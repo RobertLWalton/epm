@@ -81,6 +81,7 @@
 	{\end{list}}
 
 \newcommand{\ITEM}{\hspace*{-0.2in}}
+\newcommand{\TTITEM}[1]{\hspace*{-0.2in}{\TT{#1}}\\}
 
 \begin{document}
         
@@ -88,7 +89,7 @@
 
 \author{Robert L. Walton}
 
-\date{October 30, 2019}
+\date{October 31, 2019}
  
 \maketitle
 
@@ -151,17 +152,21 @@ Suppose this contains the problem \TT{PPPP}.  This means the
 following files exist:
 
 \begin{indpar}
-\ITEM\TT{system/PPPP/PPPP.tex}  Problem description in latex.
-\\
-\ITEM\TT{system/PPPP/PPPP.pdf}  Problem description in pdf made from
+\TTITEM{system/PPPP/PPPP.tex}  Problem description in latex.
+    Not visible to the user.
+\\[1ex]
+\TTITEM{system/PPPP/PPPP.pdf}  Problem description made from
     \TT{PPPP.tex} by using \TT{pdflatex}.
-\\
-\ITEM\TT{system/PPPP/PPPP.cc}  Judge's solution to the problem.
-    Cannot be linked to the user's \TT{UUUU/PPPP} directory.
-\\
-\ITEM\TT{system/PPPP/PPPP}  Binary of judge's solution to the problem,
-    made from \TT{PPPP.cc} by using \TT{g++}.
-    Cannot be linked to the user's \TT{UUUU/PPPP} directory.
+    Visible to user.
+\\[1ex]
+\TTITEM{system/PPPP/supplement-PPPP.tex}  Problem supplementary
+    documentation in latex.  Documents generate and filter programs:
+    see below.  Not visible to the user.
+\\[1ex]
+\TTITEM{system/PPPP/supplement-PPPP.pdf}  Problem supplementary
+    documentation made from
+    \TT{PPPP.tex} by using \TT{pdflatex}.
+    Visible to user.
 \\[1ex]
 \ITEM\begin{tabular}[t]{@{}l}
      \TT{system/PPPP/00-000-PPPP.in} \\
@@ -173,19 +178,28 @@ following files exist:
      \end{tabular}
      ~~~~
      \begin{tabular}[t]{p{3in}}
-     Test case input files.  Symbolically linked to \TT{UUUU/PPPP}
-     directory, but not visible to user except for \TT{00-\ldots.in}
-     files that are sample inputs.
+     Test case input files.  Usable in runs,
+     but not visible to user except for \TT{00-\ldots.in}
+     files that are visible sample inputs.
      \end{tabular}
-\\
-\ITEM\TT{system/PPPP/generate\_PPPP.cc}  Source code for generate
+\\[1ex]
+\TTITEM{system/PPPP/generate\_PPPP.cc}  Source code for generate
     program that generates actual test case input from \TT{.in} files.
-    Cannot be linked to the user's \TT{UUUU/PPPP} directory.
-\\
-\ITEM\TT{system/PPPP/generate\_PPPP}  Binary of generate
+    Not visible to user.
+\\[1ex]
+\TTITEM{system/PPPP/generate\_PPPP}  Binary of generate
     program made by using \TT{g++} on \TT{gen\-erate\_\EOL PPPP.cc}.
-    Symbolically linked to \TT{UUUU/PPPP} directory and usable
-    by the user to generate user test case input.
+    Visible to user.
+\\[1ex]
+\TTITEM{system/PPPP/PPPP.cc}  Judge's solution to the problem.
+    Accepts actual test case input from the generate program,
+    and produces actual test case output (\TT{.test} files below).
+    Not visible to user.
+\\[1ex]
+\TTITEM{system/PPPP/PPPP}  Binary of judge's solution to the problem,
+    made from \TT{PPPP.cc} by using \TT{g++}.
+    Not visible to user, but can be used during a run to regenerate
+    other \TT{system/PPPP} files.
 \\[1ex]
 \ITEM\begin{tabular}[t]{@{}l}
      \TT{system/PPPP/00-000-PPPP.test} \\
@@ -200,19 +214,17 @@ following files exist:
      Judge's test case output files.  Each is made by running
      the corresponding \TT{.in} file first through the generate
      program and then through the judge's solution program.
-     Symbolically linked to \TT{UUUU/PPPP}
-     directory, but not visible to user except for \TT{00-\ldots.test}
-     files that are sample outputs.
+     Usable in runs but not visible to user except for \TT{00-\ldots.test}
+     files that are visible sample judge's outputs.
      \end{tabular}
-\\
-\ITEM\TT{system/PPPP/PPPP.run}  Standard `run' file which lists
+\\[1ex]
+\TTITEM{system/PPPP/PPPP.run}  Standard `run' file which lists
     the test cases to be run in the order they are to be
     run.  For example:
    `{\TT{00-000-PPPP}, \TT{00-001-PPPP}, \ldots}'.
-    Symbolically linked to
-    the \TT{UUUU/PPPP} directory and visible to the user.
-\\
-\ITEM\TT{system/PPPP/sample-PPPP.run}  Ditto but only includes sample tests.
+    Visible to the user.
+\\[1ex]
+\TTITEM{system/PPPP/sample-PPPP.run}  Ditto but only includes sample tests.
 \end{indpar}
 
 All compiled programs follow the convention that they cannot
@@ -230,26 +242,26 @@ so as to protect the server from malicious programs, including,
 for example, generate programs submitted by users developing
 their own problems.
 
-The user directory has the following files, not including
-those symbolically linked from the \TT{system/PPPP} directory:
+The user directory has the following files, all of which are
+visible to the user unless noted otherwise:
 
 \begin{indpar}
-\ITEM\TT{system/PPPP/PPPP.py}  User's solution to the problem.
+\TTITEM{UUUU/PPPP/PPPP.py}  User's solution to the problem.
     May be in a different programming language from the judge's
     solution (e.g., \TT{.py} is python, \TT{.cc} is C++).
     Uploaded by the user (and thus modifiable by the user).
-\\
-\ITEM\TT{system/PPPP/PPPP}  Binary of users's solution to the problem,
+\\[1ex]
+\TTITEM{UUUU/PPPP/PPPP}  Binary of users's solution to the problem,
     typically a \TT{bash} script that executes `\TT{python3 PPPP.py}'
     (if the user's solution were C++, \TT{g++} would be used to
     compile \TT{PPPP.cc}).
 \\[1ex]
 \ITEM\begin{tabular}[t]{@{}l}
-     \TT{system/PPPP/00-000-PPPP.out} \\
-     \TT{system/PPPP/00-001-PPPP.out} \\
+     \TT{UUUU/PPPP/00-000-PPPP.out} \\
+     \TT{UUUU/PPPP/00-001-PPPP.out} \\
      \ldots\ldots\ldots\ldots\ldots \\
-     \TT{system/PPPP/01-000-PPPP.out} \\
-     \TT{system/PPPP/01-001-PPPP.out} \\
+     \TT{UUUU/PPPP/01-000-PPPP.out} \\
+     \TT{UUUU/PPPP/01-001-PPPP.out} \\
      \ldots\ldots\ldots\ldots\ldots \\
      \end{tabular}
      ~~~~
@@ -257,14 +269,19 @@ those symbolically linked from the \TT{system/PPPP} directory:
      User's test case output files.  Each is made by running
      the corresponding \TT{.in} file first through the generate
      program and then through the user's solution program.
+     Only sample test case files and the file for the first
+     failed test case are visible to the user.
      \end{tabular}
-\\
-\ITEM\TT{system/PPPP/PPPP.score}  Score associated with
+\\[1ex]
+\TTITEM{UUUU/PPPP/PPPP.score}  Score associated with
     the `\TT{system/PPPP/PPPP.run}' file.  Either says the run was completely
     correct, or specifies the first test case that failed.
     Also contains a history of past scores.
-\\
-\ITEM\TT{system/PPPP/sample-PPPP.score}  Ditto but only include sample tests.
+    Total scores are computed using the number of failed runs before
+    the first successful run.
+\\[1ex]
+\TTITEM{UUUU/PPPP/sample-PPPP.score}  Ditto but only include sample tests
+in \TT{system/\EOL PPPP/\EOL sample-\EOL PPPP.run}.
 \\[1ex]
 \ITEM\begin{tabular}[t]{@{}l}
      \TT{system/PPPP/00-000-PPPP.gin} \\
@@ -279,34 +296,173 @@ those symbolically linked from the \TT{system/PPPP} directory:
      Result of running corresponding \TT{.in} files through the 
      generate program.  These files represent the input actually
      seen by the user's \TT{PPPP} solution program.  Not all
-     these files are computed: only the files for the sample
-     tests and the first failed test case are computed.
+     these files are computed: a \TT{.gin} file may be computed
+     only if the corresponding \TT{.in} file is visible to the
+     user.
      \end{tabular}
 
 \end{indpar}
 
-The \TT{.in}, \TT{.gin}, \TT{.out}, and \TT{.test} files are \underline{not}
-visible to the user unless they are for sample tests
-(with names of the form \TT{00-\ldots}) or for the first test
-case that failed in the user's last run.
-
 The user, to develop a problem solution, repeatedly uploads and
-tests the \TT{PPPP.py} file.  Each test produces a \TT{.in},
+the \TT{PPPP.py} file and executes a \TT{.run} file.
+Each test produces a \TT{.in},
 \TT{.gin}, \TT{.out}, and \TT{.test} file that can be inspected,
 along with differences between the \TT{.out} and \TT{.test}
 files.
+
+A general principal is that the user is only allowed to look
+at input and output files (\TT{.in}, \TT{.gin}, \TT{.test}, \TT{.out} files)
+of sample test cases (\TT{00-\ldots} files), and of the `first
+failed test case'.  This last is computed by executing a run
+using a \TT{.run} file, and is the first test case listed in
+that file on which the solution fails.
 
 In the above we have assumed that the problem is such that the
 \TT{.out} file is uniquely determined by the \TT{.in} file,
 with perhaps minor differences such as spacing and
 the exact number of decimal places printed (as long as number
 agree within the tolerance specified by the problem).
-However some problems have many possible correct solutions.
+However some problems have many possible correct solutions:
+for example a maze problem asking for a shortest path in which
+there may be several shortest pathes.
 For these the following files are added.
 
 In the \TT{system/PPPP} directory:
 
+\begin{indpar}
+\TTITEM{system/PPPP/filter\_PPPP.cc}  Source code for filter
+    program that accepts actual test case input from the generate
+    program and actual test case output from a problem solution
+    and produces filtered output (\TT{.ftest} or \TT{.fout} files,
+    see below).
+    Not visible to the user.
+\\[1ex]
+\TTITEM{system/PPPP/filter\_PPPP}  Binary of filter
+    program made by using \TT{g++} on \TT{fil\-ter\_\EOL PPPP.cc}.
+    Visible to the user.
+\\[1ex]
+\ITEM\begin{tabular}[t]{@{}l}
+     \TT{system/PPPP/00-000-PPPP.ftest} \\
+     \TT{system/PPPP/00-001-PPPP.ftest} \\
+     \ldots\ldots\ldots\ldots\ldots \\
+     \TT{system/PPPP/01-000-PPPP.ftest} \\
+     \TT{system/PPPP/01-001-PPPP.ftest} \\
+     \ldots\ldots\ldots\ldots\ldots \\
+     \end{tabular}
+     ~~~~
+     \begin{tabular}[t]{p{3in}}
+     Judge's test case filtered output files.  Each is made by running
+     the corresponding \TT{.in} file first through the generate
+     program, then through the judge's solution program, and lastly
+     through the filter program.
+     Useable in runs but not visible to user,
+     except for \TT{00-\ldots.ftest} files that are visible sample outputs.
+     \end{tabular}
+\end{indpar}
 
+For test cases on which a solution is successful, the filtered output
+typically consists of just one line containing either \TT{OK}, or in
+the case of a problem that tries to minimize some number while providing
+extra information, just the number.  If the solution is unsuccessful,
+the filtered output will have error messages.  For example, if a shortest path
+through a maze is to be output, and the \TT{.test} file has the path,
+the filtered output will have the length of the path if the path is
+legal, and error messages otherwise.
+
+When there is a filter program, the \TT{UUUU/PPPP} directory has:
+
+\begin{indpar}
+\ITEM\begin{tabular}[t]{@{}l}
+     \TT{system/PPPP/00-000-PPPP.fout} \\
+     \TT{system/PPPP/00-001-PPPP.fout} \\
+     \ldots\ldots\ldots\ldots\ldots \\
+     \TT{system/PPPP/01-000-PPPP.fout} \\
+     \TT{system/PPPP/01-001-PPPP.fout} \\
+     \ldots\ldots\ldots\ldots\ldots \\
+     \end{tabular}
+     ~~~~
+     \begin{tabular}[t]{p{3in}}
+     User's test case filtered output files.  Each is made by running
+     the corresponding \TT{.in} file first through the generate
+     program, then through the user's solution program, and lastly
+     through the filter program.
+     Not visible to user except sample test cases and the first failed
+     test case.
+     \end{tabular}
+\end{indpar}
+
+A user may develop a problem.  In this case the \TT{UUUU/PPPP} problem
+will have all the files that were in the \TT{system/PPPP} directory
+above, all these files will be visible to the user, and the user
+will be able to upload all the \TT{.tex}, \TT{.cc}, \TT{.py} etc
+files (but not the administrative files in the next section).
+
+\subsection{Administrative Files}
+
+EPM uses administrative files to direct generation of files from
+other files, to keep track of visibility
+permissions, and for other things.  All these files are in JSON
+format.  EPM does \underline{not} use any data base (like MYSQL).
+
+Administrative files are \underline{not} uploadable by the user.
+They are made by commands issued by the user to web pages, e.g.,
+the \TT{PPPP.score} file is made by the user commanding
+the \TT{PPPP.run} file, and the user can make their own
+\TT{\ldots-PPPP.run} file using a web page.  When administrative
+commands are made using a web page, the code associated with the
+page checks that the file being made does not violate security.
+
+The following administrative files the user will encounter.
+Unless otherwise noted, these are visible to the user.
+
+\begin{indpar}
+\TTITEM{XXXX.mk}  File specifying how to make the file \TT{XXXX},
+when this last file is generated from other files.  E.g.,
+the \TT{UUUU/PPPP/00-000-PPPP.out.mk} file tells how to make
+the \TT{UUUU/PPPP/00-000-PPPP.out} from 
+the \TT{system/PPPP/00-000-PPPP.in},
+the \TT{system\EOL /\EOL PPPP/\EOL generate-PPPP},
+and \TT{UUUU/PPPP/PPPP}.
+
+A \TT{XXXX.mk} file also tells how to make itself, so there is
+no need for \TT{XXXX.mk.mk} files.  \TT{XXXX.mk} files are
+made from template files.
+\\[1ex]
+\TTITEM{system/template/X.E->Y.F.tpl}
+Template file used to make \TT{.mk} or other administrative
+files.  A typical template file name ends with \TT{X.cc->X.tmpl}
+and is used to make a \TT{X.mk} file that specifies how to
+make a \TT{X} file from a \TT{X.cc} file, where \TT{X} is a
+parameter to the template file.  In general single upper case
+letters are used as parameter names for template files, and
+may also appear in the names of the template files themselves.
+
+Template files are located and used by code in web pages that
+make administrative files.
+\\[1ex]
+\TTITEM{UUUU/credentials} Credential file for user.  Specifies
+user email addresses, ip addresses, dates ip addresses last
+certified and last used.
+\\[1ex]
+\TTITEM{UUUU/logins} Login history of user.
+\\[1ex]
+\TTITEM{UUUU/PPPP/uploads} Upload history of user for problem \TT{PPPP}.
+Note that a user's uploads for a problem are automatically
+checked into a per-user, per-problem \TT{git} database
+which can be cloned by the user and partially inspected
+(in particular to obtain difference listings) using EPM
+web pages.
+\\[1ex]
+\TTITEM{UUUU/PPPP/runs} Run history of user for problem \TT{PPPP}.
+\\[1ex]
+\TTITEM{DDDD/user.perm} Permission control file for arbitrary
+users for all files in directory \TT{DDDD} (e.g., in \TT{system},
+\TT{system/PPPP}) and its subdirectories.
+\\[1ex]
+\TTITEM{DDDD/UUUU.perm} Permission control file for
+user \TT{UUUU} and files in directory \TT{DDDD} (e.g., in directory
+\TT{UUUU}).
+\end{indpar}
 
 
 \end{document}
