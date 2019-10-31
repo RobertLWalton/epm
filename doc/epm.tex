@@ -206,10 +206,13 @@ following files exist:
      \end{tabular}
 \\
 \ITEM\TT{system/PPPP/PPPP.run}  Standard `run' file which lists
-    the test cases to be run; for example:
-   `{\TT{00-000-PPPP}, \TT{00-001-PPPP}, \ldots}'
+    the test cases to be run in the order they are to be
+    run.  For example:
+   `{\TT{00-000-PPPP}, \TT{00-001-PPPP}, \ldots}'.
     Symbolically linked to
     the \TT{UUUU/PPPP} directory and visible to the user.
+\\
+\ITEM\TT{system/PPPP/sample-PPPP.run}  Ditto but only includes sample tests.
 \end{indpar}
 
 All compiled programs follow the convention that they cannot
@@ -229,6 +232,79 @@ their own problems.
 
 The user directory has the following files, not including
 those symbolically linked from the \TT{system/PPPP} directory:
+
+\begin{indpar}
+\ITEM\TT{system/PPPP/PPPP.py}  User's solution to the problem.
+    May be in a different programming language from the judge's
+    solution (e.g., \TT{.py} is python, \TT{.cc} is C++).
+    Uploaded by the user (and thus modifiable by the user).
+\\
+\ITEM\TT{system/PPPP/PPPP}  Binary of users's solution to the problem,
+    typically a \TT{bash} script that executes `\TT{python3 PPPP.py}'
+    (if the user's solution were C++, \TT{g++} would be used to
+    compile \TT{PPPP.cc}).
+\\[1ex]
+\ITEM\begin{tabular}[t]{@{}l}
+     \TT{system/PPPP/00-000-PPPP.out} \\
+     \TT{system/PPPP/00-001-PPPP.out} \\
+     \ldots\ldots\ldots\ldots\ldots \\
+     \TT{system/PPPP/01-000-PPPP.out} \\
+     \TT{system/PPPP/01-001-PPPP.out} \\
+     \ldots\ldots\ldots\ldots\ldots \\
+     \end{tabular}
+     ~~~~
+     \begin{tabular}[t]{p{3in}}
+     User's test case output files.  Each is made by running
+     the corresponding \TT{.in} file first through the generate
+     program and then through the user's solution program.
+     \end{tabular}
+\\
+\ITEM\TT{system/PPPP/PPPP.score}  Score associated with
+    the `\TT{system/PPPP/PPPP.run}' file.  Either says the run was completely
+    correct, or specifies the first test case that failed.
+    Also contains a history of past scores.
+\\
+\ITEM\TT{system/PPPP/sample-PPPP.score}  Ditto but only include sample tests.
+\\[1ex]
+\ITEM\begin{tabular}[t]{@{}l}
+     \TT{system/PPPP/00-000-PPPP.gin} \\
+     \TT{system/PPPP/00-001-PPPP.gin} \\
+     \ldots\ldots\ldots\ldots\ldots \\
+     \TT{system/PPPP/01-000-PPPP.gin} \\
+     \TT{system/PPPP/01-001-PPPP.gin} \\
+     \ldots\ldots\ldots\ldots\ldots \\
+     \end{tabular}
+     ~~~~
+     \begin{tabular}[t]{p{3in}}
+     Result of running corresponding \TT{.in} files through the 
+     generate program.  These files represent the input actually
+     seen by the user's \TT{PPPP} solution program.  Not all
+     these files are computed: only the files for the sample
+     tests and the first failed test case are computed.
+     \end{tabular}
+
+\end{indpar}
+
+The \TT{.in}, \TT{.gin}, \TT{.out}, and \TT{.test} files are \underline{not}
+visible to the user unless they are for sample tests
+(with names of the form \TT{00-\ldots}) or for the first test
+case that failed in the user's last run.
+
+The user, to develop a problem solution, repeatedly uploads and
+tests the \TT{PPPP.py} file.  Each test produces a \TT{.in},
+\TT{.gin}, \TT{.out}, and \TT{.test} file that can be inspected,
+along with differences between the \TT{.out} and \TT{.test}
+files.
+
+In the above we have assumed that the problem is such that the
+\TT{.out} file is uniquely determined by the \TT{.in} file,
+with perhaps minor differences such as spacing and
+the exact number of decimal places printed (as long as number
+agree within the tolerance specified by the problem).
+However some problems have many possible correct solutions.
+For these the following files are added.
+
+In the \TT{system/PPPP} directory:
 
 
 
