@@ -1,6 +1,12 @@
 <?php
+
+    // File:	index.php
+    // Author:	Robert L Walton <walton@acm.org>
+    // Date:	Mon Nov  4 14:02:23 EST 2019
+
     session_start();
 
+    $bad_email = false;
     $bad_confirm = false;
     $begin_form =
 	'<form method="post" action="' .
@@ -15,7 +21,8 @@
     }
     else if ( $_SESSION['ipaddr'] != $remote_addr )
     {
-        exit ( "ERROR: IP ADDRESS CHANGED" );
+        exit ( 'ERROR: SESSION IP ADDRESS CHANGED;' .
+	       ' RESTART BROWSER' );
     }
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -36,9 +43,24 @@
 	else if ( array_key_exists
 	              ( 'email', $_REQUEST ) )
 	{
-	    $_SESSION['email'] = $_REQUEST['email'];
-	    $_SESSION['confirm'] = 
-	        bin2hex ( random_bytes ( 8 ) );
+	    // Enter a New Email Address button sends
+	    // `email' == "".
+	    //
+	    $EMAIL = filter_var
+	        ( $_REQUEST['email'],
+		  FILTER_SANITIZE_EMAIL );
+	    if ( filter_var ( $EMAIL,
+	                     FILTER_VALIDATE_EMAIL )
+		 || $EMAIL == "" )
+	    {
+		$_SESSION['email'] = $EMAIL;
+		$_SESSION['confirm'] = 
+		    bin2hex ( random_bytes ( 8 ) );
+	    }
+	    else
+	    {
+	        $bad_email = true;
+	    }
 	}
     }
 ?>
@@ -49,8 +71,15 @@
 
   <?php if ( $_SESSION['email'] == "" )
         {
+	    if ( $bad_email )
+	    {
+	        echo '<mark>EMAIL ADDRESS WAS' .
+		     ' MALFORMED; TRY AGAIN</mark>' .
+		     '<br><br>';
+	    }
+
 	    echo $begin_form;
-	    echo 'Login:<br>';
+	    echo '<h2>Login:</h2>';
 	    echo 'Email Address:' .
 	         ' <input type="email" name="email">';
 	    echo $end_form;
