@@ -2,19 +2,34 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov  5 02:43:11 EST 2019
+    // Date:	Tue Nov  5 06:50:47 EST 2019
+
+    // Handles login.  Sets _SESSION:
+    //
+    //    userid
+    //    email
+    //    ipaddr
+    //    confirmation_time
 
     session_start();
 
     $userid = "";
+        // == "" if email address not yet posted
+	// == "NEW" if new user
+	// == admin/user_index.json[$email] otherwise
+    $email = "";
+        // == "" if valid email address not yet posted
+	// == valid (sanitized) posted email address
+	//    otherwise
     $confirmed = false;
     $bad_email = false;
     $bad_confirm = false;
+    $confirmation_time = NULL;
 
-    $remote_addr = $_SERVER['REMOTE_ADDR'];
+    $ipaddr = $_SERVER['REMOTE_ADDR'];
     if ( ! array_key_exists ( 'ipaddr', $_SESSION ) )
-        $_SESSION['ipaddr'] = $remote_addr;
-    else if ( $_SESSION['ipaddr'] != $remote_addr )
+        $_SESSION['ipaddr'] = $ipaddr;
+    else if ( $_SESSION['ipaddr'] != $ipaddr )
         exit ( 'ERROR: SESSION IP ADDRESS CHANGED;' .
 	       ' RESTART BROWSER' );
 
@@ -22,15 +37,20 @@
 	if ( array_key_exists
 	              ( 'confirm', $_REQUEST ) )
 	{
-	    if (    $_SESSION['confirm']
-	         == $_REQUEST['confirm'] )
-	        $confirmed = true;
-	    else
+	    if ( ! array_key_exists
+	            ( 'email', $_SESSION ) )
+	        exit ( 'BAD POST; IGNORED' ); 
+	    else if (    $_SESSION['confirm']
+	              == $_REQUEST['confirm'] )
 	    {
-		$bad_confirm = true;
-		$_SESSION['confirm'] = 
-		    bin2hex ( random_bytes ( 8 ) );
+	        $confirmed = true;
+		$confirmation_time = time();
 	    }
+	    else
+		$bad_confirm = true;
+
+	    $userid = $_SESSION['userid'];
+	    $email = $_SESSION['email'];
 	}
 	else if ( array_key_exists
 	              ( 'email', $_REQUEST ) )
@@ -45,12 +65,12 @@
 	         && ! filter_var
 		          ( $email,
 	                    FILTER_VALIDATE_EMAIL ) )
+	    {
 	        $bad_email = true;
+		$email = "";
+	    }
 	    else
 	    {
-		$_SESSION['email'] = $email;
-		$_SESSION['confirm'] = 
-		    bin2hex ( random_bytes ( 8 ) );
 		$users = file_get_contents
 		    ( 'admin/user_index.json' );
 		$users = json_decode ( $users, true );
@@ -62,34 +82,19 @@
 		else
 		    $userid = 'NEW';
 		$_SESSION['userid'] = $userid;
+		$_SESSION['email'] = $email;
 	    }
 	}
     }
 
-    $userid = $_SESSION['userid'];
-
-    if ( $confirmed && $userid != "" )
+    if ( $confirmed && $userid != "NEW" )
     {
-        if ( $userid == 'NEW' )
-	{
-	    $users = file_get_contents
-		( 'admin/user_index.json' );
-	    $users = json_decode ( $users, true );
-	    if ( ! $users )
-	    {
-	        $users = NULL;
-		$userid = 1;
-	    }
-	    else
-	    {
-	        $userid = 0;
-		foreach ( $users as $value )
-		    $userid = max ( $userid, $value );
-		$userid ++;
-	    }
-	    $_SESSION['userid'] = $userid;
-	}
-
+        // Record current time as last confirmation
+	// time for the user and ip address.
+	//
+	$_SESSION['confirmation_time'] =
+	    $confirmation_time;
+	$ipaddr = $_SESSION['ipaddr'];
 	$last_confirmation_file =
 	    "admin/user${userid}_" .
 	    "last_confirmation.json";
@@ -99,8 +104,8 @@
 	    ( $last_confirmation_json, true );
 	if ( ! $last_confirmation )
 	    $last_confirmation = NULL;
-	$last_confirmation[$remoteaddr] =
-	    strftime ( '%FT%T%z', time() );
+	$last_confirmation[$ipaddr] =
+	    strftime ( '%FT%T%z', $confirmation_time );
 	$last_confirmation_json = json_encode
 	    ( $last_confirmation );
 	file_put_contents
@@ -111,33 +116,39 @@
     if ( ! $confirmed && $userid != ""
                       && $userid != 'NEW' )
     {
-	$last_confirmation_file =
-	    "admin/user${userid}_" .
-	    "last_confirmation.json";
-	$last_confirmation_json = file_get_contents
-	    ( $last_confirmation_file );
-	$last_confirmation = json_decode
-	    ( $last_confirmation_json, true );
-	if ( $last_confirmation
+	// Check if we can auto-confirm for this
+	// user and ip address.
+	//
+	$user_json = file_get_contents
+	    ( "admin/user{$userid}.json" );
+	$user = json_decode ( $user_json, true );
+	if ( $user
 	     &&
-	     array_key_exists
-		 ( $remoteaddr, $last_confirmation ) )
+	     array_key_exists ( $ipaddr, $user ) )
 	{
-	    $lastdate = $last_confirmation[$remoteaddr];
-	    if ( time() < strtotime ( $lastdate )
+	    $confirmation_time =
+	        strtotime ( $user[$ipaddr] );
+	    if ( time() < $confirmation_time
 	                  + 60 * 60 * 24 * 30 )
+	    {
 	        $confirmed = true;
+		$_SESSION['confirmation_time'] =
+		    $confirmation_time;
+	    }
 	}
     }
 
-    if ( $confirmed )
+    if ( $confirmed ) // implies $userid != ""
     {
-	if ( $userid != "" )
-	    header ( "Location: /src/problems.php" );
+	if ( $userid == "NEW" )
+	    header ( "Location: /src/user.php" );
 	else
-	    header ( "Location: /src/setup.php" );
+	    header ( "Location: /src/problems.php" );
 	exit;
     }
+    else if ( $userid != "" )
+	$_SESSION['confirm'] =
+	    bin2hex ( random_bytes ( 8 ) );
 
 ?>
 
@@ -152,7 +163,7 @@
 	$_SERVER['PHP_SELF'] . '">';
     $end_form = '</form>';
 
-    if ( $_SESSION['email'] == "" )
+    if ( $email == "" )
     {
 	if ( $bad_email )
 	    echo '<mark>EMAIL ADDRESS WAS' .
