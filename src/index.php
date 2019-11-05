@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov  5 01:40:06 EST 2019
+    // Date:	Tue Nov  5 02:43:11 EST 2019
 
     session_start();
 
@@ -38,17 +38,17 @@
 	    // Enter a New Email Address button sends
 	    // `email' == "".
 	    //
-	    $EMAIL = filter_var
+	    $email = filter_var
 	        ( $_REQUEST['email'],
 		  FILTER_SANITIZE_EMAIL );
-	    if (    $EMAIL != ""
+	    if (    $email != ""
 	         && ! filter_var
-		          ( $EMAIL,
+		          ( $email,
 	                    FILTER_VALIDATE_EMAIL ) )
 	        $bad_email = true;
 	    else
 	    {
-		$_SESSION['email'] = $EMAIL;
+		$_SESSION['email'] = $email;
 		$_SESSION['confirm'] = 
 		    bin2hex ( random_bytes ( 8 ) );
 		$users = file_get_contents
@@ -57,8 +57,8 @@
 		if ( $users
 		     &&
 		     array_key_exists
-		         ( $EMAIL, $users ) )
-		    $userid = $users[$EMAIL];
+		         ( $email, $users ) )
+		    $userid = $users[$email];
 		else
 		    $userid = 'NEW';
 		$_SESSION['userid'] = $userid;
@@ -66,33 +66,67 @@
 	}
     }
 
+    $userid = $_SESSION['userid'];
+
+    if ( $confirmed && $userid != "" )
+    {
+        if ( $userid == 'NEW' )
+	{
+	    $users = file_get_contents
+		( 'admin/user_index.json' );
+	    $users = json_decode ( $users, true );
+	    if ( ! $users )
+	    {
+	        $users = NULL;
+		$userid = 1;
+	    }
+	    else
+	    {
+	        $userid = 0;
+		foreach ( $users as $value )
+		    $userid = max ( $userid, $value );
+		$userid ++;
+	    }
+	    $_SESSION['userid'] = $userid;
+	}
+
+	$last_confirmation_file =
+	    "admin/user${userid}_" .
+	    "last_confirmation.json";
+	$last_confirmation_json = file_get_contents
+	    ( $last_confirmation_file );
+	$last_confirmation = json_decode
+	    ( $last_confirmation_json, true );
+	if ( ! $last_confirmation )
+	    $last_confirmation = NULL;
+	$last_confirmation[$remoteaddr] =
+	    strftime ( '%FT%T%z', time() );
+	$last_confirmation_json = json_encode
+	    ( $last_confirmation );
+	file_put_contents
+	    ( $last_confirmation_file,
+	      $last_confirmation_json );
+    }
+
     if ( ! $confirmed && $userid != ""
                       && $userid != 'NEW' )
     {
-	$loginlog_file =
-	    "admin/user${userid}_login.json";
-	$loginlog_json = file_get_contents
-	    ( $loginlog_file );
-	$loginlog = json_decode
-	    ( $loginlog_json, true );
-	if ( $loginlog
+	$last_confirmation_file =
+	    "admin/user${userid}_" .
+	    "last_confirmation.json";
+	$last_confirmation_json = file_get_contents
+	    ( $last_confirmation_file );
+	$last_confirmation = json_decode
+	    ( $last_confirmation_json, true );
+	if ( $last_confirmation
 	     &&
 	     array_key_exists
-		     ( $remoteaddr, $loginlog ) )
+		 ( $remoteaddr, $last_confirmation ) )
 	{
-	    $lastdate = $loginlog[$remoteaddr];
+	    $lastdate = $last_confirmation[$remoteaddr];
 	    if ( time() < strtotime ( $lastdate )
 	                  + 60 * 60 * 24 * 30 )
-	    {
 	        $confirmed = true;
-		$loginlog[$remoteaddr] =
-		    strftime ( '%FT%T%z', time() );
-		$loginlog_json = json_encode
-		    ( $loginlog );
-		file_put_contents
-		    ( $loginlog_file,
-		      $loginlog_json );
-	    }
 	}
     }
 
