@@ -17,11 +17,16 @@
 	exit;
     }
 
-    exit ( 'user.php not finished yet' );
-
     $userid = $_SESSION['userid'];
     $email = $_SESSION['email'];
     $ipaddr = $_SESSION['ipaddr'];
+
+    echo "userid = $userid<br>";
+    echo "email = $email<br>";
+    echo "ipaddr = $ipaddr<br>";
+
+    exit ( 'user.php not finished yet' );
+
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
@@ -49,6 +54,16 @@
 
 <html>
 <body>
+
+
+<?php 
+
+    $begin_form =
+	'<form method="post" action="' .
+	$_SERVER['PHP_SELF'] . '">';
+    $end_form = '</form>';
+
+?>
 
 
 </body>

@@ -8,17 +8,15 @@
        As there is only one text field, carriage return on that
        will submit.
   -->
+  <input type="hidden" name="fname" value="HIDDEN">
+  <!-- the hidden attribute does not prevent the one text
+       field from causing submit on carriage return
+  -->
 </form>
 
 <?php
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // collect value of input field
-    $name = $_REQUEST['fname'];
-    if (empty($name)) {
-	echo "Name is empty";
-    } else {
-	echo $name;
-    }
+    print_r ( $_REQUEST );
 }
 ?>
 

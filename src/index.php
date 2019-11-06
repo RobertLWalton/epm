@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov  5 06:50:47 EST 2019
+    // Date:	Wed Nov  6 01:37:26 EST 2019
 
     // Handles login.  Sets _SESSION:
     //
@@ -35,13 +35,13 @@
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	if ( array_key_exists
-	              ( 'confirm', $_REQUEST ) )
+	              ( 'confirm', $_POST ) )
 	{
 	    if ( ! array_key_exists
 	            ( 'email', $_SESSION ) )
 	        exit ( 'BAD POST; IGNORED' ); 
 	    else if (    $_SESSION['confirm']
-	              == $_REQUEST['confirm'] )
+	              == $_POST['confirm'] )
 	    {
 	        $confirmed = true;
 		$confirmation_time = time();
@@ -53,13 +53,13 @@
 	    $email = $_SESSION['email'];
 	}
 	else if ( array_key_exists
-	              ( 'email', $_REQUEST ) )
+	              ( 'email', $_POST ) )
 	{
 	    // Enter a New Email Address button sends
 	    // `email' == "".
 	    //
 	    $email = filter_var
-	        ( $_REQUEST['email'],
+	        ( $_POST['email'],
 		  FILTER_SANITIZE_EMAIL );
 	    if (    $email != ""
 	         && ! filter_var
