@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Nov  6 06:01:57 EST 2019
+    // Date:	Wed Nov  6 11:22:39 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -59,7 +59,11 @@
 	        exit ( 'BAD POST; IGNORED' ); 
 		// If session email set, so is
 		// session userid.
-	    else if (    $_SESSION['confirm']
+	    elseif ( ! isset ( $_SESSION
+	                       ['confirmation_time'] ) )
+	        exit ( 'ALREADY CONFIRMED; YOU BEAT' .
+		       ' YOURSELF TO IT' ); 
+	    elseif (    $_SESSION['confirm']
 	              == $_POST['confirm'] )
 		$confirmation_time = time();
 	    else
@@ -106,6 +110,17 @@
 	}
     }
 
+    if ( is_int ( $userid ) )
+    {
+	$user_json = file_get_contents
+	    ( "admin/user{$userid}.json" );
+	$user = json_decode ( $user_json, true );
+	if ( ! $user )
+	    $user = [];
+    }
+    else
+        $user = [];
+
     if (    isset ( $confirmation_time )
          && is_int ( $userid ) )
     {
@@ -115,22 +130,11 @@
 	$_SESSION['confirmation_time'] =
 	    $confirmation_time;
 	$ipaddr = $_SESSION['ipaddr'];
-	$last_confirmation_file =
-	    "admin/user{$userid}_" .
-	    "last_confirmation.json";
-	$last_confirmation_json = file_get_contents
-	    ( $last_confirmation_file );
-	$last_confirmation = json_decode
-	    ( $last_confirmation_json, true );
-	if ( ! $last_confirmation )
-	    $last_confirmation = NULL;
-	$last_confirmation[$ipaddr] =
+	$user['confirmation_time'][$ipaddr] =
 	    strftime ( '%FT%T%z', $confirmation_time );
-	$last_confirmation_json = json_encode
-	    ( $last_confirmation );
+	$user_json = json_encode ( $user );
 	file_put_contents
-	    ( $last_confirmation_file,
-	      $last_confirmation_json );
+	    ( "admin/user{$userid}.json", $user_json );
     }
 
     if (    ! isset ( $confirmation_time )
@@ -139,13 +143,12 @@
 	// Check if we can auto-confirm for this
 	// user and ip address.
 	//
-	$user_json = file_get_contents
-	    ( "admin/user{$userid}.json" );
-	$user = json_decode ( $user_json, true );
-	if (    $user
-	     && isset ( $user[$ipaddr] ) )
+	if ( isset ( $user['confirmation_time']
+	                  [$ipaddr] ) )
 	{
-	    $ctime = strtotime ( $user[$ipaddr] );
+	    $ctime = strtotime
+			 ( $user['confirmation_time']
+			        [$ipaddr] );
 	    if (   time()
 	         < $ctime + $confirmation_interval )
 	    {

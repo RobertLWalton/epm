@@ -44,13 +44,16 @@
 
     $is_new_user = ( $userid == 'NEW' );
     if ( $is_new_user )
-    {
-        $userid = $max_id + 1;
 	$emails[] = $email;
-    }
 
     if ( $method == 'GET' )
+    {
         $dialog = bin2hex ( random_bytes ( 8 ) );
+	$_SESSION[$dialog]['time'] = time();
+	$_SESSION[$dialog]['emails'] = $emails;
+	$_SESSION[$dialog]['is_new_user'] =
+	    $is_new_user;
+    }
 
     elseif ( $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
