@@ -51,6 +51,10 @@
     if ( $is_new_user )
 	$emails[] = $email;
 
+    sort ( $emails );
+ 
+    $new_email = NULL;
+    $bad_email = NULL;
     if ( $method == 'GET' )
     {
         $dialog = bin2hex ( random_bytes ( 8 ) );
@@ -65,57 +69,48 @@
 
     else // $method == 'POST'
     {
-	if ( isset ( $_POST['confirm'] ) )
-	{
-	    if ( ! isset ( $_SESSION['email'] ) )
-	        exit ( 'BAD POST; IGNORED' ); 
-		// If session email set, so is
-		// session userid.
-	    else if (    $_SESSION['confirm']
-	              == $_POST['confirm'] )
-		$confirmation_time = time();
-	    else
-		$bad_confirm = true;
+        if ( ! isset ( $_POST['dialog'] ) )
+	    error ( 'UNKNOWN HTTP POST' );
+	$dialog = $_POST['dialog'];
+	if ( ! isset ( $_SESSION[$dialog]['time'] ) )
+	    error ( 'UNKNOWN EPM DIALOG' );
+	$emails = $_SESSION[$dialog]['emails'];
+	$is_new_user =
+	    $_SESSION[$dialog]['is_new_user'];
 
-	    $userid = $_SESSION['userid'];
-	    $email = $_SESSION['email'];
-	}
-	else if ( isset ( $_POST['email'] ) )
+	if ( isset ( $_POST['delete'] ) )
 	{
-	    // Enter a New Email Address button sends
-	    // `email' == "".
-	    //
-	    $email = filter_var
-	        ( $_POST['email'],
+	    $i = $_POST['delete'];
+	    if ( 0 <= $i && $i < count ( $emails ) )
+	    {
+	        $emails[$i] = NULL;
+		sort ( $emails );
+	    }
+	}
+	elseif ( isset ( $_POST['add'] ) )
+	{
+	    $new_email = filter_var
+	        ( $_POST['add'],
 		  FILTER_SANITIZE_EMAIL );
 
-	    if ( $email == "" )
-	        $email = NULL;
-		// "" email sent by
-		// `Enter New Email Address'
-		// button or user typing just
-		// carriage return.
-	    else if ( ! filter_var
-		          ( $email,
-	                    FILTER_VALIDATE_EMAIL ) )
+	    if ( ! filter_var
+		      ( $new_email,
+			FILTER_VALIDATE_EMAIL ) )
 	    {
-	        $bad_email = true;
-		$email = NULL;
+	        $bad_email = $new_email;
+		$new_email = NULL;
 	    }
 	    else
 	    {
-		$users = file_get_contents
-		    ( 'admin/user_index.json' );
-		$users = json_decode ( $users, true );
-		if (    $users
-		     && isset ( $users[$email] ) )
-		    $userid = $users[$email];
-		else
-		    $userid = 'NEW';
-		$_SESSION['userid'] = $userid;
-		$_SESSION['email'] = $email;
+		$emails[] = $new_email;
+		sort ( $emails );
 	    }
 	}
+	elseif ( isset ( $_POST['profile'] ) )
+	{
+	}
+	else
+	    error ( 'UNKNOW HTTP POST' );
     }
 
     if ( $is_new_user )
