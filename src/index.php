@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Nov  6 11:22:39 EST 2019
+    // Date:	Wed Nov  6 11:41:10 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -29,6 +29,7 @@
 	// ip address.  Default, 30 days.
 
     session_start();
+    clearstatcache();
 
     $ipaddr = $_SERVER['REMOTE_ADDR'];
     if ( ! isset ( $_SESSION['ipaddr'] ) )
@@ -59,8 +60,8 @@
 	        exit ( 'BAD POST; IGNORED' ); 
 		// If session email set, so is
 		// session userid.
-	    elseif ( ! isset ( $_SESSION
-	                       ['confirmation_time'] ) )
+	    elseif ( isset ( $_SESSION
+	                     ['confirmation_time'] ) )
 	        exit ( 'ALREADY CONFIRMED; YOU BEAT' .
 		       ' YOURSELF TO IT' ); 
 	    elseif (    $_SESSION['confirm']
@@ -96,11 +97,17 @@
 	    }
 	    else
 	    {
-		$users = file_get_contents
-		    ( 'admin/user_index.json' );
-		$users = json_decode ( $users, true );
-		if (    $users
-		     && isset ( $users[$email] ) )
+		$users_file = 'admin/user_index.json';
+		$users = [];
+		if ( is_writable ( $users_file ) )
+		{
+		    $users_json = file_get_contents
+			( $users_file );
+		    $users = json_decode
+		        ( $users_json, true );
+		    if ( ! $users ) $users = [];
+		}
+		if ( isset ( $users[$email] ) )
 		    $userid = $users[$email];
 		else
 		    $userid = 'NEW';
@@ -112,11 +119,14 @@
 
     if ( is_int ( $userid ) )
     {
-	$user_json = file_get_contents
-	    ( "admin/user{$userid}.json" );
-	$user = json_decode ( $user_json, true );
-	if ( ! $user )
-	    $user = [];
+        $user_file = "admin/user{$userid}.json";
+	if ( is_writable ( $user_file ) )
+	{
+	    $user_json = file_get_contents
+	        ( $user_file );
+	    $user = json_decode ( $user_json, true );
+	    if ( ! $user ) $user = [];
+	}
     }
     else
         $user = [];

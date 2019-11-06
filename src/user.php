@@ -10,6 +10,7 @@
     // user.
 
     session_start();
+    clearstatcache();
 
     if ( ! isset ( $_SESSION['confirm'] ) )
     {
@@ -21,17 +22,21 @@
     echo 'REQUEST: '; print_r ( $_REQUEST ); echo '<br><br>';
     echo 'SERVER: '; print_r ( $_SERVER ); echo '<br><br>';
 
-    exit ( 'user.php not finished yet' );
-
 
     $email = $_SESSION['email'];
     $userid = $_SESSION['userid'];
     $method = $_SERVER['REQUEST_METHOD'];
 	    
-    $users = file_get_contents
-	( 'admin/user_index.json' );
-    $users = json_decode ( $users, true );
-    if ( ! $users ) users = [];
+    $users = [];
+    $users_file = 'admin/user_index.json';
+    if ( is_writable ( $users_file ) )
+    {
+	$users = file_get_contents ( $users_file );
+	$users = json_decode ( $users, true );
+	if ( ! $users ) $users = [];
+    }
+
+    exit ( 'user.php not finished yet' );
 
     $emails = [];
     $max_id = 0;
