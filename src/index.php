@@ -116,7 +116,7 @@
 	    $confirmation_time;
 	$ipaddr = $_SESSION['ipaddr'];
 	$last_confirmation_file =
-	    "admin/user${userid}_" .
+	    "admin/user{$userid}_" .
 	    "last_confirmation.json";
 	$last_confirmation_json = file_get_contents
 	    ( $last_confirmation_file );

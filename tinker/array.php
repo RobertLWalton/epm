@@ -14,12 +14,12 @@ echo "undefined variable = $undef<br>";
     // This also causes php server NOTICE message, that
     // cannot be seen by the user.
 
-if ( $undef == NULL )
-    $test = 1;
-else
-    $test = 0;
+foreach ( $arr as $key => $value )
+    echo "KEY $key VALUE $value<br>";
 
-echo "(undefined variable == NULL) = $test<br>";
+$arr = [];
+foreach ( $arr as $key => $value )
+    echo "KEY $key VALUE $value<br>";
 ?>
 
 </body>
