@@ -2,58 +2,73 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Nov  6 01:37:26 EST 2019
+    // Date:	Wed Nov  6 06:01:57 EST 2019
 
-    // Handles login.  Sets _SESSION:
+    // Handles login for a session.  Sets _SESSION:
     //
     //    userid
     //    email
     //    ipaddr
     //    confirmation_time
+    //
+    // Login for a session has completed if confirma-
+    // tion_time has been set and userid is an integer.
+    // Confirmation_time is the time of the last confir-
+    // mation, which may be days before the current
+    // time.
+    //
+    // The userid == 'NEW' if this is a new user which
+    // has not yet been assigned a user id.  Otherwise
+    // it is a natural number (1, 2, ...).  NEW is
+    // changed to a natural number by the user.php
+    // page.
+
+    $confirmation_interval = 30 * 24 * 60 * 60;
+        // Interval in seconds that confirmation will
+	// be valid for a given email address and
+	// ip address.  Default, 30 days.
 
     session_start();
 
-    $userid = "";
-        // == "" if email address not yet posted
-	// == "NEW" if new user
-	// == admin/user_index.json[$email] otherwise
-    $email = "";
-        // == "" if valid email address not yet posted
-	// == valid (sanitized) posted email address
-	//    otherwise
-    $confirmed = false;
-    $bad_email = false;
-    $bad_confirm = false;
-    $confirmation_time = NULL;
-
     $ipaddr = $_SERVER['REMOTE_ADDR'];
-    if ( ! array_key_exists ( 'ipaddr', $_SESSION ) )
+    if ( ! isset ( $_SESSION['ipaddr'] ) )
         $_SESSION['ipaddr'] = $ipaddr;
     else if ( $_SESSION['ipaddr'] != $ipaddr )
         exit ( 'ERROR: SESSION IP ADDRESS CHANGED;' .
 	       ' RESTART BROWSER' );
 
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	if ( array_key_exists
-	              ( 'confirm', $_POST ) )
+    $method = $_SERVER["REQUEST_METHOD"];
+
+    if ( $method == 'GET' )
+    {
+	$userid = NULL;
+	$email = NULL;
+	$bad_email = false;
+	$bad_confirm = false;
+	$confirmation_time = NULL;
+    }
+
+    elseif ( $method != 'POST' )
+        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
+
+    else // $method == 'POST'
+    {
+	if ( isset ( $_POST['confirm'] ) )
 	{
-	    if ( ! array_key_exists
-	            ( 'email', $_SESSION ) )
+	    if ( ! isset ( $_SESSION['email'] ) )
 	        exit ( 'BAD POST; IGNORED' ); 
+		// If session email set, so is
+		// session userid.
 	    else if (    $_SESSION['confirm']
 	              == $_POST['confirm'] )
-	    {
-	        $confirmed = true;
 		$confirmation_time = time();
-	    }
 	    else
 		$bad_confirm = true;
 
 	    $userid = $_SESSION['userid'];
 	    $email = $_SESSION['email'];
 	}
-	else if ( array_key_exists
-	              ( 'email', $_POST ) )
+	else if ( isset ( $_POST['email'] ) )
 	{
 	    // Enter a New Email Address button sends
 	    // `email' == "".
@@ -61,23 +76,27 @@
 	    $email = filter_var
 	        ( $_POST['email'],
 		  FILTER_SANITIZE_EMAIL );
-	    if (    $email != ""
-	         && ! filter_var
+
+	    if ( $email == "" )
+	        $email = NULL;
+		// "" email sent by
+		// `Enter New Email Address'
+		// button or user typing just
+		// carriage return.
+	    else if ( ! filter_var
 		          ( $email,
 	                    FILTER_VALIDATE_EMAIL ) )
 	    {
 	        $bad_email = true;
-		$email = "";
+		$email = NULL;
 	    }
 	    else
 	    {
 		$users = file_get_contents
 		    ( 'admin/user_index.json' );
 		$users = json_decode ( $users, true );
-		if ( $users
-		     &&
-		     array_key_exists
-		         ( $email, $users ) )
+		if (    $users
+		     && isset ( $users[$email] ) )
 		    $userid = $users[$email];
 		else
 		    $userid = 'NEW';
@@ -87,7 +106,8 @@
 	}
     }
 
-    if ( $confirmed && $userid != "NEW" )
+    if (    isset ( $confirmation_time )
+         && is_int ( $userid ) )
     {
         // Record current time as last confirmation
 	// time for the user and ip address.
@@ -113,8 +133,8 @@
 	      $last_confirmation_json );
     }
 
-    if ( ! $confirmed && $userid != ""
-                      && $userid != 'NEW' )
+    if (    ! isset ( $confirmation_time )
+         && is_int ( $userid ) )
     {
 	// Check if we can auto-confirm for this
 	// user and ip address.
@@ -122,31 +142,30 @@
 	$user_json = file_get_contents
 	    ( "admin/user{$userid}.json" );
 	$user = json_decode ( $user_json, true );
-	if ( $user
-	     &&
-	     array_key_exists ( $ipaddr, $user ) )
+	if (    $user
+	     && isset ( $user[$ipaddr] ) )
 	{
-	    $confirmation_time =
-	        strtotime ( $user[$ipaddr] );
-	    if ( time() < $confirmation_time
-	                  + 60 * 60 * 24 * 30 )
+	    $ctime = strtotime ( $user[$ipaddr] );
+	    if (   time()
+	         < $ctime + $confirmation_interval )
 	    {
-	        $confirmed = true;
+	        $confirmation_time = $ctime;
 		$_SESSION['confirmation_time'] =
 		    $confirmation_time;
 	    }
 	}
     }
 
-    if ( $confirmed ) // implies $userid != ""
+    if ( isset ( $confirmation_time ) )
+    		// implies $userid and $email set
     {
-	if ( $userid == "NEW" )
+	if ( ! is_int ( $userid ) )
 	    header ( "Location: /src/user.php" );
 	else
 	    header ( "Location: /src/problems.php" );
 	exit;
     }
-    else if ( $userid != "" )
+    else if ( isset ( $email ) )
 	$_SESSION['confirm'] =
 	    bin2hex ( random_bytes ( 8 ) );
 
@@ -163,7 +182,7 @@
 	$_SERVER['PHP_SELF'] . '">';
     $end_form = '</form>';
 
-    if ( $email == "" )
+    if ( ! isset ( $email ) )
     {
 	if ( $bad_email )
 	    echo '<mark>EMAIL ADDRESS WAS' .
