@@ -13,6 +13,9 @@
        field from causing submit on carriage return
   -->
 </form>
+<form method="post" action="<?php echo $_SERVER['PHP_SELF'];?>">
+<input type="submit" name="SUBMITTER" value="foobar">
+</form>
 
 <?php
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

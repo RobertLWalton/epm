@@ -25,8 +25,11 @@
 
     $email = $_SESSION['email'];
     $userid = $_SESSION['userid'];
+    $ipaddr = $_SESSION['ipaddr'];
+    $confirmation_time = $_SESSION['confirmation_time'];
+
     $method = $_SERVER['REQUEST_METHOD'];
-	    
+   
     $users = [];
     $users_file = 'admin/user_index.json';
     if ( is_writable ( $users_file ) )
@@ -35,6 +38,29 @@
 	$users = json_decode ( $users, true );
 	if ( ! $users ) $users = [];
     }
+   
+    $user = [];
+    if ( is_int ( $userid ) )
+    {
+	$user_file = 'admin/user{$userid}.json';
+	if ( is_writable ( $user_file ) )
+	{
+	    $user = file_get_contents ( $user_file );
+	    $user = json_decode ( $user, true );
+	    if ( ! $user ) $users = [];
+	}
+    }
+    else
+    {
+	$user['confirmation_time'][$ipaddr] =
+	    strftime ( '%FT%T%z', $confirmation_time );
+	$user['full_name'] = "";
+	$user['organization'] = "Self";
+	$user['address'] = "";
+    }
+    $full_name = $user['full_name'];
+    $organization = $user['organization'];
+    $address = $user['address'];
 
     exit ( 'user.php not finished yet' );
 
@@ -43,13 +69,12 @@
     foreach ( $users as $key => $value )
     {
 	$max_id = max ( $max_id, $value );
-	if ( $value == $userid )
+	if (    $value == $userid 
+	     && $key != $email )
 	    $emails[] = $key;
     }
 
     $is_new_user = ( $userid == 'NEW' );
-    if ( $is_new_user )
-	$emails[] = $email;
 
     sort ( $emails );
  
@@ -60,8 +85,11 @@
         $dialog = bin2hex ( random_bytes ( 8 ) );
 	$_SESSION[$dialog]['time'] = time();
 	$_SESSION[$dialog]['emails'] = $emails;
-	$_SESSION[$dialog]['is_new_user'] =
-	    $is_new_user;
+	$_SESSION[$dialog]['full_name'] = $full_name;
+	$_SESSION[$dialog]['organization'] =
+	    $organization;
+	$_SESSION[$dialog]['address'] = $address;
+	$_SESSION[$dialog]['userid'] = $userid;
     }
 
     elseif ( $method != 'POST' )
