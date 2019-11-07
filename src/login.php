@@ -1,8 +1,8 @@
 <?php
 
-    // File:	index.php
+    // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Nov  7 02:27:46 EST 2019
+    // Date:	Thu Nov  7 14:17:16 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -20,7 +20,7 @@
     // The userid == 'NEW' if this is a new user which
     // has not yet been assigned a user id.  Otherwise
     // it is a natural number (1, 2, ...).  NEW is
-    // changed to a natural number by the user.php
+    // changed to a natural number by the user_edit.php
     // page.
 
     $confirmation_interval = 30 * 24 * 60 * 60;
@@ -173,7 +173,7 @@
     		// implies $userid and $email set
     {
 	if ( ! is_int ( $userid ) )
-	    header ( "Location: /src/user.php" );
+	    header ( "Location: /src/user_edit.php" );
 	else
 	    header ( "Location: /src/problems.php" );
 	exit;

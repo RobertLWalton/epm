@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Nov  7 04:02:15 EST 2019
+    // Date:	Thu Nov  7 14:17:31 EST 2019
 
     // Edits files:
     //
@@ -31,7 +31,7 @@
 
     if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
-	header ( "Location: /src/index.php" );
+	header ( "Location: /src/login.php" );
 	exit;
     }
 
@@ -211,6 +211,14 @@
                            && count ( $errors ) == 0 )
     {
         // We are done; copy data to files.
+	//
+	if ( ! is_int ( $user_id ) )
+	{
+	    $user_id = $max_id + 1;
+	    if ( ! file_exists ( '/admin' ) )
+	    {
+	        if ( ! mkdir ( '/admin', 0750 ) )
+		    error ( 'Cannot make /admin.' );
 
 // TBD
 
