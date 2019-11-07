@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Nov  6 11:41:10 EST 2019
+    // Date:	Thu Nov  7 02:27:46 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -97,7 +97,7 @@
 	    }
 	    else
 	    {
-		$users_file = 'admin/user_index.json';
+		$users_file = 'admin/users.json';
 		$users = [];
 		if ( is_writable ( $users_file ) )
 		{

@@ -2,17 +2,34 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Nov  6 07:40:21 EST 2019
+    // Date:	Thu Nov  7 04:02:15 EST 2019
 
-    // Edits admin/user{$userid}.json file containing
-    // information about user.  Also sets up directories
-    // for new user, and system directories for first
-    // user.
+    // Edits files:
+    //
+    //		admin/users
+    //		admin/user{$userid}.json
+    //
+    // containing information about user.  Also creates
+    // directories:
+    //
+    //		admin
+    //		user{$userid}
+    //
+    // if they are needed and do not exist.
+    //
+    // Does this by using a form to collect the follow-
+    // ing information:
+    //
+    //     emails	List of the user's emails.
+    //	   full_name	Use's full name.
+    //	   organization Use's organization.
+    //     location     Town, state, country of
+    //			organization.
 
     session_start();
     clearstatcache();
 
-    if ( ! isset ( $_SESSION['confirm'] ) )
+    if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
 	header ( "Location: /src/index.php" );
 	exit;
@@ -77,72 +94,126 @@
     $is_new_user = ( $userid == 'NEW' );
 
     sort ( $emails );
+
+    $max_emails = count ( $emails ) + 1;
+    $max_emails = max ( $max_emails, 3 );
  
-    $new_email = NULL;
-    $bad_email = NULL;
-    if ( $method == 'GET' )
+    $errors = [];  // List of submit error messages.
+    $field_missing = false;
+    		   // Set if form field missing from
+		   // post.
+
+    // Sanitize non-email form entries.  Return new
+    // value.  If error, add to $errors and return
+    // new form value.
+    //
+    function sanitize
+        ( $name, $form_name, $min_length )
     {
-        $dialog = bin2hex ( random_bytes ( 8 ) );
-	$_SESSION[$dialog]['time'] = time();
-	$_SESSION[$dialog]['emails'] = $emails;
-	$_SESSION[$dialog]['full_name'] = $full_name;
-	$_SESSION[$dialog]['organization'] =
-	    $organization;
-	$_SESSION[$dialog]['address'] = $address;
-	$_SESSION[$dialog]['userid'] = $userid;
+        global $errors, $field_missing;
+
+        if ( ! isset ( $_POST[$name] ) )
+	{
+	    $field_missing = true;
+	    $errors[] = 'Must set ' . $form_name . '.';
+	    return '';
+	}
+	$value = trim ( $_POST[$name] );
+	if ( $value == '' )
+	{
+	    $errors[] = 'Must set ' . $form_name . '.';
+	    return '';
+	}
+	if ( grapheme_strlen ( $value ) < $min_length )
+	{
+	    $errors[] = $form_name
+	              . ' is too short; re-enter.';
+	    return '';
+	}
+	$value = htmlspecialchars ( $value );
+	if ( $value == '' )
+	{
+	    $errors[] = $form_name
+	              . ' contained illegal characters;'
+		      . ' re-enter.';
+	    return '';
+	}
+	return $value;
     }
+	
+
+    if ( $method == 'GET' )
+        /* do nothing; we set form variables above */;
 
     elseif ( $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     else // $method == 'POST'
     {
-        if ( ! isset ( $_POST['dialog'] ) )
-	    error ( 'UNKNOWN HTTP POST' );
-	$dialog = $_POST['dialog'];
-	if ( ! isset ( $_SESSION[$dialog]['time'] ) )
-	    error ( 'UNKNOWN EPM DIALOG' );
-	$emails = $_SESSION[$dialog]['emails'];
-	$is_new_user =
-	    $_SESSION[$dialog]['is_new_user'];
+	// Read and check all the form data.
+	// Delete emails that are to be deleted.
+	//
+	$full_name = sanitize
+	    ( 'full_name', 'Full Name', 5 );
+	$organization = sanitize
+	    ( 'organization', 'Organization', 3 );
+	$location = sanitize
+	    ( 'location', 'Location', 6 );
 
-	if ( isset ( $_POST['delete'] ) )
+	$emails = [];
+	for ( $i = 0; $i < $max_emails; $i++ )
 	{
-	    $i = $_POST['delete'];
-	    if ( 0 <= $i && $i < count ( $emails ) )
+	    if ( ! isset ( $_POST["email$i"] ) )
 	    {
-	        $emails[$i] = NULL;
-		sort ( $emails );
+	        $field_missing = true;
+	        continue;
 	    }
-	}
-	elseif ( isset ( $_POST['add'] ) )
-	{
-	    $new_email = filter_var
-	        ( $_POST['add'],
-		  FILTER_SANITIZE_EMAIL );
-
+	    if ( isset ( $_POST["delete$i"] )
+	        continue;
+	    $value =  trim ( $_POST["email$i"] );
+	    if ( $value == "" )
+	        continue;
+	    $svalue = filter_var
+	        ( $value, FILTER_SANITIZE_EMAIL );
+	    if ( $value != $svalue )
+	    {
+	        errors[] = 'Email '
+			 . htmlspecialchars
+			     ( $value )
+		         . ' contained characters'
+			 . ' illegal in an email'
+			 . ' address.';
+		$value = $svalue;
+	    }
+	    $hvalue = htmlspecialchars ( $value );
+	    if ( $value != $hvalue )
+	    {
+	        errors[] = 'Email ' . $hvalue
+		         . ' contains HTML special'
+			 . ' characters.';
+		$value = $hvalue;
+	    }
 	    if ( ! filter_var
-		      ( $new_email,
+		      ( $value,
 			FILTER_VALIDATE_EMAIL ) )
-	    {
-	        $bad_email = $new_email;
-		$new_email = NULL;
-	    }
-	    else
-	    {
-		$emails[] = $new_email;
-		sort ( $emails );
-	    }
+	        errors[] = 'Email ' . $value
+		         . ' is not a valid email'
+			 . ' address.';
+	    if ( $value != $email )
+		emails[] = $value;
 	}
-	elseif ( isset ( $_POST['profile'] ) )
-	{
-	}
-	else
-	    error ( 'UNKNOW HTTP POST' );
+
+	if ( $field_missing )
+	    error ( 'UNKNOWN HTTP POST' );
     }
 
-    if ( $is_new_user )
+    if ( $method == 'POST' && isset ( $_POST['submit' )
+                           && count ( $errors ) == 0 )
     {
+        // We are done; copy data to files.
+
+// TBD
+
         // Record current time as last confirmation
 	// time for the user and ip address.
 	//
