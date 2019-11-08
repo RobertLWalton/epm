@@ -11,7 +11,7 @@
     //
     // containing information about user.  Gives the
     // user the option of going to user_edit.php or
-    // problems.php or problem.php.
+    // problem.php.
 
     session_start();
     clearstatcache();
@@ -94,15 +94,7 @@
     Location: $user['location']<br>br>
     <button action="src/user_edit.php">Edit</button>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <button action="src/problems_edit.php">Select Problem</button>
-EOT
-    if ( isset ( $_SESSION['problem'] ) )
-    {
-	$problem = $_SESSION['problem'];
-	echo <<<EOT
-	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-	<button action="src/problem.php?$problem">
-	    Go To $problem</button>
+    <button action="src/problem.php">Go To Problem</button>
 EOT
 }
 

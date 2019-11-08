@@ -230,7 +230,7 @@
 	if ( ! is_int ( $userid ) )
 	    header ( "Location: /src/user_edit.php" );
 	else
-	    header ( "Location: /src/problems.php" );
+	    header ( "Location: /src/problem.php" );
 	exit;
     }
     else if ( isset ( $email ) )
