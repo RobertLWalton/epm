@@ -2,25 +2,25 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Nov  8 03:02:30 EST 2019
+    // Date:	Fri Nov  8 07:44:54 EST 2019
 
     // Edits files:
     //
-    //		admin/users
+    //		admin/email_index/*
     //		admin/user{$userid}.json
     //
-    // containing information about user.  Also creates
-    // directories:
+    // containing information about user.  Also
+    // assigns $userid and creates
     //
-    //		admin
-    //		user{$userid}
+    //		users/user$userid
+    //	        admin/user$userid.json
     //
-    // if they are needed and do not exist.
+    // if $_SESSION['userid'] == 'NEW'.
     //
     // Does this by using a form to collect the follow-
     // ing information:
     //
-    //     emails	List of the user's emails.
+    //     user_emails	List of the user's emails.
     //	   full_name	Use's full name.
     //	   organization Use's organization.
     //     location     Town, state, country of
