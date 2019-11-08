@@ -1,6 +1,6 @@
 <?php
 
-    // File:	user.php
+    // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
     // Date:	Fri Nov  8 03:02:30 EST 2019
 
@@ -255,107 +255,64 @@
 	               ( $value, $user_mails, true ) )
 		unlink ( "admin/email_index/$value" );
 	}
+	header ( "Location: /src/user.php?done=yes" );
+	exit;
     }
 
 // TBD
 
     exit ( 'user_edit.php not finished yet' );
 	        
-    if (    ! isset ( $confirmation_time )
-         && is_int ( $userid ) )
-    {
-	// Check if we can auto-confirm for this
-	// user and ip address.
-	//
-	$user_json = file_get_contents
-	    ( "admin/user{$userid}.json" );
-	$user = json_decode ( $user_json, true );
-	if (    $user
-	     && isset ( $user[$ipaddr] ) )
-	{
-	    $ctime = strtotime ( $user[$ipaddr] );
-	    if (   time()
-	         < $ctime + $confirmation_interval )
-	    {
-	        $confirmation_time = $ctime;
-		$_SESSION['confirmation_time'] =
-		    $confirmation_time;
-	    }
-	}
-    }
-
-    if ( isset ( $confirmation_time ) )
-    		// implies $userid and $email set
-    {
-	if ( ! is_int ( $userid ) )
-	    header ( "Location: /src/user.php" );
-	else
-	    header ( "Location: /src/problems.php" );
-	exit;
-    }
-    else if ( isset ( $email ) )
-	$_SESSION['confirm'] =
-	    bin2hex ( random_bytes ( 8 ) );
-
 ?>
 
 <html>
 <body>
 
+<form method="post" action="/src/user_edit.php">
 
 <?php 
 
-    $begin_form =
-	'<form method="post" action="' .
-	$_SERVER['PHP_SELF'] . '">';
-    $end_form = '<input type="hidden"' .
-                ' name="dialog"' .
-		' value="' . $dialog . '></form>';
-
-    if ( ! isset ( $email ) )
+    if ( count ( $errors ) > 0 )
     {
-	if ( $bad_email )
-	    echo '<mark>EMAIL ADDRESS WAS' .
-		 ' MALFORMED; TRY AGAIN</mark>' .
-		 '<br><br>';
-
-	echo $begin_form;
-	echo '<h2>Login:</h2>';
-	echo 'Email Address:' .
-	     ' <input type="email" name="email">';
-	echo $end_form;
+	echo "<mark>\n";
+        echo '<h2>ERRORS:</h2><br>' . "\n";
+	foreach ( $errors as $value )
+	    echo "$value<br>\n";
+	echo '</mark><br><br>' . "\n";
     }
-    else
+    echo '<h2>Email Addresses:</h2><br>' . "\n";
+    for ( $i = 0; $i < $max_emails; ++ $i )
     {
-	if ( $bad_confirm )
-	{
-	    echo '<mark>CONFIRMATION NUMBER WAS' .
-		 ' WRONG; TRY AGAIN</mark><br>';
-	    echo 'A <mark>new</mark>';
-	}
+        if ( ! isset ( $user_emails[$i] ) )
+	    echo '<input name=email' . $i .
+	         ' type="text" value="">';
+	elseif ( $user_emails[$i] == $email )
+	    echo "$email";
 	else
-	    echo 'A';
-
-	echo ' confirmation number has been mailed'
-	     . ' to your email address.<br><br>';
-	echo 'Email Address: ' . $_SESSION['email']
-	     . '&nbsp;&nbsp;/&nbsp;&nbsp;';
-	echo 'IP Address: ' . $_SESSION['ipaddr']
-	     . '<br><br>';
-	echo $begin_form;
-	echo 'Confirmation Number:' .
-	     ' <input type="text" name="confirm">'
-	     . "<br>";
-	echo $end_form;
-	echo $begin_form;
-	echo '<button name="email" value="">' .
-	     'Enter New Email Address</button>';
-	echo $end_form;
-	echo '<br>Confirmation Number is ' . 
-	     $_SESSION["confirm"];
-
+	    echo "$user_emails[$i]&nbsp;&nbsp;&nbsp;" .
+	         '<input type="submit" name="delete' .
+		 $i . ' value = "delete">';
+	echo "<br>\n";
     }
+    echo <<<EOT
+    <br><br>
+    Full Name: <input type="text" maxlength="80"
+                      name="full_name"
+                      value="$full_name"
+	              placeholder="John Doe">
+    <br><br>
+    Organization:
+        <input type="text" maxlength="80"
+	 name="organization" value="$organization"
+	 placeholder="University, Company, or Self">
+    <br><br>
+    Location:
+        <input type="text" maxlength="80"
+	 name="location" value="$location"
+	 placeholder="Town, State Country of Organization">
+EOT
 ?>
 
+</form>
 </body>
 </html>
