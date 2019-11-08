@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Nov  7 14:17:16 EST 2019
+    // Date:	Fri Nov  8 03:02:19 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -10,6 +10,7 @@
     //    email
     //    ipaddr
     //    confirmation_time
+    //    login_time
     //
     // Login for a session has completed if confirma-
     // tion_time has been set and userid is an integer.
@@ -22,11 +23,31 @@
     // it is a natural number (1, 2, ...).  NEW is
     // changed to a natural number by the user_edit.php
     // page.
+    //
+    // Login_time is the time this page first accessed
+    // for a session.  Once a session is logged in,
+    // it stays logged in indefinitely.
+    //
+    // Login attempts are logged to the file
+    //
+    //		admin/login.log
+    //
+    // if that file exists and is writeable. The file
+    // format is CVS with:
+    //
+    //		*,comment
+    //		email,login_time,confirmation_time
+    //
+    // where times are in '%FT%T%z' (ISO 8601) format,
+    // and confirmation_time is 'FAILED' if confirmation
+    // failed.  Each confirmation attempt is logged
+    // separately.
 
     $confirmation_interval = 30 * 24 * 60 * 60;
         // Interval in seconds that confirmation will
 	// be valid for a given email address and
 	// ip address.  Default, 30 days.
+    $date_format = "%FT%T%z";
 
     session_start();
     clearstatcache();
@@ -40,6 +61,7 @@
 
     $method = $_SERVER["REQUEST_METHOD"];
 
+    $log_confirmation_time = NULL;
     if ( $method == 'GET' )
     {
 	$userid = NULL;
@@ -47,6 +69,13 @@
 	$bad_email = false;
 	$bad_confirm = false;
 	$confirmation_time = NULL;
+	if ( isset ( $_SESSION['login_time'] ) )
+	    $login_time = $_SESSION['login_time'];
+	else
+	{
+	    $login_time = time();
+	    $_SESSION['login_time'] = $login_time;
+	}
     }
 
     elseif ( $method != 'POST' )
@@ -66,9 +95,19 @@
 		       ' YOURSELF TO IT' ); 
 	    elseif (    $_SESSION['confirm']
 	              == $_POST['confirm'] )
+	    {
 		$confirmation_time = time();
+		$_SESSION['confirmation_time'] =
+		    $confirmation_time;
+		$log_confirmation_time = strftime
+		    ( $data_format,
+		      $confirmation_time );
+	    }
 	    else
+	    {
 		$bad_confirm = true;
+		$log_confirmation_time = 'FAILED';
+	    }
 
 	    $userid = $_SESSION['userid'];
 	    $email = $_SESSION['email'];
@@ -97,18 +136,15 @@
 	    }
 	    else
 	    {
-		$users_file = 'admin/users.json';
-		$users = [];
-		if ( is_writable ( $users_file ) )
+		$email_file =
+		    "admin/email_index/$email";
+		if ( is_readable ( $email_file ) )
 		{
-		    $users_json = file_get_contents
-			( $users_file );
-		    $users = json_decode
-		        ( $users_json, true );
-		    if ( ! $users ) $users = [];
+		    $userid = file_get_contents
+			( $email_file );
+		    if ( ! is_int ( $userid ) )
+		         $userid = 'NEW';
 		}
-		if ( isset ( $users[$email] ) )
-		    $userid = $users[$email];
 		else
 		    $userid = 'NEW';
 		$_SESSION['userid'] = $userid;
@@ -117,6 +153,23 @@
 	}
     }
 
+    if (    isset ( $log_confirmation_time )
+         && is_writable ( "admin/login.log" ) )
+    {
+        $desc = fopen ( "admin/login.log", 'a' );
+	if ( $desc )
+	{
+	    fputcsv
+		( $desc,
+		  [ $email,
+		    strftime ( $date_format,
+		               $login_time ),
+		    $log_confirmation_time ] );
+	    fclose ( $desc );
+	}
+    }
+
+    $user = NULL;
     if ( is_int ( $userid ) )
     {
         $user_file = "admin/user{$userid}.json";
@@ -125,14 +178,12 @@
 	    $user_json = file_get_contents
 	        ( $user_file );
 	    $user = json_decode ( $user_json, true );
-	    if ( ! $user ) $user = [];
+	    if ( ! $user ) $user = NULL;
 	}
     }
-    else
-        $user = [];
 
     if (    isset ( $confirmation_time )
-         && is_int ( $userid ) )
+         && isset ( $user ) )
     {
         // Record current time as last confirmation
 	// time for the user and ip address.
@@ -147,8 +198,12 @@
 	    ( "admin/user{$userid}.json", $user_json );
     }
 
+    // This must be done after recording confirmation_
+    // time as it may set $confirmation_time to an old
+    // value.
+    //
     if (    ! isset ( $confirmation_time )
-         && is_int ( $userid ) )
+         && isset ( $user ) )
     {
 	// Check if we can auto-confirm for this
 	// user and ip address.

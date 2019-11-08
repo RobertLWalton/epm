@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Nov  7 14:17:31 EST 2019
+    // Date:	Fri Nov  8 03:02:30 EST 2019
 
     // Edits files:
     //
@@ -34,6 +34,11 @@
 	header ( "Location: /src/login.php" );
 	exit;
     }
+    if ( ! is_writable ( "admin/email_index" ) )
+    {
+	header ( "Location: /src/first_user.php" );
+	exit;
+    }
 
     echo 'SESSION: '; print_r ( $_SESSION ); echo '<br><br>';
     echo 'REQUEST: '; print_r ( $_REQUEST ); echo '<br><br>';
@@ -44,19 +49,49 @@
     $userid = $_SESSION['userid'];
     $ipaddr = $_SESSION['ipaddr'];
     $confirmation_time = $_SESSION['confirmation_time'];
+    $login_time = $_SESSION['login_time'];
+
+    // Set $_SESSION['emails'] to the emails in
+    // admin/email_index that point at the current
+    // $userid, or to [] if $userid == 'NEW'.  May
+    // have been previously set for the session.
+    // $_SESSION['max_id'] is set to the maximum
+    // userid observed when $_SESSION['emails'] is
+    // set.
+    //
+    $emails = [];
+    $max_id = 0;
+    if ( isset ( $_SESSION['emails'] ) )
+    {
+        $emails = $_SESSION['emails'];
+	$max_id = $_SESSION['max_id'];
+    }
+    elseif ( is_int ( $userid ) )
+    {
+        $desc = opendir ( 'admin/email_index' );
+	if ( $desc ) while ( true )
+	{
+	    $value = readdir ( $desc );
+	    if ( ! $value )
+	    {
+	        closedir ( $desc );
+		break;
+	    }
+	    $i = file_get_contents
+	        ( "admin/email_index/$value" );
+	    if ( ! is_int ( $i ) ) continue;
+	    $max_id = max ( $max_id, $i );
+	    if ( $value == $email ) continue;
+	    if ( $i == $userid )
+	        $emails[] = $value;
+	}
+	$_SESSION['emails'] = $emails;
+	$_SESSION['max_id'] = $max_id;
+    }
 
     $method = $_SERVER['REQUEST_METHOD'];
    
-    $users = [];
-    $users_file = 'admin/user_index.json';
-    if ( is_writable ( $users_file ) )
-    {
-	$users = file_get_contents ( $users_file );
-	$users = json_decode ( $users, true );
-	if ( ! $users ) $users = [];
-    }
-   
-    $user = [];
+    $user = NULL;
     if ( is_int ( $userid ) )
     {
 	$user_file = 'admin/user{$userid}.json';
@@ -64,36 +99,21 @@
 	{
 	    $user = file_get_contents ( $user_file );
 	    $user = json_decode ( $user, true );
-	    if ( ! $user ) $users = [];
+	    if ( ! $user ) $users = NULL;
 	}
     }
-    else
+
+    if ( $user == NULL )
     {
 	$user['confirmation_time'][$ipaddr] =
 	    strftime ( '%FT%T%z', $confirmation_time );
 	$user['full_name'] = "";
-	$user['organization'] = "Self";
+	$user['organization'] = "";
 	$user['address'] = "";
     }
     $full_name = $user['full_name'];
     $organization = $user['organization'];
     $address = $user['address'];
-
-    exit ( 'user.php not finished yet' );
-
-    $emails = [];
-    $max_id = 0;
-    foreach ( $users as $key => $value )
-    {
-	$max_id = max ( $max_id, $value );
-	if (    $value == $userid 
-	     && $key != $email )
-	    $emails[] = $key;
-    }
-
-    $is_new_user = ( $userid == 'NEW' );
-
-    sort ( $emails );
 
     $max_emails = count ( $emails ) + 1;
     $max_emails = max ( $max_emails, 3 );
@@ -151,7 +171,9 @@
     else // $method == 'POST'
     {
 	// Read and check all the form data.
-	// Delete emails that are to be deleted.
+	// Skip emails that are to be deleted.
+	// List of emails other than $email is
+	// put in $user_emails.
 	//
 	$full_name = sanitize
 	    ( 'full_name', 'Full Name', 5 );
@@ -160,7 +182,7 @@
 	$location = sanitize
 	    ( 'location', 'Location', 6 );
 
-	$emails = [];
+	$user_emails = [];
 	for ( $i = 0; $i < $max_emails; $i++ )
 	{
 	    if ( ! isset ( $_POST["email$i"] ) )
@@ -168,7 +190,7 @@
 	        $field_missing = true;
 	        continue;
 	    }
-	    if ( isset ( $_POST["delete$i"] )
+	    if ( isset ( $_POST["delete$i"] ) )
 	        continue;
 	    $value =  trim ( $_POST["email$i"] );
 	    if ( $value == "" )
@@ -177,75 +199,68 @@
 	        ( $value, FILTER_SANITIZE_EMAIL );
 	    if ( $value != $svalue )
 	    {
-	        errors[] = 'Email '
-			 . htmlspecialchars
-			     ( $value )
-		         . ' contained characters'
-			 . ' illegal in an email'
-			 . ' address.';
+	        $errors[] = 'Email '
+			  . htmlspecialchars
+			      ( $value )
+		          . ' contained characters'
+			  . ' illegal in an email'
+			  . ' address.';
 		$value = $svalue;
 	    }
 	    $hvalue = htmlspecialchars ( $value );
 	    if ( $value != $hvalue )
 	    {
-	        errors[] = 'Email ' . $hvalue
-		         . ' contains HTML special'
-			 . ' characters.';
+	        $errors[] = 'Email ' . $hvalue
+		          . ' contains HTML special'
+			  . ' characters.';
 		$value = $hvalue;
 	    }
 	    if ( ! filter_var
 		      ( $value,
 			FILTER_VALIDATE_EMAIL ) )
-	        errors[] = 'Email ' . $value
-		         . ' is not a valid email'
-			 . ' address.';
+	        $errors[] = 'Email ' . $value
+		          . ' is not a valid email'
+			  . ' address.';
 	    if ( $value != $email )
-		emails[] = $value;
+		$user_emails[] = $value;
 	}
 
 	if ( $field_missing )
-	    error ( 'UNKNOWN HTTP POST' );
+	    $error ( 'UNKNOWN HTTP POST' );
     }
 
-    if ( $method == 'POST' && isset ( $_POST['submit' )
+    if ( $method == 'POST' && isset ( $_POST['submit'] )
                            && count ( $errors ) == 0 )
     {
         // We are done; copy data to files.
 	//
 	if ( ! is_int ( $user_id ) )
 	{
-	    $user_id = $max_id + 1;
-	    if ( ! file_exists ( '/admin' ) )
-	    {
-	        if ( ! mkdir ( '/admin', 0750 ) )
-		    error ( 'Cannot make /admin.' );
+	    $userid = $max_id + 1;
+	    while ( ! mkdir ( "users/user$userid",
+	                      0750 ) )
+	        ++ $userid;
+	    $_SESSION['userid'] = $userid;
+	}
+	$user_emails[] = $email;
+	foreach ( $user_emails as $value )
+	    file_put_contents
+		( "admin/email_index/$value", $userid );
+	$user_json = json_encode ( $user );
+	file_put_contents
+	    ( "admin/user{$userid}.json", $user_json );
+	foreach ( $emails as $value )
+	{
+	    if ( ! array_search
+	               ( $value, $user_mails, true ) )
+		unlink ( "admin/email_index/$value" );
+	}
+    }
 
 // TBD
 
-        // Record current time as last confirmation
-	// time for the user and ip address.
-	//
-	$confirmation_time =
-	    $_SESSION['confirmation_time'];
-	$ipaddr = $_SESSION['ipaddr'];
-	$last_confirmation_file =
-	    "admin/user{$userid}_" .
-	    "last_confirmation.json";
-	$last_confirmation_json = file_get_contents
-	    ( $last_confirmation_file );
-	$last_confirmation = json_decode
-	    ( $last_confirmation_json, true );
-	if ( ! $last_confirmation )
-	    $last_confirmation = NULL;
-	$last_confirmation[$ipaddr] =
-	    strftime ( '%FT%T%z', $confirmation_time );
-	$last_confirmation_json = json_encode
-	    ( $last_confirmation );
-	file_put_contents
-	    ( $last_confirmation_file,
-	      $last_confirmation_json );
-    }
-
+    exit ( 'user_edit.php not finished yet' );
+	        
     if (    ! isset ( $confirmation_time )
          && is_int ( $userid ) )
     {
