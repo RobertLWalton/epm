@@ -1,0 +1,10 @@
+\documentclass{minimal}
+\newwrite\tempfile
+\begin{document}
+\openout\tempfile=/home/walton/lists.tex
+\immediate\write\tempfile{this is interesting}
+\immediate\write\tempfile{}
+\immediate\write\tempfile{this too}
+\closeout\tempfile
+\input{lists}
+\end{document}

@@ -99,19 +99,26 @@
     echo "Problem: " . ( isset ( $problem ) ?
                          $problem :
 			 "none selected" );
-    echo '<form action="src/problem.php"' .
-              ' method="POST">' . "\n";
     if ( count ( $problems ) > 0 )
     {
-        echo "<select>\n";
+	echo '<form action="src/problem.php"' .
+		  ' method="POST">' . "\n";
+	echo "<button type='submit'>Go To Problem:" .
+	     "</button>\n";
+        echo "<select name='problem'>\n";
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
 	             "$value</option>\n"
         echo "</select>\n";
+        echo "</form>\n";
+        echo "<br>\n";
     }
-                
+    echo <<<EOT
+    <form action="src/problem.php" method="POST">
+    <button type="submit">Create New Problem:</button>
+    <input type="text" maxlength="32" name="problem">
+    </form>
 EOT
-}
 
 ?>
 
