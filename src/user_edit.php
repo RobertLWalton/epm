@@ -246,7 +246,8 @@
 	foreach ( $user_emails as $value )
 	    file_put_contents
 		( "admin/email_index/$value", $userid );
-	$user_json = json_encode ( $user );
+	$user_json = json_encode
+	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
 	    ( "admin/user{$userid}.json", $user_json );
 	foreach ( $emails as $value )

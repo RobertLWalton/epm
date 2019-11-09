@@ -193,7 +193,8 @@
 	$ipaddr = $_SESSION['ipaddr'];
 	$user['confirmation_time'][$ipaddr] =
 	    strftime ( '%FT%T%z', $confirmation_time );
-	$user_json = json_encode ( $user );
+	$user_json = json_encode
+	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
 	    ( "admin/user{$userid}.json", $user_json );
     }
