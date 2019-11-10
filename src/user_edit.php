@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 01:10:10 EST 2019
+    // Date:	Sun Nov 10 08:45:19 EST 2019
 
     // Edits files:
     //
@@ -56,7 +56,8 @@
 
     // Set $_SESSION['emails'] to the emails in
     // admin/email_index that point at the current
-    // $userid, or to [] if $userid == 'NEW'.  May
+    // $userid, or to [] if $userid == 'NEW'.  Then
+    // add $email if it is not already included.  May
     // have been previously set for the session.
     // $_SESSION['max_id'] is set to the maximum
     // userid observed when $_SESSION['emails'] is
@@ -83,26 +84,43 @@
 	    $i = file_get_contents
 	        ( "$home/admin/email_index/$value" );
 	    if ( ! is_int ( $i ) ) continue;
+	        // TBD: alert admin
 	    $max_id = max ( $max_id, $i );
 	    if ( $value == $email ) continue;
 	    if ( $i == $userid )
 	        $emails[] = $value;
 	}
-	$_SESSION['emails'] = $emails;
+	$emails[] = $email;
 	$_SESSION['max_id'] = $max_id;
     }
+    else
+        $emails[] = $email;
+
+    $_SESSION['emails'] = $emails;
 
     $method = $_SERVER['REQUEST_METHOD'];
    
+    // Set $user to admin/user$userid.json contents,
+    // or NULL if this file is not readable.
+    //
     $user = NULL;
     if ( is_int ( $userid ) )
     {
+	$sysalert = NULL;
 	$user_file = "$home/admin/user{$userid}.json";
-	if ( is_writable ( $user_file ) )
+	$user = file_get_contents ( $user_file );
+	if ( ! $user )
+	    $sysalert = "cannot read $user_file";
+	else
 	{
-	    $user = file_get_contents ( $user_file );
 	    $user = json_decode ( $user, true );
-	    if ( ! $user ) $users = NULL;
+	    if ( ! $user )
+		$sysalert = "cannot decode $user_file";
+	}
+	if ( isset ( $sysalert ) )
+	{
+	    include ( "sysalert.php" );
+	    $user = NULL;
 	}
     }
 
@@ -112,23 +130,26 @@
 	    strftime ( '%FT%T%z', $confirmation_time );
 	$user['full_name'] = "";
 	$user['organization'] = "";
-	$user['address'] = "";
+	$user['location'] = "";
     }
     $full_name = $user['full_name'];
     $organization = $user['organization'];
-    $address = $user['address'];
+    $location = $user['location'];
 
-    $max_emails = count ( $emails ) + 1;
-    $max_emails = max ( $max_emails, 3 );
+    $max_emails = max ( count ( $emails ), 3 );
  
     $errors = [];  // List of submit error messages.
     $field_missing = false;
     		   // Set if form field missing from
 		   // post.
 
-    // Sanitize non-email form entries.  Return new
-    // value.  If error, add to $errors and return
-    // new form value.
+    // Sanitize non-email form entries.  If error, add
+    // to $errors and return ''.  Otherwise return
+    // htmlspecialchars of value.
+    //
+    // $name is as in $_POST[$name], $form_name is as in
+    // text of form, $min_length is min UNICODE characters
+    // in value.
     //
     function sanitize
         ( $name, $form_name, $min_length )
@@ -147,7 +168,10 @@
 	    $errors[] = 'Must set ' . $form_name . '.';
 	    return '';
 	}
-	if ( grapheme_strlen ( $value ) < $min_length )
+	if (   strlen ( utf8_decode ( $value ) )
+	     < $min_length )
+	     // Note, grapheme_strlen is not available
+	     // because we do not assume intl extension.
 	{
 	    $errors[] = $form_name
 	              . ' is too short; re-enter.';
@@ -166,7 +190,7 @@
 	
 
     if ( $method == 'GET' )
-        /* do nothing; we set form variables above */;
+        $user_emails = $emails;
 
     elseif ( $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
@@ -189,10 +213,7 @@
 	for ( $i = 0; $i < $max_emails; $i++ )
 	{
 	    if ( ! isset ( $_POST["email$i"] ) )
-	    {
-	        $field_missing = true;
 	        continue;
-	    }
 	    if ( isset ( $_POST["delete$i"] ) )
 	        continue;
 	    $value =  trim ( $_POST["email$i"] );
@@ -229,7 +250,7 @@
 	}
 
 	if ( $field_missing )
-	    $error ( 'UNKNOWN HTTP POST' );
+	    exit ( 'UNKNOWN HTTP POST' );
     }
 
     if ( $method == 'POST' && isset ( $_POST['submit'] )
@@ -240,7 +261,7 @@
 	if ( ! is_int ( $user_id ) )
 	{
 	    $userid = $max_id + 1;
-	    while ( ! mkdir ( "users/user$userid",
+	    while ( ! mkdir ( "$home/users/user$userid",
 	                      0750 ) )
 	        ++ $userid;
 	    $_SESSION['userid'] = $userid;
@@ -266,10 +287,6 @@
 	exit;
     }
 
-// TBD
-
-    exit ( 'user_edit.php not finished yet' );
-	        
 ?>
 
 <html>
@@ -287,18 +304,18 @@
 	    echo "$value<br>\n";
 	echo '</mark><br><br>' . "\n";
     }
-    echo '<h2>Email Addresses:</h2><br>' . "\n";
+    echo "<h2>Email Addresses:</h2><br>\n";
     for ( $i = 0; $i < $max_emails; ++ $i )
     {
         if ( ! isset ( $user_emails[$i] ) )
-	    echo '<input name=email' . $i .
-	         ' type="text" value="">';
+	    echo '<input name="email' . $i .
+	         '" type="text" value="">';
 	elseif ( $user_emails[$i] == $email )
 	    echo "$email";
 	else
 	    echo "$user_emails[$i]&nbsp;&nbsp;&nbsp;" .
 	         '<input type="submit" name="delete' .
-		 $i . ' value = "delete">';
+		 $i . '" value = "delete">';
 	echo "<br>\n";
     }
     $location_placeholder =
@@ -319,6 +336,9 @@
         <input type="text" maxlength="80"
 	 name="location" value="$location"
 	 placeholder="$location_placeholder">
+    <br><br>
+        <input type="submit" name="submit"
+	       value="Update">
 EOT
 ?>
 
