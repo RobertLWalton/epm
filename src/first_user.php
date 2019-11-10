@@ -2,7 +2,7 @@
 
     // File:	first_user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Nov  8 08:19:23 EST 2019
+    // Date:	Sun Nov 10 01:09:30 EST 2019
 
     // Asks user if they are the first user.  If yes
     // makes the following directories and then goes
@@ -14,12 +14,15 @@
 
     session_start();
     clearstatcache();
+    if ( ! isset ( $_SESSION['epm_home'] ) )
+        exit ( 'SYSTEM ERROR: epm_home not set' );
+    $home = $_SESSION['epm_home'];
 
-    if (    is_writable ( 'admin' )
-         && is_writable ( 'admin/email_index' )
-         && is_writable ( 'users' ) )
+    if (    is_writable ( "$home/admin" )
+         && is_writable ( "$home/admin/email_index" )
+         && is_writable ( "$home/users" ) )
     {
-        header ( 'Location: src/user.php' );
+        header ( 'Location: user.php' );
 	exit;
     }
 
@@ -29,20 +32,23 @@
     {
         if ( isset ( $_POST['is_administrator'] ) )
 	{
-	    $is_administrator = $_POST['is_administrator'];
+	    $is_administrator =
+	        $_POST['is_administrator'];
 	    if ( $is_administrator == 'yes' )
 	    {
-		mkdir ( 'admin', 0750 );
-		mkdir ( 'admin/email_index', 0750 );
-		mkdir ( 'users', 0750 );
+		mkdir ( "$home/admin", 0750 );
+		mkdir ( "$home/admin/email_index",
+		        0750 );
+		mkdir ( "$home/users", 0750 );
 		header
-		    ( 'Location: src/user_edit.php' );
+		    ( 'Location: user_edit.php' );
 		exit;
 	    }
-	    error ( 'SYSTEM ERROR: admin directories' .
-	            ' not set up' );
+	    exit ( 'SYSTEM ERROR: admin directories' .
+	            ' not set up;' .
+		    ' contact administrator' );
 	}
-	error ( 'UNACCEPTABLE POST' );
+	exit ( 'UNACCEPTABLE POST' );
     }
     else if ( $method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
@@ -52,17 +58,18 @@
 <html>
 <body>
 
+<?php echo "Home Directory: $home<br><br>" ?>
+
 Are you the administrator of this system?
 &nbsp;&nbsp;&nbsp;&nbsp;
+    <form method='POST' action='first_user.php'>
     <button type="submit"
-            formmethod="post"
 	    name="is_administrator"
 	    value="no">NO</button>
 &nbsp;&nbsp;&nbsp;&nbsp;
     <button type="submit"
-            formmethod="post"
 	    name="is_administrator"
 	    value="yes">YES</button>
-                      action
+    </form>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Nov  8 11:41:55 EST 2019
+    // Date:	Sun Nov 10 01:09:58 EST 2019
 
     // Selects user problem.
     //
@@ -19,7 +19,7 @@
 
     if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
-	header ( "Location: /src/login.php" );
+	header ( "Location: login.php" );
 	exit;
     }
 
@@ -30,7 +30,7 @@
          ||
 	 ! is_writable ( "users/user$userid" ) )
     {
-	header ( "Location: /src/user_edit.php" );
+	header ( "Location: user_edit.php" );
 	exit;
     }
 
@@ -40,7 +40,7 @@
 
     $desc = opendir ( 'users/user$userid' );
     if ( ! $desc )
-        error ( 'SYSTEM ERROR: cannot open' .
+        exit ( 'SYSTEM ERROR: cannot open' .
 	        " users/user$userid" );
     {
 	$value = readdir ( $desc );

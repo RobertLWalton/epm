@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Nov  8 07:47:26 EST 2019
+    // Date:	Sun Nov 10 01:10:35 EST 2019
 
     // Displays files:
     //
@@ -15,6 +15,9 @@
 
     session_start();
     clearstatcache();
+    if ( ! isset ( $_SESSION['epm_home'] ) )
+        exit ( 'SYSTEM ERROR: epm_home not set' );
+    $home = $_SESSION['epm_home'];
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -22,12 +25,12 @@
 
     if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
-	header ( "Location: /src/login.php" );
+	header ( "Location: login.php" );
 	exit;
     }
-    if ( ! is_writable ( "admin/email_index" ) )
+    if ( ! is_writable ( "$home/admin/email_index" ) )
     {
-	header ( "Location: /src/first_user.php" );
+	header ( "Location: first_user.php" );
 	exit;
     }
 
@@ -37,7 +40,7 @@
 
     if ( ! is_int ( $userid ) )
     {
-	header ( "Location: /src/edit_user.php" );
+	header ( "Location: user_edit.php" );
 	exit;
     }
 
@@ -46,10 +49,11 @@
     //
     $emails = [];
 
-    $desc = opendir ( 'admin/email_index' );
+    $desc = opendir ( "$home/admin/email_index" );
     if ( ! $desc )
-        error ( 'SYSTEM ERROR: cannot open' .
-	        ' admin/email_index' );
+        exit ( 'SYSTEM ERROR: cannot open' .
+	        " $home/admin/email_index" );
+    while ( true )
     {
 	$value = readdir ( $desc );
 	if ( ! $value )
@@ -58,21 +62,23 @@
 	    break;
 	}
 	$i = file_get_contents
-	    ( "admin/email_index/$value" );
+	    ( "$home/admin/email_index/$value" );
 	if ( ! is_int ( $i ) ) continue;
 	if ( $i == $userid )
 	    $emails[] = $value;
     }
 
-    $user_file = 'admin/user{$userid}.json';
+    $user_file = "$home/admin/user{$userid}.json";
     $user = file_get_contents ( $user_file );
     if ( ! $user )
-	error ( 'SYSTEM ERROR: cannot read ' .
+	exit ( 'SYSTEM ERROR: cannot read ' .
 		$user_file );
     $user = json_decode ( $user, true );
     if ( ! $user )
-	error ( 'SYSTEM ERROR: cannot parse ' .
+	exit ( 'SYSTEM ERROR: cannot parse ' .
 		$user_file );
+
+?>
 
 <html>
 <body>
@@ -89,14 +95,14 @@
 
     echo <<<EOT
     <br><br>
-    Full Name: $user['full_name']<br><br>
-    Organization: $user['organization']<br>br>
-    Location: $user['location']<br>br>
+    Full Name: {$user['full_name']}<br><br>
+    Organization: {$user['organization']}<br>br>
+    Location: {$user['location']}<br>br>
     <button action="src/user_edit.php">Edit</button>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <button action="src/problem.php">Go To Problem</button>
+    <button action="src/problem.php">
+        Go To Problem</button>
 EOT
-}
 
 ?>
 

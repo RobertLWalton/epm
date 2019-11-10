@@ -24,6 +24,10 @@ echo "REMOTE_HOST = " . $_SERVER['REMOTE_HOST'];
 echo "<br>";
 echo "REMOTE_PORT = " . $_SERVER['REMOTE_PORT'];
 echo "<br>";
+echo "SCRIPT_FILENAME = " . $_SERVER['SCRIPT_FILENAME'];
+echo "<br>";
+echo "PATH_TRANSLATED = " . $_SERVER['PATH_TRANSLATED'];
+echo "<br>";
 echo "REQUEST_TIME = " . date ( DATE_COOKIE, $_SERVER['REQUEST_TIME'] );
 ?>
 </HTML>

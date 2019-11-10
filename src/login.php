@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Nov  8 03:02:19 EST 2019
+    // Date:	Sun Nov 10 01:09:45 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -43,14 +43,15 @@
     // failed.  Each confirmation attempt is logged
     // separately.
 
-    $confirmation_interval = 30 * 24 * 60 * 60;
-        // Interval in seconds that confirmation will
-	// be valid for a given email address and
-	// ip address.  Default, 30 days.
     $date_format = "%FT%T%z";
 
     session_start();
     clearstatcache();
+    if ( ! isset ( $_SESSION['epm_home'] ) )
+        exit ( 'SYSTEM ERROR: epm_home not set' );
+    $home = $_SESSION['epm_home'];
+    $confirmation_interval =
+        $_SESSION['epm_confirmation_interval'];
 
     $ipaddr = $_SERVER['REMOTE_ADDR'];
     if ( ! isset ( $_SESSION['ipaddr'] ) )
@@ -62,12 +63,12 @@
     $method = $_SERVER["REQUEST_METHOD"];
 
     $log_confirmation_time = NULL;
+    $bad_confirm = false;
     if ( $method == 'GET' )
     {
 	$userid = NULL;
 	$email = NULL;
 	$bad_email = false;
-	$bad_confirm = false;
 	$confirmation_time = NULL;
 	if ( isset ( $_SESSION['login_time'] ) )
 	    $login_time = $_SESSION['login_time'];
@@ -100,7 +101,7 @@
 		$_SESSION['confirmation_time'] =
 		    $confirmation_time;
 		$log_confirmation_time = strftime
-		    ( $data_format,
+		    ( $date_format,
 		      $confirmation_time );
 	    }
 	    else
@@ -137,7 +138,7 @@
 	    else
 	    {
 		$email_file =
-		    "admin/email_index/$email";
+		    "$home/admin/email_index/$email";
 		if ( is_readable ( $email_file ) )
 		{
 		    $userid = file_get_contents
@@ -154,9 +155,9 @@
     }
 
     if (    isset ( $log_confirmation_time )
-         && is_writable ( "admin/login.log" ) )
+         && is_writable ( "$home/admin/login.log" ) )
     {
-        $desc = fopen ( "admin/login.log", 'a' );
+        $desc = fopen ( "$home/admin/login.log", 'a' );
 	if ( $desc )
 	{
 	    fputcsv
@@ -172,7 +173,7 @@
     $user = NULL;
     if ( is_int ( $userid ) )
     {
-        $user_file = "admin/user{$userid}.json";
+        $user_file = "$home/admin/user{$userid}.json";
 	if ( is_writable ( $user_file ) )
 	{
 	    $user_json = file_get_contents
@@ -196,7 +197,8 @@
 	$user_json = json_encode
 	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
-	    ( "admin/user{$userid}.json", $user_json );
+	    ( "$home/admin/user{$userid}.json",
+	       $user_json );
     }
 
     // This must be done after recording confirmation_
@@ -229,9 +231,9 @@
     		// implies $userid and $email set
     {
 	if ( ! is_int ( $userid ) )
-	    header ( "Location: /src/user_edit.php" );
+	    header ( "Location: user_edit.php" );
 	else
-	    header ( "Location: /src/problem.php" );
+	    header ( "Location: problem.php" );
 	exit;
     }
     else if ( isset ( $email ) )

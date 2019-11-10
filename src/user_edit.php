@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Nov  8 07:44:54 EST 2019
+    // Date:	Sun Nov 10 01:10:10 EST 2019
 
     // Edits files:
     //
@@ -28,15 +28,18 @@
 
     session_start();
     clearstatcache();
+    if ( ! isset ( $_SESSION['epm_home'] ) )
+        exit ( 'SYSTEM ERROR: epm_home not set' );
+    $home = $_SESSION['epm_home'];
 
     if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
-	header ( "Location: /src/login.php" );
+	header ( "Location: login.php" );
 	exit;
     }
-    if ( ! is_writable ( "admin/email_index" ) )
+    if ( ! is_writable ( "$home/admin/email_index" ) )
     {
-	header ( "Location: /src/first_user.php" );
+	header ( "Location: first_user.php" );
 	exit;
     }
 
@@ -68,7 +71,7 @@
     }
     elseif ( is_int ( $userid ) )
     {
-        $desc = opendir ( 'admin/email_index' );
+        $desc = opendir ( "$home/admin/email_index" );
 	if ( $desc ) while ( true )
 	{
 	    $value = readdir ( $desc );
@@ -78,7 +81,7 @@
 		break;
 	    }
 	    $i = file_get_contents
-	        ( "admin/email_index/$value" );
+	        ( "$home/admin/email_index/$value" );
 	    if ( ! is_int ( $i ) ) continue;
 	    $max_id = max ( $max_id, $i );
 	    if ( $value == $email ) continue;
@@ -94,7 +97,7 @@
     $user = NULL;
     if ( is_int ( $userid ) )
     {
-	$user_file = 'admin/user{$userid}.json';
+	$user_file = "$home/admin/user{$userid}.json";
 	if ( is_writable ( $user_file ) )
 	{
 	    $user = file_get_contents ( $user_file );
@@ -245,18 +248,21 @@
 	$user_emails[] = $email;
 	foreach ( $user_emails as $value )
 	    file_put_contents
-		( "admin/email_index/$value", $userid );
+		( "$home/admin/email_index/$value",
+		  $userid );
 	$user_json = json_encode
 	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
-	    ( "admin/user{$userid}.json", $user_json );
+	    ( "$home/admin/user{$userid}.json",
+	       $user_json );
 	foreach ( $emails as $value )
 	{
 	    if ( ! array_search
 	               ( $value, $user_mails, true ) )
-		unlink ( "admin/email_index/$value" );
+		unlink
+		  ( "$home/admin/email_index/$value" );
 	}
-	header ( "Location: /src/user.php?done=yes" );
+	header ( "Location: user.php?done=yes" );
 	exit;
     }
 
@@ -269,7 +275,7 @@
 <html>
 <body>
 
-<form method="post" action="/src/user_edit.php">
+<form method="post" action="user_edit.php">
 
 <?php 
 
@@ -295,6 +301,8 @@
 		 $i . ' value = "delete">';
 	echo "<br>\n";
     }
+    $location_placeholder =
+	 "Town, State and Country of Organization";
     echo <<<EOT
     <br><br>
     Full Name: <input type="text" maxlength="80"
@@ -310,7 +318,7 @@
     Location:
         <input type="text" maxlength="80"
 	 name="location" value="$location"
-	 placeholder="Town, State Country of Organization">
+	 placeholder="$location_placeholder">
 EOT
 ?>
 
