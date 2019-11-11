@@ -285,7 +285,7 @@
 	foreach ( $emails as $value )
 	{
 	    if ( ! array_search
-	               ( $value, $user_mails, true ) )
+	               ( $value, $user_emails, true ) )
 		unlink
 		  ( "$home/admin/email_index/$value" );
 	}
