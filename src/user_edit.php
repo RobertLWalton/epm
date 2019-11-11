@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 11 04:31:11 EST 2019
+    // Date:	Mon Nov 11 09:52:45 EST 2019
 
     // Edits files:
     //
@@ -50,23 +50,14 @@
     $ipaddr = $_SESSION['ipaddr'];
     $confirmation_time = $_SESSION['confirmation_time'];
 
-    // Set $emails = $_SESSION['user_emails'] to the
-    // emails in admin/email_index that point at the
-    // current $userid, or to [] if $userid == 'NEW'.
-    // Then add $email if it is not already included.
-    // May have been previously set for the session.
-    // $_SESSION['max_id'] is set to the maximum
-    // userid observed when $_SESSION['user_emails'] is
-    // computed by reading admin/email_index.
+    // Set $emails to the emails in admin/email_index
+    // that point at the current $userid, or to [] if
+    // $userid == 'NEW'.  Set $max_id to the maximum
+    // user id seen amoung admin/email_index files.
     //
     $emails = [];
     $max_id = 0;
-    if ( isset ( $_SESSION['user_emails'] ) )
-    {
-        $emails = $_SESSION['user_emails'];
-	$max_id = $_SESSION['max_id'];
-    }
-    elseif ( $userid != 'NEW' )
+    if ( $userid != 'NEW' )
     {
         $desc = opendir ( "$home/admin/email_index" );
 	if ( $desc ) while ( true )
@@ -90,17 +81,13 @@
 	        continue;
 	    }
 	    $max_id = max ( $max_id, $i );
-	    if ( $value == $email ) continue;
 	    if ( $i == $userid )
 	        $emails[] = $value;
 	}
-	$emails[] = $email;
     }
-    else
-        $emails[] = $email;
-
-    $_SESSION['user_emails'] = $emails;
-    $_SESSION['max_id'] = $max_id;
+    sort ( $emails );
+    $max_emails = max ( $_SESSION['max_emails'],
+                        count ( $emails ) );
 
     // Set $user to admin/user$userid.json contents,
     // or NULL if this file is not readable or does
@@ -186,12 +173,58 @@
 	}
 	return $value;
     }
+
+    // Check that $value can be legally added as an email.
+    // Return '' if its not legal OR if its empty.
+    //
+    function sanitize_email ( $value )
+    {
+        global $errors;
+
+	$value =  trim ( $value );
+	if ( $value == "" )
+	    return '';
+	$svalue = filter_var
+	    ( $value, FILTER_SANITIZE_EMAIL );
+	if ( $value != $svalue )
+	{
+	    $errors[] = 'Email '
+		      . htmlspecialchars
+			  ( $value )
+		      . ' contains characters'
+		      . ' illegal in an email'
+		      . ' address.';
+	    return '';
+	}
+	$hvalue = htmlspecialchars ( $value );
+	if ( $value != $hvalue )
+	{
+	    $errors[] = 'Email ' . $hvalue
+		      . ' contains HTML special'
+		      . ' characters.';
+	    return '';
+	}
+	if ( ! filter_var
+		  ( $value,
+		    FILTER_VALIDATE_EMAIL ) )
+	{
+	    $errors[] = 'Email ' . $value
+		      . ' is not a valid email'
+		      . ' address.';
+	    return '';
+	}
+	return $value;
+    }
 	
     $method = $_SERVER['REQUEST_METHOD'];
-    $max_emails = max ( count ( $emails ), 3 );
    
     if ( $method == 'GET' )
-        $user_emails = $emails;
+    {
+	$user_emails = $emails;
+        if ( $userid == 'NEW' ) 
+	    $user_emails[] = $email;
+        $_SESSION['user_emails'] = $user_emails;
+    }
 
     elseif ( $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
@@ -210,54 +243,67 @@
 	$location = sanitize
 	    ( 'location', 'Location', 6 );
 
-	$user_emails = [];
-	for ( $i = 0; $i < $max_emails; $i++ )
-	{
-	    if ( ! isset ( $_POST["email$i"] ) )
-	        continue;
-		// If user does not put any text
-		// in a type="text" input then
-		// email$i will not be sent
-	    if ( isset ( $_POST["delete$i"] ) )
-	        continue;
-	    $value =  trim ( $_POST["email$i"] );
-	    if ( $value == "" )
-	        continue;
-	    $svalue = filter_var
-	        ( $value, FILTER_SANITIZE_EMAIL );
-	    if ( $value != $svalue )
-	    {
-	        $errors[] = 'Email '
-			  . htmlspecialchars
-			      ( $value )
-		          . ' contained characters'
-			  . ' illegal in an email'
-			  . ' address.';
-		$value = $svalue;
-	    }
-	    $hvalue = htmlspecialchars ( $value );
-	    if ( $value != $hvalue )
-	    {
-	        $errors[] = 'Email ' . $hvalue
-		          . ' contains HTML special'
-			  . ' characters.';
-		$value = $hvalue;
-	    }
-	    if ( ! filter_var
-		      ( $value,
-			FILTER_VALIDATE_EMAIL ) )
-	    {
-	        $errors[] = 'Email ' . $value
-		          . ' is not a valid email'
-			  . ' address.';
-		continue;
-	    }
-	    if ( $value != $email )
-		$user_emails[] = $value;
-	}
-
 	if ( $field_missing )
 	    exit ( 'UNKNOWN HTTP POST' );
+	if ( ! isset ( $_SESSION['user_emails'] ) )
+	    exit ( 'UNKNOWN HTTP POST' );
+	$user_emails = $_SESSION['user_emails'];
+	for ( $i = 0; $i < $max_emails; $i++ )
+	{
+	    if ( isset ( $_POST["delete$i"] ) )
+	        unset ( $user_emails[$i] );
+	    else if ( isset ( $_POST["email$i"] ) )
+	    {
+	        $value = sanitize_email
+		    ( $_POST["email$i"] );
+		if ( $value == "" ) continue;
+		if ( false !== array_search
+		       ( $value, $user_emails, true ) )
+		    $errors[] = "$value is a duplicate";
+		else
+		    $user_emails[$i] = $value;
+	    }
+	}
+    }
+    $user_emails = array_values ( $user_emails );
+    sort ( $user_emails );
+    $_SESSION['user_emails'] = $user_emails;
+
+    $add  = [];
+    $sub  = [];
+    $keep = [];
+    $i = 0;
+    $j = 0;
+    $max_i = count ( $emails );
+    $max_j = count ( $user_emails );
+    while ( $i < $max_i || $j < $max_j )
+    {
+	if ( $i >= $max_i )
+	    $add[] = $user_emails[$j++];
+	elseif ( $j >= $max_j )
+	    $sub[] = $emails[$i++];
+	elseif ( $emails[$i] < $user_emails[$j] )
+	    $sub[] = $emails[$i++];
+	elseif ( $emails[$i] > $user_emails[$j] )
+	    $sub[] = $user_emails[$j++];
+	else
+	{
+	    $keep[] = $emails[$i++];
+	    ++ $j;
+	}
+    }
+    echo 'EMAILS: '; print_r ( $emails ); echo '<br>';
+    echo 'USER_EMAILS: '; print_r ( $user_emails ); echo '<br>';
+    echo 'ADD: '; print_r ( $add ); echo '<br>';
+    echo 'SUB: '; print_r ( $sub ); echo '<br>';
+    echo 'KEEP: '; print_r ( $keep ); echo '<br>';
+
+    $h = "$home/admin/email_index";
+    foreach ( $add as $e )
+    {
+        if ( is_readable ( "$h/$e" ) )
+	    $errors[] =
+	        "$e is assigned to another user";
     }
 
     if ( $method == 'POST' && isset ( $_POST['update'] )
@@ -274,21 +320,6 @@
 	    $_SESSION['userid'] = $userid;
 	}
 
-	$user_emails[] = $email;
-	$_SESSION['user_emails'] = $user_emails;
-
-	foreach ( $user_emails as $value )
-	    file_put_contents
-		( "$home/admin/email_index/$value",
-		  "$userid" );
-
-	foreach ( $emails as $value )
-	{
-	    if ( ! array_search
-	               ( $value, $user_emails, true ) )
-		unlink
-		  ( "$home/admin/email_index/$value" );
-	}
 
 	$user['full_name'] = $full_name;
 	$user['organization'] = $organization;
@@ -299,6 +330,25 @@
 	    ( "$home/admin/user{$userid}.json",
 	       $user_json );
 
+	foreach ( $add as $e )
+	{
+	    if ( ! file_put_contents
+		      ( "$h/$e", "$userid" ) )
+	    {
+		$sysalert = "could not write $h/$e";
+		include '../include/sysalert.php';
+	    }
+	}
+	foreach ( $sub as $e )
+	{
+	    if ( ! unlink ( "$h/$e" ) )
+	    {
+		$sysalert = "could not unlink $h/$e";
+		include '../include/sysalert.php';
+	    }
+	}
+
+	//unset ( $_SESSION['user_emails'] );
 	header ( "Location: user.php?done=yes" );
 	exit;
     }
@@ -326,7 +376,7 @@
         if ( ! isset ( $user_emails[$i] ) )
 	    echo '<input name="email' . $i .
 	         '" type="text" value=""' .
-		 ' placeholder="Email Address">';
+		 ' placeholder="Another Email Address">';
 	elseif ( $user_emails[$i] == $email )
 	    echo "$email";
 	else
