@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 20:02:37 EST 2019
+    // Date:	Mon Nov 11 04:32:11 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -141,7 +141,7 @@
 		    "$home/admin/email_index/$email";
 		if ( is_readable ( $email_file ) )
 		{
-		    $userid = (int) file_get_contents
+		    $userid = file_get_contents
 			( $email_file );
 		    if ( $userid == 0 )
 		         $userid = 'NEW';

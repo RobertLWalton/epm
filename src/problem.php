@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 20:02:48 EST 2019
+    // Date:	Mon Nov 11 04:31:32 EST 2019
 
     // Selects user problem.
     //
@@ -42,6 +42,7 @@
     if ( ! $desc )
         exit ( 'SYSTEM ERROR: cannot open' .
 	        " users/user$userid" );
+    while ( true )
     {
 	$value = readdir ( $desc );
 	if ( ! $value )
@@ -63,7 +64,7 @@
 	if ( ! preg_match ( '/^[-_A-Za-z0-9]+$/',
 	                    $problem )
 	     ||
-	     ! preg_match ( '[A-Za-z]', $problem ) )
+	     ! preg_match ( '/[A-Za-z]/', $problem ) )
 	{
 	    $problem_error =
 	        "problem name $problem contains an" .
@@ -85,6 +86,8 @@
         $problem = $_SESSION['problem'];
     else if ( isset ( $problem ) )
         $_SESSION['problem'] = $problem;
+
+?>
 
 
 <html>
@@ -108,7 +111,7 @@
         echo "<select name='problem'>\n";
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
-	             "$value</option>\n"
+	             "$value</option>\n";
         echo "</select>\n";
         echo "</form>\n";
         echo "<br>\n";

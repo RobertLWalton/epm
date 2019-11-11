@@ -58,8 +58,6 @@
 <html>
 <body>
 
-<?php echo "Home Directory: $home<br><br>" ?>
-
 Are you the administrator of this system?
 &nbsp;&nbsp;&nbsp;&nbsp;
     <form method='POST' action='first_user.php'>

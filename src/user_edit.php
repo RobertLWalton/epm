@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 20:03:06 EST 2019
+    // Date:	Mon Nov 11 04:31:11 EST 2019
 
     // Edits files:
     //
@@ -43,31 +43,27 @@
 	exit;
     }
 
-    echo 'SESSION: '; print_r ( $_SESSION ); echo '<br><br>';
-    echo 'REQUEST: '; print_r ( $_REQUEST ); echo '<br><br>';
-    echo 'SERVER: '; print_r ( $_SERVER ); echo '<br><br>';
-
+    include '../include/debug_info.php';
 
     $email = $_SESSION['email'];
     $userid = $_SESSION['userid'];
     $ipaddr = $_SESSION['ipaddr'];
     $confirmation_time = $_SESSION['confirmation_time'];
-    $login_time = $_SESSION['login_time'];
 
-    // Set $_SESSION['emails'] to the emails in
-    // admin/email_index that point at the current
-    // $userid, or to [] if $userid == 'NEW'.  Then
-    // add $email if it is not already included.  May
-    // have been previously set for the session.
+    // Set $emails = $_SESSION['user_emails'] to the
+    // emails in admin/email_index that point at the
+    // current $userid, or to [] if $userid == 'NEW'.
+    // Then add $email if it is not already included.
+    // May have been previously set for the session.
     // $_SESSION['max_id'] is set to the maximum
-    // userid observed when $_SESSION['emails'] is
-    // set.
+    // userid observed when $_SESSION['user_emails'] is
+    // computed by reading admin/email_index.
     //
     $emails = [];
     $max_id = 0;
-    if ( isset ( $_SESSION['emails'] ) )
+    if ( isset ( $_SESSION['user_emails'] ) )
     {
-        $emails = $_SESSION['emails'];
+        $emails = $_SESSION['user_emails'];
 	$max_id = $_SESSION['max_id'];
     }
     elseif ( $userid != 'NEW' )
@@ -81,27 +77,34 @@
 	        closedir ( $desc );
 		break;
 	    }
-	    $i = (int) file_get_contents
-	        ( "$home/admin/email_index/$value" );
-	    if ( $i == 0 ) continue;
-	        // TBD: alert admin
+	    if ( preg_match ( '/^\.\.*$/', $value ) )
+		continue;
+	    $email_file =
+	        "$home/admin/email_index/$value";
+	    $i = file_get_contents ( $email_file );
+	    if ( ! preg_match
+	               ( '/^[1-9][0-9]*$/', $i ) )
+	    {
+		$sysalert = "bad value in $email_file";
+		include '../include/sysalert.php';
+	        continue;
+	    }
 	    $max_id = max ( $max_id, $i );
 	    if ( $value == $email ) continue;
 	    if ( $i == $userid )
 	        $emails[] = $value;
 	}
 	$emails[] = $email;
-	$_SESSION['max_id'] = $max_id;
     }
     else
         $emails[] = $email;
 
-    $_SESSION['emails'] = $emails;
+    $_SESSION['user_emails'] = $emails;
+    $_SESSION['max_id'] = $max_id;
 
-    $method = $_SERVER['REQUEST_METHOD'];
-   
     // Set $user to admin/user$userid.json contents,
-    // or NULL if this file is not readable.
+    // or NULL if this file is not readable or does
+    // not exist.
     //
     $user = NULL;
     if ( $userid != 'NEW' )
@@ -119,7 +122,7 @@
 	}
 	if ( isset ( $sysalert ) )
 	{
-	    include ( "sysalert.php" );
+	    include '../include/sysalert.php';
 	    $user = NULL;
 	}
     }
@@ -136,13 +139,6 @@
     $organization = $user['organization'];
     $location = $user['location'];
 
-    $max_emails = max ( count ( $emails ), 3 );
- 
-    $errors = [];  // List of submit error messages.
-    $field_missing = false;
-    		   // Set if form field missing from
-		   // post.
-
     // Sanitize non-email form entries.  If error, add
     // to $errors and return ''.  Otherwise return
     // htmlspecialchars of value.
@@ -151,6 +147,9 @@
     // text of form, $min_length is min UNICODE charac-
     // ters in value.
     //
+    $errors = [];  // List of post error messages.
+    $field_missing = false;
+       // Set if form field missing from post.
     function sanitize
         ( $name, $form_name, $min_length )
     {
@@ -188,7 +187,9 @@
 	return $value;
     }
 	
-
+    $method = $_SERVER['REQUEST_METHOD'];
+    $max_emails = max ( count ( $emails ), 3 );
+   
     if ( $method == 'GET' )
         $user_emails = $emails;
 
@@ -214,6 +215,9 @@
 	{
 	    if ( ! isset ( $_POST["email$i"] ) )
 	        continue;
+		// If user does not put any text
+		// in a type="text" input then
+		// email$i will not be sent
 	    if ( isset ( $_POST["delete$i"] ) )
 	        continue;
 	    $value =  trim ( $_POST["email$i"] );
@@ -242,9 +246,12 @@
 	    if ( ! filter_var
 		      ( $value,
 			FILTER_VALIDATE_EMAIL ) )
+	    {
 	        $errors[] = 'Email ' . $value
 		          . ' is not a valid email'
 			  . ' address.';
+		continue;
+	    }
 	    if ( $value != $email )
 		$user_emails[] = $value;
 	}
@@ -253,7 +260,7 @@
 	    exit ( 'UNKNOWN HTTP POST' );
     }
 
-    if ( $method == 'POST' && isset ( $_POST['submit'] )
+    if ( $method == 'POST' && isset ( $_POST['update'] )
                            && count ( $errors ) == 0 )
     {
         // We are done; copy data to files.
@@ -266,11 +273,23 @@
 	        ++ $userid;
 	    $_SESSION['userid'] = $userid;
 	}
+
 	$user_emails[] = $email;
+	$_SESSION['user_emails'] = $user_emails;
+
 	foreach ( $user_emails as $value )
 	    file_put_contents
 		( "$home/admin/email_index/$value",
 		  "$userid" );
+
+	foreach ( $emails as $value )
+	{
+	    if ( ! array_search
+	               ( $value, $user_mails, true ) )
+		unlink
+		  ( "$home/admin/email_index/$value" );
+	}
+
 	$user['full_name'] = $full_name;
 	$user['organization'] = $organization;
 	$user['location'] = $location;
@@ -279,15 +298,8 @@
 	file_put_contents
 	    ( "$home/admin/user{$userid}.json",
 	       $user_json );
-	foreach ( $emails as $value )
-	{
-	    if ( ! array_search
-	               ( $value, $user_mails, true ) )
-		unlink
-		  ( "$home/admin/email_index/$value" );
-	}
-	$_SESSION['emails'] = $user_emails;
-	header ( "Location: user_edit.php?done=yes" );
+
+	header ( "Location: user.php?done=yes" );
 	exit;
     }
 
@@ -342,7 +354,7 @@
 	 name="location" value="$location"
 	 placeholder="$location_placeholder">
     <br><br>
-        <input type="submit" name="submit"
+        <input type="submit" name="update"
 	       value="Update">
 EOT
 ?>

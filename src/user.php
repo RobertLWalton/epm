@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 20:02:57 EST 2019
+    // Date:	Mon Nov 11 04:31:22 EST 2019
 
     // Displays files:
     //
@@ -18,6 +18,8 @@
     if ( ! isset ( $_SESSION['epm_home'] ) )
         exit ( 'SYSTEM ERROR: epm_home not set' );
     $home = $_SESSION['epm_home'];
+
+    include '../include/debug_info.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -61,9 +63,18 @@
 	    closedir ( $desc );
 	    break;
 	}
-	$i = (int) file_get_contents
-	    ( "$home/admin/email_index/$value" );
-	if ( $i == 0 ) continue;
+	if ( preg_match ( '/^\.\.*$/', $value ) )
+	    continue;
+	$email_file =
+	    "$home/admin/email_index/$value";
+	$i = file_get_contents ( $email_file );
+	if ( ! preg_match
+		   ( '/^[1-9][0-9]*$/', $i ) )
+	{
+	    $sysalert = "bad value in $email_file";
+	    include '../include/sysalert.php';
+	    continue;
+	}
 	if ( $i == $userid )
 	    $emails[] = $value;
     }
@@ -101,17 +112,15 @@
     Full Name: {$user['full_name']}<br>
     Organization: {$user['organization']}<br>
     Location: {$user['location']}<br><br>
-    <button type="submit" formmethod='POST'
-            formaction="user_edit.php">
-        Edit</button>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <button type="submit" formmethod='POST'
-            formaction="src/problem.php">
-        Go To Problem</button>
-    </form>
 EOT
 
 ?>
+
+<form method='GET' action=user_edit.php>
+<input type="submit" value="Edit">
+</form><form method='GET' action=problem.php>
+<button type="submit">Go To Problem</button>
+</form>
 
 </body>
 </html>
