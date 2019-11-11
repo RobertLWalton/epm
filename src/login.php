@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 01:09:45 EST 2019
+    // Date:	Sun Nov 10 20:02:37 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -141,9 +141,9 @@
 		    "$home/admin/email_index/$email";
 		if ( is_readable ( $email_file ) )
 		{
-		    $userid = file_get_contents
+		    $userid = (int) file_get_contents
 			( $email_file );
-		    if ( ! is_int ( $userid ) )
+		    if ( $userid == 0 )
 		         $userid = 'NEW';
 		}
 		else
@@ -171,7 +171,7 @@
     }
 
     $user = NULL;
-    if ( is_int ( $userid ) )
+    if ( $userid != 'NEW' )
     {
         $user_file = "$home/admin/user{$userid}.json";
 	if ( is_writable ( $user_file ) )
@@ -230,7 +230,7 @@
     if ( isset ( $confirmation_time ) )
     		// implies $userid and $email set
     {
-	if ( ! is_int ( $userid ) )
+	if ( $userid == 'NEW' )
 	    header ( "Location: user_edit.php" );
 	else
 	    header ( "Location: problem.php" );

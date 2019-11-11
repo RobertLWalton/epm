@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 08:45:19 EST 2019
+    // Date:	Sun Nov 10 20:03:06 EST 2019
 
     // Edits files:
     //
@@ -70,7 +70,7 @@
         $emails = $_SESSION['emails'];
 	$max_id = $_SESSION['max_id'];
     }
-    elseif ( is_int ( $userid ) )
+    elseif ( $userid != 'NEW' )
     {
         $desc = opendir ( "$home/admin/email_index" );
 	if ( $desc ) while ( true )
@@ -81,9 +81,9 @@
 	        closedir ( $desc );
 		break;
 	    }
-	    $i = file_get_contents
+	    $i = (int) file_get_contents
 	        ( "$home/admin/email_index/$value" );
-	    if ( ! is_int ( $i ) ) continue;
+	    if ( $i == 0 ) continue;
 	        // TBD: alert admin
 	    $max_id = max ( $max_id, $i );
 	    if ( $value == $email ) continue;
@@ -104,7 +104,7 @@
     // or NULL if this file is not readable.
     //
     $user = NULL;
-    if ( is_int ( $userid ) )
+    if ( $userid != 'NEW' )
     {
 	$sysalert = NULL;
 	$user_file = "$home/admin/user{$userid}.json";
@@ -148,8 +148,8 @@
     // htmlspecialchars of value.
     //
     // $name is as in $_POST[$name], $form_name is as in
-    // text of form, $min_length is min UNICODE characters
-    // in value.
+    // text of form, $min_length is min UNICODE charac-
+    // ters in value.
     //
     function sanitize
         ( $name, $form_name, $min_length )
@@ -258,7 +258,7 @@
     {
         // We are done; copy data to files.
 	//
-	if ( ! is_int ( $user_id ) )
+	if ( $userid == 'NEW' )
 	{
 	    $userid = $max_id + 1;
 	    while ( ! mkdir ( "$home/users/user$userid",
@@ -270,7 +270,10 @@
 	foreach ( $user_emails as $value )
 	    file_put_contents
 		( "$home/admin/email_index/$value",
-		  $userid );
+		  "$userid" );
+	$user['full_name'] = $full_name;
+	$user['organization'] = $organization;
+	$user['location'] = $location;
 	$user_json = json_encode
 	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
@@ -283,7 +286,8 @@
 		unlink
 		  ( "$home/admin/email_index/$value" );
 	}
-	header ( "Location: user.php?done=yes" );
+	$_SESSION['emails'] = $user_emails;
+	header ( "Location: user_edit.php?done=yes" );
 	exit;
     }
 
@@ -309,7 +313,8 @@
     {
         if ( ! isset ( $user_emails[$i] ) )
 	    echo '<input name="email' . $i .
-	         '" type="text" value="">';
+	         '" type="text" value=""' .
+		 ' placeholder="Email Address">';
 	elseif ( $user_emails[$i] == $email )
 	    echo "$email";
 	else

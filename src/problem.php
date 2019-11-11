@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 01:09:58 EST 2019
+    // Date:	Sun Nov 10 20:02:48 EST 2019
 
     // Selects user problem.
     //
@@ -26,7 +26,7 @@
     $userid = $_SESSION['userid'];
     $email = $_SESSION['email'];
 
-    if ( ! is_int ( $userid )
+    if ( $userid == 'NEW'
          ||
 	 ! is_writable ( "users/user$userid" ) )
     {

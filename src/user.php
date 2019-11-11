@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 01:10:35 EST 2019
+    // Date:	Sun Nov 10 20:02:57 EST 2019
 
     // Displays files:
     //
@@ -38,7 +38,7 @@
     $email = $_SESSION['email'];
     $confirmation_time = $_SESSION['confirmation_time'];
 
-    if ( ! is_int ( $userid ) )
+    if ( $userid == 'NEW' )
     {
 	header ( "Location: user_edit.php" );
 	exit;
@@ -61,9 +61,9 @@
 	    closedir ( $desc );
 	    break;
 	}
-	$i = file_get_contents
+	$i = (int) file_get_contents
 	    ( "$home/admin/email_index/$value" );
-	if ( ! is_int ( $i ) ) continue;
+	if ( $i == 0 ) continue;
 	if ( $i == $userid )
 	    $emails[] = $value;
     }
@@ -86,22 +86,29 @@
 <?php 
 
     if ( $_GET['done'] == "yes" )
-        echo '<h2>Profile Edit Finished</h2><br><br>' .
-	     "\n";
+        echo "<mark>" .
+	     "Profile Edit Finished" .
+	     "</mark><br><br>\n";
 
-    echo '<h2>Email Addresses:</h2><br>' . "\n";
+    echo 'Email Addresses:<br>' . "\n";
     foreach ( $emails as $value )
-	echo "$value<br>\n";
+	echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" .
+	     "$value<br>\n";
+    
 
     echo <<<EOT
     <br><br>
-    Full Name: {$user['full_name']}<br><br>
-    Organization: {$user['organization']}<br>br>
-    Location: {$user['location']}<br>br>
-    <button action="src/user_edit.php">Edit</button>
+    Full Name: {$user['full_name']}<br>
+    Organization: {$user['organization']}<br>
+    Location: {$user['location']}<br><br>
+    <button type="submit" formmethod='POST'
+            formaction="user_edit.php">
+        Edit</button>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <button action="src/problem.php">
+    <button type="submit" formmethod='POST'
+            formaction="src/problem.php">
         Go To Problem</button>
+    </form>
 EOT
 
 ?>
