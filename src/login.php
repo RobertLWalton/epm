@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 11 04:32:11 EST 2019
+    // Date:	Tue Nov 12 13:51:13 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -47,9 +47,9 @@
 
     session_start();
     clearstatcache();
-    if ( ! isset ( $_SESSION['epm_home'] ) )
-        exit ( 'SYSTEM ERROR: epm_home not set' );
-    $home = $_SESSION['epm_home'];
+    if ( ! isset ( $_SESSION['epm_data'] ) )
+        exit ( 'SYSTEM ERROR: epm_data not set' );
+    $data = $_SESSION['epm_data'];
     $confirmation_interval =
         $_SESSION['epm_confirmation_interval'];
 
@@ -138,7 +138,7 @@
 	    else
 	    {
 		$email_file =
-		    "$home/admin/email_index/$email";
+		    "$data/admin/email_index/$email";
 		if ( is_readable ( $email_file ) )
 		{
 		    $userid = file_get_contents
@@ -155,9 +155,9 @@
     }
 
     if (    isset ( $log_confirmation_time )
-         && is_writable ( "$home/admin/login.log" ) )
+         && is_writable ( "$data/admin/login.log" ) )
     {
-        $desc = fopen ( "$home/admin/login.log", 'a' );
+        $desc = fopen ( "$data/admin/login.log", 'a' );
 	if ( $desc )
 	{
 	    fputcsv
@@ -173,7 +173,7 @@
     $user = NULL;
     if ( $userid != 'NEW' )
     {
-        $user_file = "$home/admin/user{$userid}.json";
+        $user_file = "$data/admin/user{$userid}.json";
 	if ( is_writable ( $user_file ) )
 	{
 	    $user_json = file_get_contents
@@ -197,7 +197,7 @@
 	$user_json = json_encode
 	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
-	    ( "$home/admin/user{$userid}.json",
+	    ( "$data/admin/user{$userid}.json",
 	       $user_json );
     }
 

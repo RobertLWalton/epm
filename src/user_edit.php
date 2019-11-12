@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 01:34:50 EST 2019
+    // Date:	Tue Nov 12 13:51:46 EST 2019
 
     // Edits files:
     //
@@ -28,22 +28,22 @@
 
     session_start();
     clearstatcache();
-    if ( ! isset ( $_SESSION['epm_home'] ) )
-        exit ( 'SYSTEM ERROR: epm_home not set' );
-    $home = $_SESSION['epm_home'];
+    if ( ! isset ( $_SESSION['epm_data'] ) )
+        exit ( 'SYSTEM ERROR: epm_data not set' );
+    $data = $_SESSION['epm_data'];
 
     if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
 	header ( "Location: login.php" );
 	exit;
     }
-    if ( ! is_writable ( "$home/admin/email_index" ) )
+    if ( ! is_writable ( "$data/admin/email_index" ) )
     {
 	header ( "Location: first_user.php" );
 	exit;
     }
 
-    include '../include/debug_info.php';
+    include 'include/debug_info.php';
 
     $email = $_SESSION['email'];
     $userid = $_SESSION['userid'];
@@ -59,7 +59,7 @@
     $max_id = 0;
     if ( $userid != 'NEW' )
     {
-        $desc = opendir ( "$home/admin/email_index" );
+        $desc = opendir ( "$data/admin/email_index" );
 	if ( $desc ) while ( true )
 	{
 	    $value = readdir ( $desc );
@@ -71,13 +71,13 @@
 	    if ( preg_match ( '/^\.\.*$/', $value ) )
 		continue;
 	    $email_file =
-	        "$home/admin/email_index/$value";
+	        "$data/admin/email_index/$value";
 	    $i = file_get_contents ( $email_file );
 	    if ( ! preg_match
 	               ( '/^[1-9][0-9]*$/', $i ) )
 	    {
 		$sysalert = "bad value in $email_file";
-		include '../include/sysalert.php';
+		include 'include/sysalert.php';
 	        continue;
 	    }
 	    $max_id = max ( $max_id, $i );
@@ -97,7 +97,7 @@
     if ( $userid != 'NEW' )
     {
 	$sysalert = NULL;
-	$user_file = "$home/admin/user{$userid}.json";
+	$user_file = "$data/admin/user{$userid}.json";
 	$user = file_get_contents ( $user_file );
 	if ( ! $user )
 	    $sysalert = "cannot read $user_file";
@@ -109,7 +109,7 @@
 	}
 	if ( isset ( $sysalert ) )
 	{
-	    include '../include/sysalert.php';
+	    include 'include/sysalert.php';
 	    $user = NULL;
 	}
     }
@@ -293,7 +293,7 @@
 	}
     }
 
-    $h = "$home/admin/email_index";
+    $h = "$data/admin/email_index";
     foreach ( $add as $e )
     {
         if ( is_readable ( "$h/$e" ) )
@@ -309,7 +309,7 @@
 	if ( $userid == 'NEW' )
 	{
 	    $userid = $max_id + 1;
-	    while ( ! mkdir ( "$home/users/user$userid",
+	    while ( ! mkdir ( "$data/users/user$userid",
 	                      0770 ) )
 	        ++ $userid;
 	    $_SESSION['userid'] = $userid;
@@ -322,7 +322,7 @@
 	$user_json = json_encode
 	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
-	    ( "$home/admin/user{$userid}.json",
+	    ( "$data/admin/user{$userid}.json",
 	       $user_json );
 
 	foreach ( $add as $e )
@@ -331,7 +331,7 @@
 		      ( "$h/$e", "$userid" ) )
 	    {
 		$sysalert = "could not write $h/$e";
-		include '../include/sysalert.php';
+		include 'include/sysalert.php';
 	    }
 	}
 	foreach ( $sub as $e )
@@ -339,7 +339,7 @@
 	    if ( ! unlink ( "$h/$e" ) )
 	    {
 		$sysalert = "could not unlink $h/$e";
-		include '../include/sysalert.php';
+		include 'include/sysalert.php';
 	    }
 	}
 

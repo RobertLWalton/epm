@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 03:01:52 EST 2019
+    // Date:	Tue Nov 12 13:51:37 EST 2019
 
     // Selects user problem.
     //
@@ -15,11 +15,11 @@
 
     session_start();
     clearstatcache();
-    if ( ! isset ( $_SESSION['epm_home'] ) )
-        exit ( 'SYSTEM ERROR: epm_home not set' );
-    $home = $_SESSION['epm_home'];
+    if ( ! isset ( $_SESSION['epm_data'] ) )
+        exit ( 'SYSTEM ERROR: epm_data not set' );
+    $data = $_SESSION['epm_data'];
 
-    include '../include/debug_info.php';
+    include 'include/debug_info.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -34,7 +34,7 @@
     $userid = $_SESSION['userid'];
     $email = $_SESSION['email'];
 
-    $user_dir = "$home/users/user$userid";
+    $user_dir = "$data/users/user$userid";
 
     if ( $userid == 'NEW'
          ||
@@ -90,7 +90,7 @@
     if ( isset ( $problem ) )
     {
 	$problem_dir =
-	    "$home/users/user$userid/$problem";
+	    "$data/users/user$userid/$problem";
 
 	if (    $method == 'POST'
 	     && isset ( $_POST['submit'] )
@@ -111,7 +111,7 @@
 	        $problems[] = $problem;
 	}
 	elseif ( ! is_writable
-		      ( "$home/users/user$userid" .
+		      ( "$data/users/user$userid" .
 		        "/$problem" ) )
 	{
 	    $problem_error =

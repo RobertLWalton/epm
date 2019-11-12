@@ -2,7 +2,7 @@
 
     // File:	first_user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 10 01:09:30 EST 2019
+    // Date:	Tue Nov 12 12:03:41 EST 2019
 
     // Asks user if they are the first user.  If yes
     // makes the following directories and then goes
@@ -14,13 +14,13 @@
 
     session_start();
     clearstatcache();
-    if ( ! isset ( $_SESSION['epm_home'] ) )
-        exit ( 'SYSTEM ERROR: epm_home not set' );
-    $home = $_SESSION['epm_home'];
+    if ( ! isset ( $_SESSION['epm_data'] ) )
+        exit ( 'SYSTEM ERROR: epm_data not set' );
+    $data = $_SESSION['epm_data'];
 
-    if (    is_writable ( "$home/admin" )
-         && is_writable ( "$home/admin/email_index" )
-         && is_writable ( "$home/users" ) )
+    if (    is_writable ( "$data/admin" )
+         && is_writable ( "$data/admin/email_index" )
+         && is_writable ( "$data/users" ) )
     {
         header ( 'Location: user.php' );
 	exit;
@@ -36,10 +36,10 @@
 	        $_POST['is_administrator'];
 	    if ( $is_administrator == 'yes' )
 	    {
-		mkdir ( "$home/admin", 0770 );
-		mkdir ( "$home/admin/email_index",
+		mkdir ( "$data/admin", 0770 );
+		mkdir ( "$data/admin/email_index",
 		        0770 );
-		mkdir ( "$home/users", 0770 );
+		mkdir ( "$data/users", 0770 );
 		header
 		    ( 'Location: user_edit.php' );
 		exit;

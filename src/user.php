@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 01:34:41 EST 2019
+    // Date:	Tue Nov 12 13:52:15 EST 2019
 
     // Displays files:
     //
@@ -15,11 +15,11 @@
 
     session_start();
     clearstatcache();
-    if ( ! isset ( $_SESSION['epm_home'] ) )
-        exit ( 'SYSTEM ERROR: epm_home not set' );
-    $home = $_SESSION['epm_home'];
+    if ( ! isset ( $_SESSION['epm_data'] ) )
+        exit ( 'SYSTEM ERROR: epm_data not set' );
+    $data = $_SESSION['epm_data'];
 
-    include '../include/debug_info.php';
+    include 'include/debug_info.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -30,7 +30,7 @@
 	header ( "Location: login.php" );
 	exit;
     }
-    if ( ! is_writable ( "$home/admin/email_index" ) )
+    if ( ! is_writable ( "$data/admin/email_index" ) )
     {
 	header ( "Location: first_user.php" );
 	exit;
@@ -51,10 +51,10 @@
     //
     $emails = [];
 
-    $desc = opendir ( "$home/admin/email_index" );
+    $desc = opendir ( "$data/admin/email_index" );
     if ( ! $desc )
         exit ( 'SYSTEM ERROR: cannot open' .
-	        " $home/admin/email_index" );
+	        " $data/admin/email_index" );
     while ( true )
     {
 	$value = readdir ( $desc );
@@ -66,20 +66,20 @@
 	if ( preg_match ( '/^\.\.*$/', $value ) )
 	    continue;
 	$email_file =
-	    "$home/admin/email_index/$value";
+	    "$data/admin/email_index/$value";
 	$i = file_get_contents ( $email_file );
 	if ( ! preg_match
 		   ( '/^[1-9][0-9]*$/', $i ) )
 	{
 	    $sysalert = "bad value in $email_file";
-	    include '../include/sysalert.php';
+	    include 'include/sysalert.php';
 	    continue;
 	}
 	if ( $i == $userid )
 	    $emails[] = $value;
     }
 
-    $user_file = "$home/admin/user{$userid}.json";
+    $user_file = "$data/admin/user{$userid}.json";
     $user = file_get_contents ( $user_file );
     if ( ! $user )
 	exit ( 'SYSTEM ERROR: cannot read ' .
