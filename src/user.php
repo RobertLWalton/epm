@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 11 04:31:22 EST 2019
+    // Date:	Tue Nov 12 00:33:38 EST 2019
 
     // Displays files:
     //
@@ -116,10 +116,12 @@ EOT
 
 ?>
 
-<form method='GET' action=user_edit.php>
-<input type="submit" value="Edit">
-</form><form method='GET' action=problem.php>
-<button type="submit">Go To Problem</button>
+<form>
+<input type="submit" formaction="user_edit.php"
+       value="Edit">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="submit" formaction="problem.php"
+       value="Go To Problem"</input>
 </form>
 
 </body>

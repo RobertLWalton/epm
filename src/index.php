@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 11 05:26:17 EST 2019
+    // Date:	Tue Nov 12 01:03:10 EST 2019
 
     // To set up a epm instance home directory H, given
     // that this directory is S, execute:
@@ -34,7 +34,11 @@
 
         $_SESSION['max_emails'] = 3;
 	    // Maximum number of emails a user may have.
+
+	header ( "Location: $src/login.php" );
     }
-    header ( "Location: $src/login.php" );
+    else
+	header ( "Location: user.php" );
+
     exit;
 ?>
