@@ -36,10 +36,10 @@
 	        $_POST['is_administrator'];
 	    if ( $is_administrator == 'yes' )
 	    {
-		mkdir ( "$home/admin", 0750 );
+		mkdir ( "$home/admin", 0770 );
 		mkdir ( "$home/admin/email_index",
-		        0750 );
-		mkdir ( "$home/users", 0750 );
+		        0770 );
+		mkdir ( "$home/users", 0770 );
 		header
 		    ( 'Location: user_edit.php' );
 		exit;

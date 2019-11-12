@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 11 04:31:32 EST 2019
+    // Date:	Tue Nov 12 03:01:52 EST 2019
 
     // Selects user problem.
     //
@@ -15,7 +15,15 @@
 
     session_start();
     clearstatcache();
+    if ( ! isset ( $_SESSION['epm_home'] ) )
+        exit ( 'SYSTEM ERROR: epm_home not set' );
+    $home = $_SESSION['epm_home'];
+
+    include '../include/debug_info.php';
+
     $method = $_SERVER['REQUEST_METHOD'];
+    if ( $method != 'GET' && $method != 'POST' )
+        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
@@ -26,9 +34,11 @@
     $userid = $_SESSION['userid'];
     $email = $_SESSION['email'];
 
+    $user_dir = "$home/users/user$userid";
+
     if ( $userid == 'NEW'
          ||
-	 ! is_writable ( "users/user$userid" ) )
+	 ! is_writable ( "$user_dir" ) )
     {
 	header ( "Location: user_edit.php" );
 	exit;
@@ -38,10 +48,10 @@
     //
     $problems = [];
 
-    $desc = opendir ( 'users/user$userid' );
+    $desc = opendir ( $user_dir );
     if ( ! $desc )
-        exit ( 'SYSTEM ERROR: cannot open' .
-	        " users/user$userid" );
+         error
+	     ( "SYSTEM ERROR: cannot open $user_dir" );
     while ( true )
     {
 	$value = readdir ( $desc );
@@ -50,42 +60,72 @@
 	    closedir ( $desc );
 	    break;
 	}
-	$problems[] = $value;
+	if ( ! preg_match ( '/^\.\.*$/', $value ) )
+	    $problems[] = $value;
     }
 
     // Set $problem to current problem, or NULL if none.
     //
     $problem = NULL;
     $problem_error = NULL;
-    if (    $method == 'GET'
-         && isset ( $_GET['problem'] ) )
+    if ( isset ( $_REQUEST['problem'] ) )
     {
-        $problem = $_GET['problem'];
-	if ( ! preg_match ( '/^[-_A-Za-z0-9]+$/',
-	                    $problem )
-	     ||
-	     ! preg_match ( '/[A-Za-z]/', $problem ) )
+        $problem = trim ( $_REQUEST['problem'] );
+	if ( $problem == '' )
+	    $problem = NULL;
+	elseif ( ! preg_match ( '/^[-_A-Za-z0-9]+$/',
+	                        $problem )
+	         ||
+	         ! preg_match ( '/[A-Za-z]/', $problem )
+	       )
 	{
 	    $problem_error =
 	        "problem name $problem contains an" .
-		" illegal character";
+		" illegal character or" .
+		" does not contain a letter";
 	    $problem = NULL;
 	}
-	else if ( ! is_writable
-		      ( "users/user$userid/$problem" ) )
+    }
+
+    if ( isset ( $problem ) )
+    {
+	$problem_dir =
+	    "$home/users/user$userid/$problem";
+
+	if (    $method == 'POST'
+	     && isset ( $_POST['submit'] )
+	     &&    $_POST['submit']
+	        == 'Create New Problem:' )
+	{
+	    if ( file_exists ( $problem_dir ) )
+	    {
+		$problem_error =
+		    "problem $problem already exists" .
+		" for user $email";
+		$problem = NULL;
+	    }
+	    elseif ( ! mkdir ( $problem_dir, 0770 ) )
+		exit ( "SYSTEM ERROR: cannot make" .
+		       $problem_dir );
+	    else
+	        $problems[] = $problem;
+	}
+	elseif ( ! is_writable
+		      ( "$home/users/user$userid" .
+		        "/$problem" ) )
 	{
 	    $problem_error =
 	        "problem $problem does not exist" .
 		" for user $email";
 	    $problem = NULL;
 	}
-
     }
+
     if (    ! isset ( $problem )
          && isset ( $_SESSION['problem'] ) )
         $problem = $_SESSION['problem'];
-    else if ( isset ( $problem ) )
-        $_SESSION['problem'] = $problem;
+    elseif ( isset ( $problem ) )
+	$_SESSION['problem'] = $problem;
 
 ?>
 
@@ -97,29 +137,28 @@
 
     if ( isset ( $problem_error ) )
         echo "<mark>ERROR:" .
-	     " $problem_error</mark><br<br>\n";
-    echo "User: $mail&nbsp;&nbsp;&nbsp;&nbsp;";
-    echo "Problem: " . ( isset ( $problem ) ?
-                         $problem :
-			 "none selected" );
+	     " $problem_error</mark><br><br>\n";
+    echo "User: $email&nbsp;&nbsp;&nbsp;&nbsp;";
+    echo "Current Problem: " . ( isset ( $problem ) ?
+                                 $problem :
+			         "none selected" );
+    echo "<br><br>\n";
+    echo "<form action='problem.php' method='POST'>\n";
     if ( count ( $problems ) > 0 )
     {
-	echo '<form action="src/problem.php"' .
-		  ' method="POST">' . "\n";
-	echo "<button type='submit'>Go To Problem:" .
-	     "</button>\n";
+	echo "<input type='submit' value='Go To Problem:'>\n";
         echo "<select name='problem'>\n";
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
 	             "$value</option>\n";
         echo "</select>\n";
-        echo "</form>\n";
-        echo "<br>\n";
+        echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
     }
     echo <<<EOT
-    <form action="src/problem.php" method="POST">
-    <button type="submit">Create New Problem:</button>
-    <input type="text" maxlength="32" name="problem">
+    <input type="submit" name="submit"
+           value="Create New Problem:"</input>
+    <input type="text" size="32" name="problem"
+           placeholder="New Problem Name">
     </form>
 EOT
 

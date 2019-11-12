@@ -2,11 +2,15 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 01:03:10 EST 2019
+    // Date:	Tue Nov 12 02:27:41 EST 2019
 
     // To set up a epm instance home directory H, given
     // that this directory is S, execute:
     //
+    //	        mkdir H
+    //		chgrp WEB-SERVERS-GROUP H
+    //		chmod g+s H
+    //		chgrp WEB-SERVERS-GROUP `find S`
     //		cd H
     //		cp S/index.php .
     //		ln -s S src

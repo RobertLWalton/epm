@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 00:33:38 EST 2019
+    // Date:	Tue Nov 12 01:34:41 EST 2019
 
     // Displays files:
     //
@@ -101,14 +101,14 @@
 	     "Profile Edit Finished" .
 	     "</mark><br><br>\n";
 
-    echo 'Email Addresses:<br>' . "\n";
+    echo "Email Addresses:<br>\n";
+    echo '<ul style="list-style-type:none">' . "\n";
     foreach ( $emails as $value )
-	echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" .
-	     "$value<br>\n";
+	echo "<li>$value</li>\n";
+    echo "</ul>\n";
     
 
     echo <<<EOT
-    <br><br>
     Full Name: {$user['full_name']}<br>
     Organization: {$user['organization']}<br>
     Location: {$user['location']}<br><br>

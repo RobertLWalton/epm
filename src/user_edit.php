@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 11 09:52:45 EST 2019
+    // Date:	Tue Nov 12 01:34:50 EST 2019
 
     // Edits files:
     //
@@ -292,11 +292,6 @@
 	    ++ $j;
 	}
     }
-    echo 'EMAILS: '; print_r ( $emails ); echo '<br>';
-    echo 'USER_EMAILS: '; print_r ( $user_emails ); echo '<br>';
-    echo 'ADD: '; print_r ( $add ); echo '<br>';
-    echo 'SUB: '; print_r ( $sub ); echo '<br>';
-    echo 'KEEP: '; print_r ( $keep ); echo '<br>';
 
     $h = "$home/admin/email_index";
     foreach ( $add as $e )
@@ -315,7 +310,7 @@
 	{
 	    $userid = $max_id + 1;
 	    while ( ! mkdir ( "$home/users/user$userid",
-	                      0750 ) )
+	                      0770 ) )
 	        ++ $userid;
 	    $_SESSION['userid'] = $userid;
 	}
@@ -370,37 +365,41 @@
 	    echo "$value<br>\n";
 	echo '</mark><br><br>' . "\n";
     }
-    echo "<h2>Email Addresses:</h2><br>\n";
+    echo "Email Addresses:<br>\n";
+    echo '<ul style="list-style-type:none">';
     for ( $i = 0; $i < $max_emails; ++ $i )
     {
         if ( ! isset ( $user_emails[$i] ) )
-	    echo '<input name="email' . $i .
+	    echo '<li><input name="email' . $i .
 	         '" type="text" value=""' .
-		 ' placeholder="Another Email Address">';
+		 ' size="40" placeholder=' .
+		 '"Another Email Address"a</li>';
 	elseif ( $user_emails[$i] == $email )
-	    echo "$email";
+	    echo "<li>$email</li>";
 	else
-	    echo "$user_emails[$i]&nbsp;&nbsp;&nbsp;" .
+	    echo "<li>$user_emails[$i]" .
+	         '&nbsp;&nbsp;&nbsp;' .
 	         '<input type="submit" name="delete' .
-		 $i . '" value = "delete">';
+		 $i . '" value = "delete"></li>';
 	echo "<br>\n";
     }
+    echo "</ul>\n";
     $location_placeholder =
 	 "Town, State and Country of Organization";
     echo <<<EOT
     <br><br>
-    Full Name: <input type="text" maxlength="80"
+    Full Name: <input type="text" size="40"
                       name="full_name"
                       value="$full_name"
 	              placeholder="John Doe">
     <br><br>
     Organization:
-        <input type="text" maxlength="80"
+        <input type="text" size="40"
 	 name="organization" value="$organization"
 	 placeholder="University, Company, or Self">
     <br><br>
     Location:
-        <input type="text" maxlength="80"
+        <input type="text" size="40"
 	 name="location" value="$location"
 	 placeholder="$location_placeholder">
     <br><br>
