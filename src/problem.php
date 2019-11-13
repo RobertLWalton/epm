@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 13:51:37 EST 2019
+    // Date:	Tue Nov 12 19:28:11 EST 2019
 
     // Selects user problem.
     //
@@ -18,8 +18,6 @@
     if ( ! isset ( $_SESSION['epm_data'] ) )
         exit ( 'SYSTEM ERROR: epm_data not set' );
     $data = $_SESSION['epm_data'];
-
-    include 'include/debug_info.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -93,9 +91,7 @@
 	    "$data/users/user$userid/$problem";
 
 	if (    $method == 'POST'
-	     && isset ( $_POST['submit'] )
-	     &&    $_POST['submit']
-	        == 'Create New Problem:' )
+	     && isset ( $_POST['problem'] ) )
 	{
 	    if ( file_exists ( $problem_dir ) )
 	    {
@@ -155,8 +151,7 @@
         echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
     }
     echo <<<EOT
-    <input type="submit" name="submit"
-           value="Create New Problem:"</input>
+    <label for="problem">Create New Problem:</label>
     <input type="text" size="32" name="problem"
            placeholder="New Problem Name">
     </form>

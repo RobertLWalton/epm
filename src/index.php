@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 11:57:23 EST 2019
+    // Date:	Tue Nov 12 19:01:00 EST 2019
 
     // To set up a epm instance you need the following
     // directories:
@@ -41,36 +41,39 @@
     //		ln -s S src
     //		<edit parameters in H/index.php>
 
+    // The directory containing the page sources
+    // MUST be linked to R/W/src.
+
+    $script_name = $_SERVER['SCRIPT_NAME'];
+
+    if ( basename ( $script_name ) == 'src' )
+    {
+        // This is the unedited index.html and
+	// we should go to the edited version.
+
+	header ( "Location: ../index.php" );
+	exit;
+    }
 
     session_start();
+    foreach ( array_keys ( $_SESSION ) as $key )
+        unset ( $_SESSION[$key] );
 
-    $src = "src";
-	// Directory containing page sources.
+    // Parameters:
+    //
+    $_SESSION['epm_data'] =
+	dirname ( $_SERVER['DOCUMENT_ROOT'] ) .
+	'/data';
 
-    if ( ! isset ( $_SESSION['epm_data'] ) )
-    {
-	// Parameters:
-	//
-	$_SESSION['epm_data'] =
-	    $_SERVER['DOCUMENT_ROOT'] . '/data';
+    $_SESSION['epm_confirmation_interval'] =
+	30 * 24 * 60 * 60;
+	// Interval in seconds that confirmation
+	// will be valid for a given email address
+	// and ip address.  Default, 30 days.
 
-        $_SESSION['confirmation_interval'] =
-	    30 * 24 * 60 * 60;
-	    // Interval in seconds that confirmation
-	    // will be valid for a given email address
-	    // and ip address.  Default, 30 days.
+    $_SESSION['epm_max_emails'] = 3;
+	// Maximum number of emails a user may have.
 
-        $_SESSION['max_emails'] = 3;
-	    // Maximum number of emails a user may have.
-
-	if (    basename ( $_SERVER['SCRIPT_NAME'] )
-	     == $src )
-	    header ( "Location: login.php" );
-	else
-	    header ( "Location: $src/login.php" );
-    }
-    else
-	header ( "Location: user.php" );
-
+    header ( "Location: src/login.php" );
     exit;
 ?>

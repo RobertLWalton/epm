@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 13:51:13 EST 2019
+    // Date:	Tue Nov 12 19:28:53 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -47,8 +47,17 @@
 
     session_start();
     clearstatcache();
+
     if ( ! isset ( $_SESSION['epm_data'] ) )
-        exit ( 'SYSTEM ERROR: epm_data not set' );
+    {
+        // User saved src/login.php and is trying to
+	// reuse it to login again and start another
+	// session.  Go to edited version of index.php.
+	//
+        header ( 'Location: ../index.php' );
+	exit;
+    }
+
     $data = $_SESSION['epm_data'];
     $confirmation_interval =
         $_SESSION['epm_confirmation_interval'];

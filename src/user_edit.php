@@ -86,7 +86,7 @@
 	}
     }
     sort ( $emails );
-    $max_emails = max ( $_SESSION['max_emails'],
+    $max_emails = max ( $_SESSION['epm_max_emails'],
                         count ( $emails ) );
 
     // Set $user to admin/user$userid.json contents,
