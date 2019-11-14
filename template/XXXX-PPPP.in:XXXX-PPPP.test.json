@@ -1,0 +1,10 @@
+{
+
+"COMMANDS": ["sandbox PPPP < XXXX-PPPP.in > XXXX-PPPP.test 2> XXXX-PPPP.err"],
+"REQUIRES":["XXXX-PPPP.in", "PPPP"],
+"KEEP":    ["XXXX-PPPP.test","XXXX-PPPP.err"],
+"CHECKS":   ["cmp -s XXXX-PPPP.err /dev/null"]
+
+}
+
+

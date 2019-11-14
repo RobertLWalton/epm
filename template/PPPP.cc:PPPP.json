@@ -1,0 +1,16 @@
+{
+
+"COMMANDS": ["g++ AAAA -o PPPP PPPP.cc BBBB > PPPP.cout 2> PPPP.cerr"]
+"REQUIRES":["PPPP.cc"],
+"KEEP":    ["PPPP","PPPP.cout","PPPP.cerr"],
+"CHECKS":  ["cmp -s PPPP.cerr /dev/null"],
+"OPTIONS": {
+    "AAAA": [["-std=gnu++11",""],
+	     ["-Og", "-O3", ""],
+	     ["", "-Wpedantic"]],
+    "BBBB":  [["", "-lgsl"],
+              ["", "-lcrypto"]]
+          
+}
+
+}
