@@ -155,6 +155,17 @@
     <input type="text" size="32" name="problem"
            placeholder="New Problem Name">
     </form>
+
+    <br><br>
+
+    <form enctype="multipart/form-data"
+          action="problem.php" method="post">
+    <input type="hidden" name="MAX_FILE_SIZE"
+	   value="200000">
+    <label for="uploaded_file">File to Upload:</label>
+    <input type="file" name="uploaded_file">
+    <input type="submit" value="Upload File">
+    </form>
 EOT
 
 ?>
