@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Nov 15 07:06:14 EST 2019
+// Date:    Fri Nov 15 13:06:50 EST 2019
 
 // Functions used to make files from other files.
 
@@ -29,19 +29,20 @@ function file_name_match
                 ( '/[A-Z]/', $temname, $matches,
                   PREG_OFFSET_CAPTURE, $offset ) )
     {
-        $char = $match[0][0];
-	$offset = $match[0][1];
+        $char = $matches[0][0];
+	$offset = $matches[0][1];
 	if ( ! preg_match
-	           ( "/^$char{4}/", $temname, $matches,
+	           ( "/\G$char{4}/", $temname, $matches,
 		     0, $offset ) )
 	{
 	    ++ $offset;
 	    continue;
 	}
 	$temname = preg_replace
-	    ( "/^$char{4}/", '(.*)', $temname );
-	$ids = "$char$char$char$char";
+	    ( "/$char{4}/", '(.*)', $temname, 1 );
+	$ids[] = "$char$char$char$char";
     }
+    preg_replace ( '/\./', '\\.', $temname );
     if ( ! preg_match ( "/^$temname\$/", $filename,
                                          $matches ) )
         return FALSE;
