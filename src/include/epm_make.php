@@ -21,7 +21,7 @@ function file_name_match
         return FALSE;
     $temname = $matches[1];
     $temname = preg_replace
-        ( '/PPPP/', $problem, $temname, -1, count );
+        ( '/PPPP/', $problem, $temname, -1, $count );
     if ( $count == 0 ) return FALSE;
     $offset = 0;
     $ids = [];
@@ -57,6 +57,7 @@ function file_name_match
 	else
 	    $result[$ids[$i]] = $matches[$i+1];
     }
+    $result['PPPP'] = $problem;
     return $result;
 }
 

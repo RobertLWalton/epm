@@ -1,0 +1,28 @@
+#! /bin/php
+<?php
+
+// File:	emp_make_test
+// Author:	walton@acm.org
+// Date:	Fri Nov 15 08:41:42 EST 2019
+
+include ( '../src/include/epm_make.php' );
+
+function check ( $expression, $value )
+{
+    $result;
+    eval ( "\$result = ($expression);" );
+    if ( $result != $value )
+    {
+        $v1 = json_encode ( $result );
+        $v2 = json_encode ( $value );
+        echo "FAILED: $expression\n";
+	echo "    $v1 != $v2\n";
+    }
+}
+
+check ( 'file_name_match
+              ( "tv", "tv.cc", "PPPP.cc:PPPP.json" )',
+	 ["PPPP" => "tv"] );
+
+
+?>
