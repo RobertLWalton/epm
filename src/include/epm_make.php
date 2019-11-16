@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Nov 16 01:14:23 EST 2019
+// Date:    Sat Nov 16 08:11:02 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -21,7 +21,7 @@
 // If PPPP is in the template, replace it with
 // problem name before proceeding futher.
 //
-function file_name_match
+function filename_match
     ( $problem, $filename, $template )
 {
     if ( ! preg_match ( '/^([^:]*):/', $template,
@@ -105,8 +105,91 @@ function substitute_match ( $item, $match )
         return $item;
 }
 
+// Go through the directory list dirs and find each
+// template or option file that has the given
+// source extension and destination extension (either
+// of which may be NULL if missing).  Return in
+// templates and options lists whose elements are
+// [filename, json-decode-of-file-contents] in the
+// order that the files were found.
+//
+// All directory and file names are relative to epm_data.
+//
+// Any errors cause error messages to be appended to
+// the errors list.
+//
+function file_templates_and_options
+    ( $dirs, $src_ext, $des_ext,
+      & $templates, & $options, & $errors )
+{
+    global $epm_data;
+
+    $templates = [];
+    $options = [];
+    foreach ( $dirs as $dir )
+    {
+        $desc = opendir ( "$epm_data/$dir" );
+	if ( ! $desc )
+	{
+	    $errors[] =
+	        "cannot open search directory $dir";
+	    continue;
+	}
+	while ( $fname = readdir ( $desc ) )
+	{
+	    if ( ! preg_match
+	           ( '/^([^:]+):([^:]+)(:.*|)' .
+		     '(\.tmpl|\.opt)$/',
+		     $fname, $matches ) )
+	        continue;
+
+	    $src = $matches[0];
+	    $des = $matches[1];
+	    $type = $matches[3];
+
+	    if ( ! is_null ( $src_ext )
+		 &&
+		 ( $src_ext == "" ?
+		   preg_match ( '/\./', $fname ) :
+		   ! preg_match
+			 ( "/\\.$src_ext\$/",
+			   $fname ) ) )
+		continue;
+	    if ( ! is_null ( $des_ext )
+		 &&
+		 ( $des_ext == "" ?
+		   preg_match ( '/\./', $fname ) :
+		   ! preg_match
+			 ( "/\\.$des_ext\$/",
+			   $fname ) ) )
+		continue;
+
+	    $file = file_get_contents
+	        ( "$epm_data/$dir/$fname" );
+	    if ( ! $file )
+	    {
+		$errors[] = "cannot read $dir/$fname";
+		continue;
+	    }
+	    $json = json_decode ( $file, true );
+	    if ( ! $json )
+	    {
+		$errors[] =
+		    "cannot decode json in $dir/$fname";
+		continue;
+	    }
+
+	    if ( $type == '.tmpl' )
+	        $templates[] = ["$dir/$fname", $json];
+	    else
+	        $options[] = ["$dir/$fname", $json];
+	}
+	close ( $desc );
+    }
+}
+
 // Given the name of an uploaded file, and a list of
-// directories, find the make control file that is to be
+// directories, find the template file that is to be
 // used to make something from the uploaded file, and
 // return its json decoded array with substitutions for
 // parameters in its file name.
@@ -132,12 +215,18 @@ function substitute_match ( $item, $match )
 //
 function find_make_control
 	( $user_dir, $problem, $filename, $dirs,
-	             & $best_filename, & $errors )
+	  & $errors )
 {
     global $epm_data;
-    $prob_dir = "$epm_data/$user_dir/$problem";
-    $best = NULL;
-    $best_requires = -1;
+    $templates = [];
+        // List of json-decode-of-file for templates
+	// for which filename_match works, with wildcard
+	// matches substituted in the json.  Listed in
+	// order encountered.
+    $requires = [];
+        // Associative array of form [element => ""]
+	// for every element of a REQUIRES list in
+	// a template listed above.
     foreach ( $dirs as $dir )
     {
         $desc = opendir ( "$epm_data/$dir" );
@@ -150,29 +239,15 @@ function find_make_control
 	while ( $fname = readdir ( $desc ) )
 	{
 	    if ( ! preg_match
-	               ( '/PPPP.*\.json$/', $fname )
+	               ( '/PPPP.*\.tmpl$/', $fname )
 		 &&
 		 ! preg_match
-	               ( "/$problem.*\.json$/",
+	               ( "/$problem.*\.tmpl$/",
 		         $fname ) )
 	        continue;
-	    $match = file_name_match
+	    $match = filename_match
                 ( $problem, $filename, $fname );
 	    if ( is_null ( $match ) ) continue;
-	    $filejson = file_get_contents
-	        ( "$epm_data/$dir/$fname" );
-	    if ( ! $filejson )
-	    {
-		$errors[] = "cannot read $dir/$fname";
-		continue;
-	    }
-	    $fileval = json_decode ( $filejson, true );
-	    if ( ! $fileval )
-	    {
-		$errors[] =
-		    "cannot decode json in $dir/$fname";
-		continue;
-	    }
 	    $fileval =
 	        substitute_match ( $fileval, $match );
 	    if ( ! isset ( $fileval['REQUIRES'] ) )
@@ -181,30 +256,46 @@ function find_make_control
 		    "no REQUIRES in $dir/$fname";
 		continue;
 	    }
-	    $requires = $fileval['REQUIRES'];
-	    if ( ! is_array ( $requires ) )
+	    $reqval = $fileval['REQUIRES'];
+	    if ( ! is_array ( $reqval ) )
 	    {
 		$errors[] = "REQUIRES is not an array"
 		          . " in $dir/$fname";
 		continue;
 	    }
-	    if ( count ( $requires ) <= $best_requires )
-	        continue;
-	    $OK = true;
-	    foreach ( $requires as $value )
-	    {
-	        if ( $value != $filename
-		     &&
-		     ! is_readable
-		           ( "$probdir/$value" ) )
-		{
-		    $OK = false;
-		    break;
-		}
-	    }
-	    $best = $fileval;
-	    $best_requires = count ( $requires );
-	    $best_filename = "$dir/$fname";
+
+	    $templates[] = $fileval;
+	    foreach ( $reqval as $required )
+	        $requires[$required] = "";
+	}
+	close ( $desc );
+    }
+
+    // Now go through the directories again, and for
+    // each file, if its name matches a key in
+    // $requires and that element of $requires has ""
+    // as its value, record the filename of the file
+    // relative to epm_data as he new value replacing
+    // the "".
+    //
+    foreach ( $dirs as $dir )
+    {
+        $desc = opendir ( "$epm_data/$dir" );
+	if ( ! $desc )
+	{
+	    $errors[] =
+	        "cannot open search directory $dir";
+	    continue;
+	}
+	while ( $fname = readdir ( $desc ) )
+	{
+	    if ( isset ( $requires[$fname] )
+	         &&
+		 $requires[$fname] == ""
+		 &&
+		 is_readable
+		     ( "$epm_data/$dir/$fname" ) )
+	        $requires[$fname] = "$dir/$fname";
 	}
 	close ( $desc );
     }
