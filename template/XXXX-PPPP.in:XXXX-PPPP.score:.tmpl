@@ -1,0 +1,20 @@
+{
+
+"COMMANDS": ["sandbox PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err",
+             "score AAAA < XXXX-PPPP.out 3< XXXX-PPPP.test > XXXX-PPPP.score"],
+"REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.test"],
+"KEEP":    ["XXXX-PPPP.out","XXXX-PPPP.err"],
+"CHECKS":  [ "cmp -s PPPP.err /dev/null",
+             "echo 'Completely Correct' | cmp -s - XXXX-PPPP.score"]
+"OPTIONS: { "AAAA": [["space", ""],
+                     ["", "integer FFFF FFFF"],
+		     ["", "float FFFF FFFF"],
+		     ["exponent decimal sign", ""],
+		     ["column", ""],
+		     ["", "letter-case"],
+		     ["", "words-are-format"],
+		     ["", "nonumber"]] }
+
+}
+
+
