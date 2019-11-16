@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	walton@acm.org
-// Date:	Fri Nov 15 19:29:38 EST 2019
+// Date:	Sat Nov 16 14:28:34 EST 2019
 
 include ( '../src/include/epm_make.php' );
 
@@ -22,19 +22,17 @@ function check ( $expression, $value )
 
 check ( '["A" => 0, "B" => 1]', ["B" => 1, "A" => 0] );
 
-check ( 'filename_match
-              ( "tv", "tv.cc", "PPPP.cc:PPPP.json" )',
+check ( 'template_match
+              ( "tv", "tv.cc", "PPPP.cc" )',
 	 ["PPPP" => "tv"] );
-check ( 'filename_match
+check ( 'template_match
               ( "tv", "00-001-tv.in",
-	        "XXXX-YYYY-PPPP.in:" .
-		"XXXX-YYYY-PPPP.out.json" )',
+	        "XXXX-YYYY-PPPP.in" )',
 	 ["XXXX" => "00","YYYY" => "001",
 	                 "PPPP" => "tv"] );
-check ( 'filename_match // tvxin, NOT tv.in
+check ( 'template_match // tvxin, NOT tv.in
               ( "tv", "00-001-tvxin",
-	        "XXXX-YYYY-PPPP.in:" .
-		"XXXX-YYYY-PPPP.out.json" )',
+	        "XXXX-YYYY-PPPP.in" )',
 	 false );
 
 check ( 'substitute_match ( "XXXX-YYYY-PPPP.in",
