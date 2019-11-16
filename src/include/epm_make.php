@@ -2,9 +2,12 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Nov 15 13:06:50 EST 2019
+// Date:    Fri Nov 15 19:16:28 EST 2019
 
 // Functions used to make files from other files.
+//
+// Note that file names can have -, _, ., /, but no
+// other special characters.
 
 // Given a problem name, a source file name, and a
 // template file name, determine if the template
@@ -20,6 +23,7 @@ function file_name_match
                                        $matches ) )
         return FALSE;
     $temname = $matches[1];
+    $temname = preg_replace ( '/\./', '\\.', $temname );
     $temname = preg_replace
         ( '/PPPP/', $problem, $temname, -1, $count );
     if ( $count == 0 ) return FALSE;
@@ -42,7 +46,6 @@ function file_name_match
 	    ( "/$char{4}/", '(.*)', $temname, 1 );
 	$ids[] = "$char$char$char$char";
     }
-    preg_replace ( '/\./', '\\.', $temname );
     if ( ! preg_match ( "/^$temname\$/", $filename,
                                          $matches ) )
         return FALSE;
@@ -60,6 +63,40 @@ function file_name_match
     }
     $result['PPPP'] = $problem;
     return $result;
+}
+
+// Given a string and substitutions computed by file_
+// name_match, return the string with the substitutions
+// made.
+//
+function string_substitute_match ( $string, $match )
+{
+    foreach ( $match as $key => $value )
+	$string = preg_replace
+	    ( "/$key/", $value, $string );
+    return $string;
+}
+
+// Given an array and substitutions computed by file_
+// name_match, return the array with the substitutions
+// made in the array values that are strings, and
+// recursively in array values that are arrays.
+//
+function substitute_match ( $item, $match )
+{
+    if ( is_string ( $item ) )
+        return string_substitute_match
+	    ( $item, $match );
+    else if ( is_array ( $item ) )
+    {
+        $new_array = [];
+        foreach ( $item as $key => $value )
+	    $new_array[$key] = substitute_match
+	        ( $value, $match );
+	return $new_array;
+    }
+    else
+        return $item;
 }
 
 ?>

@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	walton@acm.org
-// Date:	Fri Nov 15 13:06:38 EST 2019
+// Date:	Fri Nov 15 19:29:38 EST 2019
 
 include ( '../src/include/epm_make.php' );
 
@@ -31,7 +31,23 @@ check ( 'file_name_match
 		"XXXX-YYYY-PPPP.out.json" )',
 	 ["XXXX" => "00","YYYY" => "001",
 	                 "PPPP" => "tv"] );
+check ( 'file_name_match // tvxin, NOT tv.in
+              ( "tv", "00-001-tvxin",
+	        "XXXX-YYYY-PPPP.in:" .
+		"XXXX-YYYY-PPPP.out.json" )',
+	 false );
 
-
-
+check ( 'substitute_match ( "XXXX-YYYY-PPPP.in",
+           ["PPPP" => "tv", "XXXX" => "00",
+	                    "YYYY" => "001"] )',
+	 '00-001-tv.in' );
+check ( 'substitute_match (
+           ["X" => "XXXX/YYYY",
+	    "O" => ["M" => "PPPP99", "N" => 88],
+	    "Z" => "FOOBAT"],
+           ["PPPP" => "tv", "XXXX" => "00",
+	                    "YYYY" => "001"] )',
+	 ["X" => "00/001",
+	  "O" => ["M" => "tv99","N" => 88],
+	  "Z" => "FOOBAT"] );
 ?>
