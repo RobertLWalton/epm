@@ -50,4 +50,15 @@ check ( 'substitute_match (
 	 ["X" => "00/001",
 	  "O" => ["M" => "tv99","N" => 88],
 	  "Z" => "FOOBAT"] );
+
+$epm_data = getcwd();
+
+find_templates_options_and_requires
+    ( ["../src/template"], 'cc', NULL, 'cc',
+      $templates, $options, $requires, $errors );
+echo 'TEMPLATES: '; print_r ( $templates ); echo "\n";
+echo 'OPTIONS: '; print_r ( $options ); echo "\n";
+echo 'REQUIRES: '; print_r ( $requires ); echo "\n";
+echo 'ERRORS: '; print_r ( $errors ); echo "\n";
+
 ?>

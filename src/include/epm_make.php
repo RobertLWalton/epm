@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Nov 16 19:29:29 EST 2019
+// Date:    Sun Nov 17 05:14:48 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -164,8 +164,15 @@ function find_templates_options_and_requires
 	}
 	while ( $fname = readdir ( $desc ) )
 	{
-	    if ( preg_match ( '/\.([^.]*)$/', $fname, $matches ) )
-	        $ext = $matches[1];
+	    if ( preg_match ( '/^\.+$/', $fname ) )
+	        continue;
+
+	    if ( preg_match ( '/^(.*)\.([^.]*)$/',
+	                      $fname, $matches ) )
+	    {
+		$template = $matches[1];
+	        $ext = $matches[2];
+	    }
 	    else
 	        $ext = "";
 
@@ -183,7 +190,7 @@ function find_templates_options_and_requires
 	        continue;
 
 	    if ( ! preg_match
-	           ( '/^([^:]+):([^:]+):',
+	           ( '/^([^:]+):([^:]+):/',
 		     $fname, $matches ) )
 	    {
 	        $errors[] = "bad template or option"
@@ -191,24 +198,24 @@ function find_templates_options_and_requires
 	        continue;
 	    }
 
-	    $src = $matches[0];
-	    $des = $matches[1];
+	    $src = $matches[1];
+	    $des = $matches[2];
 
 	    if ( ! is_null ( $src_ext )
 		 &&
 		 ( $src_ext == "" ?
-		   preg_match ( '/\./', $fname ) :
+		   preg_match ( '/\./', $src ) :
 		   ! preg_match
 			 ( "/\\.$src_ext\$/",
-			   $fname ) ) )
+			   $src ) ) )
 		continue;
 	    if ( ! is_null ( $des_ext )
 		 &&
 		 ( $des_ext == "" ?
-		   preg_match ( '/\./', $fname ) :
+		   preg_match ( '/\./', $des ) :
 		   ! preg_match
 			 ( "/\\.$des_ext\$/",
-			   $fname ) ) )
+			   $des ) ) )
 		continue;
 
 	    $file = file_get_contents
@@ -226,7 +233,7 @@ function find_templates_options_and_requires
 		continue;
 	    }
 
-	    if ( $ext == '.tmpl' )
+	    if ( $ext == 'tmpl' )
 	        $templates[] =
 		    ["$src", "$dir/$fname", $json];
 	    else
@@ -235,7 +242,7 @@ function find_templates_options_and_requires
 		    $options[$template] = $json;
 	    }
 	}
-	close ( $desc );
+	closedir ( $desc );
     }
 }
 
