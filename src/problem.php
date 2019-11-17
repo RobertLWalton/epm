@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 19:28:11 EST 2019
+    // Date:	Sun Nov 17 02:05:49 EST 2019
 
     // Selects user problem.
     //
@@ -18,6 +18,9 @@
     if ( ! isset ( $_SESSION['epm_data'] ) )
         exit ( 'SYSTEM ERROR: epm_data not set' );
     $data = $_SESSION['epm_data'];
+    $uploaded_file = NULL;
+
+    include 'include/debug_info.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -66,9 +69,20 @@
     //
     $problem = NULL;
     $problem_error = NULL;
-    if ( isset ( $_REQUEST['problem'] ) )
+    $new_problem = false;
+    if ( isset ( $_POST['goto_problem'] ) )
     {
-        $problem = trim ( $_REQUEST['problem'] );
+	// new_problem takes precedence over problem,
+	// as the latter is always set to the current
+	// selected value.
+	//
+        $problem = trim ( $_REQUEST['new_problem'] );
+	if ( $problem == "" )
+	    $problem =
+	        trim ( $_REQUEST['problem'] );
+	else
+	    $new_problem = true;
+
 	if ( $problem == '' )
 	    $problem = NULL;
 	elseif ( ! preg_match ( '/^[-_A-Za-z0-9]+$/',
@@ -90,8 +104,7 @@
 	$problem_dir =
 	    "$data/users/user$userid/$problem";
 
-	if (    $method == 'POST'
-	     && isset ( $_POST['problem'] ) )
+	if ( $new_problem )
 	{
 	    if ( file_exists ( $problem_dir ) )
 	    {
@@ -123,12 +136,25 @@
     elseif ( isset ( $problem ) )
 	$_SESSION['problem'] = $problem;
 
+    if ( isset ( $_POST['upload'] ) )
+    {
+	$f = basename
+	    ($_FILES['uploaded_file']['name']);
+        $f = "$data/uploads/$f";
+	if ( move_uploaded_file
+	         ( $_FILES['uploaded_file']['tmp_name'],
+	           $f ) )
+	    $uploaded_file = $f;
+    }
+
+
 ?>
 
 
 <html>
 <body>
 
+<div>
 <?php 
 
     if ( isset ( $problem_error ) )
@@ -142,7 +168,9 @@
     echo "<form action='problem.php' method='POST'>\n";
     if ( count ( $problems ) > 0 )
     {
-	echo "<input type='submit' value='Go To Problem:'>\n";
+	echo "<input type='submit'" .
+	     " name='goto_problem'" .
+	     " value='Go To Problem:'>\n";
         echo "<select name='problem'>\n";
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
@@ -152,7 +180,7 @@
     }
     echo <<<EOT
     <label for="problem">Create New Problem:</label>
-    <input type="text" size="32" name="problem"
+    <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name">
     </form>
 
@@ -164,10 +192,21 @@
 	   value="200000">
     <label for="uploaded_file">File to Upload:</label>
     <input type="file" name="uploaded_file">
-    <input type="submit" value="Upload File">
+    <input type="submit" name="upload" value="Upload File">
     </form>
 EOT
 
+?>
+</div>
+
+<?php
+
+    if ( isset ( $uploaded_file ) )
+    {
+        $contents = file_get_contents
+	    ( $uploaded_file );
+        echo "<div><pre>$contents</pre></div>";
+    }
 ?>
 
 </body>

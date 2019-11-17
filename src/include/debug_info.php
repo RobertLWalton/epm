@@ -3,6 +3,7 @@ echo "SESSION: "; print_r ( $_SESSION ); echo "<br><br>";
 echo "REQUEST: "; print_r ( $_REQUEST ); echo "<br><br>";
 echo "POST: "; print_r ( $_POST ); echo "<br><br>";
 echo "GET: "; print_r ( $_GET ); echo "<br><br>";
+echo "FILES: "; print_r ( $_FILES ); echo "<br><br>";
 $__server = [];
 $__server['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'];
 $__server['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
