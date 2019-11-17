@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Nov 16 12:25:29 EST 2019
+// Date:    Sat Nov 16 19:29:29 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -24,33 +24,37 @@
 function template_match
     ( $problem, $filename, $template )
 {
-    // Turn template into a regexp.
+    // Turn template source into a regexp.
     //
-    $template = preg_replace
-        ( '/\./', '\\.', $template );
-    $template = preg_replace
-        ( '/PPPP/', $problem, $template,
+    if ( ! preg_match ( '/^([^:]*):/', $template,
+                                       $matches ) )
+        return NULL;
+    $source = $matches[1];
+    $source = preg_replace
+        ( '/\./', '\\.', $source );
+    $source = preg_replace
+        ( '/PPPP/', $problem, $source,
 	  -1, $PPPP_count );
     $offset = 0;
     $ids = [];
     while ( preg_match
-                ( '/[A-Z]/', $template, $matches,
+                ( '/[A-Z]/', $source, $matches,
                   PREG_OFFSET_CAPTURE, $offset ) )
     {
         $char = $matches[0][0];
 	$offset = $matches[0][1];
 	if ( ! preg_match
-	           ( "/\G$char{4}/", $template, $matches,
+	           ( "/\G$char{4}/", $source, $matches,
 		     0, $offset ) )
 	{
 	    ++ $offset;
 	    continue;
 	}
-	$template = preg_replace
-	    ( "/$char{4}/", '(.*)', $template, 1 );
+	$source = preg_replace
+	    ( "/$char{4}/", '(.*)', $source, 1 );
 	$ids[] = "$char$char$char$char";
     }
-    if ( ! preg_match ( "/^$template\$/", $filename,
+    if ( ! preg_match ( "/^$source\$/", $filename,
                                          $matches ) )
         return NULL;
 
@@ -105,29 +109,42 @@ function substitute_match ( $item, $match )
 }
 
 // Go through the directory list dirs and find each
-// template or option file that has the given
-// source extension and destination extension (either
-// of which may be NULL if missing).  Return in
-// templates and options lists whose elements are
-// [source, filename, json-decode-of-file-contents]
-// in the order that the files were found.
+// template (.tmpl) or option (.optn) file that has the
+// given source extension and destination extension
+// (either of which may be NULL if it not to be tested).
+// Also find each required file that has the given
+// required extension (e.g., .test or no extension).
 //
-// While going through the directory list, find each
-// file with a required file extension and add it to
-// the requires list whose elements are just file names.
+// List the found template files in the templates
+// list, each element of which has the form:
 //
-// The extension arguments, if not missing, are
-// regular expressions.  E.g., '(in|test|)' or just
-// 'cc'.  Required file extensions may NOT include
-// tmpl or optn.
+//   [template, filename, json-decode-of-file-contents]
 //
-// All directory and file names are relative to
+// Here `template' is the part of the last component
+// of the file name minus the extension (.tmpl or
+// .optn).  This list is in the order that the files
+// were found.
+//
+// The options map maps option file templates to the
+// json decode of the file contents, preferring the
+// first file found with a given template.
+//
+// The requires map maps the last component of file
+// names to the full name (relative to epm_data) of
+// the first file found with that last component.
+//
+// The extension arguments, if not NULL, are regular
+// expressions.  E.g., '(in|test|)' or just 'cc'.
+// Required file extensions may NOT include tmpl or
+// optn.
+//
+// All directory and full file names are relative to
 // epm_data.
 //
 // Any errors cause error messages to be appended to
 // the errors list.
 //
-function file_templates_options_and_requires
+function find_templates_options_and_requires
     ( $dirs, $src_ext, $des_ext, $req_ext,
       & $templates, & $options, & $requires, & $errors )
 {
@@ -156,7 +173,8 @@ function file_templates_options_and_requires
 	         &&
 	         preg_match ( "/^$req_ext$/", $ext ) )
 	    {
-	        $requires[] = "$dir/$fname";
+		if ( ! isset ( $requires[$fname] ) )
+		    $requires[$fname] = "$dir/$fname";
 		continue;
 	    }
 
@@ -213,8 +231,8 @@ function file_templates_options_and_requires
 		    ["$src", "$dir/$fname", $json];
 	    else
 	    {
-	        $options[] =
-		    ["$src", "$dir/$fname", $json];
+	        if ( ! isset ( $options[$template] ) )
+		    $options[$template] = $json;
 	    }
 	}
 	close ( $desc );
@@ -234,19 +252,23 @@ function file_templates_options_and_requires
 //
 // If there are several suitable template files, prefer
 // first ones with the largest number of REQUIRES files,
-// and second the one in the earliest directory in the
-// templates list.  If there are several suitable
-// options files, use the first one in the options list.
+// and second ones earliest in the templates list.  Use
+// the options map options file with the same template,
+// if it exists.
 //
 // Any errors cause error messages to be appended to
 // the errors list.
 //
-// If no file is found, return NULL.
+// If no template file is found, return NULL.
 //
 function find_make_control
 	( $problem, $upload,
 	  $templates, $options, $requires, & $errors )
 {
+    $best_json = NULL;
+    $best_match = NULL;
+    $best_template = NULL;
+    $best_requires = -1;
     foreach ( $templates as $element )
     {
         $template = $element[0];
@@ -274,8 +296,32 @@ function find_make_control
 	    continue;
 	}
 
-	// TBD
+	$OK = true;
+	foreach ( $reqval as $required )
+	{
+	    if ( $required == $problem ) continue;
+	    if ( ! isset ( $requires[$required] ) )
+	    {
+	        $OK = false;
+		break;
+	    }
+	}
+	if ( ! $OK ) continue;
+
+	if ( $best_requires >= count ( $reqval ) )
+	    continue;
+
+	$best_json = $control;
+	$best_template = $template;
+	$best_match = $match;
+	$best_requires = count ( $reqval );
     }
+    foreach ( $options[$best_template]
+              as $key => $value )
+        $best_json[$key] = substitute_match
+	    ( $value, $best_match );
+
+    return $best_json;
 }
 
 ?>
