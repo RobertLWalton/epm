@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 17 02:05:49 EST 2019
+    // Date:	Sun Nov 17 09:07:51 EST 2019
 
     // Selects user problem.
     //
@@ -154,7 +154,7 @@
 <html>
 <body>
 
-<div>
+<div style="background-color:#c0ffff;width:30%;float:left">
 <?php 
 
     if ( isset ( $problem_error ) )
@@ -205,7 +205,9 @@ EOT
     {
         $contents = file_get_contents
 	    ( $uploaded_file );
-        echo "<div><pre>$contents</pre></div>";
+        echo "<div style='background-color:#ffffc0;" .
+	     "width:70%;height:60%;float:left;overflow:scroll'>" .
+	     "<pre>$contents</pre></div>";
     }
 ?>
 
