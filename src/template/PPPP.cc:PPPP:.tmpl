@@ -1,9 +1,9 @@
 {
 
-"COMMANDS": ["g++ AAAA -o PPPP PPPP.cc BBBB > PPPP.cout 2> PPPP.cerr"],
+"COMMANDS": ["g++ AAAA -o PPPP PPPP.cc BBBB > PPPP.out 2> PPPP.err"],
 "REQUIRES":["PPPP.cc"],
-"KEEP":    ["PPPP","PPPP.cout","PPPP.cerr"],
-"CHECKS":  ["cmp -s PPPP.cerr /dev/null"],
+"KEEP":    ["PPPP","PPPP.out","PPPP.err"],
+"CHECKS":  ["cmp -s PPPP.err /dev/null"],
 "OPTIONS": {
     "AAAA": [["-std=gnu++11", ""],
 	     ["-Og", "-O3", ""],

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Nov 18 05:24:10 EST 2019
+// Date:    Mon Nov 18 12:32:03 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -370,6 +370,72 @@ function cleanup_working ( $dir )
 	return true;
 }
 
+// Link files from the required list into the working
+// working directory, using the requires map generated
+// by find_templates_options_and_requires.  Ignore and
+// do not line a required list file with name equal to
+// the name of the uploaded file, if that argument is
+// not NULL.  The required list is generally taken from
+// the REQUIRES member of a make control.
+//
+// Errors cause error messages to be appended to errors.
+//
+function link_requires
+	( $dir, $uploaded, $required, $requires,
+	  $errors )
+{
+    global $epm_data;
 
+    foreach ( $required as $fname )
+    {
+        if ( $fname == $uploaded ) continue;
+	if ( ! isset ( $requires[$fname] ) )
+	{
+	    $errors[] = "$fname not in requires list";
+	    continue;
+	}
+	$rname = "$epm_data/$requires[$fname]";
+	if ( ! is_readable ( $rname ) )
+	{
+	    $errors[] = "$rname is not readable";
+	    continue;
+	}
+	if ( ! preg_match ( '/\./', $fname )
+	     &&
+	     ! is_executable ( $rname ) )
+	{
+	    $errors[] = "$rname is not executable";
+	    continue;
+	}
+	$link = "$epm_data/$dir/$fname";
+	if ( ! symlink ( $rname, "$link" ) )
+	{
+	    $errors[] = "cannot link $rname to $link";
+	    continue;
+	}
+    }
+}
+
+// Return COMMANDS list from control with OPTIONS
+// inserted.
+//
+function get_commands ( $control )
+{
+    $commands = $control['COMMANDS'];
+    $options = $control['OPTIONS'];
+    $match = [];
+    foreach ( $options as $key => $value )
+    {
+        $opts = "";
+	foreach ( $value as $item )
+	{
+	    $opt = $item[0];
+	    if ( $opt == "" ) continue;
+	    $opts = "$opts $opt";
+	}
+	$match[$key] = trim ( $opts );
+    }
+    return substitute_match ( $commands, $match );
+}
 
 ?>
