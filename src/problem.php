@@ -160,12 +160,17 @@
     if ( isset ( $problem_error ) )
         echo "<mark>ERROR:" .
 	     " $problem_error</mark><br><br>\n";
-    echo "User: $email&nbsp;&nbsp;&nbsp;&nbsp;";
-    echo "Current Problem: " . ( isset ( $problem ) ?
+    $current_problem = ( isset ( $problem ) ?
                                  $problem :
 			         "none selected" );
-    echo "<br><br>\n";
-    echo "<form action='problem.php' method='POST'>\n";
+    echo <<<EOT
+    <form action='user.php' method='GET'>
+    User: <input type='submit' value='$email'>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    Current Problem:&nbsp;$current_problem
+    </form>
+    <form action='problem.php' method='POST'>
+EOT;
     if ( count ( $problems ) > 0 )
     {
 	echo "<input type='submit'" .
@@ -192,9 +197,10 @@
 	   value="200000">
     <label for="uploaded_file">File to Upload:</label>
     <input type="file" name="uploaded_file">
-    <input type="submit" name="upload" value="Upload File">
+    <input type="submit" name="upload"
+           value="Upload File">
     </form>
-EOT
+EOT;
 
 ?>
 </div>

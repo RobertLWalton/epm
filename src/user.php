@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 13:52:15 EST 2019
+    // Date:	Mon Nov 18 17:11:36 EST 2019
 
     // Displays files:
     //
@@ -17,7 +17,7 @@
     clearstatcache();
     if ( ! isset ( $_SESSION['epm_data'] ) )
         exit ( 'SYSTEM ERROR: epm_data not set' );
-    $data = $_SESSION['epm_data'];
+    $epm_data = $_SESSION['epm_data'];
 
     include 'include/debug_info.php';
 
@@ -30,7 +30,8 @@
 	header ( "Location: login.php" );
 	exit;
     }
-    if ( ! is_writable ( "$data/admin/email_index" ) )
+    if ( ! is_writable
+               ( "$epm_data/admin/email_index" ) )
     {
 	header ( "Location: first_user.php" );
 	exit;
@@ -51,10 +52,10 @@
     //
     $emails = [];
 
-    $desc = opendir ( "$data/admin/email_index" );
+    $desc = opendir ( "$epm_data/admin/email_index" );
     if ( ! $desc )
         exit ( 'SYSTEM ERROR: cannot open' .
-	        " $data/admin/email_index" );
+	        " $epm_data/admin/email_index" );
     while ( true )
     {
 	$value = readdir ( $desc );
@@ -66,7 +67,7 @@
 	if ( preg_match ( '/^\.\.*$/', $value ) )
 	    continue;
 	$email_file =
-	    "$data/admin/email_index/$value";
+	    "$epm_data/admin/email_index/$value";
 	$i = file_get_contents ( $email_file );
 	if ( ! preg_match
 		   ( '/^[1-9][0-9]*$/', $i ) )
@@ -79,7 +80,7 @@
 	    $emails[] = $value;
     }
 
-    $user_file = "$data/admin/user{$userid}.json";
+    $user_file = "$epm_data/admin/user{$userid}.json";
     $user = file_get_contents ( $user_file );
     if ( ! $user )
 	exit ( 'SYSTEM ERROR: cannot read ' .

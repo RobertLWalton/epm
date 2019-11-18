@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 13:51:46 EST 2019
+    // Date:	Mon Nov 18 17:08:47 EST 2019
 
     // Edits files:
     //
@@ -30,14 +30,15 @@
     clearstatcache();
     if ( ! isset ( $_SESSION['epm_data'] ) )
         exit ( 'SYSTEM ERROR: epm_data not set' );
-    $data = $_SESSION['epm_data'];
+    $epm_data = $_SESSION['epm_data'];
 
     if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
 	header ( "Location: login.php" );
 	exit;
     }
-    if ( ! is_writable ( "$data/admin/email_index" ) )
+    if ( ! is_writable
+               ( "$epm_data/admin/email_index" ) )
     {
 	header ( "Location: first_user.php" );
 	exit;
@@ -59,7 +60,8 @@
     $max_id = 0;
     if ( $userid != 'NEW' )
     {
-        $desc = opendir ( "$data/admin/email_index" );
+        $desc = opendir
+	    ( "$epm_data/admin/email_index" );
 	if ( $desc ) while ( true )
 	{
 	    $value = readdir ( $desc );
@@ -71,7 +73,7 @@
 	    if ( preg_match ( '/^\.\.*$/', $value ) )
 		continue;
 	    $email_file =
-	        "$data/admin/email_index/$value";
+	        "$epm_data/admin/email_index/$value";
 	    $i = file_get_contents ( $email_file );
 	    if ( ! preg_match
 	               ( '/^[1-9][0-9]*$/', $i ) )
@@ -97,7 +99,8 @@
     if ( $userid != 'NEW' )
     {
 	$sysalert = NULL;
-	$user_file = "$data/admin/user{$userid}.json";
+	$user_file =
+	    "$epm_data/admin/user{$userid}.json";
 	$user = file_get_contents ( $user_file );
 	if ( ! $user )
 	    $sysalert = "cannot read $user_file";
@@ -174,8 +177,9 @@
 	return $value;
     }
 
-    // Check that $value can be legally added as an email.
-    // Return '' if its not legal OR if its empty.
+    // Check that $value can be legally added as an
+    // email.  Return '' if its not legal OR if its
+    // empty.
     //
     function sanitize_email ( $value )
     {
@@ -293,7 +297,7 @@
 	}
     }
 
-    $h = "$data/admin/email_index";
+    $h = "$epm_data/admin/email_index";
     foreach ( $add as $e )
     {
         if ( is_readable ( "$h/$e" ) )
@@ -309,8 +313,9 @@
 	if ( $userid == 'NEW' )
 	{
 	    $userid = $max_id + 1;
-	    while ( ! mkdir ( "$data/users/user$userid",
-	                      0770 ) )
+	    while ( ! mkdir ( $epm_data .
+	                      "/users/user$userid",
+	                      0750 ) )
 	        ++ $userid;
 	    $_SESSION['userid'] = $userid;
 	}
@@ -322,7 +327,7 @@
 	$user_json = json_encode
 	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
-	    ( "$data/admin/user{$userid}.json",
+	    ( "$epm_data/admin/user{$userid}.json",
 	       $user_json );
 
 	foreach ( $add as $e )
@@ -370,10 +375,13 @@
     for ( $i = 0; $i < $max_emails; ++ $i )
     {
         if ( ! isset ( $user_emails[$i] ) )
+	{
 	    echo '<li><input name="email' . $i .
 	         '" type="text" value=""' .
 		 ' size="40" placeholder=' .
 		 '"Another Email Address"a</li>';
+	    break;
+	}
 	elseif ( $user_emails[$i] == $email )
 	    echo "<li>$email</li>";
 	else

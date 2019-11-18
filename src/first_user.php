@@ -2,7 +2,7 @@
 
     // File:	first_user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 17:59:07 EST 2019
+    // Date:	Mon Nov 18 17:03:58 EST 2019
 
     // Asks user if they are the first user.  If yes
     // makes the following directories and then goes
@@ -17,11 +17,12 @@
 
     if ( ! isset ( $_SESSION['epm_data'] ) )
         exit ( 'SYSTEM ERROR: epm_data not set' );
-    $data = $_SESSION['epm_data'];
+    $epm_data = $_SESSION['epm_data'];
 
-    if (    is_writable ( "$data/admin" )
-         && is_writable ( "$data/admin/email_index" )
-         && is_writable ( "$data/users" ) )
+    if (    is_writable ( "$epm_data/admin" )
+         && is_writable ( $epm_data .
+	                  "/admin/email_index" )
+         && is_writable ( "$epm_data/users" ) )
     {
         header ( 'Location: user.php' );
 	exit;
@@ -36,17 +37,18 @@
 	    $is_administrator =
 	        $_POST['is_administrator'];
 	    if (    $is_administrator == 'yes'
-	         && mkdir ( "$data/admin", 0770 )
-		 && mkdir ( "$data/admin/email_index",
-		            0770 )
-		 && mkdir ( "$data/users", 0770 ) )
+	         && mkdir ( "$epm_data/admin", 0750 )
+		 && mkdir ( $epm_data .
+		            "/admin/email_index",
+		            0750 )
+		 && mkdir ( "$epm_data/users", 0750 ) )
 	    {
 		header
 		    ( 'Location: user_edit.php' );
 		exit;
 	    }
 	    exit ( 'SYSTEM ERROR: admin directories' .
-	            " in $data not set up;" .
+	            " in $epm_data not set up;" .
 		    ' contact administrator' );
 	}
 	exit ( 'UNACCEPTABLE POST' );

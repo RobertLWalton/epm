@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 19:28:53 EST 2019
+    // Date:	Mon Nov 18 17:05:50 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -58,7 +58,7 @@
 	exit;
     }
 
-    $data = $_SESSION['epm_data'];
+    $epm_data = $_SESSION['epm_data'];
     $confirmation_interval =
         $_SESSION['epm_confirmation_interval'];
 
@@ -146,8 +146,9 @@
 	    }
 	    else
 	    {
-		$email_file =
-		    "$data/admin/email_index/$email";
+		$email_file = $epm_data
+		            . '/admin/email_index/'
+			    . $email;
 		if ( is_readable ( $email_file ) )
 		{
 		    $userid = file_get_contents
@@ -164,9 +165,11 @@
     }
 
     if (    isset ( $log_confirmation_time )
-         && is_writable ( "$data/admin/login.log" ) )
+         && is_writable
+	        ( "$epm_data/admin/login.log" ) )
     {
-        $desc = fopen ( "$data/admin/login.log", 'a' );
+        $desc = fopen
+	    ( "$epm_data/admin/login.log", 'a' );
 	if ( $desc )
 	{
 	    fputcsv
@@ -182,7 +185,8 @@
     $user = NULL;
     if ( $userid != 'NEW' )
     {
-        $user_file = "$data/admin/user{$userid}.json";
+        $user_file =
+	    "$epm_data/admin/user{$userid}.json";
 	if ( is_writable ( $user_file ) )
 	{
 	    $user_json = file_get_contents
@@ -206,7 +210,7 @@
 	$user_json = json_encode
 	    ( $user, JSON_PRETTY_PRINT );
 	file_put_contents
-	    ( "$data/admin/user{$userid}.json",
+	    ( "$epm_data/admin/user{$userid}.json",
 	       $user_json );
     }
 
