@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Nov 17 05:14:48 EST 2019
+// Date:    Mon Nov 18 05:24:10 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -330,5 +330,46 @@ function find_make_control
 
     return $best_json;
 }
+
+// Clean up a working directory.  If it has a PID file,
+// kill the PID.  Then if it exists, unlink its contents
+// and the directory itself, orphaning the directory.
+// Then create a new directory under the same name.
+//
+// Directory name is relative to epm_data.
+//
+// Returns true on success and false on failure, and in
+// the latter case issues a sysalert.
+//
+function cleanup_working ( $dir )
+{
+    global $epm_data;
+    $dir = "$epm_data/$dir";
+
+    if ( file_exists ( "$dir/PID" ) )
+    {
+        $PID = file_get_contents ( "$dir/PID" );
+	if ( $PID )
+	{
+	    exec ( "kill -1 $PID" );
+	    usleep ( 500000 );
+	    exec ( "kill -9 $PID" );
+	}
+    }
+
+    if ( file_exists ( $dir ) )
+        exec ( "rm -rf $dir" );
+
+    if ( ! mkdir ( $dir ) )
+    {
+	$sysalert = "could not make $dir";
+	include 'sysalert.php';
+	return false;
+    }
+    else
+	return true;
+}
+
+
 
 ?>

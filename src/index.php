@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 12 19:01:00 EST 2019
+    // Date:	Mon Nov 18 07:07:41 EST 2019
 
     // To set up a epm instance you need the following
     // directories:
@@ -44,14 +44,31 @@
     // The directory containing the page sources
     // MUST be linked to R/W/src.
 
-    $script_name = $_SERVER['SCRIPT_NAME'];
+    $script_name = $_SERVER['SCRIPT_FILENAME'];
+    $script_dir = dirname ( $script_name );
 
-    if ( basename ( $script_name ) == 'src' )
+    if ( basename ( $script_dir ) == 'src' )
     {
         // This is the unedited index.html and
 	// we should go to the edited version.
 
-	header ( "Location: ../index.php" );
+	$root = $_SERVER['DOCUMENT_ROOT'];
+	$host = $_SERVER['HTTP_HOST'];
+	$n = strlen ( $root );
+	$check = substr ( $script_dir, 0, $n );
+	if ( $check != $root )
+	{
+	    echo ( "SCRIPT_NAME: $script_name<br>\n" );
+	    echo "SCRIPT_DIR: $script_dir<br>\n";
+	    echo "ROOT: $root<br>\n";
+	    echo "HOST: $host<br>\n";
+	    echo "N: $n<br>\n";
+	    echo "CHECK: $check<br>\n";
+	    exit ( 'WRONG PAGE; RETYPE' );
+	}
+	$tail = substr ( $script_dir, $n );
+	$tail = dirname ( $tail );
+	header ( "Location: http://$host/$tail" );
 	exit;
     }
 

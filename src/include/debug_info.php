@@ -12,5 +12,6 @@ $__server['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
 $__server['PHP_SELF'] = $_SERVER['PHP_SELF'];
 $__server['SCRIPT_NAME'] = $_SERVER['SCRIPT_NAME'];
 $__server['SCRIPT_FILENAME'] = $_SERVER['SCRIPT_FILENAME'];
+$__server['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_ROOT'];
 echo "SERVER: "; print_r ( $__server ); echo "<br><br>";
 ?>

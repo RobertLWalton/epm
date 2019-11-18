@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	walton@acm.org
-// Date:	Sat Nov 16 19:29:06 EST 2019
+// Date:	Mon Nov 18 07:09:29 EST 2019
 
 include ( '../src/include/epm_make.php' );
 
@@ -56,9 +56,9 @@ $epm_data = getcwd();
 find_templates_options_and_requires
     ( ["../src/template"], 'cc', NULL, 'cc',
       $templates, $options, $requires, $errors );
-echo 'TEMPLATES: '; print_r ( $templates ); echo "\n";
-echo 'OPTIONS: '; print_r ( $options ); echo "\n";
-echo 'REQUIRES: '; print_r ( $requires ); echo "\n";
-echo 'ERRORS: '; print_r ( $errors ); echo "\n";
+// echo 'TEMPLATES: '; print_r ( $templates ); echo "\n";
+// echo 'OPTIONS: '; print_r ( $options ); echo "\n";
+// echo 'REQUIRES: '; print_r ( $requires ); echo "\n";
+// echo 'ERRORS: '; print_r ( $errors ); echo "\n";
 
 ?>

@@ -1,3 +1,3 @@
 <?php
-echo "SYSALERT: $sysalert";
+echo "SYSALERT: $sysalert\n";
 ?>
