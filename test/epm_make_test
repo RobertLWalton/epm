@@ -3,13 +3,15 @@
 
 // File:	emp_make_test
 // Author:	walton@acm.org
-// Date:	Tue Nov 19 02:00:32 EST 2019
-
-if ( ! file_exists ( 'data' ) )
-    mkdir ( 'data' );
+// Date:	Tue Nov 19 06:24:21 EST 2019
 
 $epm_data = getcwd() . '/data';
 echo "epm_data set to $epm_data\n";
+
+$_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
+
+if ( ! file_exists ( './data/users/user1/prob' ) )
+    mkdir ( './data/users/user1/prob', 0750, true );
 
 include ( '../src/include/epm_make.php' );
 
