@@ -2,12 +2,58 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Nov 18 12:32:03 EST 2019
+// Date:    Tue Nov 19 02:01:07 EST 2019
 
 // Functions used to make files from other files.
 //
 // Note that file names can have -, _, ., /, but no
-// other special characters.
+// other special characters.  Of course uploaded
+// files and components cannot have /.
+
+if ( ! isset ( $epm_data ) )
+    exit ( 'SYSTEM ERROR: $epm_data not set' );
+if ( ! isset ( $_SESSION['userid'] ) )
+    exit ( 'SYSTEM ERROR: session userid not set' );
+if ( ! isset ( $_SESSION['problem'] ) )
+    exit ( 'SYSTEM ERROR: sesssion has no current' .
+           ' problem' );
+
+$userid = $_SESSION['userid'];
+$problem = $_SESSION['problem'];
+
+if ( ! isset ( $_SESSION['epm_admin_params'] ) )
+    include 'get_params.php';
+
+// Administrative Parameters:
+//
+$params = $_SESSION['epm_admin_params'];
+if ( isset ( $params['upload_require_ext'] ) )
+    $upload_require_ext =
+        $params['upload_require_ext'];
+else
+    $upload_require_ext = [
+	"in" => "(test|ftest)"];
+
+if ( isset ( $params['upload_maxsize'] ) )
+    $upload_maxsize = $params['upload_maxsize'];
+else
+    $upload_maxsize = 2000000;
+
+// User Parameters:
+//
+if ( ! isset ( $_SESSION['epm_user_params'] ) )
+    exit ( 'SYSTEM ERROR: epm_user_params not set' );
+    // Should be set if epm_admin_params set.
+
+$params = $_SESSION['epm_user_params'];
+if ( isset ( $params['make_dirs'] ) )
+    $make_dirs = $params['make_dirs'];
+else
+    $make_dirs = ["users/user$userid/."];
+
+if ( isset ( $params['upload_maxsize'] ) )
+    $upload_maxsize = $params['upload_maxsize'];
+                   
 
 // Given a problem name, a source file name, and a
 // template source name, determine if the template
@@ -341,7 +387,10 @@ function find_make_control
 // Returns true on success and false on failure, and in
 // the latter case issues a sysalert.
 //
-function cleanup_working ( $dir )
+// If directory cannot be cleaned up, issues system
+// alert and adds to errors.
+//
+function cleanup_working ( $dir, & $errors )
 {
     global $epm_data;
     $dir = "$epm_data/$dir";
@@ -364,10 +413,8 @@ function cleanup_working ( $dir )
     {
 	$sysalert = "could not make $dir";
 	include 'sysalert.php';
-	return false;
+	$errors[] = "SYSTEM ERROR: could not make $dir";
     }
-    else
-	return true;
 }
 
 // Link files from the required list into the working
@@ -382,7 +429,7 @@ function cleanup_working ( $dir )
 //
 function link_requires
 	( $dir, $uploaded, $required, $requires,
-	  $errors )
+	  & $errors )
 {
     global $epm_data;
 
@@ -436,6 +483,139 @@ function get_commands ( $control )
 	$match[$key] = trim ( $opts );
     }
     return substitute_match ( $commands, $match );
+}
+
+// Process an uploaded file.  Errors append error
+// message to $errors.  Output from commands
+// executed is appended to $output (this does not
+// include writes to standard error by bash). 
+//
+function process_upload
+	( $upload, & $output, & $errors )
+{
+    $errors_size = count ( $errors );
+    if ( ! isset ( $_FILES[$upload] ) )
+    {
+        $errors[] =
+	    "SYSTEM ERROR: \$_FILES['$upload'] not set";
+	return;
+    }
+    $fname = $_FILES[$upload]['name'];
+    if ( ! preg_match ( '/^[-_.a-zA-Z0-9]*$/',
+                        $fname ) )
+    {
+        $errors[] =
+	    "uploaded file $fname has character" .
+	    " other than letter, digit, ., -, or _";
+	return;
+    }
+    if ( ! preg_match ( '/\.([^.]+)$/', $fname,
+                                        $matches ) )
+    {
+        $errors[] =
+	    "uploaded file $fname has no extension";
+	return;
+    }
+    $ext = $matches[1];
+
+    $ferror = $_FILES[$upload]['error'];
+    if ( $ferror != 0 )
+    {
+        switch ( $ferror )
+	{
+	    case UPLOAD_ERR_INI_SIZE:
+	    case UPLOAD_ERR_FORM_SIZE:
+	        $errors[] = "$fname too large";
+		break;
+	    case UPLOAD_ERR_PARTIAL:
+	    case UPLOAD_ERR_NO_FILE:
+	        $errors[] = "$fname upload failed;"
+		          . " try again";
+		break;
+	    default:
+	        $errors[] = "SYSTEM ERROR uploading"
+		          . " $fname, upload error"
+			  . " code $ferror";
+	}
+	return;
+    }
+
+    $fsize = $_FILES[$upload]['size'];
+    if ( $fsize > $upload_maxsize )
+    {
+        $errors[] =
+	    "uploaded file $fname to large;" .
+	    " your limit is $maxsize";
+	return;
+    }
+
+    $req_ext = NULL;
+    if ( isset ( $upload_require_ext[$ext] ) )
+        $req_ext = $upload_require_ext[$ext];
+
+    find_templates_options_and_requires
+	( $make_dirs, $ext, NULL, $req_ext,
+	  $templates, $options, $requires, $errors );
+
+    if ( count ( $errors ) > $errors_size ) return;
+
+    $control = find_make_control
+	( $problem, $fname,
+	  $templates, $options, $requires, $errors );
+
+    if ( count ( $errors ) > $errors_size ) return;
+    if ( ! $control )
+    {
+        $errors[] =
+	    "cannot upload $fname, because it" .
+	    " does not have legal extension" .
+	    " or file name pattern";
+	return;
+    }
+
+    $work = "users/user$userid/work";
+    cleanup_working ( $work, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
+    $required = $control['REQUIRES'];
+    link_requires
+	( $work, $fname, $required, $requires,
+	  $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
+    if ( file_exists ( $work/$fname ) )
+    {
+        $errors[] =
+	    "SYSTEM_ERROR: uploaded file is $fname" .
+	    " but $work/$fname already exists";
+	return;
+    }
+
+    $commands = get_commands ( $control );
+
+    $ftmp_name = $_FILES[$upload]['tmp_name'];
+
+    if ( ! move_uploaded_file
+               ( $ftmp_name, $work/$fname ) )
+    {
+        $errors[] =
+	    "SYSTEM_ERROR: failed to move $ftmp_name" .
+	    " (alias for uploaded $fname)" .
+	    " to $work/$fname";
+	return;
+    }
+
+    foreach ( $commands as $command )
+    {
+        exec ( $command, $output, $ret );
+	if ( $ret != 0 )
+	{
+	    $errors[] =
+		"error code $ret returned upon" .
+		" executing $command";
+	    return;
+	}
+    }
 }
 
 ?>

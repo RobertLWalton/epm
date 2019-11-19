@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 17 09:07:51 EST 2019
+    // Date:	Tue Nov 19 02:01:37 EST 2019
 
     // Selects user problem.
     //
@@ -194,7 +194,7 @@ EOT;
     <form enctype="multipart/form-data"
           action="problem.php" method="post">
     <input type="hidden" name="MAX_FILE_SIZE"
-	   value="200000">
+	   value="2000000">
     <label for="uploaded_file">File to Upload:</label>
     <input type="file" name="uploaded_file">
     <input type="submit" name="upload"

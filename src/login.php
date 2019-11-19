@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 18 17:05:50 EST 2019
+    // Date:	Tue Nov 19 02:01:50 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -54,7 +54,7 @@
 	// reuse it to login again and start another
 	// session.  Go to edited version of index.php.
 	//
-        header ( 'Location: ../index.php' );
+        header ( 'Location: index.php' );
 	exit;
     }
 
