@@ -1,9 +1,11 @@
 {
 
 "COMMANDS": ["g++ AAAA -o PPPP PPPP.cc BBBB > PPPP.out 2> PPPP.err"],
-"REQUIRES":["PPPP.cc"],
-"KEEP":    ["PPPP","PPPP.out","PPPP.err"],
-"CHECKS":  ["cmp -s PPPP.err /dev/null"],
+"LOCAL-REQUIRES":["PPPP.cc"],
+"KEEP":    ["PPPP"],
+"SHOW":    ["PPPP.err","PPPP.out"],
+"CHECKS":  ["cmp -s PPPP.err /dev/null",
+            "cmp -s PPPP.out /dev/null"],
 "OPTIONS": {
     "AAAA": [["-std=gnu++11", ""],
 	     ["-Og", "-O3", ""],

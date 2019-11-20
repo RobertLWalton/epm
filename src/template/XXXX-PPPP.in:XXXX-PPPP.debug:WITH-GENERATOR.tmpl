@@ -1,7 +1,8 @@
 {
 
-"COMMANDS": ["epm_sandbox SSSS PPPP AAAA < XXXX-PPPP.in > XXXX-PPPP.debug 2> XXXX-PPPP.err"]
+"COMMANDS": ["generate_PPP < XXXX-PPPP.in | epm_sandbox SSSS PPPP AAAA > XXXX-PPPP.debug 2> XXXX-PPPP.err"]
 "LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP"],
+"REMOTE-REQUIRES":["generate_PPPP"],
 "KEEP":    ["XXXX-PPPP.debug"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.debug"],
 "OPTIONS": {
@@ -12,3 +13,6 @@
 }
 
 }
+
+
+

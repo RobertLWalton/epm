@@ -1,8 +1,13 @@
 {
 
-"COMMANDS": ["sandbox PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"]
-"REQUIRES":["XXXX-PPPP.in", "PPPP"],
-"KEEP":    ["XXXX-PPPP.out","XXXX-PPPP.err"],
-
+"COMMANDS": ["epm_sandbox SSSS PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"]
+"LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP"],
+"KEEP":    ["XXXX-PPPP.out"],
+"SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.out"],
+"OPTIONS": {
+    "SSSS": [["-cputime 30"],
+             ["-space 2g"],
+	     ["-filesize 2m"]]
 }
 
+}

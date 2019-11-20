@@ -1,8 +1,8 @@
+
 {
 
-"COMMANDS": ["monitor_PPPP epm_sandbox SSSS PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"],
-"LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP"],
-"REMOTE-REQUIRES":["monitor_PPPP"],
+"COMMANDS": ["epm_sandbox SSSS python3 PPPP.pyc < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"]
+"LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP.pyc"],
 "KEEP":    ["XXXX-PPPP.out"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.out"],
 "OPTIONS": {
@@ -12,3 +12,4 @@
 }
 
 }
+

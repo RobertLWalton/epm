@@ -1,0 +1,11 @@
+{
+
+"COMMANDS": ["javac -encoding UTF-8 sourcepath . -d . JJJJ PPPP.java > PPPP.out 2> PPPP.err"],
+
+"LOCAL-REQUIRES":["PPPP.java"],
+"KEEP":    ["PPPP.class"],
+"SHOW":    ["PPPP.err","PPPP.out"],
+"CHECKS":  ["cmp -s PPPP.err /dev/null",
+            "cmp -s PPPP.out /dev/null"],
+}
+
