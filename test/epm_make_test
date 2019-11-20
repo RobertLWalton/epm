@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	walton@acm.org
-// Date:	Tue Nov 19 06:24:21 EST 2019
+// Date:	Wed Nov 20 02:17:56 EST 2019
 
 $epm_data = getcwd() . '/data';
 echo "epm_data set to $epm_data\n";
@@ -31,18 +31,16 @@ function check ( $expression, $value )
 check ( '["A" => 0, "B" => 1]', ["B" => 1, "A" => 0] );
 
 check ( 'template_match
-              ( "tv", "tv.cc", "PPPP.cc:PPPP:" )',
+              ( "tv", "tv.cc", "PPPP.cc" )',
 	 ["PPPP" => "tv"] );
 check ( 'template_match
               ( "tv", "00-001-tv.in",
-	        "XXXX-YYYY-PPPP.in:" .
-		"XXXX-YYYY-PPPP.score:" )',
+	        "XXXX-YYYY-PPPP.in" )',
 	 ["XXXX" => "00","YYYY" => "001",
 	                 "PPPP" => "tv"] );
 check ( 'template_match // tvxin, NOT tv.in
               ( "tv", "00-001-tvxin",
-	        "XXXX-YYYY-PPPP.in:" .
-		"XXXX-YYYY-PPPP.score:" )',
+	        "XXXX-YYYY-PPPP.in" )',
 	 false );
 
 check ( 'substitute_match ( "XXXX-YYYY-PPPP.in",
@@ -60,13 +58,5 @@ check ( 'substitute_match (
 	  "Z" => "FOOBAT"] );
 
 $epm_data = getcwd();
-
-find_templates_options_and_requires
-    ( ["../src/template"], 'cc', NULL, 'cc',
-      $templates, $options, $requires, $errors );
-// echo 'TEMPLATES: '; print_r ( $templates ); echo "\n";
-// echo 'OPTIONS: '; print_r ( $options ); echo "\n";
-// echo 'REQUIRES: '; print_r ( $requires ); echo "\n";
-// echo 'ERRORS: '; print_r ( $errors ); echo "\n";
 
 ?>

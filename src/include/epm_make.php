@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Nov 19 02:01:07 EST 2019
+// Date:    Wed Nov 20 02:18:12 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -27,17 +27,27 @@ if ( ! isset ( $_SESSION['epm_admin_params'] ) )
 // Administrative Parameters:
 //
 $params = $_SESSION['epm_admin_params'];
-if ( isset ( $params['upload_require_ext'] ) )
-    $upload_require_ext =
-        $params['upload_require_ext'];
+if ( isset ( $params['upload_target_ext'] ) )
+    $upload_target_ext =
+        $params['upload_target_ext'];
 else
-    $upload_require_ext = [
-	"in" => "(test|ftest)"];
+    $upload_target_ext = [
+        "c" =>  "",
+	"cc" => "",
+	"java" => "class",
+	"py" => "pyc",
+	"tex" => "pdf",
+	"in" => "NONE"];
 
 if ( isset ( $params['upload_maxsize'] ) )
     $upload_maxsize = $params['upload_maxsize'];
 else
     $upload_maxsize = 2000000;
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+$template_dirs =
+    ["$root/src/template",
+     "$epm_data/template"];
 
 // User Parameters:
 //
@@ -55,53 +65,54 @@ if ( isset ( $params['upload_maxsize'] ) )
     $upload_maxsize = $params['upload_maxsize'];
                    
 
-// Given a problem name, a source file name, and a
-// template source name, determine if the template
-// source name matches the problem and source file
-// name.  If no, return NULL.  If yes, return an array
-// containing the map from wild card symbols to their
-// values.  Note that if the template does not contain
-// PPPP or any other wildcard, this may be an empty
-// array, but will not be NULL.
+// Given a problem name, file names, and a template,
+// determine if the template matches the problem and
+// file name.  If no, return NULL.  If yes, return an
+// array containing the map from wild card symbols to
+// their values.  Note that if the template does not
+// contain PPPP or any other wildcard, this may be an
+// empty array, but will not be NULL.
 //
 // If PPPP is in the template, replace it with problem
 // name before proceeding futher.
 //
+// Either $filenames is a single name and $template
+// is just the source or just the destination part of
+// a .tmpl file name, or $filenames has the form
+// $srcfile:$desfile an $template is the part of the
+// .tmpl file name before the second :.
+//
 function template_match
-    ( $problem, $filename, $template )
+    ( $problem, $filenames, $template )
 {
-    // Turn template source into a regexp.
+    // Turn template into a regexp.
     //
-    if ( ! preg_match ( '/^([^:]*):/', $template,
-                                       $matches ) )
-        return NULL;
-    $source = $matches[1];
-    $source = preg_replace
-        ( '/\./', '\\.', $source );
-    $source = preg_replace
-        ( '/PPPP/', $problem, $source,
+    $template = preg_replace
+        ( '/\./', '\\.', $template );
+    $template = preg_replace
+        ( '/PPPP/', $problem, $template,
 	  -1, $PPPP_count );
     $offset = 0;
     $ids = [];
     while ( preg_match
-                ( '/[A-Z]/', $source, $matches,
+                ( '/[A-Z]/', $template, $matches,
                   PREG_OFFSET_CAPTURE, $offset ) )
     {
         $char = $matches[0][0];
 	$offset = $matches[0][1];
 	if ( ! preg_match
-	           ( "/\G$char{4}/", $source, $matches,
-		     0, $offset ) )
+	           ( "/\G$char{4}/", $template,
+		     $matches, 0, $offset ) )
 	{
 	    ++ $offset;
 	    continue;
 	}
-	$source = preg_replace
-	    ( "/$char{4}/", '(.*)', $source, 1 );
+	$template = preg_replace
+	    ( "/$char{4}/", '(.*)', $template, 1 );
 	$ids[] = "$char$char$char$char";
     }
-    if ( ! preg_match ( "/^$source\$/", $filename,
-                                         $matches ) )
+    if ( ! preg_match ( "/^$template\$/", $filenames,
+                                          $matches ) )
         return NULL;
 
     $result = [];
@@ -154,54 +165,41 @@ function substitute_match ( $item, $match )
         return $item;
 }
 
-// Go through the directory list dirs and find each
-// template (.tmpl) or option (.optn) file that has the
-// given source extension and destination extension
-// (either of which may be NULL if it not to be tested).
-// Also find each required file that has the given
-// required extension (e.g., .test or no extension).
+// Go through the template directories and find each
+// template (.tmpl) file that has the given source file
+// name and destination file name, either of which may
+// be NULL if it is not to be tested (both cannot be
+// NULL).
 //
-// List the found template files in the templates
-// list, each element of which has the form:
+// For each template file found, list in $templates
+// elements of the form:
 //
-//   [template, filename, json-decode-of-file-contents]
+//   [template, filename, json]
 //
 // Here `template' is the part of the last component
-// of the file name minus the extension (.tmpl or
-// .optn).  This list is in the order that the files
-// were found.
-//
-// The options map maps option file templates to the
-// json decode of the file contents, preferring the
-// first file found with a given template.
-//
-// The requires map maps the last component of file
-// names to the full name (relative to epm_data) of
-// the first file found with that last component.
-//
-// The extension arguments, if not NULL, are regular
-// expressions.  E.g., '(in|test|)' or just 'cc'.
-// Required file extensions may NOT include tmpl or
-// optn.
-//
-// All directory and full file names are relative to
-// epm_data.
+// of the file name minus the extension .tmpl and json
+// is the file contents with wildcards substituted.
+// This list is in the order that the files were found.
+// Filename is the absolute name of the template file
+// and is only used in error messages.
 //
 // Any errors cause error messages to be appended to
 // the errors list.
 //
-function find_templates_options_and_requires
-    ( $dirs, $src_ext, $des_ext, $req_ext,
-      & $templates, & $options, & $requires, & $errors )
+function find_templates
+    ( $problem, $srcfile, $desfile,
+      & $templates, & $errors )
 {
-    global $epm_data;
+    global $epm_data, $template_dirs;
+
+    if ( is_null ( $srcfile ) && is_null ( $desfile ) )
+        exit ( 'SYSTEM ERROR; find_templates called' .
+	       ' with both $srcfile and $desfile NULL' );
 
     $templates = [];
-    $options = [];
-    $requires = [];
-    foreach ( $dirs as $dir )
+    foreach ( $template_dirs as $dir )
     {
-        $desc = opendir ( "$epm_data/$dir" );
+        $desc = opendir ( "$dir" );
 	if ( ! $desc )
 	{
 	    $errors[] =
@@ -213,59 +211,37 @@ function find_templates_options_and_requires
 	    if ( preg_match ( '/^\.+$/', $fname ) )
 	        continue;
 
-	    if ( preg_match ( '/^(.*)\.([^.]*)$/',
+	    if ( ! preg_match ( '/^(.*)\.tmpl$/',
 	                      $fname, $matches ) )
-	    {
-		$template = $matches[1];
-	        $ext = $matches[2];
-	    }
-	    else
-	        $ext = "";
-
-	    if ( ! is_null ( $req_ext )
-	         &&
-	         preg_match ( "/^$req_ext$/", $ext ) )
-	    {
-		if ( ! isset ( $requires[$fname] ) )
-		    $requires[$fname] = "$dir/$fname";
-		continue;
-	    }
-
-	    if ( ! preg_match
-	               ( '/^(tmpl|optn)$/', $ext ) )
 	        continue;
+	    $template = $matches[1];
 
 	    if ( ! preg_match
 	           ( '/^([^:]+):([^:]+):/',
-		     $fname, $matches ) )
+		     $template, $matches ) )
 	    {
-	        $errors[] = "bad template or option"
-		         . " file name format $fname";
+	        $errors[] = "bad template file name"
+		          . " format $dir/$fname";
 	        continue;
 	    }
 
-	    $src = $matches[1];
-	    $des = $matches[2];
+	    $tsrc = $matches[1];
+	    $tdes = $matches[2];
 
-	    if ( ! is_null ( $src_ext )
-		 &&
-		 ( $src_ext == "" ?
-		   preg_match ( '/\./', $src ) :
-		   ! preg_match
-			 ( "/\\.$src_ext\$/",
-			   $src ) ) )
-		continue;
-	    if ( ! is_null ( $des_ext )
-		 &&
-		 ( $des_ext == "" ?
-		   preg_match ( '/\./', $des ) :
-		   ! preg_match
-			 ( "/\\.$des_ext\$/",
-			   $des ) ) )
-		continue;
+	    if ( is_null ( $srcfile ) )
+	        $match = template_match
+		    ( $problem, $srcfile, $tsrc );
+	    elseif ( is_null ( $desfile ) )
+	        $match = template_match
+		    ( $problem, $desfile, $tdes );
+	    else
+	        $match = template_match
+		    ( $problem, "$srcfile:$desfile",
+		                "$tsrc:$tdes" );
 
-	    $file = file_get_contents
-	        ( "$epm_data/$dir/$fname" );
+	    if ( is_null ( $match ) ) continue;
+
+	    $file = file_get_contents ( "$dir/$fname" );
 	    if ( ! $file )
 	    {
 		$errors[] = "cannot read $dir/$fname";
@@ -278,103 +254,181 @@ function find_templates_options_and_requires
 		    "cannot decode json in $dir/$fname";
 		continue;
 	    }
+	    $json = substitute_match ( $json, $match );
 
-	    if ( $ext == 'tmpl' )
-	        $templates[] =
-		    ["$src", "$dir/$fname", $json];
-	    else
-	    {
-	        if ( ! isset ( $options[$template] ) )
-		    $options[$template] = $json;
-	    }
+	    $templates[] =
+	        [ $template, "$dir/$fname", $json ];
 	}
 	closedir ( $desc );
     }
 }
 
-// Given the name of an uploaded file, and the tem-
-// plates, options, and requires lists from find_
-// templates_options_and_requires, return the template
-// file json data that is to be used to make something
-// from the uploaded file, with options inserted and
-// substitutions made for wildcards from the file
-// template.
+// Given the output of find_templates and the list of
+// directories in which required and option files are
+// to be found, create maps of required file names to
+// first directory in which the required file name is
+// found and option file names to the first directory
+// in which the option file is found.  In these maps,
+// "" is used to mean `no directory'.
 //
-// Require that the REQUIRES files of any returned
-// template exist or be the uploaded file.
+// Directory names are relative the $epm_data.
 //
-// If there are several suitable template files, prefer
-// first ones with the largest number of REQUIRES files,
-// and second ones earliest in the templates list.  Use
-// the options map options file with the same template,
-// if it exists.
+// Any errors cause error messages to be appended to
+// the errors list.
+// 
+function find_requires_and_options
+    ( $dirs, $templates,
+      & $requires, & $options, & $errors )
+{
+    global $epm_data;
+
+    // Initialize the maps from $templates so we know
+    // which files we are looking for.
+    //
+    $required = [];
+    $options = [];
+    foreach ( $templates as $template )
+    {
+        $json = $template[2];
+	$optfile = "$template[0].optn";
+	$options[$optfile] = "";
+	foreach ( ['REQUIRES', 'LOCAL-REQUIRES',
+	                       'REMOTE-REQUIRES']
+		  as $R )
+	{
+	    if ( isset ( $json[$R] ) )
+	    {
+		foreach ( $json[$R] as $required )
+		    $requires[$required] = "";
+	    }
+	}
+    }
+
+    // Cycle through $dirs and set the maps.
+    //
+    foreach ( $dirs as $dir )
+    {
+        $desc = opendir ( "$emp_data/$dir" );
+	if ( ! $desc )
+	{
+	    $errors[] =
+	        "cannot open search directory" .
+		" $emp_data/$dir";
+	    continue;
+	}
+	while ( $fname = readdir ( $desc ) )
+	{
+	    if ( preg_match ( '/^\.+$/', $fname ) )
+	        continue;
+
+	    if ( isset ( $requires[$fname] )
+	         &&
+		 $requires[$fname] == "" )
+	        $requires[$fname] = $dir;
+
+	    if ( isset ( $options[$fname] )
+	         &&
+		 $options[$fname] == "" )
+	        $options[$fname] = $dir;
+	}
+	closedir ( $desc );
+    }
+
+}
+
+// Given $templates computed by find_templates and
+// $requires and $options computed by find_requires_and_
+// options, return the control, i.e., the json of
+// the selected template, and set $required to the list
+// of required files and $option to the option file,
+// or NULL if none.  The filenames returned are relative
+// to $epm_data.  $dirs is used to identify the local
+// directory (its the first one) and identify whether
+// there is more than one directory.
+//
+// If multiple controls satisfy required file
+// constraints, ones with the largest number of required
+// files are selected, and among these the first in
+// the $templates list.
+//
+// Returns NULL if no control found meeting required
+// file constraints.
 //
 // Any errors cause error messages to be appended to
 // the errors list.
 //
-// If no template file is found, return NULL.
-//
-function find_make_control
-	( $problem, $upload,
-	  $templates, $options, $requires, & $errors )
+function find_control
+	( $dirs, $templates, $requires, $options,
+	  & $required, & $option, & $errors )
 {
-    $best_json = NULL;
-    $best_match = NULL;
-    $best_template = NULL;
-    $best_requires = -1;
-    foreach ( $templates as $element )
+    $best = NULL;
+    $best_count = -1;
+    $local_dir = $dirs[0];
+    $dirs_count = count ( $dirs );
+    foreach ( $templates as $template )
     {
-        $template = $element[0];
-	$match = template_match
-	    ( $problem, $upload, $template );
-	if ( is_null ( $match ) ) continue;
+	$rlist = [];
 
-	$filename = $element[1];
-	$control = $element[2];
-
-	$control =
-	    substitute_match ( $control, $match );
-
-	if ( ! isset ( $control['REQUIRES'] ) )
-	{
-	    $errors[] =
-		"no REQUIRES in $filename";
-	    continue;
-	}
-	$reqval = $control['REQUIRES'];
-	if ( ! is_array ( $reqval ) )
-	{
-	    $errors[] = "REQUIRES is not an"
-		      . " array in $filename";
-	    continue;
-	}
-
+        $json = $template[2];
 	$OK = true;
-	foreach ( $reqval as $required )
+	foreach ( ['REQUIRES', 'LOCAL-REQUIRES',
+	                       'REMOTE-REQUIRES']
+		  as $R )
 	{
-	    if ( $required == $problem ) continue;
-	    if ( ! isset ( $requires[$required] ) )
+	    if ( isset ( $json[$R] ) )
 	    {
-	        $OK = false;
-		break;
+		foreach ( $json[$R] as $rfile )
+		{
+		    if ( ! isset
+			     ( $requires[$rfile] ) )
+		    {
+		        $OK = false;
+			break;
+		    }
+		    $rdir = $requires[$rfile];
+		    if ( $rdir == "" )
+		        $OK = false;
+		    else switch ( $R )
+		    {
+		        case 'LOCAL-REQUIRES':
+			    if ( $rdir != $local_dir )
+			        $OK = false;
+			    break;
+		        case 'REMOTE-REQUIRES':
+			    if ( $rdir == $local_dir
+			         &&
+				 $dirs_count != 1 )
+			        $OK = false;
+			    break;
+		    }
+		    if ( ! $OK ) break;
+
+		    $rlist[] = "$rdir/$rfile";
+		}
 	    }
 	}
 	if ( ! $OK ) continue;
 
-	if ( $best_requires >= count ( $reqval ) )
+	$rlist = array_unique ( $rlist );
+	$rcount = count ( $rlist );
+	if ( $rcount <= $best_count )
 	    continue;
-
-	$best_json = $control;
-	$best_template = $template;
-	$best_match = $match;
-	$best_requires = count ( $reqval );
+	$best = $json;
+	$best_count = $rcount;
+	$required = $rlist;
+	$ofile = "$template[0].optn";
+	if ( ! isset ( $options[$ofile] ) )
+	    $options = NULL;
+	else
+	{
+	    $options = $options[$ofile];
+	    if ( $options == "" )
+	        $options = NULL;
+	    else
+	        $options = "$options/$ofile";
+	}
     }
-    foreach ( $options[$best_template]
-              as $key => $value )
-        $best_json[$key] = substitute_match
-	    ( $value, $best_match );
-
-    return $best_json;
+    return $best;
 }
 
 // Clean up a working directory.  If it has a PID file,
