@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Nov 20 08:09:06 EST 2019
+// Date:    Wed Nov 20 12:04:27 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -477,11 +477,31 @@ function cleanup_working ( $dir, & $errors )
     if ( file_exists ( "$dir/PID" ) )
     {
         $PID = file_get_contents ( "$dir/PID" );
+
+	// PID file if it exists has the form
+	//
+	//    pid:expire
+	//
+	// where it may be assumed that if time()
+	// >= expire the process that originally
+	// had pid is dead.  This is necessary because
+	// pid's can be reused, though generally not
+	// within the same hour.
+	//
 	if ( $PID )
 	{
-	    exec ( "kill -1 $PID" );
-	    usleep ( 500000 );
-	    exec ( "kill -9 $PID" );
+	    $pair = explode ( $PID, ":" );
+	    if ( count ( $pair ) == 2 )
+	    {
+		$pid = $pair[0];
+		$expire = $pair[1];
+		if ( time() < $expire )
+		{
+		    exec ( "kill -1 $PID" );
+		    usleep ( 500000 );
+		    exec ( "kill -9 $PID" );
+		}
+	    }
 	}
     }
 
@@ -621,15 +641,15 @@ function move_keep
 // names are relative to $epm_data.  Files that are not
 // readable are ignored; there can be no errors.
 //
-function compute_shows ( $control, $work )
+function compute_show ( $control, $work )
 {
     global $epm_data;
 
-    if ( ! isset ( $control[2]['SHOWS'] ) )
+    if ( ! isset ( $control[2]['SHOW'] ) )
         return [];
     $slist = [];
-    $shows = $control[2]['SHOWS'];
-    foreach ( $shows as $fname )
+    $show = $control[2]['SHOW'];
+    foreach ( $show as $fname )
     {
         $sfile = "$epm_data/$work/$fname";
 	if ( is_readable ( $sfile ) )
@@ -639,18 +659,19 @@ function compute_shows ( $control, $work )
 }
 
 // Process an uploaded file.  Errors append error
-// message to $errors.  Output from commands
-// executed is appended to $output (this does not
-// include writes to standard error by bash). 
-// List of SHOWS files is placed in $shows.
+// message to $errors.  Commands are computed using
+// get_commands.  Output from commands executed is
+// appended to $output (this does not include writes
+// to standard error by bash, which are lost).  List
+// of SHOW files is placed in $show.
 //
 function process_upload
-	( $problem, $upload,
-	  & $shows, & $output, & $errors )
+	( $problem, $upload, & $commands,
+	  & $show, & $output, & $errors )
 {
     global $upload_target_ext, $make_dirs, $userid;
 
-    $shows = [];
+    $show = [];
     $errors_size = count ( $errors );
     if ( ! isset ( $_FILES[$upload] ) )
     {
@@ -748,7 +769,7 @@ function process_upload
     }
 
     $localdir = "users/user$userid";
-    $work = "$localdir/work";
+    $work = "$localdir/+work+";
     cleanup_working ( $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
@@ -781,21 +802,21 @@ function process_upload
     $output = [];
     run_commands ( $commands, $work, $output, $errors );
     if ( count ( $errors ) > $errors_size )
-        goto SHOWS;
+        goto SHOW;
 
     if ( isset ( $control[2]['CHECKS'] ) )
     {
 	run_commands ( $control[2]['CHECKS'], $work,
 	               $output, $errors );
 	if ( count ( $errors ) > $errors_size )
-	    goto SHOWS;
+	    goto SHOW;
     }
 
     move_keep ( $control, $work, $localdir, $errors );
-    if ( count ( $errors ) > $errors_size ) goto SHOWS;
+    if ( count ( $errors ) > $errors_size ) goto SHOW;
 
-SHOWS:
-    $shows = compute_shows ( $control, $work );
+SHOW:
+    $show = compute_show ( $control, $work );
 }
 
 ?>
