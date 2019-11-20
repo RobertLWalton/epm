@@ -6,10 +6,9 @@
 "KEEP":    ["XXXX-PPPP.out"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.out"],
 "OPTIONS": {
-    "SSSS": [["-cputime 30"],
-             ["-space 2g"],
-	     ["-filesize 2m"]]
-}
+    "SSSS": { "cputime: ["-cputime 30", "LESS"],
+              "space":  ["-space 2g", "LESS"],
+	      "filesize": ["-filesize 2m", "LESS"]}}
 
 }
 

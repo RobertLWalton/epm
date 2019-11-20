@@ -6,18 +6,17 @@
 "REMOTE-REQUIRES":["XXXX-PPPP.test"],
 "KEEP":    ["XXXX-PPPP.score"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.score"],
-"OPTIONS: { "AAAA": [["space", ""],
-                     ["", "integer FFFF FFFF"],
-		     ["", "float FFFF FFFF"],
-		     ["exponent decimal sign", ""],
-		     ["column", ""],
-		     ["", "letter-case"],
-		     ["", "words-are-format"],
-		     ["", "nonumber"]],
-    "SSSS": [["-cputime 30"],
-             ["-space 2g"],
-	     ["-filesize 2m"]]
+"OPTIONS": {
+    "SSSS": { "cputime: ["-cputime 30", "LESS"],
+              "space":  ["-space 2g", "LESS"],
+	      "filesize": ["-filesize 2m", "LESS"]},
+    "AAAA": { "space": ["space", ""],
+              "integer": ["", "integer FFFF FFFF"],
+	      "float": ["", "float FFFF FFFF"],
+	      "decimal": ["exponent decimal sign", ""],
+	      "column": ["column", ""],
+	      "letter-case": ["", "letter-case"],
+	      "words-are-format": ["", "words-are-format"],
+	      "nonumber": ["", "nonumber"]}}
 
 }
-
-

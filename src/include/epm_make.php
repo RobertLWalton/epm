@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Nov 20 02:18:12 EST 2019
+// Date:    Wed Nov 20 08:09:06 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -37,7 +37,7 @@ else
 	"java" => "class",
 	"py" => "pyc",
 	"tex" => "pdf",
-	"in" => "NONE"];
+	"in" => "out"];
 
 if ( isset ( $params['upload_maxsize'] ) )
     $upload_maxsize = $params['upload_maxsize'];
@@ -338,11 +338,13 @@ function find_requires_and_options
 
 // Given $templates computed by find_templates and
 // $requires and $options computed by find_requires_and_
-// options, return the control, i.e., the json of
-// the selected template, and set $required to the list
-// of required files and $option to the option file,
-// or NULL if none.  The filenames returned are relative
-// to $epm_data.  $dirs is used to identify the local
+// options, return the control, i.e., the selected
+// element of $template, and set $required to the list
+// of required files and $option to the json of the
+// option file, or NULL if no such file.  The filenames
+// returned in $required are relative to $epm_data.
+// $dirs is the directory list used by find_requires_
+// and_options, and is used to identify the local
 // directory (its the first one) and identify whether
 // there is more than one directory.
 //
@@ -361,7 +363,7 @@ function find_control
 	( $dirs, $templates, $requires, $options,
 	  & $required, & $option, & $errors )
 {
-    $best = NULL;
+    $best_template = NULL;
     $best_count = -1;
     $local_dir = $dirs[0];
     $dirs_count = count ( $dirs );
@@ -413,21 +415,44 @@ function find_control
 	$rcount = count ( $rlist );
 	if ( $rcount <= $best_count )
 	    continue;
-	$best = $json;
+
+	$best = $template;
 	$best_count = $rcount;
 	$required = $rlist;
-	$ofile = "$template[0].optn";
-	if ( ! isset ( $options[$ofile] ) )
-	    $options = NULL;
-	else
-	{
-	    $options = $options[$ofile];
-	    if ( $options == "" )
-	        $options = NULL;
-	    else
-	        $options = "$options/$ofile";
-	}
     }
+
+    $ofile = "$best[0].optn";
+    if ( ! isset ( $options[$ofile] ) )
+	$ofile = NULL;
+    else
+    {
+	$odir = $options[$ofile];
+	if ( $odir == "" )
+	    $ofile = NULL;
+	else
+	    $ofile = "$odir/$ofile";
+    }
+    if ( ! is_null ( $ofile ) )
+    {
+	$ocontents = file_get_contents
+	    ( "$epm_data/$oname" );
+	if ( ! $ocontents )
+	{
+	    $errors[] = "cannot read $epm_data/$ofile";
+	    return NULL;
+	}
+	$ojson = json_decode ( $ocontents, true );
+	if ( ! $ojson )
+	{
+	    $errors[] = "cannot decode json in"
+	              . " $epm_data/$ofile";
+	    return NULL;
+	}
+	$option = $ojson;
+    }
+    else
+        $option = [];
+
     return $best;
 }
 
@@ -481,56 +506,57 @@ function cleanup_working ( $dir, & $errors )
 //
 // Errors cause error messages to be appended to errors.
 //
-function link_requires
-	( $dir, $uploaded, $required, $requires,
-	  & $errors )
+function link_required
+	( $uploaded, $work, $required, & $errors )
 {
     global $epm_data;
 
-    foreach ( $required as $fname )
+    foreach ( $required as $rname )
     {
-        if ( $fname == $uploaded ) continue;
-	if ( ! isset ( $requires[$fname] ) )
-	{
-	    $errors[] = "$fname not in requires list";
-	    continue;
-	}
-	$rname = "$epm_data/$requires[$fname]";
+        $rbase = basename ( $rname );
+        if ( $rname == $uploaded ) continue;
+
+	$rname = "$epm_data/$rname";
+
 	if ( ! is_readable ( $rname ) )
 	{
 	    $errors[] = "$rname is not readable";
 	    continue;
 	}
-	if ( ! preg_match ( '/\./', $fname )
+	if ( ! preg_match ( '/\./', $rbase )
 	     &&
 	     ! is_executable ( $rname ) )
 	{
 	    $errors[] = "$rname is not executable";
 	    continue;
 	}
-	$link = "$epm_data/$dir/$fname";
-	if ( ! symlink ( $rname, "$link" ) )
+	$rlink = "$epm_data/$work/$rbase";
+	if ( ! symlink ( $rname, "$rlink" ) )
 	{
-	    $errors[] = "cannot link $rname to $link";
+	    $errors[] = "cannot symbolically link"
+	              . " $rname to $rlink";
 	    continue;
 	}
     }
 }
 
 // Return COMMANDS list from control with OPTIONS
-// inserted.
+// inserted.  $option is option file json, or
+// [] if none.
 //
-function get_commands ( $control )
+function insert_options ( $control, $option )
 {
-    $commands = $control['COMMANDS'];
-    $options = $control['OPTIONS'];
+    $commands = $control[2]['COMMANDS'];
     $match = [];
     foreach ( $options as $key => $value )
     {
         $opts = "";
-	foreach ( $value as $item )
+	foreach ( $value as $subkey => $list )
 	{
-	    $opt = $item[0];
+	    if ( isset ( $option[$key][$subkey] ) )
+	        $opt = $option[$key][$subkey];
+	    else
+		$opt = $list[0];
 	    if ( $opt == "" ) continue;
 	    $opts = "$opts $opt";
 	}
@@ -539,14 +565,92 @@ function get_commands ( $control )
     return substitute_match ( $commands, $match );
 }
 
+// Run $commands in $work.  Append output to output
+// and error messages to $errors.
+//
+function run_commands
+	( $commands, $work, & $output, & $errors )
+{
+    global $epm_data;
+
+    foreach ( $commands as $command )
+    {
+        exec ( "cd $epm_data/$work; $command",
+	       $output, $ret );
+	if ( $ret != 0 )
+	{
+	    $errors[] =
+		"error code $ret returned upon" .
+		" executing $command";
+	    return;
+	}
+    }
+}
+
+// Move keep files, if any, from $work to $localdir.
+// Append error messages to $errors.
+//
+function move_keep
+	( $control, $work, $localdir, & $errors )
+{
+    global $epm_data;
+
+    if ( ! isset ( $control[2]['KEEP'] ) )
+        return;
+    $keep = $control[2]['KEEP'];
+    foreach ( $keep as $fname )
+    {
+        $wfile = "$epm_data/$work/$fname";
+        $lfile = "$epm_data/$localdir/$fname";
+	if ( ! file_exists ( $wfile ) )
+	{
+	    $errors[] = "KEEP file $fname was not"
+	              . " made by $control[1]";
+	    continue;
+	}
+	if ( ! rename ( $wfile, $lfile ) )
+	{
+	    $errors[] = "SYSTEM ERROR: could not rename"
+	              . " $wfile to $lfile";
+	    continue;
+	}
+    }
+}
+
+// Return list of files to be shown.  File and dirctory
+// names are relative to $epm_data.  Files that are not
+// readable are ignored; there can be no errors.
+//
+function compute_shows ( $control, $work )
+{
+    global $epm_data;
+
+    if ( ! isset ( $control[2]['SHOWS'] ) )
+        return [];
+    $slist = [];
+    $shows = $control[2]['SHOWS'];
+    foreach ( $shows as $fname )
+    {
+        $sfile = "$epm_data/$work/$fname";
+	if ( is_readable ( $sfile ) )
+	    $slist[] = "$work/$fname";
+    }
+    return $slist;
+}
+
 // Process an uploaded file.  Errors append error
 // message to $errors.  Output from commands
 // executed is appended to $output (this does not
 // include writes to standard error by bash). 
+// List of SHOWS files is placed in $shows.
 //
 function process_upload
-	( $upload, & $output, & $errors )
+	( $problem, $upload,
+	  & $shows, & $output, & $errors )
 {
+    global $upload_target_ext, $make_dirs, $userid;
+
+    $shows = [];
     $errors_size = count ( $errors );
     if ( ! isset ( $_FILES[$upload] ) )
     {
@@ -563,14 +667,26 @@ function process_upload
 	    " other than letter, digit, ., -, or _";
 	return;
     }
-    if ( ! preg_match ( '/\.([^.]+)$/', $fname,
-                                        $matches ) )
+    if ( ! preg_match ( '/^(.+)\.([^.]+)$/',
+                        $fname, $matches ) )
     {
         $errors[] =
 	    "uploaded file $fname has no extension";
 	return;
     }
-    $ext = $matches[1];
+    $base = $matches[1];
+    $ext = $matches[2];
+
+    if ( ! isset ( $upload_target_ext[$ext] ) )
+    {
+        $errors[] =
+	    "uploaded file $fname has unrecognized" .
+	    " extension";
+	return;
+    }
+    $text = $upload_target_ext[$ext];
+    $tname = $base;
+    if ( $text != "" ) $tname = "$tname.$text";
 
     $ferror = $_FILES[$upload]['error'];
     if ( $ferror != 0 )
@@ -598,43 +714,46 @@ function process_upload
     if ( $fsize > $upload_maxsize )
     {
         $errors[] =
-	    "uploaded file $fname to large;" .
-	    " your limit is $maxsize";
+	    "uploaded file $fname too large;" .
+	    " limit is $maxsize";
 	return;
     }
 
-    $req_ext = NULL;
-    if ( isset ( $upload_require_ext[$ext] ) )
-        $req_ext = $upload_require_ext[$ext];
-
-    find_templates_options_and_requires
-	( $make_dirs, $ext, NULL, $req_ext,
-	  $templates, $options, $requires, $errors );
-
+    find_templates
+	( $problem, $fname, $tname,
+	  $templates, $errors );
     if ( count ( $errors ) > $errors_size ) return;
-
-    $control = find_make_control
-	( $problem, $fname,
-	  $templates, $options, $requires, $errors );
-
-    if ( count ( $errors ) > $errors_size ) return;
-    if ( ! $control )
+    if ( count ( $templates ) == 0 )
     {
         $errors[] =
-	    "cannot upload $fname, because it" .
-	    " does not have legal extension" .
-	    " or file name pattern";
+	    "there are no templates $fname:$tname:...";
 	return;
     }
 
-    $work = "users/user$userid/work";
+    find_requires_and_options
+	( $make_dirs, $templates,
+	  $requires, $options, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
+    $control = find_control
+	( $make_dirs, $templates, $requires, $options,
+	  $required, $option, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+    if ( is_null ( $control ) )
+    {
+        $errors[] =
+	    "for no template $fname:$tname:... are" .
+	    " all its required files pre-existing";
+	return;
+    }
+
+    $localdir = "users/user$userid";
+    $work = "$localdir/work";
     cleanup_working ( $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
-    $required = $control['REQUIRES'];
-    link_requires
-	( $work, $fname, $required, $requires,
-	  $errors );
+    link_required
+	( $fname, $work, $required, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
     if ( file_exists ( $work/$fname ) )
@@ -644,8 +763,6 @@ function process_upload
 	    " but $work/$fname already exists";
 	return;
     }
-
-    $commands = get_commands ( $control );
 
     $ftmp_name = $_FILES[$upload]['tmp_name'];
 
@@ -659,17 +776,26 @@ function process_upload
 	return;
     }
 
-    foreach ( $commands as $command )
+    $commands = get_commands ( $control, $option );
+
+    $output = [];
+    run_commands ( $commands, $work, $output, $errors );
+    if ( count ( $errors ) > $errors_size )
+        goto SHOWS;
+
+    if ( isset ( $control[2]['CHECKS'] ) )
     {
-        exec ( $command, $output, $ret );
-	if ( $ret != 0 )
-	{
-	    $errors[] =
-		"error code $ret returned upon" .
-		" executing $command";
-	    return;
-	}
+	run_commands ( $control[2]['CHECKS'], $work,
+	               $output, $errors );
+	if ( count ( $errors ) > $errors_size )
+	    goto SHOWS;
     }
+
+    move_keep ( $control, $work, $localdir, $errors );
+    if ( count ( $errors ) > $errors_size ) goto SHOWS;
+
+SHOWS:
+    $shows = compute_shows ( $control, $work );
 }
 
 ?>

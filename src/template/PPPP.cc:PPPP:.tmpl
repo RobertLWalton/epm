@@ -7,12 +7,10 @@
 "CHECKS":  ["cmp -s PPPP.err /dev/null",
             "cmp -s PPPP.out /dev/null"],
 "OPTIONS": {
-    "AAAA": [["-std=gnu++11", ""],
-	     ["-Og", "-O3", ""],
-	     ["", "-Wpedantic"]],
-    "BBBB":  [["", "-lgsl"],
-              ["", "-lcrypto"]]
-          
-	    }
+    "AAAA": { "std": ["-std=gnu++11", ""],
+	      "opt": ["-Og", "-O3", ""],
+	      "ped": ["", "-Wpedantic"]},
+    "BBBB": { "gsl": ["", "-lgsl"],
+              "crypto": ["", "-lcrypto"]}}
 
 }
