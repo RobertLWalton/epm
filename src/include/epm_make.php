@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Nov 20 19:12:58 EST 2019
+// Date:    Thu Nov 21 05:24:20 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -310,12 +310,12 @@ function find_requires_and_options
     //
     foreach ( $dirs as $dir )
     {
-        $desc = opendir ( "$emp_data/$dir" );
+        $desc = opendir ( "$epm_data/$dir" );
 	if ( ! $desc )
 	{
 	    $errors[] =
 	        "cannot open search directory" .
-		" $emp_data/$dir";
+		" $epm_data/$dir";
 	    continue;
 	}
 	while ( $fname = readdir ( $desc ) )

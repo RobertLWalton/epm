@@ -2,8 +2,8 @@
 <?php
 
 // File:	emp_make_test
-// Author:	walton@acm.org
-// Date:	Thu Nov 21 00:14:33 EST 2019
+// Author:	Robert L Walton <walton@acm.org>
+// Date:	Thu Nov 21 05:43:29 EST 2019
 
 $epm_data = getcwd() . '/epm_make_test_data';
 $_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
@@ -24,10 +24,14 @@ public class prob {
 }
 EOT;
 
-file_put_contents
-    ( "$epm_data/$prob_dir/prob.java", $prob_java );
-exec ( "javac -d $epm_data/$prob_dir" .
-       " $epm_data/$prob_dir/prob.java" );
+$prob_c = <<<'EOT'
+# include <stdio.h>
+int main ()
+{
+    printf ( "Hello World!\n" );
+    return 0;
+}
+EOT;
 
 include ( '../src/include/epm_make.php' );
 
@@ -74,18 +78,32 @@ check ( 'substitute_match (
 	  "Z" => "FOOBAT"] );
 
 $errors = [];
-find_templates ( $problem, "$problem.cc", NULL,
+find_templates ( $problem, "$problem.c", NULL,
                  $templates, $errors );
 
 check ( '$GLOBALS["templates"][0][0]',
-        "PPPP.cc:PPPP:" );
+        "PPPP.c:PPPP:" );
 check ( '$GLOBALS["templates"][0][2]' .
-        '["LOCAL-REQUIRES"][0]', "prob.cc" );
+        '["LOCAL-REQUIRES"][0]', "prob.c" );
 check ( '$GLOBALS["templates"][0][2]' .
         '["KEEP"][0]', "prob" );
 check ( '$GLOBALS["templates"][0][2]' .
         '["SHOW"]', ["prob.err", "prob.out"] );
 check ( '$GLOBALS["errors"]', [] );
+
+file_put_contents
+    ( "$epm_data/$prob_dir/prob.c", $prob_c );
+
+$dirs = [ $prob_dir, $proj_dir ];
+
+$errors = [];
+find_requires_and_options
+    ( $dirs, $templates, $requires, $options, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["requires"]',
+        ["prob.c" => "users/user1/prob"] );
+check ( '$GLOBALS["options"]',
+        ["PPPP.c:PPPP:.optn" => ""] );
 
 $errors = [];
 find_templates ( $problem, "00-001-$problem.in",
@@ -106,5 +124,23 @@ foreach ( $templates as $template )
             ["-cputime 30", "LESS"] );
 }
 check ( '$GLOBALS["errors"]', [] );
+
+find_requires_and_options
+    ( $dirs, $templates, $requires, $options, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["requires"]["prob.c"]',
+        "users/user1/prob" );
+check ( '$GLOBALS["options"]' .
+        '["XXXX-PPPP.in:XXXX-PPPP.out:.optn"]',
+        "" );
+print_r ( $requires );
+
+exit;
+
+exec ( "rm -r $epm_data/$prob_dir/*" );
+
+
+file_put_contents
+    ( "$epm_data/$prob_dir/prob.java", $prob_java );
 
 ?>
