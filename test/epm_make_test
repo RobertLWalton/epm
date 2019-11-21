@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Nov 21 05:43:29 EST 2019
+// Date:	Thu Nov 21 06:43:45 EST 2019
 
 $epm_data = getcwd() . '/epm_make_test_data';
 $_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
@@ -104,6 +104,23 @@ check ( '$GLOBALS["requires"]',
         ["prob.c" => "users/user1/prob"] );
 check ( '$GLOBALS["options"]',
         ["PPPP.c:PPPP:.optn" => ""] );
+
+$errors = [];
+find_control ( $dirs, $templates, $requires, $options,
+               $required, $option, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["required"]', ["$prob_dir/prob.c"] );
+check ( '$GLOBALS["option"]', [] );
+
+$errors = [];
+$work = "$prob_dir/+work+";
+cleanup_working ( $work, $errors );
+check ( '$GLOBALS["errors"]', [] );
+
+$errors = [];
+link_required ( NULL, $work, $required, $errors );
+check ( '$GLOBALS["errors"]', [] );
+exit;
 
 $errors = [];
 find_templates ( $problem, "00-001-$problem.in",

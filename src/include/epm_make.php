@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Nov 21 05:24:20 EST 2019
+// Date:    Thu Nov 21 06:39:55 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -64,7 +64,6 @@ else
 if ( isset ( $params['upload_maxsize'] ) )
     $upload_maxsize = $params['upload_maxsize'];
                    
-
 // Given a problem name, file names, and a template,
 // determine if the template matches the problem and
 // file name.  If no, return NULL.  If yes, return an
@@ -343,19 +342,19 @@ function find_requires_and_options
 // options, return the control, i.e., the selected
 // element of $template, and set $required to the list
 // of required files and $option to the json of the
-// option file, or NULL if no such file.  The filenames
+// option file, or [] if no such file.  The filenames
 // returned in $required are relative to $epm_data.
 // $dirs is the directory list used by find_requires_
 // and_options, and is used to identify the local
 // directory (its the first one) and identify whether
 // there is more than one directory.
 //
-// If multiple controls satisfy required file
+// If multiple templates satisfy required file
 // constraints, ones with the largest number of required
 // files are selected, and among these the first in
 // the $templates list.
 //
-// Returns NULL if no control found meeting required
+// Returns NULL if no template found meeting required
 // file constraints.
 //
 // Any errors cause error messages to be appended to
@@ -410,6 +409,7 @@ function find_control
 		    $rlist[] = "$rdir/$rfile";
 		}
 	    }
+	    if ( ! $OK ) break;
 	}
 	if ( ! $OK ) continue;
 
@@ -418,12 +418,12 @@ function find_control
 	if ( $rcount <= $best_count )
 	    continue;
 
-	$best = $template;
+	$best_template = $template;
 	$best_count = $rcount;
 	$required = $rlist;
     }
 
-    $ofile = "$best[0].optn";
+    $ofile = "$best_template[0].optn";
     if ( ! isset ( $options[$ofile] ) )
 	$ofile = NULL;
     else
@@ -437,7 +437,7 @@ function find_control
     if ( ! is_null ( $ofile ) )
     {
 	$ocontents = file_get_contents
-	    ( "$epm_data/$oname" );
+	    ( "$epm_data/$ofile" );
 	if ( ! $ocontents )
 	{
 	    $errors[] = "cannot read $epm_data/$ofile";
@@ -455,7 +455,7 @@ function find_control
     else
         $option = [];
 
-    return $best;
+    return $best_template;
 }
 
 // Clean up a working directory.  If it has a PID file,
@@ -464,9 +464,6 @@ function find_control
 // Then create a new directory under the same name.
 //
 // Directory name is relative to epm_data.
-//
-// Returns true on success and false on failure, and in
-// the latter case issues a sysalert.
 //
 // If directory cannot be cleaned up, issues system
 // alert and adds to errors.
@@ -487,8 +484,8 @@ function cleanup_working ( $dir, & $errors )
 	// where it may be assumed that if time()
 	// >= expire the process that originally
 	// had pid is dead.  This is necessary because
-	// pid's can be reused, though generally not
-	// within the same hour.
+	// pid's can be reused, though (almost)
+	// certainly not within the same hour.
 	//
 	if ( $PID )
 	{
@@ -519,12 +516,11 @@ function cleanup_working ( $dir, & $errors )
 }
 
 // Link files from the required list into the working
-// working directory, using the requires map generated
-// by find_templates_options_and_requires.  Ignore and
-// do not line a required list file with name equal to
-// the name of the uploaded file, if that argument is
-// not NULL.  The required list is generally taken from
-// the REQUIRES member of a make control.
+// working directory.  Ignore and do not link a required
+// list file with last name component equal to the name
+// of the uploaded file, if that argument is not NULL.
+// The required list is generally computed by find_
+// control.
 //
 // Errors cause error messages to be appended to errors.
 //
