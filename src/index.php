@@ -39,7 +39,7 @@
     //		cd R/W
     //		cp -p S/index.php .
     //		ln -s S src
-    //		<edit parameters in H/index.php>
+    //		<edit parameters in R/W/index.php>
 
     // The directory containing the page sources
     // MUST be linked to R/W/src.

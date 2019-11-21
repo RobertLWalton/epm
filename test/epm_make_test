@@ -3,12 +3,13 @@
 
 // File:	emp_make_test
 // Author:	walton@acm.org
-// Date:	Wed Nov 20 02:17:56 EST 2019
+// Date:	Wed Nov 20 19:12:32 EST 2019
 
 $epm_data = getcwd() . '/data';
 echo "epm_data set to $epm_data\n";
 
 $_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
+$_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
 
 if ( ! file_exists ( './data/users/user1/prob' ) )
     mkdir ( './data/users/user1/prob', 0750, true );
@@ -57,6 +58,12 @@ check ( 'substitute_match (
 	  "O" => ["M" => "tv99","N" => 88],
 	  "Z" => "FOOBAT"] );
 
-$epm_data = getcwd();
+$errors = [];
+find_templates ( $problem, "$problem.cc", NULL,
+                 $templates, $errors );
+
+check ( '$GLOBALS["errors"]', [] );
+
+print_r ( $templates );
 
 ?>

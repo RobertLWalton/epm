@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Nov 20 12:04:27 EST 2019
+// Date:    Wed Nov 20 19:12:58 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -45,9 +45,9 @@ else
     $upload_maxsize = 2000000;
 
 $root = $_SERVER['DOCUMENT_ROOT'];
-$template_dirs =
-    ["$root/src/template",
-     "$epm_data/template"];
+$template_dirs = ["$root/src/template"];
+if ( is_dir ( "$epm_data/template" ) )
+    $template_dirs[] = "$epm_data/template";
 
 // User Parameters:
 //
@@ -59,7 +59,7 @@ $params = $_SESSION['epm_user_params'];
 if ( isset ( $params['make_dirs'] ) )
     $make_dirs = $params['make_dirs'];
 else
-    $make_dirs = ["users/user$userid/."];
+    $make_dirs = ["users/user$userid/$problem"];
 
 if ( isset ( $params['upload_maxsize'] ) )
     $upload_maxsize = $params['upload_maxsize'];
@@ -131,9 +131,9 @@ function template_match
     return $result;
 }
 
-// Given a string and substitutions computed by file_
-// name_match, return the string with the substitutions
-// made.
+// Given a string and substitutions such as those
+// computed by file_name_match, return the string with
+// the substitutions made.
 //
 function string_substitute_match ( $string, $match )
 {
@@ -143,10 +143,11 @@ function string_substitute_match ( $string, $match )
     return $string;
 }
 
-// Given an array and substitutions computed by file_
-// name_match, return the array with the substitutions
-// made in the array values that are strings, and
-// recursively in array values that are arrays.
+// Given an array and substitutions such as those
+// computed by file_name_match, return the array with
+// the substitutions made in the array values that are
+// strings, and recursively in array values that are
+// arrays.
 //
 function substitute_match ( $item, $match )
 {
@@ -176,12 +177,12 @@ function substitute_match ( $item, $match )
 //
 //   [template, filename, json]
 //
-// Here `template' is the part of the last component
-// of the file name minus the extension .tmpl and json
-// is the file contents with wildcards substituted.
-// This list is in the order that the files were found.
-// Filename is the absolute name of the template file
-// and is only used in error messages.
+// Here `template' is the last component of the file
+// name minus the extension .tmpl and json is the file
+// contents with wildcards substituted.  This list is in
+// the order that the files were found.  Filename is the
+// absolute name of the template file and is only used
+// in error messages.
 //
 // Any errors cause error messages to be appended to
 // the errors list.
@@ -190,11 +191,12 @@ function find_templates
     ( $problem, $srcfile, $desfile,
       & $templates, & $errors )
 {
-    global $epm_data, $template_dirs;
+    global $template_dirs;
 
     if ( is_null ( $srcfile ) && is_null ( $desfile ) )
         exit ( 'SYSTEM ERROR; find_templates called' .
-	       ' with both $srcfile and $desfile NULL' );
+	       ' with both $srcfile and $desfile NULL'
+	     );
 
     $templates = [];
     foreach ( $template_dirs as $dir )
@@ -228,10 +230,10 @@ function find_templates
 	    $tsrc = $matches[1];
 	    $tdes = $matches[2];
 
-	    if ( is_null ( $srcfile ) )
+	    if ( is_null ( $desfile ) )
 	        $match = template_match
 		    ( $problem, $srcfile, $tsrc );
-	    elseif ( is_null ( $desfile ) )
+	    elseif ( is_null ( $srcfile ) )
 	        $match = template_match
 		    ( $problem, $desfile, $tdes );
 	    else

@@ -37,11 +37,11 @@
 	    $is_administrator =
 	        $_POST['is_administrator'];
 	    if (    $is_administrator == 'yes'
-	         && mkdir ( "$epm_data/admin", 0750 )
+	         && mkdir ( "$epm_data/admin", 0770 )
 		 && mkdir ( $epm_data .
 		            "/admin/email_index",
-		            0750 )
-		 && mkdir ( "$epm_data/users", 0750 ) )
+		            0770 )
+		 && mkdir ( "$epm_data/users", 0770 ) )
 	    {
 		header
 		    ( 'Location: user_edit.php' );

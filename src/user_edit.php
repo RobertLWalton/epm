@@ -315,7 +315,7 @@
 	    $userid = $max_id + 1;
 	    while ( ! mkdir ( $epm_data .
 	                      "/users/user$userid",
-	                      0750 ) )
+	                      0770 ) )
 	        ++ $userid;
 	    $_SESSION['userid'] = $userid;
 	}
