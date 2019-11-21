@@ -1,15 +1,15 @@
 
 {
 
-"COMMANDS": ["epm_sandbox SSSS java JJJJ PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"]
+"COMMANDS": ["epm_sandbox SSSS java JJJJ PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"],
 "LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP.class"],
 "KEEP":    ["XXXX-PPPP.out"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.out"],
 "OPTIONS": {
-    "SSSS": { "cputime: ["-cputime 30", "LESS"],
+    "SSSS": { "cputime": ["-cputime 30", "LESS"],
               "space":  ["-space 2g", "LESS"],
 	      "filesize": ["-filesize 2m", "LESS"]},
-    "JJJJ": { "gc": ["-XX:+UseSerialGC],
+    "JJJJ": { "gc": ["-XX:+UseSerialGC"],
               "ss": ["-Xss64m"],
 	      "ms": ["-Xms1920m -Xmx1920m"],
 	      "ea": ["-ea", ""]}}

@@ -1,12 +1,12 @@
 
 {
 
-"COMMANDS": ["epm_sandbox SSSS python3 PPPP.pyc < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"]
-"LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP.pyc"],
+"COMMANDS": ["epm_sandbox SSSS python3 PPPP.pyc < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"],
+"LOCAL-REQUIRES": ["XXXX-PPPP.in", "PPPP.pyc"],
 "KEEP":    ["XXXX-PPPP.out"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.out"],
 "OPTIONS": {
-    "SSSS": { "cputime: ["-cputime 30", "LESS"],
+    "SSSS": { "cputime": ["-cputime 30", "LESS"],
               "space":  ["-space 2g", "LESS"],
 	      "filesize": ["-filesize 2m", "LESS"]}}
 

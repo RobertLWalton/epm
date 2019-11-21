@@ -3,11 +3,9 @@
 
 // File:	emp_make_test
 // Author:	walton@acm.org
-// Date:	Wed Nov 20 19:12:32 EST 2019
+// Date:	Wed Nov 20 22:38:20 EST 2019
 
 $epm_data = getcwd() . '/data';
-echo "epm_data set to $epm_data\n";
-
 $_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
 $_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
 
@@ -62,8 +60,34 @@ $errors = [];
 find_templates ( $problem, "$problem.cc", NULL,
                  $templates, $errors );
 
+check ( '$GLOBALS["templates"][0][0]',
+        "PPPP.cc:PPPP:" );
+check ( '$GLOBALS["templates"][0][2]' .
+        '["LOCAL-REQUIRES"][0]', "prob.cc" );
+check ( '$GLOBALS["templates"][0][2]' .
+        '["KEEP"][0]', "prob" );
+check ( '$GLOBALS["templates"][0][2]' .
+        '["SHOW"]', ["prob.err", "prob.out"] );
 check ( '$GLOBALS["errors"]', [] );
 
-print_r ( $templates );
+$errors = [];
+find_templates ( $problem, "00-001-$problem.in",
+                 "00-001-$problem.out",
+                 $templates, $errors );
+check ( 'count($GLOBALS["templates"]) > 0', true );
+foreach ( $templates as $template )
+{
+    $tlist = explode ( ":", $template[0] );
+    check ( '$GLOBALS["tlist"][0]', "XXXX-PPPP.in" );
+    check ( '$GLOBALS["tlist"][1]', "XXXX-PPPP.out" );
+    check ( '$GLOBALS["template"][2]["KEEP"][0]',
+            "00-001-prob.out" );
+    check ( '$GLOBALS["template"][2]["SHOW"]',
+            ["00-001-prob.err", "00-001-prob.out"] );
+    check ( '$GLOBALS["template"][2]' .
+            '["OPTIONS"]["SSSS"]["cputime"]',
+            ["-cputime 30", "LESS"] );
+}
+check ( '$GLOBALS["errors"]', [] );
 
 ?>
