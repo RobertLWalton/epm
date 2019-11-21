@@ -559,12 +559,41 @@ function link_required
 }
 
 // Return COMMANDS list from control with OPTIONS
-// inserted.  $option is option file json, or
-// [] if none.
+// inserted.  $option is option file json, or [] if
+// none.
 //
-function insert_options ( $control, $option )
+// Errors cause error messages to be appended to errors.
+//
+function get_commands ( $control, $option, & $errors )
 {
+    if ( ! isset ( $control[2]['COMMANDS'] ) )
+        return [];
     $commands = $control[2]['COMMANDS'];
+    if ( isset ( $control[2]['OPTIONS'] ) )
+        $options = $control[2]['OPTIONS'];
+    else
+        $options = [];
+
+    $errors_count = count ( $errors );
+    foreach ( $option as $key => $value )
+    {
+        if ( ! isset ( $options[$key] ) )
+	{
+	    $errors[] =
+	        "option key $key is not recognized;" .
+		" may be obsolete";
+	    continue;
+	}
+	$kopts = $options[$key];
+	if ( isset ( $kopts["values"] ) )
+	{
+	    if ( array_search ( $value, $kopts["values"] ) === false )
+	    ;
+	}
+
+
+    }
+     
     $match = [];
     foreach ( $options as $key => $value )
     {
