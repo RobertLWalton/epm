@@ -6,10 +6,13 @@
 "SHOW":    ["PPPP.err","PPPP.out"],
 "CHECKS":  ["cmp -s PPPP.err /dev/null",
             "cmp -s PPPP.out /dev/null"],
-"OPTIONS": {
-    "AAAA": { "opt": ["-Og", "-O3", ""],
-	      "ped": ["", "-Wpedantic"]},
-    "BBBB": { "gsl": ["", "-lgsl"],
-              "crypto": ["", "-lcrypto"]}}
+"OPTIONS": { "opt": { "values": ["-Og", "-O3", ""],
+                      "wildcard": "AAAA" },
+	     "ped": { "values": ["", "-Wpedantic"]},
+                      "wildcard": "AAAA" },
+             "gsl": { "values": ["", "-lgsl"],
+                      "wildcard": "BBBB" },
+             "crypto": { "values": ["", "-lcrypto"]}}
+                      "wildcard": "BBBB" }
 
 }

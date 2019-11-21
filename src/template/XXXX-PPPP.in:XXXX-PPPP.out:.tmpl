@@ -4,9 +4,14 @@
 "LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP"],
 "KEEP":    ["XXXX-PPPP.out"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.out"],
-"OPTIONS": {
-    "SSSS": { "cputime": ["-cputime 30", "LESS"],
-              "space":  ["-space 2g", "LESS"],
-	      "filesize": ["-filesize 2m", "LESS"]}}
+"OPTIONS": { "cputime: { "range": ["1", "30"],
+			 "format": "-cputime ####",
+                         "wildcard": "SSSS" },
+             "space":  { "range": ["16", "2048"],
+			 "format": "-space ####m",
+                         "wildcard": "SSSS" },
+	     "filesize": { "range": ["1", "2048"],
+			 "format": "-filesize ####k",
+                         "wildcard": "SSSS" }}
 
 }

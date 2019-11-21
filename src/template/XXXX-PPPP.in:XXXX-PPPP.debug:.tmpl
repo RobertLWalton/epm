@@ -1,13 +1,19 @@
 {
 
-"COMMANDS": ["epm_sandbox SSSS PPPP AAAA < XXXX-PPPP.in > XXXX-PPPP.debug 2> XXXX-PPPP.err"]
+"COMMANDS": ["epm_sandbox SSSS PPPP DDDD < XXXX-PPPP.in > XXXX-PPPP.debug 2> XXXX-PPPP.err"]
 "LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP"],
 "KEEP":    ["XXXX-PPPP.debug"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.debug"],
-"OPTIONS": {
-    "AAAA": "ANY",
-    "SSSS": { "cputime: ["-cputime 30", "LESS"],
-              "space":  ["-space 2g", "LESS"],
-	      "filesize": ["-filesize 2m", "LESS"]}}
+"OPTIONS": { "cputime: { "range": ["1", "30"],
+			 "format": "-cputime ####",
+                         "wildcard": "SSSS" },
+             "space":  { "range": ["16", "2048"],
+			 "format": "-space ####m",
+                         "wildcard": "SSSS" },
+	     "filesize": { "range": ["1", "2048"],
+			 "format": "-filesize ####k",
+                         "wildcard": "SSSS" },
+	     "debug": { "values": "ANY",
+                        "wildcard": "DDDD" }}
 
 }
