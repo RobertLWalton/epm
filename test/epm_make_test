@@ -3,14 +3,31 @@
 
 // File:	emp_make_test
 // Author:	walton@acm.org
-// Date:	Wed Nov 20 22:38:20 EST 2019
+// Date:	Thu Nov 21 00:14:33 EST 2019
 
-$epm_data = getcwd() . '/data';
+$epm_data = getcwd() . '/epm_make_test_data';
 $_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
 $_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
 
-if ( ! file_exists ( './data/users/user1/prob' ) )
-    mkdir ( './data/users/user1/prob', 0750, true );
+$prob_dir = 'users/user1/prob';
+$proj_dir = 'projects/proj1/prob';
+exec ( "rm -rf $epm_data" );
+mkdir ( "$epm_data/$prob_dir", 0750, true );
+mkdir ( "$epm_data/$proj_dir", 0750, true );
+
+$prob_java = <<<'EOT'
+public class prob {
+    public static void main ( String[] args )
+    {
+        System.out.println ( "Hello World!" );
+    }
+}
+EOT;
+
+file_put_contents
+    ( "$epm_data/$prob_dir/prob.java", $prob_java );
+exec ( "javac -d $epm_data/$prob_dir" .
+       " $epm_data/$prob_dir/prob.java" );
 
 include ( '../src/include/epm_make.php' );
 
