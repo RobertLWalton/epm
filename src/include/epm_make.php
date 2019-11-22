@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Nov 21 06:39:55 EST 2019
+// Date:    Thu Nov 21 18:33:42 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -562,9 +562,11 @@ function link_required
 // inserted.  $option is option file json, or [] if
 // none.
 //
-// Errors cause error messages to be appended to errors.
+// Errors cause warning messages to be appended to the
+// warnings list and corrective action to be taken as
+// indicated in the messages.
 //
-function get_commands ( $control, $option, & $errors )
+function get_commands ( $control, $option, & $warnings )
 {
     if ( ! isset ( $control[2]['COMMANDS'] ) )
         return [];
@@ -574,8 +576,7 @@ function get_commands ( $control, $option, & $errors )
     else
         $options = [];
 
-    $errors_count = count ( $errors );
-    foreach ( $option as $key => $value )
+    foreach ( $options as $key => $value )
     {
         if ( ! isset ( $options[$key] ) )
 	{
@@ -595,20 +596,110 @@ function get_commands ( $control, $option, & $errors )
     }
      
     $match = [];
-    foreach ( $options as $key => $value )
+    foreach ( $options as $key => $object )
     {
-        $opts = "";
-	foreach ( $value as $subkey => $list )
+        if ( ! isset ( $object['wildcard'] ) )
 	{
-	    if ( isset ( $option[$key][$subkey] ) )
-	        $opt = $option[$key][$subkey];
-	    else
-		$opt = $list[0];
-	    if ( $opt == "" ) continue;
-	    $opts = "$opts $opt";
+	    $warnings[] = "option $key has no wildcard;"
+	                . " option ignored";
+	    continue;
 	}
-	$match[$key] = trim ( $opts );
+	$wildcard = $object['wildcard'];
+
+	if ( isset ( $object['values'] ) )
+	{
+	    $vlist = $object['values'];
+	    $value = $vlist[0];
+	    if ( isset ( $option[$key] ) )
+	    {
+	        $ovalue = $option[$key];
+		if (     array_search
+		             ( $ovalue, $vlist, true )
+		     !== false )
+		    $value = $ovalue;
+		else
+		    $warnings[] =
+		        "$ovalue not legal value for" .
+			" $key option; ignored";
+	    }
+	}
+	elseif ( isset ( $object['range'] ) )
+	{
+	    $range = $object['range'];
+	    $number = $range[1];
+	    if ( isset ( $option[$key] ) )
+	    {
+	        $onumber = $option[$key];
+		if ( ! is_numeric ( $onumber ) )
+		    $warnings[] =
+		        "$onumber is not a number value"
+		      . " for $key option; ignored";
+		elseif ( $onumber > $range[1] )
+		    $warnings[] =
+		        "$onumber is too large for $key"
+		      . " option; $number used instead";
+		elseif ( $onumber < $range[0] )
+		{
+		    $number = $range[0];
+		    $warnings[] =
+		        "$onumber is too small for $key"
+		      . " option; $number used instead";
+		}
+		else
+		    $number = $onumber;
+	    }
+
+	    if ( isset ( $object['format'] ) )
+	    {
+	        $format = $object['format'];
+	        $value = preg_replace
+		    ( '/####/', $number, $format );
+	    }
+	    else
+	        $value = $number;
+	}
+	elseif ( isset ( $object['format'] ) )
+	{
+	    if ( ! isset ( $option[$key] ) )
+	        continue;
+	    $ovalue = $option[$key];
+	    if ( preg_match ( '/\v/', $ovalue ) )
+	    {
+		$warnings = "value $ovalue for"
+			  . " option $key contains"
+			  . " a vertical space"
+			  . " character; ignored";
+		continue;
+	    }
+	    $format = $object['format'];
+	    $count = 0;
+	    $value = preg_replace
+	        ( '/\*\*\*\*/', $ovalue, $format,
+		  -1, $count );
+	    if ( $count == 0 )
+	    {
+		if ( preg_match ( '/\s/', $ovalue ) )
+		{
+		    $warnings = "value $ovalue for"
+		              . " option $key contains"
+			      . " a whitespace"
+			      . " character; ignored";
+		    continue;
+		}
+		$value = preg_replace
+		    ( '/\?\?\?\?/', $ovalue, $format );
+	    }
+	}
+
+	if ( ! isset ( $map[$wildcard] ) )
+	    $map[$wildcard] = $value;
+	else
+	{
+	    $values = $map[$wildcard];
+	    $map[$wildcard] = "$values $value";
+	}
     }
+
     return substitute_match ( $commands, $match );
 }
 
