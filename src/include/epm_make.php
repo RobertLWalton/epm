@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Nov 21 18:33:42 EST 2019
+// Date:    Fri Nov 22 06:30:45 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -576,40 +576,81 @@ function get_commands ( $control, $option, & $warnings )
     else
         $options = [];
 
-    foreach ( $options as $key => $value )
+    if ( ! is_array ( $options ) )
+    {
+	$warnings[] =
+	    "options misformatted in .tmpl file;" .
+	    " commands ignored";
+	return [];
+    }
+
+    if ( ! is_array ( $option ) )
+    {
+	$warnings[] =
+	    ".optn file misformatted; .optn file" .
+	    " ignored";
+	$option = [];
+    }
+
+    foreach ( $option as $key => $value )
     {
         if ( ! isset ( $options[$key] ) )
-	{
-	    $errors[] =
-	        "option key $key is not recognized;" .
-		" may be obsolete";
-	    continue;
-	}
-	$kopts = $options[$key];
-	if ( isset ( $kopts["values"] ) )
-	{
-	    if ( array_search ( $value, $kopts["values"] ) === false )
-	    ;
-	}
-
-
+	    $warnings[] =
+	        "option $key in .optn file is not" .
+		" recognized; may be obsolete; option" .
+		" $key in .optn file is ignored";
     }
      
     $match = [];
     foreach ( $options as $key => $object )
     {
+	if ( ! is_array ( $object ) )
+	{
+	    $warnings[] = "option $key missformatted in"
+	                . " .tmpl file; option $key"
+			. " ignored";
+	    continue;
+	}
+
         if ( ! isset ( $object['wildcard'] ) )
 	{
 	    $warnings[] = "option $key has no wildcard;"
-	                . " option ignored";
+	                . " option $key ignored";
 	    continue;
 	}
+
+	if ( isset ( $option[$key] )
+	     &&
+	     ! is_string ( $option[$key] ) )
+	{
+	    $warnings[] = "override for option $key"
+	                . " missformatted in"
+	                . " .optn file; override"
+			. " ignored";
+	    unset ( $option[$key] );
+	}
+
 	$wildcard = $object['wildcard'];
+	if ( ! isset ( $match[$wildcard] ) )
+	    $match[$wildcard] = "";
+	    // Be sure all wildcards have a value
+	    // even if their associated options are
+	    // illegal or "".
 
 	if ( isset ( $object['values'] ) )
 	{
+	    if ( isset ( $object['format'] ) )
+	        $warnings[] =
+		    "option $key has both values and" .
+		    " format; format ignored";
+	    if ( isset ( $object['range'] ) )
+	        $warnings[] =
+		    "option $key has both values and" .
+		    " range; range ignored";
+
 	    $vlist = $object['values'];
 	    $value = $vlist[0];
+
 	    if ( isset ( $option[$key] ) )
 	    {
 	        $ovalue = $option[$key];
@@ -619,85 +660,121 @@ function get_commands ( $control, $option, & $warnings )
 		    $value = $ovalue;
 		else
 		    $warnings[] =
-		        "$ovalue not legal value for" .
-			" $key option; ignored";
+		        "override $ovalue in .optn" .
+			" file is not a legal value" .
+			" for option $key; override" .
+			" $ovalue ignored";
 	    }
 	}
 	elseif ( isset ( $object['range'] ) )
 	{
+	    if ( ! isset ( $object['format'] ) )
+	    {
+	        $warnings[] =
+		    "option $key has range but no" .
+		    " format in .tmpl file; option" .
+		    " $key ignored";
+		continue;
+	    }
 	    $range = $object['range'];
+	    $format = $object['format'];
+	    if ( ! preg_match ( '/####/', $format ) )
+	    {
+	        $warnings[] =
+		    "option $key format in .tmpl" .
+		    " file has no ####; option $key" .
+		    " ignored";
+		continue;
+	    }
+
 	    $number = $range[1];
 	    if ( isset ( $option[$key] ) )
 	    {
 	        $onumber = $option[$key];
 		if ( ! is_numeric ( $onumber ) )
 		    $warnings[] =
-		        "$onumber is not a number value"
-		      . " for $key option; ignored";
+		        "override $onumber in .optn" .
+			" file is not a number value" .
+		        " for option $key; override" .
+		        " $onumber ignored";
 		elseif ( $onumber > $range[1] )
 		    $warnings[] =
-		        "$onumber is too large for $key"
-		      . " option; $number used instead";
+		        "override $onumber in .optn" .
+			" file is too large for" .
+			" option $key; $number used" .
+			" instead";
 		elseif ( $onumber < $range[0] )
 		{
 		    $number = $range[0];
 		    $warnings[] =
-		        "$onumber is too small for $key"
-		      . " option; $number used instead";
+		        "override $onumber in .optn" .
+			" file is too small for" .
+			" option $key; $number used" .
+			" instead";
 		}
 		else
 		    $number = $onumber;
 	    }
-
-	    if ( isset ( $object['format'] ) )
-	    {
-	        $format = $object['format'];
-	        $value = preg_replace
-		    ( '/####/', $number, $format );
-	    }
-	    else
-	        $value = $number;
+	    $value = preg_replace
+		( '/####/', $number, $format );
 	}
 	elseif ( isset ( $object['format'] ) )
 	{
 	    if ( ! isset ( $option[$key] ) )
 	        continue;
+
 	    $ovalue = $option[$key];
-	    if ( preg_match ( '/\v/', $ovalue ) )
+
+	    $format = $object['format'];
+
+	    preg_replace ( '/\./', '\\.', $format );
+	    $count1 = 0;
+	    preg_replace
+	        ( '/\*\*\*\*/', '(\\V+)', $format,
+		  -1, $count1 );
+	    $count2 = 0;
+	    preg_replace
+	        ( '/\?\?\?\?/', '(\\S+)', $format,
+		  -1, $count2 );
+	    if ( count1 + count2 == 0 )
 	    {
-		$warnings = "value $ovalue for"
-			  . " option $key contains"
-			  . " a vertical space"
-			  . " character; ignored";
+		$warnings =
+		    "option $key in .tmpl file" .
+		    " contains format without ???? or" .
+		    " **** and no range or values;" .
+		    " option $key ignored";
 		continue;
 	    }
-	    $format = $object['format'];
-	    $count = 0;
-	    $value = preg_replace
-	        ( '/\*\*\*\*/', $ovalue, $format,
-		  -1, $count );
-	    if ( $count == 0 )
-	    {
-		if ( preg_match ( '/\s/', $ovalue ) )
-		{
-		    $warnings = "value $ovalue for"
-		              . " option $key contains"
-			      . " a whitespace"
-			      . " character; ignored";
-		    continue;
-		}
-		$value = preg_replace
-		    ( '/\?\?\?\?/', $ovalue, $format );
-	    }
-	}
 
-	if ( ! isset ( $map[$wildcard] ) )
-	    $map[$wildcard] = $value;
+	    if ( ! preg_match ( "/$format/", $ovalue ) )
+	    {
+		$warnings =
+		    "format {$object['format']} for" .
+		    " option $key in .tmpl file does" .
+		    " not match override value in" .
+		    " .optn file; override value" .
+		    " $ovalue ignored";
+		continue;
+	    }
+
+	    $value = $ovalue;
+	}
 	else
 	{
-	    $values = $map[$wildcard];
-	    $map[$wildcard] = "$values $value";
+	    $warnings[] =
+		"option $key has no values, range, or" .
+		" format in .tmpl file; option $key" .
+		" ignored";
+	    continue;
 	}
+
+	if ( $value == "" ) continue;
+
+	if ( $map[$wildcard] == "" )
+	    $map[$wildcard] = $value;
+	else
+	    $map[$wildcard] =
+	        "{$map[$wildcard]} $value";
     }
 
     return substitute_match ( $commands, $match );
