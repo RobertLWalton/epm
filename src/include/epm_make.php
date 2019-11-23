@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Nov 23 07:01:37 EST 2019
+// Date:    Sat Nov 23 07:59:44 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -619,12 +619,46 @@ function get_commands
 	    continue;
 	}
 
-        if ( ! isset ( $object['name'] ) )
+	$argname = NULL;
+        if ( isset ( $object['argname'] ) )
+	    $argname = $object['argname'];
+	$valname = NULL;
+        if ( isset ( $object['valname'] ) )
+	    $valname = $object['valname'];
+
+	$name = $argname;
+	if ( is_null ( $name ) )
+	    $name = $valname;
+	elseif ( ! is_null ( $valname ) )
+	{
+	    $warnings[] = "option $key has BOTH"
+	                . " argname and valname;"
+	                . " option $key ignored";
+	    continue;
+	}
+
+	if ( is_null ( $name ) )
 	{
 	    $warnings[] = "option $key has no name;"
 	                . " option $key ignored";
 	    continue;
 	}
+	elseif ( ! is_string ( $name ) )
+	{
+	    $warnings[] = "option $key name is not a"
+	                . " string; option $key"
+			. " ignored";
+	    continue;
+	}
+
+	if ( ! is_null ( $argname )
+	     &&
+	     ! isset ( $map[$argname] ) )
+	    $map[$name] = "";
+	    // Be sure all argnames have a value even if
+	    // their associated options are illegal or
+	    // "".
+
 
 	if ( isset ( $option[$key] )
 	     &&
@@ -636,8 +670,6 @@ function get_commands
 			. " ignored";
 	    unset ( $option[$key] );
 	}
-
-	$name = $object['name'];
 
 	if ( isset ( $object['type'] ) )
 	{
@@ -759,17 +791,9 @@ function get_commands
 		if ( ! is_null ( $ovalue ) )
 		    $value = $ovalue;
 	    }
-
-	    $submap[$name] = $value;
 	}
 	elseif ( isset ( $object['values'] ) )
 	{
-	    if ( ! isset ( $map[$name] ) )
-		$map[$name] = "";
-		// Be sure all names have a value even
-		// if their associated options are
-		// illegal or "".
-
 	    $vlist = $object['values'];
 	    $value = $vlist[0];
 
@@ -789,12 +813,6 @@ function get_commands
 	    }
 
 	    if ( $value == "" ) continue;
-
-	    if ( $map[$wildcard] == "" )
-		$map[$wildcard] = $value;
-	    else
-		$map[$wildcard] =
-		    "{$map[$wildcard]} $value";
 	}
 	else
 	{
@@ -803,6 +821,17 @@ function get_commands
 		" .tmpl file; option $key ignored";
 	    continue;
 	}
+
+	if ( ! is_null ( $argname ) )
+	{
+	    if ( $map[$argname] == "" )
+		$map[$argname] = $value;
+	    else
+		$map[$argname] =
+		    "{$map[$argname]} $value";
+	}
+	else
+	    $submap[$valname] = $value;
     }
 
     $map = substitute_match ( $map, $submap );
