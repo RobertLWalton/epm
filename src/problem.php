@@ -184,6 +184,7 @@ EOT;
         echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
     }
     echo <<<EOT
+    <br>or
     <label for="problem">Create New Problem:</label>
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name">
