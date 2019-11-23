@@ -1,19 +1,34 @@
 {
 
-"COMMANDS": ["epm_sandbox SSSS PPPP DDDD < XXXX-PPPP.in > XXXX-PPPP.debug 2> XXXX-PPPP.err"]
+"COMMANDS": ["epm_sandbox SANDBOX-ARGS PPPP DEBUG-ARGS < XXXX-PPPP.in > XXXX-PPPP.debug 2> XXXX-PPPP.err"]
+
 "LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP"],
 "KEEP":    ["XXXX-PPPP.debug"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.debug"],
-"OPTIONS": { "cputime: { "range": ["1", "30"],
-			 "format": "-cputime ####",
-                         "wildcard": "SSSS" },
-             "space":  { "range": ["16", "2048"],
-			 "format": "-space ####m",
-                         "wildcard": "SSSS" },
-	     "filesize": { "range": ["1", "2048"],
-			 "format": "-filesize ####k",
-                         "wildcard": "SSSS" },
-	     "debug": { "format": "****",
-                        "wildcard": "DDDD" }}
+
+"OPTIONS": {
+     "cputime: { "type": "integer",
+                 "range": ["1", "30"],
+		 "default": "30",
+		 "description": "allowed CPU time in seconds",
+		 "name": "CPUTIME" },
+     "cputime-form: { "values": ["-cputime CPUTIME"],
+		      "name": "SANDBOX-ARGS" },
+     "space":  { "type": "integer",
+                 "range": ["16", "2048"],
+		 "default": "2048",
+		 "description": "allowed virtual memory in megabytes",
+		 "name": "SPACE" },
+     "space-form":  { "values": ["-space SPACEm"],
+		      "name": "SANDBOX-ARGS" },
+     "filesize": { "type": "integer",
+                   "range": ["1", "2048"],
+		   "default": "2048",
+		   "description": "allowed output files size in kilobytes",
+		   "name": "FILESIZE" },
+     "filesize-form": { "values": ["-filesize FILESIZEk"],
+		        "name": "SANDBOX-ARGS" },
+     "debug": { "type": "args",
+		"name": "DEBUG-ARGS" }}
 
 }
