@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 19 02:01:37 EST 2019
+    // Date:	Sat Nov 23 12:21:42 EST 2019
 
     // Selects user problem.
     //
@@ -16,7 +16,16 @@
     session_start();
     clearstatcache();
     if ( ! isset ( $_SESSION['epm_data'] ) )
-        exit ( 'SYSTEM ERROR: epm_data not set' );
+    {
+	header ( "Location: index.php" );
+	exit;
+    }
+    if ( ! isset ( $_SESSION['confirmation_time'] ) )
+    {
+	header ( "Location: login.php" );
+	exit;
+    }
+
     $data = $_SESSION['epm_data'];
     $uploaded_file = NULL;
 
@@ -25,12 +34,6 @@
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
-
-    if ( ! isset ( $_SESSION['confirmation_time'] ) )
-    {
-	header ( "Location: login.php" );
-	exit;
-    }
 
     $userid = $_SESSION['userid'];
     $email = $_SESSION['email'];

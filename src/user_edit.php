@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 18 17:08:47 EST 2019
+    // Date:	Sat Nov 23 12:23:08 EST 2019
 
     // Edits files:
     //
@@ -29,14 +29,18 @@
     session_start();
     clearstatcache();
     if ( ! isset ( $_SESSION['epm_data'] ) )
-        exit ( 'SYSTEM ERROR: epm_data not set' );
-    $epm_data = $_SESSION['epm_data'];
-
+    {
+	header ( "Location: index.php" );
+	exit;
+    }
     if ( ! isset ( $_SESSION['confirmation_time'] ) )
     {
 	header ( "Location: login.php" );
 	exit;
     }
+
+    $epm_data = $_SESSION['epm_data'];
+
     if ( ! is_writable
                ( "$epm_data/admin/email_index" ) )
     {

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 18 17:11:36 EST 2019
+    // Date:	Sat Nov 23 12:23:30 EST 2019
 
     // Displays files:
     //
@@ -16,7 +16,16 @@
     session_start();
     clearstatcache();
     if ( ! isset ( $_SESSION['epm_data'] ) )
-        exit ( 'SYSTEM ERROR: epm_data not set' );
+    {
+	header ( "Location: index.php" );
+	exit;
+    }
+    if ( ! isset ( $_SESSION['confirmation_time'] ) )
+    {
+	header ( "Location: login.php" );
+	exit;
+    }
+
     $epm_data = $_SESSION['epm_data'];
 
     include 'include/debug_info.php';
@@ -25,11 +34,6 @@
     if ( $method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
-    if ( ! isset ( $_SESSION['confirmation_time'] ) )
-    {
-	header ( "Location: login.php" );
-	exit;
-    }
     if ( ! is_writable
                ( "$epm_data/admin/email_index" ) )
     {
