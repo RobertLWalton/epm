@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Nov 21 06:43:45 EST 2019
+// Date:	Sat Nov 23 19:20:43 EST 2019
 
 $epm_data = getcwd() . '/epm_make_test_data';
 $_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
@@ -106,8 +106,9 @@ check ( '$GLOBALS["options"]',
         ["PPPP.c:PPPP:.optn" => ""] );
 
 $errors = [];
-find_control ( $dirs, $templates, $requires, $options,
-               $required, $option, $errors );
+$control = find_control
+    ( $dirs, $templates, $requires, $options,
+      $required, $option, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["required"]', ["$prob_dir/prob.c"] );
 check ( '$GLOBALS["option"]', [] );
@@ -120,6 +121,26 @@ check ( '$GLOBALS["errors"]', [] );
 $errors = [];
 link_required ( NULL, $work, $required, $errors );
 check ( '$GLOBALS["errors"]', [] );
+
+$warnings = [];
+$errors = [];
+$commands = get_commands
+    ( $control, $option, $warnings, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["warnings"]', [] );
+
+$errors = [];
+$output = [];
+run_commands ( $commands, $work, $output, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["output"]', [] );
+
+$checks = $control[2]['CHECKS'];
+$errors = [];
+$output = [];
+run_commands ( $checks, $work, $output, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["output"]', [] );
 exit;
 
 $errors = [];

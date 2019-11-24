@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Nov 23 07:59:44 EST 2019
+// Date:    Sat Nov 23 18:55:42 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -584,7 +584,7 @@ function get_commands
 
     if ( ! is_array ( $options ) )
     {
-	$warnings[] =
+	$errors[] =
 	    "options misformatted in .tmpl file;" .
 	    " commands ignored";
 	return [];
@@ -693,10 +693,10 @@ function get_commands
 		    {
 			$warnings[] =
 			    "override $ovalue in" .
-			    " .optn file for $key in" .
-			    " .tmpl file is not an" .
-			    " integer; override" .
-			    " ignored";
+			    " .optn file for option" .
+			    " $key in .tmpl file is" .
+			    " not an integer;" .
+			    " override ignored";
 			$ovalue = NULL;
 		    }
 		}
@@ -706,10 +706,10 @@ function get_commands
 		    {
 			$warnings[] =
 			    "override $ovalue in" .
-			    " .optn file for $key in" .
-			    " .tmpl file is not a" .
-			    " number; override" .
-			    " ignored";
+			    " .optn file for option" .
+			    " $key in .tmpl file is" .
+			    " not a number;" .
+			    " override ignored";
 			$ovalue = NULL;
 		    }
 		}
@@ -719,10 +719,11 @@ function get_commands
 		    {
 			$warnings[] =
 			    "override $ovalue in" .
-			    " .optn file for $key in" .
-			    " .tmpl file contains a" .
-			    " space character;" .
-			    " override ignored";
+			    " .optn file for option" .
+			    " $key in .tmpl file" .
+			    " contains a whitespace" .
+			    " character; override" .
+			    " ignored";
 			$ovalue = NULL;
 		    }
 		}
@@ -732,13 +733,22 @@ function get_commands
 		    {
 			$warnings[] =
 			    "override $ovalue in" .
-			    " .optn file for $key in" .
-			    " .tmpl file contains a" .
-			    " vertical space" .
-			    " character; override" .
-			    " ignored";
+			    " .optn file for option" .
+			    " $key in .tmpl file" .
+			    " contains a vertical" .
+			    " space character;" .
+			    " override ignored";
 			$ovalue = NULL;
 		    }
+		}
+		else
+		{
+		    $warnings[] =
+			"option $key in .tmpl file" .
+			" has unknown type $type;" .
+			" override $ovalue from" .
+			" .optn file ignored";
+		    $ovalue = NULL;
 		}
 
 		if ( ( $type == 'integer'
@@ -780,7 +790,7 @@ function get_commands
 			    $warnings[] =
 				"override $oldvalue" .
 				" in .optn file is" .
-				" small large for" .
+				" too small for" .
 				" option $key;" .
 				" $ovalue used" .
 				" instead";
@@ -826,7 +836,7 @@ function get_commands
 	{
 	    if ( $map[$argname] == "" )
 		$map[$argname] = $value;
-	    else
+	    elseif ( $value != "" )
 		$map[$argname] =
 		    "{$map[$argname]} $value";
 	}
@@ -835,7 +845,7 @@ function get_commands
     }
 
     $map = substitute_match ( $map, $submap );
-    $commands = substitutute_match ( $commands, $map );
+    $commands = substitute_match ( $commands, $map );
 
     $unspecifieds = [];
     foreach ( $commands as $command )
