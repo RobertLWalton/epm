@@ -3,7 +3,9 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun Nov 24 00:29:40 EST 2019
+// Date:	Sun Nov 24 02:56:45 EST 2019
+
+$is_epm_test = true;
 
 $epm_data = getcwd() . '/epm_make_test_data';
 $_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
@@ -11,9 +13,16 @@ $_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
 
 $prob_dir = 'users/user1/prob';
 $proj_dir = 'projects/proj1/prob';
-exec ( "rm -rf $epm_data" );
-mkdir ( "$epm_data/$prob_dir", 0750, true );
-mkdir ( "$epm_data/$proj_dir", 0750, true );
+
+function setup_test_dirs ()
+{
+    global $epm_data, $prob_dir, $proj_dir;
+    exec ( "rm -rf $epm_data" );
+    mkdir ( "$epm_data/$prob_dir", 0750, true );
+    mkdir ( "$epm_data/$proj_dir", 0750, true );
+    mkdir ( "$epm_data/tmp", 0750, true );
+        // Used for simulated upload.
+}
 
 $prob_java = <<<'EOT'
 public class prob {
@@ -77,6 +86,10 @@ check ( 'substitute_match (
 	  "O" => ["M" => "tv99","N" => 88],
 	  "Z" => "FOOBAT"] );
 
+// Simulate upload steps for prob.c.
+//
+setup_test_dirs();
+
 $errors = [];
 find_templates ( $problem, "$problem.c", NULL,
                  $templates, $errors );
@@ -91,26 +104,22 @@ check ( '$GLOBALS["templates"][0][2]' .
         '["SHOW"]', ["prob.err", "prob.out"] );
 check ( '$GLOBALS["errors"]', [] );
 
-file_put_contents
-    ( "$epm_data/$prob_dir/prob.c", $prob_c );
-
 $dirs = [ $prob_dir, $proj_dir ];
 
 $errors = [];
 find_requires_and_options
     ( $dirs, $templates, $requires, $options, $errors );
 check ( '$GLOBALS["errors"]', [] );
-check ( '$GLOBALS["requires"]',
-        ["prob.c" => "users/user1/prob"] );
+check ( '$GLOBALS["requires"]', ["prob.c" => ""] );
 check ( '$GLOBALS["options"]',
         ["PPPP.c:PPPP:.optn" => ""] );
 
 $errors = [];
 $control = find_control
-    ( $dirs, $templates, $requires, $options,
+    ( $dirs, 'prob.c', $templates, $requires, $options,
       $required, $option, $errors );
 check ( '$GLOBALS["errors"]', [] );
-check ( '$GLOBALS["required"]', ["$prob_dir/prob.c"] );
+check ( '$GLOBALS["required"]', [] );
 check ( '$GLOBALS["option"]', [] );
 
 $errors = [];
@@ -119,8 +128,9 @@ cleanup_working ( $work, $errors );
 check ( '$GLOBALS["errors"]', [] );
 
 $errors = [];
-link_required ( NULL, $work, $required, $errors );
+link_required ( "prob.c", $work, $required, $errors );
 check ( '$GLOBALS["errors"]', [] );
+
 
 $warnings = [];
 $errors = [];
@@ -128,6 +138,10 @@ $commands = get_commands
     ( $control, $option, $warnings, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["warnings"]', [] );
+check ( 'count ( $GLOBALS["commands"] )', 1 );
+
+file_put_contents
+    ( "$epm_data/$work/prob.c", $prob_c );
 
 $errors = [];
 $output = [];
@@ -153,6 +167,35 @@ $show = compute_show
 check ( '$GLOBALS["show"]',
         ["users/user1/prob/+work+/prob.err",
 	 "users/user1/prob/+work+/prob.out"] );
+
+// Simulate upload for prob.c.
+//
+setup_test_dirs();
+file_put_contents ( "$epm_data/tmp/prob.c", $prob_c );
+
+$errors = [];
+$warnings = [];
+$output = [];
+
+$_FILES['uploaded_file'] =
+    ['name' => 'prob.c',
+     'error' => '0',
+     'size' => '1000',
+     'tmp_name' => "$epm_data/tmp/prob.c"];
+process_upload ( $_FILES['uploaded_file'],
+		 'prob',
+		 $commands, $moved, $show,
+		 $output, $warnings, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["warnings"]', [] );
+check ( '$GLOBALS["output"]', [] );
+check ( 'count ( $GLOBALS["commands"] )', 1 );
+check ( '$GLOBALS["moved"]', ["prob", "prob.c"] );
+check ( '$GLOBALS["show"]',
+        ["users/user1/prob/+work+/prob.err",
+	 "users/user1/prob/+work+/prob.out"] );
+
+
 exit;
 
 $errors = [];

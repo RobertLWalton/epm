@@ -2,13 +2,20 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Nov 24 00:18:11 EST 2019
+// Date:    Sun Nov 24 01:05:47 EST 2019
 
 // Functions used to make files from other files.
 //
 // Note that file names can have -, _, ., /, but no
 // other special characters.  Of course uploaded
 // files and components cannot have /.
+
+if ( ! isset ( $is_epm_test ) )
+    $is_epm_test = false;
+    // True means we are running a test script that is
+    // NOT driven by an http server.  Some functions,
+    // notably move_uploaded_file, will not work
+    // in this test script environment.
 
 if ( ! isset ( $epm_data ) )
     exit ( 'SYSTEM ERROR: $epm_data not set' );
@@ -354,6 +361,10 @@ function find_requires_and_options
 // files are selected, and among these the first in
 // the $templates list.
 //
+// If $uploaded is not NULL, it is the name of the
+// file being uploaded and will satisfy REQUIRES or
+// LOCAL-REQUIRES.
+//
 // Returns NULL if no template found meeting required
 // file constraints.
 //
@@ -361,9 +372,12 @@ function find_requires_and_options
 // the errors list.
 //
 function find_control
-	( $dirs, $templates, $requires, $options,
-	  & $required, & $option, & $errors )
+	( $dirs, $uploaded, $templates, $requires,
+	  $options, & $required, & $option, & $errors )
 {
+    $required = [];
+    $option = [];
+
     $best_template = NULL;
     $best_count = -1;
     $local_dir = $dirs[0];
@@ -382,6 +396,15 @@ function find_control
 	    {
 		foreach ( $json[$R] as $rfile )
 		{
+		    if ( $rfile == $uploaded )
+		    {
+		        if ( $R == 'REMOVE-REQUIRES'
+			     &&
+			     $dirs_count != 1 )
+			    $OK = false;
+			continue;
+		    }
+
 		    if ( ! isset
 			     ( $requires[$rfile] ) )
 		    {
@@ -953,28 +976,38 @@ function compute_show
     return $slist;
 }
 
-// Process an uploaded file.  Errors append error
-// message to $errors.  Commands are computed using
+// Process an uploaded file whose $_FILES[...] value
+// is given by the $upload argument.
+//
+// Errors append error messages to $errors and warning
+// messages to $warnings.  Commands are computed using
 // get_commands.  Output from commands executed is
-// appended to $output (this does not include writes
-// to standard error by bash, which are lost).  List
-// of SHOW files is placed in $show.
+// appended to $output (this does not include writes to
+// standard error by bash, which are lost).  List of
+// KEEP files moved to problem directory is placed in
+// $moved, and list of SHOW files is placed in $show.
+// File names in these are relative to $epm_data.
 //
 function process_upload
-	( $problem, $upload, & $commands,
-	  & $show, & $output, & $errors )
+	( $upload, $problem, & $commands, & $moved,
+	  & $show, & $output, & $warnings, & $errors )
 {
-    global $upload_target_ext, $make_dirs, $userid;
+    global $epm_data, $upload_target_ext, $make_dirs,
+           $upload_maxsize, $userid, $problem,
+	   $is_epm_test;
 
+    $commands = [];
+    $moved = [];
     $show = [];
     $errors_size = count ( $errors );
-    if ( ! isset ( $_FILES[$upload] ) )
+
+    if ( ! is_array ( $upload ) )
     {
         $errors[] =
-	    "SYSTEM ERROR: \$_FILES['$upload'] not set";
+	    "SYSTEM ERROR: $upload is not an array";
 	return;
     }
-    $fname = $_FILES[$upload]['name'];
+    $fname = $upload['name'];
     if ( ! preg_match ( '/^[-_.a-zA-Z0-9]*$/',
                         $fname ) )
     {
@@ -1004,7 +1037,7 @@ function process_upload
     $tname = $base;
     if ( $text != "" ) $tname = "$tname.$text";
 
-    $ferror = $_FILES[$upload]['error'];
+    $ferror = $upload['error'];
     if ( $ferror != 0 )
     {
         switch ( $ferror )
@@ -1026,12 +1059,12 @@ function process_upload
 	return;
     }
 
-    $fsize = $_FILES[$upload]['size'];
+    $fsize = $upload['size'];
     if ( $fsize > $upload_maxsize )
     {
         $errors[] =
 	    "uploaded file $fname too large;" .
-	    " limit is $maxsize";
+	    " limit is $upload_maxsize";
 	return;
     }
 
@@ -1052,8 +1085,8 @@ function process_upload
     if ( count ( $errors ) > $errors_size ) return;
 
     $control = find_control
-	( $make_dirs, $templates, $requires, $options,
-	  $required, $option, $errors );
+	( $make_dirs, $fname, $templates, $requires,
+	  $options, $required, $option, $errors );
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) )
     {
@@ -1063,7 +1096,7 @@ function process_upload
 	return;
     }
 
-    $prob_dir = "users/user$userid";
+    $prob_dir = "users/user$userid/$problem";
     $work = "$prob_dir/+work+";
     cleanup_working ( $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
@@ -1072,7 +1105,7 @@ function process_upload
 	( $fname, $work, $required, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
-    if ( file_exists ( $work/$fname ) )
+    if ( file_exists ( "$work/$fname" ) )
     {
         $errors[] =
 	    "SYSTEM_ERROR: uploaded file is $fname" .
@@ -1080,10 +1113,14 @@ function process_upload
 	return;
     }
 
-    $ftmp_name = $_FILES[$upload]['tmp_name'];
+    $ftmp_name = $upload['tmp_name'];
 
-    if ( ! move_uploaded_file
-               ( $ftmp_name, $work/$fname ) )
+    if ( $is_epm_test ?
+         ! rename ( $ftmp_name,
+	            "$epm_data/$work/$fname" ) :
+         ! move_uploaded_file
+	       ( $ftmp_name,
+		 "$epm_data/$work/$fname" ) )
     {
         $errors[] =
 	    "SYSTEM_ERROR: failed to move $ftmp_name" .
@@ -1092,7 +1129,9 @@ function process_upload
 	return;
     }
 
-    $commands = get_commands ( $control, $option );
+    $commands = get_commands
+        ( $control, $option, $warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
 
     $output = [];
     run_commands ( $commands, $work, $output, $errors );
@@ -1107,11 +1146,22 @@ function process_upload
 	    goto SHOW;
     }
 
-    move_keep ( $control, $work, $prob_dir, $errors );
+    move_keep ( $control, $work, $prob_dir,
+                $moved, $errors );
+    if ( ! rename ( "$epm_data/$work/$fname",
+                    "$epm_data/$prob_dir/$fname" ) )
+	$errors[] =
+	    "SYSTEM_ERROR: could not rename" .
+	    " $epm_data/$work/$fname to" .
+	    " $epm_data/$prob_dir/$fname";
+    else
+        $moved[] = $fname;
     if ( count ( $errors ) > $errors_size ) goto SHOW;
+             
 
 SHOW:
-    $show = compute_show ( $control, $work );
+    $show = compute_show
+        ( $control, $work, $prob_dir, $moved );
 }
 
 ?>
