@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Nov 23 19:20:43 EST 2019
+// Date:	Sun Nov 24 00:29:40 EST 2019
 
 $epm_data = getcwd() . '/epm_make_test_data';
 $_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
@@ -141,6 +141,18 @@ $output = [];
 run_commands ( $checks, $work, $output, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["output"]', [] );
+
+$errors = [];
+move_keep ( $control, $work, $prob_dir,
+            $moved, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["moved"]', ["prob"] );
+
+$show = compute_show
+    ( $control, $work, $prob_dir, $moved );
+check ( '$GLOBALS["show"]',
+        ["users/user1/prob/+work+/prob.err",
+	 "users/user1/prob/+work+/prob.out"] );
 exit;
 
 $errors = [];

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Nov 23 18:55:42 EST 2019
+// Date:    Sun Nov 24 00:18:11 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -888,21 +888,26 @@ function run_commands
     }
 }
 
-// Move keep files, if any, from $work to $localdir.
+// Move KEEP files, if any, from $work to $prob_dir.
+// List last component names of files moved in $moved.
 // Append error messages to $errors.
 //
 function move_keep
-	( $control, $work, $localdir, & $errors )
+	( $control, $work, $prob_dir,
+	  & $moved, & $errors )
 {
     global $epm_data;
 
+    $moved = [];
+
     if ( ! isset ( $control[2]['KEEP'] ) )
         return;
+
     $keep = $control[2]['KEEP'];
     foreach ( $keep as $fname )
     {
         $wfile = "$epm_data/$work/$fname";
-        $lfile = "$epm_data/$localdir/$fname";
+        $lfile = "$epm_data/$prob_dir/$fname";
 	if ( ! file_exists ( $wfile ) )
 	{
 	    $errors[] = "KEEP file $fname was not"
@@ -915,26 +920,35 @@ function move_keep
 	              . " $wfile to $lfile";
 	    continue;
 	}
+	$moved[] = $fname;
     }
 }
 
-// Return list of files to be shown.  File and dirctory
-// names are relative to $epm_data.  Files that are not
-// readable are ignored; there can be no errors.
+// Return list of files to be shown.  File and directory
+// names are relative to $epm_data.  Files that have not
+// been moved are in $work, and moved files are in
+// $prob_dir.  Files that are not readable are ignored;
+// there can be no errors.
 //
-function compute_show ( $control, $work )
+function compute_show
+	( $control, $work, $prob_dir, $moved )
 {
     global $epm_data;
 
     if ( ! isset ( $control[2]['SHOW'] ) )
         return [];
+
     $slist = [];
     $show = $control[2]['SHOW'];
     foreach ( $show as $fname )
     {
-        $sfile = "$epm_data/$work/$fname";
-	if ( is_readable ( $sfile ) )
-	    $slist[] = "$work/$fname";
+	if (     array_search ( $fname, $moved, true )
+	     !== false )
+	    $sfile = "$prob_dir/$fname";
+	else
+	    $sfile = "$work/$fname";
+	if ( is_readable ( "$epm_data/$sfile" ) )
+	    $slist[] = "$sfile";
     }
     return $slist;
 }
@@ -1049,8 +1063,8 @@ function process_upload
 	return;
     }
 
-    $localdir = "users/user$userid";
-    $work = "$localdir/+work+";
+    $prob_dir = "users/user$userid";
+    $work = "$prob_dir/+work+";
     cleanup_working ( $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
@@ -1093,7 +1107,7 @@ function process_upload
 	    goto SHOW;
     }
 
-    move_keep ( $control, $work, $localdir, $errors );
+    move_keep ( $control, $work, $prob_dir, $errors );
     if ( count ( $errors ) > $errors_size ) goto SHOW;
 
 SHOW:
