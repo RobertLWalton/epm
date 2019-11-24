@@ -26,7 +26,7 @@
 	exit;
     }
 
-    $data = $_SESSION['epm_data'];
+    $epm_data = $_SESSION['epm_data'];
     $uploaded_file = NULL;
 
     include 'include/debug_info.php';
@@ -38,7 +38,7 @@
     $userid = $_SESSION['userid'];
     $email = $_SESSION['email'];
 
-    $user_dir = "$data/users/user$userid";
+    $user_dir = "$epm_data/users/user$userid";
 
     if ( $userid == 'NEW'
          ||
@@ -105,7 +105,7 @@
     if ( isset ( $problem ) )
     {
 	$problem_dir =
-	    "$data/users/user$userid/$problem";
+	    "$epm_data/users/user$userid/$problem";
 
 	if ( $new_problem )
 	{
@@ -123,7 +123,7 @@
 	        $problems[] = $problem;
 	}
 	elseif ( ! is_writable
-		      ( "$data/users/user$userid" .
+		      ( "$epm_data/users/user$userid" .
 		        "/$problem" ) )
 	{
 	    $problem_error =
@@ -141,13 +141,17 @@
 
     if ( isset ( $_POST['upload'] ) )
     {
-	$f = basename
-	    ($_FILES['uploaded_file']['name']);
-        $f = "$data/uploads/$f";
-	if ( move_uploaded_file
-	         ( $_FILES['uploaded_file']['tmp_name'],
-	           $f ) )
-	    $uploaded_file = $f;
+	$upload_info = $_FILES['uploaded_file'];
+	$uploaded_file = $upload_info['name'];
+	include 'include/epm_make.php';
+	$upload_errors = [];
+	$upload_warnings = [];
+	$upload_output = [];
+	process_upload
+	    ( $upload_info, $problem,
+	      $upload_commands, $upload_moved,
+	      $upload_show, $upload_output,
+	      $upload_warnings, $upload_errors );
     }
 
 
@@ -157,7 +161,7 @@
 <html>
 <body>
 
-<div style="background-color:#c0ffff;width:30%;float:left">
+<div style="background-color:#c0ffff;width:50%;float:left">
 <?php 
 
     if ( isset ( $problem_error ) )
@@ -213,11 +217,59 @@ EOT;
 
     if ( isset ( $uploaded_file ) )
     {
-        $contents = file_get_contents
-	    ( $uploaded_file );
-        echo "<div style='background-color:#ffffc0;" .
-	     "width:70%;height:60%;float:left;overflow:scroll'>" .
-	     "<pre>$contents</pre></div>";
+	echo "<div style='background-color:#c0ffc0;width:50%;float:left'>\n";
+        if ( count ( $upload_errors ) > 0 )
+	{
+	    echo "Errors:<br><ul>\n";
+	    foreach ( $upload_errors as $e )
+	        echo "<li><pre>$e</pre>\n";
+	     echo "</ul>\n";
+	}
+        if ( count ( $upload_warnings ) > 0 )
+	{
+	    echo "Warnings:<br><ul>\n";
+	    foreach ( $upload_warnings as $e )
+	        echo "<li><pre>$e</pre>\n";
+	     echo "</ul>\n";
+	}
+        if ( count ( $upload_output ) > 0 )
+	{
+	    echo "Output:<br><ul>\n";
+	    foreach ( $upload_output as $e )
+	        echo "<li><pre>$e</pre>\n";
+	     echo "</ul>\n";
+	}
+        if ( count ( $upload_commands ) > 0 )
+	{
+	    echo "Commands:<br><ul>\n";
+	    foreach ( $upload_commands as $e )
+	        echo "<li><pre>$e</pre>\n";
+	     echo "</ul>\n";
+	}
+        if ( count ( $upload_moved ) > 0 )
+	{
+	    echo "Kept:<br><ul>\n";
+	    foreach ( $upload_moved as $e )
+	        echo "<li><pre>$e</pre>\n";
+	     echo "</ul>\n";
+	}
+        if ( count ( $upload_show ) > 0 )
+	{
+	    foreach ( $upload_show as $f )
+	    {
+		$f = "epm_data/$f";
+		$b = basename ( $f );
+	        if ( filesize ( $f ) == 0 )
+		{
+		    echo "$b is empty<br>\n";
+		    continue;
+		}
+		echo "$b:\n\n";
+		echo '<pre>' . file_get_contants ( $f )
+		             . "</pre>\n\n";
+	    }
+	}
+	echo "</div>\n";
     }
 ?>
 
