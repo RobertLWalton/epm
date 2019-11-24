@@ -265,7 +265,7 @@ EOT;
 		    continue;
 		}
 		echo "$b:\n\n";
-		echo '<pre>' . file_get_contants ( $f )
+		echo '<pre>' . file_get_contents ( $f )
 		             . "</pre>\n\n";
 	    }
 	}
