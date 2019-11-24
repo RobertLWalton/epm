@@ -257,7 +257,7 @@ EOT;
 	{
 	    foreach ( $upload_show as $f )
 	    {
-		$f = "epm_data/$f";
+		$f = "$epm_data/$f";
 		$b = basename ( $f );
 	        if ( filesize ( $f ) == 0 )
 		{
