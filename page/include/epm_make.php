@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Nov 24 19:22:49 EST 2019
+// Date:    Sun Nov 24 23:56:23 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -51,8 +51,8 @@ if ( isset ( $params['upload_maxsize'] ) )
 else
     $upload_maxsize = 2000000;
 
-$root = $_SERVER['DOCUMENT_ROOT'];
-$template_dirs = ["$root/src/template"];
+$root = $_SESSION['epm_root'];
+$template_dirs = ["$root/template"];
 
 // User Parameters:
 //
