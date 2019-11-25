@@ -18,11 +18,11 @@ if ( ! isset ( $is_epm_test ) )
     // in this test script environment.
 
 if ( ! isset ( $epm_data ) )
-    exit ( 'SYSTEM ERROR: $epm_data not set' );
+    exit ( 'ACCESS ERROR: $epm_data not set' );
 if ( ! isset ( $_SESSION['userid'] ) )
-    exit ( 'SYSTEM ERROR: session userid not set' );
+    exit ( 'ACCESS ERROR: session userid not set' );
 if ( ! isset ( $_SESSION['problem'] ) )
-    exit ( 'SYSTEM ERROR: sesssion has no current' .
+    exit ( 'ACCESS ERROR: sesssion has no current' .
            ' problem' );
 
 $userid = $_SESSION['userid'];

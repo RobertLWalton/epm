@@ -5,7 +5,7 @@
 // Date:    Tue Nov 19 06:11:40 EST 2019
 
 if ( ! isset ( $epm_data ) )
-    exit ( 'SYSTEM ERROR: $epm_data not set' );
+    exit ( 'ACCESS ERROR: $epm_data not set' );
 
 $file = "$epm_data/admin/admin.params";
 if ( is_readable ( $file ) )

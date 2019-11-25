@@ -14,9 +14,17 @@
 
     session_start();
     clearstatcache();
-
     if ( ! isset ( $_SESSION['epm_data'] ) )
-        exit ( 'SYSTEM ERROR: epm_data not set' );
+    {
+	header ( "Location: index.php" );
+	exit;
+    }
+    if ( ! isset ( $_SESSION['confirmation_time'] ) )
+    {
+	header ( "Location: login.php" );
+	exit;
+    }
+
     $epm_data = $_SESSION['epm_data'];
 
     if (    is_writable ( "$epm_data/admin" )
