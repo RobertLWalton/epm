@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Nov 24 03:47:18 EST 2019
+// Date:    Sun Nov 24 19:22:49 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -1073,7 +1073,8 @@ function process_upload
     if ( count ( $templates ) == 0 )
     {
         $errors[] =
-	    "there are no templates $fname:$tname:...";
+	    "there are no templates" .
+	    " $fname:$tname:... for problem $problem";
 	return;
     }
 

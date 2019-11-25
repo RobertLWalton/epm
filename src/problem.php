@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Nov 23 12:21:42 EST 2019
+    // Date:	Sun Nov 24 19:31:51 EST 2019
 
     // Selects user problem.
     //
@@ -161,7 +161,7 @@
 <html>
 <body>
 
-<div style="background-color:#c0ffff;width:50%;float:left">
+<div style="background-color:#c0ffff;width:50%;">
 <?php 
 
     if ( isset ( $problem_error ) )
@@ -217,7 +217,7 @@ EOT;
 
     if ( isset ( $uploaded_file ) )
     {
-	echo "<div style='background-color:#c0ffc0;width:50%;float:left'>\n";
+	echo "<div style='background-color:#c0ffc0;width:50%;'>\n";
         if ( count ( $upload_errors ) > 0 )
 	{
 	    echo "Errors:<br><ul>\n";
@@ -253,6 +253,7 @@ EOT;
 	        echo "<li><pre>$e</pre>\n";
 	     echo "</ul>\n";
 	}
+	echo "</div>\n";
         if ( count ( $upload_show ) > 0 )
 	{
 	    foreach ( $upload_show as $f )
@@ -265,11 +266,12 @@ EOT;
 		    continue;
 		}
 		echo "$b:\n\n";
+		echo "<div style='background-color:#ffc0ff;width:50%;'>\n";
 		echo '<pre>' . file_get_contents ( $f )
 		             . "</pre>\n\n";
+		echo "</div>\n";
 	    }
 	}
-	echo "</div>\n";
     }
 ?>
 
