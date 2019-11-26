@@ -372,11 +372,10 @@ int main ( int argc, char ** argv )
 
     /* Fix up space parameter for .java
     */
-    if (    geteuid() != 0
-         || ( getenv ( "EPM_EXT" ) != NULL
-	      &&
-	      strcmp ( getenv ( "EPM_EXT" ), "java" )
-	          == 0 ) )
+    if ( getenv ( "EPM_EXT" ) != NULL
+	 &&
+	    strcmp ( getenv ( "EPM_EXT" ), "java" )
+	 == 0 )
 	space = RLIM_INFINITY;
 
     /* If -watch or -tee, start child and watch it. */
