@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Nov 24 23:56:23 EST 2019
+// Date:    Tue Nov 26 18:56:31 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -528,7 +528,7 @@ function cleanup_working ( $dir, & $errors )
     if ( file_exists ( $dir ) )
         exec ( "rm -rf $dir" );
 
-    if ( ! mkdir ( $dir, 0771 ) )
+    if ( ! mkdir ( $dir, 0771) )
     // Must give o+x permission so epm_sandbox can
     // execute programs that are in working directory.
     {
@@ -572,7 +572,7 @@ function link_required
 	    continue;
 	}
 	$rlink = "$epm_data/$work/$rbase";
-	if ( ! symlink ( $rname, "$rlink" ) )
+	if ( ! link ( $rname, "$rlink" ) )
 	{
 	    $errors[] = "cannot symbolically link"
 	              . " $rname to $rlink";

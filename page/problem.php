@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Nov 24 19:31:51 EST 2019
+    // Date:	Tue Nov 26 18:57:02 EST 2019
 
     // Selects user problem.
     //
@@ -15,6 +15,7 @@
 
     session_start();
     clearstatcache();
+    umask ( 06 );
     if ( ! isset ( $_SESSION['epm_data'] ) )
     {
 	header ( "Location: index.php" );
