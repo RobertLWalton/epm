@@ -528,7 +528,9 @@ function cleanup_working ( $dir, & $errors )
     if ( file_exists ( $dir ) )
         exec ( "rm -rf $dir" );
 
-    if ( ! mkdir ( $dir ) )
+    if ( ! mkdir ( $dir, 0771 ) )
+    // Must give o+x permission so epm_sandbox can
+    // execute programs that are in working directory.
     {
 	$sysalert = "could not make $dir";
 	include 'sysalert.php';
