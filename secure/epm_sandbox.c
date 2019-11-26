@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Mon Nov 25 17:28:35 EST 2019
+ * Date:	Tue Nov 26 05:37:58 EST 2019
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -36,16 +36,6 @@
 char documentation [] =
 "epm_sandbox [options] program argument ...\n"
 "\n"
-"    If EPM_SANDBOX_UNSECURE is defined in the\n"
-"    environment and this program's effective user\n"
-"    ID is `root', this program begins by changing\n"
-"    the effective user ID to the real user ID.\n"
-"\n"
-"    If EPM_EXT is defined to equal `java' in the\n"
-"    current environment, then this program ignores\n"
-"    -space options, as JAVA will not run with\n"
-"    limited virtual address space.\n"
-"\n"
 "    This program first checks its arguments for\n"
 "    options that set resource limits:\n"
 "\n"
@@ -63,82 +53,66 @@ char documentation [] =
 "    can end with `k' to multiply it by 1024 or `m'\n"
 "    to multiply it by 1024 * 1024 or `g' to multiply\n"
 "    it by 1024 * 1024 * 1024 (`g' is only valid on\n"
-"    64 bit computers).  N can also be `u' standing\n"
-"    for unlimited.  If not set a resource is"
-				    " unlimited.\n"
+"    64 bit computers).\n"
 "\n"
-"    There are also two other options.  First, with\n"
-"    the\n"
+"    There are also two other options:\n"
 "\n"
-"      -watch\n"
-"\f\n"
-"    option, this program forks and the parent waits\n"
-"    for the child to complete the rest of this pro-\n"
-"    gram's action.  If the child terminates with a\n"
-"    signal, the parent prints an error message iden-\n"
-"    tifying the signal to the standard error.  It\n"
-"    uses strsignal(3) to do this after changing\n"
-"    SIGKILL with measured CPU time over the limit\n"
-"    to SIGXCPU.  The parent returns a 0 exit code\n"
-"    if the child does not terminate with a signal,\n"
-"    and returns 128 + the possibly changed signal\n"
-"    number as an exit code if the child does termin-\n"
-"    ate with a signal.\n"
+"      -time TIME-FILE\n"
+"      -env ENV-PARAM\n"
 "\n"
-"    Alternatively, with the\n"
+"    With a TIME-FILE the execution times of the\n"
+"    child process that executes `program ...' are\n"
+"    written into the TIME-FILE, in the form of a\n"
+"    single line of format `USER-TIME SYSTEM-TIME',\n"
+"    where times are floating point numbers of CPU\n"
+"    seconds.\n"
 "\n"
-"      -tee FILE\n"
+"    Without any -env options, the environment in\n"
+"    which `program ...' executes is empty.  There\n"
+"    can be zero or more `-env ENV-PARAM' options,\n"
+"    each of which adds its ENV-PARAM to the environ-\n"
+"    ment in which `program ...' executes.\n"
 "\n"
-"    option, the program does the same thing as with\n"
-"    the -watch option, but in addition pipes the\n"
-"    standard output of the child back through the\n"
-"    parent, where it is copied into the FILE and\n"
-"    also copied to the standard output, just like\n"
-"    the UNIX tee(1) command.  However, unlike\n"
-"    tee(1), if the filesize is exceeded for the\n"
-"    standard output, a SIGXFSZ signal is sent to\n"
-"    the child.\n"
+"    The name `program' is looked up using the epm_\n"
+"    sandbox's environment PATH variable after the\n"
+"    manner of the UNIX which(1) or shell commands.\n"
 "\n"
-"    The rest of this program, which runs as the\n"
-"    child with a -watch or -tee option, or as the\n"
-"    program proper otherwise, does the following.\n"
+"    If the program is in the current directory, it\n"
+"    may have to be given a+x permission so that it\n"
+"    can be executed by the `sandbox' user as descri-\n"
+"    bed below.\n"
 "\n"
-"    First, if this program's effective user ID is\n"
-"    (still) `root', this program eliminates any\n"
-"    supplementary groups that the process might have\n"
-"    and changes the effective user and group IDs to\n"
-"    those of `sandbox', as looked up in /etc/passwd.\n"
-"\f\n"
-"    Then this program sets the real user and group\n"
-"    IDs to the effective user and group IDs, sets\n"
-"    the resource limits determined by the options\n"
-"    and defaults, sets the environment to contain\n"
-"    the strings in EPM_SANDBOX_ENV if that environ-\n"
-"    ment variable is defined, or just \"SANDBOX\"\n"
-"    otherwise, and executes the program with the\n"
-"    given arguments.  If EPM_SANDBOX_ENV is de-\n"
-"    fined, it consists of whitespace separated\n"
-"    strings that become the environment, with re-\n"
-"    placement of `\\ ', `\\t', `\\n', `\\f', `\\v',\n"
-"    and `\\\\' within each environment string by\n"
-"    space, tab, new line, form feed, vertical tab,\n"
-"    and backslash, respectively.  `\\ ', which de-\n"
-"    notes a single space, does not separate strings.\n"
+"    Epm_sandbox forks, the parent waits for the\n"
+"    child, and the child executes `program ...'.  If\n"
+"    epm_sandbox's effective user ID is `root', any\n"
+"    supplementary groups are eliminated from the\n"
+"    child and the real and effective user and group\n"
+"    IDs of the child are changed to those of the\n"
+"    `sandbox' account, as looked up in /etc/passwd.\n"
 "\n"
 "    Normally the `sandbox' user is not allowed to\n"
 "    log in and owns no useful files or directories.\n"
 "\n"
-"    If the environment variable EPM_SANDBOX_TIME\n"
-"    is defined and either the -watch or -tee option\n"
-"    is given, the environment variable names a local\n"
-"    file into which the execution times of the child\n"
-"    process are placed, in the form of a single line\n"
-"    of format `USER-TIME SYSTEM-TIME' where times\n"
-"    are floating point numbers of CPU seconds.\n"
+"    The child's resource limits and environment are\n"
+"    set according to the options and defaults, and\n"
+"    the program is executed with the given argu-\n"
+"    ments.\n"
 "\n"
-"    The program will write an error message on the\n"
-"    standard error output if any system call is in\n"
-"    error.\n" ;
+"    If the child terminates with a signal, the\n"
+"    parent prints an error message identifying the\n"
+"    signal to the standard error.  It uses"
+                                  " strsignal(3)\n"
+"    to do this after changing SIGKILL with measured\n"
+"    CPU time over the limit to SIGXCPU.  The parent\n"
+"    returns a 0 exit code if the child does not ter-\n"
+"    minate with a signal, and returns 128 + the\n"
+"    possibly changed signal number as an exit code\n"
+"    if the child does terminate with a signal.\n"
+"\n"
+"    Epm_sandbox will write an error message on the\n"
+"    standard error output and exit with exit code 1\n"
+"    if any system call or option is in error.\n"
+;
 
 void errno_exit ( char * m )
 {
@@ -184,7 +158,7 @@ int main ( int argc, char ** argv )
     int watch = 0;
     int tee = 0;
     int debug = 0;
-    const char * file = NULL;
+    const char * tee_file = NULL;
 
     /* Effective IDs of this process after change
        from `root' to `sandbox' */
@@ -228,7 +202,7 @@ int main ( int argc, char ** argv )
 			  " arguments\n" );
 		exit (1);
 	    }
-	    file = argv[index++];
+	    tee_file = argv[index++];
 	    continue;
 	}
         else if ( strcmp ( argv[index], "-cputime" )
@@ -280,7 +254,7 @@ int main ( int argc, char ** argv )
 	        if ( c < '0' || c > '9' ) break;
 		digit_found = 1;
 
-		if ( n > ( max_value / 10 ) )
+		if ( n > ( ( max_value - 9 ) / 10 ) )
 		{
 		    fprintf ( stderr,
 			      "epm_sandbox: Number"
@@ -336,11 +310,6 @@ int main ( int argc, char ** argv )
 		    exit (1);
 		}
 		n <<= 10;
-	    } else if ( c == 'u' && ! digit_found )
-	    {
-	        c = * s ++;
-		n = RLIM_INFINITY;
-		digit_found = 1;
 	    }
 
 	    if ( c != 0 || ! digit_found )
@@ -370,14 +339,6 @@ int main ( int argc, char ** argv )
 	exit ( 1 );
     }
 
-    /* Fix up space parameter for .java
-    */
-    if ( getenv ( "EPM_EXT" ) != NULL
-	 &&
-	    strcmp ( getenv ( "EPM_EXT" ), "java" )
-	 == 0 )
-	space = RLIM_INFINITY;
-
     /* If -watch or -tee, start child and watch it. */
 
     if ( watch || tee )
@@ -403,8 +364,8 @@ int main ( int argc, char ** argv )
 	    // our effective ID is root.
 
 	    tee_fd =
-	        open ( file, O_WRONLY|O_CREAT|O_TRUNC,
-			     0666 );
+	        open ( tee_file,
+		       O_WRONLY|O_CREAT|O_TRUNC, 0666 );
 
 	    if ( euid == 0 ) {
 	        // If effective uid WAS root, switch
@@ -478,7 +439,7 @@ int main ( int argc, char ** argv )
 		    outsize += c;
 		    if ( outsize > filesize )
 		        c -= ( outsize - filesize );
-		    if ( c > 0 )
+		    if ( c > 0 && ! sigxfsz_sent )
 		    {
 			if (   write ( 1, buffer, c )
 			     < 0 )
