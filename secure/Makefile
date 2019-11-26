@@ -2,7 +2,7 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Mon Nov 25 19:15:11 EST 2019
+# Date:		Tue Nov 26 09:52:53 EST 2019
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
@@ -19,20 +19,20 @@ SECURE_BIN=/usr/sbin
 
 all: epm_sandbox
 
-root_install:	${SECURE_BIN}/epm_sandbox_secure
+root_install:	${SECURE_BIN}/epm_sandbox
 root_uninstall:	${SECURE_BIN}_uninstall
 
-${SECURE_BIN}/epm_sandbox_secure:	\
+${SECURE_BIN}/epm_sandbox:	\
 		${SECURE_BIN}/epm_sandbox.compiled
 	test `id -un` = root
 	test -d ${SECURE_BIN}
 	test -w ${SECURE_BIN}
-	-mv -f ${SECURE_BIN}/epm_sandbox_secure \
-	       ${SECURE_BIN}/epm_sandbox_secure-
+	-mv -f ${SECURE_BIN}/epm_sandbox \
+	       ${SECURE_BIN}/epm_sandbox-
 	cp -p ${SECURE_BIN}/epm_sandbox.compiled \
-	      ${SECURE_BIN}/epm_sandbox_secure
-	chmod 755 ${SECURE_BIN}/epm_sandbox_secure
-	chmod u+s ${SECURE_BIN}/epm_sandbox_secure
+	      ${SECURE_BIN}/epm_sandbox
+	chmod 755 ${SECURE_BIN}/epm_sandbox
+	chmod u+s ${SECURE_BIN}/epm_sandbox
 	ls -l ${SECURE_BIN}/epm_sandbox*
 
 ${SECURE_BIN}/epm_sandbox.compiled:	epm_sandbox.c
@@ -52,8 +52,8 @@ ${SECURE_BIN}_uninstall:
 	test `id -un` = root
 	test -d ${SECURE_BIN}
 	test -w ${SECURE_BIN}
-	-mv -f ${SECURE_BIN}/epm_sandbox_secure- \
-	       ${SECURE_BIN}/epm_sandbox_secure
+	-mv -f ${SECURE_BIN}/epm_sandbox- \
+	       ${SECURE_BIN}/epm_sandbox
 	-mv -f ${SECURE_BIN}/epm_sandbox.compiled- \
 	       ${SECURE_BIN}/epm_sandbox.compiled
 	ls -l ${SECURE_BIN}/epm_sandbox*
