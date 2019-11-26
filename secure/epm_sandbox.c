@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Tue Nov 26 06:30:15 EST 2019
+ * Date:	Tue Nov 26 09:45:27 EST 2019
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -13,8 +13,9 @@
  */
 
 #define _GNU_SOURCE
-    // Without this strsignal breaks with segmentation
-    // fault.
+    /* Without this strsignal breaks with segmentation
+     * fault.
+     */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -159,10 +160,6 @@ int is_executable ( const char * program )
 int main ( int argc, char ** argv )
 {
 
-    /* Index of next argv to process. */
-
-    int index = 1;
-
     /* Options with default values. */
 
     rlim_t cputime = RLIM_INFINITY;
@@ -182,17 +179,20 @@ int main ( int argc, char ** argv )
     char ** env =
         realloc ( NULL,   ( env_max_size + 1 )
 	                * sizeof (const char *) );
-        // Environment of program.  Expanded if
-	// necessary in units of 100 entries.
+        /* Environment of program.  Expanded if
+	 * necessary in units of 100 entries. */
     int env_size = 0;
     
     char * program = NULL;
-        // Program name after lookup using PATH.
+        /* Program name after lookup using PATH. */
 
     euid = geteuid();
     egid = getegid();
     
     /* Consume the options. */
+
+    int index = 1;
+	/* Index of next argv to process. */
 
     while ( index < argc )
     {
@@ -566,8 +566,8 @@ int main ( int argc, char ** argv )
 	    if ( strcmp ( p->pw_name, "sandbox" )
 	         == 0 )
 	    {
-		/* Set real IDs first so as not to
-		 * disturb root euid.
+		/* Set group ID first so as not to
+		 * disturb root euid prematurely.
 		 */
 		if ( setregid ( p->pw_gid , p->pw_gid )
 		     < 0 )
