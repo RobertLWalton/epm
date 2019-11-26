@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Tue Nov 26 05:37:58 EST 2019
+ * Date:	Tue Nov 26 06:30:15 EST 2019
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -127,17 +127,6 @@ void errno_exit ( char * m )
 int main ( int argc, char ** argv )
 {
 
-    /* If EPM_SANDBOX_UNSECURE defined and effective
-     * ID is root, change effective ID to real ID.
-     */
-    if ( getenv ( "EPM_SANDBOX_UNSECURE" )
-         &&
-	 geteuid() == 0 )
-    {
-	if ( setreuid ( -1, getuid() ) < 0 )
-	     errno_exit ( "root setreuid" );
-    }
-
     /* Index of next argv to process. */
 
     int index = 1;
@@ -155,21 +144,24 @@ int main ( int argc, char ** argv )
 
     rlim_t max_value = RLIM_INFINITY;
 
-    int watch = 0;
-    int tee = 0;
     int debug = 0;
-    const char * tee_file = NULL;
 
-    /* Effective IDs of this process after change
-       from `root' to `sandbox' */
+    const char * time_file = NULL;
 
-    uid_t euid;
-    gid_t egid;
+    int env_max_size = 100;
+    char ** env =
+        realloc ( NULL,   ( env_max_size + 1 )
+	                * sizeof (const char *) );
+        // Environment of program.  Expanded if
+	// necessary in units of 100 entries.
+    int env_size = 0;
+    
+    char * program = NULL;
+        // Program name after lookup using PATH.
 
-    /* Environment for program to be executed. */
-
-    char ** env;
-
+    uid_t euid = geteuid();
+    uid_t egid = getegid();
+    
     /* Consume the options. */
 
     while ( index < argc )
@@ -183,17 +175,9 @@ int main ( int argc, char ** argv )
 	    ++ index;
 	    continue;
 	}
-        else if ( strcmp ( argv[index], "-watch" )
+        else if ( strcmp ( argv[index], "-time" )
 	     == 0 )
 	{
-	    watch = 1;
-	    ++ index;
-	    continue;
-	}
-        else if ( strcmp ( argv[index], "-tee" )
-	     == 0 )
-	{
-	    tee = 1;
 	    ++ index;
 	    if ( index >= argc )
 	    {
@@ -202,9 +186,34 @@ int main ( int argc, char ** argv )
 			  " arguments\n" );
 		exit (1);
 	    }
-	    tee_file = argv[index++];
+	    time_file = argv[index++];
 	    continue;
 	}
+        else if ( strcmp ( argv[index], "-env" )
+	     == 0 )
+	{
+	    ++ index;
+	    if ( index >= argc )
+	    {
+		fprintf ( stderr,
+			  "epm_sandbox: Too few"
+			  " arguments\n" );
+		exit (1);
+	    }
+	    if ( env_size >= env_max_size )
+	    {
+	        env_max_size += 100;
+	        env = realloc
+		    ( env,   ( env_max_size + 1 )
+	                   * sizeof (const char *) );
+	    }
+	    env[env_size++] = argv[index++];
+	    continue;
+	}
+
+	/* Remaining options set `option' and fall
+	 * through.
+	 */
         else if ( strcmp ( argv[index], "-cputime" )
 	     == 0 )
 	    option = & cputime;
@@ -230,6 +239,8 @@ int main ( int argc, char ** argv )
 	     == 0 )
 	    option = & processes;
         else break;
+
+	/* Come here to process numeric options. */
 
 	++ index;
 
@@ -339,237 +350,175 @@ int main ( int argc, char ** argv )
 	exit ( 1 );
     }
 
-    /* If -watch or -tee, start child and watch it. */
+    /* Look up program in PATH. */
 
-    if ( watch || tee )
+    const char * PATH = getenv ( "PATH" );
+    if ( PATH == NULL || PATH[0] == 0 )
     {
-	pid_t child;	    /* child ID */
-	int out_pipe[2];    /* stdout pipe */
-        int tee_fd;	    /* Tee file descriptor. */
+	fprintf ( stderr,
+		  "epm_sandbox: PATH environment"
+		  " variable is missing or empty\n" );
+	exit (1);
+    }
+    program = malloc
+        (   strlen ( PATH )
+	  + strlen ( argv[index] ) + 1 );
+    struct stat s;
+    const char * p = PATH;
+    int found = 0;
+    while ( ! found && * p != 0 )
+    {
+        char * q = program;
+	while ( * p && * p != ':' )
+	    * q ++ = * p ++;
+	if ( q == program ) * q ++ = '.';
+	if ( * p == ':' ) ++ p;
+	* q ++ = '/';
+	strcpy ( q, argv[index] );
+	if ( stat ( program, & s ) < 0 )
+	    continue;
 
-        if ( tee )
-	{
-
-	    uid_t uid = getuid();
-	    uid_t euid = geteuid();
-	    if ( euid == 0 ) {
-	        // If effective uid is root, switch
-		// effective and real uids.
-
-		if ( setreuid ( euid, uid ) < 0 )
-		     errno_exit ( "root setreuid" );
-	    }
-
-	    // We do not want to create a file while
-	    // our effective ID is root.
-
-	    tee_fd =
-	        open ( tee_file,
-		       O_WRONLY|O_CREAT|O_TRUNC, 0666 );
-
-	    if ( euid == 0 ) {
-	        // If effective uid WAS root, switch
-		// effective and real uids.
-
-		if ( setreuid ( uid, euid ) < 0 )
-		     errno_exit ( "root setreuid" );
-	    }
-
-	    if ( tee_fd < 0 )
-	        errno_exit ( "opening -tee file" );
-	    if ( pipe ( out_pipe ) < 0 )
-	        errno_exit ( "pipe" );
-	}
-	child = fork ();
-
-	if ( child < 0 )
-	    errno_exit ( "fork" );
-
-	if ( child == 0 )
-	{
-	    /* Child executes this. */
-
-	    if ( tee )
-	    {
-	        if ( close ( out_pipe[0] ) < 0 )
-		    errno_exit
-		        ( "out pipe child close" );
-		if ( dup2 ( out_pipe[1], 1 ) < 0 )
-		    errno_exit
-		        ( "out child dup2" );
-		{
-		    int fd;
-		    int max_fd = getdtablesize ();
-
-		    if ( max_fd < 0 ) max_fd = 256;
-
-		    for ( fd = 3; fd < max_fd; ++ fd )
-			close ( fd );
-		}
-	    }
-
-	    /* Child now falls through to code that
-	       executes with or without -watch or -tee.
-	    */
-	}
-	else
-	{
-	    /* Parent executes this. */
-
-	    int status;
-
-	    if ( tee )
-	    {
-		int outsize = 0;
-		int sigxfsz_sent = 0;
-
-	        if ( close ( out_pipe[1] ) < 0 )
-		    errno_exit
-		        ( "out pipe parent close" );
-
-		while ( 1 )
-		{
-		    char buffer[256];
-		    int c = read ( out_pipe[0],
-			           buffer, 256 );
-		    if ( c < 0 && errno == EINTR )
-		        continue;
-		    else if ( c <= 0 ) break;
-
-		    outsize += c;
-		    if ( outsize > filesize )
-		        c -= ( outsize - filesize );
-		    if ( c > 0 && ! sigxfsz_sent )
-		    {
-			if (   write ( 1, buffer, c )
-			     < 0 )
-			    errno_exit
-				( "parent stdout"
-				  " write" );
-			if (   write ( tee_fd,
-			               buffer, c )
-			     < 0 )
-			    errno_exit
-				( "parent tee file"
-				  " write" );
-		    }
-		    if (    outsize > filesize
-		         && ! sigxfsz_sent )
-		    {
-			sigxfsz_sent = 1;
-			kill ( child, SIGXFSZ );
-		    }
-		}
-		close ( tee_fd );
-	    }
-
-	    if ( wait ( & status ) < 0 )
-		errno_exit ( "wait" );
-
-            const char * times_file =
-	        getenv ( "EPM_SANDBOX_TIMES" );
-	    if ( times_file != NULL )
-	    {
-	        struct rusage usage;
-		if ( getrusage ( RUSAGE_CHILDREN,
-		                 & usage ) < 0 )
-		    errno_exit
-		        ( "genrusage RUSAGE_CHILDREN" );
-
-		int times_fd =
-		    open ( times_file,
-			   O_WRONLY|O_CREAT|O_TRUNC,
-			   0666 );
-
-		if ( times_fd < 0 )
-		    errno_exit
-		        ( "opening EPM_SANDBOX_TIMES"
-		           " file" );
-		char times_buffer[1000];
-		int chars = sprintf
-		    ( times_buffer, "%.6f %.6f\n",
-		        usage.ru_utime.tv_sec
-		      + 1e-6 * usage.ru_utime.tv_usec,
-		        usage.ru_stime.tv_sec
-		      + 1e-6 * usage.ru_stime.tv_usec );
-		char * p = times_buffer;
-		while ( chars > 0 )
-		{
-		    int c = write
-		        ( times_fd, p, chars );
-		    if ( c < 0 && errno == EINTR )
-		        continue;
-		    if ( c < 0 )
-			errno_exit
-			  ( "writing EPM_SANDBOX_TIMES"
-			    " file" );
-		    chars -= c, p += c;
-		}
-	        if ( close ( times_fd ) < 0 )
-		    errno_exit
-		        ( "closing EPM_SANDBOX_TIMES"
-		           " file" );
-		if ( debug )
-		    fprintf
-		        ( stderr,
-		          "epm_sandbox: wrote %s\n",
-			  times_file );
-
-	    }
-
-	    if ( WIFSIGNALED ( status ) )
-	    {
-		int sig = WTERMSIG ( status );
-
-		/* Cpu time exceeded is signalled by
-		   SIGKILL, so we check for it and
-		   change the sig to SIGXCPU.
-		 */
-
-		if ( sig == SIGKILL )
-		{
-		    struct rusage usage;
-		    long sec;
-
-		    if ( getrusage ( RUSAGE_CHILDREN,
-		                     & usage )
-			 < 0 )
-		        errno_exit ( "getrusage" );
-
-		    sec  = usage.ru_utime.tv_sec;
-		    sec += usage.ru_stime.tv_sec;
-		    if ( ( usage.ru_utime.tv_usec
-		           + usage.ru_stime.tv_usec )
-			 >= 1000000 )
-		        ++ sec;
-		    if ( sec >= cputime )
-		    	sig = SIGXCPU;
-		}
-
-		fprintf ( stderr,
-			  "epm_sandbox: Child"
-			  " terminated with signal:"
-			  " %s\n",
-			  strsignal ( sig ) );
-
-		/* Parent exit when child died by
-		   signal.
-		*/
-		exit ( 128 + sig );
-	    }
-
-	    /* Parent exit when child did NOT die by
-	       signal.
-	    */
-	    exit ( 0 );
-	}
+	if ( euid == 0 )
+	    found = ( ( S_IXOTH & s.st_mode ) != 0 );
+	else if ( euid == s.st_uid
+	          &&
+	          ( S_IXUSR & s.st_mode ) != 0 )
+	    found = 1;
+	else if ( egid == s.st_gid
+	          &&
+	          ( S_IXGRP & s.st_mode ) != 0 )
+	    found = 1;
+	else if ( ( S_IXUSR & s.st_mode ) != 0 )
+	    found = 1;
     }
 
-    /* Child (or original process if no -watch)
-       continues execution here.
+    if ( ! found )
+    {
+	fprintf ( stderr,
+		  "epm_sandbox: could not find"
+		  " executable program file %s\n"
+		  "    in PATH environment variable"
+		  " directories\n",
+		  argv[index] );
+	exit (1);
+    }
+
+
+
+
+
+
+    pid_t child = fork ();
+
+    if ( child < 0 )
+	errno_exit ( "fork" );
+
+    if ( child != 0 )
+    {
+	/* Parent executes this. */
+
+	int status;
+
+	if ( wait ( & status ) < 0 )
+	    errno_exit ( "wait" );
+
+	if ( time_file != NULL )
+	{
+	    struct rusage usage;
+	    if ( getrusage ( RUSAGE_CHILDREN,
+			     & usage ) < 0 )
+		errno_exit
+		    ( "genrusage RUSAGE_CHILDREN" );
+
+	    int time_fd =
+		open ( time_file,
+		       O_WRONLY|O_CREAT|O_TRUNC,
+		       0640 );
+
+	    if ( time_fd < 0 )
+		errno_exit
+		    ( "opening TIME-FILE" );
+	    char time_buffer[1000];
+	    int chars = sprintf
+		( time_buffer, "%.6f %.6f\n",
+		    usage.ru_utime.tv_sec
+		  + 1e-6 * usage.ru_utime.tv_usec,
+		    usage.ru_stime.tv_sec
+		  + 1e-6 * usage.ru_stime.tv_usec );
+	    char * p = time_buffer;
+	    while ( chars > 0 )
+	    {
+		int c = write
+		    ( time_fd, p, chars );
+		if ( c < 0 && errno == EINTR )
+		    continue;
+		if ( c < 0 )
+		    errno_exit
+		      ( "writing TIME-FILE" );
+		chars -= c, p += c;
+	    }
+	    if ( close ( time_fd ) < 0 )
+		errno_exit
+		    ( "closing TIME-FILE" );
+	    if ( debug )
+		fprintf
+		    ( stderr,
+		      "epm_sandbox: wrote %s\n",
+		      time_file );
+
+	}
+
+	if ( WIFSIGNALED ( status ) )
+	{
+	    int sig = WTERMSIG ( status );
+
+	    /* Cpu time exceeded is signalled by
+	       SIGKILL, so we check for it and
+	       change the sig to SIGXCPU.
+	     */
+
+	    if ( sig == SIGKILL )
+	    {
+		struct rusage usage;
+		long sec;
+
+		if ( getrusage ( RUSAGE_CHILDREN,
+				 & usage )
+		     < 0 )
+		    errno_exit ( "getrusage" );
+
+		sec  = usage.ru_utime.tv_sec;
+		sec += usage.ru_stime.tv_sec;
+		if ( ( usage.ru_utime.tv_usec
+		       + usage.ru_stime.tv_usec )
+		     >= 1000000 )
+		    ++ sec;
+		if ( sec >= cputime )
+		    sig = SIGXCPU;
+	    }
+
+	    fprintf ( stderr,
+		      "epm_sandbox: Child"
+		      " terminated with signal:"
+		      " %s\n",
+		      strsignal ( sig ) );
+
+	    /* Parent exit when child died by
+	       signal.
+	    */
+	    exit ( 128 + sig );
+	}
+
+	/* Parent exit when child did NOT die by
+	   signal.
+	*/
+	exit ( 0 );
+    }
+
+    /* Child continues execution here.
     */
 
-    if ( geteuid() == 0 ) {
+    if ( euid == 0 ) {
 
         /* Execute if effective user is root. */
 
@@ -600,10 +549,13 @@ int main ( int argc, char ** argv )
 	    if ( strcmp ( p->pw_name, "sandbox" )
 	         == 0 )
 	    {
-		if ( setregid ( -1, p->pw_gid )
+		/* Set real IDs first so as not to
+		 * disturb root euid.
+		 */
+		if ( setregid ( p->pw_gid , p->pw_gid )
 		     < 0 )
 		     errno_exit ( "root setregid" );
-		if ( setreuid ( -1, p->pw_uid )
+		if ( setreuid ( p->pw_uid, p->pw_uid )
 		     < 0 )
 		     errno_exit ( "root setreuid" );
 
@@ -614,18 +566,6 @@ int main ( int argc, char ** argv )
 
 	/* End root execution. */
     }
-
-    /* Set the real user and group IDs to effective
-       user and group IDs.
-    */
-
-    euid = geteuid ();
-    egid = getegid ();
-
-    if ( setreuid ( euid, -1 ) < 0 )
-        errno_exit ( "setreuid setting real uid" );
-    if ( setregid ( egid, -1 ) < 0 )
-        errno_exit ( "setregid setting real gid" );
 
     if ( debug )
     {
@@ -718,110 +658,11 @@ int main ( int argc, char ** argv )
 #	endif
     }
 
-    {
-	/* Compute the environment for the program to be
-	   executed.
-	*/
-
-	char * epm_sandbox_env =
-	    getenv ( "EPM_SANDBOX_ENV" );
-
-	if ( epm_sandbox_env == NULL )
-	{
-	    env = realloc ( NULL, 2 * sizeof (char *) );
-	    if ( env == NULL ) errno_exit ( "realloc" );
-	    env[0] = "SANDBOX";
-	    env[1] = NULL;
-	}
-	else
-	{
-	    char * buffer = malloc
-		( strlen ( epm_sandbox_env ) + 1 );
-	    char * ep = epm_sandbox_env;
-	    char * bp = buffer;
-	    int i = 0;		/* Index in env. */
-	    int size = 101;	/* Size of env. */
-
-	    if ( buffer == NULL )
-		errno_exit
-		    ( "malloc ( strlen ("
-		      " EPM_SANDBOX_ENV ) )" );
-
-	    env = realloc
-		( NULL, size * sizeof (char *) );
-	    if ( env == NULL )
-		errno_exit ( "realloc env" );
-
-	    /* Reorganize environment strings in buffer
-	       so each ends with a 0 and they have
-	       escapes converted to characters.  As
-	       each string appears in buffer, record its
-	       address in env.
-	    */
-
-	    while (1)
-	    {
-		while ( isspace ( * ep ) ) ++ ep;
-		if ( * ep == 0 ) break;
-
-		if ( i >= size - 1 )
-		{
-		    size *= 2;
-		    env = realloc
-			( env, size * sizeof (char *) );
-		    if ( env == NULL )
-			errno_exit ( "realloc env" );
-		}
-
-		env[i++] = bp;
-
-		while (1)
-		{
-		    if ( * ep == '\\' )
-		    {
-			switch ( * ++ ep )
-			{
-			case ' ':
-			    * bp ++ = ' '; break;
-			case 't':
-			    * bp ++ = '\t'; break;
-			case 'n':
-			    * bp ++ = '\n'; break;
-			case 'f':
-			    * bp ++ = '\f'; break;
-			case 'v':
-			    * bp ++ = '\v'; break;
-			case '\\':
-			    * bp ++ = '\\'; break;
-			default:
-			    fprintf ( stderr,
-				      "bad escape in"
-				      " EPM_SANDBOX_"
-				      "ENV: \\%c\n",
-				      * ep );
-			    exit ( 1 );
-			}
-			++ ep;
-		    }
-		    else if ( isspace ( * ep ) )
-			break;
-		    else if ( ! * ep )
-			break;
-		    else
-			* bp ++ = * ep ++;
-		}
-
-		* bp ++ = 0;
-	    }
-	    env[i] = NULL;
-	}
-    }
-
-    /* Execute program with arguments and computed
+    /* Execute program with arguments and optional
        environment.
     */
 
-    execve ( argv[index], argv + index, env );
+    execve ( program, argv + index, env );
 
     /* If execve fails, print error messages. */
 
