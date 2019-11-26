@@ -72,15 +72,17 @@ char documentation [] =
 "    can be zero or more `-env ENV-PARAM' options,\n"
 "    each of which adds its ENV-PARAM to the environ-\n"
 "    ment in which `program ...' executes.\n"
-"\n"
-"    The name `program' is looked up using the epm_\n"
-"    sandbox's environment PATH variable after the\n"
-"    manner of the UNIX which(1) or shell commands.\n"
-"\n"
-"    If the program is in the current directory, it\n"
-"    may have to be given a+x permission so that it\n"
-"    can be executed by the `sandbox' user as descri-\n"
-"    bed below.\n"
+"\f\n"
+"    If `program' is not in the current directory,\n"
+"    it is looked up using epm_sandbox's environment\n"
+"    PATH variable after the manner of the UNIX shell\n"
+"    commands.  If epm_sandbox is executed with root\n"
+"    effective user ID, then `program', the directory\n"
+"    containing it, and any directories needed to\n"
+"    locate `program', must all have o+x permission.\n"
+"    If `program' is in the current directory, only\n"
+"    it and the current directory need o+x permis-\n"
+"    sion.\n"
 "\n"
 "    Epm_sandbox forks, the parent waits for the\n"
 "    child, and the child executes `program ...'.  If\n"
@@ -108,7 +110,7 @@ char documentation [] =
 "    minate with a signal, and returns 128 + the\n"
 "    possibly changed signal number as an exit code\n"
 "    if the child does terminate with a signal.\n"
-"\n"
+"\f\n"
 "    Epm_sandbox will write an error message on the\n"
 "    standard error output and exit with exit code 1\n"
 "    if any system call or option is in error.\n"
@@ -120,6 +122,36 @@ void errno_exit ( char * m )
                       " %s:\n    %s\n",
 		      m, strerror ( errno ) );
     exit ( 1 );
+}
+
+uid_t euid, egid;
+    /* Effective IDs of epm_sandbox. */
+
+int debug = 0;
+
+int is_executable ( const char * program )
+{
+    struct stat s;
+    if ( stat ( program, & s ) < 0 )
+    {
+        if ( debug ) fprintf
+	    ( stderr, "could not stat %s\n", program );
+	return 0;
+    }
+    else if ( euid == 0 )
+	return ( ( S_IXOTH & s.st_mode ) != 0 );
+    else if ( euid == s.st_uid
+	      &&
+	      ( S_IXUSR & s.st_mode ) != 0 )
+	return 1;
+    else if ( egid == s.st_gid
+	      &&
+	      ( S_IXGRP & s.st_mode ) != 0 )
+	return 1;
+    else if ( ( S_IXUSR & s.st_mode ) != 0 )
+	return 1;
+    else
+        return 0;
 }
 
 /* Main program.
@@ -144,8 +176,6 @@ int main ( int argc, char ** argv )
 
     rlim_t max_value = RLIM_INFINITY;
 
-    int debug = 0;
-
     const char * time_file = NULL;
 
     int env_max_size = 100;
@@ -159,8 +189,8 @@ int main ( int argc, char ** argv )
     char * program = NULL;
         // Program name after lookup using PATH.
 
-    uid_t euid = geteuid();
-    uid_t egid = getegid();
+    euid = geteuid();
+    egid = getegid();
     
     /* Consume the options. */
 
@@ -352,61 +382,48 @@ int main ( int argc, char ** argv )
 
     /* Look up program in PATH. */
 
-    const char * PATH = getenv ( "PATH" );
-    if ( PATH == NULL || PATH[0] == 0 )
+    if ( is_executable ( argv[index] ) )
+        program = argv[index];
+    else
     {
-	fprintf ( stderr,
-		  "epm_sandbox: PATH environment"
-		  " variable is missing or empty\n" );
-	exit (1);
+	const char * PATH = getenv ( "PATH" );
+	if ( PATH == NULL || PATH[0] == 0 )
+	{
+	    fprintf ( stderr,
+		      "epm_sandbox: PATH environment"
+		      " variable is missing or"
+		      " empty\n" );
+	    exit (1);
+	}
+	program = malloc
+	    (   strlen ( PATH )
+	      + strlen ( argv[index] ) + 1 );
+	const char * p = PATH;
+	int found = 0;
+	while ( ! found && * p != 0 )
+	{
+	    char * q = program;
+	    while ( * p && * p != ':' )
+		* q ++ = * p ++;
+	    if ( q == program ) * q ++ = '.';
+	    if ( * p == ':' ) ++ p;
+	    * q ++ = '/';
+	    strcpy ( q, argv[index] );
+
+	    found = is_executable ( program );
+	}
+
+	if ( ! found )
+	{
+	    fprintf ( stderr,
+		      "epm_sandbox: could not find"
+		      " executable program file %s\n"
+		      "    in current directory or"
+		      " PATH directories\n",
+		      argv[index] );
+	    exit (1);
+	}
     }
-    program = malloc
-        (   strlen ( PATH )
-	  + strlen ( argv[index] ) + 1 );
-    struct stat s;
-    const char * p = PATH;
-    int found = 0;
-    while ( ! found && * p != 0 )
-    {
-        char * q = program;
-	while ( * p && * p != ':' )
-	    * q ++ = * p ++;
-	if ( q == program ) * q ++ = '.';
-	if ( * p == ':' ) ++ p;
-	* q ++ = '/';
-	strcpy ( q, argv[index] );
-	if ( stat ( program, & s ) < 0 )
-	    continue;
-
-	if ( euid == 0 )
-	    found = ( ( S_IXOTH & s.st_mode ) != 0 );
-	else if ( euid == s.st_uid
-	          &&
-	          ( S_IXUSR & s.st_mode ) != 0 )
-	    found = 1;
-	else if ( egid == s.st_gid
-	          &&
-	          ( S_IXGRP & s.st_mode ) != 0 )
-	    found = 1;
-	else if ( ( S_IXUSR & s.st_mode ) != 0 )
-	    found = 1;
-    }
-
-    if ( ! found )
-    {
-	fprintf ( stderr,
-		  "epm_sandbox: could not find"
-		  " executable program file %s\n"
-		  "    in PATH environment variable"
-		  " directories\n",
-		  argv[index] );
-	exit (1);
-    }
-
-
-
-
-
 
     pid_t child = fork ();
 
