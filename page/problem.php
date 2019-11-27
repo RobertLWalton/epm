@@ -2,9 +2,9 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 26 23:46:11 EST 2019
+    // Date:	Wed Nov 27 07:02:02 EST 2019
 
-    // Selects user problem.  Displays and uploades
+    // Selects user problem.  Displays and uploads
     // problem files.
 
     session_start();
@@ -22,12 +22,15 @@
     }
 
     $epm_data = $_SESSION['epm_data'];
+    $userid = $_SESSION['userid'];
+
     $uploaded_file = NULL;
 
     if ( ! isset ( $_SESSION['epm_admin_params'] ) )
-	include 'get_params.php';
+	include 'include/get_admin_params.php';
     $params = $_SESSION['epm_admin_params'];
     $upload_maxsize = $params['upload_maxsize'];
+    $display_file_ext = $params['display_file_ext'];
 
     include 'include/debug_info.php';
 
@@ -143,15 +146,21 @@
     {
 	$upload_info = $_FILES['uploaded_file'];
 	$uploaded_file = $upload_info['name'];
-	include 'include/epm_make.php';
-	$upload_errors = [];
-	$upload_warnings = [];
-	$upload_output = [];
-	process_upload
-	    ( $upload_info, $problem,
-	      $upload_commands, $upload_moved,
-	      $upload_show, $upload_output,
-	      $upload_warnings, $upload_errors );
+	if ( $uploaded_file != "" )
+	{
+	    include 'include/epm_make.php';
+	    $upload_errors = [];
+	    $upload_warnings = [];
+	    $upload_output = [];
+	    process_upload
+		( $upload_info, $problem,
+		  $upload_commands, $upload_moved,
+		  $upload_show, $upload_output,
+		  $upload_warnings, $upload_errors );
+	}
+	else
+	    $upload_errors =
+	        ["no file selected for upload"];
     }
 
 
@@ -174,43 +183,80 @@
     <form action='user.php' method='GET'>
     User: <input type='submit' value='$email'>
     &nbsp;&nbsp;&nbsp;&nbsp;
-    Current Problem:&nbsp;$current_problem
+    <b>Current Problem:&nbsp;$current_problem</b>
     </form>
-    <form action='problem.php' method='POST'>
+    <table><form action='problem.php' method='POST'>
 EOT;
     if ( count ( $problems ) > 0 )
     {
-	echo "<input type='submit'" .
+	echo "<tr><td style='text-align:right'>" .
+	     "<input type='submit'" .
 	     " name='goto_problem'" .
 	     " value='Go To Problem:'>\n";
-        echo "<select name='problem'>\n";
+        echo "</td><td><select name='problem'>\n";
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
 	             "$value</option>\n";
-        echo "</select>\n";
-        echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
+        echo "</select></td></tr>\n";
     }
     echo <<<EOT
-    <br>or
-    <label for="problem">Create New Problem:</label>
+    <tr><td style='text-align:right'>
+    <label>or Create New Problem:</label></td><td>
     <input type="text" size="32" name="new_problem"
-           placeholder="New Problem Name">
-    </form>
+           placeholder="New Problem Name" id="create">
+    </td></tr></table></form>
 EOT;
+
     if ( isset ( $problem ) )
     {
-        echo <<<EOT
+	$problem_dir =
+	    "$epm_data/users/user$userid/$problem";
+        $count = 0;
+	foreach ( scandir ( $problem_dir ) as $fname )
+	{
+	    if ( preg_match ( '/^\./', $fname ) )
+	        continue;
+	    if ( ! preg_match ( '/[^.]\.([^.]+)$/',
+	                        $fname, $matches ) )
+	        continue;
+	    $ext = $matches[1];
+	    if ( ! array_search
+	               ( $ext, $display_file_ext,
+		               true ) )
+		continue;
 
-	<br><br>
+	    if ( ++ $count == 1 )
+	        echo "<form action='problem.php'" .
+		     " method='POST'>" .
+		     " Current Problem Files:" .
+		     "<table style='display:block'>";
+	    echo "<tr>";
+	    echo "<td style='text-align:right'>" .
+	         "<button type='submit'" .
+	         " name='show_file' value='$fname'>" .
+		 $fname . "</button></td>";
+	    echo "<td><button type='submit'" .
+	         " name='delete_file' value='$fname'>" .
+		 "Delete</button></td>";
+	    if ( $ext == "out" )
+	    {
+		echo "<td><button type='submit'" .
+		     " name='move_file' value='$fname'>" .
+		     "Move to .test</button></td>";
+	    }
+	    echo "</tr>";
+	}
+	if ( $count > 0 ) echo "</table></form>";
+
+        echo <<<EOT
 
 	<form enctype="multipart/form-data"
 	      action="problem.php" method="post">
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$upload_maxsize">
-	<label for="uploaded_file">File to Upload:</label>
-	<input type="file" name="uploaded_file">
 	<input type="submit" name="upload"
-	       value="Upload File">
+	       value="Upload File:">
+	<input type="file" name="uploaded_file">
 	</form>
 EOT;
     }
