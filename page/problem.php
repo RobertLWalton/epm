@@ -2,16 +2,10 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 26 18:57:02 EST 2019
+    // Date:	Tue Nov 26 23:46:11 EST 2019
 
-    // Selects user problem.
-    //
-    //		admin/email_index/*
-    //		admin/user{$userid}.json
-    //
-    // containing information about user.  Gives the
-    // user the option of going to user_edit.php or
-    // problem.php.
+    // Selects user problem.  Displays and uploades
+    // problem files.
 
     session_start();
     clearstatcache();
@@ -29,6 +23,11 @@
 
     $epm_data = $_SESSION['epm_data'];
     $uploaded_file = NULL;
+
+    if ( ! isset ( $_SESSION['epm_admin_params'] ) )
+	include 'get_params.php';
+    $params = $_SESSION['epm_admin_params'];
+    $upload_maxsize = $params['upload_maxsize'];
 
     include 'include/debug_info.php';
 
@@ -197,19 +196,24 @@ EOT;
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name">
     </form>
-
-    <br><br>
-
-    <form enctype="multipart/form-data"
-          action="problem.php" method="post">
-    <input type="hidden" name="MAX_FILE_SIZE"
-	   value="2000000">
-    <label for="uploaded_file">File to Upload:</label>
-    <input type="file" name="uploaded_file">
-    <input type="submit" name="upload"
-           value="Upload File">
-    </form>
 EOT;
+    if ( isset ( $problem ) )
+    {
+        echo <<<EOT
+
+	<br><br>
+
+	<form enctype="multipart/form-data"
+	      action="problem.php" method="post">
+	<input type="hidden" name="MAX_FILE_SIZE"
+	       value="$upload_maxsize">
+	<label for="uploaded_file">File to Upload:</label>
+	<input type="file" name="uploaded_file">
+	<input type="submit" name="upload"
+	       value="Upload File">
+	</form>
+EOT;
+    }
 
 ?>
 </div>

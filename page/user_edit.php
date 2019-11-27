@@ -28,6 +28,7 @@
 
     session_start();
     clearstatcache();
+    umask ( 07 );
     if ( ! isset ( $_SESSION['epm_data'] ) )
     {
 	header ( "Location: index.php" );
@@ -58,7 +59,7 @@
     // Set $emails to the emails in admin/email_index
     // that point at the current $userid, or to [] if
     // $userid == 'NEW'.  Set $max_id to the maximum
-    // user id seen amoung admin/email_index files.
+    // user id seen among admin/email_index files.
     //
     $emails = [];
     $max_id = 0;

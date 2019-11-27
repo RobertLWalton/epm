@@ -29,46 +29,35 @@ $userid = $_SESSION['userid'];
 $problem = $_SESSION['problem'];
 
 if ( ! isset ( $_SESSION['epm_admin_params'] ) )
-    include 'get_params.php';
+    include 'get_admin_params.php';
 
 // Administrative Parameters:
 //
 $params = $_SESSION['epm_admin_params'];
-if ( isset ( $params['upload_target_ext'] ) )
-    $upload_target_ext =
-        $params['upload_target_ext'];
-else
-    $upload_target_ext = [
-        "c" =>  "",
-	"cc" => "",
-	"java" => "class",
-	"py" => "pyc",
-	"tex" => "pdf",
-	"in" => "out"];
+$upload_target_ext = $params['upload_target_ext'];
+$upload_maxsize = $params['upload_maxsize'];
+$template_dirs = $params['template_dirs'];
+$display_file_ext = $params['display_file_ext'];
 
-if ( isset ( $params['upload_maxsize'] ) )
-    $upload_maxsize = $params['upload_maxsize'];
-else
-    $upload_maxsize = 2000000;
-
-$root = $_SESSION['epm_root'];
-$template_dirs = ["$root/template"];
-
-// User Parameters:
+// Problem Parameters:
 //
-if ( ! isset ( $_SESSION['epm_user_params'] ) )
-    exit ( 'SYSTEM ERROR: epm_user_params not set' );
-    // Should be set if epm_admin_params set.
-
-$params = $_SESSION['epm_user_params'];
+$file = "$epm_data/users/user$userid/"
+      . "$problem/$problem.params";
+$params = [];
+if ( is_readable ( $file ) )
+{
+    $contents = file_get_contents ( $file );
+    if ( ! $contents )
+        exit ( "cannot read $file" );
+    $params = json_decode ( $contents, true );
+    if ( ! $params )
+        exit ( "cannot decode json $file" );
+}
 if ( isset ( $params['make_dirs'] ) )
     $make_dirs = $params['make_dirs'];
 else
     $make_dirs = ["users/user$userid/$problem"];
 
-if ( isset ( $params['upload_maxsize'] ) )
-    $upload_maxsize = $params['upload_maxsize'];
-                   
 // Given a problem name, file names, and a template,
 // determine if the template matches the problem and
 // file name.  If no, return NULL.  If yes, return an

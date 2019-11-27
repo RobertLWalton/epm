@@ -47,6 +47,7 @@
 
     session_start();
     clearstatcache();
+    umask ( 07 );
 
     if ( ! isset ( $_SESSION['epm_data'] ) )
     {
