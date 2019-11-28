@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Nov 23 12:23:30 EST 2019
+    // Date:	Wed Nov 27 22:53:43 EST 2019
 
     // Displays files:
     //
@@ -28,7 +28,7 @@
 
     $epm_data = $_SESSION['epm_data'];
 
-    include 'include/debug_info.php';
+    // include 'include/debug_info.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -104,29 +104,32 @@
     if ( $_GET['done'] == "yes" )
         echo "<mark>" .
 	     "Profile Edit Finished" .
-	     "</mark><br><br>\n";
+	     "</mark>\n";
 
-    echo "Email Addresses:<br>\n";
-    echo '<ul style="list-style-type:none">' . "\n";
+    echo "<h3>User Profile</h3>\n";
+    echo "<b>Email Addresses:</b><br>\n";
+    echo '<table style="margin-left:20px">' . "\n";
     foreach ( $emails as $value )
-	echo "<li>$value</li>\n";
-    echo "</ul>\n";
+	echo "<tr><td>$value</td></tr>\n";
+    echo "</table>\n";
     
 
     echo <<<EOT
-    Full Name: {$user['full_name']}<br>
-    Organization: {$user['organization']}<br>
-    Location: {$user['location']}<br><br>
+    <table>
+    <tr><td><b>Full Name:</b></th><td> {$user['full_name']}<td><tr>
+    <tr><td><b>Organization:</b></th><td> {$user['organization']}<td><tr>
+    <tr><td><b>Location:</b></th><td> {$user['location']}<td><tr>
 EOT
 
 ?>
 
 <form>
-<input type="submit" formaction="user_edit.php"
-       value="Edit">
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<input type="submit" formaction="problem.php"
-       value="Go To Problem"</input>
+<table><tr>
+<td><input type="submit" formaction="user_edit.php"
+       value="Edit"></td>
+<td><input type="submit" formaction="problem.php"
+       value="Go To Problem"</input></td>
+</tr></table>
 </form>
 
 </body>

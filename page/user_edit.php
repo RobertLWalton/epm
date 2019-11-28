@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Nov 23 12:23:08 EST 2019
+    // Date:	Wed Nov 27 23:11:50 EST 2019
 
     // Edits files:
     //
@@ -49,7 +49,7 @@
 	exit;
     }
 
-    include 'include/debug_info.php';
+    // include 'include/debug_info.php';
 
     $email = $_SESSION['email'];
     $userid = $_SESSION['userid'];
@@ -375,49 +375,51 @@
 	    echo "$value<br>\n";
 	echo '</mark><br><br>' . "\n";
     }
-    echo "Email Addresses:<br>\n";
-    echo '<ul style="list-style-type:none">';
+    echo "<h3>Edit User Profile</h3>\n";
+    echo "<b>Email Addresses:</b>\n";
+    echo "<table style='margin-left:20px'>\n";
     for ( $i = 0; $i < $max_emails; ++ $i )
     {
         if ( ! isset ( $user_emails[$i] ) )
 	{
-	    echo '<li><input name="email' . $i .
+	    echo '<tr><td><input name="email' . $i .
 	         '" type="text" value=""' .
 		 ' size="40" placeholder=' .
-		 '"Another Email Address"a</li>';
+		 '"Another Email Address"a</td></tr>';
 	    break;
 	}
 	elseif ( $user_emails[$i] == $email )
-	    echo "<li>$email</li>";
+	    echo "<tr><td>$email" .
+	         '&nbsp;&nbsp;&nbsp;' .
+		 '(used for this login)' .
+	         '</td></tr>';
 	else
-	    echo "<li>$user_emails[$i]" .
+	    echo "<tr><td>$user_emails[$i]" .
 	         '&nbsp;&nbsp;&nbsp;' .
 	         '<input type="submit" name="delete' .
-		 $i . '" value = "delete"></li>';
-	echo "<br>\n";
+		 $i . '" value = "delete"></td></tr>';
     }
-    echo "</ul>\n";
+    echo "</table>\n";
     $location_placeholder =
 	 "Town, State and Country of Organization";
     echo <<<EOT
-    <br><br>
-    Full Name: <input type="text" size="40"
+    <table>
+    <tr><td><b>Full Name:</b></td><td> <input type="text" size="40"
                       name="full_name"
                       value="$full_name"
-	              placeholder="John Doe">
-    <br><br>
-    Organization:
+	              placeholder="John Doe"></td></tr>
+    <tr><td><b>Organization:</b></td><td>
         <input type="text" size="40"
 	 name="organization" value="$organization"
-	 placeholder="University, Company, or Self">
-    <br><br>
-    Location:
+	 placeholder="University, Company, or Self"></td></tr>
+    <tr><td><b>Location:</b></td><td>
         <input type="text" size="40"
 	 name="location" value="$location"
-	 placeholder="$location_placeholder">
-    <br><br>
+	 placeholder="$location_placeholder"></td></tr>
+    <tr><td>
         <input type="submit" name="update"
-	       value="Update">
+	       value="Update"></td></tr>
+    </table>
 EOT
 ?>
 
