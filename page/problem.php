@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Nov 28 10:48:00 EST 2019
+    // Date:	Thu Nov 28 12:39:36 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -153,10 +153,30 @@
     {
         $f = "users/user$userid/$problem/"
 	   . $_POST['show_file'];
-	if ( filesize ( "$epm_data/$f" ) == 0 )
-	    $show_files[] = $f;
-	else
+	$t = exec ( "file $epm_data/$f" );
+	if ( preg_match ( '/ASCII/', $t ) )
 	    $show_file = $f;
+	else
+	    $show_files[] = $f;
+    }
+    else if ( isset ( $_POST['delete_file'] ) )
+    {
+        $f = $_POST['delete_file'];
+        if ( ! unlink ( "$problem_dir/$f" ) )
+	    $errors[] = "could not delete $f";
+    }
+    else if ( isset ( $_POST['move_file'] ) )
+    {
+        $f = $_POST['move_file'];
+	$r = preg_match ( '/^(.+)\.out$/', $f,
+	                  $matches );
+	$g = ( $r ? $matches[1] . '.test' : NULL );
+	if ( ! $r )
+	    $errors[] = "$f has wrong extension to be"
+	              . " moved to .test";
+	else if ( ! rename ( "$problem_dir/$f",
+	                     "$problem_dir/$g" ) )
+	    $errors[] = "could not move $f to $g";
     }
     else if ( isset ( $_POST['upload'] ) )
     {
@@ -272,10 +292,12 @@ EOT;
 	{
 	    if ( preg_match ( '/^\./', $fname ) )
 	        continue;
-	    if ( ! preg_match ( '/[^.]\.([^.]+)$/',
-	                        $fname, $matches ) )
-	        continue;
-	    $ext = $matches[1];
+	    if ( $fname == "+work+" ) continue;
+	    if ( preg_match ( '/[^.]\.([^.]+)$/',
+	                       $fname, $matches ) )
+		$ext = $matches[1];
+	    else
+	        $ext = "";
 	    if ( ! array_search
 	               ( $ext, $display_file_ext,
 		               true ) )
@@ -346,25 +368,41 @@ EOT;
 	     echo "</ul>\n";
 	}
 	echo "</div>\n";
-        if ( count ( $show_files ) > 0 )
+    }
+
+    if ( count ( $show_files ) > 0 )
+    {
+	echo "<div style='" .
+	     "background-color:" .
+	     "#AEF9B0;width:50%;'>\n";
+	foreach ( $show_files as $f )
 	{
-	    foreach ( $show_files as $f )
+	    $f = "$epm_data/$f";
+	    $b = basename ( $f );
+	    if ( filesize ( $f ) == 0 )
 	    {
-		$f = "$epm_data/$f";
-		$b = basename ( $f );
-	        if ( filesize ( $f ) == 0 )
-		{
-		    echo "<u>$b</u> is empty<br>\n";
-		    continue;
-		}
-		echo "<div style='background-color:" .
-		     "#AEF9B0;width:50%;'>\n";
+		echo "<u>$b</u> is empty<br>\n";
+		continue;
+	    }
+	    $t = exec ( "file $f" );
+	    if ( preg_match ( '/ASCII/', $t ) )
+	    {
 		echo "<u>$b</u>:<br>\n";
-		echo '<pre>' . file_get_contents ( $f )
-			     . "</pre>\n\n";
-		echo "</div>\n";
+		echo '<pre>'
+		   . file_get_contents ( $f )
+		   . "</pre>\n\n";
+	    }
+	    else
+	    {
+		$t = explode ( ":", $t );
+		$t = $t[1];
+		$t = explode ( ",", $t );
+		$t = $t[0];
+		$t = trim ( $t );
+		echo "<u>$b</u> is $t<br>\n";
 	    }
 	}
+	echo "</div>\n";
     }
 ?>
 

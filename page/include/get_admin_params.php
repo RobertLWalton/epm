@@ -40,6 +40,7 @@ if ( ! isset ( $params['upload_target_ext'] ) )
 if ( ! isset ( $params['display_file_ext'] ) )
     $params['display_file_ext'] = [
         "c", "cc", "java", "py", "tex",
+	"", "pdf",
 	"in", "gin", "out", "fout", "test", "ftest",
 	"err", "log", "fls"];
 
