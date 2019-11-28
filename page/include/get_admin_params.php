@@ -44,7 +44,7 @@ if ( ! isset ( $params['display_file_ext'] ) )
 	"err", "log", "fls"];
 
 if ( ! isset ( $params['upload_maxsize'] ) )
-    $params['upload_maxsize'] = 2097152; // 2 meg
+    $params['upload_maxsize'] = 262144; // 256 kb
 
 if ( ! isset ( $params['template_dirs'] ) )
     $params['template_dirs'] =

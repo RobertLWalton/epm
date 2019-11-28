@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Nov 27 07:02:02 EST 2019
+    // Date:	Thu Nov 28 06:28:30 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -25,6 +25,9 @@
     $userid = $_SESSION['userid'];
 
     $uploaded_file = NULL;
+    $show_file = NULL;
+    $errors = [];
+    $warnings = [];
 
     if ( ! isset ( $_SESSION['epm_admin_params'] ) )
 	include 'include/get_admin_params.php';
@@ -32,7 +35,7 @@
     $upload_maxsize = $params['upload_maxsize'];
     $display_file_ext = $params['display_file_ext'];
 
-    include 'include/debug_info.php';
+    // include 'include/debug_info.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -74,7 +77,6 @@
     // Set $problem to current problem, or NULL if none.
     //
     $problem = NULL;
-    $problem_error = NULL;
     $new_problem = false;
     if ( isset ( $_POST['goto_problem'] ) )
     {
@@ -97,7 +99,7 @@
 	         ! preg_match ( '/[A-Za-z]/', $problem )
 	       )
 	{
-	    $problem_error =
+	    $errors[] =
 	        "problem name $problem contains an" .
 		" illegal character or" .
 		" does not contain a letter";
@@ -114,9 +116,9 @@
 	{
 	    if ( file_exists ( $problem_dir ) )
 	    {
-		$problem_error =
+		$errors[] =
 		    "problem $problem already exists" .
-		" for user $email";
+		    " for user $email";
 		$problem = NULL;
 	    }
 	    elseif ( ! mkdir ( $problem_dir, 0770 ) )
@@ -129,7 +131,7 @@
 		      ( "$epm_data/users/user$userid" .
 		        "/$problem" ) )
 	{
-	    $problem_error =
+	    $errors[] =
 	        "problem $problem does not exist" .
 		" for user $email";
 	    $problem = NULL;
@@ -142,25 +144,24 @@
     elseif ( isset ( $problem ) )
 	$_SESSION['problem'] = $problem;
 
-    if ( isset ( $_POST['upload'] ) )
+    if ( isset ( $_POST['show_file'] ) )
+        $show_file = $_POST['show_file'];
+    else if ( isset ( $_POST['upload'] ) )
     {
 	$upload_info = $_FILES['uploaded_file'];
 	$uploaded_file = $upload_info['name'];
 	if ( $uploaded_file != "" )
 	{
 	    include 'include/epm_make.php';
-	    $upload_errors = [];
-	    $upload_warnings = [];
 	    $upload_output = [];
 	    process_upload
 		( $upload_info, $problem,
 		  $upload_commands, $upload_moved,
 		  $upload_show, $upload_output,
-		  $upload_warnings, $upload_errors );
+		  $warnings, $errors );
 	}
 	else
-	    $upload_errors =
-	        ["no file selected for upload"];
+	    $errors[] = "no file selected for upload";
     }
 
 
@@ -170,12 +171,28 @@
 <html>
 <body>
 
-<div style="background-color:#c0ffff;width:50%;">
+<div style="background-color:#96F9F3;width:50%;float:left">
 <?php 
 
-    if ( isset ( $problem_error ) )
-        echo "<mark>ERROR:" .
-	     " $problem_error</mark><br><br>\n";
+    if ( count ( $errors ) > 0 )
+    {
+	echo "<div style='background-color:#F5F81A'>\n";
+	echo "Errors:\n";
+	echo "<div style='margin-left:20px;font-size:110%'>\n";
+	foreach ( $errors as $e )
+	    echo "<pre>$e</pre><br>\n";
+	 echo "</div></div>\n";
+    }
+    if ( count ( $warnings ) > 0 )
+    {
+	echo "<div style='background-color:#ffc0ff'>\n";
+	echo "Warnings:\n";
+	echo "<div style='margin-left:20px'>\n";
+	foreach ( $warnings as $e )
+	    echo "<pre>$e</pre><br>\n";
+	 echo "</div></div>\n";
+    }
+
     $current_problem = ( isset ( $problem ) ?
                                  $problem :
 			         "none selected" );
@@ -183,7 +200,7 @@
     <form action='user.php' method='GET'>
     User: <input type='submit' value='$email'>
     &nbsp;&nbsp;&nbsp;&nbsp;
-    <b>Current Problem:&nbsp;$current_problem</b>
+    <b>Current Problem:</b>&nbsp;$current_problem
     </form>
     <table><form action='problem.php' method='POST'>
 EOT;
@@ -266,42 +283,45 @@ EOT;
 
 <?php
 
-    if ( isset ( $uploaded_file ) )
+    if ( isset ( $show_file ) )
+    {
+	$f = "$epm_data/users/user$userid/$problem"
+	   . "/$show_file";
+	if ( filesize ( $f ) == 0 )
+	    echo "$show_file is empty<br>\n";
+	else
+	{
+	    echo "<div style='background-color:" .
+	         "#AEF9B0;width:50%;" .
+		 "float:right;overflow:scroll;height:95%'>\n";
+	    echo "$show_file:<br>\n";
+	    echo '<pre>' . file_get_contents ( $f )
+			 . "</pre>\n\n";
+	    echo "</div>\n";
+	}
+    }
+    else if ( isset ( $uploaded_file ) )
     {
 	echo "<div style='background-color:#c0ffc0;width:50%;'>\n";
-        if ( count ( $upload_errors ) > 0 )
-	{
-	    echo "Errors:<br><ul>\n";
-	    foreach ( $upload_errors as $e )
-	        echo "<li><pre>$e</pre>\n";
-	     echo "</ul>\n";
-	}
-        if ( count ( $upload_warnings ) > 0 )
-	{
-	    echo "Warnings:<br><ul>\n";
-	    foreach ( $upload_warnings as $e )
-	        echo "<li><pre>$e</pre>\n";
-	     echo "</ul>\n";
-	}
         if ( count ( $upload_output ) > 0 )
 	{
 	    echo "Output:<br><ul>\n";
 	    foreach ( $upload_output as $e )
-	        echo "<li><pre>$e</pre>\n";
+	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
 	     echo "</ul>\n";
 	}
         if ( count ( $upload_commands ) > 0 )
 	{
 	    echo "Commands:<br><ul>\n";
 	    foreach ( $upload_commands as $e )
-	        echo "<li><pre>$e</pre>\n";
+	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
 	     echo "</ul>\n";
 	}
         if ( count ( $upload_moved ) > 0 )
 	{
-	    echo "Kept:<br><ul>\n";
+	    echo "Kept:<ul>\n";
 	    foreach ( $upload_moved as $e )
-	        echo "<li><pre>$e</pre>\n";
+	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
 	     echo "</ul>\n";
 	}
 	echo "</div>\n";

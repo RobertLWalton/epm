@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Nov 26 18:56:31 EST 2019
+// Date:    Thu Nov 28 05:27:11 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -894,7 +894,7 @@ function run_commands
 	{
 	    $errors[] =
 		"error code $ret returned upon" .
-		" executing $command";
+		" executing\n    $command";
 	    return;
 	}
     }
