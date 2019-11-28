@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Nov 28 06:28:30 EST 2019
+    // Date:	Thu Nov 28 10:48:00 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -25,7 +25,8 @@
     $userid = $_SESSION['userid'];
 
     $uploaded_file = NULL;
-    $show_file = NULL;
+    $show_file = NULL;  // File shown to right.
+    $show_files = [];   // Files shown to left.
     $errors = [];
     $warnings = [];
 
@@ -144,8 +145,19 @@
     elseif ( isset ( $problem ) )
 	$_SESSION['problem'] = $problem;
 
+    $problem_dir =
+        "$epm_data/users/user$userid/$problem";
+
+
     if ( isset ( $_POST['show_file'] ) )
-        $show_file = $_POST['show_file'];
+    {
+        $f = "users/user$userid/$problem/"
+	   . $_POST['show_file'];
+	if ( filesize ( "$epm_data/$f" ) == 0 )
+	    $show_files[] = $f;
+	else
+	    $show_file = $f;
+    }
     else if ( isset ( $_POST['upload'] ) )
     {
 	$upload_info = $_FILES['uploaded_file'];
@@ -159,6 +171,15 @@
 		  $upload_commands, $upload_moved,
 		  $upload_show, $upload_output,
 		  $warnings, $errors );
+	    foreach ( $upload_show as $f )
+	    {
+	        if ( ! preg_match ( '/\.out$/', $f )
+		     ||
+		     filesize ( "$epm_data/$f" ) == 0 )
+		    $show_files[] = $f;
+		else
+		    $show_file = $f;
+	    }
 	}
 	else
 	    $errors[] = "no file selected for upload";
@@ -167,6 +188,26 @@
 
 ?>
 
+<?php 
+
+    // If a file is to be shown to the right, output
+    // it before anything else.
+    //
+    if ( isset ( $show_file ) )
+    {
+	$b = basename ( $show_file );
+	echo "<div style='background-color:" .
+	     "#AEF9B0;width:50%;" .
+	     "float:right;overflow:scroll;" .
+	     "height:100%'>\n";
+	echo "<u>$b</u>:<br>\n";
+	echo '<pre>' . file_get_contents
+	                   ( "$epm_data/$show_file" )
+		     . "</pre>\n\n";
+	echo "</div>\n";
+    }
+
+?>
 
 <html>
 <body>
@@ -226,8 +267,6 @@ EOT;
 
     if ( isset ( $problem ) )
     {
-	$problem_dir =
-	    "$epm_data/users/user$userid/$problem";
         $count = 0;
 	foreach ( scandir ( $problem_dir ) as $fname )
 	{
@@ -282,25 +321,7 @@ EOT;
 </div>
 
 <?php
-
-    if ( isset ( $show_file ) )
-    {
-	$f = "$epm_data/users/user$userid/$problem"
-	   . "/$show_file";
-	if ( filesize ( $f ) == 0 )
-	    echo "$show_file is empty<br>\n";
-	else
-	{
-	    echo "<div style='background-color:" .
-	         "#AEF9B0;width:50%;" .
-		 "float:right;overflow:scroll;height:95%'>\n";
-	    echo "$show_file:<br>\n";
-	    echo '<pre>' . file_get_contents ( $f )
-			 . "</pre>\n\n";
-	    echo "</div>\n";
-	}
-    }
-    else if ( isset ( $uploaded_file ) )
+    if ( isset ( $uploaded_file ) )
     {
 	echo "<div style='background-color:#c0ffc0;width:50%;'>\n";
         if ( count ( $upload_output ) > 0 )
@@ -325,21 +346,22 @@ EOT;
 	     echo "</ul>\n";
 	}
 	echo "</div>\n";
-        if ( count ( $upload_show ) > 0 )
+        if ( count ( $show_files ) > 0 )
 	{
-	    foreach ( $upload_show as $f )
+	    foreach ( $show_files as $f )
 	    {
 		$f = "$epm_data/$f";
 		$b = basename ( $f );
 	        if ( filesize ( $f ) == 0 )
 		{
-		    echo "$b is empty<br>\n";
+		    echo "<u>$b</u> is empty<br>\n";
 		    continue;
 		}
-		echo "$b:\n\n";
-		echo "<div style='background-color:#ffc0ff;width:50%;'>\n";
+		echo "<div style='background-color:" .
+		     "#AEF9B0;width:50%;'>\n";
+		echo "<u>$b</u>:<br>\n";
 		echo '<pre>' . file_get_contents ( $f )
-		             . "</pre>\n\n";
+			     . "</pre>\n\n";
 		echo "</div>\n";
 	    }
 	}
