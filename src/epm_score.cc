@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Nov 30 02:06:31 EST 2019
+// Date:	Sat Nov 30 07:41:33 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <cmath>
@@ -27,6 +28,7 @@ using std::endl;
 using std::string;
 using std::vector;
 using std::ifstream;
+using std::max;
 
 unsigned const PROOF_LIMIT = 5;
 
@@ -42,9 +44,9 @@ char documentation [] =
 "\n"
 "                Completely Correct\n"
 "                Format Error\n"
-"                Empty Output\n"
 "                Incomplete Output\n"
 "                Incorrect Output\n"
+"                Empty Output\n"
 "\n"
 "    To find differences, file lines are parsed into\n"
 "    tokens, and sucessive tokens of the lines are\n"
@@ -107,8 +109,8 @@ char documentation [] =
 "        greater than R, the score is Incorrect Out-\n"
 "        put, and otherwise the numbers are consider-\n"
 "        equal.  See below for definition of relative\n"
-"        error.  If either A or R is `-', it is ignor-\n"
-"        ed.\n"
+"        error.  If either A or R is `-', it is\n"
+"        ignored.\n"
 "\n"
 "    -float A R\n"
 "        Ditto but apply only if the test file num-\n"
@@ -118,18 +120,15 @@ char documentation [] =
 "        All tokens must exactly match as character\n"
 "        strings, else Incorrect Output.\n"
 "\n"
-"    Without number or float options, numbers must\n"
-"    be exactly equal.\n"
-"\n"
-"    To compare numbers, they are converted to IEEE\n"
-"    64 bit numbers if either is floating point.  It\n"
-"    is a program error if the test file number con-\n"
-"    verts to an infinity, and Incorrect Output if\n"
-"    the output file number converts to an infinity.\n"
-"\n"
-"    To compare integers without a +number option,\n"
+"    To compare integers without a -number option,\n"
 "    any high order zeros, initial + sign, or initial\n"
 "    - sign before a zero integer are ignored.\n"
+"\n"
+"    To compare numbers otherwise, they are convert-\n"
+"    ed to IEEE 64 bit numbers.  If neither is infin-\n"
+"    ity and there is a -float or -number option,\n"
+"    they are compared using the A and R given in\n"
+"    that option.  Otherwise they must be equal.\n"
 "\n"
 "    The relative difference between two numbers x\n"
 "    and y is:\n"
@@ -159,15 +158,17 @@ bool float_opt = false;
 bool exact_opt = false;
 
 enum token_type {
-    NO_TOKEN = 0, WORD_TOKEN, SEPARATOR_TOKEN, INTEGER_TOKEN,
-    FLOAT_TOKEN, EOL_TOKEN, EOF_TOKEN };
+    NO_TOKEN = 0,
+    WORD_TOKEN, SEPARATOR_TOKEN, INTEGER_TOKEN,
+		FLOAT_TOKEN,
+    EOL_TOKEN };
 
 // Type names for debugging only.
 //
 const char * token_type_name[] = {
     "no-token",
     "word", "separator", "integer", "float",
-    "eof" };
+    "end-of-line" };
 
 struct file
     // Information about one of the input files (output
@@ -178,10 +179,14 @@ struct file
     const char * id;	// Either "Ouput File" or
     			// "Test File".
 
-    string line;	// Current line.
+    string line;	// Current line if file not
+    			// at_end or at beginning.
     int line_number;	// After end of file this is
     			// number of lines in file + 1.
-    bool is_blank;	// True if line is blank.
+			// 0 if file before first line.
+    bool at_end;	// True if file is at end.
+    bool is_blank;	// True if line is blank and
+    			// file is NOT at end.
 
     // Token description.
     //
@@ -202,9 +207,10 @@ file & test = files[1];;
 
 vector<string> format_errors;
 vector<string> incorrect_errors;
-int number_proofs = 0;
+int number_format_proofs = 0;
+int number_incorrect_proofs = 0;
 
-void check_errors ( void )
+void check_incorrect ( void )
 {
     if ( incorrect_errors.size() > 0 )
     {
@@ -214,6 +220,9 @@ void check_errors ( void )
 	    cout << incorrect_errors[i] << endl;
 	exit ( 1 );
     }
+}
+void check_format ( void )
+{
     if ( format_errors.size() > 0 )
     {
         cout << "Format Error";
@@ -244,8 +253,18 @@ const char * truncate ( const string & s )
 
 void error_lines ( vector<string> & e )
 {
-    if ( ++ number_proofs > PROOF_LIMIT )
-        check_errors();  // does not return
+    if ( & e == & incorrect_errors )
+    {
+	if ( number_incorrect_proofs >= PROOF_LIMIT )
+	    check_incorrect();  // does not return
+	++ number_incorrect_proofs;
+    }
+    else
+    {
+	if ( number_format_proofs >= PROOF_LIMIT )
+	    return;
+	++ number_format_proofs;
+    }
 
     char buffer[1000];
     for ( int i = 0; i < 2; ++ i )
@@ -253,7 +272,7 @@ void error_lines ( vector<string> & e )
         sprintf ( buffer, "%s line %d: %s",
 	          files[i].id,
 		  files[i].line_number,
-		  files[i].type == EOF_TOKEN ?
+		  files[i].at_end ?
 		    "<end of file>" :
 		     truncate ( files[i].line ) );
 	assert ( strlen ( buffer ) <= 80 );
@@ -285,9 +304,10 @@ void error_token
         ( vector<string> & e, file & f )
 {
     char buffer[1000];
-    int n = sprintf ( buffer, "    %s %s token:",
+    int n = sprintf ( buffer, "    %s %s token",
                       f.id, token_type_name[f.type] );
     int len = f.end - f.start;
+    if ( len > 0 ) n += sprintf ( buffer + n, ": " );
     if ( len <= 40 )
         strncpy ( buffer + n, f.line.c_str() + f.start,
 	                      len );
@@ -344,18 +364,18 @@ void open ( file & f, char * filename )
     f.type		= NO_TOKEN;
 }
 
-// Get next line.  If end of file, set token type
-// to EOF_TOKEN.  If called when token type is
-// EOF_TOKEN, does nothing.  If not end of file,
-// set token type to NO_TOKEN and initialize
-// start, end, and column to 0.
+// Get next line.  If end of file, set at_end and
+// is_blank.  If called when file is at_end, to nothing.
+// If file not at_end, set token type to NO_TOKEN,
+// set is_blank, and initialize start, end, and column
+// to 0.
 //
 void get_line ( file & f )
 {
-    if ( f.type == EOF_TOKEN ) return;
+    if ( f.at_end ) return;
     ++ f.line_number;
     if ( ! getline ( f.stream, f.line ) )
-         f.type = EOF_TOKEN;
+         f.at_end = true;
     else
     {
         const char * p = f.line.c_str();
@@ -372,20 +392,24 @@ void get_line ( file & f )
 
     cout << f.id
          << " " << f.line_number
-         << ": " << truncate ( f.line )
+         << ": "
+	 << ( f.at_end ? "<end-of-file>" :
+	                 truncate ( f.line ) )
 	 << endl;
 }
 
-// Get next token.  If end of file, does nothing.
-// Updates f.column to last column of token and
-// sets token f.start and f.end.
+// Get next token.  If file at_end or file type is
+// EOL_TOKEN do nothing.  Otherwise set f.type,
+// f.column, f.start, and f.end.
 //
 void get_token ( file & f )
 {
-    if ( f.type == EOF_TOKEN ) return;
+    if ( f.at_end ) return;
+    if ( f.type == EOL_TOKEN ) return;
+
     const char * lp = f.line.c_str();
     const char * p = lp + f.end;
-    bool point_found;  // Declare here before jumps.
+    bool point_found;  // Declare here before goto's.
     const char * q;    // Ditto.
     while ( * p && isspace ( * p ) )
     {
@@ -520,7 +544,7 @@ double number ( file & f )
 // equality.  Ignores initial + sign, initial - sign
 // for zeros, and high order zeros.
 //
-bool test_integer_equality ( void )
+bool integers_are_equal ( void )
 {
     const char * p1 =
         output.line.c_str() + output.start;
@@ -644,6 +668,14 @@ int main ( int argc, char ** argv )
 	exit ( 1 );
     }
 
+    if (    ( float_opt || number_opt )
+         && number_A == -1 && number_R == -1 )
+    {
+	cerr << "BOTH A and R cannot be `-'"
+	     << endl;
+	exit ( 1 );
+    }
+
     if ( case_format_opt && case_incorrect_opt )
     {
 	cerr << "cannot have BOTH -case-format AND"
@@ -697,7 +729,208 @@ int main ( int argc, char ** argv )
     open ( output, argv[1] );
     open ( test, argv[2] );
 
-// TBD
+    // Loop through lines.
+    //
+    while ( true )
+    {
+        get_line ( output );
+	get_line ( test );
+
+	if ( output.is_blank
+	     &&
+	     test.is_blank  )
+	    continue;
+	if ( output.is_blank )
+	{
+	    if ( blank_opt )
+	        non_token_error
+		    ( format_errors,
+		      "superfluous blank line" );
+	    while ( output.is_blank )
+	        get_line ( output );
+	}
+	else if ( test.is_blank )
+	{
+	    if ( blank_opt )
+	        non_token_error
+		    ( format_errors,
+		      "missing blank line" );
+	    while ( test.is_blank )
+	        get_line ( test );
+	}
+		    
+	if ( output.at_end && test.at_end )
+	{
+	    check_incorrect();
+	    check_format();
+	    // If these return there are no incorrect
+	    // or format errors.
+	    cout << "Completely Correct" << endl;
+	    exit ( 0 );
+	}
+
+	if ( output.at_end )
+	{
+	    check_incorrect();
+	    // If this return there are no incorrect
+	    // errors.
+	    cout << "Incomplete Output" << endl;
+	    exit ( 0 );
+	}
+
+	if ( test.at_end )
+	{
+	    non_token_error
+	        ( incorrect_errors,
+	          "extra line at end of output" );
+	    check_incorrect();
+	    // This does NOT return.
+	}
+
+	// Loop to check tokens of non-blank lines.
+	//
+	while ( true )
+	{
+	    get_token ( output );
+	    get_token ( test );
+
+	    if ( output.type == EOL_TOKEN
+	         &&
+		 test.type == EOL_TOKEN )
+	        break;
+
+	    if ( output.type == EOL_TOKEN )
+	    {
+	        token_error
+		    ( incorrect_errors,
+		      "does not match" );
+		break;
+	    }
+	    if ( test.type == EOL_TOKEN )
+	    {
+	        token_error
+		    ( incorrect_errors,
+		      "does not match" );
+		break;
+	    }
+
+	    bool output_is_number =
+	        ( output.type == INTEGER_TOKEN
+		  ||
+		  output.type == FLOAT_TOKEN );
+	    bool test_is_number =
+	        ( test.type == INTEGER_TOKEN
+		  ||
+		  test.type == FLOAT_TOKEN );
+	    int output_len = output.end - output.start;
+	    int test_len   = test.end - test.start;
+	    const char * p1 = output.line.c_str()
+	                    + output.start;
+	    const char * p2 = output.line.c_str()
+	                    + output.start;
+
+	    if ( ! output_is_number
+	         ||
+		 ! test_is_number )
+	    {
+		if ( output.type != test.type )
+		{
+		    token_error
+			( incorrect_errors,
+			  "does not match" );
+		    continue;
+		}
+
+		if ( output_len != test_len )
+		{
+		    token_error
+			( incorrect_errors,
+			  "does not match" );
+		    continue;
+		}
+
+		if (    strncmp ( p1, p2, output_len )
+		     == 0 )
+		    continue;
+
+		if ( output.type != WORD_TOKEN
+		     ||
+		     case_incorrect_opt
+		     ||
+		        strncasecmp
+			    ( p1, p2, output_len )
+		     != 0 )
+
+		{
+		    token_error
+			( incorrect_errors,
+			  "does not match" );
+		    continue;
+		}
+
+		if ( case_format_opt )
+		{
+		    token_error
+			( format_errors,
+			  "does not match letter"
+			  " case of" );
+		}
+		continue;
+	    }
+
+	    // Both tokens are numbers.
+	    //
+	    if ( output.type == INTEGER_TOKEN
+	         &&
+		 test.type == INTEGER_TOKEN
+		 &&
+		 ! number_opt )
+	    {
+	        if ( ! integers_are_equal() )
+		{
+		    token_error
+			( incorrect_errors,
+			  "does not equal" );
+		}
+		continue;
+	    }
+
+	    double n1 = number ( output );
+	    double n2 = number ( test );
+
+	    if ( n1 == n2 ) continue;
+
+	    if ( n1 == + INFINITY
+	         ||
+		 n1 == - INFINITY
+	         ||
+		 n2 == + INFINITY
+	         ||
+		 n2 == - INFINITY
+		 ||
+		 ( ! float_opt && ! number_opt )
+		 ||
+		 (    ! number_opt
+		   && test.type != FLOAT_TOKEN ) )
+	    {
+		token_error
+		    ( incorrect_errors,
+		      "does not equal" );
+		continue;
+	    }
+
+	    double diff = fabs ( n1 - n2 );
+	    if ( diff == 0 ) continue;
+	    if ( diff <= number_A ) continue;
+	    double divisor =
+	        max ( fabs ( n1 ), fabs ( n2 ) );
+	    double r = diff / divisor;
+	    if ( r <= number_R ) continue;
+	    token_error
+		( incorrect_errors,
+		  "is not sufficiently equal to" );
+	}
+    }
 
     // Return from main function without error.
 
