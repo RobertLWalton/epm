@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Nov 29 18:26:04 EST 2019
+// Date:	Sat Nov 30 00:45:50 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -198,6 +198,7 @@ struct file
     			// the last character of the
 			// the current token.  The first
 			// column is 1.
+
 };
 
 // The two files.
@@ -248,8 +249,7 @@ const char * truncate ( const string & s )
     return truncate_buffer;
 }
 
-void error
-        ( vector<string> & e, const char * format... )
+void error_lines ( vector<string> & e )
 {
     if ( ++ number_proofs > PROOF_LIMIT )
         check_errors();  // does not return
@@ -264,13 +264,69 @@ void error
 	assert ( strlen ( buffer ) <= 80 );
 	e.push_back ( string ( buffer ) );
     }
+}
 
-    va_list args;
-    va_start ( args, format );
+void error_message
+        ( vector<string> & e, const char * format,
+	                      va_list args )
+{
+    char buffer[1000];
     strcpy ( buffer, "    " );
     vsprintf ( buffer + 4, format, args );
     assert ( strlen ( buffer ) <= 80 );
     e.push_back ( string ( buffer ) );
+}
+
+void error_message
+        ( vector<string> & e, const char * format... )
+{
+    va_list args;
+    va_start ( args, format );
+    error_message ( e, format, args );
+    va_end ( args );
+}
+
+void error_token
+        ( vector<string> & e, file & f )
+{
+    char buffer[1000];
+    int n = sprintf ( buffer, "    %s %s token:",
+                      f.id, token_type_name[f.type] );
+    int len = f.end - f.start;
+    if ( len <= 40 )
+        strncpy ( buffer + n, f.line.c_str() + f.start,
+	                      len );
+    else
+    {
+        strncpy ( buffer + n,
+	          f.line.c_str() + f.start, 20 );
+        strcpy ( buffer + n + 20, "..." );
+        strncpy ( buffer + n + 23,
+	          f.line.c_str() + f.end - 20, 20 );
+    }
+    e.push_back ( string ( buffer ) );
+}
+
+void non_token_error
+        ( vector<string> & e, const char * format... )
+{
+    error_lines ( e );
+    va_list args;
+    va_start ( args, format );
+    error_message ( e, format, args );
+    va_end ( args );
+}
+
+void token_error
+        ( vector<string> & e, const char * format... )
+{
+    error_lines ( e );
+    error_token ( e, output );
+    va_list args;
+    va_start ( args, format );
+    error_message ( e, format, args );
+    va_end ( args );
+    error_token ( e, test );
 }
 
 // Open file for reading.
@@ -342,13 +398,15 @@ void get_token ( file & f )
 	else if ( * p == '\t' )
 	    f.column += 8 - ( f.column % 8 );
 	else if ( * p == '\f' )
-	    error ( format_errors,
-	            "form feed character in column %d",
-		    f.column );
+	    non_token_error
+	        ( format_errors,
+	          "form feed character in column %d",
+		  f.column );
 	else if ( * p == '\v' )
-	    error ( format_errors,
-	            "vertical space character"
-		    " in column %d", f.column );
+	    non_token_error
+	        ( format_errors,
+	          "vertical space character"
+		  " in column %d", f.column );
 	// else its carriage return and we ignore it.
     }
 
