@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Nov 30 00:45:50 EST 2019
+// Date:	Sat Nov 30 00:48:38 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -260,7 +260,9 @@ void error_lines ( vector<string> & e )
         sprintf ( buffer, "%s line %d: %s",
 	          files[i].id,
 		  files[i].line_number,
-		  truncate ( files[i].line ) );
+		  files[i].type == EOF_TOKEN ?
+		    "<end of file>" :
+		     truncate ( files[i].line ) );
 	assert ( strlen ( buffer ) <= 80 );
 	e.push_back ( string ( buffer ) );
     }
