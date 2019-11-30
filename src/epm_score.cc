@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Nov 30 00:48:38 EST 2019
+// Date:	Sat Nov 30 02:06:31 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -28,14 +28,6 @@ using std::string;
 using std::vector;
 using std::ifstream;
 
-// Name defined in include file that is used below and
-// needs to be changed in its usage below.
-//
-#ifdef INFINITY
-#    undef INFINITY
-#    endif
-#define INFINITY Infinity
-
 unsigned const PROOF_LIMIT = 5;
 
 char documentation [] =
@@ -49,7 +41,7 @@ char documentation [] =
 "    The possible score line values are:\n"
 "\n"
 "                Completely Correct\n"
-"                Formatting Error\n"
+"                Format Error\n"
 "                Empty Output\n"
 "                Incomplete Output\n"
 "                Incorrect Output\n"
@@ -85,16 +77,16 @@ char documentation [] =
 "    -blank\n"
 "        If a blank line is matched to a non-blank\n"
 "        line, the blank line is skipped.  With this\n"
-"        option, such a skip is a Formatting Error.\n"
+"        option, such a skip is a Format Error.\n"
 "\n"
 "    -column\n"
 "        For matching tokens, if they have different\n"
-"        end column numbers it is a Formatting Error.\n"
+"        end column numbers it is a Format Error.\n"
 "\n"
-"    -case-formatting\n"
+"    -case-format\n"
 "        For matching word tokens, if they have\n"
 "        matched letters of different case, it is a\n"
-"        Formatting Error.\n"
+"        Format Error.\n"
 "\n"
 "    -case-incorrect\n"
 "        For matching word tokens, if they have\n"
@@ -158,8 +150,9 @@ char documentation [] =
 bool debug = false;
 bool blank_opt = false;
 bool column_opt = false;
+bool case_format_opt = false;
+bool case_incorrect_opt = false;
 bool decimal_opt = false;
-bool case_opt = false;
 bool number_opt = false;
 double number_A, number_R;
 bool float_opt = false;
@@ -503,106 +496,57 @@ TOKEN_DONE:
     cout << endl;
 }
 
-
-// TBD
-
-// Tests two numbers just scanned for the output and
-// test files to see if there is a computable differ-
-// ence.  If so, calls found_difference (FLOAT) (or
-// found_difference (INTEGER)), and updates `float_
-// absdiff_maximum' and `float_reldiff_maximum' (or
-// `integer_absdiff_maximum' and `integer_reldiff_
-// maximum') by writing the differences just found
-// into these variables iff the new differences are
-// larger than the previous values of these variables.
+// Computes the floating point value of the current
+// number token.  May be + - INFINITY.
 //
-// Also calls found_difference for DECIMAL, EXPONENT,
-// or SIGN if the two number `decimals' or `has_expo-
-// nent' file members are unequal, or the number signs
-// are unequal (where a sign is the first character of a
-// token if that is `+' or `-' and is `\0' otherwise)
-// and the numbers are both integers.
-//
-// If there is no computable difference, calls found_
-// difference(INFINITY) instead.  This happens if one of
-// the numbers is not `finite' or their difference is
-// not `finite'.
-// 
-void diffnumber ()
+double number ( file & f )
 {
-    if ( ! isfinite ( output.number )
-	 ||
-	 ! isfinite ( test.number ) )
-    {
-	found_difference ( INFINITY );
-	return;
-    }
-
-    double absdiff =
-	( output.number - test.number );
-    if ( ! isfinite ( absdiff ) )
-    {
-	found_difference ( INFINITY );
-	return;
-    }
-    if ( absdiff < 0 ) absdiff = - absdiff;
-
-    double abs1 = output.number;
-    if ( abs1 < 0 ) abs1 = - abs1;
-
-    double abs2 = test.number;
-    if ( abs2 < 0 ) abs2 = - abs2;
-
-    double max = abs1;
-    if ( max < abs2 ) max = abs2;
-
-    double reldiff = absdiff == 0.0 ?
-                     0.0 :
-		     absdiff / max;
-
-    if ( ! isfinite ( reldiff ) )
-    {
-        // Actually, this should never happen.
-
-	found_difference ( INFINITY );
-	return;
-    }
-
-    if ( output.is_float || test.is_float )
-    {
-	found_difference ( FLOAT, absdiff, reldiff );
-
-	if ( absdiff > float_absdiff_maximum )
-	    float_absdiff_maximum = absdiff;
-
-	if ( reldiff > float_reldiff_maximum )
-	    float_reldiff_maximum = reldiff;
-    }
+    assert ( f.type == INTEGER_TOKEN
+             ||
+	     f.type == FLOAT_TOKEN );
+    int len = f.end - f.start;
+    char buffer[len+1];
+    strncpy ( buffer, f.line.c_str() + f.start, len );
+    char * endp;
+    double r = strtod ( buffer, & endp );
+    assert ( * endp == 0 );
+    if ( r == + HUGE_VAL ) r = + INFINITY;
     else
-    {
-	found_difference ( INTEGER, absdiff, reldiff );
+    if ( r == - HUGE_VAL ) r = - INFINITY;
+    return r;
+}
 
-	if ( absdiff > integer_absdiff_maximum )
-	    integer_absdiff_maximum = absdiff;
+// Tests two integer tokens of arbitrary length for
+// equality.  Ignores initial + sign, initial - sign
+// for zeros, and high order zeros.
+//
+bool test_integer_equality ( void )
+{
+    const char * p1 =
+        output.line.c_str() + output.start;
+    const char * e1 =
+        output.line.c_str() + output.end;
+    const char * p2 =
+        test.line.c_str() + test.start;
+    const char * e2 =
+        test.line.c_str() + test.end;
 
-	if ( reldiff > integer_reldiff_maximum )
-	    integer_reldiff_maximum = reldiff;
-
-	char oc = output.token[0];
-	char tc = test.token[0];
-
-	if ( oc != '-' && oc != '+' ) oc = 0;
-	if ( tc != '-' && tc != '+' ) tc = 0;
-
-	if ( oc != tc )
-	    found_difference ( SIGN );
-    }
-
-    if ( output.decimals != test.decimals )
-	found_difference ( DECIMAL );
-
-    if ( output.has_exponent != test.has_exponent )
-	found_difference ( EXPONENT );
+    int s1 = +1, s2 = +1;
+    if ( * p1 == '+' ) ++ p1;
+    else if ( * p1 == '-' ) s1 = -1, ++ p1;
+    if ( * p2 == '+' ) ++ p2;
+    else if ( * p2 == '-' ) s2 = -1, ++ p2;
+    while ( * p1 == '0' && p1 < e1 ) ++ p1;
+    while ( * p2 == '0' && p2 < e2 ) ++ p2;
+    if ( p1 == e1 && p2 == e2 ) return true;
+        // Both integers zero.
+    if ( p1 != e1 || p2 == e2 ) return false;
+        // One integer zero.
+    if ( s1 != s2 ) return false;
+        // Non-zero integers of different sign.
+    if ( ( e1 - p1 ) != ( e2 - p2 ) ) return false;
+        // Non-zero integers of different length.
+    return strncmp ( p1, p2, p1 - e1 ) == 0;
 }
 
 // Main program.
@@ -612,96 +556,74 @@ int main ( int argc, char ** argv )
 
     // Process options.
 
-    while ( argc >= 4 && argv[1][0] == '-' )
+    while ( argc >= 2 && argv[1][0] == '-' )
     {
 
 	char * name = argv[1] + 1;
 
-        if (    strcmp ( "float", name ) == 0
-	     || strcmp ( "integer", name ) == 0 )
+        if ( strncmp ( "doc", name, 3 ) == 0 )
+	{
+	    // Any -doc* option prints documentation
+	    // and exits with no error.
+	    //
+	    FILE * out = popen ( "less -F", "w" );
+	    fputs ( documentation, out );
+	    pclose ( out );
+	    exit ( 0 );
+	}
+        else if ( strcmp ( "debug", name ) == 0 )
+	    debug = true;
+        else if ( strcmp ( "blank", name ) == 0 )
+	    debug = blank_opt;
+        else if ( strcmp ( "column", name ) == 0 )
+	    debug = column_opt;
+        else if ( strcmp ( "decimal", name ) == 0 )
+	    debug = decimal_opt;
+        else if ( strcmp ( "case-format", name ) == 0 )
+	    debug = case_format_opt;
+        else if (    strcmp ( "case-incorrect", name )
+	          == 0 )
+	    debug = case_incorrect_opt;
+        else if ( strcmp ( "exact", name ) == 0 )
+	    debug = exact_opt;
+        else if (    strcmp ( "float", name ) == 0
+	          || strcmp ( "number", name ) == 0 )
 	{
 	    // special case.
 
-	    double absdiff_limit = -1.0;
-	    double reldiff_limit = -1.0;
+	    if ( name[0] == 'f' ) float_opt = true;
+	    else number_opt = true;
 
-	    if (    isdigit ( argv[2][0] )
-	         || argv[2][0] == '.' )
-	    {
-		absdiff_limit = atof ( argv[2] );
-		++ argv, -- argc;
-		if ( argc < 3 ) break;
-	    }
-	    else if ( strcmp ( "-", argv[2] ) == 0 )
-	    {
-		++ argv, -- argc;
-		if ( argc < 3 ) break;
-	    }
+	    double number_A = -1.0;
+	    double number_R = -1.0;
 
-	    if (    isdigit ( argv[2][0] )
-	         || argv[2][0] == '.' )
+	    if ( argc < 2 ) break;
+	    if ( strcmp ( "-", argv[2] ) != 0 )
 	    {
-		reldiff_limit = atof ( argv[2] );
-		++ argv, -- argc;
-		if ( argc < 3 ) break;
+	        char * endp;
+		number_A = strtod ( argv[2], & endp );
+		if ( * endp )
+		{
+		    cerr << "Unrecognized A in"
+		            " -number or -float: "
+			 << argv[2] << endl;
+		    exit ( 1 );
+		}
 	    }
-	    else if ( strcmp ( "-", argv[2] ) == 0 )
+	    if ( argc < 2 ) break;
+	    if ( strcmp ( "-", argv[2] ) != 0 )
 	    {
-		++ argv, -- argc;
-		if ( argc < 3 ) break;
-	    }
-
-	    if ( name[0] == 'f' )
-	    {
-	    	float_absdiff_limit = absdiff_limit;
-	    	float_reldiff_limit = reldiff_limit;
-	    }
-	    else
-	    {
-	    	integer_absdiff_limit = absdiff_limit;
-	    	integer_reldiff_limit = reldiff_limit;
+	        char * endp;
+		number_R = strtod ( argv[2], & endp );
+		if ( * endp )
+		{
+		    cerr << "Unrecognized R in"
+		            " -number or -float: "
+			 << argv[2] << endl;
+		    exit ( 1 );
+		}
 	    }
 	}
-        else if ( strncmp ( "doc", name, 3 ) == 0 )
-	{
-	    // Any -doc* option prints documentation
-	    // and exits with error status.
-	    //
-	    cout << documentation;
-	    exit (1);
-	}
-
-	int i; for ( i = 0; i < MAX_DIFFERENCE; ++ i )
-	{
-	    if ( differences[i].name == NULL )
-	        continue;
-	    if ( strcmp ( differences[i].name, name )
-	         == 0 ) break;
-	}
-
-	assert ( argc >= 3 );
-
-    	if ( i < MAX_DIFFERENCE )
-	    differences[i].proof_limit
-	    	= isdigit ( argv[2][0] ) ?
-		  (unsigned) atol ( argv[2] ) :
-		  0;
-    	else if ( strcmp ( "all", name ) == 0 )
-	{
-	    int limit = isdigit ( argv[2][0] ) ?
-		        (unsigned) atol ( argv[2] ) :
-		        0;
-	    for ( int j = 0; j < MAX_DIFFERENCE; ++ j )
-		differences[j].proof_limit = limit;
-	}
-        else if ( strcmp ( "nosign", name ) == 0 )
-	    nosign = true;
-        else if ( strcmp ( "nonumber", name ) == 0 )
-	    nonumber = true;
-        else if ( strcmp ( "filtered", name ) == 0 )
-	    filtered = true;
-        else if ( strcmp ( "debug", name ) == 0 )
-	    debug = true;
 	else
 	{
 	    cerr << "Unrecognized option -"
@@ -715,452 +637,67 @@ int main ( int argc, char ** argv )
 		++ argv, -- argc;
     }
 
-    // Print documentation and exit with error status
-    // unless there are exactly two program arguments
-    // left.
-
-    if ( argc != 3 )
+    if ( float_opt && number_opt )
     {
-        cout << documentation;
-	exit (1);
+	cerr << "cannot have BOTH -number AND -float"
+	     << endl;
+	exit ( 1 );
+    }
+
+    if ( case_format_opt && case_incorrect_opt )
+    {
+	cerr << "cannot have BOTH -case-format AND"
+	        " -case-incorrect" << endl;
+	exit ( 1 );
+    }
+
+    if ( exact_opt && case_format_opt )
+    {
+	cerr << "cannot have BOTH -exact AND"
+	        " -case-format" << endl;
+	exit ( 1 );
+    }
+
+    if ( exact_opt && decimal_opt )
+    {
+	cerr << "cannot have BOTH -exact AND"
+	        " -decimal" << endl;
+	exit ( 1 );
+    }
+
+    if ( exact_opt && number_opt )
+    {
+	cerr << "cannot have BOTH -exact AND"
+	        " -number" << endl;
+	exit ( 1 );
+    }
+
+    if ( exact_opt && float_opt )
+    {
+	cerr << "cannot have BOTH -exact AND"
+	        " -float" << endl;
+	exit ( 1 );
+    }
+
+    if ( argc == 1 )
+    {
+        cerr << "output and test file names missing"
+	     << endl;
+	exit ( 1 );
+    }
+    if ( argc == 2 )
+    {
+        cerr << "test file name missing"
+	     << endl;
+	exit ( 1 );
     }
 
     // Open files.
 
-    open ( output, argv[1], "out" );
-    open ( test, argv[2], "test" );
+    open ( output, argv[1] );
+    open ( test, argv[2] );
 
-    // Loop that reads the two files and compares their
-    // tokens, recording any differences found.
-
-    bool done		= false;
-
-    bool last_match_was_word_diff	= false;
-
-    while ( ! done )
-    {
-	bool skip_whitespace_comparison	= false;
-
-	// Scan next tokens.
-	//
-	if ( output.type != test.type )
-	{
-	    // Type differences for current tokens have
-	    // not yet been announced by calling found_
-	    // difference.
-
-	    bool announced[MAX_TOKEN];
-	    for ( int i = 0; i < MAX_TOKEN; ++ i )
-	        announced[i] = false;
-	    if ( output.type < test.type )
-	    {
-	        while ( output.type < test.type )
-		{
-		     if ( ! announced[output.type] )
-		     {
-			found_difference
-			    ( type_mismatch
-				( output.type,
-				  test.type ) );
-		        announced[output.type] = true;
-		     }
-		     scan_token ( output );
-		}
-	    }
-	    else
-	    {
-	        while ( test.type < output.type )
-		{
-		     if ( ! announced[test.type] )
-		     {
-			found_difference
-			    ( type_mismatch
-				( output.type,
-				  test.type ) );
-		        announced[test.type] = true;
-		     }
-		     scan_token ( test );
-		}
-	    }
-	    skip_whitespace_comparison = true;
-	}
-	else if ( last_match_was_word_diff
-		  && (    output.remainder
-		          != test.remainder
-		       ||
-		       before_nl ( output )
-			   != before_nl ( test ) ) )
-	{
-	    assert (    ! output.remainder
-	    	     || ! test.remainder );
-
-	    // If the last two tokens had a word diff-
-	    // erence and one is a remainder or a
-	    // number, or one is followed by a new line
-	    // and the other is not, discard the
-	    // remainder, the one not followed by a new
-	    // line, or the word (non-number), leaving
-	    // the other token for the next match.
-
-	    if ( output.remainder )
-		scan_token ( output );
-	    else if ( test.remainder )
-		scan_token ( test );
-	    else if (      before_nl ( test )
-	              && ! before_nl ( output ) )
-		scan_token ( output );
-	    else if (    ! before_nl ( test )
-	              &&   before_nl ( output ) )
-		scan_token ( test );
-	}
-	else
-	{
-	    scan_token ( output );
-	    scan_token ( test );
-	}
-
-	// Compare tokens.  Type mismatch is handled
-	// at beginning of containing loop.
-	//
-	if ( output.type != test.type ) continue;
-
-	last_match_was_word_diff = false;
-        switch ( output.type ) {
-
-	case EOF_TOKEN:
-		done = true;
-	case BOG_TOKEN:
-	case BOC_TOKEN:
-		break;
-
-	case NUMBER_TOKEN:
-	case WORD_TOKEN:
-
-	    // If both tokens are words and one is
-	    // longer than the other, split the longer
-	    // word.  If we get a word diff, we will
-	    // undo the split.
-
-	    if ( output.type == WORD_TOKEN )
-	    {
-		if ( output.length < test.length )
-		    split_word ( test, output.length );
-		else if ( test.length < output.length )
-		    split_word ( output, test.length );
-	    }
-
-	    // Compare tokens for match that is either
-	    // exact or exact but for letter case.
-
-	    char * tp1 = output.token;
-	    char * tp2 = test.token;
-	    char * endtp2 = tp2 + test.length;
-	    bool token_match_but_for_letter_case =
-	        ( output.length == test.length );
-	    bool token_match =
-	        token_match_but_for_letter_case;
-
-	    while ( tp2 < endtp2
-	            && token_match_but_for_letter_case )
-	    {
-		if ( * tp1 != * tp2 )
-		{
-		    token_match = false;
-		    token_match_but_for_letter_case =
-			( toupper ( * tp1 )
-			  == toupper ( * tp2 ) );
-		}
-		++ tp1, ++ tp2;
-	    }
-
-	    if ( token_match_but_for_letter_case )
-	    {
-		if ( ! token_match )
-		    found_difference
-		        ( output.type != NUMBER_TOKEN ?
-			      LETTER_CASE :
-			  output.is_float ?
-			      FLOAT :
-			      INTEGER );
-	    }
-
-	    else if ( output.type == NUMBER_TOKEN )
-	    {
-	        // Tokens are not equal with letter case
-		// ignored, but both are numbers.
-
-	        assert ( test.type == NUMBER_TOKEN );
-		diffnumber ();
-	    }
-
-	    else
-	    {
-	        // Tokens are not equal with letter case
-		// ignored, and both are words.
-
-		assert ( test.type == WORD_TOKEN );
-
-	    	undo_split ( test );
-	    	undo_split ( output );
-
-		found_difference ( WORD );
-		last_match_was_word_diff = true;
-	    }
-
-	    break;
-     	}
-
-	// The rest of the loop compares columns and
-	// whitespace.  If we are skipping whitespace
-	// comparisons because one file is longer than
-	// the other, continue loop here.
-
-	if ( skip_whitespace_comparison ) continue;
-
-	assert ( output.type == test.type );
-
-	// Compare column numbers.  This is done after
-	// token comparison so that the results of word
-	// splitting can be taken into account in token
-	// ending column numbers.  It is not done if
-	// both files have BOC_TOKENs, BOG_TOKENS, or
-	// EOF_TOKENs.
-
-	if (    output.type != EOF_TOKEN
-	     && output.type != BOG_TOKEN
-	     && output.type != BOC_TOKEN
-	     && output.column != test.column )
-	    found_difference ( COLUMN );
-
-        // Compare whitespace preceding tokens.  This is
-	// done after token comparison so that the
-	// results of word splitting can be taken into
-	// account in token ending column numbers.
-
-	if ( (    output.whitespace[0] != 0
-	       && test.whitespace[0]   == 0 )
-	     ||
-	     (    output.whitespace[0] == 0
-	       && test.whitespace[0]   != 0 ) )
-	    found_difference ( SPACEBREAK );
-	else if ( output.newlines != test.newlines )
-	    found_difference ( LINEBREAK );
-	else
-	{
-	    char * wp1		= output.whitespace;
-	    char * wp2		= test.whitespace;
-	    int newlines	= 0;
-
-	    while (1) {
-		while ( * wp1 == * wp2 ) {
-		    if ( * wp1 == 0 ) break;
-		    if ( * wp1 == '\n' ) ++ newlines;
-		    ++ wp1, ++ wp2;
-		}
-
-		if ( * wp1 == * wp2 ) break;
-
-		// Come here if a difference in white-
-		// space has been detected.  `newlines'
-		// is the number of newlines scanned so
-		// far.
-
-		// Skip to just before next newline or
-		// string end in each whitespace.
-
-		while ( * wp1 && * wp1 != '\n' ) ++ wp1;
-		while ( * wp2 && * wp2 != '\n' ) ++ wp2;
-
-		assert ( output.newlines
-		         == test.newlines );
-
-		if ( newlines == output.newlines )
-		{
-		    bool output_is_float =
-		        output.type == NUMBER_TOKEN
-			&& output.is_float;
-		    bool test_is_float =
-		        test.type == NUMBER_TOKEN
-			&& test.is_float;
-
-		    if (    ! output_is_float
-		         && ! test_is_float )
-			found_difference
-			    ( newlines == 0 ?
-			      WHITESPACE :
-			      BEGINSPACE );
-		}
-		else if ( newlines == 0 )
-			found_difference ( ENDSPACE );
-		else
-		    found_difference ( LINESPACE );
-	    }
-	}
-    }
-
-    // The file reading loop is done because we have
-    // found matched EOF_TOKENS.  Output fake eof-eof
-    // difference.
-    //
-    assert ( output.type == EOF_TOKEN );
-    assert ( test.type == EOF_TOKEN );
-    found_difference
-	( type_mismatch ( EOF_TOKEN, EOF_TOKEN ) );
-
-    // Differences are now recorded in memory, ready for
-    // outputting.
-
-    // Produce first output line listing all found
-    // differences, regardless of the proofs to be
-    // output.  As these are output, their found flags
-    // are cleared.  Differences with smaller
-    // OGN:OCN-TGN:TCN markers are printed first.
-
-    bool any = false;	// True if anything printed.
-    while ( true )
-    {
-	// Find the lowest OGN,OCN,TGN,TCN 4-tuple among
-	// all differences that that remain to be
-	// printed.
-	//
-	int output_group;
-	int output_case;
-	int test_group;
-	int test_case;
-	bool found = false;
-	for ( int i = 0; i < MAX_DIFFERENCE; ++ i )
-	{
-	    if ( ! differences[i].found ) continue;
-
-	    if ( ! found )
-	    {
-		found = true;
-		/* Drop through */
-	    }
-	    else if (   differences[i].output_group
-		      > output_group )
-		continue;
-	    else if (   differences[i].output_group
-		      < output_group )
-		/* Drop through */;
-	    else if (   differences[i].output_case
-		      > output_case )
-		continue;
-	    else if (   differences[i].output_case
-		      < output_case )
-		/* Drop through */;
-	    else if (   differences[i].test_group
-		      > test_group )
-		continue;
-	    else if (   differences[i].test_group
-		      < test_group )
-		/* Drop through */;
-	    else if (   differences[i].test_case
-		      > test_case )
-		continue;
-	    else if (   differences[i].test_case
-		      < test_case )
-		/* Drop through */;
-	    else continue;
-
-	    output_group =
-		differences[i].output_group;
-	    output_case  =
-		differences[i].output_case;
-	    test_group   =
-		differences[i].test_group;
-	    test_case    =
-		differences[i].test_case;
-	}
-	if ( ! found ) break;
-
-	// Print out the OGN:OCN-TGN:TCN marker, and
-	// then all the differences for this marker,
-	// clearing the found flags of differences
-	// printed.
-	//
-	if ( any ) cout << " ";
-	any = true;
-	cout << output_group << ":" << output_case
-	     << "-"
-	     << test_group << ":" << test_case;
-	for ( int i = 0; i < MAX_DIFFERENCE; ++ i )
-	{
-	    if ( ! differences[i].found ) continue;
-
-	    if (    differences[i].output_group
-	         != output_group ) continue;
-	    if (    differences[i].output_case
-	         != output_case ) continue;
-	    if (    differences[i].test_group
-	         != test_group ) continue;
-	    if (    differences[i].test_case
-	         != test_case ) continue;
-
-	    differences[i].found = false;
-
-	    cout << " " << differences[i].name;
-	    if ( i == FLOAT )
-		cout << " " << float_absdiff_maximum
-		     << " " << float_reldiff_maximum;
-	    else if ( i == INTEGER )
-		cout << " " << integer_absdiff_maximum
-		     << " " << integer_reldiff_maximum;
-	}
-    }
-
-    cout << endl;
-
-    // Output proof lines.
-
-    for ( proof_line * pline = first_proof_line;
-          pline != NULL;
-	  pline = pline->next )
-    {
-        cout << pline->output_line << " "
-             << pline->test_line;
-
-	// Output proofs within a proof line.
-
-	int last_output_column	= -2;
-	int last_test_column	= -2;
-
-	for ( proof * p = pline->proofs;
-	      p != NULL;
-	      p = p->next )
-	{
-	    if ( last_output_column
-	             != p->output_token_end_column
-	         ||
-		 last_test_column
-	             != p->test_token_end_column )
-	    {
-		cout << " "
-		     << p->output_token_begin_column
-		     << " "
-		     << p->output_token_end_column;
-		cout << " "
-		     << p->test_token_begin_column
-		     << " "
-		     << p->test_token_end_column;
-
-		last_output_column =
-		    p->output_token_end_column;
-		last_test_column =
-		    p->test_token_end_column;
-	    }
-
-	    cout << " " << differences[p->type].name;
-	    if (    p->type == FLOAT
-	         || p->type == INTEGER )
-	    {
-		cout << " " << p->absdiff;
-		cout << " " << p->reldiff;
-	    }
-	}
-
-	cout << endl;
-    }
+// TBD
 
     // Return from main function without error.
 
