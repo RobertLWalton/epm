@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Nov 29 17:36:31 EST 2019
+// Date:	Fri Nov 29 18:26:04 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -12,19 +12,20 @@
 // system written by the same author.
 
 #include <cstdlib>
-#include <climits>
 #include <iostream>
-#include <iomanip>
 #include <string>
+#include <vector>
 #include <fstream>
 #include <cctype>
 #include <cstring>
 #include <cmath>
+#include <cstdarg>
 #include <cassert>
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
+using std::vector;
 using std::ifstream;
 
 // Name defined in include file that is used below and
@@ -35,15 +36,7 @@ using std::ifstream;
 #    endif
 #define INFINITY Infinity
 
-// Maximum size of a token, or of whitespace preceding
-// a token.
-//
-unsigned const MAX_SIZE = 1100000;
-
-// Default maximum number of proof lines containing any
-// one type of difference.
-//
-unsigned const PROOF_LIMIT = 10;
+unsigned const PROOF_LIMIT = 5;
 
 char documentation [] =
 "epm_score [options] output_file test_file\n"
@@ -130,13 +123,8 @@ char documentation [] =
 "        ber is floating point.\n"
 "\n"
 "    -exact\n"
-"        All tokens must be identical as character\n"
-"        strings and have identical ending columns,\n"
-"        else the score is Incorrect Output.\n"
-"\n"
-"    -exact-no-digit\n"
-"        Ditto but apply only if the test file line\n"
-"        contains no digits.\n"
+"        All tokens must exactly match as character\n"
+"        strings, else Incorrect Output.\n"
 "\n"
 "    Without number or float options, numbers must\n"
 "    be exactly equal.\n"
@@ -167,6 +155,7 @@ char documentation [] =
 
 // Options:
 //
+bool debug = false;
 bool blank_opt = false;
 bool column_opt = false;
 bool decimal_opt = false;
@@ -175,11 +164,10 @@ bool number_opt = false;
 double number_A, number_R;
 bool float_opt = false;
 bool exact_opt = false;
-bool exact_no_numbers_opt = false;
 
 enum token_type {
     NO_TOKEN = 0, WORD_TOKEN, SEPARATOR_TOKEN, INTEGER_TOKEN,
-    FLOAT_TOKEN, EOF_TOKEN };
+    FLOAT_TOKEN, EOL_TOKEN, EOF_TOKEN };
 
 // Type names for debugging only.
 //
@@ -194,15 +182,13 @@ struct file
 {
     ifstream stream;	// Input stream.
     char * filename;	// File name.
-    const char * id;	// Short name of file for
-    			// debugging: "out" or "test".
+    const char * id;	// Either "Ouput File" or
+    			// "Test File".
 
     string line;	// Current line.
-    int line_number;
+    int line_number;	// After end of file this is
+    			// number of lines in file + 1.
     bool is_blank;	// True if line is blank.
-    bool has_digit;	// True if line has digit.
-    			// Only computed if +exact-no-
-			// numbers option given.
 
     // Token description.
     //
@@ -211,21 +197,90 @@ struct file
     int column;		// Column within the line of
     			// the last character of the
 			// the current token.  The first
-			// column is 0.
+			// column is 1.
 };
 
 // The two files.
 //
-file output;
-file test;
+file files[2];
+file & output = files[0];;
+file & test = files[1];;
+
+vector<string> format_errors;
+vector<string> incorrect_errors;
+int number_proofs = 0;
+
+void check_errors ( void )
+{
+    if ( incorrect_errors.size() > 0 )
+    {
+        cout << "Incorrect Output";
+	for ( int i = 0;
+	      i < incorrect_errors.size(); ++ i )
+	    cout << incorrect_errors[i] << endl;
+	exit ( 1 );
+    }
+    if ( format_errors.size() > 0 )
+    {
+        cout << "Format Error";
+	for ( int i = 0;
+	      i < format_errors.size(); ++ i )
+	    cout << format_errors[i] << endl;
+	exit ( 1 );
+    }
+}
+
+// Put first 40 characters of string in truncate_buffer
+// and if string has more than 40 characters, follow
+// it with "...".  Return address of truncate_buffer.
+//
+char truncate_buffer[50];
+const char * truncate ( const string & s )
+{
+    int n = s.size();
+    if ( n > 40 )
+    {
+        strncpy ( truncate_buffer, s.c_str(), 40 );
+	strcpy ( truncate_buffer + 40, "..." );
+    }
+    else
+        strcpy ( truncate_buffer, s.c_str() );
+    return truncate_buffer;
+}
+
+void error
+        ( vector<string> & e, const char * format... )
+{
+    if ( ++ number_proofs > PROOF_LIMIT )
+        check_errors();  // does not return
+
+    char buffer[1000];
+    for ( int i = 0; i < 2; ++ i )
+    {
+        sprintf ( buffer, "%s line %d: %s",
+	          files[i].id,
+		  files[i].line_number,
+		  truncate ( files[i].line ) );
+	assert ( strlen ( buffer ) <= 80 );
+	e.push_back ( string ( buffer ) );
+    }
+
+    va_list args;
+    va_start ( args, format );
+    strcpy ( buffer, "    " );
+    vsprintf ( buffer + 4, format, args );
+    assert ( strlen ( buffer ) <= 80 );
+    e.push_back ( string ( buffer ) );
+}
 
 // Open file for reading.
 //
-void open ( file & f, char * filename, const char * id )
+void open ( file & f, char * filename )
 {
     f.filename = new char [strlen ( filename ) + 1 ];
     strcpy ( f.filename, filename );
-    f.id = id;
+    f.id = ( & f == & output ? "Output File" :
+                               "Test File" );
 
     f.stream.open ( filename );
     if ( ! f.stream ) {
@@ -240,11 +295,14 @@ void open ( file & f, char * filename, const char * id )
 
 // Get next line.  If end of file, set token type
 // to EOF_TOKEN.  If called when token type is
-// EOF_TOKEN, does nothing.
+// EOF_TOKEN, does nothing.  If not end of file,
+// set token type to NO_TOKEN and initialize
+// start, end, and column to 0.
 //
 void get_line ( file & f )
 {
     if ( f.type == EOF_TOKEN ) return;
+    ++ f.line_number;
     if ( ! getline ( f.stream, f.line ) )
          f.type = EOF_TOKEN;
     else
@@ -253,881 +311,140 @@ void get_line ( file & f )
 	f.is_blank = true;
 	while ( f.is_blank && * p )
 	    f.is_blank = isspace(*p++);
-	if ( exact_no_numbers_opt )
-	{
-	    -- p;
-	    f.has_digit = false;
-	    while ( ! f.has_digit && * p )
-	        f.has_digit = isdigit(*p++);
-	}
+	f.type   = NO_TOKEN;
+	f.start  = 0;
+	f.end    = 0;
+	f.column = 0;
     }
-}
 
-// Routines to announce errors and exit program.
-//
-void whitespace_too_long ( file & f ) {
-    cerr << "Whitespace too long in line "
-         << f.line
-	 << " of "
-         << f.filename
-	 << endl;
-    exit (1);
-}
-void token_too_long ( file & f ) {
-    cerr << "Token too long in line "
-         << f.line
-	 << " of "
-         << f.filename
-	 << endl;
-    exit (1);
-}
-void bad_filtered_mark ( file & f ) {
-    cerr << "Bad filtered file line mark"
-            " beginning line "
-         << f.line
-	 << " of "
-         << f.filename
-	 << endl;
-    exit (1);
-}
+    if ( ! debug ) return;
 
-// Produce debug output for a scaned token.
-//
-void debug_output ( file & f )
-{
     cout << f.id
-         << " " << f.line
-         << " " << f.column - f.length + 1
-         << " " << f.column
-	 << " " << f.group_number
-	 << ":" << f.case_number
-	 << " " << strlen ( f.whitespace )
-	 << "/" << f.newlines
+         << " " << f.line_number
+         << ": " << truncate ( f.line )
+	 << endl;
+}
+
+// Get next token.  If end of file, does nothing.
+// Updates f.column to last column of token and
+// sets token f.start and f.end.
+//
+void get_token ( file & f )
+{
+    if ( f.type == EOF_TOKEN ) return;
+    const char * lp = f.line.c_str();
+    const char * p = lp + f.end;
+    bool point_found;  // Declare here before jumps.
+    const char * q;    // Ditto.
+    while ( * p && isspace ( * p ) )
+    {
+        if ( * p == ' ' ) ++ f.column;
+	else if ( * p == '\t' )
+	    f.column += 8 - ( f.column % 8 );
+	else if ( * p == '\f' )
+	    error ( format_errors,
+	            "form feed character in column %d",
+		    f.column );
+	else if ( * p == '\v' )
+	    error ( format_errors,
+	            "vertical space character"
+		    " in column %d", f.column );
+	// else its carriage return and we ignore it.
+    }
+
+    f.start = p - lp;
+    if ( * p == 0 )
+    {
+        f.type = EOL_TOKEN;
+	goto TOKEN_DONE;
+    }
+    if ( isalpha ( * p ) )
+    {
+	++ p;
+	while ( isalpha ( * p ) ) ++ p;
+	f.type = WORD_TOKEN;
+	goto TOKEN_DONE;
+    }
+    q = p;
+    while ( * p && ! isdigit ( * p )
+		&& ! isalpha ( * p )
+		&& ! isspace ( * p ) )
+	 ++ p;
+    if ( isdigit ( * p ) )
+    {
+	if ( p > q && p[-1] == '.' ) -- p;
+	if ( p > q && (    p[-1] == '+'
+			|| p[-1] == '-' ) )
+	    -- p;
+    }
+    if ( p > q )
+    {
+        f.type = SEPARATOR_TOKEN;
+	goto TOKEN_DONE;
+    }
+
+    // p must be start of number.
+    //
+    if ( * p == '+' || * p == '-' ) ++ p;
+    point_found = ( * p == '.' );
+    if ( point_found ) ++ p;
+    while ( isdigit ( * p ) ) ++ p;
+        // There must be at least one digit as we were
+	// at start of number.
+    if ( * p == '.' )
+    {
+        if ( point_found )
+	{
+	    f.type = FLOAT_TOKEN;
+	    goto TOKEN_DONE;
+	}
+	point_found = true;
+	++ p;
+	while ( isdigit ( * p ) ) ++ p;
+    }
+    if ( * p == 'e' || * p == 'E' )
+    {
+	q = p;
+        ++ p;
+	if ( * p == '+' || * p == '-' ) ++ p;
+	if ( isdigit ( * p ) )
+	{
+	    ++ p;
+	    while ( isdigit ( * p ) ) ++ p;
+	    f.type = FLOAT_TOKEN;
+	    goto TOKEN_DONE;
+	}
+	p = q;
+    }
+    f.type = ( point_found ? FLOAT_TOKEN
+                           : INTEGER_TOKEN );
+
+TOKEN_DONE:
+
+    f.end = p - lp;
+    f.column += f.end - f.start;
+
+    if ( ! debug ) return;
+
+    cout << f.id
+         << " " << f.line_number
+         << ":" << f.column
 	 << " " << token_type_name[f.type]
 	 << " ";
-    char * endp = f.token + f.length;
-    for ( char * p = f.token; p < endp; ++ p )
+    for ( int i = f.start; i < f.end; ++ i )
     {
-        if ( 040 <= * p && * p < 0177 )
-	    cout << * p;
-	else if ( * p < 040 )
-	    cout << "^" << * p + '@';
-	else if ( * p >= 0177 )
+        if ( i > f.start + 40 )
 	{
-	    int d0 = ( * p >> 4 ) & 0xF;
-	    int d1 = * p & 0xF;
-	    char c0 = d0 < 10 ? '0' + d0
-	                      : 'A' - 10 + d0;
-	    char c1 = d1 < 10 ? '0' + d1
-	                      : 'A' - 10 + d1;
-	    cout << "\\x" << c0 << c1;
+	    cout << "...";
+	    break;
 	}
+	cout << f.line[i];
     }
     cout << endl;
 }
 
-// Scan next token in a file.  EOF_TOKEN is returned
-// repeatedly at end of file.  -debug option output is
-// produced.
-//
-void zero_proof_lines ( void );
-void scan_token ( file & f )
-{
-    if ( f.type == EOF_TOKEN ) return;
-    if ( f.boc_next )
-    {
-	// Current token is part of BOG/BOC pair.
-	//
-	assert ( f.type == BOG_TOKEN );
-        f.boc_next	= false;
-	++ f.case_number;
-	f.type		= BOC_TOKEN;
-	f.whitespace[0]	= 0;
-	f.newlines	= 0;
-	if ( debug ) debug_output ( f );
-	return;
-    }
 
-    f.before_nl		= false;
-    f.not_before_nl	= false;
-
-    if ( f.remainder_length != 0 )
-    {
-        assert ( f.type == WORD_TOKEN );
-
-	char * p = f.token + f.length;
-	char * q = f.token;
-	char * endq = q + f.remainder_length;
-	while ( q < endq ) * q ++ = * p ++;
-	f.length		= f.remainder_length;
-
-	f.column		+= f.remainder_length;
-	f.remainder_length	= 0;
-
-	f.whitespace[0]		= 0;
-	f.newlines		= 0;
-	f.remainder		= true;
-
-	if ( debug ) debug_output ( f );
-	return;
-    }
-
-    f.remainder = false;
-
-    int c = get_character ( f );
-    int column = f.column + 1;
-    
-    // Scan whitespace.
-    //
-    char * wp = f.whitespace;
-    char * endwp = wp + MAX_SIZE;
-
-    f.newlines = 0;
-
-    // Set in case BOG/BOC/EOF_TOKEN found.
-    //
-    f.length	= 0;
-
-    while ( isspace ( c ) ) {
-
-	if ( wp >= endwp ) whitespace_too_long ( f );
-	* wp ++ = c;
-
-        if ( c == '\n' ) {
-	    column = -1;
-	    ++ f.newlines;
-	    ++ f.line;
-	    if ( filtered ) {
-	        switch ( get_character ( f ) ) {
-		case '+':	++ f.group_number;
-				f.case_number = 0;
-				f.type = BOG_TOKEN;
-				zero_proof_lines();
-				f.column = column;
-				f.boc_next = true;
-				* wp = 0;
-				if ( debug )
-				    debug_output ( f );
-				return;
-		case '-':	++ f.case_number;
-				f.type = BOC_TOKEN;
-				f.column = column;
-				* wp = 0;
-				if ( debug )
-				    debug_output ( f );
-				return;
-		case '|':	++ f.group_number;
-				f.case_number = 0;
-				f.type = BOG_TOKEN;
-				zero_proof_lines();
-				f.column = column;
-				* wp = 0;
-				if ( debug )
-				    debug_output ( f );
-				return;
-		case '.':	break;
-		case EOF:	break;
-		default:	bad_filtered_mark ( f );
-		}
-	    }
-	}
-	else if ( c == '\t' )
-	    column += 7 - ( column % 8 );
-	else if ( c == '\f' ) -- column;
-	else if ( c == '\v' ) -- column;
-	else if ( c == '\r' ) column = -1;
-	else if ( c == '\b' && column >= 1 )
-	    column -= 2;
-
-	// Note: terminals, unlike printers, generally
-	// do not treat \f as going back to the first
-	// column, so we do not here.
-
-	c = get_character ( f );
-	++ column;
-    }
-
-    // Come here then c is the first character of the
-    // token.
-
-    * wp = 0;
-
-    if ( c == EOF ) {
-    	f.type = EOF_TOKEN;
-	f.column = -- column;
-	if ( debug ) debug_output ( f );
-	return;
-    }
-
-    // Come here when c is the first character of a
-    // word or number token.
-
-    char * tp = f.token;
-    char * endtp = tp + MAX_SIZE;
-    int decimals = -1;
-
-    if ( nonumber ) goto word;
-
-    switch ( c ) {
-
-    case '+':
-    case '-':
-	if ( nosign ) goto word;
-
-	* tp ++ = c;
-
-	c = get_character ( f );
-	++ column;
-
-	// f.token now holds a sign.
-
-	switch ( c ) {
-	case '.':
-	    ++ decimals;
-
-	    * tp ++ = c;
-
-	    c = get_character ( f );
-	    ++ column;
-
-	    // f.token now holds a sign followed by a
-	    // decimal point.
-
-	    if ( ! isdigit ( c ) ) goto word;
-	    break;
-
-	default:
-	    // Here f.token holds just a sign.
-
-	    if ( ! isdigit ( c ) ) goto word;
-	}
-	break;
-
-    case '.':
-	* tp ++ = c;
-	c = get_character ( f );
-	++ column;
-	++ decimals;
-
-	// f.token now holds just a decimal point.
-
-	if ( ! isdigit ( c ) ) goto word;
-	break;
-
-    default:
-	// Here f.token is empty.
-
-        if ( ! isdigit ( c ) ) goto word;
-	break;
-    }
-
-    // Come here when c is the first digit of a number.
-
-    * tp ++ = c;
-    c = get_character ( f );
-    ++ column;
-
-    // Get rest of mantissa.
-    //
-    while ( true ) {
-        if ( isdigit ( c ) ) {
-	    if ( decimals >= 0 ) ++ decimals;
-	} else if ( c == '.' ) {
-	    if ( decimals < 0 ) ++ decimals;
-	    else break;
-	} else break;
-
-	if ( tp < endtp ) * tp ++ = c;
-	else token_too_long ( f );
-	c = get_character ( f );
-	++ column;
-    }
-
-    // Get exponent if present.
-    //
-    f.has_exponent = false;
-
-    if ( c == 'e' || c == 'E' ) {
-
-	// Save tp and column in case we want to back
-	// up to this point.
-
-        char * ep = tp;
-	int ecolumn = column;
-
-	if ( tp < endtp ) * tp ++ = c;
-	else token_too_long ( f );
-
-	c = get_character ( f );
-	++ column;
-
-	// f.token now holds a mantissa followed by an
-	// `e' or `E'.
-
-	if ( c == '+' || c == '-' ) {
-	    if ( tp < endtp ) * tp ++ = c;
-	    else token_too_long ( f );
-
-	    c = get_character ( f );
-	    ++ column;
-	}
-
-	// f.token now holds a mantissa followed by an
-	// `e' or `E' and possibly then followed by
-	// a sign.
-
-	if ( ! isdigit ( c ) ) {
-	    // No digit next: backup.
-
-	    assert ( f.backp == f.endbackp );
-	    int len = tp - ep;
-	    memcpy ( f.backup, ep, len );
-	    f.backp = f.backup;
-	    f.endbackp = f.backup + len;
-	    tp = ep;
-	    column = ecolumn;
-	} else {
-	    // Exponent first digit next: scan rest of
-	    // exponent.
-
-	    do {
-		if ( tp < endtp ) * tp ++ = c;
-		else token_too_long ( f );
-		c = get_character ( f );
-		++ column;
-	    } while ( isdigit ( c ) );
-	    f.has_exponent = true;
-	}
-    }
-
-    // End of number token.  c is first character beyond
-    // number token, and if the backup string is not
-    // empty, it was set just above and c should be
-    // APPENDED to it.
-
-    f.type	= NUMBER_TOKEN;
-    f.length	= tp - f.token;
-    f.column	= -- column;
-    f.decimals	= decimals;
-    f.is_float	= ( f.decimals >= 0 ) || f.has_exponent;
-
-    // Put c into backup.
-
-    if ( c != EOF ) {
-	if ( f.backp == f.endbackp )
-	    f.backp = f.endbackp = f.backup;
-	* f.endbackp ++ = c;
-    }
-
-    // Convert number token to floating point using
-    // strtod.
-
-    char * e;
-    f.token[f.length] = 0;
-    f.number = strtod ( f.token, & e );
-    assert ( e == tp || ! isfinite ( f.number ) );
-    	//
-    	// If number is too large then f.number is
-	// set to an infinity and e is not set to
-	// the end of the number; which is probably
-	// a bug in strtod.
-
-    if ( debug ) debug_output ( f );
-    return;
-
-// Come here if we have concluded that the characters
-// scanned into f.token so far are part of a word,
-// and c is the next character of the word or is a
-// whitespace character or is the beginning of a number
-// token or is an EOF.  In the cases where c is not the
-// next character of the word, f.token is not empty at
-// this point.
-//
-word:
-
-    while ( true ) {
-        if (    isspace ( c )
-	     || ( isdigit ( c ) && ! nonumber )
-	     || c == EOF ) break;
-
-	switch ( c ) {
-
-	case '+':
-	case '-':
-	    if ( nosign ) break;
-	case '.':
-	    if ( nonumber ) break;
-
-	    // Possible first character of number.
-
-	    // Save tp and column in case we want to
-	    // backup to this point.
-
-	    char * np = tp;
-	    int ncolumn = column;
-	    int oldc = c;
-
-	    if ( tp < endtp ) * tp ++ = c;
-	    else token_too_long ( f );
-
-	    c = get_character ( f );
-	    ++ column;
-
-	    // f.token now holds a word followed by a
-	    // sign or decimal point.
-
-	    if ( c == '.' && oldc != '.' ) {
-		if ( tp < endtp ) * tp ++ = c;
-		else token_too_long ( f );
-
-		c = get_character ( f );
-		++ column;
-	    }
-
-	    // f.token now holds a word followed by a
-	    // sign and then possibly a decimal point,
-	    // or followed by just a decimal point.
-
-	    if ( isdigit ( c ) ) {
-	        // Found digit and hence number: backup.
-
-		assert ( f.backp == f.endbackp );
-		int len = tp - np;
-		memcpy ( f.backup, np, len );
-		f.backp = f.backup;
-		f.endbackp = f.backup + len;
-		tp = np;
-		column = ncolumn;
-		goto end_word;
-	    } else continue;
-	        // No digit; we are still in word.  Go
-		// check c for possible number beginning
-		// character (it might be `.' or sign).
-	}
-
-	if ( tp < endtp ) * tp ++ = c;
-	else token_too_long ( f );
-
-	c = get_character ( f );
-	++ column;
-    }
-
-end_word:
-
-    // End of word.  c is first character beyond the
-    // word, and if the backup string is not empty,
-    // it was set just above and c should be APPENDED
-    // to it.
-
-    f.type	= WORD_TOKEN;
-    f.length	= tp - f.token;
-    f.column	= -- column;
-
-    assert ( f.length  > 0 );
-
-    // Put c into backup.
-
-    if ( c != EOF ) {
-	if ( f.backp == f.endbackp )
-	    f.backp = f.endbackp = f.backup;
-	* f.endbackp ++ = c;
-    }
-
-    if ( debug ) debug_output ( f );
-    return;
-}
-
-// Split word token so first part has n characters.
-//
-void split_word ( file & f, int n )
-{
-    assert ( f.type == WORD_TOKEN );
-    assert ( n < f.length );
-
-    f.remainder_length = f.length - n;
-    f.length = n;
-    f.column -= f.remainder_length;
-
-    f.before_nl		= false;
-    f.not_before_nl	= true;
-}
-
-// Undo a token split.  Does nothing if file
-// token is not split.
-//
-void undo_split ( file & f )
-{
-    if ( f.remainder_length != 0 )
-    {
-	f.length += f.remainder_length;
-	f.column += f.remainder_length;
-	f.remainder_length = 0;
-	f.before_nl	= false;
-	f.not_before_nl	= false;
-    }
-}
-
-// Sets f.before_nl and f.not_before_nl according to
-// what comes next in the input stream.  Sets backup to
-// some portion of the whitespace that comes next, plus
-// possibly a following non-whitespace character.
-//
-// If f.before_nl or f.not_before_nl is already set,
-// nothing needs to be done.
-//
-// If f.type == EOF_TOKEN assumes EOF is next thing
-// in input string.
-//
-// Returns f.before_nl.
-//
-bool before_nl ( file & f )
-{
-    if ( f.before_nl || f.not_before_nl )
-        return f.before_nl;
-
-    if ( f.type == EOF_TOKEN ) 
-    {
-        f.before_nl = true;
-	return true;
-    }
-
-    // Scan characters to answer question.  Start by
-    // scanning characters in backup, and then add to
-    // backup until we scan the first non-whitespace
-    // character or '\n' or EOF.  Set before_nl if we
-    // find an `\n' or EOF, and not_before_nl other-
-    // wise.
-    //
-    char * p = f.backp;
-    int c;
-    while ( true )
-    {
-	// Get next character.
-	//
-	if ( p < f.endbackp ) c = * p ++;
-        else if ( p >= f.backup + sizeof ( f.backup ) )
-	    whitespace_too_long ( f );
-	else
-	{
-	    c = f.stream.get();
-
-	    if ( c == EOF ) {
-		f.before_nl = true;
-		return true;
-	    }
-
-	    * f.endbackp ++ = c;
-	    p = f.endbackp;
-	}
-
-    	if ( ! isspace ( c ) )
-	{
-	    f.not_before_nl = true;
-	    return false;
-	}
-	else if ( c == '\n' )
-	{
-	    f.before_nl = true;
-	    return true;
-        }
-    }
-}
-
-// Possible difference types.  The first group
-// have indices computed by the function that
-// followed the enum definition.
-//
-enum difference_type {
-    LINEBREAK = MAX_TOKEN * MAX_TOKEN,
-    SPACEBREAK,
-    WHITESPACE,
-    BEGINSPACE,
-    LINESPACE,
-    ENDSPACE,
-    FLOAT,
-    INTEGER,
-    DECIMAL,
-    EXPONENT,
-    SIGN,
-    INFINITY,
-    LETTER_CASE,
-    COLUMN,
-    WORD,
-    MAX_DIFFERENCE
-};
-//
-inline difference_type type_mismatch 
-	( token_type TYPE1, token_type TYPE2 )
-{
-    return difference_type
-    		( TYPE1 * MAX_TOKEN + TYPE2 );
-}
-
-// Difference data.
-//
-struct difference
-    // Information about one type of difference.
-{
-    const char * name;
-    	// Name of difference type.
-
-    bool	found;
-        // True if difference of this type has been
-	// found.
-
-    unsigned	output_group;
-    unsigned	output_case;
-    unsigned	test_group;
-    unsigned	test_case;
-	// Number to print the marker:
-	//
-	//    OGN:OCN-TGN:TCN
-
-    int		last_output_line;
-    int		last_test_line;
-       // Line numbers of last proof output that
-       // contains this type of difference.  Zero
-       // if no proof containing this difference
-       // has been output.
-
-    unsigned	proof_lines;
-       // Number of proof lines containing a proof of
-       // this difference type.  Incremented conceptual-
-       // ly at the end of a line in either file if a
-       // proof for a difference of this type has been
-       // output for that line.  In actual practice, the
-       // incrementing is not done till the next differ-
-       // ence of this type is found.
-
-    unsigned	proof_limit;
-       // If not greater than proof_lines, suppresses
-       // further output of proofs of this difference
-       // type.
-};
-
-// Information on the various differences found.
-//
-#define DIFFERENCE_FILLER \
-        false,0,0,0,0,0,0,0,PROOF_LIMIT
-difference differences[] = {
-    { NULL,		DIFFERENCE_FILLER },
-    { "word-number",	DIFFERENCE_FILLER },
-    { "word-boc",	DIFFERENCE_FILLER },
-    { "word-bog",	DIFFERENCE_FILLER },
-    { "word-eof",	DIFFERENCE_FILLER },
-    { "number-word",	DIFFERENCE_FILLER },
-    { NULL,		DIFFERENCE_FILLER },
-    { "number-boc",	DIFFERENCE_FILLER },
-    { "number-bog",	DIFFERENCE_FILLER },
-    { "number-eof",	DIFFERENCE_FILLER },
-    { "boc-word",	DIFFERENCE_FILLER },
-    { "boc-number",	DIFFERENCE_FILLER },
-    { NULL,		DIFFERENCE_FILLER },
-    { "boc-bog",	DIFFERENCE_FILLER },
-    { "boc-eof",	DIFFERENCE_FILLER },
-    { "bog-word",	DIFFERENCE_FILLER },
-    { "bog-number",	DIFFERENCE_FILLER },
-    { "bog-boc",	DIFFERENCE_FILLER },
-    { NULL,		DIFFERENCE_FILLER },
-    { "bog-eof",	DIFFERENCE_FILLER },
-    { "eof-word",	DIFFERENCE_FILLER },
-    { "eof-number",	DIFFERENCE_FILLER },
-    { "eof-boc",	DIFFERENCE_FILLER },
-    { "eof-bog",	DIFFERENCE_FILLER },
-    { "eof-eof",	DIFFERENCE_FILLER },
-    { "linebreak",	DIFFERENCE_FILLER },
-    { "spacebreak",	DIFFERENCE_FILLER },
-    { "whitespace",	DIFFERENCE_FILLER },
-    { "beginspace",	DIFFERENCE_FILLER },
-    { "linespace",	DIFFERENCE_FILLER },
-    { "endspace",	DIFFERENCE_FILLER },
-    { "float",		DIFFERENCE_FILLER },
-    { "integer",	DIFFERENCE_FILLER },
-    { "decimal",	DIFFERENCE_FILLER },
-    { "exponent",	DIFFERENCE_FILLER },
-    { "sign",		DIFFERENCE_FILLER },
-    { "infinity",	DIFFERENCE_FILLER },
-    { "letter-case",	DIFFERENCE_FILLER },
-    { "column",		DIFFERENCE_FILLER },
-    { "word",		DIFFERENCE_FILLER }
-};
-#undef DIFFERENCE_FILLER
-
-// Function to zero difference proof_lines counts.
-//
-void zero_proof_lines ( void )
-{
-    int i; for ( i = 0; i < MAX_DIFFERENCE; ++ i )
-	differences[i].proof_lines == 0;
-}
-
-// Maximum numeric differences found so far.
-//
-double float_absdiff_maximum	= 0.0;
-double float_reldiff_maximum	= 0.0;
-double integer_absdiff_maximum	= 0.0;
-double integer_reldiff_maximum	= 0.0;
-
-// Numeric differences less than or equal to these are
-// NOT output as proofs.
-//
-double float_absdiff_limit	= -1.0;
-double float_reldiff_limit	= -1.0;
-double integer_absdiff_limit	= -1.0;
-double integer_reldiff_limit	= -1.0;
-
-struct proof
-    // A description of one single proof to be output.
-{
-    difference_type	type;
-        // Difference type.
-
-    int			output_token_begin_column;
-    int			output_token_end_column;
-    int			test_token_begin_column;
-    int			test_token_end_column;
-        // Column numbers.
-
-    double		absdiff;
-    double		reldiff;
-    	// Numeric differences for numeric difference
-	// types.
-
-    proof *		next;
-        // Next proof in list of proofs on one proof
-	// line.
-};
-
-struct proof_line
-    // A description of one single line of proofs that
-    // is to be output.
-{
-    int			output_line;
-    int			test_line;
-        // Line numbers.
-
-    proof *		proofs;
-        // First proof on this line.
-
-    proof_line *	next;
-        // Next proof line to be output.
-};
-
-proof_line *	first_proof_line	= NULL;
-proof_line *	last_proof_line		= NULL;
-    // First and last proof lines being output.
-
-proof *		last_proof		= NULL;
-    // Last proof being output on last proof
-    // line being output.
-
-// Output a new proof.  Use current line and
-// column numbers.
-//
-inline void output_proof
-	( difference_type type,
-	  double absdiff = 0.0,
-	  double reldiff = 0.0 )
-{
-
-    if ( last_proof_line == NULL
-	 ||
-         last_proof_line->output_line
-	 != output.line
-	 ||
-	 last_proof_line->test_line
-	 != test.line )
-    {
-        proof_line * pline	= new proof_line;
-
-	pline->output_line	= output.line;
-	pline->test_line	= test.line;
-	pline->proofs		= NULL;
-	pline->next		= NULL;
-
-	last_proof		= NULL;
-
-	if ( last_proof_line == NULL )
-	    first_proof_line		= pline;
-	else
-	    last_proof_line->next	= pline;
-
-	last_proof_line		= pline;
-    }
-
-    proof * p	= new proof;
-
-    p->type			= type;
-    p->output_token_begin_column
-    				= output.column -
-				  output.length + 1;
-    p->output_token_end_column	= output.column;
-    p->test_token_begin_column	= test.column -
-				  test.length + 1;
-    p->test_token_end_column	= test.column;
-    p->absdiff			= absdiff;
-    p->reldiff			= reldiff;
-    p->next			= NULL;
-
-    if ( last_proof == NULL )
-	last_proof_line->proofs	= p;
-    else
-        last_proof->next	= p;
-
-    last_proof		= p;
-
-    difference & d = differences[type];
-
-    d.last_output_line = output.line;
-    d.last_test_line   = test.line;
-}
-
-// Record a found difference.
-//
-inline void found_difference
-	( difference_type type,
-	  double absdiff = 0.0,
-	  double reldiff = 0.0 )
-{
-    if (    type == FLOAT
-	 && ( absdiff <= float_absdiff_limit
-	      ||
-	      reldiff <= float_reldiff_limit ) )
-        return;
-    if (    type == INTEGER
-	 && ( absdiff <= integer_absdiff_limit
-	      ||
-	      reldiff <= integer_reldiff_limit ) )
-        return;
-
-    difference & d = differences[type];
-
-    if ( ! d.found )
-    {
-        d.output_group = output.group_number;
-        d.output_case  = output.case_number;
-        d.test_group   = test.group_number;
-        d.test_case    = test.case_number;
-    }
-    d.found = true;
-
-    // Conceptually, d.proof_lines is incremented
-    // at the end of a proof line containing an
-    // output of a proof of the given `type'.  But
-    // in practice, to reduce coding complexity,
-    // the incrementing is deferred until the next
-    // proof of this type is discovered, and then
-    // the incrementing is done here.
-    //
-    if ( d.last_output_line != 0
-	 && ( d.last_output_line != output.line
-	     ||
-	     d.last_test_line != test.line ) )
-	++ d.proof_lines;
-
-    if ( d.proof_lines < d.proof_limit )
-	output_proof ( type, absdiff, reldiff );
-}
+// TBD
 
 // Tests two numbers just scanned for the output and
 // test files to see if there is a computable differ-
