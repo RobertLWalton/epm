@@ -1,8 +1,8 @@
-// Educational Programming Contest Scoring Program
+// Educational Problem Manager Scoring Program
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Nov 30 07:41:33 EST 2019
+// Date:	Sun Dec  1 07:02:01 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -22,18 +22,25 @@
 #include <cmath>
 #include <cstdarg>
 #include <cassert>
+using std::cin;
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
 using std::vector;
+using std::istream;
 using std::ifstream;
 using std::max;
 
 unsigned const PROOF_LIMIT = 5;
 
 char documentation [] =
-"epm_score [options] output_file test_file\n"
+"epm_score [options] <output_file test_file\n"
+"\n"
+"    The output_file is the problem solution output\n"
+"    presented in the standard input, and the test_\n"
+"    file is the judge's solution output, presented\n"
+"    by giving its file name.\n"
 "\n"
 "    Returns on a single line the score obtained by\n"
 "    comparing the user's output_file to the judge's\n"
@@ -49,8 +56,8 @@ char documentation [] =
 "                Empty Output\n"
 "\n"
 "    To find differences, file lines are parsed into\n"
-"    tokens, and sucessive tokens of the lines are\n"
-"    matched.  A token is a word, a number, or a\n"
+"    tokens, and sucessive tokens of non-blank lines\n"
+"    are matched.  A token is a word, a number, or a\n"
 "    separator.\n"
 "\n"
 "    A word is just a string of ASCII letters.  A\n"
@@ -67,19 +74,24 @@ char documentation [] =
 "                   | integer exponent\n"
 "\n"
 "        fraction ::= decimal-point digit+\n"
-"\n"
+"\f\n"
 "        exponent ::= 'e' integer\n"
 "                   | 'E' integer\n"
 "\n"
 "    A separator is a string of non-whitespace, non-\n"
-"    letters that is not part of a number.\n"
+"    letter, non-digit characters that is not part\n"
+"    of a number.\n"
+"\n"
+"    Tokens are scanned left to right with longer\n"
+"    tokens being preferred at each point.\n"
 "\n"
 "    The epm_score options are:\n"
 "\n"
 "    -blank\n"
 "        If a blank line is matched to a non-blank\n"
-"        line, the blank line is skipped.  With this\n"
-"        option, such a skip is a Format Error.\n"
+"        line or end of file, the blank line is skip-\n"
+"        ped.  With this option, such a skip is a\n"
+"        Format Error.\n"
 "\n"
 "    -column\n"
 "        For matching tokens, if they have different\n"
@@ -96,11 +108,13 @@ char documentation [] =
 "        Incorrect Output.\n"
 "\n"
 "    -decimal\n"
-"        For matching numbers, if they have different\n"
-"        numbers of digits after the decimal point,\n"
-"        of if either has an exponent, it is a For-\n"
-"        matting Error.\n"
-"\n"
+"        For matching numbers, if the test file num-\n"
+"        ber has no exponent and has digits after a\n"
+"        decimal point, then if the output file num-\n"
+"        ber has an exponent or has a different num-\n"
+"        ber of digits after its decimal point, or\n"
+"        has no decimal point, it is a Format Error.\n"
+"\f\n"
 "    -number A R\n"
 "        All numbers, even integers, are converted\n"
 "        to floating point.  Then if the difference\n"
@@ -123,12 +137,15 @@ char documentation [] =
 "    To compare integers without a -number option,\n"
 "    any high order zeros, initial + sign, or initial\n"
 "    - sign before a zero integer are ignored.\n"
+"    Integers may be arbitrarily long.\n"
 "\n"
 "    To compare numbers otherwise, they are convert-\n"
 "    ed to IEEE 64 bit numbers.  If neither is infin-\n"
-"    ity and there is a -float or -number option,\n"
-"    they are compared using the A and R given in\n"
-"    that option.  Otherwise they must be equal.\n"
+"    ity, and either there is a -number option, or\n"
+"    there is a -float option and the test file num-\n"
+"    ber is floating point, then the numbers are com-\n"
+"    pared using the A and R given in the -number or\n"
+"    -float option.  Otherwise they must be equal.\n"
 "\n"
 "    The relative difference between two numbers x\n"
 "    and y is:\n"
@@ -136,7 +153,7 @@ char documentation [] =
 "                        | x - y |\n"
 "                     ----------------\n"
 "                     max ( |x|, |y| )\n"
-"\n"
+"\f\n"
 "    and is never larger than 2.  If x == y == 0 this\n"
 "    relative difference is taken to be zero.\n"
 "\n"
@@ -163,7 +180,7 @@ enum token_type {
 		FLOAT_TOKEN,
     EOL_TOKEN };
 
-// Type names for debugging only.
+// Type names.
 //
 const char * token_type_name[] = {
     "no-token",
@@ -174,8 +191,7 @@ struct file
     // Information about one of the input files (output
     // or test file).
 {
-    ifstream stream;	// Input stream.
-    char * filename;	// File name.
+    istream * stream;	// Input stream.
     const char * id;	// Either "Ouput File" or
     			// "Test File".
 
@@ -196,6 +212,11 @@ struct file
     			// the last character of the
 			// the current token.  The first
 			// column is 1.
+    int decimals;	// Number of decimal places if
+    			// type == FLOAT_TYPE.  0 other-
+			// wise.
+    bool has_exponent;	// True iff token has an expo-
+    			// nent and type == FLOAT_TYPE.
 
 };
 
@@ -204,6 +225,38 @@ struct file
 file files[2];
 file & output = files[0];;
 file & test = files[1];;
+
+ifstream test_stream;
+
+// Open files for reading.
+//
+void open_files ( const char * test_file_name )
+{
+    for ( int i = 0; i < 2; ++ i )
+    {
+	file & f = files[i];
+        f.at_end = f.is_blank = false;
+	f.line_number = 0;
+	f.type = NO_TOKEN;
+
+	if ( i == 0 )
+	{
+	    f.id = "Output File";
+	    f.stream = & cin;
+	}
+	else
+	{
+	    f.id = "Test File";
+	    f.stream = & test_stream;
+	    test_stream.open ( test_file_name );
+	    if ( ! test_stream ) {
+		cout << "ERROR: not readable: "
+		     << test_file_name << endl;
+		exit ( 1 );
+	    }
+	}
+    }
+}
 
 vector<string> format_errors;
 vector<string> incorrect_errors;
@@ -251,7 +304,11 @@ const char * truncate ( const string & s )
     return truncate_buffer;
 }
 
-void error_lines ( vector<string> & e )
+// Output error lines and return true,, or if we are
+// over the limit, either call check_incorrect to exit,
+// or do nothing and return false.
+//
+bool error_lines ( vector<string> & e )
 {
     if ( & e == & incorrect_errors )
     {
@@ -262,7 +319,7 @@ void error_lines ( vector<string> & e )
     else
     {
 	if ( number_format_proofs >= PROOF_LIMIT )
-	    return;
+	    return false;
 	++ number_format_proofs;
     }
 
@@ -278,6 +335,7 @@ void error_lines ( vector<string> & e )
 	assert ( strlen ( buffer ) <= 80 );
 	e.push_back ( string ( buffer ) );
     }
+    return true;
 }
 
 void error_message
@@ -309,8 +367,11 @@ void error_token
     int len = f.end - f.start;
     if ( len > 0 ) n += sprintf ( buffer + n, ": " );
     if ( len <= 40 )
+    {
         strncpy ( buffer + n, f.line.c_str() + f.start,
 	                      len );
+	buffer[n+len] = 0;
+    }
     else
     {
         strncpy ( buffer + n,
@@ -318,6 +379,7 @@ void error_token
         strcpy ( buffer + n + 20, "..." );
         strncpy ( buffer + n + 23,
 	          f.line.c_str() + f.end - 20, 20 );
+	buffer[n+43] = 0;
     }
     e.push_back ( string ( buffer ) );
 }
@@ -325,7 +387,7 @@ void error_token
 void non_token_error
         ( vector<string> & e, const char * format... )
 {
-    error_lines ( e );
+    if ( ! error_lines ( e ) ) return;
     va_list args;
     va_start ( args, format );
     error_message ( e, format, args );
@@ -335,7 +397,7 @@ void non_token_error
 void token_error
         ( vector<string> & e, const char * format... )
 {
-    error_lines ( e );
+    if ( ! error_lines ( e ) ) return;
     error_token ( e, output );
     va_list args;
     va_start ( args, format );
@@ -344,27 +406,7 @@ void token_error
     error_token ( e, test );
 }
 
-// Open file for reading.
-//
-void open ( file & f, char * filename )
-{
-    f.filename = new char [strlen ( filename ) + 1 ];
-    strcpy ( f.filename, filename );
-    f.id = ( & f == & output ? "Output File" :
-                               "Test File" );
-
-    f.stream.open ( filename );
-    if ( ! f.stream ) {
-        cout << "ERROR: not readable: "
-	     << filename << endl;
-    	exit ( 1 );
-    }
-
-    f.line_number	= 0;
-    f.type		= NO_TOKEN;
-}
-
-// Get next line.  If end of file, set at_end and
+// Get next line.  If end of file, set at_end and clear
 // is_blank.  If called when file is at_end, to nothing.
 // If file not at_end, set token type to NO_TOKEN,
 // set is_blank, and initialize start, end, and column
@@ -374,8 +416,8 @@ void get_line ( file & f )
 {
     if ( f.at_end ) return;
     ++ f.line_number;
-    if ( ! getline ( f.stream, f.line ) )
-         f.at_end = true;
+    if ( ! getline ( * f.stream, f.line ) )
+         f.at_end = true, f.is_blank = false;
     else
     {
         const char * p = f.line.c_str();
@@ -430,6 +472,9 @@ void get_token ( file & f )
     }
 
     f.start = p - lp;
+    f.decimals = 0;
+    f.has_exponent = false;
+
     if ( * p == 0 )
     {
         f.type = EOL_TOKEN;
@@ -465,9 +510,13 @@ void get_token ( file & f )
     if ( * p == '+' || * p == '-' ) ++ p;
     point_found = ( * p == '.' );
     if ( point_found ) ++ p;
-    while ( isdigit ( * p ) ) ++ p;
+    assert ( isdigit ( * p ) );
         // There must be at least one digit as we were
 	// at start of number.
+    q = p;
+    ++ p;
+    while ( isdigit ( * p ) ) ++ p;
+    if ( point_found ) f.decimals = p - q;
     if ( * p == '.' )
     {
         if ( point_found )
@@ -477,7 +526,9 @@ void get_token ( file & f )
 	}
 	point_found = true;
 	++ p;
+	q = p;
 	while ( isdigit ( * p ) ) ++ p;
+	f.decimals = p - q;
     }
     if ( * p == 'e' || * p == 'E' )
     {
@@ -489,6 +540,7 @@ void get_token ( file & f )
 	    ++ p;
 	    while ( isdigit ( * p ) ) ++ p;
 	    f.type = FLOAT_TOKEN;
+	    f.has_exponent = true;
 	    goto TOKEN_DONE;
 	}
 	p = q;
@@ -531,6 +583,7 @@ double number ( file & f )
     int len = f.end - f.start;
     char buffer[len+1];
     strncpy ( buffer, f.line.c_str() + f.start, len );
+    buffer[len] = 0;
     char * endp;
     double r = strtod ( buffer, & endp );
     assert ( * endp == 0 );
@@ -564,7 +617,7 @@ bool integers_are_equal ( void )
     while ( * p2 == '0' && p2 < e2 ) ++ p2;
     if ( p1 == e1 && p2 == e2 ) return true;
         // Both integers zero.
-    if ( p1 != e1 || p2 == e2 ) return false;
+    if ( p1 == e1 || p2 == e2 ) return false;
         // One integer zero.
     if ( s1 != s2 ) return false;
         // Non-zero integers of different sign.
@@ -583,7 +636,7 @@ int main ( int argc, char ** argv )
     while ( argc >= 2 && argv[1][0] == '-' )
     {
 
-	char * name = argv[1] + 1;
+	const char * name = argv[1] + 1;
 
         if ( strncmp ( "doc", name, 3 ) == 0 )
 	{
@@ -598,18 +651,18 @@ int main ( int argc, char ** argv )
         else if ( strcmp ( "debug", name ) == 0 )
 	    debug = true;
         else if ( strcmp ( "blank", name ) == 0 )
-	    debug = blank_opt;
+	    blank_opt = true;
         else if ( strcmp ( "column", name ) == 0 )
-	    debug = column_opt;
+	    column_opt = true;
         else if ( strcmp ( "decimal", name ) == 0 )
-	    debug = decimal_opt;
+	    decimal_opt = true;
         else if ( strcmp ( "case-format", name ) == 0 )
-	    debug = case_format_opt;
+	    case_format_opt = true;
         else if (    strcmp ( "case-incorrect", name )
 	          == 0 )
-	    debug = case_incorrect_opt;
+	    case_incorrect_opt = true;
         else if ( strcmp ( "exact", name ) == 0 )
-	    debug = exact_opt;
+	    exact_opt = true;
         else if (    strcmp ( "float", name ) == 0
 	          || strcmp ( "number", name ) == 0 )
 	{
@@ -621,6 +674,7 @@ int main ( int argc, char ** argv )
 	    double number_A = -1.0;
 	    double number_R = -1.0;
 
+	    ++ argv, -- argc;
 	    if ( argc < 2 ) break;
 	    if ( strcmp ( "-", argv[2] ) != 0 )
 	    {
@@ -634,6 +688,8 @@ int main ( int argc, char ** argv )
 		    exit ( 1 );
 		}
 	    }
+
+	    ++ argv, -- argc;
 	    if ( argc < 2 ) break;
 	    if ( strcmp ( "-", argv[2] ) != 0 )
 	    {
@@ -657,8 +713,6 @@ int main ( int argc, char ** argv )
 	}
 
         ++ argv, -- argc;
-	if ( isdigit ( argv[1][0] ) )
-		++ argv, -- argc;
     }
 
     if ( float_opt && number_opt )
@@ -713,21 +767,20 @@ int main ( int argc, char ** argv )
 
     if ( argc == 1 )
     {
-        cerr << "output and test file names missing"
+        cerr << "test file name missing"
 	     << endl;
 	exit ( 1 );
     }
-    if ( argc == 2 )
+    if ( argc > 2 )
     {
-        cerr << "test file name missing"
+        cerr << "too many arguments"
 	     << endl;
 	exit ( 1 );
     }
 
     // Open files.
 
-    open ( output, argv[1] );
-    open ( test, argv[2] );
+    open_files ( argv[1] );
 
     // Loop through lines.
     //
@@ -772,7 +825,7 @@ int main ( int argc, char ** argv )
 	if ( output.at_end )
 	{
 	    check_incorrect();
-	    // If this return there are no incorrect
+	    // If this returns there are no incorrect
 	    // errors.
 	    cout << "Incomplete Output" << endl;
 	    exit ( 0 );
@@ -814,6 +867,13 @@ int main ( int argc, char ** argv )
 		break;
 	    }
 
+	    if (    column_opt
+	         && output.column != test.column )
+	        token_error
+		    ( format_errors,
+		      "does not end in the"
+		      " same column as" );
+
 	    bool output_is_number =
 	        ( output.type == INTEGER_TOKEN
 		  ||
@@ -826,8 +886,8 @@ int main ( int argc, char ** argv )
 	    int test_len   = test.end - test.start;
 	    const char * p1 = output.line.c_str()
 	                    + output.start;
-	    const char * p2 = output.line.c_str()
-	                    + output.start;
+	    const char * p2 = test.line.c_str()
+	                    + test.start;
 
 	    if ( ! output_is_number
 	         ||
@@ -887,12 +947,28 @@ int main ( int argc, char ** argv )
 		 ! number_opt )
 	    {
 	        if ( ! integers_are_equal() )
-		{
 		    token_error
 			( incorrect_errors,
 			  "does not equal" );
-		}
 		continue;
+	    }
+
+	    if ( decimal_opt
+	         &&
+		 ! test.has_exponent
+		 &&
+		 test.decimals > 0 )
+	    {
+	        if ( output.has_exponent )
+		    token_error
+			( format_errors,
+			  "has an exponent unlike" );
+		else if (    output.decimals
+		          != test.decimals )
+		    token_error
+			( format_errors,
+			  "has a different number of"
+			  " decimal places than" );
 	    }
 
 	    double n1 = number ( output );
@@ -910,7 +986,7 @@ int main ( int argc, char ** argv )
 		 ||
 		 ( ! float_opt && ! number_opt )
 		 ||
-		 (    ! number_opt
+		 (    float_opt
 		   && test.type != FLOAT_TOKEN ) )
 	    {
 		token_error
