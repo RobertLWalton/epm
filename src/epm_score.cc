@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec  1 07:02:01 EST 2019
+// Date:	Sun Dec  1 08:42:52 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -267,7 +267,7 @@ void check_incorrect ( void )
 {
     if ( incorrect_errors.size() > 0 )
     {
-        cout << "Incorrect Output";
+        cout << "Incorrect Output" << endl;
 	for ( int i = 0;
 	      i < incorrect_errors.size(); ++ i )
 	    cout << incorrect_errors[i] << endl;
@@ -278,7 +278,7 @@ void check_format ( void )
 {
     if ( format_errors.size() > 0 )
     {
-        cout << "Format Error";
+        cout << "Format Error" << endl;
 	for ( int i = 0;
 	      i < format_errors.size(); ++ i )
 	    cout << format_errors[i] << endl;
@@ -469,6 +469,8 @@ void get_token ( file & f )
 	          "vertical space character"
 		  " in column %d", f.column );
 	// else its carriage return and we ignore it.
+	
+	++ p;
     }
 
     f.start = p - lp;
@@ -891,7 +893,9 @@ int main ( int argc, char ** argv )
 
 	    if ( ! output_is_number
 	         ||
-		 ! test_is_number )
+		 ! test_is_number
+		 ||
+		 exact_opt )
 	    {
 		if ( output.type != test.type )
 		{
@@ -913,7 +917,9 @@ int main ( int argc, char ** argv )
 		     == 0 )
 		    continue;
 
-		if ( output.type != WORD_TOKEN
+		if ( exact_opt
+		     ||
+		     output.type != WORD_TOKEN
 		     ||
 		     case_incorrect_opt
 		     ||
