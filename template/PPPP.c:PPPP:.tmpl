@@ -8,15 +8,4 @@
 "CHECKS":  ["cmp -s PPPP.err /dev/null",
             "cmp -s PPPP.out /dev/null"],
 
-"OPTIONS": {
-
-    "opt": { "values": ["-Og", "-O3", ""],
-             "argname": "GCCFLAGS" },
-    "ped": { "values": ["", "-Wpedantic"],
-             "argname": "GCCFLAGS" },
-    "gsl": { "values": ["", "-lgsl"],
-             "argname": "LIBRARIES" },
-    "crypto": { "values": ["", "-lcrypto"],
-                "argname": "LIBRARIES" }}
-
 }

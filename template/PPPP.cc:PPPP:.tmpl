@@ -1,6 +1,6 @@
 {
 
-"COMMANDS": ["g++ GCCFLAGS -o PPPP PPPP.cc LIBRARIES > PPPP.out 2> PPPP.err",
+"COMMANDS": ["g++ GCCFLAGS G++FLAGS -o PPPP PPPP.cc LIBRARIES > PPPP.out 2> PPPP.err",
              "chmod o+x PPPP"],
 "LOCAL-REQUIRES":["PPPP.cc"],
 
@@ -8,17 +8,4 @@
 "SHOW":    ["PPPP.err","PPPP.out"],
 "CHECKS":  ["cmp -s PPPP.err /dev/null",
             "cmp -s PPPP.out /dev/null"],
-
-"OPTIONS": {
-
-    "std": { "values": ["-std=gnu++11", ""],
-             "argname": "GCCFLAGS" },
-    "opt": { "values": ["-Og", "-O3", ""],
-             "argname": "GCCFLAGS" },
-    "ped": { "values": ["", "-Wpedantic"],
-             "argname": "GCCFLAGS" },
-    "gsl": { "values": ["", "-lgsl"],
-             "argname": "LIBRARIES" },
-    "crypto": { "values": ["", "-lcrypto"],
-                "argname": "LIBRARIES" }}
 }

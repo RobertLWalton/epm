@@ -6,28 +6,4 @@
 "KEEP":    ["XXXX-PPPP.out"],
 "SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.out"],
 
-"OPTIONS": {
-
-     "cputime": { "type": "integer",
-                  "range": ["1", "30"],
-		  "default": "30",
-		  "description": "allowed CPU time in seconds",
-		  "valname": "CPUTIME" },
-     "cputime-arg": { "values": ["-cputime CPUTIME"],
-		      "argname": "SANDBOX-ARGS" },
-     "space":  { "type": "integer",
-                 "range": ["16", "2048"],
-		 "default": "2048",
-		 "description": "allowed virtual memory in megabytes",
-		 "valname": "SPACE" },
-     "space-arg":  { "values": ["-space SPACEm"],
-		      "argname": "SANDBOX-ARGS" },
-     "filesize": { "type": "integer",
-                   "range": ["1", "2048"],
-		   "default": "2048",
-		   "description": "allowed output files size in kilobytes",
-		   "valname": "FILESIZE" },
-     "filesize-arg": { "values": ["-filesize FILESIZEk"],
-		        "argname": "SANDBOX-ARGS" }}
-
 }
