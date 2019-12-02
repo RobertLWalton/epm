@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Dec  2 03:54:51 EST 2019
+// Date:    Mon Dec  2 06:25:21 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -321,6 +321,46 @@ function find_templates
 	$templates[] =
 	    [ $template, $filename, $json ];
     }
+}
+
+// Get the template.optn file with overrides from
+// earlier template directories and users/user$id
+// directory.  Append some errors to $errors.
+//
+function get_template_optn ( & $errors )
+{
+    global $template_dirs, $epm_data, $userid;
+
+    $dirs = array_reverse ( $template_dirs );
+    $dirs[] = "$epm_data/users/user$userid";
+
+    $result = [];
+    foreach ( $dirs as $dir )
+    {
+	$filename = "$dir/template.optn";
+        if ( ! is_readable ( $filename ) ) continue;
+	$contents = file_get_contents ( $filename );
+	if ( $contents === false )
+	{
+	    $sysfail = "cannot read readable $filename";
+	    include 'sysalert.php';
+	}
+	$json = json_decode ( $contents, true );
+	if ( ! isset ( $json ) )
+	{
+	    $sysalert = "cannot json decode $filename";
+	    include 'sysalert.php';
+	    $errors[] = $sysalert;
+	    continue;
+	}
+
+	// template.optn values are 2D arrays.
+	//
+	foreach ( $json as $opt => $description )
+	foreach ( $description as $key => $value )
+	    $result[$opt][$key] = $value;
+    }
+    return $result;
 }
 
 // Given the output of find_templates and the list of

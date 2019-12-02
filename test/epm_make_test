@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Dec  2 04:29:38 EST 2019
+// Date:	Mon Dec  2 07:03:08 EST 2019
 
 $is_epm_test = true;
 
@@ -107,6 +107,10 @@ check ( '$GLOBALS["templates"][0][2]' .
         '["KEEP"][0]', "prob" );
 check ( '$GLOBALS["templates"][0][2]' .
         '["SHOW"]', ["prob.err", "prob.out"] );
+
+$errors = [];
+$template_optn = get_template_optn ( $errors );
+check ( '$GLOBALS["errors"]', [] );
 
 $dirs = [ $prob_dir, $proj_dir ];
 
@@ -222,6 +226,7 @@ foreach ( $templates as $template )
 }
 check ( '$GLOBALS["errors"]', [] );
 
+$errors = [];
 find_requires_and_options
     ( $dirs, $templates, $requires, $options, $errors );
 check ( '$GLOBALS["errors"]', [] );
