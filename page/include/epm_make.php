@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Dec  2 06:25:21 EST 2019
+// Date:    Mon Dec  2 11:17:29 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -362,6 +362,177 @@ function get_template_optn ( & $errors )
     }
     return $result;
 }
+
+// Get the PPPP.optn file for problem PPPP, with
+// overrides from more local directories.  Append
+// some errors to $errors.
+//
+function get_problem_optn ( $problem, & $errors )
+{
+    global $make_dirs;
+
+    $result = [];
+    foreach ( array_reverse ( $make_dirs ) as $dir )
+    {
+        $filename = "$epm_data/$dir/$problem.optn";
+        if ( ! is_readable ( $filename ) ) continue;
+	$contents = file_get_contents ( $filename );
+	if ( $contents === false )
+	{
+	    $sysfail = "cannot read readable $filename";
+	    include 'sysalert.php';
+	}
+	$json = json_decode ( $contents, true );
+	if ( ! isset ( $json ) )
+	{
+	    $sysalert = "cannot json decode $filename";
+	    include 'sysalert.php';
+	    $errors[] = $sysalert;
+	    continue;
+	}
+
+	// PPPP.optn values are 1D arrays.
+	//
+	foreach ( $json as $opt => $value )
+	    $result[$opt] = $value;
+
+    }
+    return $result;
+}
+
+// Return argument map that is to be applied to template
+// COMMANDS from results of get_template_optn and
+// get_problem_optn.  Append errors to $errors.
+//
+function compute_optn_map
+	( $problem, $template_optn, $problem_optn,
+	            & $errors )
+{
+    $arg_map = [];
+    $val_map = [];
+    foreach ( $template_optn as $opt => $description )
+    {
+	$value = NULL;
+        if ( isset ( $description['default'] ) )
+            $value = $description['default'];
+	$ovalue = NULL;
+        if ( isset ( $problem_optn[$opt] ) )
+            $ovalue = $problem_optn[$opt];
+
+        if ( isset ( $description['values'] ) )
+	{
+	    $values = $description['values'];
+	    if ( ! isset ( $value ) )
+	        $value = $values[0];
+	    if ( isset ( $ovalue ) )
+	    {
+	        if (    array_search
+		          ( $ovalue, $values, true )
+		     !== false )
+		    $value = $ovalue;
+		else
+		    $errors[] =
+		        "$opt option value $ovalue" .
+		        " from $problem.optn file\n" .
+			"    is not legal, using" .
+			" default $value instead";
+	    }
+	}
+        else if ( isset ( $description['type'] ) )
+	{
+	    $type = $description['type'];
+	    if ( ! array_search
+	               ( $type,
+		         ['args', 'natural', 'float'],
+			 true ) )
+	    {
+	        $errors[] = "unknown type $type for"
+		          . " option $opt; option"
+			  . " ignored";
+		continue;
+	    }
+
+	    if ( $type = 'args' )
+	    {
+	        if ( isset ( $ovalue ) )
+		    $value = $ovalue;
+		else if ( ! isset ( $value ) )
+		    $value = "";
+	    }
+	    else if ( ! isset ( $value ) )
+		$errors[] = "no default set for $opt"
+		          . " option of type $type";
+	    else if ( ! isset
+	                  ( $description['range'] ) )
+		$errors[] = "no range set for $opt"
+		          . " option of type $type";
+	    else if ( isset ( $ovalue )
+	              &&
+		      ! is_numeric ( $ovalue ) )
+		$errors[] = "option $opt value $ovalue"
+		          . " from $problem.optn file"
+			  . " is not numeric";
+	    else if ( isset ( $ovalue )
+	              &&
+		      $type == 'natural'
+		      &&
+		      ! preg_match
+		            ( '/^\d+$/', $ovalue ) )
+		$errors[] = "option $opt value $ovalue"
+		          . " from $problem.optn file"
+			  . " is not natural number";
+	    else if ( isset ( $ovalue ) )
+	    {
+	        $range = $description['range'];
+		if ( $ovalue < $range[0] )
+		{
+		    $errors[] =
+		        "option $opt value $ovalue" .
+			" from $problem.optn file" .
+			" is too small\n" .
+			"    (less than {$range[0]});" .
+			" {$range[0]} used instead";
+		    $ovalue = $range[0];
+		}
+		else if ( $ovalue > $range[1] )
+		{
+		    $errors[] =
+		        "option $opt value $ovalue" .
+			" from $problem.optn file" .
+			" is too large\n" .
+			"    (greater than" .
+			" {$range[1]});" .
+			" {$range[1]} used instead";
+		    $ovalue = $range[1];
+		}
+		$value = $ovalue;
+	    }
+
+	    if ( ! isset ( $value ) )
+	    {
+	        $errors[] = "option $opt ignored";
+		continue;
+	    }
+
+	    if ( isset ( $description['argname'] ) )
+	        $arg_map[$opt] = $value;
+	    else if ( isset ( $description['valname'] ) )
+	        $val_map[$opt] = $value;
+	    else
+	        $errors[] = "option $opt has neither"
+		          . " argname nor valname;"
+			  . " option ignored";
+	}
+	else if ( ! isset ( $value ) )
+	    $errors[] = "option $opt has neither"
+		      . " values nor type;"
+		      . " option ignored";
+
+    }
+
+    return substitute_match ( $arg_map, $val_map );
+}
+
 
 // Given the output of find_templates and the list of
 // directories in which required and option files are
