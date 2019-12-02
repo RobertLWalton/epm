@@ -2,7 +2,11 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Nov 28 05:27:11 EST 2019
+// Date:    Mon Dec  2 01:54:29 EST 2019
+
+// To include this in programs that are not pages run
+// by the web server, you must pre-define $_SESSION
+// accordingly.
 
 // Functions used to make files from other files.
 //
@@ -157,6 +161,89 @@ function substitute_match ( $item, $match )
     }
     else
         return $item;
+}
+
+// Build a cache of templates.  This is a map of the
+// form:
+//		template => [filename, json]
+//
+// where `template' is the last component of the file
+// name minus the extension .tmpl and json is NULL, but
+// will be set to the decoded json read from the file
+// when the file is read as per the get_template
+// function below.  If two files with the same template
+// are found, one in $epm_root/template and one in
+// $epm_root/local/template, only the latter is
+// recorded.  Filenames are absolute.  The cache is
+// stored in $template_cache.
+//
+$template_cache = NULL;
+function get_template_cache()
+{
+    global $template_dirs, $template_cache;
+
+    if ( isset ( $template_cache) ) return;
+    foreach ( $template_dirs as $dir )
+    {
+	$dircontents = scandir ( $dir );
+	if ( $dircontents === false )
+	{
+	    $sysfail = "cannot read $dir";
+	    include 'sysalert.php';
+	}
+
+	foreach ( $dircontents as $fname )
+	{
+	    if ( ! preg_match ( '/^(.+)\.tmpl$/',
+	                        $fname, $matches ) )
+	        continue;
+	    $template = $matches[1];
+	    if ( isset ( $template_cache[$template] ) )
+	        continue;
+	    $template_cache[$template] =
+	        [ "$dir/$fname", NULL ];
+	}
+    }
+    if ( ! isset ( $template_cache ) )
+    {
+        $sysfail = "no readable template directories";
+	include 'sysalert.php';
+    }
+}
+
+// Read the decoded json from a template file as stored
+// in the template cache.  Sysfail on errors.
+//
+function get_template ( $template )
+{
+    global $template_cache;
+    if ( ! isset ( $template_cache ) )
+    {
+        $sysfail = "get_template called with template"
+	         . " that is not cache key";
+	include 'sysalert.php';
+    }
+    $pair = $template_cache[$template];
+    $result = $pair[1];
+    if ( ! isset ( $result ) )
+    {
+	$filename = $pair[0];
+	$contents = file_get_contents ( $filename );
+	if ( $contents === false )
+	{
+	    $sysfail = "cannot read $filename";
+	    include 'sysalert.php';
+	}
+	$json = json_decode ( $contents, true );
+	if ( ! isset ( $json ) )
+	{
+	    $sysfail = "cannot json decode $filename";
+	    include 'sysalert.php';
+	}
+	$pair[1] = $json;
+	$result = $json;
+    }
+    return $result;
 }
 
 // Go through the template directories and find each

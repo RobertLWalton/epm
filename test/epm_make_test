@@ -8,7 +8,10 @@
 $is_epm_test = true;
 
 $epm_data = getcwd() . '/epm_make_test_data';
-$_SESSION = [ 'userid' => 1, 'problem' => 'prob' ];
+$epm_root = dirname ( getcwd() );
+$_SESSION = [ 'userid' => 1, 'problem' => 'prob',
+              'epm_root' => $epm_root,
+	      'epm_data' => $epm_data ];
 $_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
 
 $prob_dir = 'users/user1/prob';
@@ -42,11 +45,10 @@ int main ()
 }
 EOT;
 
-include ( '../src/include/epm_make.php' );
+include ( '../page/include/epm_make.php' );
 
 function check ( $expression, $value )
 {
-    $result;
     eval ( "\$result = ($expression);" );
     if ( $result != $value )
     {
@@ -94,6 +96,7 @@ $errors = [];
 find_templates ( $problem, "$problem.c", NULL,
                  $templates, $errors );
 
+check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["templates"][0][0]',
         "PPPP.c:PPPP:" );
 check ( '$GLOBALS["templates"][0][2]' .
@@ -102,7 +105,6 @@ check ( '$GLOBALS["templates"][0][2]' .
         '["KEEP"][0]', "prob" );
 check ( '$GLOBALS["templates"][0][2]' .
         '["SHOW"]', ["prob.err", "prob.out"] );
-check ( '$GLOBALS["errors"]', [] );
 
 $dirs = [ $prob_dir, $proj_dir ];
 
