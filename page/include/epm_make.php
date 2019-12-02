@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Dec  2 01:54:29 EST 2019
+// Date:    Mon Dec  2 03:54:51 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -214,10 +214,11 @@ function get_template_cache()
 // Read the decoded json from a template file as stored
 // in the template cache.  Sysfail on errors.
 //
-function get_template ( $template )
+function get_template_json ( $template )
 {
     global $template_cache;
-    if ( ! isset ( $template_cache ) )
+
+    if ( ! isset ( $template_cache[$template] ) )
     {
         $sysfail = "get_template called with template"
 	         . " that is not cache key";
@@ -240,29 +241,32 @@ function get_template ( $template )
 	    $sysfail = "cannot json decode $filename";
 	    include 'sysalert.php';
 	}
-	$pair[1] = $json;
+	$template_cache[$template] =
+	    [ $pair[0], $json ];
 	$result = $json;
     }
     return $result;
 }
 
-// Go through the template directories and find each
-// template (.tmpl) file that has the given source file
-// name and destination file name, either of which may
-// be NULL if it is not to be tested (both cannot be
-// NULL).
+// Go through the template cache and find each template
+// that has the given source file name and destination
+// file name, either of which may be NULL if it is not
+// to be tested (both cannot be NULL).
 //
-// For each template file found, list in $templates
-// elements of the form:
+// For each template found, list in $templates elements
+// of the form:
 //
 //   [template, filename, json]
+// 
+// containing the information copied from the
 //
-// Here `template' is the last component of the file
-// name minus the extension .tmpl and json is the file
-// contents with wildcards substituted.  This list is in
-// the order that the files were found.  Filename is the
-// absolute name of the template file and is only used
-// in error messages.
+//	template => [filename, json]
+//
+// but with wildcards in json replaced by their matches
+// found from matching the source and destination file
+// names and problem name to the template.  Filename is
+// the absolute name of the template file and is only
+// used in error messages.
 //
 // Any errors cause error messages to be appended to
 // the errors list.
@@ -271,77 +275,51 @@ function find_templates
     ( $problem, $srcfile, $desfile,
       & $templates, & $errors )
 {
-    global $template_dirs;
+    global $template_cache;
 
     if ( is_null ( $srcfile ) && is_null ( $desfile ) )
-        exit ( 'SYSTEM ERROR; find_templates called' .
-	       ' with both $srcfile and $desfile NULL'
-	     );
+    {
+        $sysfail = 'find_templates called'
+	         . ' with both $srcfile and $desfile'
+		 . ' NULL';
+	include 'sysalert.php';
+    }
 
     $templates = [];
-    foreach ( $template_dirs as $dir )
+    foreach ( $template_cache as $template => $pair )
     {
-        $desc = opendir ( "$dir" );
-	if ( ! $desc )
+	$filename = $pair[0];
+	if ( ! preg_match
+	       ( '/^([^:]+):([^:]+):/',
+		 $template, $matches ) )
 	{
-	    $errors[] =
-	        "cannot open search directory $dir";
+	    $errors[] = "bad template file name"
+		      . " format $filename";
 	    continue;
 	}
-	while ( $fname = readdir ( $desc ) )
-	{
-	    if ( preg_match ( '/^\.+$/', $fname ) )
-	        continue;
 
-	    if ( ! preg_match ( '/^(.*)\.tmpl$/',
-	                      $fname, $matches ) )
-	        continue;
-	    $template = $matches[1];
+	$tsrc = $matches[1];
+	$tdes = $matches[2];
 
-	    if ( ! preg_match
-	           ( '/^([^:]+):([^:]+):/',
-		     $template, $matches ) )
-	    {
-	        $errors[] = "bad template file name"
-		          . " format $dir/$fname";
-	        continue;
-	    }
+	if ( is_null ( $desfile ) )
+	    $match = template_match
+		( $problem, $srcfile, $tsrc );
+	elseif ( is_null ( $srcfile ) )
+	    $match = template_match
+		( $problem, $desfile, $tdes );
+	else
+	    $match = template_match
+		( $problem, "$srcfile:$desfile",
+			    "$tsrc:$tdes" );
 
-	    $tsrc = $matches[1];
-	    $tdes = $matches[2];
+	if ( is_null ( $match ) ) continue;
 
-	    if ( is_null ( $desfile ) )
-	        $match = template_match
-		    ( $problem, $srcfile, $tsrc );
-	    elseif ( is_null ( $srcfile ) )
-	        $match = template_match
-		    ( $problem, $desfile, $tdes );
-	    else
-	        $match = template_match
-		    ( $problem, "$srcfile:$desfile",
-		                "$tsrc:$tdes" );
+	$json = get_template_json ( $template );
 
-	    if ( is_null ( $match ) ) continue;
+	$json = substitute_match ( $json, $match );
 
-	    $file = file_get_contents ( "$dir/$fname" );
-	    if ( ! $file )
-	    {
-		$errors[] = "cannot read $dir/$fname";
-		continue;
-	    }
-	    $json = json_decode ( $file, true );
-	    if ( ! $json )
-	    {
-		$errors[] =
-		    "cannot decode json in $dir/$fname";
-		continue;
-	    }
-	    $json = substitute_match ( $json, $match );
-
-	    $templates[] =
-	        [ $template, "$dir/$fname", $json ];
-	}
-	closedir ( $desc );
+	$templates[] =
+	    [ $template, $filename, $json ];
     }
 }
 
@@ -1144,6 +1122,7 @@ function process_upload
 	return;
     }
 
+    get_template_cache();
     find_templates
 	( $problem, $fname, $tname,
 	  $templates, $errors );
