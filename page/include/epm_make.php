@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Dec  2 11:17:29 EST 2019
+// Date:    Tue Dec  3 00:25:51 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -178,7 +178,7 @@ function substitute_match ( $item, $match )
 // stored in $template_cache.
 //
 $template_cache = NULL;
-function get_template_cache()
+function load_template_cache()
 {
     global $template_dirs, $template_cache;
 
@@ -217,6 +217,7 @@ function get_template_cache()
 function get_template_json ( $template )
 {
     global $template_cache;
+    load_template_cache();
 
     if ( ! isset ( $template_cache[$template] ) )
     {
@@ -276,6 +277,7 @@ function find_templates
       & $templates, & $errors )
 {
     global $template_cache;
+    load_template_cache();
 
     if ( is_null ( $srcfile ) && is_null ( $desfile ) )
     {
@@ -325,16 +327,18 @@ function find_templates
 
 // Get the template.optn file with overrides from
 // earlier template directories and users/user$id
-// directory.  Append some errors to $errors.
+// directory.  Append non-fatal errors to $errors.
+// Cache result in $template_optn.
 //
 function get_template_optn ( & $errors )
 {
-    global $template_dirs, $epm_data, $userid;
+    global $template_dirs, $epm_data, $userid,
+           $template_optn;
 
     $dirs = array_reverse ( $template_dirs );
     $dirs[] = "$epm_data/users/user$userid";
 
-    $result = [];
+    $template_optn = [];
     foreach ( $dirs as $dir )
     {
 	$filename = "$dir/template.optn";
@@ -358,20 +362,21 @@ function get_template_optn ( & $errors )
 	//
 	foreach ( $json as $opt => $description )
 	foreach ( $description as $key => $value )
-	    $result[$opt][$key] = $value;
+	    $template_optn[$opt][$key] = $value;
     }
-    return $result;
+    return $template_optn;
 }
 
 // Get the PPPP.optn file for problem PPPP, with
 // overrides from more local directories.  Append
-// some errors to $errors.
+// some errors to $errors.  Cache the result in
+// $problem_optn.
 //
 function get_problem_optn ( $problem, & $errors )
 {
-    global $make_dirs;
+    global $make_dirs, $problem_optn;
 
-    $result = [];
+    $problem_optn = [];
     foreach ( array_reverse ( $make_dirs ) as $dir )
     {
         $filename = "$epm_data/$dir/$problem.optn";
@@ -394,10 +399,10 @@ function get_problem_optn ( $problem, & $errors )
 	// PPPP.optn values are 1D arrays.
 	//
 	foreach ( $json as $opt => $value )
-	    $result[$opt] = $value;
+	    $problem_optn[$opt] = $value;
 
     }
-    return $result;
+    return $problem_optn;
 }
 
 // Return argument map that is to be applied to template
@@ -410,11 +415,21 @@ function compute_optn_map
 {
     $arg_map = [];
     $val_map = [];
+    foreach ( $problem_optn as $opt => $value )
+    {
+        if ( ! isset ( $template_optn[$opt] ) )
+	    $errors[] = "$opt option from" .
+	                " $problem.optn file is not" .
+			" in template.optn file\n" .
+			"    and therefore it is" .
+			" illegal and its value" .
+			" $value is ignored";
+    }
     foreach ( $template_optn as $opt => $description )
     {
-	$value = NULL;
+	$default = NULL;
         if ( isset ( $description['default'] ) )
-            $value = $description['default'];
+            $default = $description['default'];
 	$ovalue = NULL;
         if ( isset ( $problem_optn[$opt] ) )
             $ovalue = $problem_optn[$opt];
@@ -422,8 +437,22 @@ function compute_optn_map
         if ( isset ( $description['values'] ) )
 	{
 	    $values = $description['values'];
-	    if ( ! isset ( $value ) )
+	    if ( ! is_array ( $values )
+	         ||
+		 count ( $values ) == 0 )
+	    {
+	        $errors[] =
+		    "badly formatted values member of" .
+		    " option $opt in template.optn" .
+		    " file; option $opt ignored";
+		continue;
+	    }
+
+	    if ( isset ( $default ) )
+		$value = $default;
+	    else
 	        $value = $values[0];
+
 	    if ( isset ( $ovalue ) )
 	    {
 	        if (    array_search
@@ -441,14 +470,20 @@ function compute_optn_map
         else if ( isset ( $description['type'] ) )
 	{
 	    $type = $description['type'];
+	    if ( isset ( $description['range'] ) )
+	        $range = $description['range'];
+	    else
+	        $range = NULL;
+
 	    if ( ! array_search
 	               ( $type,
 		         ['args', 'natural', 'float'],
 			 true ) )
 	    {
-	        $errors[] = "unknown type $type for"
-		          . " option $opt; option"
-			  . " ignored";
+	        $errors[] =
+		    "unknown type $type for option" .
+		    " $opt in template.optn file;" .
+		    " option ignored";
 		continue;
 	    }
 
@@ -459,75 +494,116 @@ function compute_optn_map
 		else if ( ! isset ( $value ) )
 		    $value = "";
 	    }
-	    else if ( ! isset ( $value ) )
-		$errors[] = "no default set for $opt"
-		          . " option of type $type";
-	    else if ( ! isset
-	                  ( $description['range'] ) )
-		$errors[] = "no range set for $opt"
-		          . " option of type $type";
+	    else if ( ! isset ( $range ) )
+	    {
+		$errors[] =
+		    "no range member for option $opt" .
+		    " of type $type\n" .
+		    " in template.optn file; option" .
+		    " ignored";
+		continue;
+	    }
+	    else if ( ! is_array ( $range )
+	              ||
+		      count ( $range ) != 2 )
+	    {
+		$errors[] =
+		    "badly formatted range member" .
+		    " for option $opt of type $type\n" .
+		    " in template.optn file; option" .
+		    " ignored";
+		continue;
+	    }
 	    else if ( isset ( $ovalue )
 	              &&
 		      ! is_numeric ( $ovalue ) )
-		$errors[] = "option $opt value $ovalue"
-		          . " from $problem.optn file"
-			  . " is not numeric";
+	    {
+		$errors[] =
+		    "option $opt value $ovalue from" .
+		    " $problem.optn file\n" .
+		    " is not numeric; $ovalue ignored";
+		$ovalue = NULL;
+	    }
 	    else if ( isset ( $ovalue )
 	              &&
 		      $type == 'natural'
 		      &&
 		      ! preg_match
 		            ( '/^\d+$/', $ovalue ) )
-		$errors[] = "option $opt value $ovalue"
-		          . " from $problem.optn file"
-			  . " is not natural number";
-	    else if ( isset ( $ovalue ) )
 	    {
-	        $range = $description['range'];
-		if ( $ovalue < $range[0] )
-		{
-		    $errors[] =
-		        "option $opt value $ovalue" .
-			" from $problem.optn file" .
-			" is too small\n" .
-			"    (less than {$range[0]});" .
-			" {$range[0]} used instead";
-		    $ovalue = $range[0];
-		}
-		else if ( $ovalue > $range[1] )
-		{
-		    $errors[] =
-		        "option $opt value $ovalue" .
-			" from $problem.optn file" .
-			" is too large\n" .
-			"    (greater than" .
-			" {$range[1]});" .
-			" {$range[1]} used instead";
-		    $ovalue = $range[1];
-		}
-		$value = $ovalue;
+		$errors[] =
+		    "option $opt value $ovalue from" .
+		    " $problem.optn file\n" .
+		    " is not natural number;" .
+		    " $ovalue ignored";
+		$ovalue = NULL;
+	    }
+	    else if ( isset ( $ovalue )
+	              &&
+		      $ovalue < $range[0] )
+	    {
+		$errors[] =
+		    "option $opt value $ovalue" .
+		    " from $problem.optn file" .
+		    " is too small\n" .
+		    "    (less than {$range[0]});" .
+		    " {$range[0]} used instead";
+		$ovalue = $range[0];
+	    }
+	    else if ( isset ( $ovalue )
+	              &&
+		      $ovalue > $range[1] )
+	    {
+		$errors[] =
+		    "option $opt value $ovalue" .
+		    " from $problem.optn file" .
+		    " is too large\n" .
+		    "    (greater than {$range[1]});" .
+		    " {$range[1]} used instead";
+		$ovalue = $range[1];
 	    }
 
-	    if ( ! isset ( $value ) )
+	    if ( isset ( $ovalue ) )
+	        $value = $ovalue;
+	    else if ( isset ( $default ) )
+	        $value = $default;
+	    else
 	    {
-	        $errors[] = "option $opt ignored";
+		$errors[] =
+		    "no default member for option" .
+		    " $opt of type $type in\n" .
+		    " template.optn file, and no" .
+		    " $problem.optn value; option" .
+		    " ignored";
 		continue;
 	    }
-
-	    if ( isset ( $description['argname'] ) )
-	        $arg_map[$opt] = $value;
-	    else if ( isset ( $description['valname'] ) )
-	        $val_map[$opt] = $value;
-	    else
-	        $errors[] = "option $opt has neither"
-		          . " argname nor valname;"
-			  . " option ignored";
 	}
-	else if ( ! isset ( $value ) )
-	    $errors[] = "option $opt has neither"
-		      . " values nor type;"
-		      . " option ignored";
+	else
+	{
+	    $errors[] =
+                "option $opt in template.optn file" .
+		" has neither values\n" .
+		"    nor type members; option ignored";
+	    continue;
+	}
 
+	if ( ! isset ( $value ) )
+	{
+	    $sysfail = "option $opt value not set in"
+	             . " in compute_optn_map";
+	    include 'sysalert.php';
+	}
+
+	if ( isset ( $description['argname'] ) )
+	    $arg_map[$opt] = $value;
+	else if ( isset ( $description['valname'] ) )
+	    $val_map[$opt] = $value;
+	else
+	    $errors[] =
+	        "option $opt in template.optn file" .
+		" has neither argname\n" .
+		"    nor valname members; option" .
+		" ignored";
     }
 
     return substitute_match ( $arg_map, $val_map );
@@ -1333,7 +1409,6 @@ function process_upload
 	return;
     }
 
-    get_template_cache();
     find_templates
 	( $problem, $fname, $tname,
 	  $templates, $errors );

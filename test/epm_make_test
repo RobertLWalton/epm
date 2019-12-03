@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Dec  2 07:03:08 EST 2019
+// Date:	Mon Dec  2 18:53:34 EST 2019
 
 $is_epm_test = true;
 
@@ -92,7 +92,11 @@ check ( 'substitute_match (
 //
 setup_test_dirs();
 
-get_template_cache();
+load_template_cache();
+check ( '$GLOBALS["template_cache"]
+                 ["PPPP.java:PPPP.class:"]
+		 [0]', "$epm_root/template/" .
+		       "PPPP.java:PPPP.class:.tmpl" );
 
 $errors = [];
 find_templates ( $problem, "$problem.c", NULL,
