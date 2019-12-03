@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Dec  3 07:22:40 EST 2019
+// Date:    Tue Dec  3 08:57:12 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -618,6 +618,43 @@ function compute_optn_map
     return substitute_match ( $arg_map, $val_map );
 }
 
+// Build a cache of files that may be required.  The
+// cache has entries of the form:
+//
+//	filename => directory
+//
+// where filename is the last component of the file
+// name and directory is the first $make_dirs directory
+// in which the file can be found under the full name:
+//
+//	$epm_data/directory/filename
+//
+$make_cache = NULL;
+function load_make_cache()
+{
+    global $epm_data, $make_dirs, $make_cache;
+    if ( isset ( $make_cache ) ) return;
+
+    foreach ( $make_dirs as $dir )
+    {
+	$d = "$epm_data/$dir";
+	$dircontents = scandir ( $d );
+	if ( $dircontents === false )
+	{
+	    $sysfail = "cannot read $d";
+	    include 'sysalert.php';
+	}
+
+	foreach ( $dircontents as $fname )
+	{
+	    if ( preg_match  ( '/^\.+$/', $fname ) )
+	        continue;
+	    if ( isset ( $make_cache[$fname] ) )
+	        continue;
+	    $make_cache[$fname] = $dir;
+	}
+    }
+}
 
 // Given the output of find_templates and the list of
 // directories in which required and option files are
@@ -693,43 +730,47 @@ function find_requires_and_options
 }
 
 // Given $templates computed by find_templates and
-// $requires and $options computed by find_requires_and_
-// options, return the control, i.e., the selected
-// element of $template, and set $required to the list
-// of required files and $option to the json of the
-// option file, or [] if no such file.  The filenames
-// returned in $required are relative to $epm_data.
-// $dirs is the directory list used by find_requires_
-// and_options, and is used to identify the local
-// directory (its the first one) and identify whether
-// there is more than one directory.
+// the $make_cache, return the control, i.e., the
+// selected element of $templates, and set $required
+// to the list of files required by the control.
 //
 // If multiple templates satisfy required file
 // constraints, ones with the largest number of required
-// files are selected, and among these the first in
-// the $templates list.
+// files are selected.  It is an error if more than
+// one is selected by this rule.
+//
+// $local_dir is the directory satisfying LOCAL-
+// REQUIRES.  It is relative to $epm_data and can be
+// compared to the values in the $make_cache.
+// If $local_dir is NULL, LOCAL-REQUIRES and REMOTE-
+// REQUIRES are treated the same as REQUIRES.
 //
 // If $uploaded is not NULL, it is the name of the
 // file being uploaded and will satisfy REQUIRES or
-// LOCAL-REQUIRES.
+// LOCAL-REQUIRES.  It is NOT listed in $required.
 //
-// Returns NULL if no template found meeting required
-// file constraints.
+// Only the last component of a file names is listed in
+// $required.  The directory containing it can be
+// found using $make_cache.
+//
+// It is an error if no template is found meeting
+// required file constraints, or if more than one
+// template is found with the maximum number of existing
+// required files.
 //
 // Any errors cause error messages to be appended to
-// the errors list.
+// the errors list and NULL to be returned.
 //
 function find_control
-	( $dirs, $uploaded, $templates, $requires,
-	  $options, & $required, & $option, & $errors )
+	( $templates, $local_dir, $uploaded,
+	  & $required, & $errors )
 {
-    $required = [];
-    $option = [];
+    global $make_cache;
+    load_make_cache();
 
     $best_template = NULL;
+    $tlist = [];
     $best_count = -1;
-    $local_dir = $dirs[0];
-    $dirs_count = count ( $dirs );
     foreach ( $templates as $template )
     {
 	$rlist = [];
@@ -746,38 +787,38 @@ function find_control
 		{
 		    if ( $rfile == $uploaded )
 		    {
-		        if ( $R == 'REMOVE-REQUIRES'
+		        if ( $R == 'REMOTE-REQUIRES'
 			     &&
-			     $dirs_count != 1 )
+			     isset ( $local_dir ) )
+			{
 			    $OK = false;
+			    break;
+			}
 			continue;
 		    }
 
 		    if ( ! isset
-			     ( $requires[$rfile] ) )
+			     ( $make_cache[$rfile] ) )
 		    {
 		        $OK = false;
 			break;
 		    }
-		    $rdir = $requires[$rfile];
-		    if ( $rdir == "" )
-		        $OK = false;
-		    else switch ( $R )
+		    $rdir = $make_cache[$rfile];
+		    if ( isset ( $local_dir ) )
+		        switch ( $R )
 		    {
 		        case 'LOCAL-REQUIRES':
 			    if ( $rdir != $local_dir )
 			        $OK = false;
 			    break;
 		        case 'REMOTE-REQUIRES':
-			    if ( $rdir == $local_dir
-			         &&
-				 $dirs_count != 1 )
+			    if ( $rdir == $local_dir )
 			        $OK = false;
 			    break;
 		    }
 		    if ( ! $OK ) break;
 
-		    $rlist[] = "$rdir/$rfile";
+		    $rlist[] = $rfile;
 		}
 	    }
 	    if ( ! $OK ) break;
@@ -786,47 +827,33 @@ function find_control
 
 	$rlist = array_unique ( $rlist );
 	$rcount = count ( $rlist );
-	if ( $rcount <= $best_count )
-	    continue;
-
-	$best_template = $template;
-	$best_count = $rcount;
-	$required = $rlist;
+	if ( $rcount == $best_count )
+	    $tlist[] = $template[0];
+	else if ( $rcount > $best_count )
+	{
+	    $tlist = [$template[0]];
+	    $best_template = $template;
+	    $best_count = $rcount;
+	    $required = $rlist;
+	}
     }
 
-    $ofile = "$best_template[0].optn";
-    if ( ! isset ( $options[$ofile] ) )
-	$ofile = NULL;
+    if ( count ( $tlist ) == 1 )
+	return $best_templates[0];
+    else if ( count ( $tlist ) == 0 )
+	$errors[] =
+	    "no template found whose required" .
+	    " files exist";
     else
     {
-	$odir = $options[$ofile];
-	if ( $odir == "" )
-	    $ofile = NULL;
-	else
-	    $ofile = "$odir/$ofile";
+        $tlist = implode ( " ", $tlist );
+	$errors[] =
+	    "too many templates found with the same" .
+	    " number of existing required files:\n" .
+	    "    $tlist";
     }
-    if ( ! is_null ( $ofile ) )
-    {
-	$ocontents = file_get_contents
-	    ( "$epm_data/$ofile" );
-	if ( ! $ocontents )
-	{
-	    $errors[] = "cannot read $epm_data/$ofile";
-	    return NULL;
-	}
-	$ojson = json_decode ( $ocontents, true );
-	if ( ! $ojson )
-	{
-	    $errors[] = "cannot decode json in"
-	              . " $epm_data/$ofile";
-	    return NULL;
-	}
-	$option = $ojson;
-    }
-    else
-        $option = [];
-
-    return $best_template;
+    $required = [];
+    return NULL;
 }
 
 // Clean up a working directory.  If it has a PID file,
