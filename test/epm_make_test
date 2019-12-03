@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Dec  2 18:53:34 EST 2019
+// Date:	Tue Dec  3 01:38:38 EST 2019
 
 $is_epm_test = true;
 
@@ -42,6 +42,14 @@ int main ()
 {
     printf ( "Hello World!\n" );
     return 0;
+}
+EOT;
+
+$prob_optn = <<<'EOT'
+{
+    "gcc-ped": "-Wpedantic",
+    "filesize": "1000",
+    "scoring-abs": 1e-5
 }
 EOT;
 
@@ -113,8 +121,35 @@ check ( '$GLOBALS["templates"][0][2]' .
         '["SHOW"]', ["prob.err", "prob.out"] );
 
 $errors = [];
-$template_optn = get_template_optn ( $errors );
+get_template_optn ( $errors );
 check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["template_optn"]["gcc-ped"]
+                                  ["values"]',
+        ["","-Wpedantic"] );
+check ( '$GLOBALS["template_optn"]["scoring-rel"]
+                                  ["range"]',
+        [-1,2] );
+
+file_put_contents
+    ( "$epm_data/$prob_dir/prob.optn", $prob_optn );
+
+$errors = [];
+get_problem_optn ( $problem, $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["problem_optn"]["gcc-ped"]',
+        "-Wpedantic" );
+check ( '$GLOBALS["problem_optn"]["filesize"]',
+        1000 );
+check ( '$GLOBALS["problem_optn"]["scoring-abs"]',
+        1e-5 );
+
+$errors = [];
+$optn_map = compute_optn_map
+    ( $problem, $template_optn, $problem_optn,
+      $errors );
+check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["optn_map"]["GCCFLAGS"]',
+        "-Og -Wpedantic" );
 
 $dirs = [ $prob_dir, $proj_dir ];
 
@@ -179,6 +214,8 @@ $show = compute_show
 check ( '$GLOBALS["show"]',
         ["users/user1/prob/+work+/prob.err",
 	 "users/user1/prob/+work+/prob.out"] );
+
+exit;
 
 // Simulate upload for prob.c.
 //

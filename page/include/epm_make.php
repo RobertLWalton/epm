@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Dec  3 00:25:51 EST 2019
+// Date:    Tue Dec  3 03:05:04 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -374,7 +374,7 @@ function get_template_optn ( & $errors )
 //
 function get_problem_optn ( $problem, & $errors )
 {
-    global $make_dirs, $problem_optn;
+    global $epm_data, $make_dirs, $problem_optn;
 
     $problem_optn = [];
     foreach ( array_reverse ( $make_dirs ) as $dir )
@@ -475,10 +475,15 @@ function compute_optn_map
 	    else
 	        $range = NULL;
 
-	    if ( ! array_search
-	               ( $type,
-		         ['args', 'natural', 'float'],
-			 true ) )
+	    // In the following, if all error checks
+	    // are passed, either $ovalue or $default
+	    // must be set, unless default member is
+	    // improperly missing.
+
+	    if ( array_search
+	             ( $type,
+		       ['args', 'natural', 'float'],
+		        true ) === false )
 	    {
 	        $errors[] =
 		    "unknown type $type for option" .
@@ -486,13 +491,10 @@ function compute_optn_map
 		    " option ignored";
 		continue;
 	    }
-
-	    if ( $type = 'args' )
+	    else if ( $type == 'args' )
 	    {
-	        if ( isset ( $ovalue ) )
-		    $value = $ovalue;
-		else if ( ! isset ( $value ) )
-		    $value = "";
+	        if ( ! isset ( $default ) )
+		    $default = "";
 	    }
 	    else if ( ! isset ( $range ) )
 	    {
@@ -567,14 +569,16 @@ function compute_optn_map
 	        $value = $ovalue;
 	    else if ( isset ( $default ) )
 	        $value = $default;
+	    else if ( isset ( $range ) )
+	        $value = $range[1];
 	    else
 	    {
 		$errors[] =
 		    "no default member for option" .
 		    " $opt of type $type in\n" .
 		    " template.optn file, and no" .
-		    " $problem.optn value; option" .
-		    " ignored";
+		    " valid $problem.optn value;" .
+		    " option ignored";
 		continue;
 	    }
 	}
@@ -595,9 +599,16 @@ function compute_optn_map
 	}
 
 	if ( isset ( $description['argname'] ) )
-	    $arg_map[$opt] = $value;
+	{
+	    $argname = $description['argname'];
+	    if ( isset ( $arg_map[$argname] ) )
+	        $arg_map[$argname] .=
+		    ' ' . $value;
+	    else
+	        $arg_map[$argname] = $value;
+	}
 	else if ( isset ( $description['valname'] ) )
-	    $val_map[$opt] = $value;
+	    $val_map[$description['valname']] = $value;
 	else
 	    $errors[] =
 	        "option $opt in template.optn file" .
