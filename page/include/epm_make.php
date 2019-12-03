@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Dec  3 03:05:04 EST 2019
+// Date:    Tue Dec  3 07:22:40 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -225,11 +225,11 @@ function get_template_json ( $template )
 	         . " that is not cache key";
 	include 'sysalert.php';
     }
-    $pair = $template_cache[$template];
-    $result = $pair[1];
+    $pair = & $template_cache[$template];
+    $result = & $pair[1];
     if ( ! isset ( $result ) )
     {
-	$filename = $pair[0];
+	$filename = & $pair[0];
 	$contents = file_get_contents ( $filename );
 	if ( $contents === false )
 	{
@@ -242,8 +242,6 @@ function get_template_json ( $template )
 	    $sysfail = "cannot json decode $filename";
 	    include 'sysalert.php';
 	}
-	$template_cache[$template] =
-	    [ $pair[0], $json ];
 	$result = $json;
     }
     return $result;
