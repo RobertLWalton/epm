@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Wed Dec  4 03:50:18 EST 2019
+// Date:	Wed Dec  4 04:20:31 EST 2019
 
 $is_epm_test = true;
 
@@ -168,16 +168,9 @@ $errors = [];
 link_required ( "prob.c", $work, $required, $errors );
 check ( '$GLOBALS["errors"]', [] );
 
-exit;
-
-$warnings = [];
-$errors = [];
-$commands = get_commands
-    ( $control, $option, $warnings, $errors );
-check ( '$GLOBALS["errors"]', [] );
-check ( '$GLOBALS["warnings"]', [] );
-check ( 'count ( $GLOBALS["commands"] )', 1 );
-
+$commands = get_commands ( $control, $optn_map );
+check ( 'preg_match ( "/-Wpedantic/", ' .
+                     '$GLOBALS["commands"][0])', 1 );
 file_put_contents
     ( "$epm_data/$work/prob.c", $prob_c );
 
