@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Dec  3 01:38:38 EST 2019
+// Date:	Wed Dec  4 03:50:18 EST 2019
 
 $is_epm_test = true;
 
@@ -151,23 +151,13 @@ check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["optn_map"]["GCCFLAGS"]',
         "-Og -Wpedantic" );
 
-$dirs = [ $prob_dir, $proj_dir ];
-
-$errors = [];
-find_requires_and_options
-    ( $dirs, $templates, $requires, $options, $errors );
-check ( '$GLOBALS["errors"]', [] );
-check ( '$GLOBALS["requires"]', ["prob.c" => ""] );
-check ( '$GLOBALS["options"]',
-        ["PPPP.c:PPPP:.optn" => ""] );
-
 $errors = [];
 $control = find_control
-    ( $dirs, 'prob.c', $templates, $requires, $options,
-      $required, $option, $errors );
+    ( $templates, $prob_dir, "prob.c",
+      $required, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["required"]', [] );
-check ( '$GLOBALS["option"]', [] );
+check ( '$GLOBALS["control"][2]["KEEP"]', ["prob"] );
 
 $errors = [];
 $work = "$prob_dir/+work+";
@@ -178,6 +168,7 @@ $errors = [];
 link_required ( "prob.c", $work, $required, $errors );
 check ( '$GLOBALS["errors"]', [] );
 
+exit;
 
 $warnings = [];
 $errors = [];

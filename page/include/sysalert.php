@@ -1,9 +1,9 @@
 <?php
-if ( ! isset ( $GLOBALS['epm_data'] ) )
-    exit ( 'ACCESS ERROR: $epm_data not set' );
+if ( ! isset ( $GLOBALS['epm_root'] ) )
+    exit ( 'ACCESS ERROR: $epm_root not set' );
 
 if ( isset ( $sysfail ) )
     exit ( "FATAL SYSTEM ERROR: $sysfail\n" );
-
-echo "SYSALERT: $sysalert\n";
+if ( isset ( $sysalert ) )
+    echo "SYSALERT: $sysalert\n";
 ?>

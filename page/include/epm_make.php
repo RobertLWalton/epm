@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Dec  3 08:57:12 EST 2019
+// Date:    Wed Dec  4 03:34:10 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -656,79 +656,6 @@ function load_make_cache()
     }
 }
 
-// Given the output of find_templates and the list of
-// directories in which required and option files are
-// to be found, create maps of required file names to
-// first directory in which the required file name is
-// found and option file names to the first directory
-// in which the option file is found.  In these maps,
-// "" is used to mean `no directory'.
-//
-// Directory names are relative the $epm_data.
-//
-// Any errors cause error messages to be appended to
-// the errors list.
-// 
-function find_requires_and_options
-    ( $dirs, $templates,
-      & $requires, & $options, & $errors )
-{
-    global $epm_data;
-
-    // Initialize the maps from $templates so we know
-    // which files we are looking for.
-    //
-    $required = [];
-    $options = [];
-    foreach ( $templates as $template )
-    {
-        $json = $template[2];
-	$optfile = "$template[0].optn";
-	$options[$optfile] = "";
-	foreach ( ['REQUIRES', 'LOCAL-REQUIRES',
-	                       'REMOTE-REQUIRES']
-		  as $R )
-	{
-	    if ( isset ( $json[$R] ) )
-	    {
-		foreach ( $json[$R] as $required )
-		    $requires[$required] = "";
-	    }
-	}
-    }
-
-    // Cycle through $dirs and set the maps.
-    //
-    foreach ( $dirs as $dir )
-    {
-        $desc = opendir ( "$epm_data/$dir" );
-	if ( ! $desc )
-	{
-	    $errors[] =
-	        "cannot open search directory" .
-		" $epm_data/$dir";
-	    continue;
-	}
-	while ( $fname = readdir ( $desc ) )
-	{
-	    if ( preg_match ( '/^\.+$/', $fname ) )
-	        continue;
-
-	    if ( isset ( $requires[$fname] )
-	         &&
-		 $requires[$fname] == "" )
-	        $requires[$fname] = $dir;
-
-	    if ( isset ( $options[$fname] )
-	         &&
-		 $options[$fname] == "" )
-	        $options[$fname] = $dir;
-	}
-	closedir ( $desc );
-    }
-
-}
-
 // Given $templates computed by find_templates and
 // the $make_cache, return the control, i.e., the
 // selected element of $templates, and set $required
@@ -839,7 +766,7 @@ function find_control
     }
 
     if ( count ( $tlist ) == 1 )
-	return $best_templates[0];
+	return $best_template;
     else if ( count ( $tlist ) == 0 )
 	$errors[] =
 	    "no template found whose required" .
@@ -917,42 +844,54 @@ function cleanup_working ( $dir, & $errors )
 
 // Link files from the required list into the working
 // working directory.  Ignore and do not link a required
-// list file with last name component equal to the name
-// of the uploaded file, if that argument is not NULL.
-// The required list is generally computed by find_
-// control.
+// list file with name equal to the uploaded file, if
+// that argument is not NULL.  The required list is
+// generally computed by find_control and only contain
+// names of last components, that must be looked up in
+// the make_cache.  It is a fatal error if a required
+// file is NOT listed in make_cache.
 //
 // Errors cause error messages to be appended to errors.
 //
 function link_required
 	( $uploaded, $work, $required, & $errors )
 {
-    global $epm_data;
+    global $epm_data, $make_cache;
+    load_make_cache();
 
     foreach ( $required as $rname )
     {
-        $rbase = basename ( $rname );
         if ( $rname == $uploaded ) continue;
 
-	$rname = "$epm_data/$rname";
-
-	if ( ! is_readable ( $rname ) )
+	if ( ! isset ( $make_cache[$rname] ) )
 	{
-	    $errors[] = "$rname is not readable";
+	    $sysfail = "in link_required: $rname not"
+	             . " in \$make_cache";
+	    include 'sysalert.php';
+	    // Does NOT return.
+	}
+
+	$dir = $make_cache[$rname];
+
+	$rfile = "$epm_data/$dir/$rname";
+
+	if ( ! is_readable ( $rfile ) )
+	{
+	    $errors[] = "$rfile is not readable";
 	    continue;
 	}
 	if ( ! preg_match ( '/\./', $rbase )
 	     &&
-	     ! is_executable ( $rname ) )
+	     ! is_executable ( $rfile ) )
 	{
-	    $errors[] = "$rname is not executable";
+	    $errors[] = "$rfile is not executable";
 	    continue;
 	}
-	$rlink = "$epm_data/$work/$rbase";
-	if ( ! link ( $rname, "$rlink" ) )
+	$rlink = "$epm_data/$work/$rname";
+	if ( ! link ( $rfile, "$rlink" ) )
 	{
 	    $errors[] = "cannot symbolically link"
-	              . " $rname to $rlink";
+	              . " $rfile to $rlink";
 	    continue;
 	}
     }
