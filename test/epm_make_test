@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Wed Dec  4 04:20:31 EST 2019
+// Date:	Wed Dec  4 05:25:34 EST 2019
 
 $is_epm_test = true;
 
@@ -144,10 +144,11 @@ check ( '$GLOBALS["problem_optn"]["scoring-abs"]',
         1e-5 );
 
 $errors = [];
+$warnings = [];
 $optn_map = compute_optn_map
-    ( $problem, $template_optn, $problem_optn,
-      $errors );
+    ( $problem, $warnings, $errors );
 check ( '$GLOBALS["errors"]', [] );
+check ( '$GLOBALS["warnings"]', [] );
 check ( '$GLOBALS["optn_map"]["GCCFLAGS"]',
         "-Og -Wpedantic" );
 

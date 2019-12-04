@@ -405,23 +405,30 @@ function get_problem_optn ( $problem, & $errors )
 
 // Return argument map that is to be applied to template
 // COMMANDS from results of get_template_optn and
-// get_problem_optn.  Append errors to $errors.
+// get_problem_optn.  Append warnings to $warnings for
+// options that must be modified or ignored, and append
+// errors to $errors for options that cannot be given
+// any value.
 //
 function compute_optn_map
-	( $problem, $template_optn, $problem_optn,
-	            & $errors )
+	( $problem, & $warnings, & $errors )
 {
+    global $template_optn, $problem_optn;
+    $error_size = count ( $errors );
+    get_template_optn ( $errors );
+    get_problem_optn ( $problem, $errors );
+    if ( count ( $errors ) > $error_size ) return;
+
     $arg_map = [];
     $val_map = [];
     foreach ( $problem_optn as $opt => $value )
     {
         if ( ! isset ( $template_optn[$opt] ) )
-	    $errors[] = "$opt option from" .
-	                " $problem.optn file is not" .
-			" in template.optn file\n" .
-			"    and therefore it is" .
-			" illegal and its value" .
-			" $value is ignored";
+	    $warnings[] =
+	        "$opt option from $problem.optn" .
+		" file is not in template.optn file\n" .
+	        "    and therefore it is illegal and" .
+		" its value $value is ignored";
     }
     foreach ( $template_optn as $opt => $description )
     {
@@ -432,6 +439,7 @@ function compute_optn_map
         if ( isset ( $problem_optn[$opt] ) )
             $ovalue = $problem_optn[$opt];
 
+	$value = NULL;
         if ( isset ( $description['values'] ) )
 	{
 	    $values = $description['values'];
@@ -458,7 +466,7 @@ function compute_optn_map
 		     !== false )
 		    $value = $ovalue;
 		else
-		    $errors[] =
+		    $warnings[] =
 		        "$opt option value $ovalue" .
 		        " from $problem.optn file\n" .
 			"    is not legal, using" .
@@ -518,7 +526,7 @@ function compute_optn_map
 	              &&
 		      ! is_numeric ( $ovalue ) )
 	    {
-		$errors[] =
+		$warnings[] =
 		    "option $opt value $ovalue from" .
 		    " $problem.optn file\n" .
 		    " is not numeric; $ovalue ignored";
@@ -531,7 +539,7 @@ function compute_optn_map
 		      ! preg_match
 		            ( '/^\d+$/', $ovalue ) )
 	    {
-		$errors[] =
+		$warnings[] =
 		    "option $opt value $ovalue from" .
 		    " $problem.optn file\n" .
 		    " is not natural number;" .
@@ -542,7 +550,7 @@ function compute_optn_map
 	              &&
 		      $ovalue < $range[0] )
 	    {
-		$errors[] =
+		$warnings[] =
 		    "option $opt value $ovalue" .
 		    " from $problem.optn file" .
 		    " is too small\n" .
@@ -554,7 +562,7 @@ function compute_optn_map
 	              &&
 		      $ovalue > $range[1] )
 	    {
-		$errors[] =
+		$warnings[] =
 		    "option $opt value $ovalue" .
 		    " from $problem.optn file" .
 		    " is too large\n" .
@@ -931,12 +939,12 @@ function run_commands
     }
 }
 
-// Move KEEP files, if any, from $work to $prob_dir.
+// Move KEEP files, if any, from $work to $local_dir.
 // List last component names of files moved in $moved.
 // Append error messages to $errors.
 //
 function move_keep
-	( $control, $work, $prob_dir,
+	( $control, $work, $local_dir,
 	  & $moved, & $errors )
 {
     global $epm_data;
@@ -950,7 +958,7 @@ function move_keep
     foreach ( $keep as $fname )
     {
         $wfile = "$epm_data/$work/$fname";
-        $lfile = "$epm_data/$prob_dir/$fname";
+        $lfile = "$epm_data/$local_dir/$fname";
 	if ( ! file_exists ( $wfile ) )
 	{
 	    $errors[] = "KEEP file $fname was not"
@@ -970,11 +978,11 @@ function move_keep
 // Return list of files to be shown.  File and directory
 // names are relative to $epm_data.  Files that have not
 // been moved are in $work, and moved files are in
-// $prob_dir.  Files that are not readable are ignored;
+// $local_dir.  Files that are not readable are ignored;
 // there can be no errors.
 //
 function compute_show
-	( $control, $work, $prob_dir, $moved )
+	( $control, $work, $local_dir, $moved )
 {
     global $epm_data;
 
@@ -987,7 +995,7 @@ function compute_show
     {
 	if (     array_search ( $fname, $moved, true )
 	     !== false )
-	    $sfile = "$prob_dir/$fname";
+	    $sfile = "$local_dir/$fname";
 	else
 	    $sfile = "$work/$fname";
 	if ( is_readable ( "$epm_data/$sfile" ) )
@@ -1009,11 +1017,11 @@ function compute_show
 // File names in these are relative to $epm_data.
 //
 function process_upload
-	( $upload, $problem, & $commands, & $moved,
-	  & $show, & $output, & $warnings, & $errors )
+	( $upload, $problem, $local_dir,
+	  & $commands, & $moved, & $show,
+	  & $output, & $warnings, & $errors )
 {
-    global $epm_data, $upload_target_ext, $make_dirs,
-           $upload_maxsize, $userid, $problem,
+    global $upload_target_ext, $upload_maxsize,
 	   $is_epm_test;
 
     $commands = [];
@@ -1023,10 +1031,11 @@ function process_upload
 
     if ( ! is_array ( $upload ) )
     {
-        $errors[] =
-	    "SYSTEM ERROR: $upload is not an array";
-	return;
+        $sysfail =
+	    'process_upload: $upload is not an array';
+	include 'sysalert.php';
     }
+
     $fname = $upload['name'];
     if ( ! preg_match ( '/^[-_.a-zA-Z0-9]*$/',
                         $fname ) )
@@ -1073,7 +1082,7 @@ function process_upload
 		break;
 	    default:
 	        $errors[] = "SYSTEM ERROR uploading"
-		          . " $fname, upload error"
+		          . " $fname, PHP upload error"
 			  . " code $ferror";
 	}
 	return;
@@ -1100,25 +1109,13 @@ function process_upload
 	return;
     }
 
-    find_requires_and_options
-	( $make_dirs, $templates,
-	  $requires, $options, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
     $control = find_control
-	( $make_dirs, $fname, $templates, $requires,
-	  $options, $required, $option, $errors );
+	( $templates, $local_dir, $fname,
+	  $required, $errors );
     if ( count ( $errors ) > $errors_size ) return;
-    if ( is_null ( $control ) )
-    {
-        $errors[] =
-	    "for no template $fname:$tname:... are" .
-	    " all its required files pre-existing";
-	return;
-    }
+    if ( is_null ( $control ) ) return;
 
-    $prob_dir = "users/user$userid/$problem";
-    $work = "$prob_dir/+work+";
+    $work = "$local_dir/+work+";
     cleanup_working ( $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
@@ -1150,9 +1147,11 @@ function process_upload
 	return;
     }
 
-    $commands = get_commands
-        ( $control, $option, $warnings, $errors );
+    $optn_map = compute_optn_map
+        ( $problem, $warnings, $errors );
     if ( count ( $errors ) > $errors_size ) return;
+
+    $commands = get_commands ( $control, $optn_map );
 
     $output = [];
     run_commands ( $commands, $work, $output, $errors );
@@ -1167,14 +1166,14 @@ function process_upload
 	    goto SHOW;
     }
 
-    move_keep ( $control, $work, $prob_dir,
+    move_keep ( $control, $work, $local_dir,
                 $moved, $errors );
     if ( ! rename ( "$epm_data/$work/$fname",
-                    "$epm_data/$prob_dir/$fname" ) )
+                    "$epm_data/$local_dir/$fname" ) )
 	$errors[] =
 	    "SYSTEM_ERROR: could not rename" .
 	    " $epm_data/$work/$fname to" .
-	    " $epm_data/$prob_dir/$fname";
+	    " $epm_data/$local_dir/$fname";
     else
         $moved[] = $fname;
     if ( count ( $errors ) > $errors_size ) goto SHOW;
@@ -1182,7 +1181,7 @@ function process_upload
 
 SHOW:
     $show = compute_show
-        ( $control, $work, $prob_dir, $moved );
+        ( $control, $work, $local_dir, $moved );
 }
 
 ?>
