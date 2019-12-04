@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Dec  4 04:21:12 EST 2019
+// Date:    Wed Dec  4 07:59:14 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -1021,8 +1021,8 @@ function process_upload
 	  & $commands, & $moved, & $show,
 	  & $output, & $warnings, & $errors )
 {
-    global $upload_target_ext, $upload_maxsize,
-	   $is_epm_test;
+    global $epm_data, $is_epm_test,
+           $upload_target_ext, $upload_maxsize;
 
     $commands = [];
     $moved = [];

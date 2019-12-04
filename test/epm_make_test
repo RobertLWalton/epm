@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Wed Dec  4 05:25:34 EST 2019
+// Date:	Wed Dec  4 08:00:42 EST 2019
 
 $is_epm_test = true;
 
@@ -200,8 +200,6 @@ check ( '$GLOBALS["show"]',
         ["users/user1/prob/+work+/prob.err",
 	 "users/user1/prob/+work+/prob.out"] );
 
-exit;
-
 // Simulate upload for prob.c.
 //
 setup_test_dirs();
@@ -217,7 +215,7 @@ $_FILES['uploaded_file'] =
      'size' => '1000',
      'tmp_name' => "$epm_data/tmp/prob.c"];
 process_upload ( $_FILES['uploaded_file'],
-		 'prob',
+		 'prob', $prob_dir,
 		 $commands, $moved, $show,
 		 $output, $warnings, $errors );
 check ( '$GLOBALS["errors"]', [] );

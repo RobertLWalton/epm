@@ -2,7 +2,7 @@
 {
 
     "g++std": { "values": ["-std=gnu++11", ""],
-                "argname": "G++FLAGS" },
+                "argname": "GPPFLAGS" },
     "gcc-opt": { "values": ["-Og", "-O3", ""],
                  "argname": "GCCFLAGS" },
     "gcc-ped": { "values": ["", "-Wpedantic"],

@@ -1,6 +1,6 @@
 <?php
-if ( ! isset ( $GLOBALS['epm_root'] ) )
-    exit ( 'ACCESS ERROR: $epm_root not set' );
+// if ( ! isset ( $GLOBALS['epm_root'] ) )
+    // $epm_root not set' );
 
 if ( isset ( $sysfail ) )
     exit ( "FATAL SYSTEM ERROR: $sysfail\n" );

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Nov 28 12:39:36 EST 2019
+    // Date:	Wed Dec  4 07:54:28 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -188,6 +188,7 @@
 	    $upload_output = [];
 	    process_upload
 		( $upload_info, $problem,
+                  "users/user$userid/$problem",
 		  $upload_commands, $upload_moved,
 		  $upload_show, $upload_output,
 		  $warnings, $errors );
@@ -216,14 +217,21 @@
     if ( isset ( $show_file ) )
     {
 	$b = basename ( $show_file );
+	$lines = [];
+	$f = "$epm_data/$show_file";
+	exec ( "cat -n $f", $lines, $ret );
 	echo "<div style='background-color:" .
 	     "#AEF9B0;width:50%;" .
 	     "float:right;overflow:scroll;" .
 	     "height:100%'>\n";
 	echo "<u>$b</u>:<br>\n";
-	echo '<pre>' . file_get_contents
-	                   ( "$epm_data/$show_file" )
-		     . "</pre>\n\n";
+	echo '<pre>';
+	if ( $ret != 0 )
+	    echo "SYSTEM ERROR: error code $ret while" .
+	         " reading $f";
+	else foreach ( $lines as $line )
+	    echo "$line\n";
+	echo "</pre>\n\n";
 	echo "</div>\n";
     }
 
