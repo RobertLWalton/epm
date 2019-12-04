@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec  4 07:54:28 EST 2019
+    // Date:	Wed Dec  4 18:52:51 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -217,22 +217,34 @@
     if ( isset ( $show_file ) )
     {
 	$b = basename ( $show_file );
-	$lines = [];
 	$f = "$epm_data/$show_file";
-	exec ( "cat -n $f", $lines, $ret );
-	echo "<div style='background-color:" .
-	     "#AEF9B0;width:50%;" .
-	     "float:right;overflow:scroll;" .
-	     "height:100%'>\n";
-	echo "<u>$b</u>:<br>\n";
-	echo '<pre>';
-	if ( $ret != 0 )
-	    echo "SYSTEM ERROR: error code $ret while" .
-	         " reading $f";
-	else foreach ( $lines as $line )
-	    echo "$line\n";
-	echo "</pre>\n\n";
-	echo "</div>\n";
+	$c = file_get_contents ( $f );
+	if ( $c === false )
+	    $errors[] = "cannot read $f";
+	else
+	{
+	    $lines = explode ( "\n", $c );
+	    if ( array_slice ( $lines, -1, 1 ) == [""] )
+		array_splice ( $lines, -1, 1 );
+	    $count = 0;
+	    echo "<div style='background-color:" .
+		 "#AEF9B0;width:50%;" .
+		 "float:right;overflow:scroll;" .
+		 "height:100%'>\n";
+	    echo "<u style='" .
+	         "background-color:#FFB3CC'>\n" .
+		 "$b</u>:<br><table>\n";
+	    foreach ( $lines as $line )
+	    {
+	        ++ $count;
+	        echo "<tr><td style='" .
+		     "background-color:#66CCFF;" .
+		     "text-align:right;'>\n" .
+		     "<pre>$count:</pre></td>" .
+		     "<td><pre>  $line</pre></td></tr>\n";
+	    }
+	    echo "</table></div>\n";
+	}
     }
 
 ?>
