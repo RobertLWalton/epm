@@ -374,7 +374,7 @@ EOT;
 	    echo "<td><button type='submit'" .
 	         " name='delete_file' value='$fname'>" .
 		 "Delete</button></td>";
-	    if ( $ext == "out" )
+	    if ( preg_match ( '/\.out$/', $fname ) )
 	    {
 		echo "<td><button type='submit'" .
 		     " name='move_file' value='$fname'>" .
