@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Dec  5 06:19:02 EST 2019
+// Date:    Thu Dec  5 11:08:48 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -1092,6 +1092,37 @@ function make_file
     if ( isset ( $control[2]['CHECKS'] ) )
 	run_commands ( $control[2]['CHECKS'], $work,
 	               $output, $errors );
+}
+
+// Given the file src make the file $des and keep any
+// files the template said should be kept.  Upon
+// return, if there are no errors, $moved is the list
+// of files moved, and $show is the list of files to
+// show.  All file names are relative to $epm_data.
+// $commands is the list of commands executed.  Errors
+// append error message lines to $errors.
+//
+function make_and_keep_file
+	( $src, $des, $problem, $local_dir,
+	  & $commands, & $moved, & $show,
+	  & $output, & $warnings, & $errors )
+{
+    $errors_size = count ( $errors );
+    $output = [];
+    make_file ( $src, $des,
+                $problem, $local_dir,
+		NULL, NULL,
+		$control, $commands, $output,
+		$warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
+    $work = "$local_dir/+work+";
+
+    move_keep ( $control, $work, $local_dir,
+                $moved, $errors );
+ 
+    $show = compute_show
+        ( $control, $work, $local_dir, $moved );
 }
 
 // Process an uploaded file whose $_FILES[...] value
