@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Dec  4 07:59:14 EST 2019
+// Date:    Thu Dec  5 06:19:02 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -888,7 +888,7 @@ function link_required
 	    $errors[] = "$rfile is not readable";
 	    continue;
 	}
-	if ( ! preg_match ( '/\./', $rbase )
+	if ( ! preg_match ( '/\./', $rname )
 	     &&
 	     ! is_executable ( $rfile ) )
 	{
@@ -1004,6 +1004,96 @@ function compute_show
     return $slist;
 }
 
+// Run commands and CHECKS to make file $des from file
+// $src.  If some file (usually $src) is uploaded, its
+// name is $upload and its tmp_name is $uploaded_tmp,
+// and it will be moved into the working directory
+// (but will not be checked for size and other errors).
+//
+// Output from exec is appended to $output, warnings and
+// errors are appended to $warnings and $errors, the
+// commands executed (but not the checks) are returned
+// in $commands (if an early command has exit code != 0
+// later commands in this list are not executed).
+//
+function make_file
+	( $src, $des,
+	  $problem, $local_dir,
+	  $uploaded, $uploaded_tmp,
+	  & $control, & $commands,
+	  & $output, & $warnings, & $errors )
+{
+    global $epm_data, $is_epm_test;
+
+    $commands = [];
+    $errors_size = count ( $errors );
+
+    find_templates
+	( $problem, $src, $des,
+	  $templates, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+    if ( count ( $templates ) == 0 )
+    {
+        $errors[] =
+	    "there are no templates" .
+	    " $src:$des:... for problem $problem";
+	return;
+    }
+
+    $control = find_control
+	( $templates, $local_dir, $uploaded,
+	  $required, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+    if ( is_null ( $control ) ) return;
+
+    $work = "$local_dir/+work+";
+    cleanup_working ( $work, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
+    link_required
+	( $uploaded, $work, $required, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
+    if ( isset ( $uploaded ) )
+    {
+	$f = "$epm_data/$work/$uploaded";
+	if ( file_exists ( $f ) )
+	{
+	    $sysfail =
+		"uploaded file is $uploaded but" .
+		" $f already exists";
+	    include 'sysalert.php';
+	}
+
+	if ( $is_epm_test ?
+	     ! rename ( $uploaded_tmp, $f ) :
+	     ! move_uploaded_file
+		   ( $uploaded_tmp, $f ) )
+	{
+	    $errors[] =
+		"SYSTEM_ERROR: failed to move" .
+		" $uploaded_tmp" .
+		" (alias for uploaded $uploaded)" .
+		" to $f";
+	    return;
+	}
+    }
+
+    $optn_map = compute_optn_map
+        ( $problem, $warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
+    $commands = get_commands ( $control, $optn_map );
+
+    run_commands ( $commands, $work, $output, $errors );
+    if ( count ( $errors ) > $errors_size )
+        return;
+
+    if ( isset ( $control[2]['CHECKS'] ) )
+	run_commands ( $control[2]['CHECKS'], $work,
+	               $output, $errors );
+}
+
 // Process an uploaded file whose $_FILES[...] value
 // is given by the $upload argument.
 //
@@ -1024,7 +1114,6 @@ function process_upload
     global $epm_data, $is_epm_test,
            $upload_target_ext, $upload_maxsize;
 
-    $commands = [];
     $moved = [];
     $show = [];
     $errors_size = count ( $errors );
@@ -1097,74 +1186,17 @@ function process_upload
 	return;
     }
 
-    find_templates
-	( $problem, $fname, $tname,
-	  $templates, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-    if ( count ( $templates ) == 0 )
-    {
-        $errors[] =
-	    "there are no templates" .
-	    " $fname:$tname:... for problem $problem";
-	return;
-    }
-
-    $control = find_control
-	( $templates, $local_dir, $fname,
-	  $required, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-    if ( is_null ( $control ) ) return;
-
-    $work = "$local_dir/+work+";
-    cleanup_working ( $work, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
-    link_required
-	( $fname, $work, $required, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
-    if ( file_exists ( "$work/$fname" ) )
-    {
-        $errors[] =
-	    "SYSTEM_ERROR: uploaded file is $fname" .
-	    " but $work/$fname already exists";
-	return;
-    }
-
     $ftmp_name = $upload['tmp_name'];
 
-    if ( $is_epm_test ?
-         ! rename ( $ftmp_name,
-	            "$epm_data/$work/$fname" ) :
-         ! move_uploaded_file
-	       ( $ftmp_name,
-		 "$epm_data/$work/$fname" ) )
-    {
-        $errors[] =
-	    "SYSTEM_ERROR: failed to move $ftmp_name" .
-	    " (alias for uploaded $fname)" .
-	    " to $work/$fname";
-	return;
-    }
-
-    $optn_map = compute_optn_map
-        ( $problem, $warnings, $errors );
+    $output = [];
+    make_file ( $fname, $tname,
+                $problem, $local_dir,
+		$fname, $ftmp_name,
+		$control, $commands, $output,
+		$warnings, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
-    $commands = get_commands ( $control, $optn_map );
-
-    $output = [];
-    run_commands ( $commands, $work, $output, $errors );
-    if ( count ( $errors ) > $errors_size )
-        goto SHOW;
-
-    if ( isset ( $control[2]['CHECKS'] ) )
-    {
-	run_commands ( $control[2]['CHECKS'], $work,
-	               $output, $errors );
-	if ( count ( $errors ) > $errors_size )
-	    goto SHOW;
-    }
+    $work = "$local_dir/+work+";
 
     move_keep ( $control, $work, $local_dir,
                 $moved, $errors );
@@ -1176,10 +1208,7 @@ function process_upload
 	    " $epm_data/$local_dir/$fname";
     else
         $moved[] = $fname;
-    if ( count ( $errors ) > $errors_size ) goto SHOW;
              
-
-SHOW:
     $show = compute_show
         ( $control, $work, $local_dir, $moved );
 }
