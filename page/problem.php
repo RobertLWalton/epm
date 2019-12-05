@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec  4 18:52:51 EST 2019
+    // Date:	Thu Dec  5 01:52:45 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -145,14 +145,57 @@
     elseif ( isset ( $problem ) )
 	$_SESSION['problem'] = $problem;
 
-    $problem_dir =
-        "$epm_data/users/user$userid/$problem";
+    if ( isset ( $problem ) )
+	$problem_dir =
+	    "$epm_data/users/user$userid/$problem";
+    else
+	$problem_dir = NULL;
 
+    $problem_file_names = NULL;
+        // Cache of problem_file_names().
+    function problem_file_names()
+    {
+        global $problem_dir, $problem_file_names,
+	       $display_file_ext;
+
+	if ( isset ( $problem_file_names ) )
+	    return $problem_file_names;
+
+	if ( ! isset ( $problem_dir ) )
+	{
+	    $problem_file_names = [];
+	    return $problem_file_names;
+	}
+
+	foreach ( scandir ( $problem_dir ) as $fname )
+	{
+	    if ( preg_match ( '/^\./', $fname ) )
+	        continue;
+	    if ( $fname == "+work+" ) continue;
+	    if ( preg_match ( '/[^.]\.([^.]+)$/',
+	                       $fname, $matches ) )
+		$ext = $matches[1];
+	    else
+	        $ext = "";
+	    if ( ! array_search
+	               ( $ext, $display_file_ext,
+		               true ) )
+		continue;
+	    $problem_file_names[] = $fname;
+	}
+	return $problem_file_names;
+    }
 
     if ( isset ( $_POST['show_file'] ) )
     {
-        $f = "users/user$userid/$problem/"
-	   . $_POST['show_file'];
+	$fname = $_POST['show_file'];
+	if ( array_search
+	         ( $fname, problem_file_names(),
+		           true ) === false )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problems.php" );
+
+        $f = "users/user$userid/$problem/$fname";
 	$t = exec ( "file $epm_data/$f" );
 	if ( preg_match ( '/ASCII/', $t ) )
 	    $show_file = $f;
@@ -161,9 +204,17 @@
     }
     else if ( isset ( $_POST['delete_file'] ) )
     {
-        $f = $_POST['delete_file'];
-        if ( ! unlink ( "$problem_dir/$f" ) )
+	$fname = $_POST['delete_file'];
+	if ( array_search
+	         ( $fname, problem_file_names(),
+		           true ) === false )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problems.php" );
+	$f = "$problem_dir/$fname";
+        if ( ! unlink ( $f ) )
 	    $errors[] = "could not delete $f";
+	$problem_file_names = NULL;
+	    // Clear cache.
     }
     else if ( isset ( $_POST['move_file'] ) )
     {
@@ -228,17 +279,17 @@
 		array_splice ( $lines, -1, 1 );
 	    $count = 0;
 	    echo "<div style='background-color:" .
-		 "#AEF9B0;width:50%;" .
+		 "#d0fbd1;width:50%;" .
 		 "float:right;overflow:scroll;" .
 		 "height:100%'>\n";
 	    echo "<u style='" .
-	         "background-color:#FFB3CC'>\n" .
+	         "background-color:#ffe6ee'>\n" .
 		 "$b</u>:<br><table>\n";
 	    foreach ( $lines as $line )
 	    {
 	        ++ $count;
 	        echo "<tr><td style='" .
-		     "background-color:#66CCFF;" .
+		     "background-color:#b3e6ff;" .
 		     "text-align:right;'>\n" .
 		     "<pre>$count:</pre></td>" .
 		     "<td><pre>  $line</pre></td></tr>\n";
@@ -308,21 +359,8 @@ EOT;
     if ( isset ( $problem ) )
     {
         $count = 0;
-	foreach ( scandir ( $problem_dir ) as $fname )
+	foreach ( problem_file_names() as $fname )
 	{
-	    if ( preg_match ( '/^\./', $fname ) )
-	        continue;
-	    if ( $fname == "+work+" ) continue;
-	    if ( preg_match ( '/[^.]\.([^.]+)$/',
-	                       $fname, $matches ) )
-		$ext = $matches[1];
-	    else
-	        $ext = "";
-	    if ( ! array_search
-	               ( $ext, $display_file_ext,
-		               true ) )
-		continue;
-
 	    if ( ++ $count == 1 )
 	        echo "<form action='problem.php'" .
 		     " method='POST'>" .
