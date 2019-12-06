@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec  5 01:52:45 EST 2019
+    // Date:	Fri Dec  6 00:51:41 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -29,6 +29,7 @@
     $show_files = [];   // Files shown to left.
     $errors = [];
     $warnings = [];
+    $file_made = false;
 
     if ( ! isset ( $_SESSION['epm_admin_params'] ) )
 	include 'include/get_admin_params.php';
@@ -204,13 +205,13 @@
     }
     else if ( isset ( $_POST['delete_file'] ) )
     {
-	$fname = $_POST['delete_file'];
+	$f = $_POST['delete_file'];
 	if ( array_search
-	         ( $fname, problem_file_names(),
-		           true ) === false )
+	         ( $f, problem_file_names(),
+		       true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problems.php" );
-	$f = "$problem_dir/$fname";
+	$f = "$problem_dir/$f";
         if ( ! unlink ( $f ) )
 	    $errors[] = "could not delete $f";
 	$problem_file_names = NULL;
@@ -219,15 +220,53 @@
     else if ( isset ( $_POST['move_file'] ) )
     {
         $f = $_POST['move_file'];
-	$r = preg_match ( '/^(.+)\.out$/', $f,
-	                  $matches );
-	$g = ( $r ? $matches[1] . '.test' : NULL );
-	if ( ! $r )
-	    $errors[] = "$f has wrong extension to be"
-	              . " moved to .test";
-	else if ( ! rename ( "$problem_dir/$f",
-	                     "$problem_dir/$g" ) )
+	if ( array_search
+	         ( $f, problem_file_names(),
+		       true ) === false )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problems.php" );
+	if ( ! preg_match ( '/^(.+)\.out$/', $f,
+	                  $matches ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problems.php" );
+	$g = $matches[1] . '.test';
+	if ( ! rename ( "$problem_dir/$f",
+	                "$problem_dir/$g" ) )
 	    $errors[] = "could not move $f to $g";
+	$problem_file_names = NULL;
+	    // Clear cache.
+    }
+    else if ( isset ( $_POST['make_score'] ) )
+    {
+        $f = $_POST['make_score'];
+	if ( array_search
+	         ( $f, problem_file_names(),
+		       true ) === false )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problems.php" );
+	if ( ! preg_match ( '/^(.+)\.in$/', $f,
+	                  $matches ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problems.php" );
+	$g = $matches[1] . '.score';
+	$h = $matches[1] . '.test';
+	include 'include/epm_make.php';
+	load_make_cache();
+	if ( ! isset ( $make_cache[$h] ) )
+	    $errors[] = "cannot make $g as $h does"
+	              . " not exist";
+	else
+	{
+	    $output = [];
+	    make_and_keep_file
+		( $f, $g, $problem,
+		  "users/user$userid/$problem",
+		  $commands, $kept, $show_files,
+		  $output, $warnings, $errors );
+	    $file_made = true;
+	    $problem_file_names = NULL;
+		// Clear cache.
+	}
     }
     else if ( isset ( $_POST['upload'] ) )
     {
@@ -236,12 +275,12 @@
 	if ( $uploaded_file != "" )
 	{
 	    include 'include/epm_make.php';
-	    $upload_output = [];
+	    $output = [];
 	    process_upload
 		( $upload_info, $problem,
                   "users/user$userid/$problem",
-		  $upload_commands, $upload_moved,
-		  $upload_show, $upload_output,
+		  $commands, $kept,
+		  $upload_show, $output,
 		  $warnings, $errors );
 	    foreach ( $upload_show as $f )
 	    {
@@ -252,6 +291,9 @@
 		else
 		    $show_file = $f;
 	    }
+	    $file_made = true;
+	    $problem_file_names = NULL;
+		// Clear cache.
 	}
 	else
 	    $errors[] = "no file selected for upload";
@@ -380,6 +422,13 @@ EOT;
 		     " name='move_file' value='$fname'>" .
 		     "Move to .test</button></td>";
 	    }
+	    if ( preg_match ( '/\.in$/', $fname ) )
+	    {
+		echo "<td><button type='submit'" .
+		     " name='make_score'" .
+		     " value='$fname'>" .
+		     "Make .score</button></td>";
+	    }
 	    echo "</tr>";
 	}
 	if ( $count > 0 ) echo "</table></form>";
@@ -401,27 +450,27 @@ EOT;
 </div>
 
 <?php
-    if ( isset ( $uploaded_file ) )
+    if ( $file_made )
     {
 	echo "<div style='background-color:#c0ffc0;width:50%;'>\n";
-        if ( count ( $upload_output ) > 0 )
+        if ( count ( $output ) > 0 )
 	{
 	    echo "Output:<br><ul>\n";
-	    foreach ( $upload_output as $e )
+	    foreach ( $output as $e )
 	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
 	     echo "</ul>\n";
 	}
-        if ( count ( $upload_commands ) > 0 )
+        if ( count ( $commands ) > 0 )
 	{
 	    echo "Commands:<br><ul>\n";
-	    foreach ( $upload_commands as $e )
+	    foreach ( $commands as $e )
 	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
 	     echo "</ul>\n";
 	}
-        if ( count ( $upload_moved ) > 0 )
+        if ( count ( $kept ) > 0 )
 	{
 	    echo "Kept:<ul>\n";
-	    foreach ( $upload_moved as $e )
+	    foreach ( $kept as $e )
 	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
 	     echo "</ul>\n";
 	}

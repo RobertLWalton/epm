@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Dec  5 11:08:48 EST 2019
+// Date:    Fri Dec  6 00:44:35 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -704,14 +704,24 @@ function find_control
     load_make_cache();
 
     $best_template = NULL;
-    $tlist = [];
-    $best_count = -1;
+        // First `best template' as triple.
+    $best_not_found = NULL;
+        // List of not found required files for the
+	// first template on not_found_list.
+    $found_list = [];
+        // List of all best template `names'.
+    $not_found_list = [];
+        // List of template `names' with least number
+	// of missing required files.
+    $best_found_count = -1;
+    $best_not_found_count = 1000000000;
     foreach ( $templates as $template )
     {
-	$rlist = [];
-
         $json = $template[2];
+	$flist = [];
+	$nflist = [];
 	$OK = true;
+
 	foreach ( ['REQUIRES', 'LOCAL-REQUIRES',
 	                       'REMOTE-REQUIRES']
 		  as $R )
@@ -735,57 +745,83 @@ function find_control
 		    if ( ! isset
 			     ( $make_cache[$rfile] ) )
 		    {
-		        $OK = false;
-			break;
+		        $nflist[] = $rfile;
+			continue;
 		    }
 		    $rdir = $make_cache[$rfile];
-		    if ( isset ( $local_dir ) )
-		        switch ( $R )
+		    if ( ! isset ( $local_dir ) )
+		        $flist[] = $rfile;
+		    else switch ( $R )
 		    {
 		        case 'LOCAL-REQUIRES':
-			    if ( $rdir != $local_dir )
-			        $OK = false;
+			    if ( $rdir == $local_dir )
+				$flist[] = $rfile;
+			    else
+				$nflist[] = $rfile;
 			    break;
 		        case 'REMOTE-REQUIRES':
-			    if ( $rdir == $local_dir )
-			        $OK = false;
+			    if ( $rdir != $local_dir )
+				$flist[] = $rfile;
+			    else
+				$nflist[] = $rfile;
 			    break;
+			default:
+			    $flist[] = $rfile;
 		    }
-		    if ( ! $OK ) break;
-
-		    $rlist[] = $rfile;
 		}
 	    }
 	    if ( ! $OK ) break;
 	}
 	if ( ! $OK ) continue;
 
-	$rlist = array_unique ( $rlist );
-	$rcount = count ( $rlist );
-	if ( $rcount == $best_count )
-	    $tlist[] = $template[0];
-	else if ( $rcount > $best_count )
+	$nfcount = count ( $nflist );
+	if ( $nfcount > 0 )
 	{
-	    $tlist = [$template[0]];
+	    if ( $nfcount == $best_not_found_count )
+		$not_found_list[] = $template[0];
+	    else if ( $nfcount < $best_not_found_count )
+	    {
+		$not_found_list = [$template[0]];
+		$best_not_found_count = $nfcount;
+		$best_not_found = $nflist;
+	    }
+	    continue;
+	}
+
+	$fcount = count ( $flist );
+	if ( $fcount == $best_found_count )
+	    $found_list[] = $template[0];
+	else if ( $fcount > $best_found_count )
+	{
+	    $found_list = [$template[0]];
 	    $best_template = $template;
-	    $best_count = $rcount;
-	    $required = $rlist;
+	    $best_found_count = $fcount;
+	    $required = $flist;
 	}
     }
 
-    if ( count ( $tlist ) == 1 )
+    if ( count ( $found_list ) == 1 )
 	return $best_template;
-    else if ( count ( $tlist ) == 0 )
+    else if ( count ( $found_list ) == 0 )
+    {
+        $not_found_list =
+	    implode ( " ", $not_found_list );
+        $best_not_found =
+	    implode ( " ", $best_not_found );
 	$errors[] =
 	    "no template found whose required" .
-	    " files exist";
+	    " files exist; closest are:\n" .
+	    "    $not_found_list\n" .
+	    "first has missing required files:\n" .
+	    "    $best_not_found";
+    }
     else
     {
-        $tlist = implode ( " ", $tlist );
+        $found_list = implode ( " ", $found_list );
 	$errors[] =
 	    "too many templates found with the same" .
 	    " number of existing required files:\n" .
-	    "    $tlist";
+	    "    $found_list";
     }
     $required = [];
     return NULL;
@@ -1114,12 +1150,12 @@ function make_and_keep_file
 		NULL, NULL,
 		$control, $commands, $output,
 		$warnings, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
 
     $work = "$local_dir/+work+";
 
-    move_keep ( $control, $work, $local_dir,
-                $moved, $errors );
+    if ( count ( $errors ) == $errors_size )
+	move_keep ( $control, $work, $local_dir,
+		    $moved, $errors );
  
     $show = compute_show
         ( $control, $work, $local_dir, $moved );

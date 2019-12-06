@@ -42,7 +42,7 @@ if ( ! isset ( $params['display_file_ext'] ) )
         "c", "cc", "java", "py", "tex",
 	"", "pdf",
 	"in", "gin", "out", "fout", "test", "ftest",
-	"err", "log", "fls"];
+	"err", "log", "fls", "score"];
 
 if ( ! isset ( $params['upload_maxsize'] ) )
     $params['upload_maxsize'] = 262144; // 256 kb
