@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec  6 00:51:41 EST 2019
+    // Date:	Fri Dec  6 13:47:52 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -30,14 +30,14 @@
     $errors = [];
     $warnings = [];
     $file_made = false;
+    $delete_problem = false;
+    $deleted_problem = NULL;
 
     if ( ! isset ( $_SESSION['epm_admin_params'] ) )
 	include 'include/get_admin_params.php';
     $params = $_SESSION['epm_admin_params'];
     $upload_maxsize = $params['upload_maxsize'];
     $display_file_ext = $params['display_file_ext'];
-
-    // include 'include/debug_info.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -54,26 +54,6 @@
     {
 	header ( "Location: user_edit.php" );
 	exit;
-    }
-
-    // Set $problems to list of available problems.
-    //
-    $problems = [];
-
-    $desc = opendir ( $user_dir );
-    if ( ! $desc )
-         error
-	     ( "SYSTEM ERROR: cannot open $user_dir" );
-    while ( true )
-    {
-	$value = readdir ( $desc );
-	if ( ! $value )
-	{
-	    closedir ( $desc );
-	    break;
-	}
-	if ( ! preg_match ( '/^\.\.*$/', $value ) )
-	    $problems[] = $value;
     }
 
     // Set $problem to current problem, or NULL if none.
@@ -126,8 +106,6 @@
 	    elseif ( ! mkdir ( $problem_dir, 0770 ) )
 		exit ( "SYSTEM ERROR: cannot make" .
 		       $problem_dir );
-	    else
-	        $problems[] = $problem;
 	}
 	elseif ( ! is_writable
 		      ( "$epm_data/users/user$userid" .
@@ -151,6 +129,64 @@
 	    "$epm_data/users/user$userid/$problem";
     else
 	$problem_dir = NULL;
+
+    if ( isset ( $_POST['delete_problem'] ) )
+    {
+	$prob = $_POST['delete_problem'];
+	if ( $prob != $problem )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	$delete_problem_tag =
+	    bin2hex ( random_bytes ( 8 ) );
+	$_SESSION['delete_problem_tag'] =
+	    $delete_problem_tag;
+	$delete_problem = true;
+    }
+    else if ( isset ( $_POST['delete_problem_yes'] ) )
+    {
+        if ( ! isset ( $_SESSION['delete_problem_tag'] )
+	     ||
+	        $_SESSION['delete_problem_tag']
+	     != $_POST['delete_problem_yes'] )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+        unset ( $_SESSION['delete_problem_tag'] );
+	exec ( "rm -rf $problem_dir" );
+	$deleted_problem = $problem;
+	$problem = NULL;
+	$problem_dir = NULL;
+	unset ( $_SESSION['problem'] );
+    }
+    else if ( isset ( $_POST['delete_problem_no'] ) )
+    {
+        if ( ! isset ( $_SESSION['delete_problem_tag'] )
+	     ||
+	        $_SESSION['delete_problem_tag']
+	     != $_POST['delete_problem_no'] )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+        unset ( $_SESSION['delete_problem_tag'] );
+    }
+
+    // Set $problems to list of available problems.
+    //
+    $problems = [];
+
+    $desc = opendir ( $user_dir );
+    if ( ! $desc )
+         error
+	     ( "SYSTEM ERROR: cannot open $user_dir" );
+    while ( true )
+    {
+	$value = readdir ( $desc );
+	if ( ! $value )
+	{
+	    closedir ( $desc );
+	    break;
+	}
+	if ( ! preg_match ( '/^\.\.*$/', $value ) )
+	    $problems[] = $value;
+    }
 
     $problem_file_names = NULL;
         // Cache of problem_file_names().
@@ -194,7 +230,7 @@
 	         ( $fname, problem_file_names(),
 		           true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
-	           " problems.php" );
+	           " problem.php" );
 
         $f = "users/user$userid/$problem/$fname";
 	$t = exec ( "file $epm_data/$f" );
@@ -210,7 +246,7 @@
 	         ( $f, problem_file_names(),
 		       true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
-	           " problems.php" );
+	           " problem.php" );
 	$f = "$problem_dir/$f";
         if ( ! unlink ( $f ) )
 	    $errors[] = "could not delete $f";
@@ -224,11 +260,11 @@
 	         ( $f, problem_file_names(),
 		       true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
-	           " problems.php" );
+	           " problem.php" );
 	if ( ! preg_match ( '/^(.+)\.out$/', $f,
 	                  $matches ) )
 	    exit ( "ACCESS: illegal POST to" .
-	           " problems.php" );
+	           " problem.php" );
 	$g = $matches[1] . '.test';
 	if ( ! rename ( "$problem_dir/$f",
 	                "$problem_dir/$g" ) )
@@ -243,11 +279,11 @@
 	         ( $f, problem_file_names(),
 		       true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
-	           " problems.php" );
+	           " problem.php" );
 	if ( ! preg_match ( '/^(.+)\.in$/', $f,
 	                  $matches ) )
 	    exit ( "ACCESS: illegal POST to" .
-	           " problems.php" );
+	           " problem.php" );
 	$g = $matches[1] . '.score';
 	$h = $matches[1] . '.test';
 	include 'include/epm_make.php';
@@ -348,6 +384,30 @@
 <div style="background-color:#96F9F3;width:50%;float:left">
 <?php 
 
+    if ( $delete_problem )
+    {
+	echo "<div style='background-color:#F5F81A'>\n";
+	echo "<form method='POST'" .
+	     " style='display:inline'" .
+	     " action=problem.php>";
+	echo "Do you really want to delete current" .
+	     " problem $problem?";
+	echo "&nbsp;&nbsp;<button type='submit'" .
+	     " name='delete_problem_yes'" .
+	     " value='$delete_problem_tag'>" .
+	     "YES</button>";
+	echo "&nbsp;&nbsp;<button type='submit'" .
+	     " name='delete_problem_no'" .
+	     " value='$delete_problem_tag'>" .
+	     "NO</button>";
+	echo "</form></div>\n";
+    }
+    else if ( isset ( $deleted_problem ) )
+    {
+	echo "<div style='background-color:#F5F81A'>\n";
+	echo "Problem $deleted_problem has been deleted!<br>";
+	echo "</div>\n";
+    }
     if ( count ( $errors ) > 0 )
     {
 	echo "<div style='background-color:#F5F81A'>\n";
@@ -355,7 +415,7 @@
 	echo "<div style='margin-left:20px;font-size:110%'>\n";
 	foreach ( $errors as $e )
 	    echo "<pre>$e</pre><br>\n";
-	 echo "</div></div>\n";
+	echo "</div></div>\n";
     }
     if ( count ( $warnings ) > 0 )
     {
@@ -364,20 +424,30 @@
 	echo "<div style='margin-left:20px'>\n";
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>\n";
-	 echo "</div></div>\n";
+	echo "</div></div>\n";
     }
 
     $current_problem = ( isset ( $problem ) ?
                                  $problem :
 			         "none selected" );
     echo <<<EOT
-    <form action='user.php' method='GET'>
+    <form style='display:inline' action='user.php' method='GET'>
     User: <input type='submit' value='$email'>
+    </form>
     &nbsp;&nbsp;&nbsp;&nbsp;
     <b>Current Problem:</b>&nbsp;$current_problem
-    </form>
-    <table><form action='problem.php' method='POST'>
 EOT;
+    if ( isset ( $problem ) )
+        echo "&nbsp;&nbsp;&nbsp;&nbsp;" .
+	     "<form style='display:inline'" .
+	     " action='problem.php' method='POST'>" .
+             " <button type='submit'" .
+	     " name='delete_problem'" .
+	     " value='$problem'>" .
+	     "Delete Current Problem</button>" .
+	     "</form>";
+    echo "<br>";
+    echo "<table><form action='problem.php' method='POST'>";
     if ( count ( $problems ) > 0 )
     {
 	echo "<tr><td style='text-align:right'>" .
@@ -452,26 +522,30 @@ EOT;
 <?php
     if ( $file_made )
     {
-	echo "<div style='background-color:#c0ffc0;width:50%;'>\n";
+	echo "<div style='background-color:#c0ffc0;" .
+	     "width:50%;'>\n";
         if ( count ( $output ) > 0 )
 	{
 	    echo "Output:<br><ul>\n";
 	    foreach ( $output as $e )
-	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
+	        echo "<li><pre style='margin:0 0'>" .
+		     "$e</pre>\n";
 	     echo "</ul>\n";
 	}
         if ( count ( $commands ) > 0 )
 	{
 	    echo "Commands:<br><ul>\n";
 	    foreach ( $commands as $e )
-	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
+	        echo "<li><pre style='margin:0 0'>" .
+		     "$e</pre>\n";
 	     echo "</ul>\n";
 	}
         if ( count ( $kept ) > 0 )
 	{
 	    echo "Kept:<ul>\n";
 	    foreach ( $kept as $e )
-	        echo "<li><pre style='margin:0 0'>$e</pre>\n";
+	        echo "<li><pre style='margin:0 0'>" .
+		     "$e</pre>\n";
 	     echo "</ul>\n";
 	}
 	echo "</div>\n";
