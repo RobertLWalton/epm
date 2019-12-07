@@ -2,19 +2,29 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 25 00:02:07 EST 2019
+    // Date:	Sat Dec  7 07:56:14 EST 2019
 
     // To set up a epm instance you need the following
     // directories:
     //
-    //		R	Root directory of server.
-    //		R/W	Place you will put epm's
-    //			index.html
-    //		P	This directory containing
-    //			page .php files.
-    //		D	Directory that will contain
-    //			data.  This must NOT be a
-    //			subdirectory of R.
+    //	   R	Root directory of server.
+    //	   R/W	Place you will put epm's index.html
+    //	   E	The `epm' directory containing `page',
+    //		`template', etc subdirectories.  Must
+    //		NOT be a subdirectory of R.
+    //	   D	Directory that will contain data.  This
+    //		must NOT be a subdirectory of R.  Also,
+    //	   	o+x permissions must be set on this dir-
+    //		ectory and all its parents, because
+    //		running JAVA in epm_sandbox requires
+    //		that the path to the JAVA .class file
+    //		be traversable by `others'.  Because of
+    //		this, the last component of the name D
+    //		should have a 12 digit random number in
+    //		it that is unique to your installation,
+    //		and the parent of this last component
+    //		should have o-r permissions so the name
+    //		D acts like an impenatrable password.
     //
     // You also need to put the UNIX account you are
     // using in the web server's UNIX group, denoted
@@ -24,25 +34,23 @@
     // web server.
     //
     // We assume only your account, and not the web
-    // server, will have write permissions on R/W and P.
+    // server, will have write permissions on R/W and E.
     //
-    // Then to install, populate P with the epm/page
-    // files and execute:
+    // Then to install, after populating E and creating
+    // R, R/W, and D:
     //
     //		chgrp WEB-SERVERS-GROUP \
-    //		      R/W `find P` `find D`
+    //		      R/W `find E` `find D`
     //		chmod g+s \
-    //		      R/W `find P -type d` \
+    //		      R/W `find E -type d` \
     //                    `find D -type d`
-    //		chmod g-w R/W `find P`
+    //		chmod g-w R/W `find E`
     //
     //		cd R/W
-    //		cp -p P/index.php .
-    //		ln -s P page
+    //		cp -p E/page/index.php .
+    //		chmod u+w index.php
+    //		ln E/page .
     //		<edit parameters in R/W/index.php>
-
-    // The directory containing the page sources
-    // MUST be linked to R/W/page.
 
     $script_name = $_SERVER['SCRIPT_FILENAME'];
     $script_dir = dirname ( $script_name );
@@ -81,10 +89,13 @@
     $_SESSION['epm_data'] =
 	dirname ( $_SERVER['DOCUMENT_ROOT'] ) .
 	'/data';
+	// WARNING: this is only a test setting;
+	//          reset this to D above.
 
     $_SESSION['epm_root'] =
 	dirname ( $_SERVER['DOCUMENT_ROOT'] );
-	// Location of template and src subdirectories.
+	// WARNING: this is only a test setting;
+	//          reset this to E above.
 
     $_SESSION['epm_confirmation_interval'] =
 	30 * 24 * 60 * 60;
