@@ -108,7 +108,7 @@
     $_SESSION['epm_admin_params'] = $admin_params;
 
     $confirmation_interval =
-        $admin_params['epm_confirmation_interval'];
+        $admin_params['confirmation_interval'];
 
     $ipaddr = $_SERVER['REMOTE_ADDR'];
     if ( ! isset ( $_SESSION['ipaddr'] ) )
