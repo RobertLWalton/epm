@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec  6 13:47:52 EST 2019
+    // Date:	Sat Dec  7 17:59:43 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -22,6 +22,7 @@
     }
 
     $epm_data = $_SESSION['epm_data'];
+    $epm_root = $_SESSION['epm_root'];
     $userid = $_SESSION['userid'];
 
     $uploaded_file = NULL;
@@ -34,7 +35,9 @@
     $deleted_problem = NULL;
 
     if ( ! isset ( $_SESSION['epm_admin_params'] ) )
-	include 'include/get_admin_params.php';
+        exit ( 'SYSTEM ERROR: problems.php:' .
+	       ' $_SESSION["epm_admin_params"]' .
+	       ' not set' );
     $params = $_SESSION['epm_admin_params'];
     $upload_maxsize = $params['upload_maxsize'];
     $display_file_ext = $params['display_file_ext'];

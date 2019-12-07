@@ -40,8 +40,14 @@ if ( ! isset ( $_SESSION['epm_admin_params'] ) )
 $params = $_SESSION['epm_admin_params'];
 $upload_target_ext = $params['upload_target_ext'];
 $upload_maxsize = $params['upload_maxsize'];
-$template_dirs = $params['template_dirs'];
 $display_file_ext = $params['display_file_ext'];
+
+// Template directories:
+//
+$template_dirs = [];
+if ( is_dir ( "$epm_data/template" ) )
+    $template_dirs[] = "$epm_data/template";
+$template_dirs[] = "$epm_root/template";
 
 // Problem Parameters:
 //

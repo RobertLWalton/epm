@@ -1,0 +1,22 @@
+{
+    "upload_target_ext": {
+        "c": "",
+	"cc": "",
+	"java": "class",
+	"py": "pyc",
+	"tex": "pdf",
+	"in": "out"},
+
+    "display_file_ext" : [
+        "c", "cc", "java", "py", "tex",
+	"", "pdf",
+	"in", "gin", "out", "fout",
+	"test", "ftest",
+	"err", "log", "fls", "score"],
+
+    "upload_maxsize": 262144,
+
+    "confirmation_interval": 2592000,
+
+    "epm_max_emails": 3
+}

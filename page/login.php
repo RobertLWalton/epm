@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Nov 19 02:01:50 EST 2019
+    // Date:	Sat Dec  7 18:08:14 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -49,19 +49,66 @@
     clearstatcache();
     umask ( 07 );
 
-    if ( ! isset ( $_SESSION['epm_data'] ) )
+    if ( ! isset ( $_SESSION['epm_root'] )
+         ||
+	 ! isset ( $_SESSION['epm_data'] ) )
     {
         // User saved src/login.php and is trying to
 	// reuse it to login again and start another
-	// session.  Go to edited version of index.php.
+	// session.  Go to index.php (which will go
+	// to edited version).
 	//
         header ( 'Location: index.php' );
 	exit;
     }
 
+    $epm_root = $_SESSION['epm_root'];
     $epm_data = $_SESSION['epm_data'];
+
+    // Get default administrative parameters.
+    //
+    $f = "$epm_root/src/default_admin.params";
+    $c = file_get_contents ( $f );
+    if ( $c === false )
+    {
+        $sysfail = "cannot read $f";
+	include 'include/sysalert.php';
+    }
+    $admin_params = json_decode ( $c, true );
+    if ( $admin_params === NULL )
+    {
+	$m = json_last_error_msg();
+        $sysfail = "cannot decode json $f:\n    $m";
+	include 'include/sysalert.php';
+    }
+
+    // Get local administrative parameter overrides.
+    //
+    $f = "$epm_data/admin/admin.params";
+    if ( is_readable ( $f ) )
+    {
+	$c = file_get_contents ( $f );
+	if ( $c === false )
+	{
+	    $sysfail = "cannot read readable $f";
+	    include 'include/sysalert.php';
+	}
+	$j = json_decode ( $c, true );
+	if ( $j === NULL )
+	{
+	    $m = json_last_error_msg();
+	    $sysfail =
+	        "cannot decode json $f:\n    $m";
+	    include 'include/sysalert.php';
+	}
+	foreach ( $j as $key => $value )
+	    $admin_params[$key] = $value;
+
+    }
+    $_SESSION['epm_admin_params'] = $admin_params;
+
     $confirmation_interval =
-        $_SESSION['epm_confirmation_interval'];
+        $admin_params['epm_confirmation_interval'];
 
     $ipaddr = $_SERVER['REMOTE_ADDR'];
     if ( ! isset ( $_SESSION['ipaddr'] ) )
