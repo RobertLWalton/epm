@@ -25,7 +25,7 @@
 		 "description": "allowed virtual memory in megabytes",
 		 "valname": "SPACE" },
      "space-arg":  { "values": ["-space SPACEm"],
-		     "argname": "SANDBOX-ARGS" },
+		     "argname": "SANDBOX-SPACE-ARG" },
      "filesize": { "type": "natural",
                    "range": ["1", "2048"],
 		   "default": "2048",

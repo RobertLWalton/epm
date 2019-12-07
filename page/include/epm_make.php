@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Dec  6 00:44:35 EST 2019
+// Date:    Sat Dec  7 03:17:40 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -1253,6 +1253,7 @@ function process_upload
 	return;
     }
 
+    $work = "$local_dir/+work+";
     $ftmp_name = $upload['tmp_name'];
 
     $output = [];
@@ -1261,9 +1262,8 @@ function process_upload
 		$fname, $ftmp_name,
 		$control, $commands, $output,
 		$warnings, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
-    $work = "$local_dir/+work+";
+    if ( count ( $errors ) > $errors_size )
+        goto SHOW;
 
     move_keep ( $control, $work, $local_dir,
                 $moved, $errors );
@@ -1276,6 +1276,8 @@ function process_upload
     else
         $moved[] = $fname;
              
+SHOW:
+
     $show = compute_show
         ( $control, $work, $local_dir, $moved );
 }
