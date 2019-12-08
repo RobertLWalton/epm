@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 03:54:46 EST 2019
+    // Date:	Sun Dec  8 04:16:17 EST 2019
 
     // Displays files:
     //
@@ -37,7 +37,7 @@
     }
 
     $userid = $_SESSION['epm_userid'];
-    $email = $_SESSION['email'];
+    $email = $_SESSION['epm_email'];
 
     // Set $emails to the emails in admin/email_index
     // that point at $userid.

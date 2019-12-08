@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 03:54:29 EST 2019
+    // Date:	Sun Dec  8 04:16:05 EST 2019
 
     // Edits files:
     //
@@ -53,9 +53,9 @@
 
     // include 'include/debug_info.php';
 
-    $email = $_SESSION['email'];
+    $email = $_SESSION['epm_email'];
     $userid = $_SESSION['epm_userid'];
-    $ipaddr = $_SESSION['ipaddr'];
+    $ipaddr = $_SESSION['epm_ipaddr'];
     $confirmation_time =
         $_SESSION['epm_confirmation_time'];
 
@@ -325,7 +325,7 @@
 	                      "/users/user$userid",
 	                      0770 ) )
 	        ++ $userid;
-	    $_SESSION['userid'] = $userid;
+	    $_SESSION['epm_userid'] = $userid;
 	}
 
 

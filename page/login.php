@@ -2,15 +2,15 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 03:50:51 EST 2019
+    // Date:	Sun Dec  8 04:15:47 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
     //    epm_userid
-    //    email
-    //    ipaddr
+    //    epm_email
+    //    epm_ipaddr
     //    epm_confirmation_time
-    //    login_time
+    //    epm_login_time
     //
     // Login for a session has completed if confirma-
     // tion_time has been set and userid is an integer.
@@ -123,9 +123,9 @@
         $admin_params['confirmation_interval'];
 
     $ipaddr = $_SERVER['REMOTE_ADDR'];
-    if ( ! isset ( $_SESSION['ipaddr'] ) )
-        $_SESSION['ipaddr'] = $ipaddr;
-    else if ( $_SESSION['ipaddr'] != $ipaddr )
+    if ( ! isset ( $_SESSION['epm_ipaddr'] ) )
+        $_SESSION['epm_ipaddr'] = $ipaddr;
+    else if ( $_SESSION['epm_ipaddr'] != $ipaddr )
         exit ( 'ERROR: SESSION IP ADDRESS CHANGED;' .
 	       ' RESTART BROWSER' );
 
@@ -139,12 +139,12 @@
 	$email = NULL;
 	$bad_email = false;
 	$confirmation_time = NULL;
-	if ( isset ( $_SESSION['login_time'] ) )
-	    $login_time = $_SESSION['login_time'];
+	if ( isset ( $_SESSION['epm_login_time'] ) )
+	    $login_time = $_SESSION['epm_login_time'];
 	else
 	{
 	    $login_time = time();
-	    $_SESSION['login_time'] = $login_time;
+	    $_SESSION['epm_login_time'] = $login_time;
 	}
     }
 
@@ -155,7 +155,7 @@
     {
 	if ( isset ( $_POST['confirm'] ) )
 	{
-	    if ( ! isset ( $_SESSION['email'] ) )
+	    if ( ! isset ( $_SESSION['epm_email'] ) )
 	        exit ( 'BAD POST; IGNORED' ); 
 		// If session email set, so is
 		// session userid.
@@ -181,7 +181,7 @@
 	    }
 
 	    $userid = $_SESSION['epm_userid'];
-	    $email = $_SESSION['email'];
+	    $email = $_SESSION['epm_email'];
 	}
 	else if ( isset ( $_POST['email'] ) )
 	{
@@ -220,7 +220,7 @@
 		else
 		    $userid = 'NEW';
 		$_SESSION['epm_userid'] = $userid;
-		$_SESSION['email'] = $email;
+		$_SESSION['epm_email'] = $email;
 	    }
 	}
     }
@@ -265,7 +265,7 @@
 	//
 	$_SESSION['epm_confirmation_time'] =
 	    $confirmation_time;
-	$ipaddr = $_SESSION['ipaddr'];
+	$ipaddr = $_SESSION['epm_ipaddr'];
 	$user['confirmation_time'][$ipaddr] =
 	    strftime ( '%FT%T%z', $confirmation_time );
 	$user_json = json_encode
@@ -353,9 +353,9 @@
 
 	echo ' confirmation number has been mailed'
 	     . ' to your email address.<br><br>';
-	echo 'Email Address: ' . $_SESSION['email']
+	echo 'Email Address: ' . $_SESSION['epm_email']
 	     . '&nbsp;&nbsp;/&nbsp;&nbsp;';
-	echo 'IP Address: ' . $_SESSION['ipaddr']
+	echo 'IP Address: ' . $_SESSION['epm_ipaddr']
 	     . '<br><br>';
 	echo $begin_form;
 	echo 'Confirmation Number:' .

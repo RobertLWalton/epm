@@ -2,7 +2,7 @@
 
     // File:	first_user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 03:50:15 EST 2019
+    // Date:	Sun Dec  8 04:15:30 EST 2019
 
     // Asks user if they are the first user.  If yes
     // makes the following directories and then goes
