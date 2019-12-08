@@ -2,7 +2,7 @@
 
     // File:	first_user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Nov 18 17:03:58 EST 2019
+    // Date:	Sun Dec  8 03:50:15 EST 2019
 
     // Asks user if they are the first user.  If yes
     // makes the following directories and then goes
@@ -15,12 +15,7 @@
     session_start();
     clearstatcache();
     umask ( 07 );
-    if ( ! isset ( $_SESSION['epm_data'] ) )
-    {
-	header ( "Location: index.php" );
-	exit;
-    }
-    if ( ! isset ( $_SESSION['confirmation_time'] ) )
+    if ( ! isset ( $_SESSION['epm_userid'] ) )
     {
 	header ( "Location: login.php" );
 	exit;

@@ -2,14 +2,14 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Dec  7 18:08:14 EST 2019
+    // Date:	Sun Dec  8 03:50:51 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
-    //    userid
+    //    epm_userid
     //    email
     //    ipaddr
-    //    confirmation_time
+    //    epm_confirmation_time
     //    login_time
     //
     // Login for a session has completed if confirma-
@@ -49,6 +49,9 @@
     clearstatcache();
     umask ( 07 );
 
+    // We come here from other pages if
+    // $_SESSION['epm_userid'] is not set.
+
     if ( ! isset ( $_SESSION['epm_root'] )
          ||
 	 ! isset ( $_SESSION['epm_data'] ) )
@@ -59,6 +62,15 @@
 	// to edited version).
 	//
         header ( 'Location: index.php' );
+	exit;
+    }
+    if ( ! isset ( $_SESSION['epm_userid'] )
+         &&
+	 isset ( $_SESSION['epm_confirmation_time'] ) )
+    {
+        // We have confirmed new user.
+	//
+        header ( 'Location: user_edit.php' );
 	exit;
     }
 
@@ -147,15 +159,16 @@
 	        exit ( 'BAD POST; IGNORED' ); 
 		// If session email set, so is
 		// session userid.
-	    elseif ( isset ( $_SESSION
-	                     ['confirmation_time'] ) )
+	    elseif ( isset
+	               ( $_SESSION
+	                 ['epm_confirmation_time'] ) )
 	        exit ( 'ALREADY CONFIRMED; YOU BEAT' .
 		       ' YOURSELF TO IT' ); 
 	    elseif (    $_SESSION['confirm']
 	              == $_POST['confirm'] )
 	    {
 		$confirmation_time = time();
-		$_SESSION['confirmation_time'] =
+		$_SESSION['epm_confirmation_time'] =
 		    $confirmation_time;
 		$log_confirmation_time = strftime
 		    ( $date_format,
@@ -167,7 +180,7 @@
 		$log_confirmation_time = 'FAILED';
 	    }
 
-	    $userid = $_SESSION['userid'];
+	    $userid = $_SESSION['epm_userid'];
 	    $email = $_SESSION['email'];
 	}
 	else if ( isset ( $_POST['email'] ) )
@@ -206,7 +219,7 @@
 		}
 		else
 		    $userid = 'NEW';
-		$_SESSION['userid'] = $userid;
+		$_SESSION['epm_userid'] = $userid;
 		$_SESSION['email'] = $email;
 	    }
 	}
@@ -250,7 +263,7 @@
         // Record current time as last confirmation
 	// time for the user and ip address.
 	//
-	$_SESSION['confirmation_time'] =
+	$_SESSION['epm_confirmation_time'] =
 	    $confirmation_time;
 	$ipaddr = $_SESSION['ipaddr'];
 	$user['confirmation_time'][$ipaddr] =
@@ -282,7 +295,7 @@
 	         < $ctime + $confirmation_interval )
 	    {
 	        $confirmation_time = $ctime;
-		$_SESSION['confirmation_time'] =
+		$_SESSION['epm_confirmation_time'] =
 		    $confirmation_time;
 	    }
 	}

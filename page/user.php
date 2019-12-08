@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Nov 27 22:53:43 EST 2019
+    // Date:	Sun Dec  8 03:54:46 EST 2019
 
     // Displays files:
     //
@@ -15,12 +15,7 @@
 
     session_start();
     clearstatcache();
-    if ( ! isset ( $_SESSION['epm_data'] ) )
-    {
-	header ( "Location: index.php" );
-	exit;
-    }
-    if ( ! isset ( $_SESSION['confirmation_time'] ) )
+    if ( ! isset ( $_SESSION['epm_userid'] ) )
     {
 	header ( "Location: login.php" );
 	exit;
@@ -41,15 +36,8 @@
 	exit;
     }
 
-    $userid = $_SESSION['userid'];
+    $userid = $_SESSION['epm_userid'];
     $email = $_SESSION['email'];
-    $confirmation_time = $_SESSION['confirmation_time'];
-
-    if ( $userid == 'NEW' )
-    {
-	header ( "Location: user_edit.php" );
-	exit;
-    }
 
     // Set $emails to the emails in admin/email_index
     // that point at $userid.

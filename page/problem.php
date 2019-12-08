@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Dec  7 17:59:43 EST 2019
+    // Date:	Sun Dec  8 03:55:45 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -10,20 +10,16 @@
     session_start();
     clearstatcache();
     umask ( 06 );
-    if ( ! isset ( $_SESSION['epm_data'] ) )
-    {
-	header ( "Location: index.php" );
-	exit;
-    }
-    if ( ! isset ( $_SESSION['confirmation_time'] ) )
+    if ( ! isset ( $_SESSION['epm_userid'] ) )
     {
 	header ( "Location: login.php" );
 	exit;
     }
 
+    $userid = $_SESSION['epm_userid'];
     $epm_data = $_SESSION['epm_data'];
     $epm_root = $_SESSION['epm_root'];
-    $userid = $_SESSION['userid'];
+    $email = $_SESSION['email'];
 
     $uploaded_file = NULL;
     $show_file = NULL;  // File shown to right.
@@ -46,8 +42,6 @@
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
-    $userid = $_SESSION['userid'];
-    $email = $_SESSION['email'];
 
     $user_dir = "$epm_data/users/user$userid";
 

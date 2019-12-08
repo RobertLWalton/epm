@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Dec  7 19:01:34 EST 2019
+    // Date:	Sun Dec  8 03:54:29 EST 2019
 
     // Edits files:
     //
@@ -15,7 +15,7 @@
     //		users/user$userid
     //	        admin/user$userid.json
     //
-    // if $_SESSION['userid'] == 'NEW'.
+    // if $_SESSION['epm_userid'] == 'NEW'.
     //
     // Does this by using a form to collect the follow-
     // ing information:
@@ -34,7 +34,8 @@
 	header ( "Location: index.php" );
 	exit;
     }
-    if ( ! isset ( $_SESSION['confirmation_time'] ) )
+    if ( ! isset
+              ( $_SESSION['epm_confirmation_time'] ) )
     {
 	header ( "Location: login.php" );
 	exit;
@@ -53,9 +54,10 @@
     // include 'include/debug_info.php';
 
     $email = $_SESSION['email'];
-    $userid = $_SESSION['userid'];
+    $userid = $_SESSION['epm_userid'];
     $ipaddr = $_SESSION['ipaddr'];
-    $confirmation_time = $_SESSION['confirmation_time'];
+    $confirmation_time =
+        $_SESSION['epm_confirmation_time'];
 
     // Set $emails to the emails in admin/email_index
     // that point at the current $userid, or to [] if
