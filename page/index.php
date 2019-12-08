@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Dec  7 07:56:14 EST 2019
+    // Date:	Sat Dec  7 19:00:48 EST 2019
 
     // To set up a epm instance you need the following
     // directories:
@@ -96,15 +96,6 @@
 	dirname ( $_SERVER['DOCUMENT_ROOT'] );
 	// WARNING: this is only a test setting;
 	//          reset this to E above.
-
-    $_SESSION['epm_confirmation_interval'] =
-	30 * 24 * 60 * 60;
-	// Interval in seconds that confirmation
-	// will be valid for a given email address
-	// and ip address.  Default, 30 days.
-
-    $_SESSION['epm_max_emails'] = 3;
-	// Maximum number of emails a user may have.
 
     header ( "Location: page/login.php" );
     exit;

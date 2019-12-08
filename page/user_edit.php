@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Nov 27 23:11:50 EST 2019
+    // Date:	Sat Dec  7 19:01:34 EST 2019
 
     // Edits files:
     //
@@ -41,6 +41,7 @@
     }
 
     $epm_data = $_SESSION['epm_data'];
+    $admin_params = $_SESSION['epm_admin_params'];
 
     if ( ! is_writable
                ( "$epm_data/admin/email_index" ) )
@@ -93,7 +94,7 @@
 	}
     }
     sort ( $emails );
-    $max_emails = max ( $_SESSION['epm_max_emails'],
+    $max_emails = max ( $admin_params['max_emails'],
                         count ( $emails ) );
 
     // Set $user to admin/user$userid.json contents,

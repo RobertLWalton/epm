@@ -18,5 +18,5 @@
 
     "confirmation_interval": 2592000,
 
-    "epm_max_emails": 3
+    "max_emails": 3
 }
