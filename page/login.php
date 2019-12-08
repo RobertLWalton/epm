@@ -2,31 +2,29 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 04:45:52 EST 2019
+    // Date:	Sun Dec  8 05:07:27 EST 2019
 
-    // Handles login for a session.  Sets _SESSION:
+    // Handles login for a session.  Sets $_SESSION:
     //
     //    epm_userid
+    //	      This is set iff the user is completely
+    //	      logged in.
     //    epm_email
-    //    epm_ipaddr
+    //	      This is set after the user has supplied
+    //        their email address.
     //    epm_confirmation_time
+    //	      This is set after epm_mail has been
+    //        confirmed (it may be auto-confirmed);
     //    epm_login_time
-    //
-    // Login for a session has completed if confirma-
-    // tion_time has been set and userid is an integer.
-    // Confirmation_time is the time of the last confir-
-    // mation, which may be days before the current
-    // time.
+    //    epm_ipaddr
+    //        These are set when login.php is first
+    //        invoked for a session.
     //
     // The userid is not set if this is a new user which
     // has not yet been assigned a user id.  Otherwise
     // it is a natural number (1, 2, ...).  If userid is
     // not set, it is set to a natural number by the
     // user_edit.php page.
-    //
-    // Login_time is the time this page first accessed
-    // for a session.  Once a session is logged in,
-    // it stays logged in indefinitely.
     //
     // Login attempts are logged to the file
     //
@@ -77,32 +75,17 @@
     $epm_root = $_SESSION['epm_root'];
     $epm_data = $_SESSION['epm_data'];
 
-    // Get default administrative parameters.
+    // Get and decode json file, which must be
+    // readable.  It is a fatal error if the
+    // file cannot be read or decoded.
     //
-    $f = "$epm_root/src/default_admin.params";
-    $c = file_get_contents ( $f );
-    if ( $c === false )
+    function get_json ( $filename )
     {
-        $sysfail = "cannot read $f";
-	include 'include/sysalert.php';
-    }
-    $admin_params = json_decode ( $c, true );
-    if ( $admin_params === NULL )
-    {
-	$m = json_last_error_msg();
-        $sysfail = "cannot decode json $f:\n    $m";
-	include 'include/sysalert.php';
-    }
-
-    // Get local administrative parameter overrides.
-    //
-    $f = "$epm_data/admin/admin.params";
-    if ( is_readable ( $f ) )
-    {
+	$f = $filename;
 	$c = file_get_contents ( $f );
 	if ( $c === false )
 	{
-	    $sysfail = "cannot read readable $f";
+	    $sysfail = "cannot read $f";
 	    include 'include/sysalert.php';
 	}
 	$j = json_decode ( $c, true );
@@ -113,6 +96,25 @@
 	        "cannot decode json $f:\n    $m";
 	    include 'include/sysalert.php';
 	}
+	return $j;
+    }
+
+    // Get default administrative parameters.
+    //
+    $f = "$epm_root/src/default_admin.params";
+    if ( ! is_readable ( $f ) )
+    {
+        $sysfail = "cannot read $f";
+	include 'include/sysalert.php';
+    }
+    $admin_params = get_json ( $f );
+
+    // Get local administrative parameter overrides.
+    //
+    $f = "$epm_data/admin/admin.params";
+    if ( is_readable ( $f ) )
+    {
+        $j = get_json ( $f );
 	foreach ( $j as $key => $value )
 	    $admin_params[$key] = $value;
 

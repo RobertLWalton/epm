@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 04:40:12 EST 2019
+    // Date:	Sun Dec  8 05:13:39 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -10,6 +10,9 @@
     session_start();
     clearstatcache();
     umask ( 06 );
+        // o+x must be allowed on problem executables
+	// and directories because of epm_sandbox.
+
     if ( ! isset ( $_SESSION['epm_userid'] ) )
     {
 	header ( "Location: login.php" );
@@ -92,7 +95,7 @@
 		    " for user $email";
 		$problem = NULL;
 	    }
-	    elseif ( ! mkdir ( $problem_dir, 0770 ) )
+	    elseif ( ! mkdir ( $problem_dir, 0771 ) )
 		exit ( "SYSTEM ERROR: cannot make" .
 		       $problem_dir );
 	}

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 05:06:48 EST 2019
+    // Date:	Sun Dec  8 05:11:46 EST 2019
 
     // Displays files:
     //
@@ -15,6 +15,8 @@
 
     session_start();
     clearstatcache();
+    umask ( 07 );
+
     if ( ! isset ( $_SESSION['epm_userid'] ) )
     {
 	header ( "Location: login.php" );
