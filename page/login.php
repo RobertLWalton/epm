@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 04:15:47 EST 2019
+    // Date:	Sun Dec  8 04:45:52 EST 2019
 
     // Handles login for a session.  Sets _SESSION:
     //
@@ -18,11 +18,11 @@
     // mation, which may be days before the current
     // time.
     //
-    // The userid == 'NEW' if this is a new user which
+    // The userid is not set if this is a new user which
     // has not yet been assigned a user id.  Otherwise
-    // it is a natural number (1, 2, ...).  NEW is
-    // changed to a natural number by the user_edit.php
-    // page.
+    // it is a natural number (1, 2, ...).  If userid is
+    // not set, it is set to a natural number by the
+    // user_edit.php page.
     //
     // Login_time is the time this page first accessed
     // for a session.  Once a session is logged in,
@@ -157,8 +157,6 @@
 	{
 	    if ( ! isset ( $_SESSION['epm_email'] ) )
 	        exit ( 'BAD POST; IGNORED' ); 
-		// If session email set, so is
-		// session userid.
 	    elseif ( isset
 	               ( $_SESSION
 	                 ['epm_confirmation_time'] ) )
@@ -180,7 +178,8 @@
 		$log_confirmation_time = 'FAILED';
 	    }
 
-	    $userid = $_SESSION['epm_userid'];
+	    if ( isset ( $_SESSION['epm_userid'] ) )
+		$userid = $_SESSION['epm_userid'];
 	    $email = $_SESSION['epm_email'];
 	}
 	else if ( isset ( $_POST['email'] ) )
@@ -215,11 +214,12 @@
 		    $userid = file_get_contents
 			( $email_file );
 		    if ( $userid == 0 )
-		         $userid = 'NEW';
+		         $userid = NULL;
 		}
 		else
-		    $userid = 'NEW';
-		$_SESSION['epm_userid'] = $userid;
+		    $userid = NULL;
+		if ( isset ( $userid ) )
+		    $_SESSION['epm_userid'] = $userid;
 		$_SESSION['epm_email'] = $email;
 	    }
 	}
@@ -244,7 +244,7 @@
     }
 
     $user = NULL;
-    if ( $userid != 'NEW' )
+    if ( isset ( $userid ) )
     {
         $user_file =
 	    "$epm_data/admin/user{$userid}.json";
@@ -302,9 +302,8 @@
     }
 
     if ( isset ( $confirmation_time ) )
-    		// implies $userid and $email set
     {
-	if ( $userid == 'NEW' )
+	if ( ! isset ( $userid ) )
 	    header ( "Location: user_edit.php" );
 	else
 	    header ( "Location: problem.php" );

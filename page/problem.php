@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 04:15:55 EST 2019
+    // Date:	Sun Dec  8 04:40:12 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -44,14 +44,6 @@
 
 
     $user_dir = "$epm_data/users/user$userid";
-
-    if ( $userid == 'NEW'
-         ||
-	 ! is_writable ( "$user_dir" ) )
-    {
-	header ( "Location: user_edit.php" );
-	exit;
-    }
 
     // Set $problem to current problem, or NULL if none.
     //

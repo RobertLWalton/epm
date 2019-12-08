@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 04:16:05 EST 2019
+    // Date:	Sun Dec  8 04:39:22 EST 2019
 
     // Edits files:
     //
@@ -15,7 +15,7 @@
     //		users/user$userid
     //	        admin/user$userid.json
     //
-    // if $_SESSION['epm_userid'] == 'NEW'.
+    // if $_SESSION['epm_userid'] not set.
     //
     // Does this by using a form to collect the follow-
     // ing information:
@@ -42,8 +42,6 @@
     }
 
     $epm_data = $_SESSION['epm_data'];
-    $admin_params = $_SESSION['epm_admin_params'];
-
     if ( ! is_writable
                ( "$epm_data/admin/email_index" ) )
     {
@@ -51,49 +49,64 @@
 	exit;
     }
 
+    $admin_params = $_SESSION['epm_admin_params'];
+
     // include 'include/debug_info.php';
 
     $email = $_SESSION['epm_email'];
-    $userid = $_SESSION['epm_userid'];
     $ipaddr = $_SESSION['epm_ipaddr'];
     $confirmation_time =
         $_SESSION['epm_confirmation_time'];
 
+    $userid = NULL;
+    if ( isset ( $_SESSION['epm_userid'] ) )
+        $userid = $_SESSION['epm_userid'];
+
     // Set $emails to the emails in admin/email_index
     // that point at the current $userid, or to [] if
-    // $userid == 'NEW'.  Set $max_id to the maximum
+    // $userid not set.  Set $max_id to the maximum
     // user id seen among admin/email_index files.
     //
     $emails = [];
     $max_id = 0;
-    if ( $userid != 'NEW' )
+    $d = "$epm_data/admin/email_index";
+    $desc = opendir ( $d );
+    if ( $desc === false )
     {
-        $desc = opendir
-	    ( "$epm_data/admin/email_index" );
-	if ( $desc ) while ( true )
+        $sysfail = "user_edit: cannot open $d";
+	include 'include/sysalert.php';
+    }
+    while ( true )
+    {
+	$value = readdir ( $desc );
+	if ( ! $value )
 	{
-	    $value = readdir ( $desc );
-	    if ( ! $value )
-	    {
-	        closedir ( $desc );
-		break;
-	    }
-	    if ( preg_match ( '/^\.\.*$/', $value ) )
-		continue;
-	    $email_file =
-	        "$epm_data/admin/email_index/$value";
-	    $i = file_get_contents ( $email_file );
-	    if ( ! preg_match
-	               ( '/^[1-9][0-9]*$/', $i ) )
-	    {
-		$sysalert = "bad value in $email_file";
-		include 'include/sysalert.php';
-	        continue;
-	    }
-	    $max_id = max ( $max_id, $i );
-	    if ( $i == $userid )
-	        $emails[] = $value;
+	    closedir ( $desc );
+	    break;
 	}
+	if ( preg_match ( '/^\.\.*$/', $value ) )
+	    continue;
+	$f = "$epm_data/admin/email_index/$value";
+	$i = file_get_contents ( $f );
+	if ( $i === false )
+	{
+	    $sysalert = "user_edit: cannot read $f";
+	    include 'include/sysalert.php';
+	    $max_id = NULL;
+	    continue;
+	}
+	if ( ! preg_match
+		   ( '/^[1-9][0-9]*$/', $i ) )
+	{
+	    $sysalert = "user_edit: bad value $i in $f";
+	    include 'include/sysalert.php';
+	    $max_id = NULL;
+	    continue;
+	}
+	if ( isset ( $max_id ) )
+	    $max_id = max ( $max_id, $i );
+	if ( $i == $userid )
+	    $emails[] = $value;
     }
     sort ( $emails );
     $max_emails = max ( $admin_params['max_emails'],
@@ -104,7 +117,7 @@
     // not exist.
     //
     $user = NULL;
-    if ( $userid != 'NEW' )
+    if ( isset ( $userid ) )
     {
 	$sysalert = NULL;
 	$user_file =
@@ -233,7 +246,7 @@
     if ( $method == 'GET' )
     {
 	$user_emails = $emails;
-        if ( $userid == 'NEW' ) 
+        if ( ! isset ( $userid ) ) 
 	    $user_emails[] = $email;
         $_SESSION['user_emails'] = $user_emails;
     }
@@ -318,8 +331,15 @@
     {
         // We are done; copy data to files.
 	//
-	if ( $userid == 'NEW' )
+	if ( ! isset ( $userid ) )
 	{
+	    if ( ! isset ( $max_id ) )
+	    {
+	        $sysfail =
+		    "could not compute new userid" .
+		    " because of previous errors";
+		include 'include/sysalert.php';
+	    }
 	    $userid = $max_id + 1;
 	    while ( ! mkdir ( $epm_data .
 	                      "/users/user$userid",

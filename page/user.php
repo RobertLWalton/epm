@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 04:16:17 EST 2019
+    // Date:	Sun Dec  8 05:06:48 EST 2019
 
     // Displays files:
     //
@@ -89,7 +89,7 @@
 
 <?php 
 
-    if ( $_GET['done'] == "yes" )
+    if ( isset ( $_GET['done'] ) )
         echo "<mark>" .
 	     "Profile Edit Finished" .
 	     "</mark>\n";
