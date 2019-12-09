@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 05:07:27 EST 2019
+    // Date:	Sun Dec  8 17:31:57 EST 2019
 
     // Handles login for a session.  Sets $_SESSION:
     //
@@ -75,6 +75,12 @@
     $epm_root = $_SESSION['epm_root'];
     $epm_data = $_SESSION['epm_data'];
 
+    if ( ! isset ( $_SESSION['epm_login_time'] ) )
+        $_SESSION['epm_login_time'] = time();
+    if ( ! isset ( $_SESSION['epm_ipaddr'] ) )
+	$_SESSION['epm_ipaddr'] =
+	    $_SERVER['REMOTE_ADDR'];
+
     // Get and decode json file, which must be
     // readable.  It is a fatal error if the
     // file cannot be read or decoded.
@@ -93,7 +99,7 @@
 	{
 	    $m = json_last_error_msg();
 	    $sysfail =
-	        "cannot decode json $f:\n    $m";
+	        "cannot decode json in $f:\n    $m";
 	    include 'include/sysalert.php';
 	}
 	return $j;
@@ -120,158 +126,158 @@
 
     }
     $_SESSION['epm_admin_params'] = $admin_params;
+        // User overrides are added when userid is set.
 
     $confirmation_interval =
         $admin_params['confirmation_interval'];
 
-    $ipaddr = $_SERVER['REMOTE_ADDR'];
-    if ( ! isset ( $_SESSION['epm_ipaddr'] ) )
-        $_SESSION['epm_ipaddr'] = $ipaddr;
-    else if ( $_SESSION['epm_ipaddr'] != $ipaddr )
-        exit ( 'ERROR: SESSION IP ADDRESS CHANGED;' .
-	       ' RESTART BROWSER' );
-
+    // Process GET and POST requests.  Need to find
+    // email and confirmation time.
+    //
     $method = $_SERVER["REQUEST_METHOD"];
-
-    $log_confirmation_time = NULL;
+    $email = NULL;
+        // User must be asked for an email address iff
+	// this remains NULL.
+    if ( isset ( $_SESSION['epm_email'] ) )
+        $email = $_SESSION['epm_email'];
+    $bad_email = NULL;
+        // If this becomes non-NULL, it is a user given
+	// email address that is rejected.
+    $confirmation_time = NULL;
+        // User must be asked for confirmation number,
+	// or must be auto-confirmed, if this remains
+	// NULL and email is not NULL.  This must be
+	// NULL if email is NULL.
+    if ( isset ( $_SESSION['epm_confirmation_time'] ) )
+        $confirmation_time =
+	    $_SESSION['epm_confirmation_time'];
     $bad_confirm = false;
+        // If this becomes true, confirmation number
+	// given by the user was invalid, and new number
+	// must be asked for.
+    $userid = NULL;
+        // This is set when userid is found using email
+	// address.  For new users, it is never set
+	// (it will be set by user_edit.php).
+	// This must be NULL if $email is NULL.
+    if ( isset ( $_SESSION['epm_userid'] ) )
+        $userid = $_SESSION['epm_userid'];
+    $user_admin = NULL;
+        // User admin parameters if they exist.
+    if ( isset ( $userid ) )
+    {
+        $f = "$epm_data/admin/user{$userid}.json";
+	if ( is_readable ( $f ) )
+	    $user_admin = get_json ( $f );
+    }
+
     if ( $method == 'GET' )
     {
-	$userid = NULL;
-	$email = NULL;
-	$bad_email = false;
-	$confirmation_time = NULL;
-	if ( isset ( $_SESSION['epm_login_time'] ) )
-	    $login_time = $_SESSION['epm_login_time'];
-	else
-	{
-	    $login_time = time();
-	    $_SESSION['epm_login_time'] = $login_time;
-	}
+        // Do nothing
     }
 
     elseif ( $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
-    else // $method == 'POST'
+    elseif ( isset ( $_POST['email'] ) )
     {
-	if ( isset ( $_POST['confirm'] ) )
+	// User answer to request for email address.
+
+        if ( isset ( $email ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+
+	$email = filter_var
+	    ( $_POST['email'],
+	      FILTER_SANITIZE_EMAIL );
+
+	if ( $email == "" ) $email = NULL;
+	    // "" email sent by
+	    // `Enter New Email Address'
+	    // button or user typing just
+	    // carriage return.
+	else if ( ! filter_var
+		      ( $email,
+			FILTER_VALIDATE_EMAIL ) )
 	{
-	    if ( ! isset ( $_SESSION['epm_email'] ) )
-	        exit ( 'BAD POST; IGNORED' ); 
-	    elseif ( isset
-	               ( $_SESSION
-	                 ['epm_confirmation_time'] ) )
-	        exit ( 'ALREADY CONFIRMED; YOU BEAT' .
-		       ' YOURSELF TO IT' ); 
-	    elseif (    $_SESSION['confirm']
-	              == $_POST['confirm'] )
+	    $bad_email = email;
+	    $email = NULL;
+	}
+	else
+	{
+	    $f = "$epm_data/admin/email_index/$email";
+	    if ( is_readable ( $f ) )
 	    {
-		$confirmation_time = time();
-		$_SESSION['epm_confirmation_time'] =
-		    $confirmation_time;
+		$u = file_get_contents ( $f );
+		if ( ! preg_match
+		          ( '/^[1-9][0-9]*$/', $u ) )
+		{
+		    $sysfail = "$f has value $u";
+		    include 'include/sysalert.php';
+		}
+		$userid = $u;
+		$_SESSION['epm_userid'] = $userid;
+	    }
+	    $_SESSION['epm_email'] = $email;
+	}
+    }
+    else if ( isset ( $_POST['confirm_tag'] ) )
+    {
+	if ( ! isset ( $email ) )
+	    exit ( 'BAD POST; IGNORED' ); 
+	elseif ( isset ( $confirmation_time ) )
+	    exit ( 'ALREADY CONFIRMED; YOU BEAT' .
+		   ' YOURSELF TO IT' ); 
+	elseif (    $_SESSION['confirm_tag']
+		  == $_POST['confirm_tag'] )
+	{
+	    $confirmation_time = time();
+	    $_SESSION['epm_confirmation_time'] =
+		$confirmation_time;
+	}
+	else
+	    $bad_confirm = true;
+
+	$f = "$epm_data/admin/login.log";
+	if ( is_writable ( $f ) )
+	{
+	    $desc = fopen ( "$f", 'a' );
+	    if ( $desc === false )
+	    {
+		$sysfail =
+		    "cannot append to writable $f";
+		include 'include/sysalert.php';
+	    }
+	    $ipaddr = $_SESSION['epm_ipaddr'];
+	    $log_login_time =
+		strftime ( $date_format,
+			   $_SESSION
+			     ['epm_login_time'] );
+	    $log_confirmation_time = 'FAILED';
+	    if ( isset ( $confirmation_time ) )
 		$log_confirmation_time = strftime
 		    ( $date_format,
 		      $confirmation_time );
-	    }
-	    else
-	    {
-		$bad_confirm = true;
-		$log_confirmation_time = 'FAILED';
-	    }
-
-	    if ( isset ( $_SESSION['epm_userid'] ) )
-		$userid = $_SESSION['epm_userid'];
-	    $email = $_SESSION['epm_email'];
-	}
-	else if ( isset ( $_POST['email'] ) )
-	{
-	    // Enter a New Email Address button sends
-	    // `email' == "".
-	    //
-	    $email = filter_var
-	        ( $_POST['email'],
-		  FILTER_SANITIZE_EMAIL );
-
-	    if ( $email == "" )
-	        $email = NULL;
-		// "" email sent by
-		// `Enter New Email Address'
-		// button or user typing just
-		// carriage return.
-	    else if ( ! filter_var
-		          ( $email,
-	                    FILTER_VALIDATE_EMAIL ) )
-	    {
-	        $bad_email = true;
-		$email = NULL;
-	    }
-	    else
-	    {
-		$email_file = $epm_data
-		            . '/admin/email_index/'
-			    . $email;
-		if ( is_readable ( $email_file ) )
-		{
-		    $userid = file_get_contents
-			( $email_file );
-		    if ( $userid == 0 )
-		         $userid = NULL;
-		}
-		else
-		    $userid = NULL;
-		if ( isset ( $userid ) )
-		    $_SESSION['epm_userid'] = $userid;
-		$_SESSION['epm_email'] = $email;
-	    }
-	}
-    }
-
-    if (    isset ( $log_confirmation_time )
-         && is_writable
-	        ( "$epm_data/admin/login.log" ) )
-    {
-        $desc = fopen
-	    ( "$epm_data/admin/login.log", 'a' );
-	if ( $desc )
-	{
 	    fputcsv
 		( $desc,
 		  [ $email,
-		    strftime ( $date_format,
-		               $login_time ),
+		    $ipaddr,
+		    $log_login_time,
 		    $log_confirmation_time ] );
 	    fclose ( $desc );
 	}
     }
 
-    $user = NULL;
-    if ( isset ( $userid ) )
-    {
-        $user_file =
-	    "$epm_data/admin/user{$userid}.json";
-	if ( is_writable ( $user_file ) )
-	{
-	    $user_json = file_get_contents
-	        ( $user_file );
-	    $user = json_decode ( $user_json, true );
-	    if ( ! $user ) $user = NULL;
-	}
-    }
-
     if (    isset ( $confirmation_time )
-         && isset ( $user ) )
+         && isset ( $user_admin ) )
     {
         // Record current time as last confirmation
 	// time for the user and ip address.
 	//
-	$_SESSION['epm_confirmation_time'] =
-	    $confirmation_time;
 	$ipaddr = $_SESSION['epm_ipaddr'];
-	$user['confirmation_time'][$ipaddr] =
+	$user_admin['confirmation_time'][$ipaddr] =
 	    strftime ( '%FT%T%z', $confirmation_time );
 	$user_json = json_encode
-	    ( $user, JSON_PRETTY_PRINT );
+	    ( $user_admin, JSON_PRETTY_PRINT );
 	file_put_contents
 	    ( "$epm_data/admin/user{$userid}.json",
 	       $user_json );
@@ -282,17 +288,18 @@
     // value.
     //
     if (    ! isset ( $confirmation_time )
-         && isset ( $user ) )
+         && isset ( $user_admin ) )
     {
 	// Check if we can auto-confirm for this
 	// user and ip address.
 	//
-	if ( isset ( $user['confirmation_time']
-	                  [$ipaddr] ) )
+	$ipaddr = $_SESSION['epm_ipaddr'];
+	if ( isset ( $user_admin['confirmation_time']
+	                        [$ipaddr] ) )
 	{
 	    $ctime = strtotime
-			 ( $user['confirmation_time']
-			        [$ipaddr] );
+		( $user_admin['confirmation_time']
+		             [$ipaddr] );
 	    if (   time()
 	         < $ctime + $confirmation_interval )
 	    {
@@ -312,7 +319,7 @@
 	exit;
     }
     else if ( isset ( $email ) )
-	$_SESSION['confirm'] =
+	$_SESSION['confirm_tag'] =
 	    bin2hex ( random_bytes ( 8 ) );
 
 ?>
@@ -324,25 +331,28 @@
 <?php 
 
     $begin_form =
-	'<form method="post" action="' .
-	$_SERVER['PHP_SELF'] . '">';
-    $end_form = '</form>';
+	"<form method='post' action='login.php';>";
+    $end_form = "</form>";
 
     if ( ! isset ( $email ) )
     {
-	if ( $bad_email )
-	    echo '<mark>EMAIL ADDRESS WAS' .
-		 ' MALFORMED; TRY AGAIN</mark>' .
-		 '<br><br>';
+	// Ask for Email Address.
+	//
+	if ( isset ( $bad_email ) )
+	    echo "<mark>EMAIL ADDRESS $bad_email WAS" .
+		 " MALFORMED; TRY AGAIN</mark>" .
+		 "<br>";
 
 	echo $begin_form;
-	echo '<h2>Login:</h2>';
-	echo 'Email Address:' .
-	     ' <input type="email" name="email">';
+	echo "Enter:&nbsp;<input type='email'" .
+	     " name='email'" .
+	     " placeholder='Email Address'>";
 	echo $end_form;
     }
     else
     {
+	// Ask for Confirmation Number
+	//.
 	if ( $bad_confirm )
 	{
 	    echo '<mark>CONFIRMATION NUMBER WAS' .
@@ -354,21 +364,22 @@
 
 	echo ' confirmation number has been mailed'
 	     . ' to your email address.<br><br>';
-	echo 'Email Address: ' . $_SESSION['epm_email']
-	     . '&nbsp;&nbsp;/&nbsp;&nbsp;';
-	echo 'IP Address: ' . $_SESSION['epm_ipaddr']
-	     . '<br><br>';
+	echo "Email Address: $email" .
+	     "&nbsp;&nbsp;/&nbsp;&nbsp;";
+	echo "IP Address: {$_SESSION['epm_ipaddr']}" .
+	     "<br><br>";
 	echo $begin_form;
-	echo 'Confirmation Number:' .
-	     ' <input type="text" name="confirm">'
-	     . "<br>";
+	echo "Enter:&nbsp;<input type='text'" .
+	     " name='confirm_tab'" .
+	     " placeholder='Confirmation Number'>";
 	echo $end_form;
 	echo $begin_form;
-	echo '<button name="email" value="">' .
-	     'Enter New Email Address</button>';
+	echo "Or Enter:&nbsp;<input type='email'" .
+	     " name='email'" .
+	     " placeholder='New Email Address'>";
 	echo $end_form;
 	echo '<br>Confirmation Number is ' . 
-	     $_SESSION["confirm"];
+	     $_SESSION["confirm_tag"];
 
     }
 ?>
