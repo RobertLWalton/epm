@@ -399,7 +399,8 @@
     foreach ( $emails as $e )
     {
 	$h = htmlspecialchars ( $e );
-	echo "<form display='inline' method='POST'" .
+	echo "<form style='display:inline'".
+	     " method='POST'" .
 	     " action='user_edit.php'>\n" .
 	     "$h&nbsp;&nbsp;&nbsp;&nbsp;" .
 	     "<button type='submit'" .
@@ -410,7 +411,8 @@
     if ( isset ( $userid )
          &&
 	 count ( $emails ) + 1 < $max_emails )
-	echo "<form display='inline' method='POST'" .
+	echo "<form style='display:inline'".
+	     " method='POST'" .
 	     " action='user_edit.php'>\n" .
 	     "<input type='email' name='new_email'" .
 	     " value='' size='40' placeholder=" .

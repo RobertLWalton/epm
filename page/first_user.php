@@ -2,7 +2,7 @@
 
     // File:	first_user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec  9 02:15:08 EST 2019
+    // Date:	Mon Dec  9 12:43:02 EST 2019
 
     // Asks user if they are the first user.  If yes
     // makes the following directories and then goes
@@ -14,8 +14,14 @@
 
     session_start();
     clearstatcache();
-    umask ( 07 );
-    if ( ! isset ( $_SESSION['epm_ipaddr'] ) )
+    umask ( 06 );
+    if ( ! isset ( $_SESSION['epm_data'] ) )
+    {
+	header ( "Location: index.php" );
+	exit;
+    }
+    if ( ! isset
+              ( $_SESSION['epm_confirmation_time'] ) )
     {
 	header ( "Location: login.php" );
 	exit;
@@ -48,15 +54,19 @@
 		 && mkdir ( $epm_data .
 		            "/admin/email_index",
 		            0770 )
-		 && mkdir ( "$epm_data/users", 0770 ) )
+		 && mkdir ( "$epm_data/users", 0771 ) )
 	    {
 		header
 		    ( 'Location: user_edit.php' );
 		exit;
 	    }
-	    exit ( 'SYSTEM ERROR: admin directories' .
-	            " in $epm_data not set up;" .
-		    ' contact administrator' );
+	    elseif ( $is_administrator != 'yes' )
+	        exit ( "The FIRST user (you!) MUST" .
+		       " be an ADMINISTRATOR!" );
+	    else
+		exit ( "SYSTEM ERROR: administrative" .
+		       " directories in $epm_data" .
+		       " improperly set up" );
 	}
 	exit ( 'UNACCEPTABLE POST' );
     }
