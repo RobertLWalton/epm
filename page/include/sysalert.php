@@ -3,7 +3,13 @@
     // $epm_root not set' );
 
 if ( isset ( $sysfail ) )
-    exit ( "FATAL SYSTEM ERROR: $sysfail\n" );
+{
+    $h = htmlspecialchars ( $sysfail );
+    exit ( "FATAL SYSTEM ERROR: $h\n" );
+}
 if ( isset ( $sysalert ) )
-    echo "SYSALERT: $sysalert\n";
+{
+    $h = htmlspecialchars ( $sysalert );
+    echo "SYSALERT: $h\n";
+}
 ?>

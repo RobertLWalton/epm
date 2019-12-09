@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 04:39:22 EST 2019
+    // Date:	Mon Dec  9 02:15:41 EST 2019
 
     // Edits files:
     //
@@ -20,11 +20,13 @@
     // Does this by using a form to collect the follow-
     // ing information:
     //
-    //     user_emails	List of the user's emails.
     //	   full_name	Use's full name.
     //	   organization Use's organization.
     //     location     Town, state, country of
     //			organization.
+    //
+    // and allows emails to be added and emails other
+    // than the login email to be deleted.
 
     session_start();
     clearstatcache();
@@ -40,6 +42,9 @@
 	header ( "Location: login.php" );
 	exit;
     }
+    if (    $_SESSION['epm_ipaddr']
+	 != $_SERVER['REMOTE_ADDR'] )
+        exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
     $epm_data = $_SESSION['epm_data'];
     if ( ! is_writable
@@ -61,14 +66,16 @@
     $userid = NULL;
     if ( isset ( $_SESSION['epm_userid'] ) )
         $userid = $_SESSION['epm_userid'];
+    $new_user = ( ! isset ( $userid ) );
 
     // Set $emails to the emails in admin/email_index
-    // that point at the current $userid, or to [] if
-    // $userid not set.  Set $max_id to the maximum
-    // user id seen among admin/email_index files.
+    // that point at the current $userid and are NOT
+    // equal to $email.  Set $max_id to the maximum
+    // user id seen amoung admin/email_index files.
     //
     $emails = [];
     $max_id = 0;
+        // Set to NULL if cannot be computed.
     $d = "$epm_data/admin/email_index";
     $desc = opendir ( $d );
     if ( $desc === false )
@@ -105,50 +112,45 @@
 	}
 	if ( isset ( $max_id ) )
 	    $max_id = max ( $max_id, $i );
-	if ( $i == $userid )
+	if ( $i == $userid && $value != $email )
 	    $emails[] = $value;
     }
     sort ( $emails );
     $max_emails = max ( $admin_params['max_emails'],
-                        count ( $emails ) );
+                        1 + count ( $emails ) );
 
-    // Set $user to admin/user$userid.json contents,
-    // or NULL if this file is not readable or does
-    // not exist.
+    // Set $user_admin to admin/user$userid.json
+    // contents, or to initial value if $userid is NULL.
     //
-    $user = NULL;
-    if ( isset ( $userid ) )
+    if ( isset ( $userid ) )  // Not new user
     {
-	$sysalert = NULL;
-	$user_file =
-	    "$epm_data/admin/user{$userid}.json";
-	$user = file_get_contents ( $user_file );
-	if ( ! $user )
-	    $sysalert = "cannot read $user_file";
-	else
+	$f = "$epm_data/admin/user{$userid}.json";
+	$c = file_get_contents ( $f );
+	if ( $c === false )
 	{
-	    $user = json_decode ( $user, true );
-	    if ( ! $user )
-		$sysalert = "cannot decode $user_file";
-	}
-	if ( isset ( $sysalert ) )
-	{
+	    $sysfail = "cannot read readable $f";
 	    include 'include/sysalert.php';
-	    $user = NULL;
+	}
+	$user_admin = json_decode ( $c, true );
+	if ( $user_admin === NULL )
+	{
+	    $m = json_last_error_msg();
+	    $sysfail =
+	        "cannot decode json in $f:\n    $m";
+	    include 'include/sysalert.php';
 	}
     }
-
-    if ( $user == NULL )
+    else // New user
     {
-	$user['confirmation_time'][$ipaddr] =
+	$user_admin['confirmation_time'][$ipaddr] =
 	    strftime ( '%FT%T%z', $confirmation_time );
-	$user['full_name'] = "";
-	$user['organization'] = "";
-	$user['location'] = "";
+	$user_admin['full_name'] = "";
+	$user_admin['organization'] = "";
+	$user_admin['location'] = "";
     }
-    $full_name = $user['full_name'];
-    $organization = $user['organization'];
-    $location = $user['location'];
+    $full_name = $user_admin['full_name'];
+    $organization = $user_admin['organization'];
+    $location = $user_admin['location'];
 
     // Sanitize non-email form entries.  If error, add
     // to $errors and return ''.  Otherwise return
@@ -169,13 +171,13 @@
         if ( ! isset ( $_POST[$name] ) )
 	{
 	    $field_missing = true;
-	    $errors[] = 'Must set ' . $form_name . '.';
+	    $errors[] = "must set $form_name";
 	    return '';
 	}
 	$value = trim ( $_POST[$name] );
 	if ( $value == '' )
 	{
-	    $errors[] = 'Must set ' . $form_name . '.';
+	    $errors[] = "must set $form_name";
 	    return '';
 	}
 	if (   strlen ( utf8_decode ( $value ) )
@@ -183,16 +185,8 @@
 	     // Note, grapheme_strlen is not available
 	     // because we do not assume intl extension.
 	{
-	    $errors[] = $form_name
-	              . ' is too short; re-enter.';
-	    return '';
-	}
-	$value = htmlspecialchars ( $value );
-	if ( $value == '' )
-	{
-	    $errors[] = $form_name
-	              . ' contained illegal characters;'
-		      . ' re-enter.';
+	    $errors[] =
+	        "$form_name is too short; re-enter";
 	    return '';
 	}
 	return $value;
@@ -209,33 +203,23 @@
 	$value =  trim ( $value );
 	if ( $value == "" )
 	    return '';
+	$hvalue = htmlspecialchars ( $value );
 	$svalue = filter_var
 	    ( $value, FILTER_SANITIZE_EMAIL );
 	if ( $value != $svalue )
 	{
-	    $errors[] = 'Email '
-		      . htmlspecialchars
-			  ( $value )
-		      . ' contains characters'
-		      . ' illegal in an email'
-		      . ' address.';
-	    return '';
-	}
-	$hvalue = htmlspecialchars ( $value );
-	if ( $value != $hvalue )
-	{
-	    $errors[] = 'Email ' . $hvalue
-		      . ' contains HTML special'
-		      . ' characters.';
+	    $errors[] =
+	        "Email $hvalue contains characters" .
+		" illegal in an email address";
 	    return '';
 	}
 	if ( ! filter_var
 		  ( $value,
 		    FILTER_VALIDATE_EMAIL ) )
 	{
-	    $errors[] = 'Email ' . $value
-		      . ' is not a valid email'
-		      . ' address.';
+	    $errors[] =
+	        "Email $hvalue is not a valid email" .
+		" address";
 	    return '';
 	}
 	return $value;
@@ -245,16 +229,73 @@
    
     if ( $method == 'GET' )
     {
-	$user_emails = $emails;
-        if ( ! isset ( $userid ) ) 
-	    $user_emails[] = $email;
-        $_SESSION['user_emails'] = $user_emails;
+	// Do nothing.  Get info from user.
     }
 
     elseif ( $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
-    else // $method == 'POST'
+    elseif ( isset ( $_POST['new_email'] ) )
+    {
+	if ( ! isset ( $userid ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+    	$e = sanitize_email ( $_POST['new_email'] );
+	if ( $e != '' )
+	{
+	    $f = "$epm_data/admin/email_index/$e";
+	    if ( is_readable ( $f ) )
+	    {
+	        $he = htmlspecialchars ( $e );
+	        $errors[] =
+		    "email address $he is already" .
+		    " assigned to some user" .
+		    " (maybe you)";
+	    }
+	    else
+	    {
+	        $r = file_put_contents ( $f, $userid );
+		if ( $r === false )
+		{
+		    $sysfail = "could not write $f";
+		    include 'include/sysalert.php';
+		}
+		$emails[] = $e;
+	    }
+	}
+    }
+    elseif ( isset ( $_POST['delete_email'] ) )
+    {
+	if ( ! isset ( $userid ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+    	$e = sanitize_email ( $_POST['delete_email'] );
+	if ( $e != '' )
+        {
+	    $f = "$epm_data/admin/email_index/$e";
+	    $k = array_search ( $e, $emails, true );
+	    if ( $e == $email )
+	    {
+	        $he = htmlspecialchars ( $e );
+	        $errors[] =
+		    "trying to delete email address" .
+		    "$he that you used to log in";
+	    }
+	    elseif ( $k === false )
+	    {
+	        $he = htmlspecialchars ( $e );
+	        $errors[] =
+		    "trying to delete email address" .
+		    "$he that is NOT assigned to your";
+	    }
+	    elseif ( ! unlink ( $f ) )
+	    {
+	        $sysfail = "cannot unlink $f";
+		include 'include/sysalert.php';
+	    }
+	    else
+		array_splice ( $emails, $k, 1 );
+	}
+    }
+    elseif ( isset ( $_POST['update'] ) )
     {
 	// Read and check all the form data.
 	// Skip emails that are to be deleted.
@@ -270,68 +311,16 @@
 
 	if ( $field_missing )
 	    exit ( 'UNKNOWN HTTP POST' );
-	if ( ! isset ( $_SESSION['user_emails'] ) )
-	    exit ( 'UNKNOWN HTTP POST' );
-	$user_emails = $_SESSION['user_emails'];
-	for ( $i = 0; $i < $max_emails; $i++ )
-	{
-	    if ( isset ( $_POST["delete$i"] ) )
-	        unset ( $user_emails[$i] );
-	    else if ( isset ( $_POST["email$i"] ) )
-	    {
-	        $value = sanitize_email
-		    ( $_POST["email$i"] );
-		if ( $value == "" ) continue;
-		if ( false !== array_search
-		       ( $value, $user_emails, true ) )
-		    $errors[] = "$value is a duplicate";
-		else
-		    $user_emails[$i] = $value;
-	    }
-	}
     }
-    $user_emails = array_values ( $user_emails );
-    sort ( $user_emails );
-    $_SESSION['user_emails'] = $user_emails;
-
-    $add  = [];
-    $sub  = [];
-    $keep = [];
-    $i = 0;
-    $j = 0;
-    $max_i = count ( $emails );
-    $max_j = count ( $user_emails );
-    while ( $i < $max_i || $j < $max_j )
-    {
-	if ( $i >= $max_i )
-	    $add[] = $user_emails[$j++];
-	elseif ( $j >= $max_j )
-	    $sub[] = $emails[$i++];
-	elseif ( $emails[$i] < $user_emails[$j] )
-	    $sub[] = $emails[$i++];
-	elseif ( $emails[$i] > $user_emails[$j] )
-	    $sub[] = $user_emails[$j++];
-	else
-	{
-	    $keep[] = $emails[$i++];
-	    ++ $j;
-	}
-    }
-
-    $h = "$epm_data/admin/email_index";
-    foreach ( $add as $e )
-    {
-        if ( is_readable ( "$h/$e" ) )
-	    $errors[] =
-	        "$e is assigned to another user";
-    }
+    else
+	exit ( 'UNACCEPTABLE HTTP POST' );
 
     if ( $method == 'POST' && isset ( $_POST['update'] )
                            && count ( $errors ) == 0 )
     {
         // We are done; copy data to files.
 	//
-	if ( ! isset ( $userid ) )
+	if ( $new_user )
 	{
 	    if ( ! isset ( $max_id ) )
 	    {
@@ -341,44 +330,41 @@
 		include 'include/sysalert.php';
 	    }
 	    $userid = $max_id + 1;
+	    umask ( 06 );
 	    while ( ! mkdir ( $epm_data .
 	                      "/users/user$userid",
-	                      0770 ) )
+	                      0771 ) )
 	        ++ $userid;
+	    umask ( 07 );
 	    $_SESSION['epm_userid'] = $userid;
-	}
-
-
-	$user['full_name'] = $full_name;
-	$user['organization'] = $organization;
-	$user['location'] = $location;
-	$user_json = json_encode
-	    ( $user, JSON_PRETTY_PRINT );
-	file_put_contents
-	    ( "$epm_data/admin/user{$userid}.json",
-	       $user_json );
-
-	foreach ( $add as $e )
-	{
-	    if ( ! file_put_contents
-		      ( "$h/$e", "$userid" ) )
+	    $f = "$epm_data/admin/email_index/$email";
+	    $r = file_put_contents ( $f, $userid );
+	    if ( $r === false )
 	    {
-		$sysalert = "could not write $h/$e";
-		include 'include/sysalert.php';
-	    }
-	}
-	foreach ( $sub as $e )
-	{
-	    if ( ! unlink ( "$h/$e" ) )
-	    {
-		$sysalert = "could not unlink $h/$e";
+		$sysfail = "could not write $f";
 		include 'include/sysalert.php';
 	    }
 	}
 
-	//unset ( $_SESSION['user_emails'] );
-	header ( "Location: user.php?done=yes" );
-	exit;
+
+	$user_admin['full_name'] = $full_name;
+	$user_admin['organization'] = $organization;
+	$user_admin['location'] = $location;
+	$j = json_encode ( $user_admin,
+	                   JSON_PRETTY_PRINT );
+	$f = "$epm_data/admin/user{$userid}.json";
+	$r = file_put_contents ( $f, $j );
+	if ( $r === false )
+	{
+	    $sysfail = "could not write $f";
+	    include 'include/sysalert.php';
+	}
+
+	if ( $_POST['update'] == 'Done' )
+	{
+	    header ( "Location: user.php?done=yes" );
+	    exit;
+	}
     }
 
 ?>
@@ -386,66 +372,87 @@
 <html>
 <body>
 
-<form method="post" action="user_edit.php">
-
 <?php 
 
     if ( count ( $errors ) > 0 )
     {
-	echo "<mark>\n";
-        echo '<h2>ERRORS:</h2><br>' . "\n";
+        echo '<h3>Errors:</h3>' . "\n";
+	echo "<div style='margin-left:20px'>\n";
 	foreach ( $errors as $value )
-	    echo "$value<br>\n";
-	echo '</mark><br><br>' . "\n";
+	    echo "<mark>$value<\mark><br>\n";
+	echo '</div>' . "\n";
     }
-    echo "<h3>Edit User Profile</h3>\n";
+
+    if (    count ( $emails ) == 0
+         && isset ( $userid )
+         && count ( $errors ) == 0 )
+        echo "<mark>Its a good idea to add a second" .
+	     " email address.</mark><br>\n";
+
+    echo "<h3>Edit User Profile:</h3>\n";
+
     echo "<b>Email Addresses:</b>\n";
-    echo "<table style='margin-left:20px'>\n";
-    for ( $i = 0; $i < $max_emails; ++ $i )
+    echo "<div style='margin-left:20px'>\n";
+    $h = htmlspecialchars ( $email );
+    echo "$h&nbsp;&nbsp;&nbsp;&nbsp;" .
+         "(used for this login)<br>\n";
+    foreach ( $emails as $e )
     {
-        if ( ! isset ( $user_emails[$i] ) )
-	{
-	    echo '<tr><td><input name="email' . $i .
-	         '" type="text" value=""' .
-		 ' size="40" placeholder=' .
-		 '"Another Email Address"a</td></tr>';
-	    break;
-	}
-	elseif ( $user_emails[$i] == $email )
-	    echo "<tr><td>$email" .
-	         '&nbsp;&nbsp;&nbsp;' .
-		 '(used for this login)' .
-	         '</td></tr>';
-	else
-	    echo "<tr><td>$user_emails[$i]" .
-	         '&nbsp;&nbsp;&nbsp;' .
-	         '<input type="submit" name="delete' .
-		 $i . '" value = "delete"></td></tr>';
+	$h = htmlspecialchars ( $e );
+	echo "<form display='inline' method='POST'" .
+	     " action='user_edit.php'>\n" .
+	     "$h&nbsp;&nbsp;&nbsp;&nbsp;" .
+	     "<button type='submit'" .
+	     " name='delete_email'" .
+	     " value='$e'>Delete</button><br>\n" .
+	     "</form>\n";
     }
-    echo "</table>\n";
+    if ( isset ( $userid )
+         &&
+	 count ( $emails ) + 1 < $max_emails )
+	echo "<form display='inline' method='POST'" .
+	     " action='user_edit.php'>\n" .
+	     "<input type='email' name='new_email'" .
+	     " value='' size='40' placeholder=" .
+	     "'Another Email Address'>" .
+	     "&nbsp;&nbsp;&nbsp;&nbsp;" .
+	     "<input type='submit' name='add_email'" .
+	     " value='Add'><br>\n" .
+	     "</form>\n";
+
+    if ( isset ( $userid ) && count ( $errors ) == 0 )
+        $update = 'Done';
+    else
+        $update = 'Update';
+
+    echo "</div>\n";
+
     $location_placeholder =
 	 "Town, State and Country of Organization";
     echo <<<EOT
+    <form  method='POST' action='user_edit.php'>
     <table>
-    <tr><td><b>Full Name:</b></td><td> <input type="text" size="40"
-                      name="full_name"
-                      value="$full_name"
-	              placeholder="John Doe"></td></tr>
+    <tr><td><b>Full Name:</b></td>
+        <td> <input type='text' size='40'
+              name='full_name'
+              value='$full_name'
+	      placeholder='John Doe'></td></tr>
     <tr><td><b>Organization:</b></td><td>
-        <input type="text" size="40"
-	 name="organization" value="$organization"
-	 placeholder="University, Company, or Self"></td></tr>
+        <input type='text' size='40'
+	 name='organization' value='$organization'
+	 placeholder='University, Company, or Self'>
+	 </td></tr>
     <tr><td><b>Location:</b></td><td>
-        <input type="text" size="40"
-	 name="location" value="$location"
-	 placeholder="$location_placeholder"></td></tr>
+        <input type='text' size='40'
+	 name='location' value='$location'
+	 placeholder='$location_placeholder'>
+	 </td></tr>
     <tr><td>
-        <input type="submit" name="update"
-	       value="Update"></td></tr>
-    </table>
+        <input type='submit' name='update'
+	       value='$update'></td></tr>
+    </table></form>
 EOT
 ?>
 
-</form>
 </body>
 </html>

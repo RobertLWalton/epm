@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec  9 00:15:43 EST 2019
+    // Date:	Mon Dec  9 02:15:21 EST 2019
 
     // Handles login for a session.  Sets $_SESSION:
     //
@@ -46,6 +46,8 @@
     clearstatcache();
     umask ( 07 );
 
+    include 'include/debug_info.php';
+
     // We come here from other pages if
     // $_SESSION['epm_userid'] is not set.
 
@@ -79,6 +81,9 @@
     if ( ! isset ( $_SESSION['epm_ipaddr'] ) )
 	$_SESSION['epm_ipaddr'] =
 	    $_SERVER['REMOTE_ADDR'];
+    else if (    $_SESSION['epm_ipaddr']
+	      != $_SERVER['REMOTE_ADDR'] )
+        exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
     // Get and decode json file, which must be
     // readable.  It is a fatal error if the
@@ -262,15 +267,17 @@
 	// User answer to request for email address.
 	// May be request to change email.
 
-	$new_email = $_POST['email'];
+	$new_email = trim ( $_POST['email'] );
 	$e = filter_var
 	    ( $new_email, FILTER_SANITIZE_EMAIL );
 
 	if ( $new_email == "" ) /* Do nothing */;
 	    // "" sent by by user typing just
 	    // carriage return.
+	else if ( $e != $new_email )
+	    $bad_email = $new_email;
 	else if ( ! filter_var
-		      ( $e,
+		      ( $new_email,
 			FILTER_VALIDATE_EMAIL ) )
 	    $bad_email = $new_email;
 	else
@@ -380,9 +387,12 @@
 	// Ask for Email Address.
 	//
 	if ( isset ( $bad_email ) )
-	    echo "<mark>EMAIL ADDRESS $bad_email WAS" .
+	{
+	    $e = htmlspecialchars ( $bad_email );
+	    echo "<mark>EMAIL ADDRESS $e WAS" .
 		 " MALFORMED; TRY AGAIN</mark>" .
 		 "<br>";
+	}
 
 	echo $begin_form;
 	echo "Enter:&nbsp;<input type='email'" .
@@ -411,7 +421,7 @@
 	     "<br><br>";
 	echo $begin_form;
 	echo "Enter:&nbsp;<input type='text'" .
-	     " name='confirm_tab'" .
+	     " name='confirm_tag'" .
 	     " placeholder='Confirmation Number'>";
 	echo $end_form;
 	echo $begin_form;

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec  8 05:13:39 EST 2019
+    // Date:	Mon Dec  9 02:15:31 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -18,6 +18,9 @@
 	header ( "Location: login.php" );
 	exit;
     }
+    if (    $_SESSION['epm_ipaddr']
+	 != $_SERVER['REMOTE_ADDR'] )
+        exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
     $userid = $_SESSION['epm_userid'];
     $epm_data = $_SESSION['epm_data'];
