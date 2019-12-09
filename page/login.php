@@ -46,7 +46,7 @@
     clearstatcache();
     umask ( 07 );
 
-    include 'include/debug_info.php';
+    // include 'include/debug_info.php';
 
     // We come here from other pages if
     // $_SESSION['epm_userid'] is not set.

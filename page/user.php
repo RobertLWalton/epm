@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec  9 02:15:52 EST 2019
+    // Date:	Mon Dec  9 09:19:58 EST 2019
 
     // Displays files:
     //
@@ -48,6 +48,7 @@
     // that point at $userid.
     //
     $emails = [];
+    $emails[] = $email;
 
     $desc = opendir ( "$epm_data/admin/email_index" );
     if ( ! $desc )
@@ -63,30 +64,31 @@
 	}
 	if ( preg_match ( '/^\.\.*$/', $value ) )
 	    continue;
-	$email_file =
-	    "$epm_data/admin/email_index/$value";
-	$i = file_get_contents ( $email_file );
+	$f = "$epm_data/admin/email_index/$value";
+	$i = file_get_contents ( $f );
 	if ( ! preg_match
 		   ( '/^[1-9][0-9]*$/', $i ) )
 	{
-	    $sysalert = "bad value in $email_file";
+	    $sysalert = "bad value $i in $f";
 	    include 'include/sysalert.php';
 	    continue;
 	}
-	if ( $i == $userid )
+	if ( $i == $userid && $value != $email )
 	    $emails[] = $value;
     }
 
-    $user_file = "$epm_data/admin/user{$userid}.json";
-    $user = file_get_contents ( $user_file );
-    if ( ! $user )
-	exit ( 'SYSTEM ERROR: cannot read ' .
-		$user_file );
-    $user = json_decode ( $user, true );
-    if ( ! $user )
-	exit ( 'SYSTEM ERROR: cannot parse ' .
-		$user_file );
-
+    $f = "$epm_data/admin/user{$userid}.json";
+    $c = file_get_contents ( $f );
+    if ( $c === false )
+	exit ( "SYSTEM ERROR: cannot read $f" );
+    $user_admin = json_decode ( $c, true );
+    if ( $user_admin == NULL )
+    {
+	$m = json_last_error_msg();
+	$sysfail =
+	    "cannot decode json in $f:\n    $m";
+	include 'include/sysalert.php';
+    }
 ?>
 
 <html>
@@ -107,22 +109,27 @@
     echo "</table>\n";
     
 
+    $full_name = $user_admin['full_name'];
+    $organization = $user_admin['organization'];
+    $location = $user_admin['location'];
     echo <<<EOT
     <table>
-    <tr><td><b>Full Name:</b></th><td> {$user['full_name']}<td><tr>
-    <tr><td><b>Organization:</b></th><td> {$user['organization']}<td><tr>
-    <tr><td><b>Location:</b></th><td> {$user['location']}<td><tr>
+    <tr><td><b>Full Name:</b></td>
+        <td>$full_name<td><tr>
+    <tr><td><b>Organization:</b></td>
+        <td>$organization<td><tr>
+    <tr><td><b>Location:</b></td>
+        <td>$location<td><tr>
+    </table>
 EOT
 
 ?>
 
 <form>
-<table><tr>
-<td><input type="submit" formaction="user_edit.php"
-       value="Edit"></td>
-<td><input type="submit" formaction="problem.php"
-       value="Go To Problem"</input></td>
-</tr></table>
+<input type="submit" formaction="user_edit.php"
+       value="Edit">&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="submit" formaction="problem.php"
+       value="Go To Problem"</input>
 </form>
 
 </body>
