@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec  9 02:15:31 EST 2019
+    // Date:	Tue Dec 10 03:36:06 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -29,19 +29,10 @@
     $epm_root = $_SESSION['epm_root'];
     $email = $_SESSION['epm_email'];
 
-    $uploaded_file = NULL;
-    $show_file = NULL;  // File shown to right.
-    $show_files = [];   // Files shown to left.
-    $errors = [];
-    $warnings = [];
-    $file_made = false;
-    $delete_problem = false;
-    $deleted_problem = NULL;
+    $user_dir = "$epm_data/users/user$userid";
 
-    if ( ! isset ( $_SESSION['epm_admin_params'] ) )
-        exit ( 'SYSTEM ERROR: problems.php:' .
-	       ' $_SESSION["epm_admin_params"]' .
-	       ' not set' );
+    // Administrative Parameters:
+    //
     $params = $_SESSION['epm_admin_params'];
     $upload_maxsize = $params['upload_maxsize'];
     $display_file_ext = $params['display_file_ext'];
@@ -50,32 +41,20 @@
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
-
-    $user_dir = "$epm_data/users/user$userid";
-
     // Set $problem to current problem, or NULL if none.
+    // Also set $problem_dir if $problem not NULL.
     //
     $problem = NULL;
-    $new_problem = false;
-    if ( isset ( $_POST['goto_problem'] )
-         ||
-	 isset ( $_POST['new_problem'] ) )
+    $problem_dir = NULL;
+    if ( isset ( $_POST['new_problem'] ) )
     {
-	// new_problem takes precedence over problem,
-	// as the latter is always set to the current
-	// selected value (unless there are no problems
-	// in which case there is no `goto_problem' or
-	// 'problem'.
-	//
         $problem = trim ( $_POST['new_problem'] );
-	if ( $problem == "" )
-	    $problem =
-	        trim ( $_POST['problem'] );
-	else
-	    $new_problem = true;
-
 	if ( $problem == '' )
+	{
+	    // User hit carriage return on empty
+	    // field.
 	    $problem = NULL;
+	}
 	elseif ( ! preg_match ( '/^[-_A-Za-z0-9]+$/',
 	                        $problem )
 	         ||
@@ -88,33 +67,30 @@
 		" does not contain a letter";
 	    $problem = NULL;
 	}
-    }
-
-    if ( isset ( $problem ) )
-    {
-	$problem_dir =
-	    "$epm_data/users/user$userid/$problem";
-
-	if ( $new_problem )
-	{
-	    if ( file_exists ( $problem_dir ) )
-	    {
-		$errors[] =
-		    "problem $problem already exists" .
-		    " for user $email";
-		$problem = NULL;
-	    }
-	    elseif ( ! mkdir ( $problem_dir, 0771 ) )
-		exit ( "SYSTEM ERROR: cannot make" .
-		       $problem_dir );
-	}
-	elseif ( ! is_writable
-		      ( "$epm_data/users/user$userid" .
-		        "/$problem" ) )
+	elseif ( is_dir ( "$user_dir/$problem" ) )
 	{
 	    $errors[] =
-	        "problem $problem does not exist" .
-		" for user $email";
+	        "trying to create $problem which" .
+		" already exists";
+	    $problem = NULL;
+	}
+	elseif ( ! mkdir ( "$user_dir/$problem",
+	                   0771 ) )
+	{
+	    $sysfail = "cannot make $user_dir/$problem";
+	    include 'include/sysalert.php';
+	}
+    }
+    elseif ( isset ( $_POST['selected_problem'] ) )
+    {
+        $problem = trim ( $_POST['selected_problem'] );
+	if ( $problem == '' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	elseif ( ! is_dir ( "$user_dir/$problem" ) )
+	{
+	    $errors[] =
+	        "trying to select non-existant" .
+		" problem: $problem";
 	    $problem = NULL;
 	}
     }
@@ -130,6 +106,18 @@
 	    "$epm_data/users/user$userid/$problem";
     else
 	$problem_dir = NULL;
+
+    // Data Set by GET and POST Requests:
+    //
+    $show_file = NULL;  // File to be shown to right.
+    $show_files = [];   // Files to be shown to left.
+    $errors = [];	// Error messages to be shown.
+    $warnings = [];	// Warining messages to be
+    			// shown.
+    $file_made = false;
+    $uploaded_file = NULL;
+    $delete_problem = false;
+    $deleted_problem = NULL;
 
     if ( isset ( $_POST['delete_problem'] ) )
     {
@@ -275,6 +263,9 @@
     }
     else if ( isset ( $_POST['make_score'] ) )
     {
+	include 'include/epm_make.php';
+	    // Do this first as it may change $f, etc.
+
         $f = $_POST['make_score'];
 	if ( array_search
 	         ( $f, problem_file_names(),
@@ -287,7 +278,6 @@
 	           " problem.php" );
 	$g = $matches[1] . '.score';
 	$h = $matches[1] . '.test';
-	include 'include/epm_make.php';
 	load_make_cache();
 	if ( ! isset ( $make_cache[$h] ) )
 	    $errors[] = "cannot make $g as $h does"
@@ -452,19 +442,24 @@ EOT;
     echo "<table><form action='problem.php' method='POST'>";
     if ( count ( $problems ) > 0 )
     {
+	echo "<form action='problem.php'" .
+	     " method='POST'" .
+	     " style='display:inline'>\n";
 	echo "<tr><td style='text-align:right'>" .
 	     "<input type='submit'" .
 	     " name='goto_problem'" .
-	     " value='Go To Problem:'>\n";
-        echo "</td><td><select name='problem'>\n";
+	     " value='Go To Problem:'></td>\n";
+        echo "<td><select name='selected_problem'>\n";
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
 	             "$value</option>\n";
-        echo "</select></td></tr>\n";
+        echo "</select></td></tr></form>\n";
     }
     echo <<<EOT
+    <form action='problem.php' method='POST'
+	  style='display:inline'>
     <tr><td style='text-align:right'>
-    <label>or Create New Problem:</label></td><td>
+    or Create New Problem:</td><td>
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name" id="create">
     </td></tr></table></form>

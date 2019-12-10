@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Dec  7 03:17:40 EST 2019
+// Date:    Tue Dec 10 04:18:15 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -13,13 +13,6 @@
 // Note that file names can have -, _, ., /, but no
 // other special characters.  Of course uploaded
 // files and components cannot have /.
-
-if ( ! isset ( $is_epm_test ) )
-    $is_epm_test = false;
-    // True means we are running a test script that is
-    // NOT driven by an http server.  Some functions,
-    // notably move_uploaded_file, will not work
-    // in this test script environment.
 
 if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
@@ -32,15 +25,19 @@ if ( ! isset ( $_SESSION['problem'] ) )
 $userid = $_SESSION['epm_userid'];
 $problem = $_SESSION['problem'];
 
-if ( ! isset ( $_SESSION['epm_admin_params'] ) )
-    include 'get_admin_params.php';
+if ( ! isset ( $is_epm_test ) )
+    $is_epm_test = false;
+    // True means we are running a test script that is
+    // NOT driven by an http server.  Some functions,
+    // notably move_uploaded_file, will not work
+    // in this test script environment.
 
 // Administrative Parameters:
 //
-$params = $_SESSION['epm_admin_params'];
-$upload_target_ext = $params['upload_target_ext'];
-$upload_maxsize = $params['upload_maxsize'];
-$display_file_ext = $params['display_file_ext'];
+$admin_params = $_SESSION['epm_admin_params'];
+$upload_target_ext = $admin_params['upload_target_ext'];
+$upload_maxsize = $admin_params['upload_maxsize'];
+$display_file_ext = $admin_params['display_file_ext'];
 
 // Template directories:
 //
@@ -49,22 +46,41 @@ if ( is_dir ( "$epm_data/template" ) )
     $template_dirs[] = "$epm_data/template";
 $template_dirs[] = "$epm_root/template";
 
+// Function to get and decode json file, which must be
+// readable.  It is a fatal error if the file cannot be
+// read or decoded.
+//
+function get_json ( $filename )
+{
+    $f = $filename;
+    $c = file_get_contents ( $f );
+    if ( $c === false )
+    {
+	$sysfail = "cannot read readable $f";
+	include 'include/sysalert.php';
+    }
+    $j = json_decode ( $c, true );
+    if ( $j === NULL )
+    {
+	$m = json_last_error_msg();
+	$sysfail =
+	    "cannot decode json in $f:\n    $m";
+	include 'include/sysalert.php';
+    }
+    return $j;
+}
+
 // Problem Parameters:
 //
-$file = "$epm_data/users/user$userid/"
-      . "$problem/$problem.params";
-$params = [];
-if ( is_readable ( $file ) )
-{
-    $contents = file_get_contents ( $file );
-    if ( ! $contents )
-        exit ( "cannot read $file" );
-    $params = json_decode ( $contents, true );
-    if ( ! $params )
-        exit ( "cannot decode json $file" );
-}
-if ( isset ( $params['make_dirs'] ) )
-    $make_dirs = $params['make_dirs'];
+$problem_params_file =
+    "$epm_data/users/user$userid/$problem/" .
+    "problem.params";
+$problem_params = [];
+if ( is_readable ( $problem_params_file ) )
+    $problem_params = get_json
+        ( $problem_params_file );
+if ( isset ( $problem_params['make_dirs'] ) )
+    $make_dirs = $problem_params['make_dirs'];
 else
     $make_dirs = ["users/user$userid/$problem"];
 
@@ -235,20 +251,13 @@ function get_template_json ( $template )
     $result = & $pair[1];
     if ( ! isset ( $result ) )
     {
-	$filename = & $pair[0];
-	$contents = file_get_contents ( $filename );
-	if ( $contents === false )
+	$f = & $pair[0];
+	if ( ! is_readable ( $f ) )
 	{
-	    $sysfail = "cannot read $filename";
+	    $sysfail = "cannot read $f";
 	    include 'sysalert.php';
 	}
-	$json = json_decode ( $contents, true );
-	if ( ! isset ( $json ) )
-	{
-	    $sysfail = "cannot json decode $filename";
-	    include 'sysalert.php';
-	}
-	$result = $json;
+	$result = get_json ( $f );
     }
     return $result;
 }
@@ -345,26 +354,13 @@ function get_template_optn ( & $errors )
     $template_optn = [];
     foreach ( $dirs as $dir )
     {
-	$filename = "$dir/template.optn";
-        if ( ! is_readable ( $filename ) ) continue;
-	$contents = file_get_contents ( $filename );
-	if ( $contents === false )
-	{
-	    $sysfail = "cannot read readable $filename";
-	    include 'sysalert.php';
-	}
-	$json = json_decode ( $contents, true );
-	if ( ! isset ( $json ) )
-	{
-	    $sysalert = "cannot json decode $filename";
-	    include 'sysalert.php';
-	    $errors[] = $sysalert;
-	    continue;
-	}
+	$f = "$dir/template.optn";
+        if ( ! is_readable ( $f ) ) continue;
+	$j = get_json ( $f );
 
 	// template.optn values are 2D arrays.
 	//
-	foreach ( $json as $opt => $description )
+	foreach ( $j as $opt => $description )
 	foreach ( $description as $key => $value )
 	    $template_optn[$opt][$key] = $value;
     }
@@ -383,26 +379,13 @@ function get_problem_optn ( $problem, & $errors )
     $problem_optn = [];
     foreach ( array_reverse ( $make_dirs ) as $dir )
     {
-        $filename = "$epm_data/$dir/$problem.optn";
-        if ( ! is_readable ( $filename ) ) continue;
-	$contents = file_get_contents ( $filename );
-	if ( $contents === false )
-	{
-	    $sysfail = "cannot read readable $filename";
-	    include 'sysalert.php';
-	}
-	$json = json_decode ( $contents, true );
-	if ( ! isset ( $json ) )
-	{
-	    $sysalert = "cannot json decode $filename";
-	    include 'sysalert.php';
-	    $errors[] = $sysalert;
-	    continue;
-	}
+        $f = "$epm_data/$dir/$problem.optn";
+        if ( ! is_readable ( $f ) ) continue;
+	$j = get_json ( $f );
 
 	// PPPP.optn values are 1D arrays.
 	//
-	foreach ( $json as $opt => $value )
+	foreach ( $j as $opt => $value )
 	    $problem_optn[$opt] = $value;
 
     }
@@ -818,7 +801,8 @@ function find_control
 	    "no template found whose required" .
 	    " files exist; closest are:\n" .
 	    "    $not_found_list\n" .
-	    "first has missing required files:\n" .
+	    "first of these templates has missing" .
+	    " required files:\n" .
 	    "    $best_not_found";
     }
     else

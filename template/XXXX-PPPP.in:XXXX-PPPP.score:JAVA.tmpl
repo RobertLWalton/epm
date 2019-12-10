@@ -1,13 +1,15 @@
-
 {
 
 "COMMANDS": ["chmod o+r . PPPP.class",
              "epm_sandbox SANDBOX-ARGS java JAVA-FLAGS PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err",
-	     "chmod o-r . PPPP.class"],
+	     "chmod o-r . PPPP.class",
+             "epm_score SCORING-ARGS < XXXX-PPPP.out XXXX-PPPP.test > XXXX-PPPP.score 2>> XXXX-PPPP.err"],
 
 "LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP.class"],
-"KEEP":    ["XXXX-PPPP.out"],
-"SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.out"],
+"REQUIRES":["XXXX-PPPP.test"],
+"KEEP":    ["XXXX-PPPP.score"],
+"SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.score"],
 "CHECKS":  ["cmp -s XXXX-PPPP.err /dev/null"]
 
 }
+
