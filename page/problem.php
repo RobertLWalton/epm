@@ -22,6 +22,8 @@
 	 != $_SERVER['REMOTE_ADDR'] )
         exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
+    include 'include/debug_info.php';
+
     $userid = $_SESSION['epm_userid'];
     $epm_data = $_SESSION['epm_data'];
     $epm_root = $_SESSION['epm_root'];
@@ -55,16 +57,20 @@
     //
     $problem = NULL;
     $new_problem = false;
-    if ( isset ( $_POST['goto_problem'] ) )
+    if ( isset ( $_POST['goto_problem'] )
+         ||
+	 isset ( $_POST['new_problem'] ) )
     {
 	// new_problem takes precedence over problem,
 	// as the latter is always set to the current
-	// selected value.
+	// selected value (unless there are no problems
+	// in which case there is no `goto_problem' or
+	// 'problem'.
 	//
-        $problem = trim ( $_REQUEST['new_problem'] );
+        $problem = trim ( $_POST['new_problem'] );
 	if ( $problem == "" )
 	    $problem =
-	        trim ( $_REQUEST['problem'] );
+	        trim ( $_POST['problem'] );
 	else
 	    $new_problem = true;
 
@@ -426,7 +432,8 @@
                                  $problem :
 			         "none selected" );
     echo <<<EOT
-    <form style='display:inline' action='user.php' method='GET'>
+    <form style='display:inline'
+          action='user.php' method='GET'>
     User: <input type='submit' value='$email'>
     </form>
     &nbsp;&nbsp;&nbsp;&nbsp;

@@ -23,13 +23,13 @@ if ( ! isset ( $is_epm_test ) )
 
 if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
-if ( ! isset ( $_SESSION['userid'] ) )
+if ( ! isset ( $_SESSION['epm_userid'] ) )
     exit ( 'ACCESS ERROR: session userid not set' );
 if ( ! isset ( $_SESSION['problem'] ) )
     exit ( 'ACCESS ERROR: sesssion has no current' .
            ' problem' );
 
-$userid = $_SESSION['userid'];
+$userid = $_SESSION['epm_userid'];
 $problem = $_SESSION['problem'];
 
 if ( ! isset ( $_SESSION['epm_admin_params'] ) )

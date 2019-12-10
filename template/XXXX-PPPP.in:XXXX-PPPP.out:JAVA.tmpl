@@ -1,7 +1,9 @@
 
 {
 
-"COMMANDS": ["epm_sandbox SANDBOX-ARGS java JAVA-FLAGS PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err"],
+"COMMANDS": ["chmod o+r . PPPP.class",
+             "epm_sandbox SANDBOX-ARGS java JAVA-FLAGS PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err",
+	     "chmod o-r . PPPP.class"],
 
 "LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP.class"],
 "KEEP":    ["XXXX-PPPP.out"],
