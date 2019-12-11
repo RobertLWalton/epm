@@ -80,11 +80,13 @@
 	    $sysfail = "cannot make $user_dir/$problem";
 	    include 'include/sysalert.php';
 	}
+        unset ( $_SESSION['delete_problem_tag'] );
     }
     elseif ( isset ( $_POST['selected_problem'] ) )
     {
         $problem = trim ( $_POST['selected_problem'] );
-	if ( $problem == '' )
+	if ( ! preg_match
+	           ( '/^[-_A-Za-z0-9]+$/', $problem );
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	elseif ( ! is_dir ( "$user_dir/$problem" ) )
 	{
@@ -93,6 +95,7 @@
 		" problem: $problem";
 	    $problem = NULL;
 	}
+        unset ( $_SESSION['delete_problem_tag'] );
     }
 
     if (    ! isset ( $problem )
@@ -115,7 +118,11 @@
     $warnings = [];	// Warining messages to be
     			// shown.
     $file_made = false;
+        // True if $output, $commands, and $kept are to
+	// be displayed.
     $uploaded_file = NULL;
+        // 'name' of uploaded file, if any file was
+	// uploaded.
     $delete_problem = false;
         // True to ask whether current problem is to be
 	// deleted.
@@ -220,14 +227,14 @@
 
     if ( isset ( $_POST['show_file'] ) )
     {
-	$fname = $_POST['show_file'];
+	$f = $_POST['show_file'];
 	if ( array_search
-	         ( $fname, problem_file_names(),
-		           true ) === false )
+	         ( $f, problem_file_names(), true )
+	     === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 
-        $f = "users/user$userid/$problem/$fname";
+        $f = "users/user$userid/$problem/$f";
 	$t = exec ( "file $epm_data/$f" );
 	if ( preg_match ( '/ASCII/', $t ) )
 	    $show_file = $f;
