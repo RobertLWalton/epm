@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Dec 10 03:36:06 EST 2019
+    // Date:	Wed Dec 11 08:05:34 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -117,7 +117,11 @@
     $file_made = false;
     $uploaded_file = NULL;
     $delete_problem = false;
+        // True to ask whether current problem is to be
+	// deleted.
     $deleted_problem = NULL;
+        // Set to announce that $deleted_problem has
+	// been deleted.
 
     if ( isset ( $_POST['delete_problem'] ) )
     {
@@ -173,10 +177,12 @@
 	    closedir ( $desc );
 	    break;
 	}
-	if ( ! preg_match ( '/^\.\.*$/', $value ) )
+	if ( preg_match ( '/^[-_A-Za-z0-9]+$/', $value )
 	    $problems[] = $value;
     }
 
+    // Return DISPLAYABLE problem file names.
+    //
     $problem_file_names = NULL;
         // Cache of problem_file_names().
     function problem_file_names()
