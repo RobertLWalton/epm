@@ -2,7 +2,7 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Dec  7 19:00:48 EST 2019
+    // Date:	Wed Dec 11 19:46:13 EST 2019
 
     // To set up a epm instance you need the following
     // directories:
@@ -76,6 +76,9 @@
 	}
 	$tail = substr ( $script_dir, $n );
 	$tail = dirname ( $tail );
+
+	$_SESSION = array();
+	session_destroy();
 	header ( "Location: http://$host/$tail" );
 	exit;
     }

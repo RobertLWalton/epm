@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec 11 08:05:34 EST 2019
+    // Date:	Wed Dec 11 19:46:23 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -86,7 +86,7 @@
     {
         $problem = trim ( $_POST['selected_problem'] );
 	if ( ! preg_match
-	           ( '/^[-_A-Za-z0-9]+$/', $problem );
+	           ( '/^[-_A-Za-z0-9]+$/', $problem ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	elseif ( ! is_dir ( "$user_dir/$problem" ) )
 	{
@@ -99,10 +99,10 @@
     }
 
     if (    ! isset ( $problem )
-         && isset ( $_SESSION['problem'] ) )
-        $problem = $_SESSION['problem'];
+         && isset ( $_SESSION['epm_problem'] ) )
+        $problem = $_SESSION['epm_problem'];
     elseif ( isset ( $problem ) )
-	$_SESSION['problem'] = $problem;
+	$_SESSION['epm_problem'] = $problem;
 
     if ( isset ( $problem ) )
 	$problem_dir =
@@ -155,7 +155,7 @@
 	$deleted_problem = $problem;
 	$problem = NULL;
 	$problem_dir = NULL;
-	unset ( $_SESSION['problem'] );
+	unset ( $_SESSION['epm_problem'] );
     }
     else if ( isset ( $_POST['delete_problem_no'] ) )
     {
@@ -184,7 +184,8 @@
 	    closedir ( $desc );
 	    break;
 	}
-	if ( preg_match ( '/^[-_A-Za-z0-9]+$/', $value )
+	if ( preg_match
+	         ( '/^[-_A-Za-z0-9]+$/', $value ) )
 	    $problems[] = $value;
     }
 

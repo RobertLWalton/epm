@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Dec 10 04:18:15 EST 2019
+// Date:    Wed Dec 11 19:45:54 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -18,12 +18,12 @@ if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
 if ( ! isset ( $_SESSION['epm_userid'] ) )
     exit ( 'ACCESS ERROR: session userid not set' );
-if ( ! isset ( $_SESSION['problem'] ) )
+if ( ! isset ( $_SESSION['epm_problem'] ) )
     exit ( 'ACCESS ERROR: sesssion has no current' .
            ' problem' );
 
 $userid = $_SESSION['epm_userid'];
-$problem = $_SESSION['problem'];
+$problem = $_SESSION['epm_problem'];
 
 if ( ! isset ( $is_epm_test ) )
     $is_epm_test = false;
