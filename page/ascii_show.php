@@ -2,9 +2,11 @@
 
     // File:	ascii_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 12 03:55:07 EST 2019
+    // Date:	Thu Dec 12 07:45:00 EST 2019
 
     // Show the ASCII file $_GET['filename'].
+    // File may be in current problem directory
+    // or a temporary in its +work+ subdirectory.
 
 ?>
 
@@ -52,10 +54,18 @@
 	    ( "ACCESS: illegal GET to ascii_show.php" );
 
     $filename = $_GET['filename'];
+    $printname = "<u>$filename</u>:";
     $f = "$problem_dir/$filename";
-    if ( ! is_readable ( "$f" ) )
-	exit
-	    ( "ACCESS: illegal GET to ascii_show.php" );
+    $g = "$problem_dir/+work+/$filename";
+    if ( ! is_readable ( $f ) )
+    {
+        if ( ! is_readable ( $g ) )
+	    exit ( "ACCESS: illegal GET to" .
+	           " ascii_show.php" );
+	$f = $g;
+	$printname .=
+	    '&nbsp;&nbsp;&nbsp;&nbsp;(temporary)';
+    }
 
     $t = exec ( "file $f" );
     if ( ! preg_match ( '/ASCII/', $t ) )
@@ -71,7 +81,7 @@
     if ( array_slice ( $lines, -1, 1 ) == [""] )
 	array_splice ( $lines, -1, 1 );
     $count = 0;
-    echo "<u>$filename</u>:<br>\n";
+    echo "<h3 style='margin-bottom:0em'>$printname</h3><br>\n";
     echo "<div style='background-color:#d0fbd1;'>" .
          "<table>\n";
     foreach ( $lines as $line )

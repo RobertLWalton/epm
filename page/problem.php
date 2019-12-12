@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 12 03:34:00 EST 2019
+    // Date:	Thu Dec 12 07:45:14 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -238,7 +238,7 @@
 
         $f = "users/user$userid/$problem/$f";
 	$t = exec ( "file $epm_data/$f" );
-	if ( preg_match ( '/ASCII/', $t ) )
+	if ( preg_match ( '/(ASCII|PDF)/', $t ) )
 	    $show_file = $f;
 	else
 	    $show_files[] = $f;
@@ -362,13 +362,12 @@
     if ( isset ( $show_file ) )
     {
 	$b = basename ( $show_file );
-	if ( ! is_readable ( "$problem_dir/$b" )
-	     &&
-	     is_readable ( "$problem_dir/+work+/$b" ) )
-	    $b = "%2bwork%2b/$b";
-	    // %2b encodes + in GET parameter
+	if ( preg_match ( '/\.pdf$/', $b ) )
+	    $e = 'pdf_show.php';
+	else
+	    $e = 'ascii_show.php';
 	echo "<iframe" .
-	     " src='ascii_show.php?filename=$b'" .
+	     " src='$e?filename=$b'" .
 	     " style='width:50%;height:97%;" .
 	     "float:right'>\n";
 	echo "</iframe>\n";
@@ -520,14 +519,9 @@ EOT;
 EOT;
     }
 
-?>
-</div>
-
-<?php
     if ( $file_made )
     {
-	echo "<div style='background-color:#c0ffc0;" .
-	     "width:50%;'>\n";
+	echo "<div style='background-color:#c0ffc0;'>";
         if ( count ( $output ) > 0 )
 	{
 	    echo "Output:<br><ul>\n";
@@ -559,7 +553,7 @@ EOT;
     {
 	echo "<div style='" .
 	     "background-color:" .
-	     "#AEF9B0;width:50%;'>\n";
+	     "#AEF9B0;'>\n";
 	foreach ( $show_files as $f )
 	{
 	    $f = "$epm_data/$f";
@@ -591,5 +585,6 @@ EOT;
     }
 ?>
 
+</div>
 </body>
 </html>
