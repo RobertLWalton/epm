@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec  9 02:15:21 EST 2019
+    // Date:	Thu Dec 12 02:57:50 EST 2019
 
     // Handles login for a session.  Sets $_SESSION:
     //
@@ -46,8 +46,6 @@
     clearstatcache();
     umask ( 07 );
 
-    // include 'include/debug_info.php';
-
     // We come here from other pages if
     // $_SESSION['epm_userid'] is not set.
 
@@ -75,6 +73,9 @@
 
     $epm_root = $_SESSION['epm_root'];
     $epm_data = $_SESSION['epm_data'];
+    $include = "$epm_root/include";
+
+    // require "$include/debug_info.php";
 
     if ( ! isset ( $_SESSION['epm_login_time'] ) )
         $_SESSION['epm_login_time'] = time();
@@ -91,12 +92,14 @@
     //
     function get_json ( $filename )
     {
+        global $include;
+
 	$f = $filename;
 	$c = file_get_contents ( $f );
 	if ( $c === false )
 	{
 	    $sysfail = "cannot read readable $f";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	}
 	$j = json_decode ( $c, true );
 	if ( $j === NULL )
@@ -104,7 +107,7 @@
 	    $m = json_last_error_msg();
 	    $sysfail =
 	        "cannot decode json in $f:\n    $m";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	}
 	return $j;
     }
@@ -115,7 +118,7 @@
     if ( ! is_readable ( $f ) )
     {
         $sysfail = "cannot read $f";
-	include 'include/sysalert.php';
+	require "$include/sysalert.php";
     }
     $admin_params = get_json ( $f );
 
@@ -178,17 +181,21 @@
     //
     function set_userid()
     {
-        global $email, $epm_data, $userid, $user_admin;
+        global $email, $epm_data, $userid, $user_admin,
+	       $include;
 
 	$f = "$epm_data/admin/email_index/$email";
 	if ( is_readable ( $f ) )
 	{
 	    $u = file_get_contents ( $f );
+	    $u = trim ( $u );
+	        // In case $f was edited by hand and a
+		// \n was introduced.
 	    if ( ! preg_match
 		      ( '/^[1-9][0-9]*$/', $u ) )
 	    {
 		$sysfail = "$f has value $u";
-		include 'include/sysalert.php';
+		require "$include/sysalert.php";
 	    }
 	    $userid = $u;
 	    $f = "$epm_data/admin/user{$userid}.json";
@@ -201,7 +208,9 @@
     //
     function log_confirmation()
     {
-    	global $confirmation_time, $email, $epm_data;
+    	global $confirmation_time, $email, $epm_data,
+	       $include;
+
 	$date_format = "%FT%T%z";
 
 	$f = "$epm_data/admin/login.log";
@@ -212,7 +221,7 @@
 	    {
 		$sysfail =
 		    "cannot append to writable $f";
-		include 'include/sysalert.php';
+		require "$include/sysalert.php";
 	    }
 	    $ipaddr = $_SESSION['epm_ipaddr'];
 	    $log_login_time =
@@ -322,7 +331,7 @@
 	if ( $r === false )
 	{
 	    $sysfail = "cannot write $f";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	}
     }
 

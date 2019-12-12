@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec 11 20:09:52 EST 2019
+    // Date:	Thu Dec 12 03:34:00 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -22,12 +22,13 @@
 	 != $_SERVER['REMOTE_ADDR'] )
         exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
-    // include 'include/debug_info.php';
-
     $userid = $_SESSION['epm_userid'];
     $epm_data = $_SESSION['epm_data'];
     $epm_root = $_SESSION['epm_root'];
     $email = $_SESSION['epm_email'];
+    $include = "$epm_root/include";
+
+    // require "$include/debug_info.php";
 
     $user_dir = "$epm_data/users/user$userid";
 
@@ -78,7 +79,7 @@
 	                   0771 ) )
 	{
 	    $sysfail = "cannot make $user_dir/$problem";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	}
         unset ( $_SESSION['delete_problem_tag'] );
     }
@@ -277,7 +278,7 @@
     }
     else if ( isset ( $_POST['make_score'] ) )
     {
-	include 'include/epm_make.php';
+	require "$include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
         $f = $_POST['make_score'];
@@ -322,7 +323,7 @@
 
 	if ( $uploaded_file != '' )
 	{
-	    include 'include/epm_make.php';
+	    require "$include/epm_make.php";
 		// Do this first as it may change $f,
 		// etc.
 
@@ -361,6 +362,11 @@
     if ( isset ( $show_file ) )
     {
 	$b = basename ( $show_file );
+	if ( ! is_readable ( "$problem_dir/$b" )
+	     &&
+	     is_readable ( "$problem_dir/+work+/$b" ) )
+	    $b = "%2bwork%2b/$b";
+	    // %2b encodes + in GET parameter
 	echo "<iframe" .
 	     " src='ascii_show.php?filename=$b'" .
 	     " style='width:50%;height:97%;" .

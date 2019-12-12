@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec  9 02:15:41 EST 2019
+    // Date:	Thu Dec 12 04:01:01 EST 2019
 
     // Edits files:
     //
@@ -47,6 +47,9 @@
         exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
     $epm_data = $_SESSION['epm_data'];
+    $epm_root = $_SESSION['epm_root'];
+    $include = "$epm_root/include";
+
     if ( ! is_writable
                ( "$epm_data/admin/email_index" ) )
     {
@@ -54,9 +57,9 @@
 	exit;
     }
 
-    $admin_params = $_SESSION['epm_admin_params'];
+    // require "$include/debug_info.php";
 
-    // include 'include/debug_info.php';
+    $admin_params = $_SESSION['epm_admin_params'];
 
     $email = $_SESSION['epm_email'];
     $ipaddr = $_SESSION['epm_ipaddr'];
@@ -81,7 +84,7 @@
     if ( $desc === false )
     {
         $sysfail = "user_edit: cannot open $d";
-	include 'include/sysalert.php';
+	require "$include/sysalert.php";
     }
     while ( true )
     {
@@ -98,7 +101,7 @@
 	if ( $i === false )
 	{
 	    $sysalert = "user_edit: cannot read $f";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	    $max_id = NULL;
 	    continue;
 	}
@@ -106,7 +109,7 @@
 		   ( '/^[1-9][0-9]*$/', $i ) )
 	{
 	    $sysalert = "user_edit: bad value $i in $f";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	    $max_id = NULL;
 	    continue;
 	}
@@ -129,7 +132,7 @@
 	if ( $c === false )
 	{
 	    $sysfail = "cannot read readable $f";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	}
 	$user_admin = json_decode ( $c, true );
 	if ( $user_admin === NULL )
@@ -137,7 +140,7 @@
 	    $m = json_last_error_msg();
 	    $sysfail =
 	        "cannot decode json in $f:\n    $m";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	}
     }
     else // New user
@@ -257,7 +260,7 @@
 		if ( $r === false )
 		{
 		    $sysfail = "could not write $f";
-		    include 'include/sysalert.php';
+		    require "$include/sysalert.php";
 		}
 		$emails[] = $e;
 	    }
@@ -289,7 +292,7 @@
 	    elseif ( ! unlink ( $f ) )
 	    {
 	        $sysfail = "cannot unlink $f";
-		include 'include/sysalert.php';
+		require "$include/sysalert.php";
 	    }
 	    else
 		array_splice ( $emails, $k, 1 );
@@ -327,7 +330,7 @@
 	        $sysfail =
 		    "could not compute new userid" .
 		    " because of previous errors";
-		include 'include/sysalert.php';
+		require "$include/sysalert.php";
 	    }
 	    $userid = $max_id + 1;
 	    umask ( 06 );
@@ -342,7 +345,7 @@
 	    if ( $r === false )
 	    {
 		$sysfail = "could not write $f";
-		include 'include/sysalert.php';
+		require "$include/sysalert.php";
 	    }
 	}
 
@@ -357,7 +360,7 @@
 	if ( $r === false )
 	{
 	    $sysfail = "could not write $f";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	}
 
 	if ( $_POST['update'] == 'Done' )

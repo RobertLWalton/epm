@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec  9 09:19:58 EST 2019
+    // Date:	Thu Dec 12 03:57:26 EST 2019
 
     // Displays files:
     //
@@ -27,8 +27,10 @@
         exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
     $epm_data = $_SESSION['epm_data'];
+    $epm_root = $_SESSION['epm_root'];
+    $include = "$epm_root/include";
 
-    // include 'include/debug_info.php';
+    // require "$include/debug_info.php";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -70,7 +72,7 @@
 		   ( '/^[1-9][0-9]*$/', $i ) )
 	{
 	    $sysalert = "bad value $i in $f";
-	    include 'include/sysalert.php';
+	    require "$include/sysalert.php";
 	    continue;
 	}
 	if ( $i == $userid && $value != $email )
@@ -87,7 +89,7 @@
 	$m = json_last_error_msg();
 	$sysfail =
 	    "cannot decode json in $f:\n    $m";
-	include 'include/sysalert.php';
+	require "$include/sysalert.php";
     }
 ?>
 

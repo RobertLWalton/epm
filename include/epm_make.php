@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Dec 11 19:45:54 EST 2019
+// Date:    Thu Dec 12 03:40:59 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -57,7 +57,7 @@ function get_json ( $filename )
     if ( $c === false )
     {
 	$sysfail = "cannot read readable $f";
-	include 'include/sysalert.php';
+	require 'sysalert.php';
     }
     $j = json_decode ( $c, true );
     if ( $j === NULL )
@@ -65,7 +65,7 @@ function get_json ( $filename )
 	$m = json_last_error_msg();
 	$sysfail =
 	    "cannot decode json in $f:\n    $m";
-	include 'include/sysalert.php';
+	require 'sysalert.php';
     }
     return $j;
 }
@@ -211,7 +211,7 @@ function load_template_cache()
 	if ( $dircontents === false )
 	{
 	    $sysfail = "cannot read $dir";
-	    include 'sysalert.php';
+	    require 'sysalert.php';
 	}
 
 	foreach ( $dircontents as $fname )
@@ -229,7 +229,7 @@ function load_template_cache()
     if ( ! isset ( $template_cache ) )
     {
         $sysfail = "no readable template directories";
-	include 'sysalert.php';
+	require 'sysalert.php';
     }
 }
 
@@ -245,7 +245,7 @@ function get_template_json ( $template )
     {
         $sysfail = "get_template called with template"
 	         . " that is not cache key";
-	include 'sysalert.php';
+	require 'sysalert.php';
     }
     $pair = & $template_cache[$template];
     $result = & $pair[1];
@@ -255,7 +255,7 @@ function get_template_json ( $template )
 	if ( ! is_readable ( $f ) )
 	{
 	    $sysfail = "cannot read $f";
-	    include 'sysalert.php';
+	    require 'sysalert.php';
 	}
 	$result = get_json ( $f );
     }
@@ -297,7 +297,7 @@ function find_templates
         $sysfail = 'find_templates called'
 	         . ' with both $srcfile and $desfile'
 		 . ' NULL';
-	include 'sysalert.php';
+	require 'sysalert.php';
     }
 
     $templates = [];
@@ -590,7 +590,7 @@ function compute_optn_map
 	{
 	    $sysfail = "option $opt value not set in"
 	             . " in compute_optn_map";
-	    include 'sysalert.php';
+	    require 'sysalert.php';
 	}
 
 	if ( isset ( $description['argname'] ) )
@@ -639,7 +639,7 @@ function load_make_cache()
 	if ( $dircontents === false )
 	{
 	    $sysfail = "cannot read $d";
-	    include 'sysalert.php';
+	    require 'sysalert.php';
 	}
 
 	foreach ( $dircontents as $fname )
@@ -871,7 +871,7 @@ function cleanup_working ( $dir, & $errors )
     // execute programs that are in working directory.
     {
 	$sysalert = "could not make $dir";
-	include 'sysalert.php';
+	require 'sysalert.php';
 	$errors[] = "SYSTEM ERROR: could not make $dir";
     }
 }
@@ -901,7 +901,7 @@ function link_required
 	{
 	    $sysfail = "in link_required: $rname not"
 	             . " in \$make_cache";
-	    include 'sysalert.php';
+	    require 'sysalert.php';
 	    // Does NOT return.
 	}
 
@@ -1088,7 +1088,7 @@ function make_file
 	    $sysfail =
 		"uploaded file is $uploaded but" .
 		" $f already exists";
-	    include 'sysalert.php';
+	    require 'sysalert.php';
 	}
 
 	if ( $is_epm_test ?
@@ -1179,7 +1179,7 @@ function process_upload
     {
         $sysfail =
 	    'process_upload: $upload is not an array';
-	include 'sysalert.php';
+	require 'sysalert.php';
     }
 
     $fname = $upload['name'];

@@ -3,16 +3,21 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Wed Dec  4 08:00:42 EST 2019
+// Date:	Thu Dec 12 03:46:14 EST 2019
 
 $is_epm_test = true;
 
 $epm_data = getcwd() . '/epm_make_test_data';
 $epm_root = dirname ( getcwd() );
-$_SESSION = [ 'userid' => 1, 'problem' => 'prob',
+$_SESSION = [ 'epm_userid' => 1,
+              'epm_problem' => 'prob',
               'epm_root' => $epm_root,
 	      'epm_data' => $epm_data ];
 $_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
+$c = file_get_contents
+    ( '../src/default_admin.params' );
+$_SESSION['epm_admin_params'] =
+    json_decode ( $c, true );
 
 $prob_dir = 'users/user1/prob';
 $proj_dir = 'projects/proj1/prob';
@@ -53,7 +58,7 @@ $prob_optn = <<<'EOT'
 }
 EOT;
 
-include ( '../page/include/epm_make.php' );
+include ( '../include/epm_make.php' );
 
 function check ( $expression, $value )
 {

@@ -2,7 +2,7 @@
 
     // File:	ascii_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 12 02:09:23 EST 2019
+    // Date:	Thu Dec 12 03:55:07 EST 2019
 
     // Show the ASCII file $_GET['filename'].
 
@@ -34,11 +34,12 @@
 	exit;
     }
 
-    // include 'include/debug_info.php';
-
     $userid = $_SESSION['epm_userid'];
     $epm_data = $_SESSION['epm_data'];
+    $epm_root = $_SESSION['epm_root'];
     $problem = $_SESSION['epm_problem'];
+
+    // require "$epm_root/include/debug_info.php";
 
     $problem_dir =
         "$epm_data/users/user$userid/$problem";

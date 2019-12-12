@@ -4,9 +4,9 @@
 // window.open will be ignored if not inside onclick function.
 //
 function new_window ( message ) {
-    x = 3 * window.outerHeight/ 4;
-    y = window.outerWidth/ 2;
-    window.open('http://localhost:9999/tinker/twopage.php?pop='
+    let x = 3 * window.outerHeight/ 4;
+    let y = window.outerWidth/ 2;
+    window.open('twopage.php?pop='
     			+ message + ' ' + x + ' ' + y,
                 'MY WINDOW',
 		'height=' + x + ',width=' + y);
