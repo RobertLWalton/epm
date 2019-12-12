@@ -1,15 +1,19 @@
-<html>
-<body>
-
-<div style="background-color:#96F9F3;width:50%;float:left">
-
 <?php
 
     // File:	ascii_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec 11 20:33:54 EST 2019
+    // Date:	Thu Dec 12 02:09:23 EST 2019
 
-    // Show an ASCII file.
+    // Show the ASCII file $_GET['filename'].
+
+?>
+
+<html>
+<body>
+
+<div style="background-color:#ffe6ee">
+
+<?php
 
     session_start();
     clearstatcache();
@@ -23,13 +27,14 @@
     if (    $_SESSION['epm_ipaddr']
 	 != $_SERVER['REMOTE_ADDR'] )
         exit ( 'UNACCEPTABLE IPADDR CHANGE' );
+
     if ( ! isset ( $_SESSION['epm_problem'] ) )
     {
 	header ( "Location: problem.php" );
 	exit;
     }
 
-    include 'include/debug_info.php';
+    // include 'include/debug_info.php';
 
     $userid = $_SESSION['epm_userid'];
     $epm_data = $_SESSION['epm_data'];
@@ -41,20 +46,20 @@
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
-    if ( ! isset ( $_GET['filename' ) )
+    if ( ! isset ( $_GET['filename'] ) )
 	exit
-	    ( "ACCESS: illegal get to ascii_show.php" );
+	    ( "ACCESS: illegal GET to ascii_show.php" );
 
-    $f = $_GET['filename'];
-    $f = "$problem_dir/$f";
+    $filename = $_GET['filename'];
+    $f = "$problem_dir/$filename";
     if ( ! is_readable ( "$f" ) )
 	exit
-	    ( "ACCESS: illegal get to ascii_show.php" );
+	    ( "ACCESS: illegal GET to ascii_show.php" );
 
     $t = exec ( "file $f" );
     if ( ! preg_match ( '/ASCII/', $t ) )
 	exit
-	    ( "ACCESS: illegal get to ascii_show.php" );
+	    ( "ACCESS: illegal GET to ascii_show.php" );
 
     $c = file_get_contents ( $f );
     if ( $c === false )
@@ -65,13 +70,9 @@
     if ( array_slice ( $lines, -1, 1 ) == [""] )
 	array_splice ( $lines, -1, 1 );
     $count = 0;
-    echo "<div style='background-color:" .
-	 "#d0fbd1;width:50%;" .
-	 "float:right;overflow:scroll;" .
-	 "height:100%'>\n";
-    echo "<u style='" .
-	 "background-color:#ffe6ee'>\n" .
-	 "$b</u>:<br><table>\n";
+    echo "<u>$filename</u>:<br>\n";
+    echo "<div style='background-color:#d0fbd1;'>" .
+         "<table>\n";
     foreach ( $lines as $line )
     {
 	++ $count;
