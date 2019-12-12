@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec 11 19:46:23 EST 2019
+    // Date:	Wed Dec 11 20:09:52 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -311,11 +311,21 @@
     }
     else if ( isset ( $_POST['upload'] ) )
     {
-	$upload_info = $_FILES['uploaded_file'];
-	$uploaded_file = $upload_info['name'];
-	if ( $uploaded_file != "" )
+	if ( isset ( $_FILES['uploaded_file']
+	                     ['name'] ) )
+	{
+	    $upload_info = $_FILES['uploaded_file'];
+	    $uploaded_file = $upload_info['name'];
+	}
+	else
+	    $uploaded_file = '';
+
+	if ( $uploaded_file != '' )
 	{
 	    include 'include/epm_make.php';
+		// Do this first as it may change $f,
+		// etc.
+
 	    $output = [];
 	    process_upload
 		( $upload_info, $problem,
