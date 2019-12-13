@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Dec 13 05:55:24 EST 2019
+// Date:    Fri Dec 13 07:02:30 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -695,22 +695,32 @@ function find_control
     load_make_cache();
 
     $best_template = NULL;
-        // First `best template' as triple.
-    $best_not_found = NULL;
-        // List of not found required files for the
-	// first template on not_found_list.
-    $found_list = [];
-        // List of all best template `names'.
-    $not_found_list = [];
-        // List of template `names' with least number
-	// of missing required files.
+        // Element of $templates for the first element
+	// of $best_found.
+    $best_found = NULL;
+        // List of [template,file,...] elements
+	// where file,... lists the required files
+	// found, and only templates with NO not
+	// found files and the most number of found
+	// files are listed.
     $best_found_count = -1;
+        // Number of files listed in each element
+	// of $best_found.
+    $best_not_found = NULL;
+        // List of [template,file,...] elements
+	// where file,... lists the required files
+	// not found, and only templates with at
+	// least 1 not found file, and with the
+	// least number of not found files, are
+	// listed.
     $best_not_found_count = 1000000000;
+        // Number of files listed in each element
+	// of $best_not_found;
     foreach ( $templates as $template )
     {
         $json = $template[2];
-	$flist = [];
-	$nflist = [];
+	$flist = [$template[0]];
+	$nflist = [$template[0]];
 	$OK = true;
 
 	foreach ( ['REQUIRES', 'LOCAL-REQUIRES',
@@ -765,55 +775,61 @@ function find_control
 	}
 	if ( ! $OK ) continue;
 
-	$nfcount = count ( $nflist );
+	$nfcount = count ( $nflist ) - 1;
 	if ( $nfcount > 0 )
 	{
 	    if ( $nfcount == $best_not_found_count )
-		$not_found_list[] = $template[0];
+		$best_not_found[] = $nflist;
 	    else if ( $nfcount < $best_not_found_count )
 	    {
-		$not_found_list = [$template[0]];
 		$best_not_found_count = $nfcount;
-		$best_not_found = $nflist;
+		$best_not_found = [$nflist];
 	    }
 	    continue;
 	}
 
-	$fcount = count ( $flist );
+	$fcount = count ( $flist ) - 1;
 	if ( $fcount == $best_found_count )
-	    $found_list[] = $template[0];
+	    $best_found[] = $flist;
 	else if ( $fcount > $best_found_count )
 	{
-	    $found_list = [$template[0]];
-	    $best_template = $template;
 	    $best_found_count = $fcount;
+	    $best_found = [$flist];
+	    $best_template = $template;
 	    $required = $flist;
+	    array_shift ( $required );
 	}
     }
 
-    if ( count ( $found_list ) == 1 )
+    if ( count ( $best_found ) == 1 )
 	return $best_template;
-    else if ( count ( $found_list ) == 0 )
+    else if ( count ( $best_found ) == 0 )
     {
-        $not_found_list =
-	    implode ( " ", $not_found_list );
-        $best_not_found =
-	    implode ( " ", $best_not_found );
 	$errors[] =
 	    "no template found whose required" .
-	    " files exist; closest are:\n" .
-	    "    $not_found_list\n" .
-	    "first of these templates has missing" .
-	    " required files:\n" .
-	    "    $best_not_found";
+	    " files exist; closest are:";
+	foreach ( $best_not_found as $nflist )
+	{
+	    $list = implode ( ',', $nflist );
+	    $errors[] =
+	        '    ' .
+		preg_replace
+		    ( '/,/', ' is missing ', $list, 1 );
+	}
     }
     else
     {
-        $found_list = implode ( " ", $found_list );
 	$errors[] =
 	    "too many templates found with the same" .
-	    " number of existing required files:\n" .
-	    "    $found_list";
+	    " number of existing required files:";
+	foreach ( $best_found as $flist )
+	{
+	    $list = implode ( ',', $flist );
+	    $errors[] =
+	        '    ' .
+		preg_replace
+		    ( '/,/', ' needs ', $list, 1 );
+	}
     }
     $required = [];
     return NULL;

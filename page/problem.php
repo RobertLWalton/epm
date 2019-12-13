@@ -422,7 +422,7 @@
 	echo "Errors:\n";
 	echo "<div style='margin-left:20px;font-size:110%'>\n";
 	foreach ( $errors as $e )
-	    echo "<pre>$e</pre><br>\n";
+	    echo "<pre style='margin:0 0'>$e</pre><br>\n";
 	echo "</div></div>\n";
     }
     if ( count ( $warnings ) > 0 )
