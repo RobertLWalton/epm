@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 12 07:45:14 EST 2019
+    // Date:	Fri Dec 13 02:32:48 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -190,7 +190,8 @@
 	    $problems[] = $value;
     }
 
-    // Return DISPLAYABLE problem file names.
+    // Return DISPLAYABLE problem file names, sorted
+    // most recent first.
     //
     $problem_file_names = NULL;
         // Cache of problem_file_names().
@@ -208,6 +209,9 @@
 	    return $problem_file_names;
 	}
 
+	clearstatcache();
+	$map = [];
+
 	foreach ( scandir ( $problem_dir ) as $fname )
 	{
 	    if ( preg_match ( '/^\./', $fname ) )
@@ -218,12 +222,19 @@
 		$ext = $matches[1];
 	    else
 	        $ext = "";
-	    if ( ! array_search
-	               ( $ext, $display_file_ext,
-		               true ) )
+	    if ( array_search
+		     ( $ext, $display_file_ext,
+		             true ) === false )
 		continue;
-	    $problem_file_names[] = $fname;
+	    $f = "$problem_dir/$fname";
+	    $map[$fname] = filemtime($f);
 	}
+	arsort ( $map, SORT_NUMERIC );
+	    // Note, keys cannot be floating point and
+	    // files often share modification times.
+	foreach ( $map as $key => $value )
+	    $problem_file_names[] = $key;
+
 	return $problem_file_names;
     }
 
@@ -479,7 +490,7 @@ EOT;
 	    if ( ++ $count == 1 )
 	        echo "<form action='problem.php'" .
 		     " method='POST'>" .
-		     " Current Problem Files:" .
+		     " Current Problem Files (most recent first):" .
 		     "<table style='display:block'>";
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>" .
