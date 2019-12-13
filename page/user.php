@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 12 03:57:26 EST 2019
+    // Date:	Fri Dec 13 05:54:30 EST 2019
 
     // Displays files:
     //
@@ -83,6 +83,8 @@
     $c = file_get_contents ( $f );
     if ( $c === false )
 	exit ( "SYSTEM ERROR: cannot read $f" );
+    $c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
+	// Get rid of `//...' comments.
     $user_admin = json_decode ( $c, true );
     if ( $user_admin == NULL )
     {

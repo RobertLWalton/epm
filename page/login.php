@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 12 02:57:50 EST 2019
+    // Date:	Fri Dec 13 05:53:49 EST 2019
 
     // Handles login for a session.  Sets $_SESSION:
     //
@@ -101,6 +101,9 @@
 	    $sysfail = "cannot read readable $f";
 	    require "$include/sysalert.php";
 	}
+	$c = preg_replace
+	         ( '#(\R|^)\h*//.*#', '', $c );
+	    // Get rid of `//...' comments.
 	$j = json_decode ( $c, true );
 	if ( $j === NULL )
 	{

@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 12 04:01:01 EST 2019
+    // Date:	Fri Dec 13 05:54:00 EST 2019
 
     // Edits files:
     //
@@ -134,6 +134,9 @@
 	    $sysfail = "cannot read readable $f";
 	    require "$include/sysalert.php";
 	}
+	$c = preg_replace
+	         ( '#(\R|^)\h*//.*#', '', $c );
+	    // Get rid of `//...' comments.
 	$user_admin = json_decode ( $c, true );
 	if ( $user_admin === NULL )
 	{

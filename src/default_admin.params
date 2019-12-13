@@ -1,4 +1,15 @@
+// Default Administrative Parameters.
+//
+// File:	default_admin.params
+// Author:	Bob Walton <walton@acm.org>
+// Date:	Fri Dec 13 06:15:00 EST 2019
+
 {
+    // To be valid, a file XXXX.E being uploaded must be
+    // such that XXXX.F can be successfully made from
+    // XXXX.E, where upload_target_ext["E"] = "F".  Note
+    // if "F" == "", XXXX.E is made into XXXX.
+    //
     "upload_target_ext": {
         "c": "",
 	"cc": "",
@@ -7,6 +18,11 @@
 	"tex": "pdf",
 	"in": "out"},
 
+    // To be listed as a problem file, and thence be
+    // `displayable' (even if only the file type is
+    // displayed, as for .class), a file must have
+    // one of the following extensions.
+    //
     "display_file_ext" : [
         "c", "cc", "java", "py", "tex",
 	"", "class", "pdf",
@@ -15,8 +31,12 @@
 	"err", "log", "fls", "score"],
 
     "upload_maxsize": 262144,
+    	// 2 megabytes
 
     "confirmation_interval": 2592000,
+        // 30 * 24 * 60 * 60 = 30 days
 
     "max_emails": 3
+        // Max number of email addresses a user may
+	// have.
 }

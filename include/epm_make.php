@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Dec 12 03:40:59 EST 2019
+// Date:    Fri Dec 13 05:55:24 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -59,6 +59,8 @@ function get_json ( $filename )
 	$sysfail = "cannot read readable $f";
 	require 'sysalert.php';
     }
+    $c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
+	// Get rid of `//...' comments.
     $j = json_decode ( $c, true );
     if ( $j === NULL )
     {
