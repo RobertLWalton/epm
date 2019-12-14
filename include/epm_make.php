@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Dec 13 07:02:30 EST 2019
+// Date:    Sat Dec 14 17:09:03 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -675,21 +675,35 @@ function load_make_cache()
 // file being uploaded and will satisfy REQUIRES or
 // LOCAL-REQUIRES.  It is NOT listed in $required.
 //
-// Only the last component of a file names is listed in
-// $required.  The directory containing it can be
-// found using $make_cache.
+// A required file may be (1) found in the local direc-
+// tory, (2) found in a non-local (remote) directory,
+// (3) not found but creatable, or (4) not found and
+// not creatable.
 //
-// It is an error if no template is found meeting
-// required file constraints, or if more than one
-// template is found with the maximum number of existing
-// required files.
+// It is an error if no template is found with all its
+// required files found, or if more than one template is
+// found with the maximum number of required files all
+// of which are found.
 //
 // Any errors cause error messages to be appended to
-// the errors list and NULL to be returned.
+// the $errors list, NULL to be returned, and $required
+// to be set to [].
+//
+// Only the last component of a file name is listed in
+// $required.  The directory containing the file can be
+// found using $make_cache.
+//
+// If NULL is returned and one or more templates with
+// all their not-found files creatable exist, the union
+// of the not-found creatable files of these templates
+// is returned in $creatables, and appropriate error
+// messages listing these files are appended to $errors.
+// Otherwise $creatables is [].  Only the last component
+// of a file is listed in $creatables.
 //
 function find_control
 	( $templates, $local_dir, $uploaded,
-	  & $required, & $errors )
+	  & $required, & $creatables, & $errors )
 {
     global $make_cache;
     load_make_cache();
@@ -709,18 +723,41 @@ function find_control
     $best_not_found = NULL;
         // List of [template,file,...] elements
 	// where file,... lists the required files
-	// not found, and only templates with at
-	// least 1 not found file, and with the
-	// least number of not found files, are
+	// not found AND not creatable, and only
+	// templates with at least 1 such file, and
+	// with the least number of such files, are
 	// listed.
     $best_not_found_count = 1000000000;
         // Number of files listed in each element
 	// of $best_not_found;
+    $not_found_creatable = NULL;
+        // List of [template,file,...] elements
+	// where file,... lists required files that
+	// were not found but creatable, and only
+	// templates with at least 1 such file and
+	// NO not-found not-creatable required files
+	// are listed.
+    // NOTE: not found but creatable files are consider-
+    //       ed to be local if local_dir != NULL.
     foreach ( $templates as $template )
     {
         $json = $template[2];
+	$json_creatables = [];
+	if ( isset ( $json['CREATABLE'] ) )
+	    $json_creatables = $json['CREATABLE'];
+	if ( ! is_array ( $json_creatables ) )
+	{
+	    $sysfail = "{$template[0]} json CREATABLE"
+	             . " not a list";
+	    require 'sysalert.php';
+	}
 	$flist = [$template[0]];
+	    // Required files found.
+	$clist = [$template[0]];
+	    // Required files not found but creatable.
 	$nflist = [$template[0]];
+	    // Required files not found and not
+	    // creatable.
 	$OK = true;
 
 	foreach ( ['REQUIRES', 'LOCAL-REQUIRES',
@@ -746,7 +783,13 @@ function find_control
 		    if ( ! isset
 			     ( $make_cache[$rfile] ) )
 		    {
-		        $nflist[] = $rfile;
+			if ( array_search
+			         ( $rfile,
+				   $json_creatables,
+				   true ) === false )
+			    $nflist[] = $rfile;
+			else
+			    $clist[] = $rfile;
 			continue;
 		    }
 		    $rdir = $make_cache[$rfile];
@@ -788,6 +831,13 @@ function find_control
 	    continue;
 	}
 
+	$ccount = count ( $clist ) - 1;
+	if ( $ccount > 0 )
+	{
+	    $not_found_creatable[] = $clist;
+	    continue;
+	}
+
 	$fcount = count ( $flist ) - 1;
 	if ( $fcount == $best_found_count )
 	    $best_found[] = $flist;
@@ -801,23 +851,10 @@ function find_control
 	}
     }
 
+    $creatables = [];
     if ( count ( $best_found ) == 1 )
 	return $best_template;
-    else if ( count ( $best_found ) == 0 )
-    {
-	$errors[] =
-	    "no template found whose required" .
-	    " files exist; closest are:";
-	foreach ( $best_not_found as $nflist )
-	{
-	    $list = implode ( ',', $nflist );
-	    $errors[] =
-	        '    ' .
-		preg_replace
-		    ( '/,/', ' is missing ', $list, 1 );
-	}
-    }
-    else
+    else if ( count ( $best_found ) > 1 )
     {
 	$errors[] =
 	    "too many templates found with the same" .
@@ -831,6 +868,40 @@ function find_control
 		    ( '/,/', ' needs ', $list, 1 );
 	}
     }
+    else if ( count ( $not_found_creatable ) > 0 )
+    {
+	$errors[] =
+	    "templates found need to have files" .
+	    " created:";
+	foreach ( $not_found_creatable as $clist )
+	{
+	    $list = implode ( ',', $clist );
+	    $errors[] =
+	        '    ' .
+		preg_replace
+		    ( '/,/', ' needs ', $list, 1 );
+	    for ( $c = 1; $c < count ( $clist ); ++ $c )
+	        $creatables[] = $clist[$c];
+	}
+    }
+    else
+    {
+	$errors[] =
+	    "no template found whose required" .
+	    " files exist; closest are:";
+	foreach ( $best_not_found as $nflist )
+	{
+	    $list = implode ( ',', $nflist );
+	    $errors[] =
+	        '    ' .
+		preg_replace
+		    ( '/,/', ' needs ', $list, 1 );
+	}
+    }
+
+    $creatables = array_unique ( $creatables );
+    $creatables = array_slice ( $creatables, 0 );
+        // Reindex array.
     $required = [];
     return NULL;
 }
@@ -1065,7 +1136,8 @@ function make_file
 	  $problem, $local_dir,
 	  $uploaded, $uploaded_tmp,
 	  & $control, & $commands,
-	  & $output, & $warnings, & $errors )
+	  & $output, & $creatables,
+	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test;
 
@@ -1086,7 +1158,7 @@ function make_file
 
     $control = find_control
 	( $templates, $local_dir, $uploaded,
-	  $required, $errors );
+	  $required, $creatables, $errors );
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) ) return;
 
@@ -1149,14 +1221,16 @@ function make_file
 function make_and_keep_file
 	( $src, $des, $problem, $local_dir,
 	  & $commands, & $moved, & $show,
-	  & $output, & $warnings, & $errors )
+	  & $output, & $creatables,
+	  & $warnings, & $errors )
 {
     $errors_size = count ( $errors );
     $output = [];
     make_file ( $src, $des,
                 $problem, $local_dir,
 		NULL, NULL,
-		$control, $commands, $output,
+		$control, $commands,
+		$output, $creatables, 
 		$warnings, $errors );
 
     $work = "$local_dir/+work+";
@@ -1184,7 +1258,8 @@ function make_and_keep_file
 function process_upload
 	( $upload, $problem, $local_dir,
 	  & $commands, & $moved, & $show,
-	  & $output, & $warnings, & $errors )
+	  & $output, & $creatables,
+	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
            $upload_target_ext, $upload_maxsize;
@@ -1268,7 +1343,8 @@ function process_upload
     make_file ( $fname, $tname,
                 $problem, $local_dir,
 		$fname, $ftmp_name,
-		$control, $commands, $output,
+		$control, $commands,
+		$output, $creatables,
 		$warnings, $errors );
     if ( count ( $errors ) > $errors_size )
         goto SHOW;

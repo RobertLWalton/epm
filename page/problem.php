@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec 13 02:32:48 EST 2019
+    // Date:	Sat Dec 14 18:45:32 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -305,21 +305,16 @@
 	$g = $matches[1] . '.score';
 	$h = $matches[1] . '.test';
 	load_make_cache();
-	if ( ! isset ( $make_cache[$h] ) )
-	    $errors[] = "cannot make $g as $h does"
-	              . " not exist";
-	else
-	{
-	    $output = [];
-	    make_and_keep_file
-		( $f, $g, $problem,
-		  "users/user$userid/$problem",
-		  $commands, $kept, $show_files,
-		  $output, $warnings, $errors );
-	    $file_made = true;
-	    $problem_file_names = NULL;
-		// Clear cache.
-	}
+	$output = [];
+	make_and_keep_file
+	    ( $f, $g, $problem,
+	      "users/user$userid/$problem",
+	      $commands, $kept, $show_files,
+	      $output, $creatables,
+	      $warnings, $errors );
+	$file_made = true;
+	$problem_file_names = NULL;
+	    // Clear cache.
     }
     else if ( isset ( $_POST['upload'] ) )
     {
@@ -343,7 +338,7 @@
 		( $upload_info, $problem,
                   "users/user$userid/$problem",
 		  $commands, $kept,
-		  $upload_show, $output,
+		  $upload_show, $output, $creatables,
 		  $warnings, $errors );
 	    foreach ( $upload_show as $f )
 	    {
