@@ -16,7 +16,7 @@
 	"java": "class",
 	"py": "pyc",
 	"tex": "pdf",
-	"in": "out"},
+	"in": "sout"},
 
     // To be listed as a problem file, and thence be
     // `displayable' (even if only the file type is
@@ -26,7 +26,8 @@
     "display_file_ext" : [
         "c", "cc", "java", "py", "tex",
 	"", "class", "pyc", "pdf",
-	"in", "gin", "out", "fout",
+	"in", "out", "fout",
+	"sout",
 	"test", "ftest",
 	"err", "log", "fls", "score"],
 
