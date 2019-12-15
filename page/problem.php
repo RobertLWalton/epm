@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Dec 14 18:45:32 EST 2019
+    // Date:	Sun Dec 15 01:19:44 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -306,9 +306,10 @@
 	$h = $matches[1] . '.test';
 	load_make_cache();
 	$output = [];
+	$d = "users/user$userid/$problem";
 	make_and_keep_file
 	    ( $f, $g, $problem,
-	      "users/user$userid/$problem",
+	      "$d/+work+", $d, NULL,
 	      $commands, $kept, $show_files,
 	      $output, $creatables,
 	      $warnings, $errors );
@@ -334,9 +335,10 @@
 		// etc.
 
 	    $output = [];
+	    $d = "users/user$userid/$problem";
 	    process_upload
 		( $upload_info, $problem,
-                  "users/user$userid/$problem",
+		  "$d/+work+", $d,
 		  $commands, $kept,
 		  $upload_show, $output, $creatables,
 		  $warnings, $errors );

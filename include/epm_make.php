@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Dec 14 17:09:03 EST 2019
+// Date:    Sun Dec 15 00:50:47 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -665,20 +665,26 @@ function load_make_cache()
 // files are selected.  It is an error if more than
 // one is selected by this rule.
 //
-// $local_dir is the directory satisfying LOCAL-
-// REQUIRES.  It is relative to $epm_data and can be
-// compared to the values in the $make_cache.
-// If $local_dir is NULL, LOCAL-REQUIRES and REMOTE-
-// REQUIRES are treated the same as REQUIRES.
+// $requires_local_dir is the directory satisfying
+// LOCAL-REQUIRES.  It is relative to $epm_data and can
+// be compared to the values in the $make_cache.
+// If $requires_local_dir is NULL, LOCAL-REQUIRES and
+// REMOTE-REQUIRES are treated the same as REQUIRES.
 //
 // If $uploaded is not NULL, it is the name of the
 // file being uploaded and will satisfy REQUIRES or
 // LOCAL-REQUIRES.  It is NOT listed in $required.
+// If it is listed in REMOTE-REQUIRES and $requires_
+// local_dir is not NULL, the template will not be
+// selected.
 //
 // A required file may be (1) found in the local direc-
 // tory, (2) found in a non-local (remote) directory,
 // (3) not found but creatable, or (4) not found and
-// not creatable.
+// not creatable.  A LOCAL-REQUIRED file cannot be
+// (2) and a REMOTE-REQUIRED file cannot be (1) or (3)
+// (i.e., REMOTE-REQUIRED files that are not found are
+// not creatable).
 //
 // It is an error if no template is found with all its
 // required files found, or if more than one template is
@@ -702,7 +708,7 @@ function load_make_cache()
 // of a file is listed in $creatables.
 //
 function find_control
-	( $templates, $local_dir, $uploaded,
+	( $templates, $requires_local_dir, $uploaded,
 	  & $required, & $creatables, & $errors )
 {
     global $make_cache;
@@ -711,7 +717,7 @@ function find_control
     $best_template = NULL;
         // Element of $templates for the first element
 	// of $best_found.
-    $best_found = NULL;
+    $best_found = [];
         // List of [template,file,...] elements
 	// where file,... lists the required files
 	// found, and only templates with NO not
@@ -720,7 +726,7 @@ function find_control
     $best_found_count = -1;
         // Number of files listed in each element
 	// of $best_found.
-    $best_not_found = NULL;
+    $best_not_found = [];
         // List of [template,file,...] elements
 	// where file,... lists the required files
 	// not found AND not creatable, and only
@@ -730,7 +736,7 @@ function find_control
     $best_not_found_count = 1000000000;
         // Number of files listed in each element
 	// of $best_not_found;
-    $not_found_creatable = NULL;
+    $not_found_creatable = [];
         // List of [template,file,...] elements
 	// where file,... lists required files that
 	// were not found but creatable, and only
@@ -738,7 +744,8 @@ function find_control
 	// NO not-found not-creatable required files
 	// are listed.
     // NOTE: not found but creatable files are consider-
-    //       ed to be local if local_dir != NULL.
+    //       ed to be local if $requires_local_dir !=
+    //       NULL.
     foreach ( $templates as $template )
     {
         $json = $template[2];
@@ -772,7 +779,8 @@ function find_control
 		    {
 		        if ( $R == 'REMOTE-REQUIRES'
 			     &&
-			     isset ( $local_dir ) )
+			     isset
+			       ( $requires_local_dir ) )
 			{
 			    $OK = false;
 			    break;
@@ -793,18 +801,23 @@ function find_control
 			continue;
 		    }
 		    $rdir = $make_cache[$rfile];
-		    if ( ! isset ( $local_dir ) )
+		    if ( ! isset
+		             ( $requires_local_dir ) )
 		        $flist[] = $rfile;
 		    else switch ( $R )
 		    {
 		        case 'LOCAL-REQUIRES':
-			    if ( $rdir == $local_dir )
+			    if ( $rdir
+			         ==
+				 $requires_local_dir )
 				$flist[] = $rfile;
 			    else
 				$nflist[] = $rfile;
 			    break;
 		        case 'REMOTE-REQUIRES':
-			    if ( $rdir != $local_dir )
+			    if ( $rdir
+			         !=
+				 $requires_local_dir )
 				$flist[] = $rfile;
 			    else
 				$nflist[] = $rfile;
@@ -1131,9 +1144,15 @@ function compute_show
 // in $commands (if an early command has exit code != 0
 // later commands in this list are not executed).
 //
+// If the make template cannot be found but there are
+// some templates that would work if some file are
+// created, $creatables is set to list these files as
+// per find_control, and error messages are appended to
+// $errors listing these files.
+//
 function make_file
 	( $src, $des,
-	  $problem, $local_dir,
+	  $problem, $work, $requires_local_dir,
 	  $uploaded, $uploaded_tmp,
 	  & $control, & $commands,
 	  & $output, & $creatables,
@@ -1157,12 +1176,11 @@ function make_file
     }
 
     $control = find_control
-	( $templates, $local_dir, $uploaded,
+	( $templates, $requires_local_dir, $uploaded,
 	  $required, $creatables, $errors );
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) ) return;
 
-    $work = "$local_dir/+work+";
     cleanup_working ( $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
@@ -1211,29 +1229,35 @@ function make_file
 }
 
 // Given the file src make the file $des and keep any
-// files the template said should be kept.  Upon
+// files the make template said should be kept.  Upon
 // return, if there are no errors, $moved is the list
 // of files moved, and $show is the list of files to
 // show.  All file names are relative to $epm_data.
 // $commands is the list of commands executed.  Errors
 // append error message lines to $errors.
 //
+// If the make template cannot be found but there are
+// some templates that would work if some file are
+// created, $creatables is set to list these files as
+// per find_control, and error messages are appended to
+// $errors listing these files.
+//
 function make_and_keep_file
-	( $src, $des, $problem, $local_dir,
+	( $src, $des, $problem,
+	  $work, $local_dir, $requires_local_dir,
 	  & $commands, & $moved, & $show,
 	  & $output, & $creatables,
 	  & $warnings, & $errors )
 {
     $errors_size = count ( $errors );
+    $moved = [];
     $output = [];
     make_file ( $src, $des,
-                $problem, $local_dir,
+                $problem, $work, $requires_local_dir,
 		NULL, NULL,
 		$control, $commands,
 		$output, $creatables, 
 		$warnings, $errors );
-
-    $work = "$local_dir/+work+";
 
     if ( count ( $errors ) == $errors_size )
 	move_keep ( $control, $work, $local_dir,
@@ -1244,7 +1268,8 @@ function make_and_keep_file
 }
 
 // Process an uploaded file whose $_FILES[...] value
-// is given by the $upload argument.
+// is given by the $upload argument.  LOCAL-REQUIRES
+// and REMOTE-REQUIRES are treated as REQUIRES.
 //
 // Errors append error messages to $errors and warning
 // messages to $warnings.  Commands are computed using
@@ -1255,8 +1280,15 @@ function make_and_keep_file
 // $moved, and list of SHOW files is placed in $show.
 // File names in these are relative to $epm_data.
 //
+// If the make template cannot be found but there are
+// some templates that would work if some file are
+// created, $creatables is set to list these files as
+// per find_control, and error messages are appended to
+// $errors listing these files.
+//
 function process_upload
-	( $upload, $problem, $local_dir,
+	( $upload, $problem,
+	  $work, $local_dir,
 	  & $commands, & $moved, & $show,
 	  & $output, & $creatables,
 	  & $warnings, & $errors )
@@ -1336,12 +1368,11 @@ function process_upload
 	return;
     }
 
-    $work = "$local_dir/+work+";
     $ftmp_name = $upload['tmp_name'];
 
     $output = [];
     make_file ( $fname, $tname,
-                $problem, $local_dir,
+                $problem, $work, NULL,
 		$fname, $ftmp_name,
 		$control, $commands,
 		$output, $creatables,
