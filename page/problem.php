@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec 15 01:19:44 EST 2019
+    // Date:	Sun Dec 15 02:40:02 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -28,7 +28,7 @@
     $email = $_SESSION['epm_email'];
     $include = "$epm_root/include";
 
-    // require "$include/debug_info.php";
+    require "$include/debug_info.php";
 
     $user_dir = "$epm_data/users/user$userid";
 
@@ -481,6 +481,26 @@ EOT;
 
     if ( isset ( $problem ) )
     {
+	if ( ! empty ( $creatables ) )
+	{
+	    echo "<div style='" .
+	         "background-color:#F5F81A'>\n" .
+	         "<form action='problem.php'" .
+		 " method='POST'>\n" .
+	         "Files that Need to be" .
+	         " Created:" .
+		 "<table style='display:block'>";
+	    foreach ( $creatables as $fname )
+	    {
+		$tag = bin2hex ( random_bytes ( 8 ) );
+		echo "<tr>" .
+		     "<td style='text-align:right'>" .
+		     "<button type='submit'" .
+		     " name='create' value='$tag'>" .
+		     "$fname</button></td></tr>\n";
+	    }
+	    echo "</table></form></div>\n";
+	}
         $count = 0;
 	foreach ( problem_file_names() as $fname )
 	{

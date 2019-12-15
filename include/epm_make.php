@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Dec 15 00:50:47 EST 2019
+// Date:    Sun Dec 15 02:39:16 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -70,6 +70,20 @@ function get_json ( $filename )
 	require 'sysalert.php';
     }
     return $j;
+}
+
+// Function to pretty print a template.  Changes
+// XXXX:YYYY:ZZZZ: to XXXX => YYYY (ZZZZ).
+//
+function pretty_template ( $template )
+{
+    if ( ! preg_match ( '/^([^:]+):([^:]+):(.*)$/',
+                        $template, $matches ) )
+        return $template;
+    $r = "{$matches[1]} => {$matches[2]}";
+    if ( $matches[3] != "" )
+        $r = "$r ({$matches[3]})";
+    return $r;
 }
 
 // Problem Parameters:
@@ -874,11 +888,10 @@ function find_control
 	    " number of existing required files:";
 	foreach ( $best_found as $flist )
 	{
+	    $t = pretty_template
+	             ( array_shift ( $flist ) );
 	    $list = implode ( ',', $flist );
-	    $errors[] =
-	        '    ' .
-		preg_replace
-		    ( '/,/', ' needs ', $list, 1 );
+	    $errors[] = "$t NEEDS $list";
 	}
     }
     else if ( count ( $not_found_creatable ) > 0 )
@@ -888,13 +901,12 @@ function find_control
 	    " created:";
 	foreach ( $not_found_creatable as $clist )
 	{
+	    $t = pretty_template
+	             ( array_shift ( $clist ) );
 	    $list = implode ( ',', $clist );
-	    $errors[] =
-	        '    ' .
-		preg_replace
-		    ( '/,/', ' needs ', $list, 1 );
-	    for ( $c = 1; $c < count ( $clist ); ++ $c )
-	        $creatables[] = $clist[$c];
+	    $errors[] = "$t NEEDS $list";
+	    foreach ( $clist as $fname )
+	        $creatables[] = $fname;
 	}
     }
     else
@@ -904,11 +916,10 @@ function find_control
 	    " files exist; closest are:";
 	foreach ( $best_not_found as $nflist )
 	{
+	    $t = pretty_template
+	             ( array_shift ( $nflist ) );
 	    $list = implode ( ',', $nflist );
-	    $errors[] =
-	        '    ' .
-		preg_replace
-		    ( '/,/', ' needs ', $list, 1 );
+	    $errors[] = "$t NEEDS $list";
 	}
     }
 
