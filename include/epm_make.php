@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Dec 15 02:39:16 EST 2019
+// Date:    Sun Dec 15 04:22:46 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -1406,6 +1406,64 @@ SHOW:
 
     $show = compute_show
         ( $control, $work, $local_dir, $moved );
+}
+
+// Create the named file, which was listed in
+// $createables.
+//
+function create_file
+	( $filename, $problem_dir, & $errors )
+{
+    $f = "$problem_dir/$filename";
+    if ( @lstat ( $f ) !== false )
+    {
+	$errors[] = "$filename already exists";
+	return true;
+    }
+
+    if ( preg_match ( '/^(.+)\.test/', $filename,
+                                       $matches ) )
+    {
+	$g = "$problem_dir/{$matches[1]}.out";
+	if ( is_readable ( $g ) )
+	{
+	    if ( ! copy ( $g, $f ) )
+	    {
+		$sysfail =
+		    "create_file: cannot copy $g to $f";
+		require 'sysalert.php';
+	    }
+	    return true;
+	}
+	else
+	{
+	    $m = $matches[1];
+	    $errors[] =
+	        "must create $m.out first (by" .
+		" uploading $m.in) so it can be" .
+		" copied to $m.test";
+	    return false;
+	}
+    }
+    else if ( preg_match ( '/^(generate|filter)_.+$/',
+                           $filename ) )
+    {
+	if ( ! symlink ( "/usr/bin/epm_cat", $f ) )
+	{
+	    $sysfail =
+		"create_file: cannot symbolically link" .
+		" $filename to /usr/bin/epm_cat";
+	    require 'sysalert.php';
+	}
+	return true;
+    }
+    else
+    {
+        $errors[] =
+	    "do not know how to create $filename";
+	return false;
+    }
+
 }
 
 ?>

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec 15 02:40:02 EST 2019
+    // Date:	Sun Dec 15 04:52:12 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -130,6 +130,12 @@
     $deleted_problem = NULL;
         // Set to announce that $deleted_problem has
 	// been deleted.
+    $creatables = [];
+    if ( isset ( $_SESSION['epm_creatables'] ) )
+    {
+        $creatables = $_SESSION['epm_creatables'];
+	unset ( $_SESSION['epm_creatables'] );
+    }
 
     if ( isset ( $_POST['delete_problem'] ) )
     {
@@ -268,24 +274,26 @@
 	$problem_file_names = NULL;
 	    // Clear cache.
     }
-    else if ( isset ( $_POST['move_file'] ) )
+    else if ( isset ( $_POST['create'] ) )
     {
-        $f = $_POST['move_file'];
-	if ( array_search
-	         ( $f, problem_file_names(),
-		       true ) === false )
+	if ( ! isset ( $problem_dir ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-	if ( ! preg_match ( '/^(.+)\.out$/', $f,
-	                  $matches ) )
+
+	require "$include/epm_make.php";
+	    // Do this first as it may change $f, etc.
+
+        $f = $_POST['create'];
+	$n = array_search ( $f, $creatables, true );
+	if ( $n === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-	$g = $matches[1] . '.test';
-	if ( ! rename ( "$problem_dir/$f",
-	                "$problem_dir/$g" ) )
-	    $errors[] = "could not move $f to $g";
-	$problem_file_names = NULL;
-	    // Clear cache.
+	if ( create_file ( $f, $problem_dir, $errors ) )
+	{
+	    array_splice ( $creatables, $n, 1 );
+	    $problem_file_names = NULL;
+		// Clear cache.
+	}
     }
     else if ( isset ( $_POST['make_score'] ) )
     {
@@ -483,6 +491,7 @@ EOT;
     {
 	if ( ! empty ( $creatables ) )
 	{
+	    $_SESSION['epm_creatables'] = $creatables;
 	    echo "<div style='" .
 	         "background-color:#F5F81A'>\n" .
 	         "<form action='problem.php'" .
@@ -492,11 +501,10 @@ EOT;
 		 "<table style='display:block'>";
 	    foreach ( $creatables as $fname )
 	    {
-		$tag = bin2hex ( random_bytes ( 8 ) );
 		echo "<tr>" .
 		     "<td style='text-align:right'>" .
 		     "<button type='submit'" .
-		     " name='create' value='$tag'>" .
+		     " name='create' value='$fname'>" .
 		     "$fname</button></td></tr>\n";
 	    }
 	    echo "</table></form></div>\n";
@@ -517,12 +525,6 @@ EOT;
 	    echo "<td><button type='submit'" .
 	         " name='delete_file' value='$fname'>" .
 		 "Delete</button></td>";
-	    if ( preg_match ( '/\.out$/', $fname ) )
-	    {
-		echo "<td><button type='submit'" .
-		     " name='move_file' value='$fname'>" .
-		     "Move to .test</button></td>";
-	    }
 	    if ( preg_match ( '/\.in$/', $fname ) )
 	    {
 		echo "<td><button type='submit'" .
