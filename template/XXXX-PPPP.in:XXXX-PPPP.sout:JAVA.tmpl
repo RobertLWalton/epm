@@ -1,0 +1,15 @@
+
+{
+
+"COMMANDS": ["chmod o+r . PPPP.class",
+             "epm_sandbox GSARGS GSPACE generate_PPPP < XXXX-PPPP.in 2> XXXX-PPPP.gerr | epm_sandbox SSARGS java JFLAGS PPPP DARGS > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
+	     "chmod o-r . PPPP.class"],
+
+"LOCAL-REQUIRES":["XXXX-PPPP.in", "generate_PPPP", "PPPP.class"],
+"CREATABLE": ["generate_PPPP"],
+"KEEP":    ["XXXX-PPPP.sout"],
+"SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.serr", "XXXX-PPPP.sout"],
+"CHECKS":  ["cmp -s XXXX-PPPP.gerr /dev/null",
+            "cmp -s XXXX-PPPP.serr /dev/null"]
+
+}
