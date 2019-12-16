@@ -2,7 +2,7 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Sun Dec 15 06:10:29 EST 2019
+# Date:		Mon Dec 16 08:53:34 EST 2019
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
@@ -14,35 +14,50 @@ INSTALL_BIN = /usr/bin
 #
 .SUFFIXES:
 
-all: epm_score epm_cat
+all: epm_score epm_default_generate epm_default_filter
 
 epm_score:	epm_score.cc
 	g++ -o epm_score epm_score.cc
 
-epm_cat:	epm_cat.cc
-	g++ -o epm_cat epm_cat.cc
+epm_default_generate:	epm_cat.c
+	gcc -o epm_default_generate \
+	    -DIN_FD=0 -DOUT_FD=1 epm_cat.c
+
+epm_default_filter:	epm_cat.c
+	gcc -o epm_default_filter \
+	    -DIN_FD=3 -DOUT_FD=1 epm_cat.c
 
 clean:
-	rm -f epm_score epm_cat
+	rm -f epm_score \
+	      epm_default_generate \
+	      epm_default_filter
 
-install:	epm_score epm_cat
+install:	epm_score \
+                epm_default_generate \
+                epm_default_filter
 	test `id -un` = root
 	test -d ${INSTALL_BIN}
 	test -w ${INSTALL_BIN}
 	rm -f ${INSTALL_BIN}/epm_score
-	rm -f ${INSTALL_BIN}/epm_cat
+	rm -f ${INSTALL_BIN}/epm_default_generate
+	rm -f ${INSTALL_BIN}/epm_default_filter
 	cp epm_score ${INSTALL_BIN}
-	cp epm_cat ${INSTALL_BIN}
+	cp epm_default_generate ${INSTALL_BIN}
+	cp epm_default_filter ${INSTALL_BIN}
 	chmod 755 ${INSTALL_BIN}/epm_score
-	chmod 755 ${INSTALL_BIN}/epm_cat
-	ls -l ${INSTALL_BIN}/epm_score*
-	ls -l ${INSTALL_BIN}/epm_cat*
+	chmod 755 ${INSTALL_BIN}/epm_default_generate
+	chmod 755 ${INSTALL_BIN}/epm_default_filter
+	-ls -l ${INSTALL_BIN}/epm_score*
+	-ls -l ${INSTALL_BIN}/epm_default_generate*
+	-ls -l ${INSTALL_BIN}/epm_default_filter*
 
 uninstall:
 	test `id -un` = root
 	test -d ${INSTALL_BIN}
 	test -w ${INSTALL_BIN}
 	rm -f ${INSTALL_BIN}/epm_score
-	rm -f ${INSTALL_BIN}/epm_cat
-	ls -l ${INSTALL_BIN}/epm_score*
-	ls -l ${INSTALL_BIN}/epm_cat*
+	rm -f ${INSTALL_BIN}/epm_default_generate
+	rm -f ${INSTALL_BIN}/epm_default_filter
+	-ls -l ${INSTALL_BIN}/epm_score*
+	-ls -l ${INSTALL_BIN}/epm_default_generate*
+	-ls -l ${INSTALL_BIN}/epm_default_filter*
