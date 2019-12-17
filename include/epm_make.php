@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Dec 15 04:22:46 EST 2019
+// Date:    Mon Dec 16 23:45:57 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -1022,18 +1022,23 @@ function link_required
 
 	$rfile = "$epm_data/$dir/$rname";
 
-	if ( ! is_readable ( $rfile ) )
+	if ( preg_match ( '/\./', $rname ) )
 	{
-	    $errors[] = "$rfile is not readable";
-	    continue;
+	    if ( ! is_readable ( $rfile ) )
+	    {
+		$errors[] = "$rfile is not readable";
+		continue;
+	    }
 	}
-	if ( ! preg_match ( '/\./', $rname )
-	     &&
-	     ! is_executable ( $rfile ) )
+	else
 	{
-	    $errors[] = "$rfile is not executable";
-	    continue;
+	    if ( ! is_executable ( $rfile ) )
+	    {
+		$errors[] = "$rfile is not executable";
+		continue;
+	    }
 	}
+
 	$rlink = "$epm_data/$work/$rname";
 	if ( ! link ( $rfile, "$rlink" ) )
 	{
@@ -1446,13 +1451,14 @@ function create_file
 	}
     }
     else if ( preg_match ( '/^(generate|filter)_.+$/',
-                           $filename ) )
+                           $filename, $matches ) )
     {
-	if ( ! symlink ( "/usr/bin/epm_cat", $f ) )
+	$b = $matches[1];
+	if ( ! symlink ( "/usr/bin/epm_default_$b", $f ) )
 	{
 	    $sysfail =
 		"create_file: cannot symbolically link" .
-		" $filename to /usr/bin/epm_cat";
+		" $filename to /usr/bin/epm_default_$b";
 	    require 'sysalert.php';
 	}
 	return true;
@@ -1464,6 +1470,44 @@ function create_file
 	return false;
     }
 
+}
+
+// Find a file in $show_files that is pdf or is the
+// largest ASCII file with size above 5 lines, delete
+// it from show_files and return it.  If there is no
+// such file, leave $show_files untouched and return
+// NULL.  The file names in $show_files are relative
+// to $epm_data.
+//
+function find_show_file ( & $show_files )
+{
+    global $epm_data;
+
+    $index = -1;
+    $lines = 5;
+    $i = -1;
+    foreach ( $show_files as $fname )
+    {
+        ++ $i;
+	$f = "$epm_data/$fname";
+	$t = exec ( "file $f" );
+	if ( preg_match ( '/PDF/', $t ) )
+	{
+	    $index = $i;
+	    break;
+	}
+	else if ( preg_match ( '/ASCII/', $t ) )
+	{
+	    $c = exec ( "grep -c '$' $f" );
+	    if ( $c > $lines )
+	    {
+	        $index = $i;
+		$lines = $c;
+	    }
+	}
+    }
+    if ( $index == -1 ) return NULL;
+    return array_splice ( $show_files, $index, 1 )[0];
 }
 
 ?>

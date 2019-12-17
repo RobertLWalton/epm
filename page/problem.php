@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec 15 04:52:12 EST 2019
+    // Date:	Mon Dec 16 23:38:51 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -295,33 +295,34 @@
 		// Clear cache.
 	}
     }
-    else if ( isset ( $_POST['make_score'] ) )
+    else if ( isset ( $_POST['make'] ) )
     {
 	require "$include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
-        $f = $_POST['make_score'];
+        $m = $_POST['make'];
+	if ( ! preg_match ( '/^([^:]+):([^:]+)$/', $m,
+	                    $matches ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	$src = $matches[1];
+	$des = $matches[2];
+		 	    
 	if ( array_search
-	         ( $f, problem_file_names(),
-		       true ) === false )
+	         ( $src, problem_file_names(),
+		         true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-	if ( ! preg_match ( '/^(.+)\.in$/', $f,
-	                  $matches ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	$g = $matches[1] . '.score';
-	$h = $matches[1] . '.test';
-	load_make_cache();
 	$output = [];
 	$d = "users/user$userid/$problem";
 	make_and_keep_file
-	    ( $f, $g, $problem,
+	    ( $src, $des, $problem,
 	      "$d/+work+", $d, NULL,
 	      $commands, $kept, $show_files,
 	      $output, $creatables,
 	      $warnings, $errors );
 	$file_made = true;
+	$show_file = find_show_file ( $show_files );
 	$problem_file_names = NULL;
 	    // Clear cache.
     }
@@ -525,12 +526,18 @@ EOT;
 	    echo "<td><button type='submit'" .
 	         " name='delete_file' value='$fname'>" .
 		 "Delete</button></td>";
-	    if ( preg_match ( '/\.in$/', $fname ) )
+	    if ( preg_match ( '/^(.+)\.in$/', $fname,
+	                      $matches ) )
 	    {
+		$b = $matches[1];
 		echo "<td><button type='submit'" .
-		     " name='make_score'" .
-		     " value='$fname'>" .
-		     "Make .score</button></td>";
+		     " name='make'" .
+		     " value='$fname:$b.sin'>" .
+		     "Make .sin</button></td>";
+		echo "<td><button type='submit'" .
+		     " name='make'" .
+		     " value='$fname:$b.sout'>" .
+		     "Make .sout</button></td>";
 	    }
 	    echo "</tr>";
 	}
