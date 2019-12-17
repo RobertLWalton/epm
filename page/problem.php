@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec 16 23:38:51 EST 2019
+    // Date:	Tue Dec 17 02:07:46 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -253,12 +253,7 @@
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 
-        $f = "users/user$userid/$problem/$f";
-	$t = exec ( "file $epm_data/$f" );
-	if ( preg_match ( '/(ASCII|PDF)/', $t ) )
-	    $show_file = $f;
-	else
-	    $show_files[] = $f;
+	$show_files[] = "users/user$userid/$problem/$f";
     }
     else if ( isset ( $_POST['delete_file'] ) )
     {
@@ -322,7 +317,6 @@
 	      $output, $creatables,
 	      $warnings, $errors );
 	$file_made = true;
-	$show_file = find_show_file ( $show_files );
 	$problem_file_names = NULL;
 	    // Clear cache.
     }
@@ -349,17 +343,8 @@
 		( $upload_info, $problem,
 		  "$d/+work+", $d,
 		  $commands, $kept,
-		  $upload_show, $output, $creatables,
+		  $show_files, $output, $creatables,
 		  $warnings, $errors );
-	    foreach ( $upload_show as $f )
-	    {
-	        if ( ! preg_match ( '/\.out$/', $f )
-		     ||
-		     filesize ( "$epm_data/$f" ) == 0 )
-		    $show_files[] = $f;
-		else
-		    $show_file = $f;
-	    }
 	    $file_made = true;
 	    $problem_file_names = NULL;
 		// Clear cache.
@@ -376,6 +361,13 @@
     // If a file is to be shown to the right, output
     // it before anything else.
     //
+    if ( count ( $show_files ) > 0 )
+    {
+        if ( ! function_exists ( "find_show_file" ) )
+	    require "$include/epm_make.php";
+        $show_file = find_show_file ( $show_files );
+    }
+
     if ( isset ( $show_file ) )
     {
 	$b = basename ( $show_file );
