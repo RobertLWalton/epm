@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Dec 16 23:45:57 EST 2019
+// Date:    Wed Dec 18 03:58:31 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -1426,10 +1426,11 @@ function create_file
 	return true;
     }
 
-    if ( preg_match ( '/^(.+)\.test/', $filename,
-                                       $matches ) )
+    if ( preg_match ( '/^(.+\..)test/', $filename,
+                                          $matches ) )
     {
-	$g = "$problem_dir/{$matches[1]}.out";
+	$o = "{$matches[1]}out";
+	$g = "$problem_dir/$o";
 	if ( is_readable ( $g ) )
 	{
 	    if ( ! copy ( $g, $f ) )
@@ -1442,11 +1443,9 @@ function create_file
 	}
 	else
 	{
-	    $m = $matches[1];
 	    $errors[] =
-	        "must create $m.out first (by" .
-		" uploading $m.in) so it can be" .
-		" copied to $m.test";
+	        "$o is not readable ($filename is" .
+		" made by copying $o)";
 	    return false;
 	}
     }

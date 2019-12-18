@@ -8,6 +8,7 @@ echo "REQUEST: "; print_r ( $_REQUEST ); echo "<br>";
 echo "POST: "; print_r ( $_POST ); echo "<br>";
 echo "GET: "; print_r ( $_GET ); echo "<br>";
 echo "FILES: "; print_r ( $_FILES ); echo "<br>";
+echo "COOKIE: "; print_r ( $_COOKIE ); echo "<br>";
 $__server = [];
 $__server['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'];
 $__server['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
