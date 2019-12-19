@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec 18 23:12:01 EST 2019
+    // Date:	Thu Dec 19 07:49:38 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -575,10 +575,20 @@ EOT;
         if ( count ( $commands ) > 0 )
 	{
 	    echo "Commands:<br><ul>\n";
-	    foreach ( $commands as $e )
-	        echo "<li><pre style='margin:0 0'>" .
-		     "$e</pre>\n";
-	     echo "</ul>\n";
+	    $e = '';
+	    foreach ( $commands as $c )
+	    {
+	        if ( preg_match ( '/^.*\h\\\\$/', $c ) )
+		    $e .= "$c\n";
+		else
+		{
+		    $e .= "$c";
+		    echo "<li><pre style='margin:0 0'>" .
+			 "$e</pre>\n";
+		    $e = '';
+		}
+	    }
+	    echo "</ul>\n";
 	}
         if ( count ( $kept ) > 0 )
 	{

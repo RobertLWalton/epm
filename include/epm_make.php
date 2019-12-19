@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Dec 18 03:58:31 EST 2019
+// Date:    Thu Dec 19 07:36:34 EST 2019
 
 // To include this in programs that are not pages run
 // by the web server, you must pre-define $_SESSION
@@ -1069,17 +1069,31 @@ function run_commands
 {
     global $epm_data;
 
-    foreach ( $commands as $command )
+    $command = '';
+    $e = '';
+    foreach ( $commands as $c )
     {
+	$e .= "\n    $c";
+        if ( preg_match ( '/^(.*\h)\\\\$/', $c,
+	                  $matches ) )
+	{
+	    $command .= $matches[1];
+	    continue;
+	}
+	else
+	    $command .= $c;
+
         exec ( "cd $epm_data/$work; $command",
 	       $output, $ret );
 	if ( $ret != 0 )
 	{
 	    $errors[] =
 		"error code $ret returned upon" .
-		" executing\n    $command";
+		" executing$e";
 	    return;
 	}
+	$command = '';
+	$e = '';
     }
 }
 
