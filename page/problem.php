@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec 18 04:10:24 EST 2019
+    // Date:	Wed Dec 18 23:12:01 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -605,7 +605,7 @@ EOT;
 		echo "<u>$b</u> is empty<br>\n";
 		continue;
 	    }
-	    $t = exec ( "file $f" );
+	    $t = exec ( "file -h $f" );
 	    if ( preg_match ( '/ASCII/', $t ) )
 	    {
 		echo "<u>$b</u>:<br>\n";
@@ -620,6 +620,17 @@ EOT;
 		$t = explode ( ",", $t );
 		$t = $t[0];
 		$t = trim ( $t );
+		if ( preg_match
+		         ( '/symbolic link/', $t ) )
+		{
+		    $s = exec ( "file -L $f" );
+		    $s = explode ( ":", $s );
+		    $s = $s[1];
+		    $s = explode ( ",", $s );
+		    $s = $s[0];
+		    $s = trim ( $s );
+		    $t = "$t which is $s";
+		}
 		echo "<u>$b</u> is $t<br>\n";
 	    }
 	}
