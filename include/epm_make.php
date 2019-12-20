@@ -2,11 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Dec 19 07:36:34 EST 2019
-
-// To include this in programs that are not pages run
-// by the web server, you must pre-define $_SESSION
-// accordingly.
+// Date:    Fri Dec 20 06:42:02 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -14,16 +10,18 @@
 // other special characters.  Of course uploaded
 // files and components cannot have /.
 
+// To include this program, be sure the following are
+// defined.  Also either define $admin_params correctly
+// or leave it undefined and this file will define it.
+
 if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
-if ( ! isset ( $_SESSION['epm_userid'] ) )
-    exit ( 'ACCESS ERROR: session userid not set' );
-if ( ! isset ( $_SESSION['epm_problem'] ) )
-    exit ( 'ACCESS ERROR: sesssion has no current' .
-           ' problem' );
-
-$userid = $_SESSION['epm_userid'];
-$problem = $_SESSION['epm_problem'];
+if ( ! isset ( $epm_root ) )
+    exit ( 'ACCESS ERROR: $epm_root not set' );
+if ( ! isset ( $userid ) )
+    exit ( 'ACCESS ERROR: $userid not set' );
+if ( ! isset ( $problem ) )
+    exit ( 'ACCESS ERROR: $problem not set' );
 
 if ( ! isset ( $is_epm_test ) )
     $is_epm_test = false;
@@ -34,7 +32,27 @@ if ( ! isset ( $is_epm_test ) )
 
 // Administrative Parameters:
 //
-$admin_params = $_SESSION['epm_admin_params'];
+if ( ! isset ( $admin_params ) )
+{
+    $f = "$epm_root/src/default_admin.params";
+    if ( ! is_readable ( $f ) )
+    {
+        $sysfail = "cannot read $f";
+	require "$include/sysalert.php";
+    }
+    $admin_params = get_json ( $f );
+
+    // Get local administrative parameter overrides.
+    //
+    $f = "$epm_data/admin/admin.params";
+    if ( is_readable ( $f ) )
+    {
+        $j = get_json ( $f );
+	foreach ( $j as $key => $value )
+	    $admin_params[$key] = $value;
+
+    }
+}
 $upload_target_ext = $admin_params['upload_target_ext'];
 $upload_maxsize = $admin_params['upload_maxsize'];
 $display_file_ext = $admin_params['display_file_ext'];

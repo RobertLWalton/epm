@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 19 07:49:38 EST 2019
+    // Date:	Fri Dec 20 07:06:34 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -34,9 +34,12 @@
 
     // Administrative Parameters:
     //
-    $params = $_SESSION['epm_admin_params'];
-    $upload_maxsize = $params['upload_maxsize'];
-    $display_file_ext = $params['display_file_ext'];
+    $admin_params =
+        $_SESSION['epm_admin_params'];
+    $upload_maxsize =
+        $admin_params['upload_maxsize'];
+    $display_file_ext =
+        $admin_params['display_file_ext'];
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -244,8 +247,18 @@
 	return $problem_file_names;
     }
 
-    if ( isset ( $_POST['show_file'] ) )
+    // Remaining POSTs require $problem and $problem_dir
+    // to be non-NULL.
+    //
+    if ( $method != 'POST' ) /* Do Nothing */;
+    elseif ( ! isset ( $problem_dir ) )
+	exit ( "ACCESS: illegal POST to problem.php" );
+    elseif ( isset ( $_POST['show_file'] ) )
     {
+	require "$include/epm_make.php";
+	    // Do this first as it may change $f,
+	    // etc.  Needed if we set show_files.
+
 	$f = $_POST['show_file'];
 	if ( array_search
 	         ( $f, problem_file_names(), true )
@@ -255,7 +268,7 @@
 
 	$show_files[] = "users/user$userid/$problem/$f";
     }
-    else if ( isset ( $_POST['delete_file'] ) )
+    elseif ( isset ( $_POST['delete_file'] ) )
     {
 	$f = $_POST['delete_file'];
 	if ( array_search
@@ -269,12 +282,8 @@
 	$problem_file_names = NULL;
 	    // Clear cache.
     }
-    else if ( isset ( $_POST['create'] ) )
+    elseif ( isset ( $_POST['create'] ) )
     {
-	if ( ! isset ( $problem_dir ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-
 	require "$include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
@@ -290,7 +299,7 @@
 		// Clear cache.
 	}
     }
-    else if ( isset ( $_POST['make'] ) )
+    elseif ( isset ( $_POST['make'] ) )
     {
 	require "$include/epm_make.php";
 	    // Do this first as it may change $f, etc.
@@ -320,7 +329,7 @@
 	$problem_file_names = NULL;
 	    // Clear cache.
     }
-    else if ( isset ( $_POST['upload'] ) )
+    elseif ( isset ( $_POST['upload'] ) )
     {
 	if ( isset ( $_FILES['uploaded_file']
 	                     ['name'] ) )
@@ -364,7 +373,12 @@
     if ( count ( $show_files ) > 0 )
     {
         if ( ! function_exists ( "find_show_file" ) )
-	    require "$include/epm_make.php";
+	{
+	    $sysfail = "SYSTEM ERROR: problem.php:"
+	             . " failed to load epm_make.php"
+		     . " while setting show_files";
+	    require "$include/sysalert.php";
+	}
         $show_file = find_show_file ( $show_files );
     }
 

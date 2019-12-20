@@ -1,0 +1,18 @@
+{
+
+"COMMANDS": ["epm_sandbox GSARGS GSPACE generate_PPPP \\",
+             "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
+	     "  epm_sandbox FSARGS FSPACE filter_PPPP \\",
+	     "    3< XXXX-PPPP.sout > XXXX-PPPP.fout \\",
+	     "    2> XXXX-PPPP.ferr"],
+
+"LOCAL-REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.sout",
+                  "generate_PPPP", "filter_PPPP"],
+"CREATABLE": ["generate_PPPP", "filter_PPPP"],
+"KEEP":    ["XXXX-PPPP.fout"],
+"SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.ferr",
+            "XXXX-PPPP.fout"],
+"CHECKS":  ["cmp -s XXXX-PPPP.gerr /dev/null",
+            "cmp -s XXXX-PPPP.ferr /dev/null"]
+
+}

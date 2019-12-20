@@ -3,15 +3,16 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	
+// Date:	Fri Dec 20 07:12:30 EST 2019
 
 $argv = $_SERVER['argv'];
 
-if ( count ( $argv ) < 4 )
+if ( count ( $argv ) < 8 )
 {
     echo <<<'EOT'
-epm_run root-directory data-directory userid problem \
-        working-subdirectory run-file status-file
+epm_run root-directory data-directory \
+        userid problem working-subdirectory \
+	run-file status-file
 
 Executes the run defined by the run-file in background.
 The background job writes its current and final status
@@ -24,5 +25,19 @@ subdirectory.
 EOT;
     exit ( 0 );
 }
+
+$epm_root = $argv[1];
+$epm_data = $argv[2];
+$userid   = $argv[3];
+$problem  = $argv[4];
+$work     = $argv[5];
+$rfile    = $argv[6];
+$sfile    = $argv[7];
+
+$include = "$epm_root/include";
+
+include "$include/epm_make.php";
+
+print_r ( $admin_params );
 
 ?>
