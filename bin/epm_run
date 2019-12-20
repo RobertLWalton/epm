@@ -1,0 +1,28 @@
+#! /bin/php
+<?php
+
+// File:	epm_run
+// Author:	Robert L Walton <walton@acm.org>
+// Date:	
+
+$argv = $_SERVER['argv'];
+
+if ( count ( $argv ) < 4 )
+{
+    echo <<<'EOT'
+epm_run root-directory data-directory userid problem \
+        working-subdirectory run-file status-file
+
+Executes the run defined by the run-file in background.
+The background job writes its current and final status
+into into the status-file.
+
+The working-subdirectory is relative to the problem
+directory.  The status-file is relative to the working-
+subdirectory.
+
+EOT;
+    exit ( 0 );
+}
+
+?>

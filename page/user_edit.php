@@ -459,7 +459,7 @@
         <input type='submit' name='update'
 	       value='$update'></td></tr>
     </table></form>
-EOT
+EOT;
 ?>
 
 </body>

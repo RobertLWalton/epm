@@ -125,7 +125,7 @@
     <tr><td><b>Location:</b></td>
         <td>$location<td><tr>
     </table>
-EOT
+EOT;
 
 ?>
 
