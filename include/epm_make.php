@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Dec 21 22:33:22 EST 2019
+// Date:    Sun Dec 22 06:36:07 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -42,7 +42,7 @@ if ( ! isset ( $admin_params ) )
     if ( ! is_readable ( "$epm_root/$f" ) )
     {
         $sysfail = "cannot read $f";
-	require "$include/sysalert.php";
+	require 'sysalert.php';
     }
     $admin_params = get_json ( $epm_root, $f );
 
@@ -341,7 +341,7 @@ function find_templates
 		 $template, $matches ) )
 	{
 	    $sysalert = "bad template format $template";
-	    include 'sysalert.php';
+	    require 'sysalert.php';
 	    continue;
 	}
 
@@ -445,18 +445,22 @@ function get_problem_optn ( $problem, $allow_local_optn )
     return $problem_optn;
 }
 
-// Return argument map that is to be applied to template
-// COMMANDS from results of get_template_optn and
-// get_problem_optn.  Append warnings to $warnings for
-// options that must be modified or ignored, and append
-// errors to $errors for options that cannot be given
-// any value.
+// Load the argument map that is to be applied to
+// template COMMANDS.  The argument map is computed from
+// results of get_template_optn and get_problem_optn.
+// Append warnings to $warnings for options that must be
+// modified or ignored, and append errors to $errors for
+// options that cannot be given any value.
 //
-function compute_optn_map
+$argument_map = NULL;
+function load_argument_map
 	( $problem, $allow_local_optn,
 	  & $warnings, & $errors )
 {
-    global $template_optn, $problem_optn;
+    global $template_optn, $problem_optn,
+           $argument_map;
+    if ( isset ( $argument_map ) ) return;
+
     get_template_optn();
     get_problem_optn( $problem, $allow_local_optn );
 
@@ -641,7 +645,7 @@ function compute_optn_map
 	if ( ! isset ( $value ) )
 	{
 	    $sysfail = "option $opt value not set in"
-	             . " in compute_optn_map";
+	             . " by load_argument_map";
 	    require 'sysalert.php';
 	}
 
@@ -664,7 +668,8 @@ function compute_optn_map
 		" ignored";
     }
 
-    return substitute_match ( $arg_map, $val_map );
+    $argument_map =
+        substitute_match ( $arg_map, $val_map );
 }
 
 // Build caches of files that may be required.  The
@@ -1125,15 +1130,19 @@ function link_required
 }
 
 // Return COMMANDS list from control as updated by
-// the optn_map.  The latter must be [] if it is
-// not used.
+// the $argument_map.  The latter must be [] if it is
+// not used.  Load_argument_map must be called before
+// this function is called.
 //
-function get_commands ( $control, $optn_map )
+function get_commands ( $control )
 {
+    global $argument_map;
+
     if ( ! isset ( $control[2]['COMMANDS'] ) )
         return [];
     $commands = $control[2]['COMMANDS'];
-    return substitute_match ( $commands, $optn_map );
+    return substitute_match
+               ( $commands, $argument_map );
 }
 
 // Run $commands in $work.  Append output to output
@@ -1245,14 +1254,14 @@ function compute_show
 // and it will be moved into the working directory
 // (but will not be checked for size and other errors).
 //
-// Load_file_caches must be called before this function
-// is called.
+// Load_file_caches and load_argument_map must be called
+// before this function is called.
 //
-// Output from exec is appended to $output, warnings and
-// errors are appended to $warnings and $errors, the
-// commands executed (but not the checks) are returned
-// in $commands (if an early command has exit code != 0
-// later commands in this list are not executed).
+// Output from exec is appended to $output, errors are
+// appended to $errors, the commands executed (but not
+// the checks) are returned in $commands (if an early
+// command has exit code != 0, later commands in this
+// list are not executed).
 //
 // If the make template cannot be found but there are
 // some templates that would work if some file are
@@ -1262,11 +1271,11 @@ function compute_show
 //
 function make_file
 	( $src, $des, $condition,
-	  $problem, $allow_local_optn, $work,
+	  $problem, $work,
 	  $uploaded, $uploaded_tmp,
 	  & $control, & $commands,
 	  & $output, & $creatables,
-	  & $warnings, & $errors )
+	  & $errors )
 {
     global $epm_data, $is_epm_test;
 
@@ -1325,12 +1334,7 @@ function make_file
 	}
     }
 
-    $optn_map = compute_optn_map
-        ( $problem, $allow_local_optn,
-	  $warnings, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
-    $commands = get_commands ( $control, $optn_map );
+    $commands = get_commands ( $control );
 
     run_commands ( $commands, $work, $output, $errors );
     if ( count ( $errors ) > $errors_size )
@@ -1349,7 +1353,7 @@ function make_file
 // $show is the list of files to show.  All file names
 // are relative to $epm_data.  $commands is the list of
 // commands executed.  Errors append error message lines
-// to $errors.
+// to $errors and warnings append to $warnings.
 //
 // If the make template cannot be found but there are
 // some templates that would work if some file are
@@ -1367,17 +1371,21 @@ function make_and_keep_file
     load_file_caches ( $local_dir );
 
     $errors_size = count ( $errors );
+
+    load_argument_map
+        ( $problem, true, $warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
     $moved = [];
     $output = [];
     make_file ( $src, $des,
                 NULL /* no CONDITION */,
                 $problem,
-		true /* allow_local_optn */,
 		$work,
 		NULL, NULL /* no upload, upload_tmp */,
 		$control, $commands,
 		$output, $creatables, 
-		$warnings, $errors );
+		$errors );
 
     if ( count ( $errors ) == $errors_size )
 	move_keep ( $control, $work, $local_dir,
@@ -1492,15 +1500,18 @@ function process_upload
 
     $ftmp_name = $upload['tmp_name'];
 
+    load_argument_map
+        ( $problem, true, $warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
     $output = [];
     make_file ( $fname, $tname, "UPLOAD $fname",
                 $problem,
-		true /* allow_local_optn */,
 		$work,
 		$fname, $ftmp_name,
 		$control, $commands,
 		$output, $creatables,
-		$warnings, $errors );
+		$errors );
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 

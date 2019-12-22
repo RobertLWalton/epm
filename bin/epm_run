@@ -39,7 +39,15 @@ $include = "$epm_root/include";
 include "$include/epm_make.php";
 
 load_template_cache();
+load_file_caches ( "users/user$userid/$problem" );
 
-var_dump ( $GLOBALS );
+$warnings = [];
+$errors   = [];
+load_argument_map
+    ( $problem, false, $warnings, $errors );
+
+var_dump ( $argument_map );
+var_dump ( $warnings );
+var_dump ( $errors );
 
 ?>
