@@ -9,8 +9,9 @@
 	     "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
 	     "chmod o-r . PPPP.class"],
 
-"LOCAL-REQUIRES": ["XXXX-PPPP.in", "PPPP.class"],
-"REQUIRES": ["generate_PPPP"],
+"CONDITION": "UPLOAD XXXX-PPPP.in",
+"LOCAL-REQUIRES":["PPPP.class"],
+"REQUIRES":["generate_PPPP"],
 "CREATABLE": ["generate_PPPP"],
 "KEEP":    ["XXXX-PPPP.sout"],
 "SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.serr", "XXXX-PPPP.sout"]

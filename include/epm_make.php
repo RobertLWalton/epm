@@ -2,14 +2,18 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Dec 20 06:42:02 EST 2019
+// Date:    Sat Dec 21 22:33:22 EST 2019
 
 // Functions used to make files from other files.
 //
 // Note that file names can have -, _, ., /, but no
 // other special characters.  Of course uploaded
-// files and components cannot have /.
-
+// files and components cannot have /."
+//
+// WARNING: No error message, including $sysfail,
+//          may contain the value of $epm_data or
+//          $epm_root.
+//
 // To include this program, be sure the following are
 // defined.  Also either define $admin_params correctly
 // or leave it undefined and this file will define it.
@@ -34,20 +38,20 @@ if ( ! isset ( $is_epm_test ) )
 //
 if ( ! isset ( $admin_params ) )
 {
-    $f = "$epm_root/src/default_admin.params";
-    if ( ! is_readable ( $f ) )
+    $f = "src/default_admin.params";
+    if ( ! is_readable ( "$epm_root/$f" ) )
     {
         $sysfail = "cannot read $f";
 	require "$include/sysalert.php";
     }
-    $admin_params = get_json ( $f );
+    $admin_params = get_json ( $epm_root, $f );
 
     // Get local administrative parameter overrides.
     //
-    $f = "$epm_data/admin/admin.params";
-    if ( is_readable ( $f ) )
+    $f = "admin/admin.params";
+    if ( is_readable ( "$epm_data/$f" ) )
     {
-        $j = get_json ( $f );
+        $j = get_json ( $epm_data, $f );
 	foreach ( $j as $key => $value )
 	    $admin_params[$key] = $value;
 
@@ -57,24 +61,42 @@ $upload_target_ext = $admin_params['upload_target_ext'];
 $upload_maxsize = $admin_params['upload_maxsize'];
 $display_file_ext = $admin_params['display_file_ext'];
 
-// Template directories:
+// Problem Parameters:
 //
-$template_dirs = [];
+if ( ! isset ( $problem_params ) )
+{
+    $f = "users/user$userid/$problem/problem.params";
+    $problem_params = [];
+    if ( is_readable ( "$epm_data/$f" ) )
+	$problem_params = get_json ( $epm_data, $f );
+}
+if ( isset ( $problem_params['remote_dirs'] ) )
+    $remote_dirs = $problem_params['remote_dirs'];
+else
+    $remote_dirs = [];
+
+// Template root directories:
+//
+$template_roots = [];
 if ( is_dir ( "$epm_data/template" ) )
-    $template_dirs[] = "$epm_data/template";
-$template_dirs[] = "$epm_root/template";
+    $template_roots[] = $epm_data;
+$template_roots[] = $epm_root;
 
 // Function to get and decode json file, which must be
 // readable.  It is a fatal error if the file cannot be
 // read or decoded.
 //
-function get_json ( $filename )
+// The file name is $r/$file, where $r is either
+// $epm_root or $epm_data and will NOT appear in any
+// error message.
+//
+function get_json ( $r, $file )
 {
-    $f = $filename;
+    $f = "$r/$file";
     $c = file_get_contents ( $f );
     if ( $c === false )
     {
-	$sysfail = "cannot read readable $f";
+	$sysfail = "cannot read readable $file";
 	require 'sysalert.php';
     }
     $c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
@@ -84,14 +106,14 @@ function get_json ( $filename )
     {
 	$m = json_last_error_msg();
 	$sysfail =
-	    "cannot decode json in $f:\n    $m";
+	    "cannot decode json in $file:\n    $m";
 	require 'sysalert.php';
     }
     return $j;
 }
 
 // Function to pretty print a template.  Changes
-// XXXX:YYYY:ZZZZ: to XXXX => YYYY (ZZZZ).
+// XXXX:YYYY:ZZZZ to XXXX => YYYY (ZZZZ).
 //
 function pretty_template ( $template )
 {
@@ -103,20 +125,6 @@ function pretty_template ( $template )
         $r = "$r ({$matches[3]})";
     return $r;
 }
-
-// Problem Parameters:
-//
-$problem_params_file =
-    "$epm_data/users/user$userid/$problem/" .
-    "problem.params";
-$problem_params = [];
-if ( is_readable ( $problem_params_file ) )
-    $problem_params = get_json
-        ( $problem_params_file );
-if ( isset ( $problem_params['make_dirs'] ) )
-    $make_dirs = $problem_params['make_dirs'];
-else
-    $make_dirs = ["users/user$userid/$problem"];
 
 // Given a problem name, file names, and a template,
 // determine if the template matches the problem and
@@ -221,30 +229,33 @@ function substitute_match ( $item, $match )
 
 // Build a cache of templates.  This is a map of the
 // form:
-//		template => [filename, json]
+//		template => [root, json]
 //
-// where `template' is the last component of the file
-// name minus the extension .tmpl and json is NULL, but
-// will be set to the decoded json read from the file
-// when the file is read as per the get_template
-// function below.  If two files with the same template
-// are found, one in $epm_root/template and one in
-// $epm_root/local/template, only the latter is
-// recorded.  Filenames are absolute.  The cache is
-// stored in $template_cache.
+// where "{$root}/template/{$template}.tmpl is a
+// template file, root is either $epm_root or $epm_data,
+// and json is NULL, but will be set to the decoded json
+// read when the template file is read as per the
+// get_template function below.  If two files with the
+// same template are found, only the one appearing
+// with the first root in $template_roots is recorded.
+// The cache is stored in $template_cache.  No value
+// is returned.
 //
 $template_cache = NULL;
 function load_template_cache()
 {
-    global $template_dirs, $template_cache;
+    global $template_roots, $template_cache;
 
     if ( isset ( $template_cache) ) return;
-    foreach ( $template_dirs as $dir )
+    foreach ( $template_roots as $r )
     {
-	$dircontents = scandir ( $dir );
+	$dircontents = scandir ( "$r/template" );
 	if ( $dircontents === false )
 	{
-	    $sysfail = "cannot read $dir";
+	    $sysfail = "cannot read "
+	             . ( $r == $epm_data ? "DATA" :
+		                           "HOME" )
+		     . "/template";
 	    require 'sysalert.php';
 	}
 
@@ -257,7 +268,7 @@ function load_template_cache()
 	    if ( isset ( $template_cache[$template] ) )
 	        continue;
 	    $template_cache[$template] =
-	        [ "$dir/$fname", NULL ];
+	        [ $r, NULL ];
 	}
     }
     if ( ! isset ( $template_cache ) )
@@ -277,89 +288,69 @@ function get_template_json ( $template )
 
     if ( ! isset ( $template_cache[$template] ) )
     {
-        $sysfail = "get_template called with template"
-	         . " that is not cache key";
+        $sysfail = "get_template called with $template"
+	         . " which is not cache key";
 	require 'sysalert.php';
     }
     $pair = & $template_cache[$template];
     $result = & $pair[1];
     if ( ! isset ( $result ) )
     {
-	$f = & $pair[0];
-	if ( ! is_readable ( $f ) )
+	$r = $pair[0];
+	$f = "template/{$template}.tmpl";
+	if ( ! is_readable ( "$r/$f" ) )
 	{
 	    $sysfail = "cannot read $f";
 	    require 'sysalert.php';
 	}
-	$result = get_json ( $f );
+	$result = get_json ( $r, $f );
     }
     return $result;
 }
 
 // Go through the template cache and find each template
 // that has the given source file name and destination
-// file name, either of which may be NULL if it is not
-// to be tested (both cannot be NULL).
+// file name and matches the given condition (which is
+// NULL if the template is to have no CONDITION).
 //
 // For each template found, list in $templates elements
 // of the form:
 //
-//   [template, filename, json]
+//   [template, root, json]
 // 
 // containing the information copied from the
 //
-//	template => [filename, json]
+//	template => [root, json]
 //
 // but with wildcards in json replaced by their matches
 // found from matching the source and destination file
-// names and problem name to the template.  Filename is
-// the absolute name of the template file and is only
-// used in error messages.
-//
-// Any errors cause error messages to be appended to
-// the errors list.
+// names and problem name to the template.
 //
 function find_templates
-    ( $problem, $srcfile, $desfile,
-      & $templates, & $errors )
+    ( $problem, $srcfile, $desfile, $condition,
+      & $templates )
 {
     global $template_cache;
     load_template_cache();
 
-    if ( is_null ( $srcfile ) && is_null ( $desfile ) )
-    {
-        $sysfail = 'find_templates called'
-	         . ' with both $srcfile and $desfile'
-		 . ' NULL';
-	require 'sysalert.php';
-    }
-
     $templates = [];
     foreach ( $template_cache as $template => $pair )
     {
-	$filename = $pair[0];
 	if ( ! preg_match
 	       ( '/^([^:]+):([^:]+):/',
 		 $template, $matches ) )
 	{
-	    $errors[] = "bad template file name"
-		      . " format $filename";
+	    $sysalert = "bad template format $template";
+	    include 'sysalert.php';
 	    continue;
 	}
 
 	$tsrc = $matches[1];
 	$tdes = $matches[2];
 
-	if ( is_null ( $desfile ) )
-	    $match = template_match
-		( $problem, $srcfile, $tsrc );
-	elseif ( is_null ( $srcfile ) )
-	    $match = template_match
-		( $problem, $desfile, $tdes );
-	else
-	    $match = template_match
-		( $problem, "$srcfile:$desfile",
-			    "$tsrc:$tdes" );
+	$match = template_match
+	    ( $problem, "$srcfile:$desfile",
+			"$tsrc:$tdes" );
 
 	if ( is_null ( $match ) ) continue;
 
@@ -367,30 +358,43 @@ function find_templates
 
 	$json = substitute_match ( $json, $match );
 
+	if ( isset ( $json['CONDITION'] ) )
+	    $cond = $json['CONDITION'];
+	else
+	    $cond = NULL;
+	if ( $cond != $condition ) continue;
+
 	$templates[] =
-	    [ $template, $filename, $json ];
+	    [ $template, $pair[0], $json ];
     }
 }
 
-// Get the template.optn file with overrides from
+// Get the template.optn file json with overrides from
 // earlier template directories and users/user$id
-// directory.  Append non-fatal errors to $errors.
-// Cache result in $template_optn.
+// directory.  Cache result in $template_optn.
 //
-function get_template_optn ( & $errors )
+$template_optn = NULL;
+function get_template_optn()
 {
-    global $template_dirs, $epm_data, $userid,
+    global $template_roots, $epm_data, $userid,
            $template_optn;
 
-    $dirs = array_reverse ( $template_dirs );
-    $dirs[] = "$epm_data/users/user$userid";
+    if ( isset ( $template_optn ) )
+        return $template_optn;
+
+    $files = [];
+    foreach ( array_reverse ( $template_roots ) as $r )
+        $files[] = [$r, "template/template.optn"];
+    $files[] = [$epm_data,
+                "/users/user$userid/template.optn"];
 
     $template_optn = [];
-    foreach ( $dirs as $dir )
+    foreach ( $files as $e )
     {
-	$f = "$dir/template.optn";
-        if ( ! is_readable ( $f ) ) continue;
-	$j = get_json ( $f );
+	$r = $e[0];
+	$f = $e[1];
+        if ( ! is_readable ( "$r/$f" ) ) continue;
+	$j = get_json ( $r, $f );
 
 	// template.optn values are 2D arrays.
 	//
@@ -401,21 +405,36 @@ function get_template_optn ( & $errors )
     return $template_optn;
 }
 
-// Get the PPPP.optn file for problem PPPP, with
-// overrides from more local directories.  Append
-// some errors to $errors.  Cache the result in
+// Get the PPPP.optn file for problem PPPP from
+// $remote_file_cache, if it exists.  Then if
+// $allow_local_optn is true, get PPPP.optn from $local_
+// file_cache and use it to any override options gotten
+// from $remote_file_cache.  Cache the result in
 // $problem_optn.
 //
-function get_problem_optn ( $problem, & $errors )
+$problem_optn = NULL;
+function get_problem_optn ( $problem, $allow_local_optn )
 {
-    global $epm_data, $make_dirs, $problem_optn;
+    global $epm_data, $problem_optn,
+           $local_file_cache, $remote_file_cache;
+
+    if ( isset ( $problem_optn ) )
+        return $problem_optn;
+
+    $f = "$problem.optn";
+    $files = [];
+    if ( isset ( $remote_file_cache[$f] ) )
+        $files[] = "{$remote_file_cache[$f]}/$f";
+    if (    $allow_local_optn
+         && isset ( $local_file_cache[$f] ) )
+        $files[] = "{$local_file_cache[$f]}/$f";
 
     $problem_optn = [];
-    foreach ( array_reverse ( $make_dirs ) as $dir )
+    foreach ( $files as $f )
     {
-        $f = "$epm_data/$dir/$problem.optn";
-        if ( ! is_readable ( $f ) ) continue;
-	$j = get_json ( $f );
+        if ( ! is_readable ( "$epm_data/$f" ) )
+	    continue;
+	$j = get_json ( $epm_data, $f );
 
 	// PPPP.optn values are 1D arrays.
 	//
@@ -434,13 +453,12 @@ function get_problem_optn ( $problem, & $errors )
 // any value.
 //
 function compute_optn_map
-	( $problem, & $warnings, & $errors )
+	( $problem, $allow_local_optn,
+	  & $warnings, & $errors )
 {
     global $template_optn, $problem_optn;
-    $error_size = count ( $errors );
-    get_template_optn ( $errors );
-    get_problem_optn ( $problem, $errors );
-    if ( count ( $errors ) > $error_size ) return;
+    get_template_optn();
+    get_problem_optn( $problem, $allow_local_optn );
 
     $arg_map = [];
     $val_map = [];
@@ -649,74 +667,82 @@ function compute_optn_map
     return substitute_match ( $arg_map, $val_map );
 }
 
-// Build a cache of files that may be required.  The
-// cache has entries of the form:
+// Build caches of files that may be required.  The
+// caches have entries of the form:
 //
 //	filename => directory
 //
 // where filename is the last component of the file
-// name and directory is the first $make_dirs directory
-// in which the file can be found under the full name:
+// name and directory is the first directory in which
+// the file can be found under the full name:
 //
 //	$epm_data/directory/filename
 //
-$make_cache = NULL;
-function load_make_cache()
+// $remote_file_cache is for the directories listed in
+// $remote_dirs.   $local_file_cache is for the files
+// listed in the single directory $local_dir.  All
+// directories names are relative to $epm_data.  This
+// function does NOT return a value.
+//
+$local_file_cache = NULL;
+$remote_file_cache = NULL;
+function load_file_caches ( $local_dir )
 {
-    global $epm_data, $make_dirs, $make_cache;
-    if ( isset ( $make_cache ) ) return;
+    global $epm_data, $remote_dirs,
+           $remote_file_cache, $local_file_cache;
 
-    foreach ( $make_dirs as $dir )
+    if ( isset ( $local_file_cache )
+         &&
+	 isset ( $remote_file_cache ) )
+        return;
+
+    $local_file_cache = [];
+    $remote_file_cache = [];
+    foreach ( $remote_dirs as $dir )
     {
-	$d = "$epm_data/$dir";
-	$dircontents = scandir ( $d );
-	if ( $dircontents === false )
+	$c = scandir ( "$epm_data/$dir" );
+	if ( $c === false )
 	{
-	    $sysfail = "cannot read $d";
+	    $sysfail = "cannot read $dir";
 	    require 'sysalert.php';
 	}
 
-	foreach ( $dircontents as $fname )
+	foreach ( $c as $fname )
 	{
 	    if ( preg_match  ( '/^\.+$/', $fname ) )
 	        continue;
-	    if ( isset ( $make_cache[$fname] ) )
+	    if ( isset ( $remote_file_cache[$fname] ) )
 	        continue;
-	    $make_cache[$fname] = $dir;
+	    $remote_file_cache[$fname] = $dir;
 	}
+    }
+
+    $c = scandir ( "$epm_data/$local_dir" );
+    if ( $c === false )
+    {
+	$sysfail = "cannot read $local_dir";
+	require 'sysalert.php';
+    }
+    foreach ( $c as $fname )
+    {
+	if ( preg_match  ( '/^\.+$/', $fname ) )
+	    continue;
+	$local_file_cache[$fname] = $local_dir;
     }
 }
 
-// Given $templates computed by find_templates and
-// the $make_cache, return the control, i.e., the
-// selected element of $templates, and set $required
-// to the list of files required by the control.
+// Given $templates computed by find_templates and the
+// caches computed by $make_file_caches, return the
+// control, i.e., the selected element of $templates,
+// and set $local_required to the list of $local_file_
+// cache files required by the control and $remote_
+// required to the list of $remote_file_cache files
+// required by the control.
 //
 // If multiple templates satisfy required file
 // constraints, ones with the largest number of required
 // files are selected.  It is an error if more than
 // one is selected by this rule.
-//
-// $requires_local_dir is the directory satisfying
-// LOCAL-REQUIRES.  It is relative to $epm_data and can
-// be compared to the values in the $make_cache.
-// If $requires_local_dir is NULL, LOCAL-REQUIRES and
-// REMOTE-REQUIRES are treated the same as REQUIRES.
-//
-// If $uploaded is not NULL, it is the name of the
-// file being uploaded and will satisfy REQUIRES or
-// LOCAL-REQUIRES.  It is NOT listed in $required.
-// If it is listed in REMOTE-REQUIRES and $requires_
-// local_dir is not NULL, the template will not be
-// selected.
-//
-// A required file may be (1) found in the local direc-
-// tory, (2) found in a non-local (remote) directory,
-// (3) not found but creatable, or (4) not found and
-// not creatable.  A LOCAL-REQUIRED file cannot be
-// (2) and a REMOTE-REQUIRED file cannot be (1) or (3)
-// (i.e., REMOTE-REQUIRED files that are not found are
-// not creatable).
 //
 // It is an error if no template is found with all its
 // required files found, or if more than one template is
@@ -728,171 +754,168 @@ function load_make_cache()
 // to be set to [].
 //
 // Only the last component of a file name is listed in
-// $required.  The directory containing the file can be
-// found using $make_cache.
+// $local_required or $remote_required.  The directory
+// containing a $remote_required file can be found using
+// $remote_file_cache.
 //
 // If NULL is returned and one or more templates with
-// all their not-found files creatable exist, the union
-// of the not-found creatable files of these templates
-// is returned in $creatables, and appropriate error
-// messages listing these files are appended to $errors.
-// Otherwise $creatables is [].  Only the last component
-// of a file is listed in $creatables.
+// all their REQUIRED or LOCAL-REQUIRED not-found files
+// are CREATABLE, the union of these not-found creatable
+// files of all these templates is returned in
+// $creatables, and appropriate error messages listing
+// these files are appended to $errors.  Otherwise
+// $creatables is [].  Only the last component of a file
+// is listed in $creatables.
 //
 function find_control
-	( $templates, $requires_local_dir, $uploaded,
-	  & $required, & $creatables, & $errors )
+	( $templates,
+	  & $local_required, & $remote_required,
+	  & $creatables, & $errors )
 {
-    global $make_cache;
-    load_make_cache();
+    global $local_file_cache, $remote_file_cache;
+
+    // Note: if $uploaded is not NULL, all templates
+    // not listing $uploaded as REQUIRED or LOCAL-
+    // REQUIRED are not considered (rejected).
 
     $best_template = NULL;
         // Element of $templates for the first element
 	// of $best_found.
     $best_found = [];
-        // List of [template,file,...] elements
-	// where file,... lists the required files
-	// found, and only templates with NO not
-	// found files and the most number of found
+        // List of elements of the form [template,
+	// lfiles,rfiles] where lfiles is the value for
+	// $local_required and $rfiles is the value for
+	// $remote_required, and only templates with NO
+	// not found files and the most number of found
 	// files are listed.
     $best_found_count = -1;
         // Number of files listed in each element
 	// of $best_found.
     $best_not_found = [];
-        // List of [template,file,...] elements
-	// where file,... lists the required files
-	// not found AND not creatable, and only
-	// templates with at least 1 such file, and
-	// with the least number of such files, are
-	// listed.
+        // List of elements of the form [template,
+	// lfiles,rfiles] where lfiles is the list
+	// of REQUIRED and LOCAL-REQUIRED files that
+	// were not found or CREATABLE, and rfiles
+	// is the list of REMOTE-REQUIRED files that
+	// were not found, and only templates with
+	// at least 1 such file are included, and
+	// only those with the least total number of
+	// such files.
     $best_not_found_count = 1000000000;
         // Number of files listed in each element
 	// of $best_not_found;
     $not_found_creatable = [];
-        // List of [template,file,...] elements
-	// where file,... lists required files that
-	// were not found but creatable, and only
-	// templates with at least 1 such file and
-	// NO not-found not-creatable required files
-	// are listed.
-    // NOTE: not found but creatable files are consider-
-    //       ed to be local if $requires_local_dir !=
-    //       NULL.
+        // List of elements of the form [template,
+	// cfiles] where cfiles lists the REQUIRED
+	// and LOCAL-REQUIRED files that were not found
+	// but were CREATABLE, and only templates with
+	// no other not-found files are listed.
     foreach ( $templates as $template )
     {
         $json = $template[2];
-	$json_creatables = [];
+	$creatables = [];
 	if ( isset ( $json['CREATABLE'] ) )
-	    $json_creatables = $json['CREATABLE'];
-	if ( ! is_array ( $json_creatables ) )
+	    $creatables = $json['CREATABLE'];
+	if ( ! is_array ( $creatables ) )
 	{
 	    $sysfail = "{$template[0]} json CREATABLE"
-	             . " not a list";
+	             . " is not a list";
 	    require 'sysalert.php';
 	}
-	$flist = [$template[0]];
-	    // Required files found.
-	$clist = [$template[0]];
+	$fllist = [];
+	    // Local required files found.
+	$frlist = [];
+	    // Remote required files found.
+	$clist = [];
 	    // Required files not found but creatable.
-	$nflist = [$template[0]];
+	$nfllist = [];
 	    // Required files not found and not
-	    // creatable.
-	$OK = true;
+	    // creatable that can be local.
+	$nfrlist = [];
+	    // Required files not found and not
+	    // creatable that must be remote.
 
-	foreach ( ['REQUIRES', 'LOCAL-REQUIRES',
-	                       'REMOTE-REQUIRES']
-		  as $R )
+	if ( isset ( $json['LOCAL-REQUIRES'] ) )
 	{
-	    if ( isset ( $json[$R] ) )
+	    foreach ( $json['LOCAL-REQUIRES'] as $f )
 	    {
-		foreach ( $json[$R] as $rfile )
-		{
-		    if ( $rfile == $uploaded )
-		    {
-		        if ( $R == 'REMOTE-REQUIRES'
-			     &&
-			     isset
-			       ( $requires_local_dir ) )
-			{
-			    $OK = false;
-			    break;
-			}
-			continue;
-		    }
-
-		    if ( ! isset
-			     ( $make_cache[$rfile] ) )
-		    {
-			if ( array_search
-			         ( $rfile,
-				   $json_creatables,
-				   true ) === false )
-			    $nflist[] = $rfile;
-			else
-			    $clist[] = $rfile;
-			continue;
-		    }
-		    $rdir = $make_cache[$rfile];
-		    if ( ! isset
-		             ( $requires_local_dir ) )
-		        $flist[] = $rfile;
-		    else switch ( $R )
-		    {
-		        case 'LOCAL-REQUIRES':
-			    if ( $rdir
-			         ==
-				 $requires_local_dir )
-				$flist[] = $rfile;
-			    else
-				$nflist[] = $rfile;
-			    break;
-		        case 'REMOTE-REQUIRES':
-			    if ( $rdir
-			         !=
-				 $requires_local_dir )
-				$flist[] = $rfile;
-			    else
-				$nflist[] = $rfile;
-			    break;
-			default:
-			    $flist[] = $rfile;
-		    }
-		}
+		if ( isset ( $local_file_cache[$f] ) )
+		    $fllist[] = $f;
+		else
+		if (     array_search
+		           ( $f, $creatables, true )
+		     !== false )
+		    $clist[] = $f;
+		else
+		    $nfllist[] = $f;
 	    }
-	    if ( ! $OK ) break;
 	}
-	if ( ! $OK ) continue;
 
-	$nfcount = count ( $nflist ) - 1;
+	if ( isset ( $json['REQUIRES'] ) )
+	{
+	    foreach ( $json['REQUIRES'] as $f )
+	    {
+		if ( isset ( $local_file_cache[$f] ) )
+		    $fllist[] = $f;
+		else
+		if ( isset ( $remote_file_cache[$f] ) )
+		    $frlist[] = $f;
+		else
+		if (     array_search
+		           ( $f, $creatables, true )
+		     !== false )
+		    $clist[] = $f;
+		else
+		    $nfllist[] = $f;
+	    }
+	}
+
+	if ( isset ( $json['REMOTE-REQUIRES'] ) )
+	{
+	    foreach ( $json['REMOTE-REQUIRES'] as $f )
+	    {
+		if ( isset ( $remote_file_cache[$f] ) )
+		    $frlist[] = $f;
+		else
+		    $nfrlist[] = $f;
+	    }
+	}
+
+	$nfcount = count ( $nfllist )
+	         + count ( $nfrlist );
 	if ( $nfcount > 0 )
 	{
+	    $element = [$template[0],$nfllist,$nfrlist];
 	    if ( $nfcount == $best_not_found_count )
-		$best_not_found[] = $nflist;
+		$best_not_found[] = $element;
 	    else if ( $nfcount < $best_not_found_count )
 	    {
 		$best_not_found_count = $nfcount;
-		$best_not_found = [$nflist];
+		$best_not_found = [$element];
 	    }
 	    continue;
 	}
 
-	$ccount = count ( $clist ) - 1;
+	$ccount = count ( $clist );
 	if ( $ccount > 0 )
 	{
-	    $not_found_creatable[] = $clist;
+	    $not_found_creatable[] =
+	        [$template[0],$clist];
 	    continue;
 	}
 
-	$fcount = count ( $flist ) - 1;
+	$fcount = count ( $fllist )
+	        + count ( $frlist );
+	$element = [$template[0],$fllist,$frlist];
 	if ( $fcount == $best_found_count )
-	    $best_found[] = $flist;
+	    $best_found[] = $element;
 	else if ( $fcount > $best_found_count )
 	{
 	    $best_found_count = $fcount;
-	    $best_found = [$flist];
+	    $best_found = [$element];
 	    $best_template = $template;
-	    $required = $flist;
-	    array_shift ( $required );
+	    $local_required = $fllist;
+	    $remote_required = $frlist;
 	}
     }
 
@@ -904,12 +927,17 @@ function find_control
 	$errors[] =
 	    "too many templates found with the same" .
 	    " number of existing required files:";
-	foreach ( $best_found as $flist )
+	foreach ( $best_found as $e )
 	{
-	    $t = pretty_template
-	             ( array_shift ( $flist ) );
-	    $list = implode ( ',', $flist );
-	    $errors[] = "$t NEEDS $list";
+	    $m = pretty_template ( $e[0] )
+	       . ' NEEDS';
+	    if ( ! empty ( $e[1] ) )
+	        $m .= ' LOCAL '
+		    . implode ( ',', $e[1] );
+	    if ( ! empty ( $e[2] ) )
+	        $m .= ' REMOTE '
+		    . implode ( ',', $e[2] );
+	    $errors[] = $m;
 	}
     }
     else if ( count ( $not_found_creatable ) > 0 )
@@ -917,14 +945,15 @@ function find_control
 	$errors[] =
 	    "templates found need to have files" .
 	    " created:";
-	foreach ( $not_found_creatable as $clist )
+	foreach ( $not_found_creatable as $e )
 	{
-	    $t = pretty_template
-	             ( array_shift ( $clist ) );
-	    $list = implode ( ',', $clist );
-	    $errors[] = "$t NEEDS $list";
-	    foreach ( $clist as $fname )
-	        $creatables[] = $fname;
+	    $m = pretty_template ( $e[0] )
+	       . ' NEEDS CREATABLE '
+	       . implode ( ',', $e[1] );
+	    $errors[] = $m;
+	    // Append $e[1] to $creatables.
+	    foreach ( $e[1] as $f )
+		$creatables[] = $f;
 	}
     }
     else
@@ -932,12 +961,17 @@ function find_control
 	$errors[] =
 	    "no template found whose required" .
 	    " files exist; closest are:";
-	foreach ( $best_not_found as $nflist )
+	foreach ( $best_not_found as $e )
 	{
-	    $t = pretty_template
-	             ( array_shift ( $nflist ) );
-	    $list = implode ( ',', $nflist );
-	    $errors[] = "$t NEEDS $list";
+	    $m = pretty_template ( $e[0] )
+	       . ' NEEDS';
+	    if ( ! empty ( $e[1] ) )
+	        $m .= ' LOCAL '
+		    . implode ( ',', $e[1] );
+	    if ( ! empty ( $e[2] ) )
+	        $m .= ' REMOTE '
+		    . implode ( ',', $e[2] );
+	    $errors[] = $m;
 	}
     }
 
@@ -961,11 +995,11 @@ function find_control
 function cleanup_working ( $dir, & $errors )
 {
     global $epm_data;
-    $dir = "$epm_data/$dir";
+    $d = "$epm_data/$dir";
 
-    if ( file_exists ( "$dir/PID" ) )
+    if ( file_exists ( "$d/PID" ) )
     {
-        $PID = file_get_contents ( "$dir/PID" );
+        $PID = file_get_contents ( "$d/PID" );
 
 	// PID file if it exists has the form
 	//
@@ -994,74 +1028,97 @@ function cleanup_working ( $dir, & $errors )
 	}
     }
 
-    if ( file_exists ( $dir ) )
-        exec ( "rm -rf $dir" );
+    if ( file_exists ( $d ) )
+        exec ( "rm -rf $d" );
 
-    if ( ! mkdir ( $dir, 0771) )
-    // Must give o+x permission so epm_sandbox can
-    // execute programs that are in working directory.
+    if ( ! mkdir ( $d, 0771) )
+	// Must give o+x permission so epm_sandbox can
+	// execute programs that are in working
+	// directory.
     {
-	$sysalert = "could not make $dir";
+	$sysfail = "could not make $dir";
 	require 'sysalert.php';
-	$errors[] = "SYSTEM ERROR: could not make $dir";
     }
 }
 
-// Link files from the required list into the working
-// working directory.  Ignore and do not link a required
-// list file with name equal to the uploaded file, if
-// that argument is not NULL.  The required list is
-// generally computed by find_control and only contain
-// names of last components, that must be looked up in
-// the make_cache.  It is a fatal error if a required
-// file is NOT listed in make_cache.
+// Link files from the required lists into the working
+// working directory.  The required lists are computed
+// by find_control and only contain names of last
+// components, that for remoted_required must be looked
+// up in the remote_file_cache.  It is a fatal error if
+// a required file is NOT listed in the appropriate
+// cache.
 //
 // Errors cause error messages to be appended to errors.
 //
 function link_required
-	( $uploaded, $work, $required, & $errors )
+	( $local_required, $remote_required, $work,
+	  & $errors )
 {
-    global $epm_data, $make_cache;
-    load_make_cache();
+    global $epm_data,
+           $local_file_cache, $remote_file_cache;
 
-    foreach ( $required as $rname )
+    // Make list of elements of form [file,target,link]
+    // where target is to become the value of the
+    // symbolic link in work, and file is the name of
+    // the file relative to $epm_data.
+    //
+    $list = [];
+    foreach ( $local_required as $f )
     {
-        if ( $rname == $uploaded ) continue;
-
-	if ( ! isset ( $make_cache[$rname] ) )
+	if ( ! isset ( $local_file_cache[$f] ) )
 	{
-	    $sysfail = "in link_required: $rname not"
-	             . " in \$make_cache";
+	    $sysfail = "link_required: $f in"
+	             . " \$local_required not"
+	             . " in \$local_file_cache";
 	    require 'sysalert.php';
 	    // Does NOT return.
 	}
-
-	$dir = $make_cache[$rname];
-
-	$rfile = "$epm_data/$dir/$rname";
-
-	if ( preg_match ( '/\./', $rname ) )
+	$d = $local_file_cache[$f];
+        $list[] = ["$d/$f", "../$f", $f];
+    }
+    foreach ( $remote_required as $f )
+    {
+	if ( ! isset ( $remote_file_cache[$f] ) )
 	{
-	    if ( ! is_readable ( $rfile ) )
+	    $sysfail = "link_required: $f in"
+	             . " \$remote_required not"
+	             . " in \$remote_file_cache";
+	    require 'sysalert.php';
+	    // Does NOT return.
+	}
+	$d = $remote_file_cache[$f];
+        $list[] = ["$d/$f", "../../../../$d/$f", $f];
+    }
+
+    foreach ( $list as $e )
+    {
+	$f = $e[0];
+	$t = $e[1];
+	$l = $e[2];
+	$g = "$epm_data/$f";
+
+	if ( preg_match ( '/\./', $l ) )
+	{
+	    if ( ! is_readable ( $g ) )
 	    {
-		$errors[] = "$rfile is not readable";
+		$errors[] = "$f is not readable";
 		continue;
 	    }
 	}
 	else
 	{
-	    if ( ! is_executable ( $rfile ) )
+	    if ( ! is_executable ( $g ) )
 	    {
-		$errors[] = "$rfile is not executable";
+		$errors[] = "$f is not executable";
 		continue;
 	    }
 	}
 
-	$rlink = "$epm_data/$work/$rname";
-	if ( ! link ( $rfile, "$rlink" ) )
+	if ( ! symlink ( $t, "$epm_data/$work/$l" ) )
 	{
 	    $errors[] = "cannot symbolically link"
-	              . " $rfile to $rlink";
+	              . " $work/$l to $t";
 	    continue;
 	}
     }
@@ -1133,15 +1190,17 @@ function move_keep
     $keep = $control[2]['KEEP'];
     foreach ( $keep as $fname )
     {
-        $wfile = "$epm_data/$work/$fname";
-        $lfile = "$epm_data/$local_dir/$fname";
-	if ( ! file_exists ( $wfile ) )
+        $wfile = "$work/$fname";
+        $lfile = "$local_dir/$fname";
+	if ( ! file_exists ( "$epm_data/$wfile" ) )
 	{
+	    $c = pretty_template ( $control[0] );
 	    $errors[] = "KEEP file $fname was not"
-	              . " made by $control[1]";
+	              . " made by $c";
 	    continue;
 	}
-	if ( ! rename ( $wfile, $lfile ) )
+	if ( ! rename ( "$epm_data/$wfile",
+	                "$epm_data/$lfile" ) )
 	{
 	    $errors[] = "SYSTEM ERROR: could not rename"
 	              . " $wfile to $lfile";
@@ -1186,6 +1245,9 @@ function compute_show
 // and it will be moved into the working directory
 // (but will not be checked for size and other errors).
 //
+// Load_file_caches must be called before this function
+// is called.
+//
 // Output from exec is appended to $output, warnings and
 // errors are appended to $warnings and $errors, the
 // commands executed (but not the checks) are returned
@@ -1199,8 +1261,8 @@ function compute_show
 // $errors listing these files.
 //
 function make_file
-	( $src, $des,
-	  $problem, $work, $requires_local_dir,
+	( $src, $des, $condition,
+	  $problem, $allow_local_optn, $work,
 	  $uploaded, $uploaded_tmp,
 	  & $control, & $commands,
 	  & $output, & $creatables,
@@ -1212,20 +1274,19 @@ function make_file
     $errors_size = count ( $errors );
 
     find_templates
-	( $problem, $src, $des,
-	  $templates, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
+	( $problem, $src, $des, $condition,
+	  $templates );
     if ( count ( $templates ) == 0 )
     {
         $errors[] =
 	    "there are no templates" .
-	    " $src:$des:... for problem $problem";
+	    " $src => $des for problem $problem";
 	return;
     }
 
     $control = find_control
-	( $templates, $requires_local_dir, $uploaded,
-	  $required, $creatables, $errors );
+	( $templates, $local_required, $remote_required,
+	  $creatables, $errors );
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) ) return;
 
@@ -1233,13 +1294,14 @@ function make_file
     if ( count ( $errors ) > $errors_size ) return;
 
     link_required
-	( $uploaded, $work, $required, $errors );
+	( $local_required, $remote_required,
+	  $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
     if ( isset ( $uploaded ) )
     {
-	$f = "$epm_data/$work/$uploaded";
-	if ( file_exists ( $f ) )
+	$f = "$work/$uploaded";
+	if ( file_exists ( "$epm_data/$f" ) )
 	{
 	    $sysfail =
 		"uploaded file is $uploaded but" .
@@ -1248,9 +1310,11 @@ function make_file
 	}
 
 	if ( $is_epm_test ?
-	     ! rename ( $uploaded_tmp, $f ) :
+	     ! rename ( $uploaded_tmp,
+	                "$epm_data/$f" ) :
 	     ! move_uploaded_file
-		   ( $uploaded_tmp, $f ) )
+		   ( $uploaded_tmp,
+		     "$epm_data/$f" ) )
 	{
 	    $errors[] =
 		"SYSTEM_ERROR: failed to move" .
@@ -1262,7 +1326,8 @@ function make_file
     }
 
     $optn_map = compute_optn_map
-        ( $problem, $warnings, $errors );
+        ( $problem, $allow_local_optn,
+	  $warnings, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
     $commands = get_commands ( $control, $optn_map );
@@ -1276,13 +1341,15 @@ function make_file
 	               $output, $errors );
 }
 
-// Given the file src make the file $des and keep any
-// files the make template said should be kept.  Upon
-// return, if there are no errors, $moved is the list
-// of files moved, and $show is the list of files to
-// show.  All file names are relative to $epm_data.
-// $commands is the list of commands executed.  Errors
-// append error message lines to $errors.
+// Given the file $src make the file $des and keep any
+// files the make template said should be kept.  The
+// template must have NO CONDITION, and local
+// problem.optn file is allowed.  Upon return, if there
+// are no errors, $moved is the list of files moved, and
+// $show is the list of files to show.  All file names
+// are relative to $epm_data.  $commands is the list of
+// commands executed.  Errors append error message lines
+// to $errors.
 //
 // If the make template cannot be found but there are
 // some templates that would work if some file are
@@ -1292,17 +1359,22 @@ function make_file
 //
 function make_and_keep_file
 	( $src, $des, $problem,
-	  $work, $local_dir, $requires_local_dir,
+	  $work, $local_dir,
 	  & $commands, & $moved, & $show,
 	  & $output, & $creatables,
 	  & $warnings, & $errors )
 {
+    load_file_caches ( $local_dir );
+
     $errors_size = count ( $errors );
     $moved = [];
     $output = [];
     make_file ( $src, $des,
-                $problem, $work, $requires_local_dir,
-		NULL, NULL,
+                NULL /* no CONDITION */,
+                $problem,
+		true /* allow_local_optn */,
+		$work,
+		NULL, NULL /* no upload, upload_tmp */,
 		$control, $commands,
 		$output, $creatables, 
 		$warnings, $errors );
@@ -1335,14 +1407,16 @@ function make_and_keep_file
 // $errors listing these files.
 //
 function process_upload
-	( $upload, $problem,
-	  $work, $local_dir,
+	( $upload, $problem, $work, $local_dir,
 	  & $commands, & $moved, & $show,
 	  & $output, & $creatables,
 	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
-           $upload_target_ext, $upload_maxsize;
+           $upload_target_ext, $upload_maxsize,
+	   $remote_file_cache;
+
+    load_file_caches ( $local_dir );
 
     $moved = [];
     $show = [];
@@ -1419,8 +1493,10 @@ function process_upload
     $ftmp_name = $upload['tmp_name'];
 
     $output = [];
-    make_file ( $fname, $tname,
-                $problem, $work, NULL,
+    make_file ( $fname, $tname, "UPLOAD $fname",
+                $problem,
+		true /* allow_local_optn */,
+		$work,
 		$fname, $ftmp_name,
 		$control, $commands,
 		$output, $creatables,
@@ -1430,14 +1506,6 @@ function process_upload
 
     move_keep ( $control, $work, $local_dir,
                 $moved, $errors );
-    if ( ! rename ( "$epm_data/$work/$fname",
-                    "$epm_data/$local_dir/$fname" ) )
-	$errors[] =
-	    "SYSTEM_ERROR: could not rename" .
-	    " $epm_data/$work/$fname to" .
-	    " $epm_data/$local_dir/$fname";
-    else
-        $moved[] = $fname;
              
 SHOW:
 
@@ -1451,7 +1519,9 @@ SHOW:
 function create_file
 	( $filename, $problem_dir, & $errors )
 {
-    $f = "$problem_dir/$filename";
+    global $epm_data;
+
+    $f = "$epm_data/$problem_dir/$filename";
     if ( @lstat ( $f ) !== false )
     {
 	$errors[] = "$filename already exists";
@@ -1462,13 +1532,14 @@ function create_file
                                           $matches ) )
     {
 	$o = "{$matches[1]}out";
-	$g = "$problem_dir/$o";
+	$g = "$epm_data/$problem_dir/$o";
 	if ( is_readable ( $g ) )
 	{
 	    if ( ! copy ( $g, $f ) )
 	    {
 		$sysfail =
-		    "create_file: cannot copy $g to $f";
+		    "create_file: cannot copy $o to" .
+		    " $filename";
 		require 'sysalert.php';
 	    }
 	    return true;

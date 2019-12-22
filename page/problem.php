@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec 20 07:06:34 EST 2019
+    // Date:	Sun Dec 22 00:51:46 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -30,7 +30,7 @@
 
     require "$include/debug_info.php";
 
-    $user_dir = "$epm_data/users/user$userid";
+    $user_dir = "users/user$userid";
 
     // Administrative Parameters:
     //
@@ -71,15 +71,17 @@
 		" does not contain a letter";
 	    $problem = NULL;
 	}
-	elseif ( is_dir ( "$user_dir/$problem" ) )
+	else
+	if ( is_dir ( "$epm_data/$user_dir/$problem" ) )
 	{
 	    $errors[] =
 	        "trying to create $problem which" .
 		" already exists";
 	    $problem = NULL;
 	}
-	elseif ( ! mkdir ( "$user_dir/$problem",
-	                   0771 ) )
+	else
+	if ( ! mkdir ( "$epm_data/$user_dir/$problem",
+	               0771 ) )
 	{
 	    $sysfail = "cannot make $user_dir/$problem";
 	    require "$include/sysalert.php";
@@ -92,7 +94,9 @@
 	if ( ! preg_match
 	           ( '/^[-_A-Za-z0-9]+$/', $problem ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	elseif ( ! is_dir ( "$user_dir/$problem" ) )
+	else
+	if ( ! is_dir
+	         ( "$epm_data/$user_dir/$problem" ) )
 	{
 	    $errors[] =
 	        "trying to select non-existant" .
@@ -110,7 +114,7 @@
 
     if ( isset ( $problem ) )
 	$problem_dir =
-	    "$epm_data/users/user$userid/$problem";
+	    "users/user$userid/$problem";
     else
 	$problem_dir = NULL;
 
@@ -161,7 +165,7 @@
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
         unset ( $_SESSION['delete_problem_tag'] );
-	exec ( "rm -rf $problem_dir" );
+	exec ( "rm -rf $epm_data/$problem_dir" );
 	$deleted_problem = $problem;
 	$problem = NULL;
 	$problem_dir = NULL;
@@ -182,7 +186,7 @@
     //
     $problems = [];
 
-    $desc = opendir ( $user_dir );
+    $desc = opendir ( "$epm_data/$user_dir" );
     if ( ! $desc )
          error
 	     ( "SYSTEM ERROR: cannot open $user_dir" );
@@ -206,8 +210,8 @@
         // Cache of problem_file_names().
     function problem_file_names()
     {
-        global $problem_dir, $problem_file_names,
-	       $display_file_ext;
+        global $epm_data, $problem_dir,
+	       $problem_file_names, $display_file_ext;
 
 	if ( isset ( $problem_file_names ) )
 	    return $problem_file_names;
@@ -221,7 +225,8 @@
 	clearstatcache();
 	$map = [];
 
-	foreach ( scandir ( $problem_dir ) as $fname )
+	foreach ( scandir ( "$epm_data/$problem_dir" )
+	          as $fname )
 	{
 	    if ( preg_match ( '/^\./', $fname ) )
 	        continue;
@@ -236,7 +241,8 @@
 		             true ) === false )
 		continue;
 	    $f = "$problem_dir/$fname";
-	    $map[$fname] = filemtime($f);
+	    $map[$fname] =
+	        filemtime ( "$epm_data/$f" );
 	}
 	arsort ( $map, SORT_NUMERIC );
 	    // Note, keys cannot be floating point and
@@ -277,7 +283,7 @@
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	$f = "$problem_dir/$f";
-        if ( ! unlink ( $f ) )
+        if ( ! unlink ( "$epm_data/$f" ) )
 	    $errors[] = "could not delete $f";
 	$problem_file_names = NULL;
 	    // Clear cache.
@@ -321,7 +327,7 @@
 	$d = "users/user$userid/$problem";
 	make_and_keep_file
 	    ( $src, $des, $problem,
-	      "$d/+work+", $d, NULL,
+	      "$d/+work+", $d,
 	      $commands, $kept, $show_files,
 	      $output, $creatables,
 	      $warnings, $errors );

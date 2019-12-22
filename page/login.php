@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec 13 05:53:49 EST 2019
+    // Date:	Sun Dec 22 00:04:15 EST 2019
 
     // Handles login for a session.  Sets $_SESSION:
     //
@@ -86,51 +86,52 @@
 	      != $_SERVER['REMOTE_ADDR'] )
         exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
-    // Get and decode json file, which must be
-    // readable.  It is a fatal error if the
-    // file cannot be read or decoded.
+    // Function to get and decode json file, which must
+    // be readable.  It is a fatal error if the file
+    // cannot be read or decoded.
     //
-    function get_json ( $filename )
+    // The file name is $r/$file, where $r is either
+    // $epm_root or $epm_data and will NOT appear in any
+    // error message.
+    //
+    function get_json ( $r, $file )
     {
-        global $include;
-
-	$f = $filename;
+	$f = "$r/$file";
 	$c = file_get_contents ( $f );
 	if ( $c === false )
 	{
-	    $sysfail = "cannot read readable $f";
-	    require "$include/sysalert.php";
+	    $sysfail = "cannot read readable $file";
+	    require 'sysalert.php';
 	}
-	$c = preg_replace
-	         ( '#(\R|^)\h*//.*#', '', $c );
+	$c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
 	    // Get rid of `//...' comments.
 	$j = json_decode ( $c, true );
 	if ( $j === NULL )
 	{
 	    $m = json_last_error_msg();
 	    $sysfail =
-	        "cannot decode json in $f:\n    $m";
-	    require "$include/sysalert.php";
+		"cannot decode json in $file:\n    $m";
+	    require 'sysalert.php';
 	}
 	return $j;
     }
 
     // Get default administrative parameters.
     //
-    $f = "$epm_root/src/default_admin.params";
-    if ( ! is_readable ( $f ) )
+    $f = "src/default_admin.params";
+    if ( ! is_readable ( "$epm_root/$f" ) )
     {
         $sysfail = "cannot read $f";
 	require "$include/sysalert.php";
     }
-    $admin_params = get_json ( $f );
+    $admin_params = get_json ( $epm_root, $f );
 
     // Get local administrative parameter overrides.
     //
-    $f = "$epm_data/admin/admin.params";
-    if ( is_readable ( $f ) )
+    $f = "admin/admin.params";
+    if ( is_readable ( "$epm_data/$f" ) )
     {
-        $j = get_json ( $f );
+        $j = get_json ( $epm_data, $f );
 	foreach ( $j as $key => $value )
 	    $admin_params[$key] = $value;
 
@@ -187,10 +188,10 @@
         global $email, $epm_data, $userid, $user_admin,
 	       $include;
 
-	$f = "$epm_data/admin/email_index/$email";
-	if ( is_readable ( $f ) )
+	$f = "admin/email_index/$email";
+	if ( is_readable ( "$epm_data/$f" ) )
 	{
-	    $u = file_get_contents ( $f );
+	    $u = file_get_contents ( "$epm_data/$f" );
 	    $u = trim ( $u );
 	        // In case $f was edited by hand and a
 		// \n was introduced.
@@ -201,9 +202,10 @@
 		require "$include/sysalert.php";
 	    }
 	    $userid = $u;
-	    $f = "$epm_data/admin/user{$userid}.json";
-	    if ( is_readable ( $f ) )
-		$user_admin = get_json ( $f );
+	    $f = "admin/user{$userid}.info";
+	    if ( is_readable ( "$epm_data/$f" ) )
+		$user_admin =
+		    get_json ( $epm_data, $f );
 	}
     }
 
@@ -216,10 +218,10 @@
 
 	$date_format = "%FT%T%z";
 
-	$f = "$epm_data/admin/login.log";
-	if ( is_writable ( $f ) )
+	$f = "admin/login.log";
+	if ( is_writable ( "$epm_data/$f" ) )
 	{
-	    $desc = fopen ( "$f", 'a' );
+	    $desc = fopen ( "$epm_data/$f", 'a' );
 	    if ( $desc === false )
 	    {
 		$sysfail =
@@ -329,8 +331,8 @@
 	    strftime ( '%FT%T%z', $confirmation_time );
 	$j = json_encode
 	    ( $user_admin, JSON_PRETTY_PRINT );
-	$f = "$epm_data/admin/user{$userid}.json";
-	$r = file_put_contents ( $f, $j );
+	$f = "admin/user{$userid}.info";
+	$r = file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	{
 	    $sysfail = "cannot write $f";

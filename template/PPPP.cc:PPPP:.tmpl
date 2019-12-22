@@ -1,10 +1,11 @@
 {
 
-"COMMANDS": ["g++ GCCFLAGS GPPFLAGS -o PPPP PPPP.cc LIBRARIES > PPPP.out 2> PPPP.err",
+"COMMANDS": ["g++ GCCFLAGS GPPFLAGS -o PPPP \\",
+             "    PPPP.cc LIBRARIES > PPPP.out 2> PPPP.err",
              "chmod o+x PPPP"],
-"LOCAL-REQUIRES":["PPPP.cc"],
+"CONDITION": "UPLOAD PPPP.cc",
 
-"KEEP":    ["PPPP"],
+"KEEP":    ["PPPP", "PPPP.cc"],
 "SHOW":    ["PPPP.err","PPPP.out"],
 "CHECKS":  ["cmp -s PPPP.err /dev/null",
             "cmp -s PPPP.out /dev/null"]

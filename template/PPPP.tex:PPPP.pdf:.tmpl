@@ -1,8 +1,9 @@
 {
 
-"COMMANDS": ["pdflatex -record -no-shell-escape -interaction nonstopmode >PPPP.out 2>PPPP.err PPPP.tex"],
-"LOCAL-REQUIRES":["PPPP.tex"],
-"KEEP":    ["PPPP.pdf","PPPP.log","PPPP.fls"],
+"COMMANDS": ["pdflatex -record -no-shell-escape -interaction \\",
+             "    nonstopmode >PPPP.out 2>PPPP.err PPPP.tex"],
+"CONDITION": "UPLOAD PPPP.tex",
+"KEEP":    ["PPPP.pdf","PPPP.log","PPPP.fls", "PPPP.tex"],
 "SHOW":    ["PPPP.err", "PPPP.out"],
 "CHECKS":  ["cmp -s PPPP.err /dev/null"]
 

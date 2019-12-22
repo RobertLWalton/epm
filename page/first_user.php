@@ -2,7 +2,7 @@
 
     // File:	first_user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec  9 12:43:02 EST 2019
+    // Date:	Sun Dec 22 00:29:39 EST 2019
 
     // Asks user if they are the first user.  If yes
     // makes the following directories and then goes
@@ -65,8 +65,8 @@
 		       " be an ADMINISTRATOR!" );
 	    else
 		exit ( "SYSTEM ERROR: administrative" .
-		       " directories in $epm_data" .
-		       " improperly set up" );
+		       " directories improperly" .
+		       " set up" );
 	}
 	exit ( 'UNACCEPTABLE POST' );
     }

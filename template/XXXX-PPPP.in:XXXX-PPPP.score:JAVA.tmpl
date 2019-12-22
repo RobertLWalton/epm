@@ -1,16 +1,25 @@
 {
 
 "COMMANDS": ["chmod o+r . PPPP.class",
-             "epm_sandbox SANDBOX-ARGS java JAVA-FLAGS PPPP < XXXX-PPPP.in > XXXX-PPPP.out 2> XXXX-PPPP.err",
+             "epm_sandbox GSARGS GSPACE generate_PPPP \\",
+	     "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
+	     "  epm_sandbox SSARGS \\",
+	     "    java JFLAGS PPPP DARGS \\",
+	     "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
 	     "chmod o-r . PPPP.class",
-             "epm_score SCORING-ARGS < XXXX-PPPP.out XXXX-PPPP.test > XXXX-PPPP.score 2>> XXXX-PPPP.err"],
+             "epm_sandbox GSARGS GSPACE generate_PPPP \\",
+             "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
+	     "  epm_sandbox FSARGS FSPACE filter_PPPP \\",
+	     "    3< XXXX-PPPP.sout > XXXX-PPPP.fout \\",
+	     "    2> XXXX-PPPP.ferr"],
+             "epm_score SCORING-ARGS \\"
+	     "    < XXXX-PPPP.fout XXXX-PPPP.ftest \\"
+	     "    > XXXX-PPPP.score 2>> XXXX-PPPP.err"],
 
-"LOCAL-REQUIRES":["XXXX-PPPP.in", "PPPP.class"],
-"REQUIRES":["XXXX-PPPP.test"],
-"CREATABLE":["XXXX-PPPP.test"],
-"KEEP":    ["XXXX-PPPP.score"],
-"SHOW":    ["XXXX-PPPP.err","XXXX-PPPP.score"],
-"CHECKS":  ["cmp -s XXXX-PPPP.err /dev/null"]
+"LOCAL-REQUIRES":["PPPP.class"],
+"REMOTE-REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.ftest",
+                   "generate_PPPP", "filter_PPPP"],
+"CONDITION": "SUBMIT"
 
 }
 

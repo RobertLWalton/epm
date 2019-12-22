@@ -9,15 +9,12 @@
 	     "    < XXXX-PPPP.fout XXXX-PPPP.ftest \\",
 	     "    > XXXX-PPPP.score 2> XXXX-PPPP.scerr"],
 
-"LOCAL-REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.sout", "XXXX-PPPP.ftest",
-                  "generate_PPPP", "filter_PPPP"],
+"LOCAL-REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.sout", "XXXX-PPPP.ftest"],
+"REQUIRES":["generate_PPPP", "filter_PPPP"],
 "CREATABLE": ["generate_PPPP", "filter_PPPP", "XXXX-PPPP.ftest"],
 "KEEP":    ["XXXX-PPPP.score"],
 "SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.ferr", "XXXX-PPPP.scerr",
-            "XXXX-PPPP.score"],
-"CHECKS":  ["cmp -s XXXX-PPPP.gerr /dev/null",
-            "cmp -s XXXX-PPPP.ferr /dev/null",
-            "cmp -s XXXX-PPPP.scerr /dev/null"]
+            "XXXX-PPPP.score"]
 
 }
 

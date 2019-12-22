@@ -2,12 +2,12 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec 13 05:54:30 EST 2019
+    // Date:	Sun Dec 22 00:38:57 EST 2019
 
     // Displays files:
     //
     //		admin/email_index/*
-    //		admin/user{$userid}.json
+    //		admin/user{$userid}.info
     //
     // containing information about user.  Gives the
     // user the option of going to user_edit.php or
@@ -52,10 +52,10 @@
     $emails = [];
     $emails[] = $email;
 
-    $desc = opendir ( "$epm_data/admin/email_index" );
+    $d = "admin/email_index";
+    $desc = opendir ( "$epm_data/$d" );
     if ( ! $desc )
-        exit ( 'SYSTEM ERROR: cannot open' .
-	        " $epm_data/admin/email_index" );
+        exit ( 'SYSTEM ERROR: cannot open $d' );
     while ( true )
     {
 	$value = readdir ( $desc );
@@ -66,8 +66,8 @@
 	}
 	if ( preg_match ( '/^\.\.*$/', $value ) )
 	    continue;
-	$f = "$epm_data/admin/email_index/$value";
-	$i = file_get_contents ( $f );
+	$f = "admin/email_index/$value";
+	$i = file_get_contents ( "$epm_data/$f" );
 	if ( ! preg_match
 		   ( '/^[1-9][0-9]*$/', $i ) )
 	{
@@ -79,8 +79,8 @@
 	    $emails[] = $value;
     }
 
-    $f = "$epm_data/admin/user{$userid}.json";
-    $c = file_get_contents ( $f );
+    $f = "admin/user{$userid}.info";
+    $c = file_get_contents ( "$epm_data/$f" );
     if ( $c === false )
 	exit ( "SYSTEM ERROR: cannot read $f" );
     $c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );

@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Dec 20 07:12:30 EST 2019
+// Date:	Fri Dec 20 12:20:47 EST 2019
 
 $argv = $_SERVER['argv'];
 
@@ -16,7 +16,7 @@ epm_run root-directory data-directory \
 
 Executes the run defined by the run-file in background.
 The background job writes its current and final status
-into into the status-file.
+to the status-file.
 
 The working-subdirectory is relative to the problem
 directory.  The status-file is relative to the working-
@@ -38,6 +38,8 @@ $include = "$epm_root/include";
 
 include "$include/epm_make.php";
 
-print_r ( $admin_params );
+load_template_cache();
+
+var_dump ( $GLOBALS );
 
 ?>

@@ -43,8 +43,7 @@
 
     // require "$epm_root/include/debug_info.php";
 
-    $problem_dir =
-        "$epm_data/users/user$userid/$problem";
+    $problem_dir = "users/user$userid/$problem";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -57,9 +56,9 @@
     $printname = "<u>$filename</u>:";
     $f = "$problem_dir/$filename";
     $g = "$problem_dir/+work+/$filename";
-    if ( ! is_readable ( $f ) )
+    if ( ! is_readable ( "$epm_data/$f" ) )
     {
-        if ( ! is_readable ( $g ) )
+        if ( ! is_readable ( "$epm_data/$g" ) )
 	    exit ( "ACCESS: illegal GET to" .
 	           " ascii_show.php" );
 	$f = $g;
@@ -67,12 +66,12 @@
 	    '&nbsp;&nbsp;&nbsp;&nbsp;(temporary)';
     }
 
-    $t = exec ( "file $f" );
+    $t = exec ( "file $epm_data/$f" );
     if ( ! preg_match ( '/ASCII/', $t ) )
 	exit
 	    ( "ACCESS: illegal GET to ascii_show.php" );
 
-    $c = file_get_contents ( $f );
+    $c = file_get_contents ( "$epm_data/$f" );
     if ( $c === false )
 	exit
 	    ( "SYSTEM ERROR: cannot read readable $f" ); 

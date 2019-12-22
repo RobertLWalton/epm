@@ -1,9 +1,10 @@
 {
 
-"COMMANDS": ["python3 -m py_compile PPPP.py > PPPP.out 2> PPPP.err",
+"COMMANDS": ["python3 -m py_compile PPPP.py \\",
+             "    > PPPP.out 2> PPPP.err",
              "mv -f __pycache__/*.pyc PPPP.pyc"],
-"LOCAL-REQUIRES":["PPPP.py"],
-"KEEP":    ["PPPP.pyc"],
+"CONDITION": "UPLOAD PPPP.py",
+"KEEP":    ["PPPP.pyc", "PPPP.py"],
 "SHOW":    ["PPPP.err","PPPP.out"],
 "CHECKS":  ["cmp -s PPPP.err /dev/null",
             "cmp -s PPPP.out /dev/null"]

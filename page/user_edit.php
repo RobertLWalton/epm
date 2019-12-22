@@ -2,18 +2,18 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec 13 05:54:00 EST 2019
+    // Date:	Sun Dec 22 00:33:44 EST 2019
 
     // Edits files:
     //
     //		admin/email_index/*
-    //		admin/user{$userid}.json
+    //		admin/user{$userid}.info
     //
     // containing information about user.  Also
     // assigns $userid and creates
     //
     //		users/user$userid
-    //	        admin/user$userid.json
+    //	        admin/user$userid.info
     //
     // if $_SESSION['epm_userid'] not set.
     //
@@ -79,8 +79,8 @@
     $emails = [];
     $max_id = 0;
         // Set to NULL if cannot be computed.
-    $d = "$epm_data/admin/email_index";
-    $desc = opendir ( $d );
+    $d = "admin/email_index";
+    $desc = opendir ( "$epm_data/$d" );
     if ( $desc === false )
     {
         $sysfail = "user_edit: cannot open $d";
@@ -96,8 +96,8 @@
 	}
 	if ( preg_match ( '/^\.\.*$/', $value ) )
 	    continue;
-	$f = "$epm_data/admin/email_index/$value";
-	$i = file_get_contents ( $f );
+	$f = "admin/email_index/$value";
+	$i = file_get_contents ( "$epm_data/$f" );
 	if ( $i === false )
 	{
 	    $sysalert = "user_edit: cannot read $f";
@@ -122,13 +122,13 @@
     $max_emails = max ( $admin_params['max_emails'],
                         1 + count ( $emails ) );
 
-    // Set $user_admin to admin/user$userid.json
+    // Set $user_admin to admin/user$userid.info
     // contents, or to initial value if $userid is NULL.
     //
     if ( isset ( $userid ) )  // Not new user
     {
-	$f = "$epm_data/admin/user{$userid}.json";
-	$c = file_get_contents ( $f );
+	$f = "admin/user{$userid}.info";
+	$c = file_get_contents ( "$epm_data/$f" );
 	if ( $c === false )
 	{
 	    $sysfail = "cannot read readable $f";
@@ -248,8 +248,8 @@
     	$e = sanitize_email ( $_POST['new_email'] );
 	if ( $e != '' )
 	{
-	    $f = "$epm_data/admin/email_index/$e";
-	    if ( is_readable ( $f ) )
+	    $f = "admin/email_index/$e";
+	    if ( is_readable ( "$epm_data/$f" ) )
 	    {
 	        $he = htmlspecialchars ( $e );
 	        $errors[] =
@@ -259,7 +259,8 @@
 	    }
 	    else
 	    {
-	        $r = file_put_contents ( $f, $userid );
+	        $r = file_put_contents
+		         ( "$epm_data/$f", $userid );
 		if ( $r === false )
 		{
 		    $sysfail = "could not write $f";
@@ -276,7 +277,7 @@
     	$e = sanitize_email ( $_POST['delete_email'] );
 	if ( $e != '' )
         {
-	    $f = "$epm_data/admin/email_index/$e";
+	    $f = "admin/email_index/$e";
 	    $k = array_search ( $e, $emails, true );
 	    if ( $e == $email )
 	    {
@@ -292,7 +293,7 @@
 		    "trying to delete email address" .
 		    "$he that is NOT assigned to your";
 	    }
-	    elseif ( ! unlink ( $f ) )
+	    elseif ( ! unlink ( "$epm_data/$f" ) )
 	    {
 	        $sysfail = "cannot unlink $f";
 		require "$include/sysalert.php";
@@ -343,8 +344,9 @@
 	        ++ $userid;
 	    umask ( 07 );
 	    $_SESSION['epm_userid'] = $userid;
-	    $f = "$epm_data/admin/email_index/$email";
-	    $r = file_put_contents ( $f, $userid );
+	    $f = "admin/email_index/$email";
+	    $r = file_put_contents
+	             ( "$epm_data/$f", $userid );
 	    if ( $r === false )
 	    {
 		$sysfail = "could not write $f";
@@ -358,8 +360,8 @@
 	$user_admin['location'] = $location;
 	$j = json_encode ( $user_admin,
 	                   JSON_PRETTY_PRINT );
-	$f = "$epm_data/admin/user{$userid}.json";
-	$r = file_put_contents ( $f, $j );
+	$f = "admin/user{$userid}.info";
+	$r = file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	{
 	    $sysfail = "could not write $f";
