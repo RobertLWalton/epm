@@ -1,10 +1,10 @@
 <?php
 
-    // File:	ascii_show.php
+    // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Dec 12 07:45:00 EST 2019
+    // Date:	Mon Dec 23 07:37:17 EST 2019
 
-    // Show the ASCII file $_GET['filename'].
+    // Show the UTF-8 file $_GET['filename'].
     // File may be in current problem directory
     // or a temporary in its +work+ subdirectory.
 
@@ -50,7 +50,7 @@
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
     if ( ! isset ( $_GET['filename'] ) )
 	exit
-	    ( "ACCESS: illegal GET to ascii_show.php" );
+	    ( "ACCESS: illegal GET to utf8_show.php" );
 
     $filename = $_GET['filename'];
     $printname = "<u>$filename</u>:";
@@ -60,16 +60,16 @@
     {
         if ( ! is_readable ( "$epm_data/$g" ) )
 	    exit ( "ACCESS: illegal GET to" .
-	           " ascii_show.php" );
+	           " utf8_show.php" );
 	$f = $g;
 	$printname .=
 	    '&nbsp;&nbsp;&nbsp;&nbsp;(temporary)';
     }
 
     $t = exec ( "file $epm_data/$f" );
-    if ( ! preg_match ( '/ASCII/', $t ) )
+    if ( ! preg_match ( '/(ASCII|UTF-8)/', $t ) )
 	exit
-	    ( "ACCESS: illegal GET to ascii_show.php" );
+	    ( "ACCESS: illegal GET to utf8_show.php" );
 
     $c = file_get_contents ( "$epm_data/$f" );
     if ( $c === false )

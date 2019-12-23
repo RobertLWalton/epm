@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Dec 22 06:36:07 EST 2019
+// Date:    Mon Dec 23 07:39:14 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -1586,7 +1586,7 @@ function create_file
 }
 
 // Find a file in $show_files that is pdf or is the
-// largest ASCII file with size above 5 lines, delete
+// largest UTF-8 file with size above 5 lines, delete
 // it from show_files and return it.  If there is no
 // such file, leave $show_files untouched and return
 // NULL.  The file names in $show_files are relative
@@ -1609,7 +1609,7 @@ function find_show_file ( & $show_files )
 	    $index = $i;
 	    break;
 	}
-	else if ( preg_match ( '/ASCII/', $t ) )
+	else if ( preg_match ( '/(ASCII|UTF-8)/', $t ) )
 	{
 	    $c = exec ( "grep -c '$' $f" );
 	    if ( $c > $lines )

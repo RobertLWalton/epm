@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec 22 00:51:46 EST 2019
+    // Date:	Mon Dec 23 07:34:53 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -28,7 +28,7 @@
     $email = $_SESSION['epm_email'];
     $include = "$epm_root/include";
 
-    require "$include/debug_info.php";
+    // require "$include/debug_info.php";
 
     $user_dir = "users/user$userid";
 
@@ -394,7 +394,7 @@
 	if ( preg_match ( '/\.pdf$/', $b ) )
 	    $e = 'pdf_show.php';
 	else
-	    $e = 'ascii_show.php';
+	    $e = 'utf8_show.php';
 	echo "<iframe" .
 	     " src='$e?filename=$b'" .
 	     " style='width:50%;height:97%;" .
@@ -636,7 +636,7 @@ EOT;
 		continue;
 	    }
 	    $t = exec ( "file -h $f" );
-	    if ( preg_match ( '/ASCII/', $t ) )
+	    if ( preg_match ( '/(ASCII|UTF-8)/', $t ) )
 	    {
 		echo "<u>$b</u>:<br>\n";
 		echo '<pre>'
