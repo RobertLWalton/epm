@@ -3,7 +3,7 @@
 //
 // File:	epm_cat.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 22 20:08:15 EST 2019
+// Date:	Sun Dec 22 21:10:48 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -99,12 +99,16 @@ bool get_line ( void )
 using std::cout;
 using std::endl;
 
+#ifndef NAME
+#    error "Program name NAME not set."
+#endif
+
 #ifndef FD
 #    error "Input file descriptor FD not set."
 #endif
 
 char documentation [] =
-"epm_cat\n"
+"%s\n"
 "\n"
 "    Copies from file descriptor %d to file descrip-\n"
 "    tor 1 removing comments from lines.  A line\n"
@@ -120,6 +124,9 @@ char documentation [] =
 "    ment.\n"
 ;
 
+# define quote(x) str(x)
+# define str(x) #x
+
 // Main program.
 //
 int main ( int argc, char ** argv )
@@ -127,7 +134,7 @@ int main ( int argc, char ** argv )
     if ( argc > 1 )
     {
 	fprintf ( stderr,
-	          documentation, FD );
+	          documentation, quote(NAME), FD );
 	return 0;
     }
 

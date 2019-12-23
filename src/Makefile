@@ -2,7 +2,7 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Mon Dec 16 08:53:34 EST 2019
+# Date:		Sun Dec 22 21:09:03 EST 2019
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
@@ -21,11 +21,13 @@ epm_score:	epm_score.cc
 
 epm_default_generate:	epm_cat.cc
 	g++ -o epm_default_generate \
-	    -DFD=0 epm_cat.cc
+	    -DNAME=epm_default_generate -DFD=0 \
+	    epm_cat.cc
 
 epm_default_filter:	epm_cat.cc
 	g++ -o epm_default_filter \
-	    -DFD=3 epm_cat.cc
+	    -DNAME=epm_default_filter -DFD=3 \
+	    epm_cat.cc
 
 clean:
 	rm -f epm_score \
