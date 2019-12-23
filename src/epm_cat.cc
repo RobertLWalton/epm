@@ -3,7 +3,7 @@
 //
 // File:	epm_cat.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 22 18:48:15 EST 2019
+// Date:	Sun Dec 22 20:08:15 EST 2019
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -11,9 +11,17 @@
 
 // Begin TEMPLATE for generate/filter program input.
 
+#include <streambuf>
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <cstdio>
+extern "C" {
+#include <unistd.h>
+}
+using std::streambuf;
+using std::istream;
+using std::string;
  
 // Class for reading from file descriptor.
 //
@@ -28,7 +36,7 @@ class inbuf : public streambuf
 
   public:
 
-    void open ( int _fd )
+    void setfd ( int _fd )
     {
         setg ( buffer, buffer, buffer );
 	eof = false;
@@ -62,12 +70,12 @@ bool get_line ( void )
     while ( getline ( in, line ) )
     {
 	const char * p = line.c_str();
-	if ( strncmp ( p, "!!**", 4 ) continue;
+	if ( strncmp ( p, "!!**", 4 ) != 0 ) continue;
 	const char * bp = strstr ( p, "[**" );
 	if ( bp == NULL ) return true;
 	const char * ep = strstr ( bp + 3, "**]" );
 	if ( ep == NULL ) return true;
-	buffer[line.size() + 1];
+	char buffer[line.size() + 1];
 	char * q = buffer;
 	while ( true )
 	{
@@ -88,7 +96,8 @@ bool get_line ( void )
 
 // End TEMPLATE for generate/filter program input.
 
-#include <cstdio>
+using std::cout;
+using std::endl;
 
 #ifndef FD
 #    error "Input file descriptor FD not set."
@@ -122,6 +131,7 @@ int main ( int argc, char ** argv )
 	return 0;
     }
 
+    inBUF.setfd ( FD );
     while ( get_line() ) cout << line << endl;
 
     return 0;

@@ -19,13 +19,13 @@ all: epm_score epm_default_generate epm_default_filter
 epm_score:	epm_score.cc
 	g++ -o epm_score epm_score.cc
 
-epm_default_generate:	epm_cat.c
-	gcc -o epm_default_generate \
-	    -DIN_FD=0 -DOUT_FD=1 epm_cat.c
+epm_default_generate:	epm_cat.cc
+	g++ -o epm_default_generate \
+	    -DFD=0 epm_cat.cc
 
-epm_default_filter:	epm_cat.c
-	gcc -o epm_default_filter \
-	    -DIN_FD=3 -DOUT_FD=1 epm_cat.c
+epm_default_filter:	epm_cat.cc
+	g++ -o epm_default_filter \
+	    -DFD=3 epm_cat.cc
 
 clean:
 	rm -f epm_score \
