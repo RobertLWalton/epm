@@ -50,7 +50,7 @@ class inbuf : public streambuf
 
 	if ( eof ) return EOF;
 	ssize_t c = read ( fd, buffer, 4096 );
-	if ( c < 0 )
+	if ( c <= 0 )
 	{
 	    eof = true; return EOF;
 	}
@@ -70,7 +70,7 @@ bool get_line ( void )
     while ( getline ( in, line ) )
     {
 	const char * p = line.c_str();
-	if ( strncmp ( p, "!!**", 4 ) != 0 ) continue;
+	if ( strncmp ( p, "!!**", 4 ) == 0 ) continue;
 	const char * bp = strstr ( p, "[**" );
 	if ( bp == NULL ) return true;
 	const char * ep = strstr ( bp + 3, "**]" );
