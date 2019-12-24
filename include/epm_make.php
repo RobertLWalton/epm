@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Dec 23 07:39:14 EST 2019
+// Date:    Mon Dec 23 19:04:22 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -1151,7 +1151,7 @@ function get_commands ( $control )
 function run_commands
 	( $commands, $work, & $output, & $errors )
 {
-    global $epm_data;
+    global $epm_data, $epm_root, $userid, $problem;
 
     $command = '';
     $e = '';
@@ -1167,7 +1167,13 @@ function run_commands
 	else
 	    $command .= $c;
 
-        exec ( "cd $epm_data/$work; $command",
+        exec ( "cd $epm_data/$work;" .
+	       " export EPM_ROOT=$epm_root;" .
+	       " export EPM_DATA=$epm_data;" .
+	       " export EPM_USERID=$userid;" .
+	       " export EPM_PROBLEM=$problem;" .
+	       " export EPM_WORK=$work;" .
+	       " $command",
 	       $output, $ret );
 	if ( $ret != 0 )
 	{

@@ -3,36 +3,81 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Dec 20 12:20:47 EST 2019
+// Date:	Mon Dec 23 18:22:46 EST 2019
 
-$argv = $_SERVER['argv'];
+$document = <<<'EOT'
+EPM_ROOT=root-directory \
+EPM_DATA=data-directory \
+EPM_USERID=userid \
+EPM_PROBLEM=problem \
+EPM_WORK=working-subdirectory \
+    epm_run [-r|-s] run-file [status-file]
 
-if ( count ( $argv ) < 8 )
-{
-    echo <<<'EOT'
-epm_run root-directory data-directory \
-        userid problem working-subdirectory \
-	run-file status-file
+With no options, just checks the run-file to see if
+it can be run with -r: i.e., all the .in files listed
+are local and have associated local .ftest files.  The
+status-file must be omitted in this case.  The result
+is in the standard output.
 
-Executes the run defined by the run-file in background.
-The background job writes its current and final status
-to the status-file.
+With options, executes the run defined by the run-file
+in background.  With -r, local .in and .ftest files are
+used, and it is an error if any do not exist locally, or
+if the .run file is not local.
 
-The working-subdirectory is relative to the problem
-directory.  The status-file is relative to the working-
-subdirectory.
+With -s only remote .in and .ftest files are used, and
+it is an error if any do not exist remotely, or if the
+.run file is not remote.  The background job writes its
+current status to the status-file, and outputs its final
+result in the standard output.
+
+Many parameters are environment variables so they will
+not be listed when the command is listed.  The working-
+subdirectory is relative to the data-directory.  The
+status-file is relative to the working-subdirectory.
+The .run file is looked up on the local and remote
+directories, and the .score's are computed using
+templates that have no CONDITION for -r or have SUBMIT
+CONDITION for -s.
 
 EOT;
+
+if ( $argc < 2 )
+{
+    echo $document;
     exit ( 0 );
 }
 
-$epm_root = $argv[1];
-$epm_data = $argv[2];
-$userid   = $argv[3];
-$problem  = $argv[4];
-$work     = $argv[5];
-$rfile    = $argv[6];
-$sfile    = $argv[7];
+$run = "c";
+if ( preg_match ( '/^-(.)$/', $argv[1], $matches ) )
+{
+    $run = $matches[1];
+    if ( ! preg_match ( '/[rs]/', $run ) )
+    {
+        echo "epm_run: bad option {$argv[1]}\n";
+	exit (1);
+    }
+    array_shift ( $argv );
+    -- $argc;
+}
+if ( $argc != ( $run == "c" ? 2 : 3 ) )
+{
+    echo "epm_run: wrong number of arguments\n";
+    exit (1);
+}
+
+// Note: $_ENV does NOT work here because $ is not in
+// ini variables_order.  But getenv does work.
+//
+$epm_root = getenv ( 'EPM_ROOT' );
+$epm_data = getenv ( 'EPM_DATA' );
+$userid   = getenv ( 'EPM_USERID' );
+$problem  = getenv ( 'EPM_PROBLEM' );
+$work     = getenv ( 'EPM_WORK' );
+$rfile    = $argv[1];
+if ( $argc > 2 )
+    $sfile    = $argv[2];
+else
+    $sfile    = NULL;
 
 $include = "$epm_root/include";
 
