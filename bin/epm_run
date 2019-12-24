@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Dec 23 18:22:46 EST 2019
+// Date:	Tue Dec 24 01:59:22 EST 2019
 
 $document = <<<'EOT'
 EPM_ROOT=root-directory \
@@ -83,8 +83,111 @@ $include = "$epm_root/include";
 
 include "$include/epm_make.php";
 
+$problem_dir = "users/user$userid/$problem";
+
+load_file_caches ( $problem_dir );
+
+if ( $run == "c"
+     &&
+     is_readable ( "$epm_data/$work/$rfile" ) )
+    $rdir = $work;
+else if ( $run == "r"
+          &&
+	  isset ( $local_file_cache[$rfile] ) )
+    $rdir = $local_file_cache[$rfile];
+else if ( $run == "s"
+          &&
+	  isset ( $remote_file_cache[$rfile] ) )
+    $rdir = $remote_file_cache[$rfile];
+else
+{
+    fprintf ( STDERR, "epm_run: cannot find %s\n",
+                      $rfile );
+    exit ( 1 );
+}
+
+// Compute $runin as the list of lines of .run file.
+//
+$runin = file_get_contents ( "$epm_data/$rdir/$rfile" );
+if ( $runin === false )
+{
+    fprintf ( STDERR, "epm_run: %s is not readable\n",
+                      "$rdir/$rfile" );
+    exit ( 1 );
+}
+
+$runin = preg_replace ( '#(\R|^)\h*//.*#', '', $runin );
+    // Get rid of `//...' comments.
+$runin = explode ( "\n", $runin );
+if ( array_slice ( $runin, -1, 1 ) == [""] )
+    array_splice ( $runin, -1, 1 );
+
+// Check that .in and .ftest files are locatable and
+// readable.
+//
+if ( $run == 's' )
+    $cache = & $remote_file_cache;
+else
+    $cache = & $local_file_cache;
+
+$errors = 0;
+foreach ( $runin as $infile )
+{
+    if ( ! preg_match
+               ( "/^([-_A-Za-z0-9]+)-$problem\\.in\$/",
+	         $infile, $matches ) )
+    {
+	fprintf
+	    ( STDERR,
+	      "epm_run: %s is not acceptable .in file" .
+	      " name\n", $infile );
+	if ( $errors >= 5 ) break;
+	else continue;
+    }
+    $inbase = "{$matches[1]}-$problem";
+
+    if ( ! isset ( $cache[$infile] ) )
+    {
+	fprintf
+	    ( STDERR, "epm_run: cannot find %s\n",
+	              $infile );
+	if ( ++ $errors >= 5 ) break;
+	else continue;
+    }
+    $indir = $cache[$infile];
+    if ( ! is_readable ( "$epm_data/$indir/$infile" ) )
+    {
+	fprintf
+	    ( STDERR, "epm_run: cannot read %s\n",
+	              "$indir/$infile" );
+	if ( ++ $errors >= 5 ) break;
+	else continue;
+    }
+    $ftestfile = "$inbase.ftest";
+    if ( ! isset ( $cache[$ftestfile] ) )
+    {
+	fprintf ( STDERR, "epm_run: cannot find %s\n",
+	                  $ftestfile );
+	if ( ++ $errors >= 5 ) break;
+	else continue;
+    }
+    $ftestdir = $cache[$ftestfile];
+    if ( ! is_readable
+               ( "$epm_data/$ftestdir/$ftestfile" ) )
+    {
+	fprintf
+	    ( STDERR, "epm_run: cannot read %s\n",
+	              "$ftestdir/$ftestfile" );
+	if ( ++ $errors >= 5 ) break;
+	else continue;
+    }
+}
+if ( $errors > 0 ) exit ( 1 );
+
+if ( $run == 'c' ) exit ( 0 );
+
+
 load_template_cache();
-load_file_caches ( "users/user$userid/$problem" );
 
 $warnings = [];
 $errors   = [];
