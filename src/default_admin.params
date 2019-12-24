@@ -2,7 +2,7 @@
 //
 // File:	default_admin.params
 // Author:	Bob Walton <walton@acm.org>
-// Date:	Sun Dec 22 02:19:09 EST 2019
+// Date:	Tue Dec 24 07:33:44 EST 2019
 
 {
     // To be valid, a file XXXX.E being uploaded must be
@@ -16,19 +16,45 @@
 	"java": "class",
 	"py": "pyc",
 	"tex": "pdf",
-	"in": "sout"},
+	"in": "sout",
+	"run": "run" },
 
     // To be listed as a problem file, and thence be
     // `displayable' (even if only the file type is
     // displayed, as for .class), a file must have
-    // one of the following extensions.
+    // one of the following extensions, and the
+    // extension must be mapped to a display page,
+    // or to "file" if the UNIX file program is to
+    // be used to display the file type.
     //
-    "display_file_ext" : [
-        "c", "cc", "java", "py", "tex",
-	"", "class", "pyc", "pdf",
-	"in", "sin", "sout", "fout",
-	"test", "ftest",
-	"err", "log", "fls", "score"],
+    "display_file_ext" : {
+        "c": "utf8",
+	"cc": "utf8",
+	"java": "utf8",
+	"py": "utf8",
+	"tex": "utf8",
+	"": "file",
+	"class": "file",
+	"pyc": "file",
+	"pdf": "pdf",
+	"in": "utf8",
+	"sin": "utf8",
+	"test": "utf8",
+	"ftest": "utf8",
+	"run": "utf8",
+	"out": "utf8",
+	"sout": "utf8",
+	"fout": "utf8",
+	"rout": "utf8",
+	"err": "utf8",
+	"gerr": "utf8",
+	"serr": "utf8",
+	"ferr": "utf8",
+	"rerr": "utf8",
+	"log": "utf8",
+	"fls": "utf8",
+	"score": "utf8"
+	},
 
     "upload_maxsize": 262144,
     	// 2 megabytes

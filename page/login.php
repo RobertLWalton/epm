@@ -96,12 +96,14 @@
     //
     function get_json ( $r, $file )
     {
+	global $include;
+
 	$f = "$r/$file";
 	$c = file_get_contents ( $f );
 	if ( $c === false )
 	{
 	    $sysfail = "cannot read readable $file";
-	    require 'sysalert.php';
+	    require "$include/sysalert.php";
 	}
 	$c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
 	    // Get rid of `//...' comments.
@@ -111,7 +113,7 @@
 	    $m = json_last_error_msg();
 	    $sysfail =
 		"cannot decode json in $file:\n    $m";
-	    require 'sysalert.php';
+	    require "$include/sysalert.php";
 	}
 	return $j;
     }

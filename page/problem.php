@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Dec 23 07:34:53 EST 2019
+    // Date:	Tue Dec 24 07:33:26 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -236,9 +236,7 @@
 		$ext = $matches[1];
 	    else
 	        $ext = "";
-	    if ( array_search
-		     ( $ext, $display_file_ext,
-		             true ) === false )
+	    if ( ! isset ( $display_file_ext[$ext] ) )
 		continue;
 	    $f = "$problem_dir/$fname";
 	    $map[$fname] =

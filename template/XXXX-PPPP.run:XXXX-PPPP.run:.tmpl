@@ -1,0 +1,12 @@
+{
+
+"COMMANDS": ["${EPM_ROOT}/bin/epm_run XXXX-PPPP.run \\",
+             "    > XXXX-PPPP.rout 2> XXXX-PPPP.rerr"],
+"CONDITION": "UPLOAD XXXX-PPPP.run",
+"CHECKS":  ["cmp -s XXXX-PPPP.rerr /dev/null"],
+"KEEP":    ["XXXX-PPPP.run"],
+"SHOW":    ["XXXX-PPPP.rerr", "XXXX-PPPP.rout",
+            "XXXX-PPPP.run"]
+
+}
+
