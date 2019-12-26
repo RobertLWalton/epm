@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Thu Dec 26 01:28:40 EST 2019
+ * Date:	Thu Dec 26 06:50:43 EST 2019
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -159,6 +159,8 @@ void errno_exit ( char * m )
 
 uid_t euid, egid;
     /* Effective IDs of epm_sandbox. */
+uid_t ruid;
+    /* Real user ID of epm_sandbox. */
 
 int debug = 0;
 
@@ -293,6 +295,7 @@ int main ( int argc, char ** argv )
 
     euid = geteuid();
     egid = getegid();
+    ruid = getuid();
     
     /* Consume the options. */
 
@@ -485,6 +488,22 @@ int main ( int argc, char ** argv )
 	exit ( 1 );
     }
 
+    if ( debug )
+    {
+        fprintf ( stderr,
+	          "epm_sandbox: uid is initially %d\n",
+		  getuid() );
+        fprintf ( stderr,
+	          "epm_sandbox: gid is initially %d\n",
+		  getgid() );
+        fprintf ( stderr,
+	          "epm_sandbox: euid is initially %d\n",
+		  geteuid() );
+        fprintf ( stderr,
+	          "epm_sandbox: egid is initially %d\n",
+		  getegid() );
+    }
+
     /* Look up program in PATH. */
 
     if ( is_executable ( argv[index] ) )
@@ -539,6 +558,11 @@ int main ( int argc, char ** argv )
     {
 	/* Parent executes this. */
 
+	if ( euid == 0
+	     &&
+	     seteuid ( ruid ) < 0 )
+	    errno_exit ( "set euid to user" );
+
 	if ( status_file != NULL )
 	{
 	    status_fd =
@@ -591,6 +615,7 @@ int main ( int argc, char ** argv )
 	    if ( close ( status_fd ) < 0 )
 		errno_exit
 		    ( "closing STATUS-FILE" );
+
 	}
 	else if ( signaled )
 	    fprintf ( stderr,
@@ -644,10 +669,12 @@ int main ( int argc, char ** argv )
 		 */
 		if ( setregid ( p->pw_gid , p->pw_gid )
 		     < 0 )
-		     errno_exit ( "root setregid" );
+		     errno_exit
+		         ( "set uids to sandbox" );
 		if ( setreuid ( p->pw_uid, p->pw_uid )
 		     < 0 )
-		     errno_exit ( "root setreuid" );
+		     errno_exit
+		         ( "set gids to sandbox" );
 
 		endpwent ();
 		break;
