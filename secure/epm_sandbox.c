@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Wed Dec 25 23:02:44 EST 2019
+ * Date:	Thu Dec 26 01:28:40 EST 2019
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -89,11 +89,13 @@ char documentation [] =
 "\n"
 "    All fields are integer except USERTIME and"
 				" SYSTIME\n"
-"    which are floating point.  Unused fields are 0.\n"
-"    EXITCODE, SIGNAL, USERTIME, SYSTIME, MAXRSS are\n"
-"    unused if STATE is R.  If beginning and ending\n"
-"    STATE do not match, re-read file as a race con-\n"
-"    dition is likely.\n"
+"    are floating point and unset limit fields are\n"
+"    `unlimited'.  EXITCODE, SIGNAL, USERTIME,"
+                                         " SYSTIME,\n"
+"    and MAXRSS are unused and 0 if STATE is R.\n"
+"    If beginning and ending STATE do not match,\n"
+"    or STATUS-FILE is empty, re-read file as a race\n"
+"    condition is likely.\n"
 "\n"
 "    Without any -env options, the environment in\n"
 "    which `program ...' executes is empty.  There\n"
@@ -185,25 +187,98 @@ int is_executable ( const char * program )
         return 0;
 }
 
+/* Information for STATUS-FILE. */
+
+pid_t child;  /* Child PID. */
+
+/* Options with default values. */
+
+rlim_t cputime = RLIM_INFINITY;
+rlim_t space = RLIM_INFINITY;
+rlim_t datasize = RLIM_INFINITY;
+rlim_t stacksize = RLIM_INFINITY;
+rlim_t filesize = RLIM_INFINITY;
+rlim_t core = RLIM_INFINITY;
+rlim_t openfiles = RLIM_INFINITY;
+rlim_t processes = RLIM_INFINITY;
+
+/* Write status line into status_fd.
+ */
+int status_fd;  /* status_file descriptor */
+int write_status
+    ( char STATE, int EXITCODE, int SIGNAL,
+      double USERTIME, double SYSTIME, long MAXRSS )
+{
+    char status_line[4000];
+    char * p = status_line;
+    p += sprintf ( p, "%c %ld", STATE, (long) child );
+
+    if ( cputime == RLIM_INFINITY )
+        p += sprintf ( p, " unlimited" );
+    else
+        p += sprintf
+	    ( p, " %lu", (unsigned long ) cputime );
+
+    if ( space == RLIM_INFINITY )
+        p += sprintf ( p, " unlimited" );
+    else
+        p += sprintf
+	    ( p, " %lu", (unsigned long ) space );
+
+    if ( datasize == RLIM_INFINITY )
+        p += sprintf ( p, " unlimited" );
+    else
+        p += sprintf
+	    ( p, " %lu", (unsigned long ) datasize );
+
+    if ( stacksize == RLIM_INFINITY )
+        p += sprintf ( p, " unlimited" );
+    else
+        p += sprintf
+	    ( p, " %lu", (unsigned long ) stacksize );
+
+    if ( filesize == RLIM_INFINITY )
+        p += sprintf ( p, " unlimited" );
+    else
+        p += sprintf
+	    ( p, " %lu", (unsigned long ) filesize );
+
+    if ( core == RLIM_INFINITY )
+        p += sprintf ( p, " unlimited" );
+    else
+        p += sprintf
+	    ( p, " %lu", (unsigned long ) core );
+
+    if ( openfiles == RLIM_INFINITY )
+        p += sprintf ( p, " unlimited" );
+    else
+        p += sprintf
+	    ( p, " %lu", (unsigned long ) openfiles );
+
+    if ( processes == RLIM_INFINITY )
+        p += sprintf ( p, " unlimited" );
+    else
+        p += sprintf
+	    ( p, " %lu", (unsigned long ) processes );
+
+    p += sprintf ( p, " %d %d %.6f %.6f %lu %c\n",
+                   EXITCODE, SIGNAL, USERTIME, SYSTIME,
+		   MAXRSS, STATE );
+    if ( ftruncate ( status_fd, 0 ) < 0 )
+	errno_exit ( "truncating STATUS-FILE" );
+    if ( write ( status_fd, status_line,
+                            p - status_line ) < 0 )
+	errno_exit ( "writing STATUS-FILE" );
+}
+
+
 /* Main program.
 */
 int main ( int argc, char ** argv )
 {
-
-    /* Options with default values. */
-
-    rlim_t cputime = RLIM_INFINITY;
-    rlim_t space = RLIM_INFINITY;
-    rlim_t datasize = RLIM_INFINITY;
-    rlim_t stacksize = RLIM_INFINITY;
-    rlim_t filesize = RLIM_INFINITY;
-    rlim_t core = RLIM_INFINITY;
-    rlim_t openfiles = RLIM_INFINITY;
-    rlim_t processes = RLIM_INFINITY;
-
     rlim_t max_value = RLIM_INFINITY;
 
-    const char * time_file = NULL;
+    const char * status_file = NULL;
 
     int env_max_size = 100;
     char ** env =
@@ -235,7 +310,7 @@ int main ( int argc, char ** argv )
 	    ++ index;
 	    continue;
 	}
-        else if ( strcmp ( argv[index], "-time" )
+        else if ( strcmp ( argv[index], "-status" )
 	     == 0 )
 	{
 	    ++ index;
@@ -246,7 +321,7 @@ int main ( int argc, char ** argv )
 			  " arguments\n" );
 		exit (1);
 	    }
-	    time_file = argv[index++];
+	    status_file = argv[index++];
 	    continue;
 	}
         else if ( strcmp ( argv[index], "-env" )
@@ -455,7 +530,7 @@ int main ( int argc, char ** argv )
 	}
     }
 
-    pid_t child = fork ();
+    child = fork ();
 
     if ( child < 0 )
 	errno_exit ( "fork" );
@@ -464,102 +539,70 @@ int main ( int argc, char ** argv )
     {
 	/* Parent executes this. */
 
+	if ( status_file != NULL )
+	{
+	    status_fd =
+		open ( status_file,
+		       O_WRONLY|O_CREAT|O_TRUNC,
+		       0640 );
+
+	    if ( status_fd < 0 )
+		errno_exit
+		    ( "opening STATUS-FILE" );
+
+	    write_status ( 'R', 0, 0, 0, 0, 0 );
+	}
+
 	int status;
 
 	if ( wait ( & status ) < 0 )
 	    errno_exit ( "wait" );
 
-	if ( time_file != NULL )
+	int signaled = WIFSIGNALED ( status );
+	int SIGNAL =
+	    ( signaled ? WTERMSIG ( status ) : 0 );
+	int EXITCODE =
+	    ( signaled ? 0 : WEXITSTATUS ( status ) );
+
+	struct rusage usage;
+	if ( getrusage ( RUSAGE_CHILDREN,
+			 & usage ) < 0 )
+	    errno_exit
+		( "genrusage RUSAGE_CHILDREN" );
+
+	double USERTIME = usage.ru_utime.tv_sec
+		        + 1e-6 * usage.ru_utime.tv_usec;
+	double SYSTIME = usage.ru_stime.tv_sec
+		       + 1e-6 * usage.ru_stime.tv_usec;
+
+        if ( signaled && SIGNAL == SIGKILL
+	              && USERTIME + SYSTIME >= cputime )
+	    SIGNAL = SIGXCPU;
+
+
+	long MAXRSS = usage.ru_maxrss;
+
+	if ( status_file != NULL )
 	{
-	    struct rusage usage;
-	    if ( getrusage ( RUSAGE_CHILDREN,
-			     & usage ) < 0 )
+	    write_status ( ( signaled ? 'S' : 'E' ),
+	                   EXITCODE, SIGNAL,
+			   USERTIME, SYSTIME,
+			   MAXRSS );
+	    if ( close ( status_fd ) < 0 )
 		errno_exit
-		    ( "genrusage RUSAGE_CHILDREN" );
-
-	    int time_fd =
-		open ( time_file,
-		       O_WRONLY|O_CREAT|O_TRUNC,
-		       0640 );
-
-	    if ( time_fd < 0 )
-		errno_exit
-		    ( "opening TIME-FILE" );
-	    char time_buffer[1000];
-	    int chars = sprintf
-		( time_buffer, "%.6f %.6f\n",
-		    usage.ru_utime.tv_sec
-		  + 1e-6 * usage.ru_utime.tv_usec,
-		    usage.ru_stime.tv_sec
-		  + 1e-6 * usage.ru_stime.tv_usec );
-	    char * p = time_buffer;
-	    while ( chars > 0 )
-	    {
-		int c = write
-		    ( time_fd, p, chars );
-		if ( c < 0 && errno == EINTR )
-		    continue;
-		if ( c < 0 )
-		    errno_exit
-		      ( "writing TIME-FILE" );
-		chars -= c, p += c;
-	    }
-	    if ( close ( time_fd ) < 0 )
-		errno_exit
-		    ( "closing TIME-FILE" );
-	    if ( debug )
-		fprintf
-		    ( stderr,
-		      "epm_sandbox: wrote %s\n",
-		      time_file );
-
+		    ( "closing STATUS-FILE" );
 	}
-
-	if ( WIFSIGNALED ( status ) )
-	{
-	    int sig = WTERMSIG ( status );
-
-	    /* Cpu time exceeded is signalled by
-	       SIGKILL, so we check for it and
-	       change the sig to SIGXCPU.
-	     */
-
-	    if ( sig == SIGKILL )
-	    {
-		struct rusage usage;
-		long sec;
-
-		if ( getrusage ( RUSAGE_CHILDREN,
-				 & usage )
-		     < 0 )
-		    errno_exit ( "getrusage" );
-
-		sec  = usage.ru_utime.tv_sec;
-		sec += usage.ru_stime.tv_sec;
-		if ( ( usage.ru_utime.tv_usec
-		       + usage.ru_stime.tv_usec )
-		     >= 1000000 )
-		    ++ sec;
-		if ( sec >= cputime )
-		    sig = SIGXCPU;
-	    }
-
+	else if ( signaled )
 	    fprintf ( stderr,
 		      "epm_sandbox: Child"
 		      " terminated with signal:"
 		      " %s\n",
-		      strsignal ( sig ) );
+		      strsignal ( SIGNAL ) );
 
-	    /* Parent exit when child died by
-	       signal.
-	    */
-	    exit ( 128 + sig );
-	}
-
-	/* Parent exit when child did NOT die by
-	   signal.
-	*/
-	exit ( 0 );
+	if ( signaled )
+	    exit ( 128 + SIGNAL );
+	else
+	    exit ( EXITCODE );
     }
 
     /* Child continues execution here.
