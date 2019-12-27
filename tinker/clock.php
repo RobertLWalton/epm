@@ -3,8 +3,8 @@
 if ( isset ( $_REQUEST['time'] ) )
 {
     $time = intval ( $_REQUEST['time'] );
-    while ( time() <= $time ) usleep ( 10000 );
-    echo "" . time();
+    while ( time() <= $time + 1 ) usleep ( 10000 );
+    echo "$time " . time();
     exit;
 }
 
@@ -19,9 +19,12 @@ xhttp.onreadystatechange = function()
     if (    this.readyState == 4
 	 && this.status == 200 )
     {
-	document.getElementById("showtime").innerHTML =
-	    this.responseText;
-	send_time ( this.responseText );
+	var r = this.responseText.split ( " " );
+	document.getElementById("oldtime")
+	        .innerHTML = r[0];
+	document.getElementById("newtime")
+	        .innerHTML = r[1];
+	send_time ( r[1] );
     }
 };
 
@@ -37,7 +40,12 @@ function send_time ( time )
 
 <body>
 
-<p>Time: <span id="showtime"></span></p>
+<p>Time:
+&nbsp; &nbsp; &nbsp; &nbsp;
+<span id="oldtime"></span>(old)
+&nbsp; &nbsp; &nbsp; &nbsp;
+<span id="newtime"></span>(new)
+</p>
 
 <?php echo "<script>send_time(" . time() . ")</script>"; ?>
 
