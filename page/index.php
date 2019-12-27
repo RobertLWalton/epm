@@ -2,16 +2,16 @@
 
     // File:	index.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Dec 11 19:46:13 EST 2019
+    // Date:	Fri Dec 27 03:31:30 EST 2019
 
     // To set up a epm instance you need the following
     // directories:
     //
     //	   R	Root directory of server.
     //	   R/W	Place you will put epm's index.html
-    //	   E	The `epm' directory containing `page',
-    //		`template', etc subdirectories.  Must
-    //		NOT be a subdirectory of R.
+    //	   H	The `epm' home directory containing
+    //          `page', `template', etc subdirectories.
+    //          Must NOT be a subdirectory of R.
     //	   D	Directory that will contain data.  This
     //		must NOT be a subdirectory of R.  Also,
     //	   	o+x permissions must be set on this dir-
@@ -34,22 +34,22 @@
     // web server.
     //
     // We assume only your account, and not the web
-    // server, will have write permissions on R/W and E.
+    // server, will have write permissions on R/W and H.
     //
-    // Then to install, after populating E and creating
+    // Then to install, after populating H and creating
     // R, R/W, and D:
     //
     //		chgrp WEB-SERVERS-GROUP \
-    //		      R/W `find E` `find D`
+    //		      R/W `find H` `find D`
     //		chmod g+s \
-    //		      R/W `find E -type d` \
+    //		      R/W `find H -type d` \
     //                    `find D -type d`
-    //		chmod g-w R/W `find E`
+    //		chmod g-w R/W `find H`
     //
     //		cd R/W
-    //		cp -p E/page/index.php .
+    //		cp -p H/page/index.php .
     //		chmod u+w index.php
-    //		ln E/page .
+    //		ln H/page .
     //		<edit parameters in R/W/index.php>
 
     $script_name = $_SERVER['SCRIPT_FILENAME'];
@@ -95,7 +95,7 @@
 	// WARNING: this is only a test setting;
 	//          reset this to D above.
 
-    $_SESSION['epm_root'] =
+    $_SESSION['epm_home'] =
 	dirname ( $_SERVER['DOCUMENT_ROOT'] );
 	// WARNING: this is only a test setting;
 	//          reset this to E above.

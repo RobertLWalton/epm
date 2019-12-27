@@ -3,15 +3,15 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Dec 12 03:46:14 EST 2019
+// Date:	Fri Dec 27 03:27:50 EST 2019
 
 $is_epm_test = true;
 
 $epm_data = getcwd() . '/epm_make_test_data';
-$epm_root = dirname ( getcwd() );
+$epm_home = dirname ( getcwd() );
 $_SESSION = [ 'epm_userid' => 1,
               'epm_problem' => 'prob',
-              'epm_root' => $epm_root,
+              'epm_home' => $epm_home,
 	      'epm_data' => $epm_data ];
 $_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
 $c = file_get_contents
@@ -53,11 +53,13 @@ EOT;
 $prob_optn = <<<'EOT'
 {
     "gcc-ped": "-Wpedantic",
-    "filesize": "1000",
+    "sfsize": "1000",
     "scoring-abs": 1e-5
 }
 EOT;
 
+$userid = $_SESSION['epm_userid'];
+$problem = $_SESSION['epm_problem'];
 include ( '../include/epm_make.php' );
 
 function check ( $expression, $value )
@@ -108,18 +110,17 @@ setup_test_dirs();
 load_template_cache();
 check ( '$GLOBALS["template_cache"]
                  ["PPPP.java:PPPP.class:"]
-		 [0]', "$epm_root/template/" .
-		       "PPPP.java:PPPP.class:.tmpl" );
+		 [0]', $epm_home );
 
 $errors = [];
-find_templates ( $problem, "$problem.c", NULL,
+find_templates ( $problem,
+                 "$problem.c", $problem,
+                 "UPLOAD $problem.c",
                  $templates, $errors );
 
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["templates"][0][0]',
         "PPPP.c:PPPP:" );
-check ( '$GLOBALS["templates"][0][2]' .
-        '["LOCAL-REQUIRES"][0]', "prob.c" );
 check ( '$GLOBALS["templates"][0][2]' .
         '["KEEP"][0]', "prob" );
 check ( '$GLOBALS["templates"][0][2]' .
@@ -137,33 +138,36 @@ check ( '$GLOBALS["template_optn"]["scoring-rel"]
 
 file_put_contents
     ( "$epm_data/$prob_dir/prob.optn", $prob_optn );
+load_file_caches ( $prob_dir );
 
 $errors = [];
-get_problem_optn ( $problem, $errors );
+get_problem_optn ( $problem, true );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["problem_optn"]["gcc-ped"]',
         "-Wpedantic" );
-check ( '$GLOBALS["problem_optn"]["filesize"]',
+check ( '$GLOBALS["problem_optn"]["sfsize"]',
         1000 );
 check ( '$GLOBALS["problem_optn"]["scoring-abs"]',
         1e-5 );
 
 $errors = [];
 $warnings = [];
-$optn_map = compute_optn_map
-    ( $problem, $warnings, $errors );
+$optn_map = load_argument_map
+    ( $problem, true, $warnings, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["warnings"]', [] );
-check ( '$GLOBALS["optn_map"]["GCCFLAGS"]',
+check ( '$GLOBALS["argument_map"]["GCCFLAGS"]',
         "-Og -Wpedantic" );
 
 $errors = [];
 $control = find_control
-    ( $templates, $prob_dir, "prob.c",
-      $required, $errors );
+    ( $templates,
+      $local_required, $remote_required,
+      $creatable, $errors );
 check ( '$GLOBALS["errors"]', [] );
-check ( '$GLOBALS["required"]', [] );
-check ( '$GLOBALS["control"][2]["KEEP"]', ["prob"] );
+check ( '$GLOBALS["local_required"]', [] );
+check ( '$GLOBALS["control"][2]["KEEP"]',
+        ["prob", "prob.c"] );
 
 $errors = [];
 $work = "$prob_dir/+work+";
@@ -171,7 +175,8 @@ cleanup_working ( $work, $errors );
 check ( '$GLOBALS["errors"]', [] );
 
 $errors = [];
-link_required ( "prob.c", $work, $required, $errors );
+link_required ( $local_required, $remote_required,
+                $work, $errors );
 check ( '$GLOBALS["errors"]', [] );
 
 $commands = get_commands ( $control, $optn_map );
@@ -197,7 +202,7 @@ $errors = [];
 move_keep ( $control, $work, $prob_dir,
             $moved, $errors );
 check ( '$GLOBALS["errors"]', [] );
-check ( '$GLOBALS["moved"]', ["prob"] );
+check ( '$GLOBALS["moved"]', ["prob", "prob.c"] );
 
 $show = compute_show
     ( $control, $work, $prob_dir, $moved );
@@ -220,13 +225,14 @@ $_FILES['uploaded_file'] =
      'size' => '1000',
      'tmp_name' => "$epm_data/tmp/prob.c"];
 process_upload ( $_FILES['uploaded_file'],
-		 'prob', $prob_dir,
+		 'prob', $work, $prob_dir,
 		 $commands, $moved, $show,
-		 $output, $warnings, $errors );
+		 $output, $creatables,
+		 $warnings, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["warnings"]', [] );
 check ( '$GLOBALS["output"]', [] );
-check ( 'count ( $GLOBALS["commands"] )', 1 );
+check ( 'count ( $GLOBALS["commands"] )', 2 );
 check ( '$GLOBALS["moved"]', ["prob", "prob.c"] );
 check ( '$GLOBALS["show"]',
         ["users/user1/prob/+work+/prob.err",

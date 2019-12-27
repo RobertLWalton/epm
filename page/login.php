@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec 22 00:04:15 EST 2019
+    // Date:	Fri Dec 27 03:33:00 EST 2019
 
     // Handles login for a session.  Sets $_SESSION:
     //
@@ -49,7 +49,7 @@
     // We come here from other pages if
     // $_SESSION['epm_userid'] is not set.
 
-    if ( ! isset ( $_SESSION['epm_root'] )
+    if ( ! isset ( $_SESSION['epm_home'] )
          ||
 	 ! isset ( $_SESSION['epm_data'] ) )
     {
@@ -71,9 +71,9 @@
 	exit;
     }
 
-    $epm_root = $_SESSION['epm_root'];
+    $epm_home = $_SESSION['epm_home'];
     $epm_data = $_SESSION['epm_data'];
-    $include = "$epm_root/include";
+    $include = "$epm_home/include";
 
     // require "$include/debug_info.php";
 
@@ -91,7 +91,7 @@
     // cannot be read or decoded.
     //
     // The file name is $r/$file, where $r is either
-    // $epm_root or $epm_data and will NOT appear in any
+    // $epm_home or $epm_data and will NOT appear in any
     // error message.
     //
     function get_json ( $r, $file )
@@ -121,12 +121,12 @@
     // Get default administrative parameters.
     //
     $f = "src/default_admin.params";
-    if ( ! is_readable ( "$epm_root/$f" ) )
+    if ( ! is_readable ( "$epm_home/$f" ) )
     {
         $sysfail = "cannot read $f";
 	require "$include/sysalert.php";
     }
-    $admin_params = get_json ( $epm_root, $f );
+    $admin_params = get_json ( $epm_home, $f );
 
     // Get local administrative parameter overrides.
     //

@@ -3,10 +3,10 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Dec 24 01:59:22 EST 2019
+// Date:	Fri Dec 27 03:34:49 EST 2019
 
 $document = <<<'EOT'
-EPM_ROOT=root-directory \
+EPM_HOME=root-directory \
 EPM_DATA=data-directory \
 EPM_USERID=userid \
 EPM_PROBLEM=problem \
@@ -68,7 +68,7 @@ if ( $argc != ( $run == "c" ? 2 : 3 ) )
 // Note: $_ENV does NOT work here because $ is not in
 // ini variables_order.  But getenv does work.
 //
-$epm_root = getenv ( 'EPM_ROOT' );
+$epm_home = getenv ( 'EPM_HOME' );
 $epm_data = getenv ( 'EPM_DATA' );
 $userid   = getenv ( 'EPM_USERID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
@@ -79,7 +79,7 @@ if ( $argc > 2 )
 else
     $sfile    = NULL;
 
-$include = "$epm_root/include";
+$include = "$epm_home/include";
 
 include "$include/epm_make.php";
 

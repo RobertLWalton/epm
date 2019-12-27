@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec 22 00:33:44 EST 2019
+    // Date:	Fri Dec 27 03:28:58 EST 2019
 
     // Edits files:
     //
@@ -47,8 +47,8 @@
         exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
     $epm_data = $_SESSION['epm_data'];
-    $epm_root = $_SESSION['epm_root'];
-    $include = "$epm_root/include";
+    $epm_home = $_SESSION['epm_home'];
+    $include = "$epm_home/include";
 
     if ( ! is_writable
                ( "$epm_data/admin/email_index" ) )

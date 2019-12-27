@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Dec 23 19:04:22 EST 2019
+// Date:    Fri Dec 27 03:33:47 EST 2019
 
 // Functions used to make files from other files.
 //
@@ -12,7 +12,7 @@
 //
 // WARNING: No error message, including $sysfail,
 //          may contain the value of $epm_data or
-//          $epm_root.
+//          $epm_home.
 //
 // To include this program, be sure the following are
 // defined.  Also either define $admin_params correctly
@@ -20,8 +20,8 @@
 
 if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
-if ( ! isset ( $epm_root ) )
-    exit ( 'ACCESS ERROR: $epm_root not set' );
+if ( ! isset ( $epm_home ) )
+    exit ( 'ACCESS ERROR: $epm_home not set' );
 if ( ! isset ( $userid ) )
     exit ( 'ACCESS ERROR: $userid not set' );
 if ( ! isset ( $problem ) )
@@ -39,12 +39,12 @@ if ( ! isset ( $is_epm_test ) )
 if ( ! isset ( $admin_params ) )
 {
     $f = "src/default_admin.params";
-    if ( ! is_readable ( "$epm_root/$f" ) )
+    if ( ! is_readable ( "$epm_home/$f" ) )
     {
         $sysfail = "cannot read $f";
 	require 'sysalert.php';
     }
-    $admin_params = get_json ( $epm_root, $f );
+    $admin_params = get_json ( $epm_home, $f );
 
     // Get local administrative parameter overrides.
     //
@@ -80,14 +80,14 @@ else
 $template_roots = [];
 if ( is_dir ( "$epm_data/template" ) )
     $template_roots[] = $epm_data;
-$template_roots[] = $epm_root;
+$template_roots[] = $epm_home;
 
 // Function to get and decode json file, which must be
 // readable.  It is a fatal error if the file cannot be
 // read or decoded.
 //
 // The file name is $r/$file, where $r is either
-// $epm_root or $epm_data and will NOT appear in any
+// $epm_home or $epm_data and will NOT appear in any
 // error message.
 //
 function get_json ( $r, $file )
@@ -232,7 +232,7 @@ function substitute_match ( $item, $match )
 //		template => [root, json]
 //
 // where "{$root}/template/{$template}.tmpl is a
-// template file, root is either $epm_root or $epm_data,
+// template file, root is either $epm_home or $epm_data,
 // and json is NULL, but will be set to the decoded json
 // read when the template file is read as per the
 // get_template function below.  If two files with the
@@ -1151,7 +1151,7 @@ function get_commands ( $control )
 function run_commands
 	( $commands, $work, & $output, & $errors )
 {
-    global $epm_data, $epm_root, $userid, $problem;
+    global $epm_data, $epm_home, $userid, $problem;
 
     $command = '';
     $e = '';
@@ -1168,7 +1168,7 @@ function run_commands
 	    $command .= $c;
 
         exec ( "cd $epm_data/$work;" .
-	       " export EPM_ROOT=$epm_root;" .
+	       " export EPM_HOME=$epm_home;" .
 	       " export EPM_DATA=$epm_data;" .
 	       " export EPM_USERID=$userid;" .
 	       " export EPM_PROBLEM=$problem;" .

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Dec 24 07:33:26 EST 2019
+    // Date:	Fri Dec 27 03:29:52 EST 2019
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -24,9 +24,9 @@
 
     $userid = $_SESSION['epm_userid'];
     $epm_data = $_SESSION['epm_data'];
-    $epm_root = $_SESSION['epm_root'];
+    $epm_home = $_SESSION['epm_home'];
     $email = $_SESSION['epm_email'];
-    $include = "$epm_root/include";
+    $include = "$epm_home/include";
 
     // require "$include/debug_info.php";
 

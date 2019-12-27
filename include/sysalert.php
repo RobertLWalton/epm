@@ -1,6 +1,6 @@
 <?php
-// if ( ! isset ( $GLOBALS['epm_root'] ) )
-    // $epm_root not set' );
+// if ( ! isset ( $GLOBALS['epm_home'] ) )
+    // $epm_home not set' );
 
 if ( isset ( $sysfail ) )
 {

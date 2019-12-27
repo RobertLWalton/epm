@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Dec 22 00:38:57 EST 2019
+    // Date:	Fri Dec 27 03:29:21 EST 2019
 
     // Displays files:
     //
@@ -27,8 +27,8 @@
         exit ( 'UNACCEPTABLE IPADDR CHANGE' );
 
     $epm_data = $_SESSION['epm_data'];
-    $epm_root = $_SESSION['epm_root'];
-    $include = "$epm_root/include";
+    $epm_home = $_SESSION['epm_home'];
+    $include = "$epm_home/include";
 
     // require "$include/debug_info.php";
 
