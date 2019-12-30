@@ -2,7 +2,7 @@
 
 // File:    epm_params.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Dec 29 18:35:24 EST 2019
+// Date:    Sun Dec 29 19:49:32 EST 2019
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -148,4 +148,19 @@ $display_file_map = [
     //
     "utf8" => "utf8_show.php",
     "pdf"  => "pdf_show.php" ];
+
+// Code that is not to be changed.
+//
+start_session();
+if ( ! isset ( $_SESSION['EPM_USERID'] ) )
+{
+    header ( 'Location: page/login.php' );
+    exit;
+}
+else if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
+{
+    header ( 'Location: page/select_problem.php' );
+    exit;
+}
+
 ?>

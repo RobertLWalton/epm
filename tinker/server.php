@@ -33,6 +33,8 @@ echo "<br>";
 echo "REQUEST_TIME = " . date ( DATE_COOKIE, $_SERVER['REQUEST_TIME'] );
 echo "<br>";
 echo "INCLUDE_PATH = " . set_include_path ( "" );
+echo "<br>COOKIE: ";
+print_r ( $_COOKIE );
 ?>
 </HTML>
 
