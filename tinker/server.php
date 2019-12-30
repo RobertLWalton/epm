@@ -31,6 +31,8 @@ echo "<br>";
 echo "REQUEST_URI = " . $_SERVER['REQUEST_URI'];
 echo "<br>";
 echo "REQUEST_TIME = " . date ( DATE_COOKIE, $_SERVER['REQUEST_TIME'] );
+echo "<br>";
+echo "INCLUDE_PATH = " . set_include_path ( "" );
 ?>
 </HTML>
 
