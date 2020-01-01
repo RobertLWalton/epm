@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  1 06:31:05 EST 2020
+    // Date:	Wed Jan  1 07:47:28 EST 2020
 
     // Handles login for a session.
     //
@@ -161,11 +161,12 @@
     //     * Receive one of:
     //           'FAILED':
     //               go to AUTO_ID
-    //           'DONE':
+    //           'DONE NEXT_PAGE':
     //               continue with following
     //     * If MANUAL:
     //		* ITEM = 'BID KEYA KEYB CTIME'
     //          * localStorage.setItem(EMAIL,ITEM)
+    //     * Issue GET to NEXT_PAGE
     //
     // The server generates bid, keyA, keyB, confirma-
     // tion number and handshake as 128-bit binary
