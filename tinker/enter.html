@@ -2,6 +2,7 @@
 <head>
 <script>
 var email;
+var store = window.localStorage;
 
 function my_function ( event )
 {
@@ -9,7 +10,15 @@ function my_function ( event )
     {
 	email = document.getElementById("email").value.trim();
 	if ( /^\S+@\S+\.\S+$/.test(email) )
-	    document.getElementById("copy").innerHTML = email;
+	{
+	    var count = store.getItem ( email );
+	    if ( count == null ) count = 0;
+	    else count = parseInt ( count );
+	    count += 1;
+	    store.setItem ( email, count );
+	    document.getElementById("copy").innerHTML =
+	        email + " " + count;
+	}
 	else if ( email != '' )
 	    alert ( email + " is not a valid email address" );
     }
@@ -23,6 +32,9 @@ function my_function ( event )
 <input onkeypress='my_function(event)' type='email' id='email' placeholder='Email Address'>
 <br><br>
 <p>Copy&nbsp;<span id="copy"></span></p>
+<br><br>
+<button onclick="store.clear()">Clear Store</button>
+
 
 </body>
 </html>
