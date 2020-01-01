@@ -1,8 +1,8 @@
 <?php
 
-if ( isset ( $_REQUEST['time'] ) )
+if ( isset ( $_POST['time'] ) )
 {
-    $time = intval ( $_REQUEST['time'] );
+    $time = intval ( $_POST['time'] );
     while ( time() <= $time + 1 ) usleep ( 10000 );
     echo "$time " . time();
     exit;
@@ -16,7 +16,7 @@ if ( isset ( $_REQUEST['time'] ) )
 var xhttp = new XMLHttpRequest();
 xhttp.onreadystatechange = function()
 {
-    if (    this.readyState == 4
+    if (    this.readyState === XMLHttpRequest.DONE
 	 && this.status == 200 )
     {
 	var r = this.responseText.split ( " " );
@@ -30,9 +30,11 @@ xhttp.onreadystatechange = function()
 
 function send_time ( time )
 {
-    xhttp.open
-        ( 'GET', "clock.php?time=" + time, true );
-    xhttp.send();
+    xhttp.open ( 'POST', "clock.php", true );
+    xhttp.setRequestHeader
+        ( "Content-Type",
+	  "application/x-www-form-urlencoded" );
+    xhttp.send ( "time=" + time );
 }
     
 </script>
