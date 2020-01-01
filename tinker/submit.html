@@ -1,0 +1,28 @@
+<html>
+<head>
+<script>
+var email;
+
+function my_function ( event )
+{
+    if ( event.code == 'Enter' )
+    {
+	email = document.getElementById("email").value.trim();
+	if ( /^\S+@\S+\.\S+$/.test(email) )
+	    document.getElementById("copy").innerHTML = email;
+	else if ( email != '' )
+	    alert ( email + " is not a valid email address" );
+    }
+}
+    
+</script>
+</head>
+
+<body>
+
+<input onkeypress='my_function(event)' type='email' id='email' placeholder='Email Address'>
+<br><br>
+<p>Copy&nbsp;<span id="copy"></span></p>
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  1 07:47:28 EST 2020
+    // Date:	Wed Jan  1 11:29:49 EST 2020
 
     // Handles login for a session.
     //
@@ -439,6 +439,83 @@ TBD
 ?>
 
 <html>
+<head>
+<script>
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function()
+{
+    if (    this.readyState === XMLHttpRequest.DONE
+	 && this.status == 200 )
+    {
+	var r = this.responseText.split ( " " );
+	document.getElementById("oldtime")
+	        .innerHTML = r[0];
+	document.getElementById("newtime")
+	        .innerHTML = r[1];
+	send_time ( r[1] );
+    }
+};
+
+function send_time ( time )
+{
+    xhttp.open ( 'POST', "clock.php", true );
+    xhttp.setRequestHeader
+        ( "Content-Type",
+	  "application/x-www-form-urlencoded" );
+    xhttp.send ( "time=" + time );
+}
+
+BEGIN:
+    var AUTO_RETRY = 0
+    //     * Get EMAIL from user.
+    //	   * Get ITEM = localStorage.getItem(EMAIL)
+    //	   * If ITEM != null:
+    //		* Parse ITEM to get BID, KEYA, KEYB
+    //          * MANUAL = no
+    //          * go to AUTO_ID
+    // MANUAL_ID:
+    //	   * MANUAL = yes
+    //     * Send 'op=MANUAL&value=EMAIL'
+    //     * Receive 'NEW BID EKEYA EKEYB CTIME' where
+    //       EKEYA, EKEYB are KEYA, KEYB encrypted using
+    //       CNUM.
+    // EXPIRED:
+    //     * Get CNUM from user.
+    //     * Decrypt EKEYA and EKEYB using CNUM to get
+    //	     KEYA, KEYB.
+    // AUTO_ID:
+    //     * AUTO_RETRY += 1
+    //     * If AUTO_RETRY > 2:
+    //		* tell user about failure
+    //          * ask if user want to:
+    //              RE-ENTER EMAIL:
+    //			* go to BEGIN
+    //              GET NEW CNUM:
+    //		        * localStorage.removeItem(EMAIL)
+    //                  * go to BEGIN
+    //     * Send 'op=AUTO&value=BID'
+    //	   * Receive one of:
+    //           'EXPIRED BIT EKEYA EKEYB CTIME':
+    //               go to EXPIRED
+    //           'FAILED':  (means BID not recognized)
+    //               go to AUTO_ID
+    //		 'SHAKE HANDSHAKE':
+    //               continue with following
+    //     * Decrypt HANDSHAKE using KEYA and encrypt
+    //       result using KEYB to get SHAKEHAND.
+    //     * Send 'op=SHAKE&value=SHAKEHAND'
+    //     * Receive one of:
+    //           'FAILED':
+    //               go to AUTO_ID
+    //           'DONE NEXT_PAGE':
+    //               continue with following
+    //     * If MANUAL:
+    //		* ITEM = 'BID KEYA KEYB CTIME'
+    //          * localStorage.setItem(EMAIL,ITEM)
+    //     * Issue GET to NEXT_PAGE
+    
+</script>
+</head>
 <body>
 
 
