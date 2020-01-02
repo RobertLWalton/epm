@@ -4,10 +4,6 @@
 var email;
 var store = window.localStorage;
 
-function my_alert ( email )
-{
-    alert ( email + " is not a valid email address" );
-}
 function my_function ( event )
 {
     if ( event.code == 'Enter' )
@@ -24,7 +20,9 @@ function my_function ( event )
 	        email + " " + count;
 	}
 	else if ( email != '' )
-	    Promise.resolve(email).then(my_alert);
+	    Promise.resolve
+                ( email + " is not a valid email address" )
+	        .then(alert);
 	    // This schedules a separate task so the
 	    // time the user takes to OK the alert
 	    // is not part of the keypress task,
@@ -38,11 +36,21 @@ function my_function ( event )
 
 <body>
 
-<input onkeypress='my_function(event)' type='email' id='email' placeholder='Email Address'>
+<input type='email' id='email' placeholder='Email Address'>
 <br><br>
 <p>Copy&nbsp;<span id="copy"></span></p>
 <br><br>
 <button onclick="store.clear()">Clear Store</button>
+<br><br>
+<input type='email' placeholder='Nonsense'>
+    // This has no keydown event handler.
+
+<script>
+const input = document.getElementById ( 'email' ); 
+// This must be put AFTER <input ...>.
+input.addEventListener ( 'keydown', my_function );
+</script>
+
 
 
 </body>
