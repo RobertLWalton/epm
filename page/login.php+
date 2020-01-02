@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  1 11:29:49 EST 2020
+    // Date:	Wed Jan  1 18:25:38 EST 2020
 
     // Handles login for a session.
     //
@@ -442,6 +442,18 @@ TBD
 <head>
 <script>
 var xhttp = new XMLHttpRequest();
+
+var AUTO_RETRY, EMAIL, ITEM, BID, KEYA, KEYB, CTIME,
+    MANUAL, CNUM;
+
+function get_email ()
+{
+}
+
+BEGIN: while ( true ) {
+    var AUTO_RETRY = 0;
+    var EMAIL = null;
+    var ITEM = null;
 xhttp.onreadystatechange = function()
 {
     if (    this.readyState === XMLHttpRequest.DONE
@@ -514,69 +526,57 @@ BEGIN:
     //          * localStorage.setItem(EMAIL,ITEM)
     //     * Issue GET to NEXT_PAGE
     
+function email_keypress ( event )
+{
+    if ( event.code == 'Enter' )
+    {
+	email = document.getElementById("email").value.trim();
+	if ( /^\S+@\S+\.\S+$/.test(email) )
+	    EMAIL = email;
+	else if ( email != '' )
+	    alert ( email + " is not a valid email address" );
+    }
+}
+
+function cnum_keypress ( event )
+{
+    if ( event.code == 'Enter' )
+    {
+	cnum = document.getElementById("cnum").value.trim();
+	if ( /^[a-f0-9]{32}$/.test(cnum) )
+	    CNUM = cunm;
+	else if ( cunm != '' )
+	    alert ( cunm + " is not a valid confirmation number" );
+    }
+}
+    
 </script>
 </head>
+
 <body>
 
+<div id='get_email'>
+<input onkeypress='email_keypress(event)' type='text'
+       id='email' placeholder='Enter Email Address'>
+<br><br>
+<button onclick="store.clear()">Reset All Confirmations
+</button><br>
+(I.e., You must reconfirm all email address used with this browser.)
+</div>
 
-<?php 
+<div id='get_cnum' hidden>
+<input onkeypress='cnum_keypress(event)' type='text'
+       id='cnum' placeholder='Enter Confirmation Number'>
+</div>
+<br><br>
+<button onclick="store.clear()">Reset All Confirmations
+</button><br>
+(I.e., You must reconfirm all email address used with this browser.)
+</div>
 
-    $begin_form =
-	"<form method='post' action='login.php';>";
-    $end_form = "</form>";
+<br>
+<p><span id='current_action'></span></p>
 
-    if ( ! isset ( $email ) )
-    {
-	// Ask for Email Address.
-	//
-	if ( isset ( $bad_email ) )
-	{
-	    $e = htmlspecialchars ( $bad_email );
-	    echo "<mark>EMAIL ADDRESS $e WAS" .
-		 " MALFORMED; TRY AGAIN</mark>" .
-		 "<br>";
-	}
-
-	echo $begin_form;
-	echo "Enter:&nbsp;<input type='email'" .
-	     " name='email'" .
-	     " placeholder='Email Address'>";
-	echo $end_form;
-    }
-    else
-    {
-	// Ask for Confirmation Number
-	//.
-	if ( $bad_confirm )
-	{
-	    echo '<mark>CONFIRMATION NUMBER WAS' .
-		 ' WRONG; TRY AGAIN</mark><br>';
-	    echo 'A <mark>new</mark>';
-	}
-	else
-	    echo 'A';
-
-	echo ' confirmation number has been mailed'
-	     . ' to your email address.<br><br>';
-	echo "Email Address: $email" .
-	     "&nbsp;&nbsp;/&nbsp;&nbsp;";
-	echo "IP Address: {$_SESSION['epm_ipaddr']}" .
-	     "<br><br>";
-	echo $begin_form;
-	echo "Enter:&nbsp;<input type='text'" .
-	     " name='confirm_tag'" .
-	     " placeholder='Confirmation Number'>";
-	echo $end_form;
-	echo $begin_form;
-	echo "Or Enter:&nbsp;<input type='email'" .
-	     " name='email'" .
-	     " placeholder='New Email Address'>";
-	echo $end_form;
-	echo '<br>Confirmation Number is ' . 
-	     $_SESSION["confirm_tag"];
-
-    }
-?>
 
 </body>
 </html>
