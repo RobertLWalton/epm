@@ -4,6 +4,10 @@
 var email;
 var store = window.localStorage;
 
+function my_alert ( email )
+{
+    alert ( email + " is not a valid email address" );
+}
 function my_function ( event )
 {
     if ( event.code == 'Enter' )
@@ -20,7 +24,12 @@ function my_function ( event )
 	        email + " " + count;
 	}
 	else if ( email != '' )
-	    alert ( email + " is not a valid email address" );
+	    Promise.resolve(email).then(my_alert);
+	    // This schedules a separate task so the
+	    // time the user takes to OK the alert
+	    // is not part of the keypress task,
+	    // which would be a violation of the
+	    // rules.
     }
 }
     
