@@ -10,7 +10,9 @@ $c = bin2hex ( openssl_encrypt
                    ( hex2bin ( $m ), "aes-128-cbc",
 		     hex2bin ( $k ), OPENSSL_RAW_DATA, $iv ) );
 echo "C $c<br>";
-$d = openssl_decrypt ( hex2bin( $c ), "aes-128-cbc", $k, OPENSSL_RAW_DATA, $iv );
+$d = bin2hex ( openssl_decrypt
+                   ( hex2bin ( $c ), "aes-128-cbc",
+                     hex2bin ( $k ), OPENSSL_RAW_DATA, $iv ) );
 echo "D $d<br>";
 echo "M " . ( $m == $d ? "==" : "!=" ) . " D<br>";
 
@@ -69,8 +71,10 @@ var kp = window.crypto.subtle.importKey
       true, ["encrypt", "decrypt"] );
 kp.then(KEY_DONE);
 
+var keysave;
 function KEY_DONE ( key )
 {
+    keysave = key;
     var cp = window.crypto.subtle.encrypt
         ( { name: "AES-CBC", iv }, key,
 	  hex2ArrayBuffer ( m ) );
@@ -81,6 +85,16 @@ function C_DONE ( cb )
 {
     var cj = ArrayBuffer2hex ( cb );
     console.log ( "cj = " + cj );
+    var dp = window.crypto.subtle.decrypt
+        ( { name: "AES-CBC", iv }, keysave,
+	  hex2ArrayBuffer ( cj ) );
+    dp.then ( D_DONE );
+}
+function D_DONE ( db )
+
+{
+    var dj = ArrayBuffer2hex ( db );
+    console.log ( "dj = " + dj );
 }
 
 
