@@ -4,6 +4,14 @@
 // Author:  Robert L Walton <walton@acm.org>
 // Date:    Tue Dec 31 23:12:16 EST 2019
 
+if ( ! preg_match
+    ( '/(chrome|firefox|safari|opera|edge)/i',
+      $_SERVER['HTTP_USER_AGENT'] ) )
+    exit ( 'Unsupported Browser: Use Chrome,' .
+           ' Firefox, Safari, Opera, or Edge' );
+    // Internet Explorer is NOT supported, as it
+    // does not support Promises or async/await.
+
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
 // directory is `required' at the beginning of all EPM

@@ -66,36 +66,30 @@ var iv = new Uint8Array ( 16 );
 var ivh = ArrayBuffer2hex ( iv );
 console.log ( "ivh = " + ivh );
 
-var kp = window.crypto.subtle.importKey
-    ( "raw", hex2ArrayBuffer ( k ), "AES-CBC",
-      true, ["encrypt", "decrypt"] );
-kp.then(KEY_DONE);
-
-var keysave;
-function KEY_DONE ( key )
+// WARNING: async/await is not currently (Jan 2020)
+// supported by Internet Explorer.  However Promises
+// are also NOT supported by Internet Explorer, which
+// has its own different thing.
+//
+async function compute_crypto()
 {
-    keysave = key;
-    var cp = window.crypto.subtle.encrypt
-        ( { name: "AES-CBC", iv }, key,
+    var kj = await window.crypto.subtle.importKey
+	( "raw", hex2ArrayBuffer ( k ), "AES-CBC",
+	  true, ["encrypt", "decrypt"] );
+    var cjb = await window.crypto.subtle.encrypt
+        ( { name: "AES-CBC", iv }, kj,
 	  hex2ArrayBuffer ( m ) );
-    cp.then ( C_DONE );
+    var cjh = ArrayBuffer2hex ( cjb );
+    console.log ( "cjh = " + cjh );
+    var djb = await window.crypto.subtle.decrypt
+        ( { name: "AES-CBC", iv }, kj,
+	  hex2ArrayBuffer ( cjh ) );
+    var djh = ArrayBuffer2hex ( djb );
+    console.log ( "djh = " + djh );
 }
 
-function C_DONE ( cb )
-{
-    var cj = ArrayBuffer2hex ( cb );
-    console.log ( "cj = " + cj );
-    var dp = window.crypto.subtle.decrypt
-        ( { name: "AES-CBC", iv }, keysave,
-	  hex2ArrayBuffer ( cj ) );
-    dp.then ( D_DONE );
-}
-function D_DONE ( db )
-
-{
-    var dj = ArrayBuffer2hex ( db );
-    console.log ( "dj = " + dj );
-}
+compute_crypto();
+// This runs compute_crypto as a separate task.
 
 
 </script>
