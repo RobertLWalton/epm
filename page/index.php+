@@ -166,6 +166,7 @@ $display_file_map = [
 start_session();
 clearstatcache();
 umask ( 06 );
+header ( 'Cache-Control: no-store' );
 
 if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
     $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];

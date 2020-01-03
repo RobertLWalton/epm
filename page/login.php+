@@ -439,9 +439,45 @@ TBD
 ?>
 
 <html>
-<head>
+
+<body>
+<!-- body elements must be BEFORE script so that
+     getElementById can be used to set global vars -->
+
+<div id='get_email' style.display='none'>
+<input type='text' id='email_in'
+       placeholder='Enter Email Address'>
+</div>
+
+<div id='show_email' style.display='none'>
+Email:&nbsp;<span id='email_out'></span>
+<button onclick="window.location.reload(true)">
+Retry Login from Beginning
+</button>&nbsp;&nbsp;&nbsp;&nbsp;
+<button onclick="RESET_BROWSER()">
+Reset Browser
+</button><br>
+(You will have reconfirm all email addresses used with this browser.)
+</div>
+
+<div id='get_cnum' style.display='none'>
+<input type='text' id='cnum_in'
+       placeholder='Enter Confirmation Number'>
+</div>
+
 <script>
 var xhttp = new XMLHttpRequest();
+var storage = window.localStorage;
+var get_email = document.getElementById("get_email")'
+var show_email = document.getElementById("show_email")'
+var get_cnum = document.getElementById("get_cnum")'
+
+function FAIL ( message )
+{
+    alert ( message );
+    window.location.reload ( true );
+}
+
 function SEND ( data, callback )
 {
     xhttp.onreadystatechange = callback;
@@ -455,30 +491,43 @@ function SEND ( data, callback )
 var AUTO_RETRY, EMAIL, ITEM, BID, KEYA, KEYB, CTIME,
     MANUAL, CNUM;
 
-var storage = window.localStorage;
-var get_email = document.getElementById("get_email")'
-var get_cnum = document.getElementById("get_cnum")'
-function BEGIN()
+AUTO_RETRY = 0;
+EMAIL = null;
+ITEM = null;
+get_email.style.display = 'block';
+
+function EMAIL_KEYDOWN ( event )
 {
-    var AUTO_RETRY = 0;
-    var EMAIL = null;
-    var ITEM = null;
-    get_email.style.display = 'block';
+    if ( event.code == 'Enter' )
+    {
+	var value = email.value.trim();
+	if ( /^\S+@\S+\.\S+$/.test(value) )
+	{
+	    EMAIL = value;
+	    SCHED ( GOT_EMAIL );
+	}
+	else if ( value != '' )
+	    alert ( value + " is not a valid" +
+	            " email address" );
+    }
 }
-function EMAIL_GOTTEN()
+email_in.addEventListener ( 'keydown', EMAIL_KEYDOWN );
+
+function GOT_EMAIL()
 {
     get_email.style.display = 'none';
+    email_out.innerHTML = EMAIL;
     ITEM = storage.getItem(EMAIL);
     if ( item == null )
-        Promise.resolve().then(MANUAL_ID);
+        SCHED ( MANUAL_ID );
     else
     {
         var ITEMlist = ITEM.split ( ' ' );
 	BID = ITEMlist[0];
 	KEYA = ITEMlist[1];
-	KMEYB = ITEMlist[2];
+	KEYB = ITEMlist[2];
 	MANUAL = false;
-	Promise.resolve().then(AUTO_ID);
+	SCHED ( AUTO_ID );
     }
 }
 function MANUAL_ID()
@@ -525,56 +574,23 @@ function MANUAL_RESPONSE()
     }
 };
 
-function email_keypress ( event )
+function CNUM_KEYDOWN ( event )
 {
     if ( event.code == 'Enter' )
     {
-	email = document.getElementById("email").value.trim();
-	if ( /^\S+@\S+\.\S+$/.test(email) )
-	    EMAIL = email;
-	else if ( email != '' )
-	    alert ( email + " is not a valid email address" );
-    }
-}
-
-function cnum_keypress ( event )
-{
-    if ( event.code == 'Enter' )
-    {
-	cnum = document.getElementById("cnum").value.trim();
-	if ( /^[a-f0-9]{32}$/.test(cnum) )
-	    CNUM = cunm;
-	else if ( cunm != '' )
-	    alert ( cunm + " is not a valid confirmation number" );
+	value = cnum.value.trim();
+	if ( /^[a-f0-9]{32}$/.test(value) )
+	{
+	    CNUM = value;
+	    SCHED ( GOT_CNUM );
+	}
+	else if ( value != '' )
+	    alert ( value + " is not a valid" +
+	            " confirmation number" );
     }
 }
     
 </script>
-</head>
-
-<body>
-
-<div id='get_email'>
-<input onkeypress='email_keypress(event)' type='text'
-       id='email' placeholder='Enter Email Address'>
-<br><br>
-<button onclick="store.clear()">Reset All Confirmations
-</button><br>
-(I.e., You must reconfirm all email address used with this browser.)
-</div>
-
-<div id='get_cnum' hidden>
-<input onkeypress='cnum_keypress(event)' type='text'
-       id='cnum' placeholder='Enter Confirmation Number'>
-</div>
-<br><br>
-<button onclick="store.clear()">Reset All Confirmations
-</button><br>
-(I.e., You must reconfirm all email address used with this browser.)
-</div>
-
-<br>
-<p><span id='current_action'></span></p>
 
 
 </body>
