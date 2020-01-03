@@ -95,34 +95,66 @@ compute_crypto();
 
 */
 
-// The following functions implement Internet Explorer
-// type interface with callbacks instead of Promises.
-//
-function IMPORTKEY
-	( format, keyData, algorithm, extractable,
-	  usages, callback )
-{
-    window.crypto.subtle.importKey
-        ( format, keyData, algorithm, extractable,
-	          usages )
-	.then ( callback );
-}
+var IMPORTKEY, ENCRYPT, DECRYPT;
 
-function ENCRYPT ( algorithm, key, data, callback )
+if ( window.msCrypto !== undefined )
 {
-    window.crypto.subtle.encrypt
-        ( algorithm, key, data )
-	.then ( callback );
-}
 
-function DECRYPT ( algorithm, key, data, callback )
-{
-    window.crypto.subtle.decrypt
-        ( algorithm, key, data )
-	.then ( callback );
+    IMPORTKEY = function
+	    ( format, keyData, algorithm, extractable,
+	      usages, callback )
+    {
+	window.msCrypto.subtle.importKey
+	    ( format, keyData, algorithm, extractable,
+		      usages )
+	    .oncomplete ( callback );
+    }
+
+    ENCRYPT = function
+	    ( algorithm, key, data, callback )
+    {
+	window.msCrypto.subtle.encrypt
+	    ( algorithm, key, data )
+	    .oncomplete ( callback );
+    }
+
+    DECRYPT = function
+	    ( algorithm, key, data, callback )
+    {
+	window.msCrypto.subtle.decrypt
+	    ( algorithm, key, data )
+	    .oncomplete ( callback );
+    }
+
+} else {
+
+    IMPORTKEY = function
+	    ( format, keyData, algorithm, extractable,
+	      usages, callback )
+    {
+	window.crypto.subtle.importKey
+	    ( format, keyData, algorithm, extractable,
+		      usages )
+	    .then ( callback );
+    }
+
+    ENCRYPT = function
+	    ( algorithm, key, data, callback )
+    {
+	window.crypto.subtle.encrypt
+	    ( algorithm, key, data )
+	    .then ( callback );
+    }
+
+    DECRYPT = function
+	    ( algorithm, key, data, callback )
+    {
+	window.crypto.subtle.decrypt
+	    ( algorithm, key, data )
+	    .then ( callback );
+    }
+
 }
-//
-// End of callback crypto functions.
 
 var kj, cjh, djh;
 

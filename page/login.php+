@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jan  2 01:31:57 EST 2020
+    // Date:	Fri Jan  3 07:03:49 EST 2020
 
     // Handles login for a session.
     //
@@ -461,11 +461,14 @@ Reset Browser
 </div>
 
 <div id='get_cnum' style.display='none'>
-<input type='text' id='cnum_in'
+A Confirmation Number has been sent to the above Email Address.
+<br>
+Please <input type='text' id='cnum_in'
        placeholder='Enter Confirmation Number'>
 </div>
 
 <script>
+
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;
 var get_email = document.getElementById("get_email")'
@@ -474,52 +477,136 @@ var get_cnum = document.getElementById("get_cnum")'
 
 function FAIL ( message )
 {
-    alert ( message );
-    window.location.reload ( true );
+    // Alert must be scheduled as separate task.
+    //
+    setTimeout ( function () {
+	alert ( message );
+	window.location.reload ( true );
+    });
 }
 
-function SEND ( data, callback )
+function ALERT ( message )
 {
-    xhttp.onreadystatechange = callback;
+    // Alert must be scheduled as separate task.
+    //
+    setTimeout ( function () { alert ( message ); } );
+}
+
+function SEND ( data, callback, error_message )
+{
+    xhttp.onreadystatechange = function() {
+	if ( this.readyState !== XMLHttpRequest.DONE )
+	    return;
+
+	if ( this.status != 200 )
+	    FAIL ( 'Bad response status (' + this.status
+	           + ') from server on '
+	           + error_message );
+	else
+	    callback ( this.responseText )
+    };
     xhttp.open ( 'POST', "login.php", true );
     xhttp.setRequestHeader
         ( "Content-Type",
 	  "application/x-www-form-urlencoded" );
     xhttp.send ( data );
 }
+
+var IMPORTKEY, ENCRYPT, DECRYPT;
+var IV = new Uint8Array ( 16 );
+    // 16 zero bytes.
+
+if ( window.msCrypto !== undefined )
+{
+
+    IMPORTKEY = function ( key, callback )
+    {
+	window.msCrypto.subtle.importKey
+	    ( "raw", hex2ArrayBuffer ( key ),
+	      "AES-CBC", true, ["encrypt", "decrypt"] )
+	    .oncomplete ( callback );
+    }
+
+    ENCRYPT = function ( cryptokey, data, callback )
+    {
+	window.msCrypto.subtle.encrypt
+	    ( { name: "AES-CBC", iv }, cryptokey,
+	      hex2ArrayBuffer ( data ) )
+	    .oncomplete ( e => ArrayBuffer2hex ( e ) );
+    }
+
+    DECRYPT = function ( cryptokey, data, callback )
+    {
+	window.msCrypto.subtle.decrypt
+	    ( { name: "AES-CBC", iv }, cryptokey,
+	      hex2ArrayBuffer ( data ) )
+	    .oncomplete ( e => ArrayBuffer2hex ( e ) );
+    }
+
+} else {
+
+    IMPORTKEY = function ( key, callback )
+    {
+	window.crypto.subtle.importKey
+	    ( "raw", hex2ArrayBuffer ( key ),
+	      "AES-CBC", true, ["encrypt", "decrypt"] )
+	    .then ( callback );
+    }
+
+    ENCRYPT = function ( cryptokey, data, callback )
+    {
+	window.crypto.subtle.encrypt
+	    ( { name: "AES-CBC", iv }, cryptokey,
+	      hex2ArrayBuffer ( data ) )
+	    .then ( e => ArrayBuffer2hex ( e ) );
+    }
+
+    DECRYPT = function ( cryptokey, data, callback )
+    {
+	window.crypto.subtle.decrypt
+	    ( { name: "AES-CBC", iv }, cryptokey,
+	      hex2ArrayBuffer ( data ) )
+	    .then ( e => ArrayBuffer2hex ( e ) );
+    }
+
+}
     
 var AUTO_RETRY, EMAIL, ITEM, BID, KEYA, KEYB, CTIME,
-    MANUAL, CNUM;
+    MANUAL, CNUM, CRYPTOKEY;
 
+// BEGIN:
+//
 AUTO_RETRY = 0;
 EMAIL = null;
 ITEM = null;
+show_email.style.display = 'none';
 get_email.style.display = 'block';
 
 function EMAIL_KEYDOWN ( event )
 {
-    if ( event.code == 'Enter' )
+    if ( event.code == 'Enter'
+         &&
+	 get_email.style.display == 'block' )
     {
 	var value = email.value.trim();
 	if ( /^\S+@\S+\.\S+$/.test(value) )
-	{
-	    EMAIL = value;
-	    SCHED ( GOT_EMAIL );
-	}
+	    GOT_EMAIL ( value );
 	else if ( value != '' )
-	    alert ( value + " is not a valid" +
+	    ALERT ( value + " is not a valid" +
 	            " email address" );
     }
 }
 email_in.addEventListener ( 'keydown', EMAIL_KEYDOWN );
 
-function GOT_EMAIL()
+function GOT_EMAIL ( email )
 {
+    EMAIL = email;
     get_email.style.display = 'none';
     email_out.innerHTML = EMAIL;
+    show_email.style.display = 'block';
     ITEM = storage.getItem(EMAIL);
     if ( item == null )
-        SCHED ( MANUAL_ID );
+        MANUAL_ID();
     else
     {
         var ITEMlist = ITEM.split ( ' ' );
@@ -527,68 +614,84 @@ function GOT_EMAIL()
 	KEYA = ITEMlist[1];
 	KEYB = ITEMlist[2];
 	MANUAL = false;
-	SCHED ( AUTO_ID );
+	AUTO_ID();
     }
 }
+
 function MANUAL_ID()
 {
     MANUAL = true;
     SEND ( "op=MANUAL&value=" + EMAIL,
-           MANUAL_RESPONSE );
+           MANUAL_RESPONSE,
+	   'sending ' + EMAIL + ' to server' );
 }
 
-function MANUAL_RESPONSE()
+function MANUAL_RESPONSE ( response )
 {
-    if ( this.readyState !== XMLHttpRequest.DONE )
-        return;
-
-    if ( this.status != 200 )
-	Promise.resolve
-	  ('Bad response from server on sending '
-	   + EMAIL + ' to server')
-	  .then(alert);
+    var r = response.split ( ' ' );
+    if ( r[0] == 'NOT_EMAIL' )
+        FAIL ( EMAIL +
+	       ' is not a valid email address' );
+    else if ( r[0] != 'NEW'
+	      ||
+	      r.length != 5 )
+        FAIL ( 'Response from server on sending '
+	       + EMAIL + ' to server is malformed' );
     else
     {
-	var r = this.responseText.split ( " " );
-	if ( r[0] == 'BAD' )
-	    Promise.resolve
-	      ('Bad response from server on sending '
-	       + EMAIL + ' to server')
-	      .then(alert)
-	      .then(BEGIN);
-	else if ( r[0] != 'NEW'
-	          ||
-		  r.length != 5 )
-	    Promise.resolve
-	      ('Bad response from server on sending '
-	       + EMAIL + ' to server')
-	      .then(alert);
-	else
-	{
-	    BID = r[1];
-	    EKEYA = r[2];
-	    EKEYB = r[3];
-	    CTIME = r[4];
-	    Promise.resolve().then(EXPIRED);
-	}
+	BID = r[1];
+	EKEYA = r[2];
+	EKEYB = r[3];
+	CTIME = r[4];
+	EXPIRED();
     }
 };
 
+function EXPIRED()
+{
+    get_cnum.style.display = 'block';
+}
+
 function CNUM_KEYDOWN ( event )
 {
-    if ( event.code == 'Enter' )
+    if ( event.code == 'Enter'
+         &&
+	 get_cnum.style.display == 'block' )
     {
 	value = cnum.value.trim();
 	if ( /^[a-f0-9]{32}$/.test(value) )
-	{
-	    CNUM = value;
-	    SCHED ( GOT_CNUM );
-	}
+	    GOT_CNUM ( value );
 	else if ( value != '' )
-	    alert ( value + " is not a valid" +
-	            " confirmation number" );
+	    ALERT ( value + ' is not a valid' +
+	            ' confirmation number' )';
     }
 }
+cnum_in.addEventListener ( 'keydown', EMAIL_KEYDOWN );
+
+function GOT_CNUM ( cnum )
+{
+    CNUM = cnum;
+    IMPORTKEY ( cnum, GOT_CNUM_KEY );
+}
+
+function GOT_CNUM_KEY ( cryptokey )
+{
+    CRYPTOKEY = cryptokey;
+    DECRYPT ( EKEYA, CRYPTOKEY, GOT_KEYA );
+}
+
+function GOT_KEYA ( keyA )
+{
+    KEYA = keyA;
+    DECRYPT ( EKEYB, CRYPTOKEY, GOT_KEYB );
+}
+
+function GOT_KEYB ( keyB )
+{
+    KEYB = keyB;
+    AUTO_ID();
+}
+
     
 </script>
 
