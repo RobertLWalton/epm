@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan  3 07:03:49 EST 2020
+    // Date:	Fri Jan  3 11:59:36 EST 2020
 
     // Handles login for a session.
     //
@@ -130,23 +130,18 @@
     // MANUAL_ID:
     //	   * MANUAL = yes
     //     * Send 'op=MANUAL&value=EMAIL'
-    //     * Receive 'NEW BID EKEYA EKEYB CTIME' where
-    //       EKEYA, EKEYB are KEYA, KEYB encrypted using
-    //       CNUM.
+    //     * Receive one of:
+    //           'BAD_EMAIL': FAIL
+    //           'NEW BID EKEYA EKEYB CTIME' where
+    //                    EKEYA, EKEYB are KEYA, KEYB
+    //                    encrypted using CNUM.
     // EXPIRED:
     //     * Get CNUM from user.
     //     * Decrypt EKEYA and EKEYB using CNUM to get
     //	     KEYA, KEYB.
     // AUTO_ID:
     //     * AUTO_RETRY += 1
-    //     * If AUTO_RETRY > 2:
-    //		* tell user about failure
-    //          * ask if user want to:
-    //              RE-ENTER EMAIL:
-    //			* go to BEGIN
-    //              GET NEW CNUM:
-    //		        * localStorage.removeItem(EMAIL)
-    //                  * go to BEGIN
+    //     * If AUTO_RETRY > 2: FAIL
     //     * Send 'op=AUTO&value=BID'
     //	   * Receive one of:
     //           'EXPIRED BIT EKEYA EKEYB CTIME':
@@ -453,7 +448,12 @@ TBD
 Email:&nbsp;<span id='email_out'></span>
 <button onclick="window.location.reload(true)">
 Retry Login from Beginning
-</button>&nbsp;&nbsp;&nbsp;&nbsp;
+</button>
+<br>
+<button onclick="RESET_EMAIL()">
+Re-confirm above email address.
+</button>
+<br>
 <button onclick="RESET_BROWSER()">
 Reset Browser
 </button><br>
@@ -468,6 +468,9 @@ Please <input type='text' id='cnum_in'
 </div>
 
 <script>
+
+var LOG = function(message) {};  // Disable logging.
+var LOG = console.log;           // Enable logging.
 
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;
@@ -485,6 +488,18 @@ function FAIL ( message )
     });
 }
 
+function RESET_EMAIL()
+{
+    storage.removeItem ( EMAIL );
+    window.location.reload ( true );
+}
+
+function RESET_BROWSER()
+{
+    storage.clear();
+    window.location.reload ( true );
+}
+
 function ALERT ( message )
 {
     // Alert must be scheduled as separate task.
@@ -492,9 +507,12 @@ function ALERT ( message )
     setTimeout ( function () { alert ( message ); } );
 }
 
+var REQUUEST_IN_PROGRESS = false;
 function SEND ( data, callback, error_message )
 {
     xhttp.onreadystatechange = function() {
+	LOG ( 'xhttp state changed to '
+	      + this.readyState );
 	if ( this.readyState !== XMLHttpRequest.DONE )
 	    return;
 
@@ -502,13 +520,20 @@ function SEND ( data, callback, error_message )
 	    FAIL ( 'Bad response status (' + this.status
 	           + ') from server on '
 	           + error_message );
-	else
+	else if ( REQUEST_IN_PROGRESS )
+	{
+	    REQUEST_IN_PROGRESS = false;
+	    LOG ( 'xhttp response: '
+	          + this.responseText );
 	    callback ( this.responseText )
+	}
     };
     xhttp.open ( 'POST', "login.php", true );
     xhttp.setRequestHeader
         ( "Content-Type",
 	  "application/x-www-form-urlencoded" );
+    REQUEST_IN_PROGRESS = true;
+    LOG ( 'xhttp sent: ' + data );
     xhttp.send ( data );
 }
 
@@ -580,17 +605,22 @@ AUTO_RETRY = 0;
 EMAIL = null;
 ITEM = null;
 show_email.style.display = 'none';
+GET_EMAIL_ENABLED = true;
 get_email.style.display = 'block';
 
+var GET_EMAIL_ENABLED = false;
 function EMAIL_KEYDOWN ( event )
 {
     if ( event.code == 'Enter'
          &&
-	 get_email.style.display == 'block' )
+	 GET_EMAIL_ENABLED )
     {
 	var value = email.value.trim();
 	if ( /^\S+@\S+\.\S+$/.test(value) )
+	{
+	    GET_EMAIL_ENABLED = false;
 	    GOT_EMAIL ( value );
+	}
 	else if ( value != '' )
 	    ALERT ( value + " is not a valid" +
 	            " email address" );
@@ -649,18 +679,23 @@ function MANUAL_RESPONSE ( response )
 
 function EXPIRED()
 {
+    GET_CNUM_ENABLED = true;
     get_cnum.style.display = 'block';
 }
 
+var GET_CNUM_ENABLED = false;
 function CNUM_KEYDOWN ( event )
 {
     if ( event.code == 'Enter'
          &&
-	 get_cnum.style.display == 'block' )
+	 GET_CNUM_ENABLED )
     {
 	value = cnum.value.trim();
 	if ( /^[a-f0-9]{32}$/.test(value) )
+	{
+	    GET_CNUM_ENABLED = false;
 	    GOT_CNUM ( value );
+	}
 	else if ( value != '' )
 	    ALERT ( value + ' is not a valid' +
 	            ' confirmation number' )';
@@ -690,6 +725,20 @@ function GOT_KEYB ( keyB )
 {
     KEYB = keyB;
     AUTO_ID();
+}
+
+function AUTO_ID()
+{
+    AUTO_RETRY += 1
+    if ( AUTO_RETRY > 2 )
+        FAIL ( 'two attempts at handshake failed' );
+    SEND ( 'op=AUTO&value=' + BID,
+           AUTO_RESPONSE,
+	   'starting handshake with server' );
+}
+
+function AUTO_RESPONSE ( item )
+{
 }
 
     
