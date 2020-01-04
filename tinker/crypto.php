@@ -107,7 +107,14 @@ if ( window.msCrypto !== undefined )
 	window.msCrypto.subtle.importKey
 	    ( format, keyData, algorithm, extractable,
 		      usages )
-	    .oncomplete ( callback );
+	    .oncomplete
+	        ( function(r)
+		  { callback ( r.target.result ) } )
+	    .onerror
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'key import failed' ) ) } )
     }
 
     ENCRYPT = function
@@ -115,7 +122,14 @@ if ( window.msCrypto !== undefined )
     {
 	window.msCrypto.subtle.encrypt
 	    ( algorithm, key, data )
-	    .oncomplete ( callback );
+	    .oncomplete
+	        ( function(r)
+		  { callback ( r.target.result ) } )
+	    .onerror
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'encryption failed' ) ) } )
     }
 
     DECRYPT = function
@@ -123,7 +137,14 @@ if ( window.msCrypto !== undefined )
     {
 	window.msCrypto.subtle.decrypt
 	    ( algorithm, key, data )
-	    .oncomplete ( callback );
+	    .oncomplete
+	        ( function(r)
+		  { callback ( r.target.result ) } )
+	    .onerror
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'decryption failed' ) ) } )
     }
 
 } else {
@@ -135,7 +156,12 @@ if ( window.msCrypto !== undefined )
 	window.crypto.subtle.importKey
 	    ( format, keyData, algorithm, extractable,
 		      usages )
-	    .then ( callback );
+	    .then ( callback )
+	    .catch
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'key import failed' ) ) } )
     }
 
     ENCRYPT = function
@@ -143,7 +169,12 @@ if ( window.msCrypto !== undefined )
     {
 	window.crypto.subtle.encrypt
 	    ( algorithm, key, data )
-	    .then ( callback );
+	    .then ( callback )
+	    .catch
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'encryption failed' ) ) } )
     }
 
     DECRYPT = function
@@ -151,7 +182,12 @@ if ( window.msCrypto !== undefined )
     {
 	window.crypto.subtle.decrypt
 	    ( algorithm, key, data )
-	    .then ( callback );
+	    .then ( callback )
+	    .catch
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'decryption failed' ) ) } )
     }
 
 }
@@ -168,6 +204,11 @@ function STEP1()
 
 function STEP2 ( key )
 {
+    if ( key instanceof Error )
+    {
+        alert ( key.message );
+	return;
+    }
     kj = key;
     ENCRYPT
         ( { name: "AES-CBC", iv }, kj,
@@ -177,6 +218,11 @@ function STEP2 ( key )
 
 function STEP3 ( encrypted )
 {
+    if ( encrypted instanceof Error )
+    {
+        alert ( encrypted.message );
+	return;
+    }
     cjh = ArrayBuffer2hex ( encrypted );
     console.log ( "cjh = " + cjh );
     DECRYPT
@@ -187,8 +233,17 @@ function STEP3 ( encrypted )
 
 function STEP4 ( decrypted )
 {
+    if ( decrypted instanceof Error )
+    {
+        alert ( decrypted.message );
+	return;
+    }
     djh = ArrayBuffer2hex ( decrypted );
     console.log ( "djh = " + djh );
+    console.assert ( m == mbh, "m != mbh" );
+    console.assert ( k == kbh, "k != kbh" );
+    console.assert ( c == cjh, "c != cjh" );
+    console.assert ( d == djh, "d != djh" );
 }
 
 STEP1();
