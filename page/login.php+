@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan  3 11:59:36 EST 2020
+    // Date:	Fri Jan  3 19:25:46 EST 2020
 
     // Handles login for a session.
     //
@@ -549,7 +549,14 @@ if ( window.msCrypto !== undefined )
 	window.msCrypto.subtle.importKey
 	    ( "raw", hex2ArrayBuffer ( key ),
 	      "AES-CBC", true, ["encrypt", "decrypt"] )
-	    .oncomplete ( callback );
+	    .oncomplete
+	        ( function(r)
+		  { callback ( r.target.result ) } )
+	    .onerror
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'key import failed' ) ) } );
     }
 
     ENCRYPT = function ( cryptokey, data, callback )
@@ -557,7 +564,16 @@ if ( window.msCrypto !== undefined )
 	window.msCrypto.subtle.encrypt
 	    ( { name: "AES-CBC", iv }, cryptokey,
 	      hex2ArrayBuffer ( data ) )
-	    .oncomplete ( e => ArrayBuffer2hex ( e ) );
+	    .oncomplete
+	        ( function(r)
+		  { callback
+		      ( ArrayBuffer2hex
+		          ( r.target.result ) ) } )
+	    .onerror
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'encryption failed' ) ) } );
     }
 
     DECRYPT = function ( cryptokey, data, callback )
@@ -565,7 +581,16 @@ if ( window.msCrypto !== undefined )
 	window.msCrypto.subtle.decrypt
 	    ( { name: "AES-CBC", iv }, cryptokey,
 	      hex2ArrayBuffer ( data ) )
-	    .oncomplete ( e => ArrayBuffer2hex ( e ) );
+	    .oncomplete
+	        ( function(r)
+		  { callback
+		      ( ArrayBuffer2hex
+		          ( r.target.result ) ) } )
+	    .onerror
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'decryption failed' ) ) } );
     }
 
 } else {
@@ -575,7 +600,12 @@ if ( window.msCrypto !== undefined )
 	window.crypto.subtle.importKey
 	    ( "raw", hex2ArrayBuffer ( key ),
 	      "AES-CBC", true, ["encrypt", "decrypt"] )
-	    .then ( callback );
+	    .then ( callback )
+	    .catch
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'key import failed' ) ) } );
     }
 
     ENCRYPT = function ( cryptokey, data, callback )
@@ -583,7 +613,15 @@ if ( window.msCrypto !== undefined )
 	window.crypto.subtle.encrypt
 	    ( { name: "AES-CBC", iv }, cryptokey,
 	      hex2ArrayBuffer ( data ) )
-	    .then ( e => ArrayBuffer2hex ( e ) );
+	    .then
+	        ( function(r)
+		  { callback
+		      ( ArrayBuffer2hex ( r ) ) } )
+	    .catch
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'encryption failed' ) ) } );
     }
 
     DECRYPT = function ( cryptokey, data, callback )
@@ -591,7 +629,15 @@ if ( window.msCrypto !== undefined )
 	window.crypto.subtle.decrypt
 	    ( { name: "AES-CBC", iv }, cryptokey,
 	      hex2ArrayBuffer ( data ) )
-	    .then ( e => ArrayBuffer2hex ( e ) );
+	    .then
+	        ( function(r)
+		  { callback
+		      ( ArrayBuffer2hex ( r ) ) } )
+	    .catch
+	        ( function(r)
+		  { callback
+		      ( new Error
+		          ( 'decryption failed' ) ) } );
     }
 
 }
@@ -701,7 +747,7 @@ function CNUM_KEYDOWN ( event )
 	            ' confirmation number' )';
     }
 }
-cnum_in.addEventListener ( 'keydown', EMAIL_KEYDOWN );
+cnum_in.addEventListener ( 'keydown', CNUM_KEYDOWN );
 
 function GOT_CNUM ( cnum )
 {
@@ -709,20 +755,42 @@ function GOT_CNUM ( cnum )
     IMPORTKEY ( cnum, GOT_CNUM_KEY );
 }
 
+function CNUM_NOT_VALID()
+{
+    alert ( CNUM + ' is not valid;'
+	    + ' try again or reset' );
+    EXPIRED();
+}
+
 function GOT_CNUM_KEY ( cryptokey )
 {
+    if ( cryptokey instanceof Error )
+    {
+        CNUM_NOT_VALID();
+	return;
+    }
     CRYPTOKEY = cryptokey;
     DECRYPT ( EKEYA, CRYPTOKEY, GOT_KEYA );
 }
 
 function GOT_KEYA ( keyA )
 {
+    if ( keyA instanceof Error )
+    {
+        CNUM_NOT_VALID();
+	return;
+    }
     KEYA = keyA;
     DECRYPT ( EKEYB, CRYPTOKEY, GOT_KEYB );
 }
 
 function GOT_KEYB ( keyB )
 {
+    if ( keyB instanceof Error )
+    {
+        CNUM_NOT_VALID();
+	return;
+    }
     KEYB = keyB;
     AUTO_ID();
 }
