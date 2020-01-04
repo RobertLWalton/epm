@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan  3 19:59:28 EST 2020
+    // Date:	Sat Jan  4 01:54:47 EST 2020
 
     // Handles login for a session.
     //
@@ -643,7 +643,7 @@ if ( window.msCrypto !== undefined )
 }
     
 var AUTO_RETRY, EMAIL, ITEM, BID, KEYA, KEYB, CTIME,
-    MANUAL, CNUM, CRYPTOKEY;
+    MANUAL, CNUM, CRYPTOKEY, HANDSHAKE, SHAKEHAND;
 
 // BEGIN:
 //
@@ -697,7 +697,8 @@ function GOT_EMAIL ( email )
 function MANUAL_ID()
 {
     MANUAL = true;
-    SEND ( "op=MANUAL&value=" + EMAIL,
+    SEND ( "op=MANUAL&value="
+           + encodeURIComponent ( EMAIL ),
            MANUAL_RESPONSE,
 	   'sending ' + EMAIL + ' to server' );
 }
@@ -822,14 +823,97 @@ function AUTO_RESPONSE ( item )
 	EXPIRED();
 	return;
     }
-    elseif ( item[0] == 'FAIL' )
+    else if ( item[0] == 'FAIL' )
     {
 	storage.removeItem ( EMAIL );
 	FAIL ( 'browser/email not known to server;'
 	       + ' re-confirmation required' );
     }
+    else if ( item[0] == 'SHAKE' )
+    {
+        HANDSHAKE = item[1];
+	IMPORTKEY ( KEYA, GOT_KEYA );
+    }
+    else
+        FAIL ( 'Response from server on sending'
+	       + 'browser ID to server is malformed' );
 }
 
+function GOT_KEYA ( cryptokey )
+{
+    if ( cryptokey instanceof Error )
+    {
+        AUTO_ID();  // Retry
+	return;
+    }
+    DECRYPT ( HANDSHAKE, cryptokey, GOT_SHAKEA );
+}
+
+function GOT_SHAKEA ( shakeA )
+{
+    if ( cryptokey instanceof Error )
+    {
+        AUTO_ID();  // Retry
+	return;
+    }
+    SHAKEHAND = shakeA;
+    IMPORTKEY ( KEYB, GOT_KEYB );
+}
+
+function GOT_KEYB ( cryptokey )
+{
+    if ( cryptokey instanceof Error )
+    {
+        AUTO_ID();  // Retry
+	return;
+    }
+    ENCRYPT ( SHAKEHAND, cryptokey, GOT_SHAKEB );
+}
+
+function GOT_SHAKEB ( shakeB )
+{
+    if ( cryptokey instanceof Error )
+    {
+        AUTO_ID();  // Retry
+	return;
+    }
+    SHAKEHAND = shakeB;
+    SEND ( 'op=HAND&value=' + SHAKEHAND,
+           SHAKE_RESPONSE,
+	   'sending handshake to server' );
+}
+
+function SHAKE_RESPONSE ( item )
+{
+    item = item.split ( ' ' );
+    if ( item[0] == 'FAILED' )
+    {
+        AUTO_ID();  // Retry
+	return;
+    }
+    else if ( item[0] == 'DONE'
+              &&
+	      item.length == 2 )
+    {
+        if ( MANUAL )
+	    storage.storeITEM
+	        ( EMAIL,
+		  BID + ' '
+		  KEYA + ' '
+		  KEYB + ' '
+		  CTIME );
+	try {
+	    window.location.assign ( item[2] );
+	} catch ( e ) {
+	    FAIL
+	       ( 'could not access page ' + item[2] );
+	       // On retry login.php will go to
+	       // correct page.
+    }
+    else
+        FAIL ( 'Response from server on sending'
+	       + 'browser ID to server is malformed' );
+}
     
 </script>
 
