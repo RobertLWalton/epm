@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan  4 02:50:37 EST 2020
+    // Date:	Sat Jan  4 05:09:53 EST 2020
 
     // Handles login for a session.
     //
@@ -262,11 +262,33 @@
 	$data['KEYA'] = bin2hex ( random_bytes ( 16 ) );
 	$data['KEYB'] = bin2hex ( random_bytes ( 16 ) );
 	$data['CTIME'] = $_SESSION['EPM_SESSION_TIME'];
+
+	mail ( $email, "Your Confirmation Number",
+	       "Your confirmation number is:\r\n" .
+	       "\r\n" .
+	       "     {$data['CNUM'}\r\n",
+	       ["From" =>
+	        "no_reply@{$_SERVER['SERVER_NAME']}"] );
+
+	$iv = hex2bin
+	    ( "00000000000000000000000000000000" );
+	$ekeyA = bin2hex ( openssl_encrypt
+	    ( hex2bin ( $data['KEYA'] ), "aes-128-cbc",
+	      hex2bin ( $data['CNUM'] ),
+	      OPENSSL_RAW_DATA, $iv ) );
+	$ekeyB = bin2hex ( openssl_encrypt
+	    ( hex2bin ( $data['KEYB'] ), "aes-128-cbc",
+	      hex2bin ( $data['CNUM'] ),
+	      OPENSSL_RAW_DATA, $iv ) );
+					e
+	echo ( "NEW {$data['BID'} $ekeyA $ekeyB" .
+	       " {$data['CTIME']}" );
+	exit;
     }
     elseif ( $op == 'AUTO_ID' )
     {
     }
-    elseif ( $op == 'AUTO_ID' )
+    elseif ( $op == 'SHAKE' )
     {
     }
     // Else load login.php.
