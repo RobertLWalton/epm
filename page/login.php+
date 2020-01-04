@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan  4 05:09:53 EST 2020
+    // Date:	Sat Jan  4 13:52:03 EST 2020
 
     // Handles login for a session.
     //
@@ -40,17 +40,19 @@
     //		    server and emailed to the user, who
     //		    enters it into the browser during
     //		    the protocol that creates the
-    //		    broswer local memory ITEM.  Only
+    //		    broswer local memory TICKET.  Only
     //		    exists if browser identification
     //		    protocol is MANUAL, and not AUTO.
     //
-    //     LTIME    Login Time.  Time server receives
-    //		    first browser identification
-    // 		    protocal POST.  Stored in
-    //              '%FT%T%z' (ISO 8601) format.
+    //     STIME    Session Time.  The time of the
+    //		    request that created the current
+    //		    session, as stored in $_SESSION
+    //		    ['EPM_SESSION_TIME'] in '%FT%T%z'
+    //		    (ISO 8601) format.
     //
-    //     CTIME    Confirmation Time.  LTIME for the
-    //		    last time browser was confirmed.
+    //     CTIME    Confirmation Time.  STIME for the
+    //		    session that last confirmed the
+    //		    browser.
     //
     //     BID-FILE The file BDIR/BID that contains just
     //		    the line:
@@ -62,7 +64,7 @@
     //		    browser identification protocol that
     //		    uses a confirmation number (CNUM).
     //
-    //	   ITEM     Browser Local Memory Item, stored
+    //	   TICKET   Browser Local Memory Item, stored
     //		    using EMAIL as the item key when
     //		    the browser is notified that the
     //              MANUAL browser id protocol has been
@@ -73,7 +75,7 @@
     //
     //		    in the browser local memory.
     //
-    //      FTIME   LTIME of first time user was
+    //      FTIME   STIME of first time user was
     //              confirmed.
     //
     //      CCOUNT  Number of times user has been
@@ -97,7 +99,6 @@
     //
     //    EPM_EMAIL => EMAIL
     //    EPM_BROWSER_ID => BID
-    //    EPM_LOGIN_TIME => LTIME
     //    EPM_USER_ID => UID, but not set for new user.
     //
     // Next page is page/problem_select.php if user is
@@ -107,10 +108,10 @@
     //
     // During the execution of the browser identifica-
     // tion protocol, $_SESSION['EPM_BROWSER_DATA']
-    // is used to hold BID, EMAIL, LTIME, CTIME, KEYA,
-    // KEYB, CNUM, UID, FTIME, and CCOUNT.  During the
-    // protocal the browser stores BID, EMAIL, CTIME,
-    // KEYA, KEYB, and CNUM in var's of the same name.
+    // is used to hold BID, EMAIL, CTIME, KEYA, KEYB,
+    // CNUM, UID, FTIME, and CCOUNT.  During the proto-
+    // col the browser stores BID, EMAIL, CTIME, KEYA,
+    // KEYB, and CNUM in var's of the same name.
     //
     // Each execution of the browser identification
     // protocol is logged separately to the file:
@@ -121,11 +122,11 @@
     // format is
     //
     //	 // comment
-    //   BID EMAIL UID IPADDR LTIME CTIME FTIME CCOUNT
+    //   BID EMAIL UID IPADDR STIME CTIME FTIME CCOUNT
     //
     // where IPADDR is $_SESSION['EPM_IPADDR'] and for
-    // a new user UID is 'NEW', CTIME and FTIME equals
-    // LTIME, and CCOUNT is 0.
+    // a new user UID is 'NEW', CTIME and FTIME equal
+    // STIME, and CCOUNT is 0.
 
 
     // Browser Identification Protocol
@@ -142,9 +143,9 @@
     // BEGIN:
     //	   * AUTO_RETRY = 0
     //     * Get EMAIL from user.
-    //	   * Get ITEM = localStorage.getItem(EMAIL)
-    //	   * If ITEM != null:
-    //		* Parse ITEM to get BID, KEYA, KEYB
+    //	   * Get TICKET = localStorage.getItem(EMAIL)
+    //	   * If TICKET != null:
+    //		* Parse TICKET to get BID, KEYA, KEYB
     //          * MANUAL = no
     //          * go to AUTO_ID
     // MANUAL_ID:
@@ -179,8 +180,8 @@
     //           'DONE NEXT_PAGE':
     //               continue with following
     //     * If MANUAL:
-    //		* ITEM = 'BID KEYA KEYB CTIME'
-    //          * localStorage.setItem(EMAIL,ITEM)
+    //		* TICKET = 'BID KEYA KEYB CTIME'
+    //          * localStorage.setItem(EMAIL,TICKET)
     //     * Issue GET to NEXT_PAGE
     //
     // The server generates bid, keyA, keyB, confirma-
@@ -748,14 +749,14 @@ if ( window.msCrypto !== undefined )
 
 }
     
-var AUTO_RETRY, EMAIL, ITEM, BID, KEYA, KEYB, CTIME,
+var AUTO_RETRY, EMAIL, TICKET, BID, KEYA, KEYB, CTIME,
     MANUAL, CNUM, CRYPTOKEY, HANDSHAKE, SHAKEHAND;
 
 // BEGIN:
 //
 AUTO_RETRY = 0;
 EMAIL = null;
-ITEM = null;
+TICKET = null;
 show_email.style.display = 'none';
 GET_EMAIL_ENABLED = true;
 get_email.style.display = 'block';
@@ -786,15 +787,15 @@ function GOT_EMAIL ( email )
     get_email.style.display = 'none';
     email_out.innerHTML = EMAIL;
     show_email.style.display = 'block';
-    ITEM = storage.getItem(EMAIL);
+    TICKET = storage.getItem(EMAIL);
     if ( item == null )
         MANUAL_ID();
     else
     {
-        var ITEMlist = ITEM.split ( ' ' );
-	BID = ITEMlist[0];
-	KEYA = ITEMlist[1];
-	KEYB = ITEMlist[2];
+        var TICKETlist = TICKET.split ( ' ' );
+	BID = TICKETlist[0];
+	KEYA = TICKETlist[1];
+	KEYB = TICKETlist[2];
 	MANUAL = false;
 	AUTO_ID();
     }
@@ -1001,13 +1002,9 @@ function SHAKE_RESPONSE ( item )
               &&
 	      item.length == 2 )
     {
+        TICKET = [BID, KEYA, KEYB, CTIME].join(' ');
         if ( MANUAL )
-	    storage.storeITEM
-	        ( EMAIL,
-		  BID + ' '
-		  KEYA + ' '
-		  KEYB + ' '
-		  CTIME );
+	    storage.storeItem ( EMAIL, TICKET );
 	try {
 	    window.location.assign ( item[2] );
 	} catch ( e ) {
