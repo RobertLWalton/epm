@@ -261,6 +261,7 @@
 	}
 	$data['KEYA'] = bin2hex ( random_bytes ( 16 ) );
 	$data['KEYB'] = bin2hex ( random_bytes ( 16 ) );
+	$data['CTIME'] = $_SESSION['EPM_SESSION_TIME'];
     }
     elseif ( $op == 'AUTO_ID' )
     {

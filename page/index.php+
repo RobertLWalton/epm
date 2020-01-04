@@ -178,12 +178,15 @@ header ( 'Cache-Control: no-store' );
 
 if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
 {
+    $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];
+    $_SESSION['EPM_SESSION_TIME'] =
+        strfime ( $_SERVER['REQUEST_TIME'], "%FT%T%z" );
     file_put_contents (
         "$epm_data/admin/error.log",
-	"NEW_SESSION {$_SERVER['REMOTE_ADDR']}" .
+	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
+	" {$_SERVER['REMOTE_ADDR']}" .
 	" {$_SERVER['REMOTE_HOST']}",
 	FILE_APPEND );
-    $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];
 }
 else if (    $_SESSION['EPM_IPADDR']
           != $_SERVER['REMOTE_ADDR'] )
