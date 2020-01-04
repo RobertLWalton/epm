@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan  3 19:25:46 EST 2020
+    // Date:	Fri Jan  3 19:59:28 EST 2020
 
     // Handles login for a session.
     //
@@ -144,7 +144,7 @@
     //     * If AUTO_RETRY > 2: FAIL
     //     * Send 'op=AUTO&value=BID'
     //	   * Receive one of:
-    //           'EXPIRED BIT EKEYA EKEYB CTIME':
+    //           'EXPIRED BID EKEYA EKEYB CTIME':
     //               go to EXPIRED
     //           'FAILED':  (means BID not recognized)
     //               go to AUTO_ID
@@ -807,6 +807,27 @@ function AUTO_ID()
 
 function AUTO_RESPONSE ( item )
 {
+    item = item.split ( ' ' );
+    if ( item[0] == 'EXPIRED' )
+    {
+	storage.removeItem ( EMAIL );
+        if ( item.length != 5 )
+	    FAIL ( 'bad response from server during'
+	           + ' handshake; re-confirmation'
+		   + ' required' );
+	BID   = item[1];
+	EKEYA = item[2];
+	EKEYB = item[3];
+	CTIME = item[4];
+	EXPIRED();
+	return;
+    }
+    elseif ( item[0] == 'FAIL' )
+    {
+	storage.removeItem ( EMAIL );
+	FAIL ( 'browser/email not known to server;'
+	       + ' re-confirmation required' );
+    }
 }
 
     
