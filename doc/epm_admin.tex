@@ -1,0 +1,250 @@
+% Educational Problem Manager (EPM) Administration Manual.
+%
+% File:         epm.tex
+% Author:       Bob Walton (walton@acm.org)
+% Date:		See \date below.
+  
+\documentclass[12pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{makeidx}
+
+\makeindex
+
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\textheight}{8.5in}
+\raggedbottom
+
+\setlength{\unitlength}{1in}
+
+\pagestyle{headings}
+\setlength{\parindent}{0.0in}
+\setlength{\parskip}{1ex}
+
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}
+\newcommand{\subsubsubsection}[1]{\paragraph[#1]{#1.}}
+\newcommand{\subsubsubsubsection}[1]{\subparagraph[#1]{#1.}}
+
+\newcommand{\TT}[1]{{\tt \bfseries #1}}
+\newcommand{\key}[1]{{\bf \em #1}}
+\newcommand{\EOL}{\penalty \exhyphenpenalty}
+
+% Begin \tableofcontents surgery.
+
+\newcount\AtCatcode
+\AtCatcode=\catcode`@
+\catcode `@=11	% @ is now a letter
+
+\renewcommand{\contentsname}{}
+\renewcommand\l@section{\@dottedtocline{1}{0.1em}{1.4em}}
+\renewcommand\l@table{\@dottedtocline{1}{0.1em}{1.4em}}
+\renewcommand\tableofcontents{%
+    \begin{list}{}%
+	     {\setlength{\itemsep}{0in}%
+	      \setlength{\topsep}{0in}%
+	      \setlength{\parsep}{1ex}%
+	      \setlength{\labelwidth}{0in}%
+	      \setlength{\baselineskip}{1.5ex}%
+	      \setlength{\leftmargin}{0.8in}%
+	      \setlength{\rightmargin}{0.8in}}%
+    \item\@starttoc{toc}%
+    \end{list}}
+\renewcommand\listoftables{%
+    \begin{list}{}%
+	     {\setlength{\itemsep}{0in}%
+	      \setlength{\topsep}{0in}%
+	      \setlength{\parsep}{1ex}%
+	      \setlength{\labelwidth}{0in}%
+	      \setlength{\baselineskip}{1.5ex}%
+	      \setlength{\leftmargin}{1.0in}%
+	      \setlength{\rightmargin}{1.0in}%
+	      }%
+    \item\@starttoc{lot}%
+    \end{list}}
+
+\catcode `@=\AtCatcode	% @ is now restored
+
+% End \tableofcontents surgery.
+
+\newenvironment{indpar}[1][0.4in]%
+	{\begin{list}{}%
+		     {\setlength{\itemsep}{0in}%
+		      \setlength{\topsep}{0in}%
+		      \setlength{\parsep}{1ex}%
+		      \setlength{\labelwidth}{#1}%
+		      \setlength{\leftmargin}{#1}%
+		      \addtolength{\leftmargin}{\labelsep}}%
+	 \item}%
+	{\end{list}}
+
+\newcommand{\ITEM}{\hspace*{-0.2in}}
+\newcommand{\TTITEM}[1]{\hspace*{-0.2in}{\TT{#1}}\\}
+\newcommand{\BFITEM}[1]{\hspace*{-0.2in}{{\bf #1}}\\}
+
+\begin{document}
+        
+\title{Educational Problem Manager\\
+Administration Manual}
+
+\author{Robert L. Walton}
+
+\date{October 31, 2019}
+ 
+\maketitle
+
+\begin{center}
+\large \bf Table of Contents
+\end{center}
+
+\bigskip
+
+\tableofcontents 
+
+\newpage
+
+\section{Introduction}
+
+See the Educational Problem Manager for an introduction to EPM
+and an initial overview.
+
+This document is a comprehensive manual for EPM system maintainers.
+
+\section{Overview}
+
+Here we list adminstrative files and transactions, and give a
+brief description of each.
+
+\subsection{Administrative Files}
+
+EPM uses administrative files to direct generation of files from
+other files, to keep track of visibility
+permissions, and for other things.  All these files are in JSON
+format.  EPM does \underline{not} use any data base (like MYSQL).
+
+Administrative files are \underline{not} uploadable by the user.
+They are made by commands issued by the user to web pages, e.g.,
+the \TT{PPPP.score} file is made by the user commanding
+the \TT{PPPP.run} file, and the user can make their own
+\TT{\ldots-PPPP.run} file using a web page.  When administrative
+commands are made using a web page, the code associated with the
+page checks that the file being made does not violate security.
+
+The following administrative files the user will encounter.
+Unless otherwise noted, these are visible to the user.
+
+\begin{indpar}
+\TTITEM{XXXX.mk}  File specifying how to make the file \TT{XXXX},
+when this last file is generated from other files.  E.g.,
+the \TT{UUUU/PPPP/00-000-PPPP.out.mk} file tells how to make
+the \TT{UUUU/PPPP/00-000-PPPP.out} from 
+the \TT{system/PPPP/00-000-PPPP.in},
+the \TT{system\EOL /\EOL PPPP/\EOL generate-PPPP},
+and \TT{UUUU/PPPP/PPPP}.
+
+A \TT{XXXX.mk} file also tells how to make itself, so there is
+no need for \TT{XXXX.mk.mk} files.  \TT{XXXX.mk} files are
+made from template files.
+\\[1ex]
+\TTITEM{system/template/X.E->Y.F.tpl}
+Template file used to make \TT{.mk} or other administrative
+files.  A typical template file name ends with \TT{X.cc->X.tmpl}
+and is used to make a \TT{X.mk} file that specifies how to
+make a \TT{X} file from a \TT{X.cc} file, where \TT{X} is a
+parameter to the template file.  In general single upper case
+letters are used as parameter names for template files, and
+may also appear in the names of the template files themselves.
+
+Template files are located and used by code in web pages that
+make administrative files.
+\\[1ex]
+\TTITEM{UUUU/credentials} Credential file for user.  Specifies
+user email addresses, ip addresses, dates ip addresses last
+certified and last used.
+\\[1ex]
+\TTITEM{UUUU/logins} Login history of user.
+\\[1ex]
+\TTITEM{UUUU/PPPP/uploads} Upload history of user for problem \TT{PPPP}.
+Note that a user's uploads for a problem are automatically
+checked into a per-user, per-problem \TT{git} database
+which can be cloned by the user and partially inspected
+(in particular to obtain difference listings) using EPM
+web pages.
+\\[1ex]
+\TTITEM{UUUU/PPPP/runs} Run history of user for problem \TT{PPPP}.
+\\[1ex]
+\TTITEM{DDDD/user.perm} Permission control file for arbitrary
+users for all files in directory \TT{DDDD} (e.g., in \TT{system},
+\TT{system/PPPP}) and its subdirectories.
+\\[1ex]
+\TTITEM{DDDD/UUUU.perm} Permission control file for
+user \TT{UUUU} and files in directory \TT{DDDD} (e.g., in directory
+\TT{UUUU}).
+\end{indpar}
+
+In the above, \TT{system/} is actually a project directory.
+There can be many project, and the \TT{UUUU/PPPP/UUUU.perm} file
+can point to any of them, in place of \TT{system/}.
+
+\subsection{Transactions}
+
+The only way a user can interact with EPM is via transactions.
+Each transaction is executed by entering small amounts of text
+on a web page and clicking appropriately.
+
+The common transations are:
+
+\begin{indpar}
+\BFITEM{download}  Download any file visible to the user.
+\\[1ex]
+\BFITEM{inspect}  Inspect various visible JSON administrative files
+in a more readable format.
+\\[1ex]
+\BFITEM{directory}  Create or destroy problem directories and designate
+a current problem directory.
+\\[1ex]
+\BFITEM{upload}  Upload any program source (\TT{.c}, \TT{.cc}, \TT{.java},
+\TT{.py}, or \TT{.lsp}) file or any program input (\TT{.in}) file into
+the current problem directory.
+\\[1ex]
+\BFITEM{make}  Create, edit, and destroy \TT{.mk} files, whose existence
+causes the associated derived files to be made upon demand, in the
+current problem directory.
+\\[1ex]
+\BFITEM{run}  Create, edit, and destroy \TT{.run} files, which define
+runs that cause batches of derived files to be created, in the
+currrent problem directory.  Execute
+designated runs.
+\\[1ex]
+\BFITEM{permission}  Create, edit, and destroy \TT{.perm} files that control
+permissions and visibility.
+\\[1ex]
+\BFITEM{credentials}  Inspect and remove credentials of the current user.
+\\[1ex]
+\BFITEM{project}  Create or destroy project directories and designate
+project directories that are visible to the current problem directory.
+\\[1ex]
+\BFITEM{move}  Move files between the current problem directory and a
+project directory.
+\end{indpar}
+
+Program source files do not have to be problem solution files.
+Any program can be run so long as it opens no files and does
+all its input/output via file descriptors.  Program output
+can be put into \TT{.out}, \TT{.fout}, \TT{.debug}, \TT{.info}, or
+\TT{.disp} files.  The last kind of file encodes X-windows commands
+that can be displayed in an X-window or pdf window or placed in a
+\TT{.pdf} file.  Programs an also interact with terminal windows;
+for example, a program can be written to calculate combinations
+(i.e., N choose K).
+
+Problem solution programs are run without arguments, unless they
+are begin debugged, in which case their output is put into \TT{.debug}
+files.  Other programs can be run with or without arguments.
+
+
+
+\end{document}
