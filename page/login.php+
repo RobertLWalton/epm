@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan  5 07:56:55 EST 2020
+    // Date:	Sun Jan  5 13:55:17 EST 2020
 
     // Handles login for a session.
     //
@@ -107,7 +107,7 @@
     // UID and sets EPM_USER_ID.
     //
     // During the execution of the browser identifica-
-    // tion protocol, $_SESSION['EPM_BROWSER_DATA']
+    // tion protocol, $_SESSION['EPM_LOGIN_DATA']
     // is used to hold BID, EMAIL, CTIME, KEYA, KEYB,
     // CNUM, UID, FTIME, and CCOUNT.  During the proto-
     // col the browser stores BID, EMAIL, CTIME, KEYA,
@@ -207,9 +207,13 @@
 
     // require "$include/debug_info.php";
 
-    if ( ! isset ( $_SESSION['EPM_BROWSER_DATA'] ) )
-	$_SESSION['EPM_BROWSER_DATA'] = [];
-    $data = & $_SESSION['EPM_BROWSER_DATA'];
+    $method = $_SERVER['REQUEST_METHOD'];
+    if ( $method == 'GET' )
+	$_SESSION['EPM_LOGIN_DATA'] = [];
+    elseif ( $method != 'POST' )
+        exit ( "unacceptable method $method" )
+
+    $data = & $_SESSION['EPM_LOGIN_DATA'];
 
     // $data['UID'] is set iff email-file exists and
     // has been read.
@@ -224,12 +228,13 @@
     {
         global $epm_data, $data;
 
-	$efile = "$epm_data/admin/email/"
+	$efile = "admin/email/"
 	       . rawurlencode ( $email );
 
-	if ( ! is_readable ( $efile ) ) return;
+	if ( ! is_readable ( "$epm_data/$efile" ) )
+	    return;
 
-	$c = file_get_contents ( $efile );
+	$c = file_get_contents ( "$epm_data/$efile" );
 	if ( $c === false )
 	    ERROR ( "failed to read readable" .
 		    " file $efile" );
@@ -259,10 +264,11 @@
 	{
 	    if ( isset ( $data['BID'] ) )
 	    {
-		$bfile = "$epm_data/admin/browser/"
+		$bfile = "admin/browser/"
 		       . $data['BID'];
-		if ( file_exists ( $bfile ) )
-		    unlink ( $bfile );
+		if ( file_exists
+		         ( "$epm_data/$bfile" ) )
+		    unlink ( "$epm_data/$bfile" );
 	    }
 	    if ( ! isset ( $data['CNUM'] ) )
 		$data['CNUM'] =
@@ -305,6 +311,13 @@
 	       " {$data['CTIME']}" );
     }
 
+    if ( ! is_directory ( "$epm_data/admin" ) )
+    {
+        mkdir ( "$epm_data/admin", 0770 );
+        mkdir ( "$epm_data/admin/email", 0770 );
+        mkdir ( "$epm_data/admin/browser", 0770 );
+    }
+
     $op = NULL;
     if ( isset ( $_POST['op'] ) )
         $op = $_POST['op'];
@@ -338,8 +351,8 @@
 	    echo ( 'FAIL' );
 	    exit;
 	}
-	$bfile = "$epm_data/admin/browser/$bid";
-	if ( ! is_readable ( $bfile ) )
+	$bfile = "admin/browser/$bid";
+	if ( ! is_readable ( "$epm_data/$bfile" ) )
 	{
 	    if ( ! isset ( $data['EMAIL'] ) )
 	    {
@@ -350,7 +363,8 @@
 	}
 	else
 	{
-	    $c = file_get_contents ( $bfile );
+	    $c = file_get_contents
+	        ( "$epm_data/$bfile" );
 	    if ( $c === false )
 	        ERROR ( "cannot read readable file" .
 		        " $bfile" );
@@ -438,7 +452,7 @@
 
 		if ( isset ( $data['CNUM'] ) )
 		{
-		    $efile = "$epm_data/admin/email"
+		    $efile = "admin/email"
 			   . rawurlencode
 			       ( $data['EMAIL'] );
 		    $data['CCOUNT'] += 1;
@@ -446,61 +460,57 @@
 			      $data['FTIME'],
 			      $data['CCOUNT'] ];
 		    file_put_contents
-			( $efile,
+			( "$epm_data/$efile",
 			  implode ( ' ', $item ) );
 		}
 	    }
 
 	    if ( isset ( $data['CNUM'] ) )
 	    {
-		$bfile = "$epm_data/admin/browser/"
+		$bfile = "admin/browser/"
 		       . $data['BID'];
 		$item = [ $data['EMAIL'],
 			  $data['KEYA'],
 			  $data['KEYB'],
 			  $data['CTIME'] ];
 		file_put_contents
-		    ( $bfile, implode ( ' ', $item ) );
+		    ( "epm_data/$bfile",
+		      implode ( ' ', $item ) );
 	    }
 
 	    $_SESSION['EPM_BROWSER_ID'] = $data['BID'];
 	    $_SESSION['EPM_EMAIL'] = $data['EMAIL'];
 
-	    $lfile = "$epm_data/admin/login.log";
-	    if ( is_writable ( $lfile ) )
-	    {
-		$stime = $_SESSION['EPM_SESSION_TIME'];
-		if ( isset ( $data['UID'] ) )
-		    $item = [ $data['BID'],
-			      $data['EMAIL'],
-			      $data['UID'],
-			      $_SESSION['EPM_IPADDR'],
-			      $stime,
-			      $data['CTIME'],
-			      $data['FTIME'],
-			      $data['CCOUNT'] ]'
-		else
-		    $item = [ $data['BID'],
-			      $data['EMAIL'],
-			      'NEW',
-			      $_SESSION['EPM_IPADDR'],
-			      $stime,
-			      $stime,
-			      $stime,
-			      1 ]'
-		file_put_contents
-		    ( $lfile, implode ( ' ', $item ),
-		      FILE_APPEND );
-	    }
+	    $lfile = "admin/login.log";
+	    $stime = $_SESSION['EPM_SESSION_TIME'];
+	    if ( isset ( $data['UID'] ) )
+		$item = [ $data['BID'],
+			  $data['EMAIL'],
+			  $data['UID'],
+			  $_SESSION['EPM_IPADDR'],
+			  $stime,
+			  $data['CTIME'],
+			  $data['FTIME'],
+			  $data['CCOUNT'] ];
+	    else
+		$item = [ $data['BID'],
+			  $data['EMAIL'],
+			  'NEW',
+			  $_SESSION['EPM_IPADDR'],
+			  $stime,
+			  $stime,
+			  $stime,
+			  1 ];
+	    file_put_contents
+		( "$epm_data/$lfile",
+		  implode ( ' ', $item ),
+		  FILE_APPEND );
 
-	    unset ( $_SESSION['EPM_BROWSER_DATA'] );
+	    unset ( $_SESSION['EPM_LOGIN_DATA'] );
 	    echo ( "DONE $next_page" );
 	}
 	exit;
     }
-    elseif ( $_SERVER['REQUEST_METHOD'] != 'GET' )
-        exit ( "unacceptable method" .
-	       " {$_SERVER['REQUEST_METHOD'}" );
 
     // Else load html and script.
 
