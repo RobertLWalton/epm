@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan  5 05:16:32 EST 2020
+    // Date:	Sun Jan  5 06:40:38 EST 2020
 
     // Handles login for a session.
     //
@@ -435,6 +435,7 @@
 		    $efile = "$epm_data/admin/email"
 			   . rawurlencode
 			       ( $data['EMAIL'] );
+		    $data['CCOUNT'] += 1;
 		    $item = [ $data['UID'],
 			      $data['FTIME'],
 			      $data['CCOUNT'] ];
@@ -459,6 +460,33 @@
 	    $_SESSION['EPM_BROWSER_ID'] = $data['BID'];
 	    $_SESSION['EPM_EMAIL'] = $data['EMAIL'];
 
+	    $lfile = "$epm_data/admin/login.log";
+	    if ( is_writable ( $lfile ) )
+	    {
+		$stime = $_SESSION['EPM_SESSION_TIME'];
+		if ( isset ( $data['UID'] ) )
+		    $item = [ $data['BID'],
+			      $data['EMAIL'],
+			      $data['UID'],
+			      $_SESSION['EPM_IPADDR'],
+			      $stime,
+			      $data['CTIME'],
+			      $data['FTIME'],
+			      $data['CCOUNT'] ]'
+		else
+		    $item = [ $data['BID'],
+			      $data['EMAIL'],
+			      'NEW',
+			      $_SESSION['EPM_IPADDR'],
+			      $stime,
+			      $stime,
+			      $stime,
+			      1 ]'
+		file_put_contents
+		    ( $lfile, implode ( ' ', $item ),
+		      FILE_APPEND );
+	    }
+
 	    echo ( "DONE $next_page" );
 	}
 	exit;
@@ -467,253 +495,10 @@
         exit ( "unacceptable method" .
 	       " {$_SERVER['REQUEST_METHOD'}" );
 
-    // Else load login.php.
-
-
-TBD
-
-    // Data set by GET and POST requests.
-    //
-    $email = NULL;
-        // User must be asked for an email address iff
-	// this remains NULL.
-    if ( isset ( $_SESSION['epm_email'] ) )
-        $email = $_SESSION['epm_email'];
-    $bad_email = NULL;
-        // If this becomes non-NULL, it is a user given
-	// email address that is rejected.
-    $confirmation_time = NULL;
-        // User must be asked for confirmation number,
-	// or must be auto-confirmed, if this remains
-	// NULL and email is not NULL.  This must be
-	// NULL if email is NULL.
-    if ( isset ( $_SESSION['epm_confirmation_time'] ) )
-        $confirmation_time =
-	    $_SESSION['epm_confirmation_time'];
-    $bad_confirm = false;
-        // If this becomes true, confirmation number
-	// given by the user was invalid, and new number
-	// must be asked for.
-    $userid = NULL;
-        // This is set when userid is found using email
-	// address.  For new users, it is never set
-	// (it will be set by user_edit.php).
-	// This must be NULL if $email is NULL.
-	//
-	// NOTE: setting this does NOT set $_SESSION
-	// ['epm_userid'], which is not set until
-	// after confirmation.
-    if ( isset ( $_SESSION['epm_userid'] ) )
-        $userid = $_SESSION['epm_userid'];
-    $user_admin = NULL;
-        // User admin parameters if they exist.
-	// Is NULL if $userid is NULL.
-
-    // Set userid and $user_admin according to $email.
-    // Does nothing for new user.  
-    //
-    function set_userid()
-    {
-        global $email, $epm_data, $userid, $user_admin,
-	       $include;
-
-	$f = "admin/email_index/$email";
-	if ( is_readable ( "$epm_data/$f" ) )
-	{
-	    $u = file_get_contents ( "$epm_data/$f" );
-	    $u = trim ( $u );
-	        // In case $f was edited by hand and a
-		// \n was introduced.
-	    if ( ! preg_match
-		      ( '/^[1-9][0-9]*$/', $u ) )
-	    {
-		$sysfail = "$f has value $u";
-		require "$include/sysalert.php";
-	    }
-	    $userid = $u;
-	    $f = "admin/user{$userid}.info";
-	    if ( is_readable ( "$epm_data/$f" ) )
-		$user_admin =
-		    get_json ( $epm_data, $f );
-	}
-    }
-
-    // Log confirmation attempt or auto-confirmation.
-    //
-    function log_confirmation()
-    {
-    	global $confirmation_time, $email, $epm_data,
-	       $include;
-
-	$date_format = "%FT%T%z";
-
-	$f = "admin/login.log";
-	if ( is_writable ( "$epm_data/$f" ) )
-	{
-	    $desc = fopen ( "$epm_data/$f", 'a' );
-	    if ( $desc === false )
-	    {
-		$sysfail =
-		    "cannot append to writable $f";
-		require "$include/sysalert.php";
-	    }
-	    $ipaddr = $_SESSION['epm_ipaddr'];
-	    $log_login_time =
-		strftime ( $date_format,
-			   $_SESSION
-			     ['epm_login_time'] );
-	    if ( isset ( $confirmation_time ) )
-		$log_confirmation_time = strftime
-		    ( $date_format,
-		      $confirmation_time );
-	    else
-		$log_confirmation_time = 'FAILED';
-	    fputcsv
-		( $desc,
-		  [ $email,
-		    $ipaddr,
-		    $log_login_time,
-		    $log_confirmation_time ] );
-	    fclose ( $desc );
-	}
-    }
-
-    if ( $method == 'GET' )
-    {
-        // Users is trying to initiate or continue
-	// login.
-	//
-	if ( isset ( $userid ) )
-	{
-	    header ( "Location: problem.php" );
-	    exit;
-	}
-	elseif ( isset ( $confirmation_time ) )
-	{
-	    header ( "Location: user_edit.php" );
-	    exit;
-	}
-	// else fall through to continue login.
-    }
-
-    elseif ( $method != 'POST' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
-
-    elseif ( isset ( $confirmation_time ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-
-    elseif ( isset ( $userid ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-
-    elseif ( isset ( $_POST['email'] ) )
-    {
-	// User answer to request for email address.
-	// May be request to change email.
-
-	$new_email = trim ( $_POST['email'] );
-	$e = filter_var
-	    ( $new_email, FILTER_SANITIZE_EMAIL );
-
-	if ( $new_email == "" ) /* Do nothing */;
-	    // "" sent by by user typing just
-	    // carriage return.
-	else if ( $e != $new_email )
-	    $bad_email = $new_email;
-	else if ( ! filter_var
-		      ( $new_email,
-			FILTER_VALIDATE_EMAIL ) )
-	    $bad_email = $new_email;
-	else
-	{
-	    $email = $e;
-	    $_SESSION['epm_email'] = $email;
-	    $userid = NULL;
-	    $user_admin = NULL;
-	    set_userid();
-	}
-    }
-    else if ( isset ( $_POST['confirm_tag'] ) )
-    {
-	if ( ! isset ( $email ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	elseif (    $_SESSION['confirm_tag']
-		  == $_POST['confirm_tag'] )
-	{
-	    $confirmation_time = time();
-	    $_SESSION['epm_confirmation_time'] =
-		$confirmation_time;
-	}
-	else
-	    $bad_confirm = true;
-
-	log_confirmation();
-    }
-
-    if (    isset ( $confirmation_time )
-         && isset ( $user_admin ) )
-    {
-        // Record current time as last confirmation
-	// time for the user and ip address.
-	//
-	$ipaddr = $_SESSION['epm_ipaddr'];
-	$user_admin['confirmation_time'][$ipaddr] =
-	    strftime ( '%FT%T%z', $confirmation_time );
-	$j = json_encode
-	    ( $user_admin, JSON_PRETTY_PRINT );
-	$f = "admin/user{$userid}.info";
-	$r = file_put_contents ( "$epm_data/$f", $j );
-	if ( $r === false )
-	{
-	    $sysfail = "cannot write $f";
-	    require "$include/sysalert.php";
-	}
-    }
-
-    // This must be done after recording confirmation_
-    // time as it may set $confirmation_time to an old
-    // value.
-    //
-    if (    ! isset ( $confirmation_time )
-         && isset ( $user_admin ) )
-    {
-	// Check if we can auto-confirm for this
-	// user and ip address.
-	//
-	$ipaddr = $_SESSION['epm_ipaddr'];
-	if ( isset ( $user_admin['confirmation_time']
-	                        [$ipaddr] ) )
-	{
-	    $ctime = strtotime
-		( $user_admin['confirmation_time']
-		             [$ipaddr] );
-	    if (   time()
-	         < $ctime + $confirmation_interval )
-	    {
-	        $confirmation_time = $ctime;
-		$_SESSION['epm_confirmation_time'] =
-		    $confirmation_time;
-		log_confirmation();
-	    }
-	}
-    }
-
-    if ( isset ( $confirmation_time ) )
-    {
-	if ( ! isset ( $userid ) )
-	    header ( "Location: user_edit.php" );
-	else
-	{
-	    if ( isset ( $userid ) )
-	        $_SESSION['epm_userid'] = $userid;
-	    header ( "Location: problem.php" );
-	}
-	exit;
-    }
-    else if ( isset ( $email ) )
-	$_SESSION['confirm_tag'] =
-	    bin2hex ( random_bytes ( 8 ) );
+    // Else load html and script.
 
 ?>
+
 
 <html>
 
