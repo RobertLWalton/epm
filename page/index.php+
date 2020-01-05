@@ -98,10 +98,10 @@ session_name ( "EPM_859036254367" );
 $epm_max_emails = 3;
     // Max number of email addresses a user may have.
 
-$confirmation_interval = 2592000;
-    // 30 * 24 * 60 * 60 = 30 days
-    // Time in seconds between requests for a user to
-    // confirm.
+$epm_expiration_times =
+	[ 2*24*60*60, 7*24*60*60, 30*24*60*60];
+    // [2, 7, 30] days; ticket expiration times
+    // for 1st, 2nd, and >= 3rd tickets.
 
 $epm_upload_maxsize = 262144;  // 256 kilobytes.
     // Maximum size of uploaded file.

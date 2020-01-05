@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan  5 01:10:56 EST 2020
+    // Date:	Sun Jan  5 01:20:37 EST 2020
 
     // Handles login for a session.
     //
@@ -207,6 +207,49 @@
 
     // require "$include/debug_info.php";
 
+    function read_email_file ( $email )
+    {
+	$efile = "$epm_data/admin/email/"
+	       . rawurlencode ( $email );
+	if ( ! is_readable ( $efile ) )
+	    return false;
+
+	$c = file_get_contents ( $efile );
+	if ( $c === false )
+	    ERROR ( "failed to read readable" .
+		    " file $efile" );
+	$c = trim ( $c );
+	$item = explode ( ' ', $c );
+	if ( count ( $item ) != 3 )
+	    ERROR ( "$efile value '$e' badly" .
+		    " formatted" );
+	$data['UID'] = $item[0];
+	$data['FTIME'] = $item[1];
+	$data['CCOUNT'] = $item[2];
+	return true;
+    }
+
+    function write_new_bid_response ( op )
+    {
+	$data['BID'] = bin2hex ( random_bytes ( 16 ) );
+	$data['KEYA'] = bin2hex ( random_bytes ( 16 ) );
+	$data['KEYB'] = bin2hex ( random_bytes ( 16 ) );
+	$data['CTIME'] = $_SESSION['EPM_SESSION_TIME'];
+
+	$iv = hex2bin
+	    ( "00000000000000000000000000000000" );
+	$ekeyA = bin2hex ( openssl_encrypt
+	    ( hex2bin ( $data['KEYA'] ), "aes-128-cbc",
+	      hex2bin ( $data['CNUM'] ),
+	      OPENSSL_RAW_DATA, $iv ) );
+	$ekeyB = bin2hex ( openssl_encrypt
+	    ( hex2bin ( $data['KEYB'] ), "aes-128-cbc",
+	      hex2bin ( $data['CNUM'] ),
+	      OPENSSL_RAW_DATA, $iv ) );
+					e
+	echo ( "$op {$data['BID'} $ekeyA $ekeyB" .
+	       " {$data['CTIME']}" );
+    }
 
     $op = NULL;
     if ( isset ( $_POST['op'] ) )
@@ -234,24 +277,6 @@
 	    $_SESSION['EPM_BROWSER_DATA'] = [];
 	$data = & $_SESSION['EPM_BROWSER_DATA'];
 
-	$efile = "$epm_data/admin/email/"
-	       . rawurlencode ( $email );
-	if ( is_readable ( $efile ) )
-	{
-	    $c = file_get_contents ( $efile );
-	    if ( $c === false )
-	        ERROR ( "failed to read readable" .
-		        " file $efile" );
-	    $c = trim ( $c );
-	    $item = explode ( ' ', $c );
-	    if ( count ( $item ) != 3 )
-	        ERROR ( "$efile value '$e' badly" .
-		        " formatted" );
-	    $data['UID'] = $item[0];
-	    $data['FTIME'] = $item[1];
-	    $data['CCOUNT'] = $item[2];
-	}
-
 	if ( ! isset ( $data['EMAIL'] )
 	     ||
 	     $data['EMAIL'] != $email )
@@ -260,6 +285,7 @@
 	    $data['CNUM'] =
 		bin2hex ( random_bytes ( 16 ) );
 	}
+	read_email_file ( $email );
 
 	if ( isset ( $data['BID'] ) )
 	{
@@ -268,11 +294,6 @@
 	    if ( file_exists ( $bfile ) )
 	        unlink ( $bfile );
 	}
-	$data['BID'] = bin2hex ( random_bytes ( 16 ) );
-
-	$data['KEYA'] = bin2hex ( random_bytes ( 16 ) );
-	$data['KEYB'] = bin2hex ( random_bytes ( 16 ) );
-	$data['CTIME'] = $_SESSION['EPM_SESSION_TIME'];
 
 	mail ( $email, "Your Confirmation Number",
 	       "Your confirmation number is:\r\n" .
@@ -281,19 +302,7 @@
 	       ["From" =>
 	        "no_reply@{$_SERVER['SERVER_NAME']}"] );
 
-	$iv = hex2bin
-	    ( "00000000000000000000000000000000" );
-	$ekeyA = bin2hex ( openssl_encrypt
-	    ( hex2bin ( $data['KEYA'] ), "aes-128-cbc",
-	      hex2bin ( $data['CNUM'] ),
-	      OPENSSL_RAW_DATA, $iv ) );
-	$ekeyB = bin2hex ( openssl_encrypt
-	    ( hex2bin ( $data['KEYB'] ), "aes-128-cbc",
-	      hex2bin ( $data['CNUM'] ),
-	      OPENSSL_RAW_DATA, $iv ) );
-					e
-	echo ( "NEW {$data['BID'} $ekeyA $ekeyB" .
-	       " {$data['CTIME']}" );
+        write_new_bid_response ( 'NEW' );
 	exit;
     }
     elseif ( $op == 'AUTO' )
@@ -301,7 +310,10 @@
 	$bid = trim ( $_POST['value'] );
 	if ( ! preg_match ( '/^[a-fA-F0-9]{32}$/',
 	                    $bid ) ) 
-	    exit ( 'badly formatted post' );
+	{
+	    echo ( 'FAIL' );
+	    exit;
+	}
 	$bfile = "$epm_data/admin/browser/$bid";
 	if ( ! is_readable ( $bfile ) )
 	{
@@ -310,6 +322,7 @@
 	        echo ( 'FAIL' );
 		exit;
 	    }
+	    // Else this is part of MANUAL login.
 	}
 	else
 	{
@@ -323,22 +336,53 @@
 	        ERROR ( "$bfile value '$c' badly" .
 		        " formatted" );
 	    $email = $item[1];
-	    if ( isset ( $data['EMAIL'] )
-	    {
-	        if ( $email != $data['EMAIL'] )
-		{
-		}
-	    }
-	    else
+	    if ( ! isset ( $data['EMAIL'] )
+		 ||
+	         $email != $data['EMAIL'] )
 	    {
 		$data['EMAIL'] = $email;
+		read_email_file ( $email );
 	    }
+	    $expired = false;
+	    if ( isset ( $data['CCOUNT']
+	         &&
+		 isset ( $data['CTIME'] )
+	    {
+	        $ccount = $data['CCOUNT'];
+		$ctime = strtotime['CTIME'];
+		$now = time();
+
+		$etimes = & $epm_expiration_times;
+		$ecount = count ( $etimes );
+		if ( $ccount >= $ecount )
+		    $ccount = $ecount - 1;
+		$etime = $now + $etimes[$ccount];
+		if ( $etime > $now )
+		    $expired = true;
+	    }
+
+	    if ( $expired )
+	    {
+	        @unlink ( $bfile );
+		write_new_bid_response ( 'EXPIRED' );
+		exit;
+	    }
+	         
 	    $data['KEYA'] = $item[2];
 	    $data['KEYB'] = $item[3];
-	    $data['CTIME'] = $item[4];
 	}
 
-	TBD
+	$data['HANDSHAKE'] =
+	    bin2hex ( random_bytes ( 16 ) );
+	$iv = hex2bin
+	    ( "00000000000000000000000000000000" );
+	$handshake = bin2hex ( openssl_encrypt
+	    ( hex2bin ( $data['KEYA'] ), "aes-128-cbc",
+	      hex2bin ( $data['HANDSHAKE'] ),
+	      OPENSSL_RAW_DATA, $iv ) );
+					e
+	echo ( "SHAKE $handshake" );
+	exit;
     }
     elseif ( $op == 'SHAKE' )
     {
