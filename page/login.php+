@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan  5 01:20:37 EST 2020
+    // Date:	Sun Jan  5 05:16:32 EST 2020
 
     // Handles login for a session.
     //
@@ -167,7 +167,7 @@
     //	   * Receive one of:
     //           'EXPIRED BID EKEYA EKEYB CTIME':
     //               go to EXPIRED
-    //           'FAILED':  (means BID not recognized)
+    //           'FAIL':  (means BID not recognized)
     //               go to AUTO_ID
     //		 'SHAKE HANDSHAKE':
     //               continue with following
@@ -175,7 +175,7 @@
     //       result using KEYB to get SHAKEHAND.
     //     * Send 'op=SHAKE&value=SHAKEHAND'
     //     * Receive one of:
-    //           'FAILED':
+    //           'FAIL':
     //               go to AUTO_ID
     //           'DONE NEXT_PAGE':
     //               continue with following
@@ -207,12 +207,21 @@
 
     // require "$include/debug_info.php";
 
+    if ( ! isset ( $_SESSION['EPM_BROWSER_DATA'] ) )
+	$_SESSION['EPM_BROWSER_DATA'] = [];
+    $data = $_SESSION['EPM_BROWSER_DATA'];
+
+    // Read $epm_data/admin/email/$email(encoded) if it
+    // exists and if read set $data UID, FTIME, CCOUNT.
+    //
     function read_email_file ( $email )
     {
+        global $epm_data, $data;
+
 	$efile = "$epm_data/admin/email/"
 	       . rawurlencode ( $email );
-	if ( ! is_readable ( $efile ) )
-	    return false;
+
+	if ( ! is_readable ( $efile ) ) return;
 
 	$c = file_get_contents ( $efile );
 	if ( $c === false )
@@ -226,11 +235,50 @@
 	$data['UID'] = $item[0];
 	$data['FTIME'] = $item[1];
 	$data['CCOUNT'] = $item[2];
-	return true;
     }
 
-    function write_new_bid_response ( op )
+    // Output NEW or EXPIRED response, creating CNUM is
+    // necessary.  Note: CNUM is set iff a new ticket
+    // has been created, and its bid-file should be
+    // written and email-file CCOUNT incremented upon
+    // successful handshake).
+    //
+    function new_ticket_response ( $email, $op )
     {
+        global $epm_data, $data;
+
+	if ( isset ( $data['EMAIL'] )
+	     &&
+	     $data['EMAIL'] == $email )
+	{
+	    if ( isset ( $data['BID'] ) )
+	    {
+		$bfile = "$epm_data/admin/browser/"
+		       . $data['BID'];
+		if ( file_exists ( $bfile ) )
+		    unlink ( $bfile );
+	    }
+	    if ( ! isset ( $data['CNUM'] ) )
+		$data['CNUM'] =
+		    bin2hex ( random_bytes ( 16 ) );
+	}
+	else
+	{
+	    $data['EMAIL'] = $email;
+	    $data['CNUM'] =
+		bin2hex ( random_bytes ( 16 ) );
+	    read_email_file ( $email );
+	}
+
+	$sname = $_SERVER['SERVER_NAME'];
+	mail ( $data['EMAIL'],
+	       "Your EPM Confirmation Number",
+	       "Your EPM $sname confirmation number" .
+	       " is:\r\n" .
+	       "\r\n" .
+	       "     {$data['CNUM']}\r\n",
+	       ["From" => "no_reply@$sname"] );
+
 	$data['BID'] = bin2hex ( random_bytes ( 16 ) );
 	$data['KEYA'] = bin2hex ( random_bytes ( 16 ) );
 	$data['KEYB'] = bin2hex ( random_bytes ( 16 ) );
@@ -246,7 +294,7 @@
 	    ( hex2bin ( $data['KEYB'] ), "aes-128-cbc",
 	      hex2bin ( $data['CNUM'] ),
 	      OPENSSL_RAW_DATA, $iv ) );
-					e
+
 	echo ( "$op {$data['BID'} $ekeyA $ekeyB" .
 	       " {$data['CTIME']}" );
     }
@@ -272,37 +320,7 @@
 	    echo ( 'BAD_EMAIL' );
 	    exit;
 	}
-
-	if ( ! isset ( $_SESSION['EPM_BROWSER_DATA'] ) )
-	    $_SESSION['EPM_BROWSER_DATA'] = [];
-	$data = & $_SESSION['EPM_BROWSER_DATA'];
-
-	if ( ! isset ( $data['EMAIL'] )
-	     ||
-	     $data['EMAIL'] != $email )
-	{
-	    $data['EMAIL'] = $email;
-	    $data['CNUM'] =
-		bin2hex ( random_bytes ( 16 ) );
-	}
-	read_email_file ( $email );
-
-	if ( isset ( $data['BID'] ) )
-	{
-	    $bfile = "$epm_data/admin/browser/"
-	           . $data['BID'];
-	    if ( file_exists ( $bfile ) )
-	        unlink ( $bfile );
-	}
-
-	mail ( $email, "Your Confirmation Number",
-	       "Your confirmation number is:\r\n" .
-	       "\r\n" .
-	       "     {$data['CNUM'}\r\n",
-	       ["From" =>
-	        "no_reply@{$_SERVER['SERVER_NAME']}"] );
-
-        write_new_bid_response ( 'NEW' );
+        new_ticket_response ( '$email, NEW' );
 	exit;
     }
     elseif ( $op == 'AUTO' )
@@ -341,10 +359,11 @@
 	         $email != $data['EMAIL'] )
 	    {
 		$data['EMAIL'] = $email;
+		unset ( $data['CNUM'] );
 		read_email_file ( $email );
 	    }
 	    $expired = false;
-	    if ( isset ( $data['CCOUNT']
+	    if ( isset ( $data['CCOUNT'] )
 	         &&
 		 isset ( $data['CTIME'] )
 	    {
@@ -357,14 +376,15 @@
 		if ( $ccount >= $ecount )
 		    $ccount = $ecount - 1;
 		$etime = $now + $etimes[$ccount];
-		if ( $etime > $now )
+		if ( $etime < $now )
 		    $expired = true;
 	    }
 
 	    if ( $expired )
 	    {
 	        @unlink ( $bfile );
-		write_new_bid_response ( 'EXPIRED' );
+		new_ticket_response
+		    ( $email, 'EXPIRED' );
 		exit;
 	    }
 	         
@@ -380,13 +400,73 @@
 	    ( hex2bin ( $data['KEYA'] ), "aes-128-cbc",
 	      hex2bin ( $data['HANDSHAKE'] ),
 	      OPENSSL_RAW_DATA, $iv ) );
-					e
+
 	echo ( "SHAKE $handshake" );
 	exit;
     }
     elseif ( $op == 'SHAKE' )
     {
+	$shakehand = trim ( $_POST['value'] );
+	if ( ! preg_match ( '/^[a-fA-F0-9]{32}$/',
+	                    $shakehand ) ) 
+	{
+	    echo ( 'FAIL' );
+	    exit;
+	}
+	$iv = hex2bin
+	    ( "00000000000000000000000000000000" );
+	$handshake = bin2hex ( openssl_decrypt
+	    ( hex2bin ( $data['KEYB'] ), "aes-128-cbc",
+	      hex2bin ( $shakehand ),
+	      OPENSSL_RAW_DATA, $iv ) );
+
+	if ( $handshake != $data['HANDSHAKE'] )
+	    echo ( 'FAIL' );
+	else
+	{
+	    $next_page = 'user_edit.php';
+	    if ( isset ( $data['UID'] ) )
+	    {
+		$next_page = 'problem.php';
+		$_SESSION['EPM_USER_ID'] = $data['UID'];
+
+		if ( isset ( $data['CNUM'] ) )
+		{
+		    $efile = "$epm_data/admin/email"
+			   . rawurlencode
+			       ( $data['EMAIL'] );
+		    $item = [ $data['UID'],
+			      $data['FTIME'],
+			      $data['CCOUNT'] ];
+		    file_put_contents
+			( $efile,
+			  implode ( ' ', $item ) );
+		}
+	    }
+
+	    if ( isset ( $data['CNUM'] ) )
+	    {
+		$bfile = "$epm_data/admin/browser/"
+		       . $data['BID'];
+		$item = [ $data['EMAIL'],
+			  $data['KEYA'],
+			  $data['KEYB'],
+			  $data['CTIME'] ];
+		file_put_contents
+		    ( $bfile, implode ( ' ', $item ) );
+	    }
+
+	    $_SESSION['EPM_BROWSER_ID'] = $data['BID'];
+	    $_SESSION['EPM_EMAIL'] = $data['EMAIL'];
+
+	    echo ( "DONE $next_page" );
+	}
+	exit;
     }
+    elseif ( $_SERVER['REQUEST_METHOD'] != 'GET' )
+        exit ( "unacceptable method" .
+	       " {$_SERVER['REQUEST_METHOD'}" );
+
     // Else load login.php.
 
 
@@ -1088,7 +1168,7 @@ function GOT_SHAKEB ( shakeB )
 function SHAKE_RESPONSE ( item )
 {
     item = item.split ( ' ' );
-    if ( item[0] == 'FAILED' )
+    if ( item[0] == 'FAIL' )
     {
         AUTO_ID();  // Retry
 	return;
