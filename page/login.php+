@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan  4 13:52:03 EST 2020
+    // Date:	Sun Jan  5 01:10:56 EST 2020
 
     // Handles login for a session.
     //
@@ -126,7 +126,7 @@
     //
     // where IPADDR is $_SESSION['EPM_IPADDR'] and for
     // a new user UID is 'NEW', CTIME and FTIME equal
-    // STIME, and CCOUNT is 0.
+    // STIME, and CCOUNT is 1.
 
 
     // Browser Identification Protocol
@@ -216,7 +216,7 @@
     //
     if ( $op == 'MANUAL_ID' )
     {
-	$email = trim ( $_POST['email'] );
+	$email = trim ( $_POST['value'] );
 	$e = filter_var
 	    ( $email, FILTER_SANITIZE_EMAIL );
 
@@ -239,7 +239,7 @@
 	if ( is_readable ( $efile ) )
 	{
 	    $c = file_get_contents ( $efile );
-	    if ( $c !== false )
+	    if ( $c === false )
 	        ERROR ( "failed to read readable" .
 		        " file $efile" );
 	    $c = trim ( $c );
@@ -260,6 +260,16 @@
 	    $data['CNUM'] =
 		bin2hex ( random_bytes ( 16 ) );
 	}
+
+	if ( isset ( $data['BID'] ) )
+	{
+	    $bfile = "$epm_data/admin/browser/"
+	           . $data['BID'];
+	    if ( file_exists ( $bfile ) )
+	        unlink ( $bfile );
+	}
+	$data['BID'] = bin2hex ( random_bytes ( 16 ) );
+
 	$data['KEYA'] = bin2hex ( random_bytes ( 16 ) );
 	$data['KEYB'] = bin2hex ( random_bytes ( 16 ) );
 	$data['CTIME'] = $_SESSION['EPM_SESSION_TIME'];
@@ -286,8 +296,49 @@
 	       " {$data['CTIME']}" );
 	exit;
     }
-    elseif ( $op == 'AUTO_ID' )
+    elseif ( $op == 'AUTO' )
     {
+	$bid = trim ( $_POST['value'] );
+	if ( ! preg_match ( '/^[a-fA-F0-9]{32}$/',
+	                    $bid ) ) 
+	    exit ( 'badly formatted post' );
+	$bfile = "$epm_data/admin/browser/$bid";
+	if ( ! is_readable ( $bfile ) )
+	{
+	    if ( ! isset ( $data['EMAIL'] ) )
+	    {
+	        echo ( 'FAIL' );
+		exit;
+	    }
+	}
+	else
+	{
+	    $c = file_get_contents ( $bfile );
+	    if ( $c === false )
+	        ERROR ( "cannot read readable file" .
+		        " $bfile" );
+	    $c = trim ( $c );
+	    $item = explode ( ' ', $c );
+	    if ( count ( $item ) != 4 )
+	        ERROR ( "$bfile value '$c' badly" .
+		        " formatted" );
+	    $email = $item[1];
+	    if ( isset ( $data['EMAIL'] )
+	    {
+	        if ( $email != $data['EMAIL'] )
+		{
+		}
+	    }
+	    else
+	    {
+		$data['EMAIL'] = $email;
+	    }
+	    $data['KEYA'] = $item[2];
+	    $data['KEYB'] = $item[3];
+	    $data['CTIME'] = $item[4];
+	}
+
+	TBD
     }
     elseif ( $op == 'SHAKE' )
     {
