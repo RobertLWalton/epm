@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan  5 06:40:38 EST 2020
+    // Date:	Sun Jan  5 07:18:49 EST 2020
 
     // Handles login for a session.
     //
@@ -209,7 +209,7 @@
 
     if ( ! isset ( $_SESSION['EPM_BROWSER_DATA'] ) )
 	$_SESSION['EPM_BROWSER_DATA'] = [];
-    $data = $_SESSION['EPM_BROWSER_DATA'];
+    $data = & $_SESSION['EPM_BROWSER_DATA'];
 
     // Read $epm_data/admin/email/$email(encoded) if it
     // exists and if read set $data UID, FTIME, CCOUNT.
@@ -487,6 +487,7 @@
 		      FILE_APPEND );
 	    }
 
+	    unset ( $_SESSION['EPM_BROWSER_DATA'] );
 	    echo ( "DONE $next_page" );
 	}
 	exit;
