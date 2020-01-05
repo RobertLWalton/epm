@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan  5 07:18:49 EST 2020
+    // Date:	Sun Jan  5 07:56:55 EST 2020
 
     // Handles login for a session.
     //
@@ -210,6 +210,12 @@
     if ( ! isset ( $_SESSION['EPM_BROWSER_DATA'] ) )
 	$_SESSION['EPM_BROWSER_DATA'] = [];
     $data = & $_SESSION['EPM_BROWSER_DATA'];
+
+    // $data['UID'] is set iff email-file exists and
+    // has been read.
+    //
+    // $data['CNUM'] is set iff new ticket has been
+    // issued and confirmation number has been sent.
 
     // Read $epm_data/admin/email/$email(encoded) if it
     // exists and if read set $data UID, FTIME, CCOUNT.
