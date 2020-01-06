@@ -1,8 +1,8 @@
 <?php
 
-    // File:	user_edit.php
+    // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jan  6 00:24:03 EST 2020
+    // Date:	Mon Jan  6 00:56:51 EST 2020
 
     // Edits files:
     //
@@ -75,6 +75,7 @@
     $email = $_SESSION['EPM_EMAIL'];
     $new_user =
         ( ! isset ( $_SESSION['EPM_USER_ID'] ) );
+    $edit = false;
 
     if ( $method == 'GET' )
     {
@@ -91,7 +92,7 @@
 	lock();
 	$desc = opendir ( "$epm_data/$d" );
 	if ( $desc === false )
-	    ERROR ( "user_edit: cannot open $d" );
+	    ERROR ( "cannot open $d" );
 
 	while ( true )
 	{
@@ -107,7 +108,7 @@
 	    $c = file_get_contents ( "$epm_data/$f" );
 	    if ( $c === false )
 	    {
-		WARN ( "user_edit: cannot read $f" );
+		WARN ( "cannot read $f" );
 		continue;
 	    }
 	    $c = trim ( $c );
@@ -117,7 +118,7 @@
 		 ! preg_match
 		       ( '/^[1-9][0-9]*$/', $item[0] ) )
 	    {
-		WARN ( "user_edit: bad value $c in $f" );
+		WARN ( "bad value $c in $f" );
 		continue;
 	    }
 	    $max_uid = max ( $max_uid, $item[0] );
@@ -235,6 +236,8 @@
     {
 	// Do nothing.  Get info from user.
     }
+    elseif ( isset ( $_POST['edit'] ) )
+        $edit = true;
     elseif ( isset ( $_POST['new_email'] ) )
     {
     	if ( sanitize_email
@@ -312,7 +315,7 @@
 	    unlock();
 	}
     }
-    elseif ( isset ( $_POST['update'] ) )
+    elseif ( isset ( $_POST['data'] ) )
     {
 	// Read and check all the form data.
 	// Skip emails that are to be deleted.
@@ -332,15 +335,17 @@
     else
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
-    if ( count ( $errors ) == 0
-         &&
-	 ( ! $new_user
-	   ||
-	   ( $full_name != ''
-	     &&
-	     $organization != ''
-	     &&
-	     $location != '' ) ) )
+    if ( count ( $errors ) != 0
+         ||
+	 $full_name == ''
+	 ||
+	 $organization == ''
+	 ||
+	 $location == '' )
+    {
+        $edit = true;
+    }
+    else
     {
         // We are done; copy data to files.
 	//
@@ -369,7 +374,7 @@
 	    foreach ( array_merge ( $emails, [$email] )
 	              as $e )
 	    {
-		$he = htmlspecialchars ( $d );
+		$he = htmlspecialchars ( $e );
 		$f = "admin/email/$he";
 		if ( is_readable ( "$epm_data/$f" ) )
 		    WARN ( "$f exists when it should" .
@@ -411,9 +416,7 @@
 	echo '</div>' . "\n";
     }
 
-    if (    count ( $emails ) == 0
-         && isset ( $uid )
-         && count ( $errors ) == 0 )
+    if ( count ( $emails ) == 0 )
         echo "<mark>Its a good idea to add a second" .
 	     " email address.</mark><br>\n";
 
@@ -426,22 +429,26 @@
          "(used for this login)<br>\n";
     foreach ( $emails as $e )
     {
-	$h = htmlspecialchars ( $e );
-	echo "<form style='display:inline'".
-	     " method='POST'" .
-	     " action='user_edit.php'>\n" .
-	     "$h&nbsp;&nbsp;&nbsp;&nbsp;" .
-	     "<button type='submit'" .
-	     " name='delete_email'" .
-	     " value='$h'>Delete</button><br>\n" .
-	     "</form>\n";
+	$he = htmlspecialchars ( $e );
+	if ( $edit )
+	    echo "<form style='display:inline'".
+		 " method='POST'" .
+		 " action='user.php'>\n" .
+		 "$he" .
+		 "&nbsp;&nbsp;&nbsp;&nbsp;" .
+		 "<button type='submit'" .
+		 " name='delete_email'" .
+		 " value='$he'>Delete</button><br>\n" .
+		 "</form>\n";
+	else
+	    echo "$he<br>\n";
     }
-    if ( isset ( $uid )
+    if ( $edit
          &&
 	 count ( $emails ) + 1 < $max_emails )
 	echo "<form style='display:inline'".
 	     " method='POST'" .
-	     " action='user_edit.php'>\n" .
+	     " action='user.php'>\n" .
 	     "<input type='email' name='new_email'" .
 	     " value='' size='40' placeholder=" .
 	     "'Another Email Address'>" .
@@ -450,11 +457,6 @@
 	     " value='Add'><br>\n" .
 	     "</form>\n";
 
-    if ( isset ( $uid ) && count ( $errors ) == 0 )
-        $update = 'Done';
-    else
-        $update = 'Update';
-
     echo "</div>\n";
 
     $location_placeholder =
@@ -462,28 +464,49 @@
     $hfull_name = htmlspecialchars ( $full_name );
     $horganization = htmlspecialchars ( $organization );
     $hlocation = htmlspecialchars ( $location );
-    echo <<<EOT
-    <form  method='POST' action='user_edit.php'>
-    <table>
-    <tr><td><b>Full Name:</b></td>
-        <td> <input type='text' size='40'
-              name='full_name'
-              value='$hfull_name'
-	      placeholder='John Doe'></td></tr>
-    <tr><td><b>Organization:</b></td><td>
-        <input type='text' size='40'
-	 name='organization' value='$horganization'
-	 placeholder='University, Company, or Self'>
-	 </td></tr>
-    <tr><td><b>Location:</b></td><td>
-        <input type='text' size='40'
-	 name='location' value='$hlocation'
-	 placeholder='$location_placeholder'>
-	 </td></tr>
-    <tr><td>
-        <input type='submit' name='update'
-	       value='$update'></td></tr>
-    </table></form>
+    if ( $edit )
+	echo <<<EOT
+	<form  method='POST' action='user.php'>
+	<table>
+	<tr><td><b>Full Name:</b></td>
+	    <td> <input type='text' size='40'
+		  name='full_name'
+		  value='$hfull_name'
+		  placeholder='John Doe'></td></tr>
+	<tr><td><b>Organization:</b></td><td>
+	    <input type='text' size='40'
+	     name='organization' value='$horganization'
+	     placeholder='University, Company, or Self'>
+	     </td></tr>
+	<tr><td><b>Location:</b></td><td>
+	    <input type='text' size='40'
+	     name='location' value='$hlocation'
+	     placeholder='$location_placeholder'>
+	     </td></tr>
+	<tr><td>
+	    <input type='submit' name='data'
+		   value='Update'></td></tr>
+	</table></form>
+EOT;
+    else
+	echo <<<EOT
+	<table>
+	<tr><td><b>Full Name:</b></td>
+	    <td>$hfull_name</td></tr>
+	<tr><td><b>Organization:</b></td><td>
+	    <td>$horganization</td></tr>
+	<tr><td><b>Location:</b></td><td>
+	    <td>$hlocation</td></tr>
+	</table><br>
+	<form>
+	<input type="submit" formaction="user.php"
+	       formmethod='POST' name='edit'
+	       value="Edit">
+        &nbsp;&nbsp;&nbsp;&nbsp;
+	<input type="submit" formaction="problem.php"
+	       formmethod='GET'
+	       value="Go To Problem"</input>
+	</form>
 EOT;
 ?>
 
