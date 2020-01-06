@@ -2,7 +2,7 @@
 
     // File:	user_edit.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan  5 13:16:15 EST 2020
+    // Date:	Mon Jan  6 00:24:03 EST 2020
 
     // Edits files:
     //
@@ -32,6 +32,27 @@
 
     // require "$include/debug_info.php";
 
+    $lock_desc = NULL;
+    function shutdown ()
+    {
+        global $lock_desc;
+        @flock ( $lock_desc, LOCK_UN );
+    }
+    register_shutdown_function ( shutdown );
+    function lock()
+    {
+        global $lock_desc, $epm_data;
+        $lock_desc =
+	    fopen ( "$epm_data/admin/email/lock", "w" );
+	flock ( $lock_desc, LOCK_EX );
+    }
+    function unlock()
+    {
+        global $lock_desc;
+	flock ( $lock_desc, LOCK_UN );
+	$lock_desc = fclose ( $lock_desc );
+    }
+
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method == 'GET' )
 	$_SESSION['EPM_USER_EDIT_DATA'] = [
@@ -41,7 +62,7 @@
 	    'organization' => '',
 	    'location' => ''];
     elseif ( $method != 'POST' )
-        exit ( "unacceptable method $method" )
+        exit ( "UNACCEPTABLE HTTP METHOD $method" )
 
     $data = & $_SESSION['EPM_USER_EDIT_DATA'];
 
@@ -66,8 +87,8 @@
 	// user id seen amoung admin/email_index files.
 	//
 	$max_uid = 0;
-	    // Set to NULL if cannot be computed.
 	$d = "admin/email";
+	lock();
 	$desc = opendir ( "$epm_data/$d" );
 	if ( $desc === false )
 	    ERROR ( "user_edit: cannot open $d" );
@@ -87,7 +108,6 @@
 	    if ( $c === false )
 	    {
 		WARN ( "user_edit: cannot read $f" );
-		$max_uid = NULL;
 		continue;
 	    }
 	    $c = trim ( $c );
@@ -98,75 +118,72 @@
 		       ( '/^[1-9][0-9]*$/', $item[0] ) )
 	    {
 		WARN ( "user_edit: bad value $c in $f" );
-		$max_uid = NULL;
 		continue;
 	    }
-	    if ( isset ( $max_uid ) )
-		$max_uid = max ( $max_uid, $item[0] );
+	    $max_uid = max ( $max_uid, $item[0] );
 	    if ( $item[0] == $uid && $value != $email )
 		$emails[] = $value;
 	}
+	unflock();
 	if ( $new_user ) $uid = $max_uid + 1;
+	                 // This is lower bound on new
+			 // user id, and not necessarily
+			 // the actual new user id.
 	sort ( $emails );
 
-	$f = "admin/user{$uid}.info";
-	$c = file_get_contents ( "$epm_data/$f" );
-	if ( $c === false )
-	    ERROR ( "cannot read readable $f" );
-	$c = preg_replace
-	         ( '#(\R|^)\h*//.*#', '', $c );
-	    // Get rid of `//...' comments.
-	$user_admin = json_decode ( $c, true );
-	if ( $user_admin === NULL )
+	if ( ! $new_user )
 	{
-	    $m = json_last_error_msg();
-	    ERROR ( "cannot decode json in $f:\n" .
-	            "    $m" );
+	    $f = "admin/user{$uid}.info";
+	    $c = file_get_contents ( "$epm_data/$f" );
+	    if ( $c === false )
+		ERROR ( "cannot read $f" );
+	    $c = preg_replace
+		     ( '#(\R|^)\h*//.*#', '', $c );
+		// Get rid of `//...' comments.
+	    $user_admin = json_decode ( $c, true );
+	    if ( $user_admin === NULL )
+	    {
+		$m = json_last_error_msg();
+		ERROR ( "cannot decode json in $f:\n" .
+			"    $m" );
+	    }
+	    foreach ( ['full_name',
+		       'organization',
+		       'location'] as $key )
+		$data[$key] = $user_admin[$key];
 	}
-	foreach ( ['full_name',
-	           'organization',
-		   'location'] as $key )
-	    $data['key'] = $user_admin[$key];
-	if ( $emails != $user_admin['emails'] )
-	    WARN ( "mismatch between $f emails" .
-	           " and admin/email/ emails" );
     }
-    $num_emails = max ( $epm_max_emails,
+    $max_emails = max ( $epm_max_emails,
                         1 + count ( $emails ) );
 
 
     // Error messages and indicators for POSTs.
     //
     $errors = [];  // List of post error messages.
-    $field_missing = false;
-       // Set if form field missing from post.
-       // An error message is also put in $errors.
 
-    // Sanitize non-email form entries.  If error, add
-    // to $errors and return ''.  Otherwise return
-    // value.
+    // Sanitize non-email form entries and set variable
+    // to new value.  If error, add to $errors and do
+    // not change variable.
     //
     // $name is as in $_POST[$name], $form_name is as in
     // text of form, $min_length is min UNICODE charac-
     // ters in value.
     //
     function sanitize
-        ( $name, $form_name, $min_length )
+        ( & $variable, $name, $form_name, $min_length )
     {
-        global $errors, $field_missing;
+        global $errors;
 
         if ( ! isset ( $_POST[$name] ) )
 	{
-	    $field_missing = true;
 	    $errors[] = "must set $form_name";
-	    return '';
+	    return;
 	}
 	$value = trim ( $_POST[$name] );
 	if ( $value == '' )
 	{
-	    $field_missing = true;
 	    $errors[] = "must set $form_name";
-	    return '';
+	    return;
 	}
 	if (   strlen ( utf8_decode ( $value ) )
 	     < $min_length )
@@ -175,22 +192,23 @@
 	{
 	    $errors[] =
 	        "$form_name is too short; re-enter";
-	    return '';
+	    return;
 	}
-	return $value;
+	$variable = $value;
     }
 
-    // Check that $value can be legally added as an
-    // email.  Return '' if its not legal OR if its
-    // empty.  Otherwise return $value.
+    // Check that value can be legally added as an email
+    // and set variable to new value.  Return true if
+    // value is legal and false if not, and if false is
+    // returned, add to $errors and do not set variable.
     //
-    function sanitize_email ( $value )
+    function sanitize_email ( & $variable, $value )
     {
         global $errors;
 
 	$value =  trim ( $value );
 	if ( $value == "" )
-	    return '';
+	    return false;
 	$svalue = filter_var
 	    ( $value, FILTER_SANITIZE_EMAIL );
 	if ( $value != $svalue )
@@ -198,7 +216,7 @@
 	    $errors[] =
 	        "Email $value contains characters" .
 		" illegal in an email address";
-	    return '';
+	    return false;
 	}
 	if ( ! filter_var
 		  ( $value,
@@ -207,56 +225,57 @@
 	    $errors[] =
 	        "Email $value is not a valid email" .
 		" address";
-	    return '';
+	    return false;
 	}
-	return $value;
+	$variable = $value;
+	return true;
     }
 	
-    $method = $_SERVER['REQUEST_METHOD'];
-   
     if ( $method == 'GET' )
     {
 	// Do nothing.  Get info from user.
     }
-
-    elseif ( $method != 'POST' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
-
     elseif ( isset ( $_POST['new_email'] ) )
     {
-    	$e = sanitize_email ( $_POST['new_email'] );
-	if ( $e != '' )
+    	if ( sanitize_email
+	         ( $e, $_POST['new_email'] ) )
 	{
-	    $f = "admin/email_index/$e";
-	    if ( is_readable ( "$epm_data/$f" ) )
+	    lock();
+	    $he = htmlspecialchars ( $e );
+	    $f = "admin/email_index/$he";
+	    if ( is_readable ( "$epm_data/$f" )
+	         ||
+		     array_search ( $e, $emails, true )
+		 !== false )
 	    {
 	        $errors[] =
 		    "email address $e is already" .
 		    " assigned to some user" .
 		    " (maybe you)";
 	    }
-	    else
+	    else if ( ! new_user )
 	    {
-		$item = [ $uid,
+	        $item = [ $uid,
 		          $_SESSION['EPM_SESSION_TIME'],
-			  1];
-	        $r = file_put_contents
-		         ( "$epm_data/$f",
-			   implode ( ' ', $item ) );
-		if ( $r === false )
-		    ERROR ( "could not write $f" );
-		$emails[] = $e;
+			  0 ];
+		file_put_contents
+		    ( "$epm_data/$f",
+		      implode ( ' ', $item );
+	        $emails[] = $e;
 	    }
+	    else
+	        $emails[] = $e;
+	    unlock();
 	}
     }
     elseif ( isset ( $_POST['delete_email'] ) )
     {
-	if ( ! isset ( $uid ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-    	$e = sanitize_email ( $_POST['delete_email'] );
-	if ( $e != '' )
+    	if ( sanitize_email
+	         ( $e, $_POST['delete_email'] ) )
         {
-	    $f = "admin/email_index/$e";
+	    lock();
+	    $he = htmlspecialchars ( $e );
+	    $f = "admin/email_index/$he";
 	    $k = array_search ( $e, $emails, true );
 	    if ( $e == $email )
 	    {
@@ -266,18 +285,31 @@
 	    }
 	    elseif ( $k === false )
 	    {
-	        $he = htmlspecialchars ( $e );
 	        $errors[] =
 		    "trying to delete email address" .
-		    "$e that is NOT assigned to your";
+		    "$e that is NOT assigned to you";
 	    }
-	    elseif ( ! unlink ( "$epm_data/$f" ) )
-	    {
-	        $sysfail = "cannot unlink $f";
-		require "$include/sysalert.php";
-	    }
-	    else
+	    elseif ( $new_user )
 		array_splice ( $emails, $k, 1 );
+	    else
+	    {
+	        $c = file_get_contents
+		    ( "$epm_data/$f" );
+		if ( $c !== false )
+		{
+		    $c = trim ( $c );
+		    $item = explode ( ' ', $c );
+		    if ( $item[0] != $uid )
+			WARN ( "UID $uid trying to" .
+			       " delete $f which" .
+			       " belongs to UID" .
+			       " {$item[0]}" );
+		    else
+			unlink ( "$epm_data/$f );
+		}
+		array_splice ( $emails, $k, 1 );
+	    }
+	    unlock();
 	}
     }
     elseif ( isset ( $_POST['update'] ) )
@@ -287,70 +319,77 @@
 	// List of emails other than $email is
 	// put in $user_emails.
 	//
-	$full_name = sanitize
-	    ( 'full_name', 'Full Name', 5 );
-	$organization = sanitize
-	    ( 'organization', 'Organization', 3 );
-	$location = sanitize
-	    ( 'location', 'Location', 6 );
-
-	if ( $field_missing )
-	    exit ( 'UNKNOWN HTTP POST' );
+	sanitize
+	    ( $full_name, 'full_name',
+	                  'Full Name', 5 );
+	sanitize
+	    ( $organization, 'organization',
+	                     'Organization', 3 );
+	sanitize
+	    ( $location, 'location',
+	                 'Location', 6 );
     }
     else
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
-    if ( $method == 'POST' && isset ( $_POST['update'] )
-                           && count ( $errors ) == 0 )
+    if ( count ( $errors ) == 0
+         &&
+	 ( ! $new_user
+	   ||
+	   ( $full_name != ''
+	     &&
+	     $organization != ''
+	     &&
+	     $location != '' ) ) )
     {
         // We are done; copy data to files.
 	//
+	$user_admin = [];
+	$user_admin['full_name'] = $full_name;
+	$user_admin['organization'] = $organization;
+	$user_admin['location'] = $location;
+	$j = json_encode
+	    ( $user_admin, JSON_PRETTY_PRINT );
+
+	lock();
+
 	if ( $new_user )
 	{
-	    if ( ! isset ( $max_uid ) )
-	    {
-	        $sysfail =
-		    "could not compute new uid" .
-		    " because of previous errors";
-		require "$include/sysalert.php";
-	    }
-	    $uid = $max_uid + 1;
 	    umask ( 06 );
 	    while ( ! mkdir ( $epm_data .
 	                      "/users/user$uid",
 	                      0771 ) )
 	        ++ $uid;
 	    umask ( 07 );
-	    $_SESSION['epm_uid'] = $uid;
-	    $f = "admin/email_index/$email";
-	    $r = file_put_contents
-	             ( "$epm_data/$f", $uid );
-	    if ( $r === false )
+	    $_SESSION['EPM_USER_ID'] = $uid;
+	    $item = [ $uid,
+	              $_SESSION['EPM_SESSION_TIME'],
+		      1];
+	    $c = implode ( ' ', $item );
+	    foreach ( array_merge ( $emails, [$email] )
+	              as $e )
 	    {
-		$sysfail = "could not write $f";
-		require "$include/sysalert.php";
+		$he = htmlspecialchars ( $d );
+		$f = "admin/email/$he";
+		if ( is_readable ( "$epm_data/$f" ) )
+		    WARN ( "$f exists when it should" .
+		           " not" );
+		else
+		{
+		    $r = file_put_contents
+			     ( "$epm_data/$f", $c );
+		    if ( $r === false )
+			WARN ( "could not write $f" );
+		}
 	    }
 	}
 
-
-	$user_admin['full_name'] = $full_name;
-	$user_admin['organization'] = $organization;
-	$user_admin['location'] = $location;
-	$j = json_encode ( $user_admin,
-	                   JSON_PRETTY_PRINT );
 	$f = "admin/user{$uid}.info";
 	$r = file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
-	{
-	    $sysfail = "could not write $f";
-	    require "$include/sysalert.php";
-	}
-
-	if ( $_POST['update'] == 'Done' )
-	{
-	    header ( "Location: user.php?done=yes" );
-	    exit;
-	}
+	    WARN ( "count not write $f" );
+	$new_user = false;
+	unlock();
     }
 
 ?>
@@ -399,7 +438,7 @@
     }
     if ( isset ( $uid )
          &&
-	 count ( $emails ) + 1 < $num_emails )
+	 count ( $emails ) + 1 < $max_emails )
 	echo "<form style='display:inline'".
 	     " method='POST'" .
 	     " action='user_edit.php'>\n" .
