@@ -2,15 +2,17 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jan  4 04:19:42 EST 2020
+// Date:    Mon Jan  6 18:53:49 EST 2020
 
+/*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
     ( '/(chrome|firefox|safari|opera|edge)/i',
       $_SERVER['HTTP_USER_AGENT'] ) )
     exit ( 'Unsupported Browser: Use Chrome,' .
            ' Firefox, Safari, Opera, or Edge' );
     // Internet Explorer is NOT supported, as it
-    // does not support Promises or async/await.
+    // does not support Promises.
+*/
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -56,7 +58,10 @@ if ( $php_self == '/page/index.php' )
 // in the web server's UNIX group, denoted below by
 // `WEB-SERVERS-GROUP'.  All the files and directories
 // will be in this group, and will be shared between
-// your current account and the web server.
+// your current account and the web server.  Ancestor
+// directories for these files and directories must
+// also be in this group and have g+x permission, unless
+// they have a+x permission.
 //
 // We assume only your account, and not the web server,
 // will have write permissions on R and H.
@@ -72,13 +77,12 @@ if ( $php_self == '/page/index.php' )
 //	chmod g-w R `find H`
 //
 //	cd R
-//	ln H/page .
-//	ln H/page/index.html .
-//	cp -p H/include/epm_params.php .
-//	chmod u+w epm_params.php
-//	<edit parameters in R/epm_params.php>
+//	ln -s H/page .
+//	cp -p H/page/index.php .
+//	chmod u+w index.php
+//	<edit parameters in R/index.php>
 
-// Parameters that you need to edit in R/epm_param.php:
+// Parameters that you need to edit in R/index.php:
 //
 $epm_data = dirname ( $_SERVER['DOCUMENT_ROOT'] )
           . '/epm_658746537635';
@@ -103,15 +107,15 @@ $epm_expiration_times =
     // [2, 7, 30] days; ticket expiration times
     // for 1st, 2nd, and >= 3rd tickets.
 
-$epm_upload_maxsize = 262144;  // 256 kilobytes.
+$epm_upload_maxsize = 256*1024;  // 256 kilobytes.
     // Maximum size of uploaded file.
 
 $upload_target_ext = [
     // If file YYYY.EEE is uploadable, then
-    // $upload_target.ext['EEE'] = 'FFF' must be
+    // $upload_target_ext['EEE'] = 'FFF' must be
     // defined and after YYYY.EEE is uploaded, the
-    // file YYYY.FFF must be makeable (there must
-    // be a template YYYY.EEE:YYYY.FFF:....tmpl.
+    // file YYYY.FFF must be makeable (i.e., there must
+    // be a template YYYY.EEE:YYYY.FFF:....tmpl).
     //
     "c" => "",
     "cc" => "",
@@ -123,10 +127,16 @@ $upload_target_ext = [
 
 $display_file_ext = [
     // To be listed as a problem file, and thence be
-    // `displayable' (even if only the file type is
-    // displayed, as for .class), a file must have
-    // extension EEE such that $display_file_ext['EEE']
-    // exists (and is the displayable file type).
+    // `displayable', a file must have extension EEE
+    // such that $display_file_ext['EEE'] == TTT exists.
+    // If display_file_map[TTT] = page/PPPP.php, then
+    // that web page may be used to display the file.
+    // Otherwise TTT is the file type and only that is
+    // displayed.
+    //
+    // WARNING: the UNIX file(1) command CANNOT be
+    //          reliably used to determine whether
+    //          a file is ASCII, UTF-8, or PDF.
     //
     "c" => "utf8",
     "cc" => "utf8",
@@ -158,19 +168,14 @@ $display_file_ext = [
 }
 
 $display_file_map = [
-    // Do be displayable as something other than a file
-    // type, a displayable file must have a type TTT
-    // such that $display_file_map['TTT'] == 'PAGE.php'
-    // exists and the file can be displayed by using
-    // the URL "page/PAGE.php?FILENAME", provided the
-    // named file is in the problem directory or its
-    // +work+ subdirectory.
+    // See display_file_ext.
     //
     "utf8" => "utf8_show.php",
     "pdf"  => "pdf_show.php" ];
 
-// Code that is not to be changed.
-//
+// The rest of this file is code that is not to be
+// changed.
+
 start_session();
 clearstatcache();
 umask ( 06 );
@@ -191,8 +196,12 @@ if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
 else if (    $_SESSION['EPM_IPADDR']
           != $_SERVER['REMOTE_ADDR'] )
     error ( 'UNACCEPTABLE SESSION IPADDR CHANGE' );
-    // A session that changes its IPADDR is likely
-    // to be obsolete.
+    // A hacker who intercepts the session cookie can
+    // try to hijack the session, but will likely not
+    // have the same IP address as the session, so this
+    // will stop the hack.  On the other hand, it might
+    // disrupt laptops that are moving between wireless
+    // cells.
 
 if ( ! isset ( $_SESSION['EPM_BROWSER_ID'] ) )
 {
@@ -204,9 +213,9 @@ if ( ! isset ( $_SESSION['EPM_BROWSER_ID'] ) )
 }
 else if ( ! isset ( $_SESSION['EPM_USER_ID'] ) )
 {
-    if ( $php_self != "/page/user_edit.php" )
+    if ( $php_self != "/page/user.php" )
     {
-	header ( 'Location: page/user_edit.php' );
+	header ( 'Location: page/user.php' );
 	exit;
     }
 }
@@ -224,7 +233,7 @@ function WARN ( $message )
     trigger_error ( $message, E_USER_WARNING );
 }
 
-// ERROR does NOT return.
+// ERROR does NOT return (as per error handler below).
 //
 function ERROR ( $message )
 {
@@ -256,7 +265,7 @@ function EPM_ERROR_HANDLER
 
     file_put_contents (
         "$epm_data/admin/error.log",
-	"$class $errno $message [$file:$line]",
+	"$class $errno [$file:$line] $message",
 	FILE_APPEND );
 
     if ( $fatal )

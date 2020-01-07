@@ -30,7 +30,7 @@
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // require "$include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     $lock_desc = NULL;
     function shutdown ()

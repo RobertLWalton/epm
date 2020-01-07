@@ -205,7 +205,7 @@
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
     umask ( 07 );
 
-    // require "$include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method == 'GET' )
