@@ -243,6 +243,8 @@ function ERROR ( $message )
 function EPM_ERROR_HANDLER
 	( $errno, $message, $file, $line )
 {
+    global $epm_data;
+
     if ( $errno & ( E_USER_NOTICE |
                     E_USER_WARNING |
                     E_USER_ERROR ) )
