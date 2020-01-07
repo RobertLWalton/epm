@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jan  7 02:16:43 EST 2020
+    // Date:	Tue Jan  7 05:00:04 EST 2020
 
     // Handles login for a session.
     //
@@ -727,7 +727,8 @@ if ( window.msCrypto !== undefined )
 }
     
 var AUTO_RETRY, EMAIL, TICKET, BID, KEYA, KEYB, CTIME,
-    MANUAL, CNUM, CRYPTOKEY, HANDSHAKE, SHAKEHAND;
+    MANUAL, CNUM, EKEYA, EKEYB, CRYPTOKEY, HANDSHAKE,
+    SHAKEHAND;
 
 var GET_EMAIL_ENABLED = false;
 var GET_CNUM_ENABLED = false;
@@ -738,8 +739,6 @@ var GET_CNUM_ENABLED = false;
 // BEGIN:
 //
 AUTO_RETRY = 0;
-EMAIL = null;
-TICKET = null;
 GET_EMAIL_ENABLED = true;
 get_email.style.display = 'block';
 
@@ -769,14 +768,14 @@ function GOT_EMAIL ( email )
     email_out.innerHTML = EMAIL;
     show_email.style.display = 'block';
     TICKET = storage.getItem(EMAIL);
-    if ( item == null )
+    if ( TICKET == null )
         MANUAL_ID();
     else
     {
-        var TICKETlist = TICKET.split ( ' ' );
-	BID = TICKETlist[0];
-	KEYA = TICKETlist[1];
-	KEYB = TICKETlist[2];
+        var ITEM = TICKET.trim().split ( ' ' );
+	BID = ITEM[0];
+	KEYA = ITEM[1];
+	KEYB = ITEM[2];
 	MANUAL = false;
 	AUTO_ID();
     }
@@ -825,7 +824,7 @@ function CNUM_KEYDOWN ( event )
 	 GET_CNUM_ENABLED )
     {
 	value = cnum.value.trim();
-	if ( /^[a-f0-9]{32}$/.test(value) )
+	if ( /^[a-fA-F0-9]{32}$/.test(value) )
 	{
 	    GET_CNUM_ENABLED = false;
 	    GOT_CNUM ( value );
@@ -983,9 +982,11 @@ function SHAKE_RESPONSE ( item )
               &&
 	      item.length == 2 )
     {
-        TICKET = [BID, KEYA, KEYB, CTIME].join(' ');
         if ( MANUAL )
-	    storage.storeItem ( EMAIL, TICKET );
+	{
+	    TICKET = [BID, KEYA, KEYB, CTIME].join(' ');
+	    storage.setItem ( EMAIL, TICKET );
+	}
 	try {
 	    window.location.assign ( item[2] );
 	} catch ( e ) {
