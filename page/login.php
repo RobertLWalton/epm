@@ -623,8 +623,7 @@ function SEND ( data, callback, error_message )
 }
 
 var IMPORTKEY, ENCRYPT, DECRYPT;
-var IV = new Uint8Array ( 16 );
-    // 16 zero bytes.
+var iv = new Uint8Array ( 16 );
 
 function ArrayBuffer2hex ( buffer )
 {
@@ -665,7 +664,7 @@ if ( window.msCrypto !== undefined )
     ENCRYPT = function ( cryptokey, data, callback )
     {
 	window.msCrypto.subtle.encrypt
-	    ( { name: "AES-CBC", IV }, cryptokey,
+	    ( { name: "AES-CBC", iv }, cryptokey,
 	      hex2ArrayBuffer ( data ) )
 	    .oncomplete
 	        ( function(r)
@@ -682,7 +681,7 @@ if ( window.msCrypto !== undefined )
     DECRYPT = function ( cryptokey, data, callback )
     {
 	window.msCrypto.subtle.decrypt
-	    ( { name: "AES-CBC", IV }, cryptokey,
+	    ( { name: "AES-CBC", iv }, cryptokey,
 	      hex2ArrayBuffer ( data ) )
 	    .oncomplete
 	        ( function(r)
@@ -714,35 +713,25 @@ if ( window.msCrypto !== undefined )
     ENCRYPT = function ( cryptokey, data, callback )
     {
 	window.crypto.subtle.encrypt
-	    ( { name: "AES-CBC", IV }, cryptokey,
-	      hex2ArrayBuffer ( data ) )
-	    .then
-	        ( function(r)
-		  { callback
-		      ( ArrayBuffer2hex ( r ) ) } )
-	    .catch
-	        ( function(r)
-		  { callback
-		      ( new Error
-		          ( 'encryption failed' ) ) } );
-    }
-
-    DECRYPT = function ( cryptokey, data, callback )
-    {
-	window.crypto.subtle.decrypt
-	    ( { name: "AES-CBC", IV }, cryptokey,
+	    ( { name: "AES-CBC", iv }, cryptokey,
 	      hex2ArrayBuffer ( data ) )
 	    .then
 	        ( function(r)
 		  { callback
 		      ( ArrayBuffer2hex ( r ) ) } )
 	    .catch ( callback );
-/* TBD
+    }
+
+    DECRYPT = function ( cryptokey, data, callback )
+    {
+	window.crypto.subtle.decrypt
+	    ( { name: "AES-CBC", iv }, cryptokey,
+	      hex2ArrayBuffer ( data ) )
+	    .then
 	        ( function(r)
 		  { callback
-		      ( new Error
-		          ( 'decryption failed' ) ) } );
-*/
+		      ( ArrayBuffer2hex ( r ) ) } )
+	    .catch ( callback );
     }
 
 }
@@ -883,20 +872,20 @@ function GOT_CNUM_KEY ( cryptokey )
     CRYPTOKEY = cryptokey;
     LOG ( 'DECRYPT ' + EKEYA + ' USING ' + CNUM );
     LOG ( 'CRYPTOKEY ' + CRYPTOKEY );
-    DECRYPT ( EKEYA, CRYPTOKEY, GOT_KEYA );
+    DECRYPT ( CRYPTOKEY, EKEYA, GOT_KEYA );
 }
 
 function GOT_KEYA ( keyA )
 {
+LOG ( 'KEYA ' + keyA );
     if ( keyA instanceof Error )
     {
         CNUM_NOT_VALID();
 	return;
     }
     KEYA = keyA;
-LOG ( 'KEYA ' + KEYA );
     LOG ( 'DECRYPT ' + EKEYB + ' USING ' + CNUM );
-    DECRYPT ( EKEYB, CRYPTOKEY, GOT_KEYB );
+    DECRYPT ( CRYPTOKEY, EKEYB, GOT_KEYB );
 }
 
 function GOT_KEYB ( keyB )
@@ -946,6 +935,7 @@ function AUTO_RESPONSE ( item )
     else if ( item[0] == 'SHAKE' )
     {
         HANDSHAKE = item[1];
+LOG ( 'KEYA ' + KEYA );
 	IMPORTKEY ( KEYA, GOT_KEYA_FOR_SHAKE );
     }
     else
@@ -960,12 +950,12 @@ function GOT_KEYA_FOR_SHAKE ( cryptokey )
         AUTO_ID();  // Retry
 	return;
     }
-    DECRYPT ( HANDSHAKE, cryptokey, GOT_SHAKEA );
+    DECRYPT ( cryptokey, HANDSHAKE, GOT_SHAKEA );
 }
 
 function GOT_SHAKEA ( shakeA )
 {
-    if ( cryptokey instanceof Error )
+    if ( shakeA instanceof Error )
     {
         AUTO_ID();  // Retry
 	return;
@@ -981,12 +971,12 @@ function GOT_KEYB_FOR_SHAKE ( cryptokey )
         AUTO_ID();  // Retry
 	return;
     }
-    ENCRYPT ( SHAKEHAND, cryptokey, GOT_SHAKEB );
+    ENCRYPT ( cryptokey, SHAKEHAND, GOT_SHAKEB );
 }
 
 function GOT_SHAKEB ( shakeB )
 {
-    if ( cryptokey instanceof Error )
+    if ( shakeB instanceof Error )
     {
         AUTO_ID();  // Retry
 	return;
