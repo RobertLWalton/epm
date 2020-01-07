@@ -2,20 +2,20 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jan  6 00:56:51 EST 2020
+    // Date:	Tue Jan  7 04:10:04 EST 2020
 
-    // Edits files:
+    // Display and edit user information in:
     //
-    //		admin/email_index/*
+    //		admin/email/*
     //		admin/user{$uid}.info
     //
-    // containing information about user.  Also
-    // assigns $uid and creates
+    // Also assigns $uid and creates
     //
-    //		users/user$uid
-    //	        admin/user$uid.info
+    //		users/user{$uid}
+    //	        admin/user{$uid}.info
     //
-    // if $_SESSION['EPM_USER_ID'] not set.
+    // if $_SESSION['EPM_USER_ID'] not set (i.e., if the
+    // user is a new user).
     //
     // Does this by using a form to collect the follow-
     // ing information:
@@ -25,8 +25,9 @@
     //     location     Town, state, country of
     //			organization.
     //
-    // and allows emails to be added and emails other
-    // than the login email to be deleted.
+    // and allows emails to be added to the user's
+    // account and emails other than the login email
+    // to be deleted.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -85,7 +86,7 @@
 	// Set $emails to the emails in admin/email
 	// that point at the current $uid and are NOT
 	// equal to $email.  Set $max_uid to the maximum
-	// user id seen amoung admin/email_index files.
+	// user id seen among admin/email files.
 	//
 	$max_uid = 0;
 	$d = "admin/email";
@@ -104,7 +105,7 @@
 	    }
 	    if ( preg_match ( '/^\.\.*$/', $value ) )
 		continue;
-	    $f = "admin/email_index/$value";
+	    $f = "admin/email/$value";
 	    $c = file_get_contents ( "$epm_data/$f" );
 	    if ( $c === false )
 	    {
@@ -113,7 +114,7 @@
 	    }
 	    $c = trim ( $c );
 	    $item = explode ( ' ', $c );
-	    if ( count ( $item ) >= 1
+	    if ( count ( $item ) < 1
 		 ||
 		 ! preg_match
 		       ( '/^[1-9][0-9]*$/', $item[0] ) )
@@ -234,7 +235,7 @@
 	
     if ( $method == 'GET' )
     {
-	// Do nothing.  Get info from user.
+	// Do nothing.  Get or display user info.
     }
     elseif ( isset ( $_POST['edit'] ) )
         $edit = true;
@@ -245,7 +246,7 @@
 	{
 	    lock();
 	    $he = htmlspecialchars ( $e );
-	    $f = "admin/email_index/$he";
+	    $f = "admin/email/$he";
 	    if ( is_readable ( "$epm_data/$f" )
 	         ||
 		     array_search ( $e, $emails, true )
@@ -278,7 +279,7 @@
         {
 	    lock();
 	    $he = htmlspecialchars ( $e );
-	    $f = "admin/email_index/$he";
+	    $f = "admin/email/$he";
 	    $k = array_search ( $e, $emails, true );
 	    if ( $e == $email )
 	    {
@@ -318,9 +319,6 @@
     elseif ( isset ( $_POST['data'] ) )
     {
 	// Read and check all the form data.
-	// Skip emails that are to be deleted.
-	// List of emails other than $email is
-	// put in $user_emails.
 	//
 	sanitize
 	    ( $full_name, 'full_name',
@@ -361,17 +359,23 @@
 	if ( $new_user )
 	{
 	    umask ( 06 );
+
+	    if ( ! is_dir ( "$epm_data/users" ) )
+	        mkdir ( "$epm_data/users", 0771 );
+
 	    while ( ! mkdir ( $epm_data .
 	                      "/users/user$uid",
 	                      0771 ) )
 	        ++ $uid;
+
 	    umask ( 07 );
+
 	    $_SESSION['EPM_USER_ID'] = $uid;
 	    $item = [ $uid,
 	              $_SESSION['EPM_SESSION_TIME'],
 		      1];
 	    $c = implode ( ' ', $item );
-	    foreach ( array_merge ( $emails, [$email] )
+	    foreach ( array_merge ( [$email], $emails )
 	              as $e )
 	    {
 		$he = htmlspecialchars ( $e );
@@ -384,7 +388,7 @@
 		    $r = file_put_contents
 			     ( "$epm_data/$f", $c );
 		    if ( $r === false )
-			WARN ( "could not write $f" );
+			ERROR ( "could not write $f" );
 		}
 	    }
 	}
@@ -392,7 +396,7 @@
 	$f = "admin/user{$uid}.info";
 	$r = file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
-	    WARN ( "count not write $f" );
+	    ERROR ( "count not write $f" );
 	$new_user = false;
 	unlock();
     }
@@ -420,7 +424,10 @@
         echo "<mark>Its a good idea to add a second" .
 	     " email address.</mark><br>\n";
 
-    echo "<h3>Edit User Profile:</h3>\n";
+    if ( $edit )
+	echo "<h3>Edit User Profile:</h3>\n";
+    else
+	echo "<h3>User Profile:</h3>\n";
 
     echo "<b>Email Addresses:</b>\n";
     echo "<div style='margin-left:20px'>\n";
@@ -451,16 +458,15 @@
 	     " action='user.php'>\n" .
 	     "<input type='email' name='new_email'" .
 	     " value='' size='40' placeholder=" .
-	     "'Another Email Address'>" .
-	     "&nbsp;&nbsp;&nbsp;&nbsp;" .
-	     "<input type='submit' name='add_email'" .
-	     " value='Add'><br>\n" .
+	     "'Another Email Address'" .
+	     " title='Add another email address" .
+	     " to the account'>" .
 	     "</form>\n";
 
     echo "</div>\n";
 
     $location_placeholder =
-	 "Town, State and Country of Organization";
+	 "Town, State (and Country) of Organization";
     $hfull_name = htmlspecialchars ( $full_name );
     $horganization = htmlspecialchars ( $organization );
     $hlocation = htmlspecialchars ( $location );
@@ -472,15 +478,18 @@
 	    <td> <input type='text' size='40'
 		  name='full_name'
 		  value='$hfull_name'
+		  title='Your Full Name'></td></tr>
 		  placeholder='John Doe'></td></tr>
 	<tr><td><b>Organization:</b></td><td>
 	    <input type='text' size='40'
 	     name='organization' value='$horganization'
+	     title='University, Company, or Self'
 	     placeholder='University, Company, or Self'>
 	     </td></tr>
 	<tr><td><b>Location:</b></td><td>
 	    <input type='text' size='40'
 	     name='location' value='$hlocation'
+	     title='$location_placeholder'
 	     placeholder='$location_placeholder'>
 	     </td></tr>
 	<tr><td>
