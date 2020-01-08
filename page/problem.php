@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 08:39:59 EST 2020
+    // Date:	Wed Jan  8 18:24:15 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -189,7 +189,7 @@
     function problem_file_names()
     {
         global $epm_data, $problem_dir,
-	       $problem_file_names, $display_file_ext;
+	       $problem_file_names, $display_file_type;
 
 	if ( isset ( $problem_file_names ) )
 	    return $problem_file_names;
@@ -209,12 +209,9 @@
 	    if ( preg_match ( '/^\./', $fname ) )
 	        continue;
 	    if ( $fname == "+work+" ) continue;
-	    if ( preg_match ( '/[^.]\.([^.]+)$/',
-	                       $fname, $matches ) )
-		$ext = $matches[1];
-	    else
-	        $ext = "";
-	    if ( ! isset ( $display_file_ext[$ext] ) )
+	    $ext = pathinfo
+	        ( $fname, PATHINFO_EXTENSION );
+	    if ( ! isset ( $display_file_type[$ext] ) )
 		continue;
 	    $f = "$problem_dir/$fname";
 	    $map[$fname] =
@@ -363,16 +360,19 @@
 
     if ( isset ( $show_file ) )
     {
-	$b = basename ( $show_file );
-	if ( preg_match ( '/\.pdf$/', $b ) )
-	    $e = 'pdf_show.php';
-	else
-	    $e = 'utf8_show.php';
-	echo "<iframe" .
-	     " src='$e?filename=$b'" .
-	     " style='width:50%;height:97%;" .
-	     "float:right'>\n";
-	echo "</iframe>\n";
+	$base = pathinfo ( $show_file, 
+	                   PATHINFO_BASENAME );
+	$ext = pathinfo ( $show_file, 
+	                  PATHINFO_EXTENSION );
+	$type = $display_file_type[$ext];
+	$page = $display_file_map[$type];
+	if ( $page != NULL )
+	    echo "<iframe" .
+		 " src='/page/$page" .
+		 "?filename=$base'" .
+		 " style='width:50%;height:97%;" .
+		 "float:right'>\n" .
+		 "</iframe>\n";
     }
 
 ?>
@@ -608,8 +608,13 @@ EOT;
 		echo "<u>$b</u> is empty<br>\n";
 		continue;
 	    }
-	    $t = exec ( "file -h $f" );
-	    if ( preg_match ( '/(ASCII|UTF-8)/', $t ) )
+	    $ext = pathinfo ( $f, PATHINFO_EXTENSION );
+	    if ( ! isset ( $display_file_type[$ext] ) )
+	        continue;
+	    $type = $display_file_type[$ext];
+	    if ( $type == 'pdf' ) $type = 'PDF file';
+
+	    if ( $type == 'utf8' )
 	    {
 		echo "<u>$b</u>:<br>\n";
 		echo '<pre>'
@@ -618,22 +623,17 @@ EOT;
 	    }
 	    else
 	    {
+		$t = exec ( "file -h $f" );
 		$t = explode ( ":", $t );
 		$t = $t[1];
-		$t = explode ( ",", $t );
-		$t = $t[0];
-		$t = trim ( $t );
 		if ( preg_match
 		         ( '/symbolic link/', $t ) )
 		{
-		    $s = exec ( "file -L $f" );
-		    $s = explode ( ":", $s );
-		    $s = $s[1];
-		    $s = explode ( ",", $s );
-		    $s = $s[0];
-		    $s = trim ( $s );
-		    $t = "$t which is $s";
+		    $t = trim ( $t );
+		    $t = "$t which is $type";
 		}
+		else
+		    $t = $type;
 		echo "<u>$b</u> is $t<br>\n";
 	    }
 	}

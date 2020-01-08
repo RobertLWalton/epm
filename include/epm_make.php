@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jan  8 12:08:14 EST 2020
+// Date:    Wed Jan  8 18:37:17 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -37,30 +37,6 @@ if ( ! isset ( $is_epm_test ) )
     // NOT driven by an http server.  Some functions,
     // notably move_uploaded_file, will not work
     // in this test script environment.
-
-// Administrative Parameters:
-//
-if ( ! isset ( $admin_params ) )
-{
-    $f = "src/default_admin.params";
-    if ( ! is_readable ( "$epm_home/$f" ) )
-        ERROR ( "cannot read $f" );
-    $admin_params = get_json ( $epm_home, $f );
-
-    // Get local administrative parameter overrides.
-    //
-    $f = "admin/admin.params";
-    if ( is_readable ( "$epm_data/$f" ) )
-    {
-        $j = get_json ( $epm_data, $f );
-	foreach ( $j as $key => $value )
-	    $admin_params[$key] = $value;
-
-    }
-}
-$upload_target_ext = $admin_params['upload_target_ext'];
-$upload_maxsize = $admin_params['upload_maxsize'];
-$display_file_ext = $admin_params['display_file_ext'];
 
 // Problem Parameters:
 //
@@ -1385,7 +1361,7 @@ function process_upload
 	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
-           $upload_target_ext, $upload_maxsize,
+           $upload_target_ext, $epm_upload_maxsize,
 	   $remote_file_cache;
 
     load_file_caches ( $local_dir );
@@ -1451,11 +1427,11 @@ function process_upload
     }
 
     $fsize = $upload['size'];
-    if ( $fsize > $upload_maxsize )
+    if ( $fsize > $epm_upload_maxsize )
     {
         $errors[] =
 	    "uploaded file $fname too large;" .
-	    " limit is $upload_maxsize";
+	    " limit is $epm_upload_maxsize";
 	return;
     }
 
@@ -1548,7 +1524,7 @@ function create_file
 //
 function find_show_file ( & $show_files )
 {
-    global $epm_data, $display_file_ext;
+    global $epm_data, $display_file_type;
 
     $index = -1;
     $lines = 5;
@@ -1562,9 +1538,9 @@ function find_show_file ( & $show_files )
 	else
 	    $ext = '';
 
-	if ( ! isset ( $display_file_ext[$ext] ) )
+	if ( ! isset ( $display_file_type[$ext] ) )
 	    continue;
-	$t = $display_file_ext[$ext];
+	$t = $display_file_type[$ext];
 	if ( $t == 'pdf' )
 	{
 	    $index = $i;

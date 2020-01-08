@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jan  8 07:57:22 EST 2020
+// Date:    Wed Jan  8 18:03:08 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -131,14 +131,14 @@ $upload_target_ext = [
     "in" => "sout",
     "run" => "run" ];
 
-$display_file_ext = [
+$display_file_type = [
     // To be listed as a problem file, and thence be
     // `displayable', a file must have extension EEE
-    // such that $display_file_ext['EEE'] == TTT exists.
-    // If display_file_map[TTT] = page/PPPP.php, then
-    // that web page may be used to display the file.
-    // Otherwise TTT is the file type and only that is
-    // displayed.
+    // such that $display_file_type['EEE'] == TTT
+    // exists.  If display_file_map[TTT] = PPPP.php,
+    // then the web page /page/PPPP.php may be used to
+    // display the file.  Otherwise TTT is the file type
+    // and only that is displayed.
     //
     // WARNING: the UNIX file(1) command CANNOT be
     //          reliably used to determine whether
@@ -174,7 +174,7 @@ $display_file_ext = [
 
 
 $display_file_map = [
-    // See display_file_ext.
+    // See display_file_type.
     //
     "utf8" => "utf8_show.php",
     "pdf"  => "pdf_show.php" ];
