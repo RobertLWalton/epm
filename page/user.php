@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jan  7 04:10:04 EST 2020
+    // Date:	Wed Jan  8 01:17:52 EST 2020
 
     // Display and edit user information in:
     //
@@ -37,9 +37,10 @@
     function shutdown ()
     {
         global $lock_desc;
-        @flock ( $lock_desc, LOCK_UN );
+	if ( isset ( $lock_desc ) )
+	    flock ( $lock_desc, LOCK_UN );
     }
-    register_shutdown_function ( shutdown );
+    register_shutdown_function ( 'shutdown' );
     function lock()
     {
         global $lock_desc, $epm_data;
@@ -51,7 +52,8 @@
     {
         global $lock_desc;
 	flock ( $lock_desc, LOCK_UN );
-	$lock_desc = fclose ( $lock_desc );
+	fclose ( $lock_desc );
+	$lock_desc = NULL;
     }
 
     $method = $_SERVER['REQUEST_METHOD'];
@@ -63,7 +65,7 @@
 	    'organization' => '',
 	    'location' => ''];
     elseif ( $method != 'POST' )
-        exit ( "UNACCEPTABLE HTTP METHOD $method" )
+        exit ( "UNACCEPTABLE HTTP METHOD $method" );
 
     $data = & $_SESSION['EPM_USER_EDIT_DATA'];
 
@@ -105,6 +107,8 @@
 	    }
 	    if ( preg_match ( '/^\.\.*$/', $value ) )
 		continue;
+	    if ( $value == 'lock' )
+	        continue;
 	    $f = "admin/email/$value";
 	    $c = file_get_contents ( "$epm_data/$f" );
 	    if ( $c === false )
@@ -126,7 +130,7 @@
 	    if ( $item[0] == $uid && $value != $email )
 		$emails[] = $value;
 	}
-	unflock();
+	unlock();
 	if ( $new_user ) $uid = $max_uid + 1;
 	                 // This is lower bound on new
 			 // user id, and not necessarily
@@ -264,7 +268,7 @@
 			  0 ];
 		file_put_contents
 		    ( "$epm_data/$f",
-		      implode ( ' ', $item );
+		      implode ( ' ', $item ) );
 	        $emails[] = $e;
 	    }
 	    else
@@ -309,7 +313,7 @@
 			       " belongs to UID" .
 			       " {$item[0]}" );
 		    else
-			unlink ( "$epm_data/$f );
+			unlink ( "$epm_data/$f" );
 		}
 		array_splice ( $emails, $k, 1 );
 	    }
@@ -478,7 +482,7 @@
 	    <td> <input type='text' size='40'
 		  name='full_name'
 		  value='$hfull_name'
-		  title='Your Full Name'></td></tr>
+		  title='Your Full Name'
 		  placeholder='John Doe'></td></tr>
 	<tr><td><b>Organization:</b></td><td>
 	    <input type='text' size='40'
@@ -502,9 +506,9 @@ EOT;
 	<table>
 	<tr><td><b>Full Name:</b></td>
 	    <td>$hfull_name</td></tr>
-	<tr><td><b>Organization:</b></td><td>
+	<tr><td><b>Organization:</b></td>
 	    <td>$horganization</td></tr>
-	<tr><td><b>Location:</b></td><td>
+	<tr><td><b>Location:</b></td>
 	    <td>$hlocation</td></tr>
 	</table><br>
 	<form>

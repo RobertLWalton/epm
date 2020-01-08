@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jan  7 10:28:22 EST 2020
+// Date:    Wed Jan  8 00:04:11 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -99,6 +99,12 @@ session_name ( "EPM_859036254367" );
     // Reset 12 digit number to non-public site-
     // specific 12 digit random number.
 
+$epm_debug = false;
+    // If true, enables DEBUG function to write to
+    // $epm_data/debug.log.  Can be set true here
+    // to affect all pages, or can be set true by a
+    // page just to affect that page.
+
 $epm_max_emails = 3;
     // Max number of email addresses a user may have.
 
@@ -187,10 +193,10 @@ if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
     $_SESSION['EPM_SESSION_TIME'] =
         strftime ( "%FT%T%z", $_SERVER['REQUEST_TIME'] );
     file_put_contents (
-        "$epm_data/admin/error.log",
+        "$epm_data/error.log",
 	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
 	" {$_SERVER['REMOTE_ADDR']}" .
-	" {$_SERVER['REMOTE_HOST']}",
+	" {$_SERVER['REMOTE_HOST']}" . PHP_EOL,
 	FILE_APPEND );
 }
 else if (    $_SESSION['EPM_IPADDR']
@@ -207,7 +213,7 @@ if ( ! isset ( $_SESSION['EPM_BROWSER_ID'] ) )
 {
     if ( $php_self != "/page/login.php" )
     {
-	header ( 'Location: page/login.php' );
+	header ( 'Location: /page/login.php' );
 	exit;
     }
 }
@@ -215,7 +221,7 @@ else if ( ! isset ( $_SESSION['EPM_USER_ID'] ) )
 {
     if ( $php_self != "/page/user.php" )
     {
-	header ( 'Location: page/user.php' );
+	header ( 'Location: /page/user.php' );
 	exit;
     }
 }
@@ -223,9 +229,18 @@ else if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
 {
     if ( $php_self != "/page/problem.php" )
     {
-	header ( 'Location: page/problem.php' );
+	header ( 'Location: /page/problem.php' );
 	exit;
     }
+}
+
+function DEBUG ( $message )
+{
+    global $epm_debug, $epm_data;
+    if ( $epm_debug )
+	file_put_contents (
+	    "$epm_data/debug.log",
+	    $message . PHP_EOL, FILE_APPEND );
 }
 
 function WARN ( $message )
@@ -266,9 +281,9 @@ function EPM_ERROR_HANDLER
     }
 
     file_put_contents (
-        "$epm_data/admin/error.log",
-	"$class $errno [$file:$line] $message",
-	FILE_APPEND );
+        "$epm_data/error.log",
+	"$class $errno [$file:$line] $message" .
+	PHP_EOL, FILE_APPEND );
 
     if ( $fatal )
         exit ( $message );

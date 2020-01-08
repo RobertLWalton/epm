@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jan  7 19:47:32 EST 2020
+    // Date:	Wed Jan  8 00:48:30 EST 2020
 
     // Handles login for a session.
     //
@@ -126,10 +126,9 @@
     // Each execution of the browser identification
     // protocol is logged separately to the file:
     //
-    //		admin/login.log
+    //		$epm_data/login.log
     //
-    // if that file exists and is writeable. The file
-    // format is
+    // The file format is
     //
     //	 // comment
     //   BID EMAIL UID IPADDR STIME CTIME FTIME TCOUNT
@@ -209,6 +208,7 @@
     umask ( 07 );
 
     // require "$epm_home/include/debug_info.php";
+    $epm_debug = true;
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method == 'GET' )
@@ -217,6 +217,15 @@
 	exit ( "UNACCEPTABLE HTTP METHOD $method" );
 
     $data = & $_SESSION['EPM_LOGIN_DATA'];
+
+    // Reply to POST from xhttp.
+    //
+    function reply ( $reply )
+    {
+        DEBUG ( 'REPLIED: ' . $reply );
+	echo ( $reply );
+	exit;
+    }
 
     // $data['UID'] is set iff EMAIL-FILE exists and
     // has been read.
@@ -257,7 +266,7 @@
     // written and EMAIL-FILE TCOUNT incremented upon
     // successful handshake).
     //
-    function new_ticket_response ( $email, $op )
+    function new_ticket_reply ( $email, $op )
     {
 	global $epm_data, $data;
 
@@ -299,8 +308,8 @@
 	      hex2bin ( $data['CNUM'] ),
 	      OPENSSL_RAW_DATA, $iv ) );
 
-	echo ( "$op {$data['BID']} $ekeyA $ekeyB" .
-	       " {$data['CTIME']}" );
+	reply ( "$op {$data['BID']} $ekeyA $ekeyB" .
+	        " {$data['CTIME']}" );
     }
 
     if ( ! is_dir ( "$epm_data/admin" ) )
@@ -312,7 +321,11 @@
 
     $op = NULL;
     if ( isset ( $_POST['op'] ) )
+    {
 	$op = $_POST['op'];
+	DEBUG ( 'RECEIVED QUERY: ' .
+	        json_encode ( $_POST ) );
+    }
 
     // Process POSTs from xhttp.
     //
@@ -327,30 +340,21 @@
 	     ! filter_var
 		      ( $email,
 			FILTER_VALIDATE_EMAIL ) )
-	{
-	    echo ( 'BAD_EMAIL' );
-	    exit;
-	}
-	new_ticket_response ( $email, 'NEW' );
-	exit;
+	    reply ( 'BAD_EMAIL' );
+	else
+	    new_ticket_reply ( $email, 'NEW' );
     }
     elseif ( $op == 'AUTO' )
     {
 	$bid = trim ( $_POST['value'] );
 	if ( ! preg_match ( '/^[a-fA-F0-9]{32}$/',
 			    $bid ) ) 
-	{
-	    echo ( 'FAIL' );
-	    exit;
-	}
+	    reply ( 'FAIL' );
 	$bfile = "admin/browser/$bid";
 	if ( ! is_readable ( "$epm_data/$bfile" ) )
 	{
 	    if ( ! isset ( $data['EMAIL'] ) )
-	    {
-		echo ( 'FAIL' );
-		exit;
-	    }
+		reply ( 'FAIL' );
 	    // Else this is part of MANUAL login.
 	}
 	else
@@ -397,7 +401,7 @@
 		    unset ( $data['KEYA'] );
 		    unset ( $data['KEYB'] );
 		    unset ( $data['CTIME'] );
-		    new_ticket_response
+		    new_ticket_reply
 			( $email, 'EXPIRED' );
 		    exit;
 		}
@@ -418,18 +422,14 @@
 	      hex2bin ( $data['KEYA'] ),
 	      OPENSSL_RAW_DATA, $iv ) );
 
-	echo ( "SHAKE $handshake" );
-	exit;
+	reply ( "SHAKE $handshake" );
     }
     elseif ( $op == 'HAND' )
     {
 	$shakehand = trim ( $_POST['value'] );
 	if ( ! preg_match ( '/^[a-fA-F0-9]{64}$/',
 	                    $shakehand ) ) 
-	{
-	    echo ( 'FAIL' );
-	    exit;
-	}
+	    reply ( 'FAIL' );
 	$iv = hex2bin
 	    ( "00000000000000000000000000000000" );
 	$handshake = bin2hex ( openssl_decrypt
@@ -438,7 +438,12 @@
 	      OPENSSL_RAW_DATA, $iv ) );
 
 	if ( $handshake != $data['HANDSHAKE'] )
-	    echo ( 'FAIL' );
+	{
+	    LOG ( "Decrypted handshake = $handshake" .
+	          " != {$data['HANDSHAKE']}" .
+		  " = HANDSHAKE" );
+	    reply ( 'FAIL' );
+	}
 	else
 	{
 	    $next_page = 'user.php';
@@ -471,14 +476,13 @@
 			  $data['KEYB'],
 			  $data['CTIME'] ];
 		file_put_contents
-		    ( "epm_data/$bfile",
+		    ( "$epm_data/$bfile",
 		      implode ( ' ', $item ) );
 	    }
 
 	    $_SESSION['EPM_BROWSER_ID'] = $data['BID'];
 	    $_SESSION['EPM_EMAIL'] = $data['EMAIL'];
 
-	    $lfile = "admin/login.log";
 	    $stime = $_SESSION['EPM_SESSION_TIME'];
 	    if ( isset ( $data['UID'] ) )
 		$item = [ $data['BID'],
@@ -499,14 +503,13 @@
 			  $stime,
 			  1 ];
 	    file_put_contents
-		( "$epm_data/$lfile",
-		  implode ( ' ', $item ),
+		( "$epm_data/login.log",
+		  implode ( ' ', $item ) . PHP_EOL,
 		  FILE_APPEND );
 
 	    unset ( $_SESSION['EPM_LOGIN_DATA'] );
-	    echo ( "DONE $next_page" );
+	    reply ( "DONE $next_page" );
 	}
-	exit;
     }
     elseif ( $method == 'POST' )
 	exit ( "UNACCEPTABLE HTTP POST" );
@@ -553,8 +556,8 @@ Please <input type='text' size='40' id='cnum_in'
 
 <script>
 
-var LOG = function(message) {};  // Disable logging.
-var LOG = console.log;           // Enable logging.
+var LOG = function(message) {};
+<?php if ( $epm_debug) echo "LOG = console.log;\n" ?>
 
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;
@@ -567,11 +570,19 @@ function FAIL ( message )
     // Alert must be scheduled as separate task.
     //
     LOG ( "call to FAIL: " + message );
-    setTimeout ( function () {
-	alert ( message );
-	// TBD
-	// window.location.reload ( true );
-    });
+<?php
+    if ( $epm_debug )
+        echo <<<'EOT'
+	    setTimeout ( function () {
+		alert ( message );
+		window.location.reload ( true );
+	    });
+EOT;
+    else
+        echo <<<'EOT'
+	    throw "CALL TO FAIL: " + message;
+EOT;
+?>
 }
 
 function RESET_EMAIL()
@@ -1016,10 +1027,10 @@ function SHAKE_RESPONSE ( item )
 	    storage.setItem ( EMAIL, TICKET );
 	}
 	try {
-	    window.location.assign ( item[2] );
+	    window.location.assign ( item[1] );
 	} catch ( e ) {
 	    FAIL
-	       ( 'could not access page ' + item[2] );
+	       ( 'could not access page ' + item[1] );
 	       // On retry login.php will go to
 	       // correct page.
 	}

@@ -1,4 +1,5 @@
 <?php
+exit ( 'problem.php not done' );
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
