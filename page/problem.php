@@ -1,46 +1,21 @@
 <?php
-exit ( 'problem.php not done' );
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec 27 03:29:52 EST 2019
+    // Date:	Wed Jan  8 08:15:10 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
 
-    session_start();
-    clearstatcache();
-    umask ( 06 );
-        // o+x must be allowed on problem executables
-	// and directories because of epm_sandbox.
+    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    if ( ! isset ( $_SESSION['epm_userid'] ) )
-    {
-	header ( "Location: login.php" );
-	exit;
-    }
-    if (    $_SESSION['epm_ipaddr']
-	 != $_SERVER['REMOTE_ADDR'] )
-        exit ( 'UNACCEPTABLE IPADDR CHANGE' );
+    // require "$epm_home/include/debug_info.php";
+    $epm_debug = true;
 
-    $userid = $_SESSION['epm_userid'];
-    $epm_data = $_SESSION['epm_data'];
-    $epm_home = $_SESSION['epm_home'];
-    $email = $_SESSION['epm_email'];
-    $include = "$epm_home/include";
+    $uid = $_SESSION['EPM_USER_ID'];
+    $email = $_SESSION['EPM_EMAIL'];
 
-    // require "$include/debug_info.php";
-
-    $user_dir = "users/user$userid";
-
-    // Administrative Parameters:
-    //
-    $admin_params =
-        $_SESSION['epm_admin_params'];
-    $upload_maxsize =
-        $admin_params['upload_maxsize'];
-    $display_file_ext =
-        $admin_params['display_file_ext'];
+    $user_dir = "users/user$uid";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -54,6 +29,7 @@ exit ( 'problem.php not done' );
     if ( isset ( $_POST['new_problem'] ) )
     {
         $problem = trim ( $_POST['new_problem'] );
+	$d = "$epm_data/$user_dir/$problem";
 	if ( $problem == '' )
 	{
 	    // User hit carriage return on empty
@@ -73,7 +49,7 @@ exit ( 'problem.php not done' );
 	    $problem = NULL;
 	}
 	else
-	if ( is_dir ( "$epm_data/$user_dir/$problem" ) )
+	if ( is_dir ( "$d" ) )
 	{
 	    $errors[] =
 	        "trying to create $problem which" .
@@ -81,11 +57,12 @@ exit ( 'problem.php not done' );
 	    $problem = NULL;
 	}
 	else
-	if ( ! mkdir ( "$epm_data/$user_dir/$problem",
-	               0771 ) )
 	{
-	    $sysfail = "cannot make $user_dir/$problem";
-	    require "$include/sysalert.php";
+	    $m = umask ( 06 );
+	    if ( ! mkdir ( "$d", 0771 ) )
+		ERROR ( "cannot make" .
+		        " $user_dir/$problem" );
+	    umask ( $m );
 	}
         unset ( $_SESSION['delete_problem_tag'] );
     }
@@ -115,7 +92,7 @@ exit ( 'problem.php not done' );
 
     if ( isset ( $problem ) )
 	$problem_dir =
-	    "users/user$userid/$problem";
+	    "users/user$uid/$problem";
     else
 	$problem_dir = NULL;
 
@@ -260,7 +237,7 @@ exit ( 'problem.php not done' );
 	exit ( "ACCESS: illegal POST to problem.php" );
     elseif ( isset ( $_POST['show_file'] ) )
     {
-	require "$include/epm_make.php";
+	require "$epm_home/include/epm_make.php";
 	    // Do this first as it may change $f,
 	    // etc.  Needed if we set show_files.
 
@@ -271,7 +248,7 @@ exit ( 'problem.php not done' );
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 
-	$show_files[] = "users/user$userid/$problem/$f";
+	$show_files[] = "users/user$uid/$problem/$f";
     }
     elseif ( isset ( $_POST['delete_file'] ) )
     {
@@ -289,7 +266,7 @@ exit ( 'problem.php not done' );
     }
     elseif ( isset ( $_POST['create'] ) )
     {
-	require "$include/epm_make.php";
+	require "$epm_home/include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
         $f = $_POST['create'];
@@ -306,7 +283,7 @@ exit ( 'problem.php not done' );
     }
     elseif ( isset ( $_POST['make'] ) )
     {
-	require "$include/epm_make.php";
+	require "$epm_home/include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
         $m = $_POST['make'];
@@ -323,7 +300,7 @@ exit ( 'problem.php not done' );
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	$output = [];
-	$d = "users/user$userid/$problem";
+	$d = "users/user$uid/$problem";
 	make_and_keep_file
 	    ( $src, $des, $problem,
 	      "$d/+work+", $d,
@@ -347,12 +324,12 @@ exit ( 'problem.php not done' );
 
 	if ( $uploaded_file != '' )
 	{
-	    require "$include/epm_make.php";
+	    require "$epm_home/include/epm_make.php";
 		// Do this first as it may change $f,
 		// etc.
 
 	    $output = [];
-	    $d = "users/user$userid/$problem";
+	    $d = "users/user$uid/$problem";
 	    process_upload
 		( $upload_info, $problem,
 		  "$d/+work+", $d,
@@ -378,12 +355,9 @@ exit ( 'problem.php not done' );
     if ( count ( $show_files ) > 0 )
     {
         if ( ! function_exists ( "find_show_file" ) )
-	{
-	    $sysfail = "SYSTEM ERROR: problem.php:"
-	             . " failed to load epm_make.php"
-		     . " while setting show_files";
-	    require "$include/sysalert.php";
-	}
+	    ERROR ( "problem.php:" .
+	            " failed to load epm_make.php" .
+		    " while setting show_files" );
         $show_file = find_show_file ( $show_files );
     }
 
@@ -572,7 +546,7 @@ EOT;
 	<form enctype="multipart/form-data"
 	      action="problem.php" method="post">
 	<input type="hidden" name="MAX_FILE_SIZE"
-	       value="$upload_maxsize">
+	       value="$epm_upload_maxsize">
 	<input type="submit" name="upload"
 	       value="Upload File:">
 	<input type="file" name="uploaded_file">

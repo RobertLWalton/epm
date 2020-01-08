@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Dec 27 03:33:47 EST 2019
+// Date:    Wed Jan  8 08:22:28 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -22,10 +22,14 @@ if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
 if ( ! isset ( $epm_home ) )
     exit ( 'ACCESS ERROR: $epm_home not set' );
-if ( ! isset ( $userid ) )
-    exit ( 'ACCESS ERROR: $userid not set' );
+if ( ! isset ( $uid ) )
+    exit ( 'ACCESS ERROR: $uid not set' );
 if ( ! isset ( $problem ) )
     exit ( 'ACCESS ERROR: $problem not set' );
+
+umask ( 06 );
+    // In order for epm_sandbox to be able to access
+    // and execute.
 
 if ( ! isset ( $is_epm_test ) )
     $is_epm_test = false;
@@ -65,7 +69,7 @@ $display_file_ext = $admin_params['display_file_ext'];
 //
 if ( ! isset ( $problem_params ) )
 {
-    $f = "users/user$userid/$problem/problem.params";
+    $f = "users/user$uid/$problem/problem.params";
     $problem_params = [];
     if ( is_readable ( "$epm_data/$f" ) )
 	$problem_params = get_json ( $epm_data, $f );
@@ -376,7 +380,7 @@ function find_templates
 $template_optn = NULL;
 function get_template_optn()
 {
-    global $template_roots, $epm_data, $userid,
+    global $template_roots, $epm_data, $uid,
            $template_optn;
 
     if ( isset ( $template_optn ) )
@@ -386,7 +390,7 @@ function get_template_optn()
     foreach ( array_reverse ( $template_roots ) as $r )
         $files[] = [$r, "template/template.optn"];
     $files[] = [$epm_data,
-                "/users/user$userid/template.optn"];
+                "/users/user$uid/template.optn"];
 
     $template_optn = [];
     foreach ( $files as $e )
@@ -1151,7 +1155,7 @@ function get_commands ( $control )
 function run_commands
 	( $commands, $work, & $output, & $errors )
 {
-    global $epm_data, $epm_home, $userid, $problem;
+    global $epm_data, $epm_home, $uid, $problem;
 
     $command = '';
     $e = '';
@@ -1170,7 +1174,7 @@ function run_commands
         exec ( "cd $epm_data/$work;" .
 	       " export EPM_HOME=$epm_home;" .
 	       " export EPM_DATA=$epm_data;" .
-	       " export EPM_USERID=$userid;" .
+	       " export EPM_UID=$uid;" .
 	       " export EPM_PROBLEM=$problem;" .
 	       " export EPM_WORK=$work;" .
 	       " $command",
