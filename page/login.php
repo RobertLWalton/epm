@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jan  7 12:00:23 EST 2020
+    // Date:	Tue Jan  7 19:47:32 EST 2020
 
     // Handles login for a session.
     //
@@ -414,17 +414,17 @@
 	$iv = hex2bin
 	    ( "00000000000000000000000000000000" );
 	$handshake = bin2hex ( openssl_encrypt
-	    ( hex2bin ( $data['KEYA'] ), "aes-128-cbc",
-	      hex2bin ( $data['HANDSHAKE'] ),
+	    ( hex2bin ( $data['HANDSHAKE'] ), "aes-128-cbc",
+	      hex2bin ( $data['KEYA'] ),
 	      OPENSSL_RAW_DATA, $iv ) );
 
 	echo ( "SHAKE $handshake" );
 	exit;
     }
-    elseif ( $op == 'SHAKE' )
+    elseif ( $op == 'HAND' )
     {
 	$shakehand = trim ( $_POST['value'] );
-	if ( ! preg_match ( '/^[a-fA-F0-9]{32}$/',
+	if ( ! preg_match ( '/^[a-fA-F0-9]{64}$/',
 	                    $shakehand ) ) 
 	{
 	    echo ( 'FAIL' );
@@ -433,8 +433,8 @@
 	$iv = hex2bin
 	    ( "00000000000000000000000000000000" );
 	$handshake = bin2hex ( openssl_decrypt
-	    ( hex2bin ( $data['KEYB'] ), "aes-128-cbc",
-	      hex2bin ( $shakehand ),
+	    ( hex2bin ( $shakehand ), "aes-128-cbc",
+	      hex2bin ( $data['KEYB'] ),
 	      OPENSSL_RAW_DATA, $iv ) );
 
 	if ( $handshake != $data['HANDSHAKE'] )
@@ -508,6 +508,8 @@
 	}
 	exit;
     }
+    elseif ( $method == 'POST' )
+	exit ( "UNACCEPTABLE HTTP POST" );
 
     // Else load html and script.
 
@@ -854,8 +856,9 @@ function GOT_CNUM ( cnum )
     IMPORTKEY ( cnum, GOT_CNUM_KEY );
 }
 
-function CNUM_NOT_VALID()
+function CNUM_NOT_VALID ( error )
 {
+    LOG ( 'CNUM_NOT_VALID ERROR: ' . error );
     alert ( CNUM + ' is not valid;'
 	    + ' enter different confirmation number'
 	    + ' or retry login' );
@@ -866,25 +869,21 @@ function GOT_CNUM_KEY ( cryptokey )
 {
     if ( cryptokey instanceof Error )
     {
-        CNUM_NOT_VALID();
+        CNUM_NOT_VALID ( cryptokey );
 	return;
     }
     CRYPTOKEY = cryptokey;
-    LOG ( 'DECRYPT ' + EKEYA + ' USING ' + CNUM );
-    LOG ( 'CRYPTOKEY ' + CRYPTOKEY );
     DECRYPT ( CRYPTOKEY, EKEYA, GOT_KEYA );
 }
 
 function GOT_KEYA ( keyA )
 {
-LOG ( 'KEYA ' + keyA );
     if ( keyA instanceof Error )
     {
-        CNUM_NOT_VALID();
+        CNUM_NOT_VALID ( keyA );
 	return;
     }
     KEYA = keyA;
-    LOG ( 'DECRYPT ' + EKEYB + ' USING ' + CNUM );
     DECRYPT ( CRYPTOKEY, EKEYB, GOT_KEYB );
 }
 
@@ -892,7 +891,7 @@ function GOT_KEYB ( keyB )
 {
     if ( keyB instanceof Error )
     {
-        CNUM_NOT_VALID();
+        CNUM_NOT_VALID ( keyB );
 	return;
     }
     KEYB = keyB;
@@ -903,7 +902,10 @@ function AUTO_ID()
 {
     AUTO_RETRY += 1
     if ( AUTO_RETRY > 2 )
+    {
         FAIL ( 'two attempts at handshake failed' );
+	return;
+    }
     SEND ( 'op=AUTO&value=' + BID,
            AUTO_RESPONSE,
 	   'starting handshake with server' );
@@ -932,10 +934,11 @@ function AUTO_RESPONSE ( item )
 	FAIL ( 'browser/email ticket not known to'
 	       + ' server; re-confirmation required' );
     }
-    else if ( item[0] == 'SHAKE' )
+    else if ( item[0] == 'SHAKE'
+              &&
+	      item.length == 2 )
     {
         HANDSHAKE = item[1];
-LOG ( 'KEYA ' + KEYA );
 	IMPORTKEY ( KEYA, GOT_KEYA_FOR_SHAKE );
     }
     else
@@ -947,9 +950,12 @@ function GOT_KEYA_FOR_SHAKE ( cryptokey )
 {
     if ( cryptokey instanceof Error )
     {
+	LOG ( 'GOT_KEYA_FOR_SHAKE ERROR: ' .
+	      cryptokey );
         AUTO_ID();  // Retry
 	return;
     }
+    LOG ( 'DECRYPT ' + HANDSHAKE + ' USING ' + KEYA );
     DECRYPT ( cryptokey, HANDSHAKE, GOT_SHAKEA );
 }
 
@@ -957,6 +963,7 @@ function GOT_SHAKEA ( shakeA )
 {
     if ( shakeA instanceof Error )
     {
+	LOG ( 'GOT_SHAKEA ERROR: ' .  shakeA );
         AUTO_ID();  // Retry
 	return;
     }
@@ -968,9 +975,12 @@ function GOT_KEYB_FOR_SHAKE ( cryptokey )
 {
     if ( cryptokey instanceof Error )
     {
+	LOG ( 'GOT_KEYB_FOR_SHAKE ERROR: ' .
+	      cryptokey );
         AUTO_ID();  // Retry
 	return;
     }
+    LOG ( 'ENCRYPT ' + SHAKEHAND + ' USING ' + KEYB );
     ENCRYPT ( cryptokey, SHAKEHAND, GOT_SHAKEB );
 }
 
@@ -978,6 +988,7 @@ function GOT_SHAKEB ( shakeB )
 {
     if ( shakeB instanceof Error )
     {
+	LOG ( 'GOT_SHAKEB ERROR: ' .  shakeB );
         AUTO_ID();  // Retry
 	return;
     }
