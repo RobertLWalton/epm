@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jan  8 08:22:28 EST 2020
+// Date:    Wed Jan  8 12:08:14 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -44,10 +44,7 @@ if ( ! isset ( $admin_params ) )
 {
     $f = "src/default_admin.params";
     if ( ! is_readable ( "$epm_home/$f" ) )
-    {
-        $sysfail = "cannot read $f";
-	require 'sysalert.php';
-    }
+        ERROR ( "cannot read $f" );
     $admin_params = get_json ( $epm_home, $f );
 
     // Get local administrative parameter overrides.
@@ -99,19 +96,15 @@ function get_json ( $r, $file )
     $f = "$r/$file";
     $c = file_get_contents ( $f );
     if ( $c === false )
-    {
-	$sysfail = "cannot read readable $file";
-	require 'sysalert.php';
-    }
+	ERROR ( "cannot read readable $file" );
     $c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
 	// Get rid of `//...' comments.
     $j = json_decode ( $c, true );
     if ( $j === NULL )
     {
 	$m = json_last_error_msg();
-	$sysfail =
-	    "cannot decode json in $file:\n    $m";
-	require 'sysalert.php';
+	ERROR
+	    ( "cannot decode json in $file:\n    $m" );
     }
     return $j;
 }
@@ -255,13 +248,10 @@ function load_template_cache()
     {
 	$dircontents = scandir ( "$r/template" );
 	if ( $dircontents === false )
-	{
-	    $sysfail = "cannot read "
-	             . ( $r == $epm_data ? "DATA" :
-		                           "HOME" )
-		     . "/template";
-	    require 'sysalert.php';
-	}
+	    ERROR ( "cannot read " .
+	            ( $r == $epm_data ? "DATA" :
+		                        "HOME" ) .
+		    "/template" );
 
 	foreach ( $dircontents as $fname )
 	{
@@ -276,10 +266,7 @@ function load_template_cache()
 	}
     }
     if ( ! isset ( $template_cache ) )
-    {
-        $sysfail = "no readable template directories";
-	require 'sysalert.php';
-    }
+        ERROR ( "no readable template directories" );
 }
 
 // Read the decoded json from a template file as stored
@@ -291,11 +278,8 @@ function get_template_json ( $template )
     load_template_cache();
 
     if ( ! isset ( $template_cache[$template] ) )
-    {
-        $sysfail = "get_template called with $template"
-	         . " which is not cache key";
-	require 'sysalert.php';
-    }
+        ERROR ( "get_template called with $template" .
+	        " which is not cache key" );
     $pair = & $template_cache[$template];
     $result = & $pair[1];
     if ( ! isset ( $result ) )
@@ -303,10 +287,7 @@ function get_template_json ( $template )
 	$r = $pair[0];
 	$f = "template/{$template}.tmpl";
 	if ( ! is_readable ( "$r/$f" ) )
-	{
-	    $sysfail = "cannot read $f";
-	    require 'sysalert.php';
-	}
+	    ERROR ( "cannot read $f" );
 	$result = get_json ( $r, $f );
     }
     return $result;
@@ -344,8 +325,7 @@ function find_templates
 	       ( '/^([^:]+):([^:]+):/',
 		 $template, $matches ) )
 	{
-	    $sysalert = "bad template format $template";
-	    require 'sysalert.php';
+	    WARN ( "bad template format $template" );
 	    continue;
 	}
 
@@ -647,11 +627,8 @@ function load_argument_map
 	}
 
 	if ( ! isset ( $value ) )
-	{
-	    $sysfail = "option $opt value not set in"
-	             . " by load_argument_map";
-	    require 'sysalert.php';
-	}
+	    ERROR ( "option $opt value not set in" .
+	            " by load_argument_map" );
 
 	if ( isset ( $description['argname'] ) )
 	{
@@ -711,10 +688,7 @@ function load_file_caches ( $local_dir )
     {
 	$c = scandir ( "$epm_data/$dir" );
 	if ( $c === false )
-	{
-	    $sysfail = "cannot read $dir";
-	    require 'sysalert.php';
-	}
+	    ERROR ( "cannot read $dir" );
 
 	foreach ( $c as $fname )
 	{
@@ -728,10 +702,7 @@ function load_file_caches ( $local_dir )
 
     $c = scandir ( "$epm_data/$local_dir" );
     if ( $c === false )
-    {
-	$sysfail = "cannot read $local_dir";
-	require 'sysalert.php';
-    }
+	ERROR ( "cannot read $local_dir" );
     foreach ( $c as $fname )
     {
 	if ( preg_match  ( '/^\.+$/', $fname ) )
@@ -826,11 +797,8 @@ function find_control
 	if ( isset ( $json['CREATABLE'] ) )
 	    $creatables = $json['CREATABLE'];
 	if ( ! is_array ( $creatables ) )
-	{
-	    $sysfail = "{$template[0]} json CREATABLE"
-	             . " is not a list";
-	    require 'sysalert.php';
-	}
+	    ERROR ( "{$template[0]} json CREATABLE" .
+	            " is not a list" );
 	$fllist = [];
 	    // Local required files found.
 	$frlist = [];
@@ -1044,10 +1012,8 @@ function cleanup_working ( $dir, & $errors )
 	// Must give o+x permission so epm_sandbox can
 	// execute programs that are in working
 	// directory.
-    {
-	$sysfail = "could not make $dir";
-	require 'sysalert.php';
-    }
+	//
+	ERROR ( "could not make $dir" );
 }
 
 // Link files from the required lists into the working
@@ -1076,26 +1042,18 @@ function link_required
     foreach ( $local_required as $f )
     {
 	if ( ! isset ( $local_file_cache[$f] ) )
-	{
-	    $sysfail = "link_required: $f in"
-	             . " \$local_required not"
-	             . " in \$local_file_cache";
-	    require 'sysalert.php';
-	    // Does NOT return.
-	}
+	    ERROR ( "link_required: $f in" .
+	            " \$local_required not" .
+	            " in \$local_file_cache" );
 	$d = $local_file_cache[$f];
         $list[] = ["$d/$f", "../$f", $f];
     }
     foreach ( $remote_required as $f )
     {
 	if ( ! isset ( $remote_file_cache[$f] ) )
-	{
-	    $sysfail = "link_required: $f in"
-	             . " \$remote_required not"
-	             . " in \$remote_file_cache";
-	    require 'sysalert.php';
-	    // Does NOT return.
-	}
+	    ERROR ( "link_required: $f in" .
+	            " \$remote_required not" .
+	            " in \$remote_file_cache" );
 	$d = $remote_file_cache[$f];
         $list[] = ["$d/$f", "../../../../$d/$f", $f];
     }
@@ -1321,12 +1279,8 @@ function make_file
     {
 	$f = "$work/$uploaded";
 	if ( file_exists ( "$epm_data/$f" ) )
-	{
-	    $sysfail =
-		"uploaded file is $uploaded but" .
-		" $f already exists";
-	    require 'sysalert.php';
-	}
+	    ERROR ( "uploaded file is $uploaded but" .
+		    " $f already exists" );
 
 	if ( $is_epm_test ?
 	     ! rename ( $uploaded_tmp,
@@ -1441,11 +1395,8 @@ function process_upload
     $errors_size = count ( $errors );
 
     if ( ! is_array ( $upload ) )
-    {
-        $sysfail =
-	    'process_upload: $upload is not an array';
-	require 'sysalert.php';
-    }
+        ERROR ( 'process_upload: $upload is not' .
+	        ' an array' );
 
     $fname = $upload['name'];
     if ( ! preg_match ( '/^[-_.a-zA-Z0-9]*$/',
@@ -1557,12 +1508,8 @@ function create_file
 	if ( is_readable ( $g ) )
 	{
 	    if ( ! copy ( $g, $f ) )
-	    {
-		$sysfail =
-		    "create_file: cannot copy $o to" .
-		    " $filename";
-		require 'sysalert.php';
-	    }
+		ERROR ( "create_file: cannot copy $o" .
+		        " to $filename" );
 	    return true;
 	}
 	else
@@ -1578,12 +1525,9 @@ function create_file
     {
 	$b = $matches[1];
 	if ( ! symlink ( "/usr/bin/epm_default_$b", $f ) )
-	{
-	    $sysfail =
-		"create_file: cannot symbolically link" .
-		" $filename to /usr/bin/epm_default_$b";
-	    require 'sysalert.php';
-	}
+	    ERROR ( "create_file: cannot symbolically" .
+		    " link $filename to" .
+		    " /usr/bin/epm_default_$b" );
 	return true;
     }
     else
@@ -1604,7 +1548,7 @@ function create_file
 //
 function find_show_file ( & $show_files )
 {
-    global $epm_data;
+    global $epm_data, $display_file_ext;
 
     $index = -1;
     $lines = 5;
@@ -1612,15 +1556,23 @@ function find_show_file ( & $show_files )
     foreach ( $show_files as $fname )
     {
         ++ $i;
-	$f = "$epm_data/$fname";
-	$t = exec ( "file $f" );
-	if ( preg_match ( '/PDF/', $t ) )
+	if ( preg_match ( '/\.([^.]+)$/',
+	                  $fname, $matches ) )
+    	    $ext = $matches[1];
+	else
+	    $ext = '';
+
+	if ( ! isset ( $display_file_ext[$ext] ) )
+	    continue;
+	$t = $display_file_ext[$ext];
+	if ( $t == 'pdf' )
 	{
 	    $index = $i;
 	    break;
 	}
-	else if ( preg_match ( '/(ASCII|UTF-8)/', $t ) )
+	else if ( $t == 'utf8' )
 	{
+	    $f = "$epm_data/$fname";
 	    $c = exec ( "grep -c '$' $f" );
 	    if ( $c > $lines )
 	    {
