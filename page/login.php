@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 07:57:42 EST 2020
+    // Date:	Wed Jan  8 14:15:39 EST 2020
 
     // Handles login for a session.
     //
@@ -381,20 +381,26 @@
 	    if ( isset ( $data['TCOUNT'] ) )
 	    {
 		$tcount = $data['TCOUNT'];
-		if ( $tcount <= 0 )
-		    ERROR ( "bad TCOUNT $tcount" );
 		$ctime = strtotime ( $item[3] );
 		$now = time();
 
 		$etimes = & $epm_expiration_times;
 		$ecount = count ( $etimes );
-		$tcount -= 1;
-		if ( $tcount >= $ecount )
-		    $tcount = $ecount - 1;
-		$etime = $ctime + $etimes[$tcount];
-		if ( $etime < $now )
+		if ( $tcount > $ecount )
+		    $tcount = $ecount;
+		if ( $tcount == 0
+		     ||
+		       $ctime + $etimes[$tcount-1]
+		     < $now )
 		{
-		    // Ticket has expired
+		    // Ticket has expired.
+		    //
+		    // tcount == 0 can only happen if
+		    // the email was deleted and then
+		    // added back, in which case any
+		    // tickets for the email should
+		    // be treated as expired.
+		    //
 		    @unlink ( "$epm_data/$bfile" );
 		    unset ( $data['BID'] );
 		    unset ( $data['KEYA'] );
