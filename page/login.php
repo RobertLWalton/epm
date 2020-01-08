@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 00:48:30 EST 2020
+    // Date:	Wed Jan  8 07:57:42 EST 2020
 
     // Handles login for a session.
     //
@@ -205,7 +205,6 @@
     // CNUM, so as not to confuse the user.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
-    umask ( 07 );
 
     // require "$epm_home/include/debug_info.php";
     $epm_debug = true;

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jan  8 03:28:21 EST 2020
+// Date:    Wed Jan  8 07:57:22 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -184,7 +184,7 @@ $display_file_map = [
 
 session_start();
 clearstatcache();
-umask ( 06 );
+umask ( 07 );
 header ( 'Cache-Control: no-store' );
 
 if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 03:26:38 EST 2020
+    // Date:	Wed Jan  8 07:57:57 EST 2020
 
     // Display and edit user information in:
     //
@@ -67,6 +67,9 @@
 	    'location' => ''];
     elseif ( $method != 'POST' )
         exit ( "UNACCEPTABLE HTTP METHOD $method" );
+    else
+        DEBUG ( 'user.php POST: ' .
+	        json_encode ( $_POST ) );
 
     $data = & $_SESSION['EPM_USER_EDIT_DATA'];
 
@@ -251,7 +254,7 @@
 	         ( $e, $_POST['new_email'] ) )
 	{
 	    lock();
-	    $re = rasurlencode ( $e );
+	    $re = rawurlencode ( $e );
 	    $f = "admin/email/$re";
 	    if ( is_readable ( "$epm_data/$f" )
 	         ||
@@ -263,7 +266,7 @@
 		    " assigned to some user" .
 		    " (maybe you)";
 	    }
-	    else if ( ! new_user )
+	    else if ( ! $new_user )
 	    {
 	        $item = [ $uid,
 		          $_SESSION['EPM_SESSION_TIME'],
@@ -380,7 +383,6 @@
 	    $item = [ $uid,
 	              $_SESSION['EPM_SESSION_TIME'],
 		      1];
-	    $c = implode ( ' ', $item );
 	    foreach ( array_merge ( [$email], $emails )
 	              as $e )
 	    {
@@ -391,6 +393,10 @@
 		           " not" );
 		else
 		{
+		    $c = implode ( ' ', $item );
+		    $item[2] = 0;
+		        // For emails other than the one
+			// logged in with.
 		    $r = file_put_contents
 			     ( "$epm_data/$f", $c );
 		    if ( $r === false )
@@ -421,7 +427,7 @@
 	foreach ( $errors as $value )
 	{
 	    $hvalue = htmlspecialchars ( $value );
-	    echo "<mark>$hvalue<\mark><br>\n";
+	    echo "<mark>$hvalue</mark><br>\n";
 	}
 	echo '</div>' . "\n";
     }
@@ -431,11 +437,10 @@
 	     " email address.</mark><br>\n";
 
     if ( $edit )
-	echo "<h3>Edit User Profile:</h3>\n";
+	echo "<h3>Edit User Email Addresses:</h3>\n";
     else
-	echo "<h3>User Profile:</h3>\n";
+	echo "<h3>User Email Addresses:</h3>\n";
 
-    echo "<b>Email Addresses:</b>\n";
     echo "<div style='margin-left:20px'>\n";
     $hemail = htmlspecialchars ( $email );
     echo "$hemail&nbsp;&nbsp;&nbsp;&nbsp;" .
@@ -466,7 +471,9 @@
 	     " value='' size='40' placeholder=" .
 	     "'Another Email Address'" .
 	     " title='Add another email address" .
-	     " to the account'>" .
+	     " to the account'>\n" .
+	     "&nbsp;&nbsp;&nbsp;&nbsp;\n" .
+	     "<input type='submit' value='Add'>\n" .
 	     "</form>\n";
 
     echo "</div>\n";
@@ -478,6 +485,7 @@
     $hlocation = htmlspecialchars ( $location );
     if ( $edit )
 	echo <<<EOT
+	<h3>Edit User Profile:</h3>
 	<form  method='POST' action='user.php'>
 	<table>
 	<tr><td><b>Full Name:</b></td>
@@ -498,13 +506,14 @@
 	     title='$location_placeholder'
 	     placeholder='$location_placeholder'>
 	     </td></tr>
-	<tr><td>
+	<tr><td></td><td style='text-align:right'>
 	    <input type='submit' name='data'
 		   value='Update'></td></tr>
 	</table></form>
 EOT;
     else
 	echo <<<EOT
+	<h3>User Profile:</h3>
 	<table>
 	<tr><td><b>Full Name:</b></td>
 	    <td>$hfull_name</td></tr>
