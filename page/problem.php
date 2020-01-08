@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 08:15:10 EST 2020
+    // Date:	Wed Jan  8 08:39:59 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -85,10 +85,10 @@
     }
 
     if (    ! isset ( $problem )
-         && isset ( $_SESSION['epm_problem'] ) )
-        $problem = $_SESSION['epm_problem'];
+         && isset ( $_SESSION['EPM_PROBLEM'] ) )
+        $problem = $_SESSION['EPM_PROBLEM'];
     elseif ( isset ( $problem ) )
-	$_SESSION['epm_problem'] = $problem;
+	$_SESSION['EPM_PROBLEM'] = $problem;
 
     if ( isset ( $problem ) )
 	$problem_dir =
@@ -147,7 +147,7 @@
 	$deleted_problem = $problem;
 	$problem = NULL;
 	$problem_dir = NULL;
-	unset ( $_SESSION['epm_problem'] );
+	unset ( $_SESSION['EPM_PROBLEM'] );
     }
     else if ( isset ( $_POST['delete_problem_no'] ) )
     {

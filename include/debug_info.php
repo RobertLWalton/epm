@@ -1,9 +1,6 @@
 <?php
 echo "SESSION: "; print_r ( $_SESSION ); echo "<br><br>";
 
-if ( ! isset ( $_SESSION['epm_data'] ) )
-    exit ( 'ACCESS ERROR: session epm_data not set' );
-
 echo "REQUEST: "; print_r ( $_REQUEST ); echo "<br>";
 echo "POST: "; print_r ( $_POST ); echo "<br>";
 echo "GET: "; print_r ( $_GET ); echo "<br>";

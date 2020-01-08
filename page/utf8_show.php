@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Dec 27 03:32:31 EST 2019
+    // Date:	Wed Jan  8 08:25:54 EST 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // File may be in current problem directory
@@ -17,33 +17,15 @@
 
 <?php
 
-    session_start();
-    clearstatcache();
-    umask ( 07 );
-
-    if ( ! isset ( $_SESSION['epm_userid'] ) )
-    {
-	header ( "Location: login.php" );
-	exit;
-    }
-    if (    $_SESSION['epm_ipaddr']
-	 != $_SERVER['REMOTE_ADDR'] )
-        exit ( 'UNACCEPTABLE IPADDR CHANGE' );
-
-    if ( ! isset ( $_SESSION['epm_problem'] ) )
-    {
-	header ( "Location: problem.php" );
-	exit;
-    }
-
-    $userid = $_SESSION['epm_userid'];
-    $epm_data = $_SESSION['epm_data'];
-    $epm_home = $_SESSION['epm_home'];
-    $problem = $_SESSION['epm_problem'];
+    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
+    $epm_debug = true;
 
-    $problem_dir = "users/user$userid/$problem";
+    $uid = $_SESSION['EPM_USER_ID'];
+    $problem = $_SESSION['EPM_PROBLEM'];
+
+    $problem_dir = "users/user$uid/$problem";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
