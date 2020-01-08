@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 01:17:52 EST 2020
+    // Date:	Wed Jan  8 03:26:38 EST 2020
 
     // Display and edit user information in:
     //
@@ -32,6 +32,7 @@
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
+    $epm_debug = true;
 
     $lock_desc = NULL;
     function shutdown ()
@@ -127,8 +128,9 @@
 		continue;
 	    }
 	    $max_uid = max ( $max_uid, $item[0] );
-	    if ( $item[0] == $uid && $value != $email )
-		$emails[] = $value;
+	    $vemail = rawurldecode ( $value );
+	    if ( $item[0] == $uid && $vemail != $email )
+		$emails[] = $vemail;
 	}
 	unlock();
 	if ( $new_user ) $uid = $max_uid + 1;
@@ -249,8 +251,8 @@
 	         ( $e, $_POST['new_email'] ) )
 	{
 	    lock();
-	    $he = htmlspecialchars ( $e );
-	    $f = "admin/email/$he";
+	    $re = rasurlencode ( $e );
+	    $f = "admin/email/$re";
 	    if ( is_readable ( "$epm_data/$f" )
 	         ||
 		     array_search ( $e, $emails, true )
@@ -282,8 +284,8 @@
 	         ( $e, $_POST['delete_email'] ) )
         {
 	    lock();
-	    $he = htmlspecialchars ( $e );
-	    $f = "admin/email/$he";
+	    $re = rawurlencode ( $e );
+	    $f = "admin/email/$re";
 	    $k = array_search ( $e, $emails, true );
 	    if ( $e == $email )
 	    {
@@ -382,8 +384,8 @@
 	    foreach ( array_merge ( [$email], $emails )
 	              as $e )
 	    {
-		$he = htmlspecialchars ( $e );
-		$f = "admin/email/$he";
+		$re = rawurlencode ( $e );
+		$f = "admin/email/$re";
 		if ( is_readable ( "$epm_data/$f" ) )
 		    WARN ( "$f exists when it should" .
 		           " not" );
