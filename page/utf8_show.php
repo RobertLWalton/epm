@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 08:25:54 EST 2020
+    // Date:	Wed Jan  8 19:08:27 EST 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // File may be in current problem directory
@@ -68,11 +68,12 @@
     foreach ( $lines as $line )
     {
 	++ $count;
+	$hline = htmlspecialchars ( $line );
 	echo "<tr><td style='" .
 	     "background-color:#b3e6ff;" .
 	     "text-align:right;'>\n" .
 	     "<pre>$count:</pre></td>" .
-	     "<td><pre>  $line</pre></td></tr>\n";
+	     "<td><pre>  $hline</pre></td></tr>\n";
     }
     echo "</table></div>\n";
 
