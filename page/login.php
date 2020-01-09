@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 14:15:39 EST 2020
+    // Date:	Thu Jan  9 07:30:12 EST 2020
 
     // Handles login for a session.
     //
@@ -207,7 +207,6 @@
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
-    $epm_debug = true;
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method == 'GET' )
@@ -521,6 +520,11 @@
 
     // Else load html and script.
 
+    $debug = ( $epm_debug != ''
+               &&
+	       preg_match ( $epm_debug, $php_self ) );
+	// True to enable javascript logging.
+
 ?>
 
 
@@ -562,7 +566,7 @@ Please <input type='text' size='40' id='cnum_in'
 <script>
 
 var LOG = function(message) {};
-<?php if ( $epm_debug) echo "LOG = console.log;\n" ?>
+<?php if ( $debug ) echo "LOG = console.log;\n" ?>
 
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;
@@ -576,7 +580,7 @@ function FAIL ( message )
     //
     LOG ( "call to FAIL: " + message );
 <?php
-    if ( $epm_debug )
+    if ( $debug )
         echo <<<'EOT'
 	    setTimeout ( function () {
 		alert ( message );

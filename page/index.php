@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jan  8 18:03:08 EST 2020
+// Date:    Thu Jan  9 07:31:31 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -99,11 +99,12 @@ session_name ( "EPM_859036254367" );
     // Reset 12 digit number to non-public site-
     // specific 12 digit random number.
 
-$epm_debug = false;
-    // If true, enables DEBUG function to write to
-    // $epm_data/debug.log.  Can be set true here
-    // to affect all pages, or can be set true by a
-    // page just to affect that page.
+$epm_debug = '';
+$epm_debug = '/(login|user|problem)/';
+    // If not '', this must be a regular expression
+    // which when matched to $php_self enables the
+    // DEBUG function to write to $epm_data/debug.log.
+    // Set to '' to disable DEBUG function.
 
 $epm_max_emails = 3;
     // Max number of email addresses a user may have.
@@ -238,11 +239,18 @@ else if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
 
 function DEBUG ( $message )
 {
-    global $epm_debug, $epm_data;
-    if ( $epm_debug )
+    global $epm_debug, $epm_data, $php_self;
+    if ( $epm_debug != ''
+         &&
+	 preg_match ( $epm_debug, $php_self ) )
+    {
+	$base = pathinfo
+	    ( $php_self, PATHINFO_BASENAME );
 	file_put_contents (
 	    "$epm_data/debug.log",
-	    $message . PHP_EOL, FILE_APPEND );
+	    "$base: $message" .  PHP_EOL,
+	    FILE_APPEND );
+    }
 }
 
 function WARN ( $message )

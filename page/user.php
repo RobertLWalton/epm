@@ -32,7 +32,6 @@
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
-    $epm_debug = true;
 
     $lock_desc = NULL;
     function shutdown ()

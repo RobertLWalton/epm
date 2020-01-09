@@ -11,7 +11,6 @@
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
-    $epm_debug = true;
 
     $uid = $_SESSION['EPM_USER_ID'];
     $problem = $_SESSION['EPM_PROBLEM'];
