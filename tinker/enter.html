@@ -21,7 +21,7 @@ function my_function ( event, e1, e2 )
 	    else count = parseInt ( count );
 	    count += 1;
 	    store.setItem ( email, count );
-	    document.getElementById(e2).innerHTML =
+	    document.getElementById(e2).innerText =
 	        email + " " + count;
 	}
 	else if ( email != '' )

@@ -21,9 +21,9 @@ xhttp.onreadystatechange = function()
     {
 	var r = this.responseText.split ( " " );
 	document.getElementById("oldtime")
-	        .innerHTML = r[0];
+	        .innerText = r[0];
 	document.getElementById("newtime")
-	        .innerHTML = r[1];
+	        .innerText = r[1];
 	send_time ( r[1] );
     }
 };

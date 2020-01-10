@@ -799,7 +799,7 @@ function GOT_EMAIL ( email )
 {
     EMAIL = email;
     get_email.style.display = 'none';
-    email_out.innerHTML = EMAIL;
+    email_out.innerText = EMAIL;
     show_email.style.display = 'block';
     TICKET = storage.getItem(EMAIL);
     if ( TICKET == null )
