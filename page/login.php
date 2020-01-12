@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jan  9 07:30:12 EST 2020
+    // Date:	Sun Jan 12 14:21:01 EST 2020
 
     // Handles login for a session.
     //
@@ -566,7 +566,7 @@ Please <input type='text' size='40' id='cnum_in'
 <script>
 
 var LOG = function(message) {};
-<?php if ( $debug ) echo "LOG = console.log;\n" ?>
+<?php if ( $debug ) echo "LOG = console.log;" . PHP_EOL ?>
 
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;

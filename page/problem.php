@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 18:24:15 EST 2020
+    // Date:	Sun Jan 12 14:03:04 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -370,8 +370,8 @@
 		 " src='/page/$page" .
 		 "?filename=$base'" .
 		 " style='width:50%;height:97%;" .
-		 "float:right'>\n" .
-		 "</iframe>\n";
+		 "float:right'>" . PHP_EOL .
+		 "</iframe>" . PHP_EOL;
     }
 
 ?>
@@ -384,7 +384,8 @@
 
     if ( $delete_problem )
     {
-	echo "<div style='background-color:#F5F81A'>\n";
+	echo "<div style='background-color:#F5F81A'>" .
+	     PHP_EOL;
 	echo "<form method='POST'" .
 	     " style='display:inline'" .
 	     " action=problem.php>";
@@ -398,31 +399,37 @@
 	     " name='delete_problem_no'" .
 	     " value='$delete_problem_tag'>" .
 	     "NO</button>";
-	echo "</form></div>\n";
+	echo "</form></div>" . PHP_EOL;
     }
     else if ( isset ( $deleted_problem ) )
     {
-	echo "<div style='background-color:#F5F81A'>\n";
-	echo "Problem $deleted_problem has been deleted!<br>";
-	echo "</div>\n";
+	echo "<div style='background-color:#F5F81A'>" .
+	     PHP_EOL;
+	echo "Problem $deleted_problem has been" .
+	     " deleted!<br>";
+	echo "</div>" . PHP_EOL;
     }
     if ( count ( $errors ) > 0 )
     {
-	echo "<div style='background-color:#F5F81A'>\n";
-	echo "Errors:\n";
-	echo "<div style='margin-left:20px;font-size:110%'>\n";
+	echo "<div style='background-color:#F5F81A'>" .
+	     PHP_EOL;
+	echo "Errors:" . PHP_EOL;
+	echo "<div style='margin-left:20px;" .
+	                "font-size:110%'>" . PHP_EOL;
 	foreach ( $errors as $e )
-	    echo "<pre style='margin:0 0'>$e</pre><br>\n";
-	echo "</div></div>\n";
+	    echo "<pre style='margin:0 0'>$e</pre>" .
+	         "<br>" . PHP_EOL;
+	echo "</div></div>" . PHP_EOL;
     }
     if ( count ( $warnings ) > 0 )
     {
-	echo "<div style='background-color:#ffc0ff'>\n";
-	echo "Warnings:\n";
-	echo "<div style='margin-left:20px'>\n";
+	echo "<div style='background-color:#ffc0ff'>" .
+	     PHP_EOL;
+	echo "Warnings:" . PHP_EOL;
+	echo "<div style='margin-left:20px'>" . PHP_EOL;
 	foreach ( $warnings as $e )
-	    echo "<pre>$e</pre><br>\n";
-	echo "</div></div>\n";
+	    echo "<pre>$e</pre><br>" . PHP_EOL;
+	echo "</div></div>" . PHP_EOL;
     }
 
     $current_problem = ( isset ( $problem ) ?
@@ -446,21 +453,23 @@ EOT;
 	     "Delete Current Problem</button>" .
 	     "</form>";
     echo "<br>";
-    echo "<table><form action='problem.php' method='POST'>";
+    echo "<table><form action='problem.php'" .
+         " method='POST'>";
     if ( count ( $problems ) > 0 )
     {
 	echo "<form action='problem.php'" .
 	     " method='POST'" .
-	     " style='display:inline'>\n";
+	     " style='display:inline'>" . PHP_EOL;
 	echo "<tr><td style='text-align:right'>" .
 	     "<input type='submit'" .
 	     " name='goto_problem'" .
-	     " value='Go To Problem:'></td>\n";
-        echo "<td><select name='selected_problem'>\n";
+	     " value='Go To Problem:'></td>" . PHP_EOL;
+        echo "<td><select name='selected_problem'>" .
+	     PHP_EOL;
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
-	             "$value</option>\n";
-        echo "</select></td></tr></form>\n";
+	             "$value</option>" . PHP_EOL;
+        echo "</select></td></tr></form>" . PHP_EOL;
     }
     echo <<<EOT
     <form action='problem.php' method='POST'
@@ -478,9 +487,10 @@ EOT;
 	{
 	    $_SESSION['epm_creatables'] = $creatables;
 	    echo "<div style='" .
-	         "background-color:#F5F81A'>\n" .
+	         "background-color:#F5F81A'>" .
+		 PHP_EOL .
 	         "<form action='problem.php'" .
-		 " method='POST'>\n" .
+		 " method='POST'>" . PHP_EOL .
 	         "Files that Need to be" .
 	         " Created:" .
 		 "<table style='display:block'>";
@@ -490,9 +500,10 @@ EOT;
 		     "<td style='text-align:right'>" .
 		     "<button type='submit'" .
 		     " name='create' value='$fname'>" .
-		     "$fname</button></td></tr>\n";
+		     "$fname</button></td></tr>" .
+		     PHP_EOL;
 	    }
-	    echo "</table></form></div>\n";
+	    echo "</table></form></div>" . PHP_EOL;
 	}
         $count = 0;
 	foreach ( problem_file_names() as $fname )
@@ -500,7 +511,8 @@ EOT;
 	    if ( ++ $count == 1 )
 	        echo "<form action='problem.php'" .
 		     " method='POST'>" .
-		     " Current Problem Files (most recent first):" .
+		     " Current Problem Files" .
+		     " (most recent first):" .
 		     "<table style='display:block'>";
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>" .
@@ -558,53 +570,54 @@ EOT;
 	echo "<div style='background-color:#c0ffc0;'>";
         if ( count ( $output ) > 0 )
 	{
-	    echo "Output:<br><ul>\n";
+	    echo "Output:<br><ul>" . PHP_EOL;
 	    foreach ( $output as $e )
 	        echo "<li><pre style='margin:0 0'>" .
-		     "$e</pre>\n";
-	     echo "</ul>\n";
+		     "$e</pre>" . PHP_EOL;
+	     echo "</ul>" . PHP_EOL;
 	}
         if ( count ( $commands ) > 0 )
 	{
-	    echo "Commands:<br><ul>\n";
+	    echo "Commands:<br><ul>" . PHP_EOL;
 	    $e = '';
 	    foreach ( $commands as $c )
 	    {
 	        if ( preg_match ( '/^.*\h\\\\$/', $c ) )
-		    $e .= "$c\n";
+		    $e .= "$c" . PHP_EOL;
 		else
 		{
 		    $e .= "$c";
-		    echo "<li><pre style='margin:0 0'>" .
-			 "$e</pre>\n";
+		    echo "<li><pre" .
+		         " style='margin:0 0'>" .
+			 "$e</pre>" . PHP_EOL;
 		    $e = '';
 		}
 	    }
-	    echo "</ul>\n";
+	    echo "</ul>" . PHP_EOL;
 	}
         if ( count ( $kept ) > 0 )
 	{
-	    echo "Kept:<ul>\n";
+	    echo "Kept:<ul>" . PHP_EOL;
 	    foreach ( $kept as $e )
 	        echo "<li><pre style='margin:0 0'>" .
-		     "$e</pre>\n";
-	     echo "</ul>\n";
+		     "$e</pre>" . PHP_EOL;
+	     echo "</ul>" . PHP_EOL;
 	}
-	echo "</div>\n";
+	echo "</div>" . PHP_EOL;
     }
 
     if ( count ( $show_files ) > 0 )
     {
 	echo "<div style='" .
 	     "background-color:" .
-	     "#AEF9B0;'>\n";
+	     "#AEF9B0;'>" . PHP_EOL;
 	foreach ( $show_files as $f )
 	{
 	    $f = "$epm_data/$f";
 	    $b = basename ( $f );
 	    if ( filesize ( $f ) == 0 )
 	    {
-		echo "<u>$b</u> is empty<br>\n";
+		echo "<u>$b</u> is empty<br>" . PHP_EOL;
 		continue;
 	    }
 	    $ext = pathinfo ( $f, PATHINFO_EXTENSION );
@@ -615,10 +628,11 @@ EOT;
 
 	    if ( $type == 'utf8' )
 	    {
-		echo "<u>$b</u>:<br>\n";
-		echo '<pre>'
-		   . file_get_contents ( $f )
-		   . "</pre>\n\n";
+		echo "<u>$b</u>:<br>" . PHP_EOL;
+		$c = file_get_contents ( $f );
+		$hc = htmlspecialchars ( $c );
+		echo "<pre>$hc</pre>" .
+		     PHP_EOL . PHP_EOL;
 	    }
 	    else
 	    {
@@ -633,10 +647,10 @@ EOT;
 		}
 		else
 		    $t = $type;
-		echo "<u>$b</u> is $t<br>\n";
+		echo "<u>$b</u> is $t<br>" . PHP_EOL;
 	    }
 	}
-	echo "</div>\n";
+	echo "</div>" . PHP_EOL;
     }
 ?>
 

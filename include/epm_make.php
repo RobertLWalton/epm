@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jan 12 07:04:47 EST 2020
+// Date:    Sun Jan 12 13:46:57 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -80,7 +80,8 @@ function get_json ( $r, $file )
     {
 	$m = json_last_error_msg();
 	ERROR
-	    ( "cannot decode json in $file:\n    $m" );
+	    ( "cannot decode json in $file:" . PHP_EOL .
+	      "    $m" );
     }
     return $j;
 }
@@ -431,7 +432,8 @@ function load_argument_map
         if ( ! isset ( $template_optn[$opt] ) )
 	    $warnings[] =
 	        "$opt option from $problem.optn" .
-		" file is not in template.optn file\n" .
+		" file is not in template.optn file" .
+		PHP_EOL .
 	        "    and therefore it is illegal and" .
 		" its value $value is ignored";
     }
@@ -473,7 +475,8 @@ function load_argument_map
 		else
 		    $warnings[] =
 		        "$opt option value $ovalue" .
-		        " from $problem.optn file\n" .
+		        " from $problem.optn file" .
+			PHP_EOL .
 			"    is not legal, using" .
 			" default $value instead";
 	    }
@@ -511,7 +514,7 @@ function load_argument_map
 	    {
 		$errors[] =
 		    "no range member for option $opt" .
-		    " of type $type\n" .
+		    " of type $type" . PHP_EOL .
 		    " in template.optn file; option" .
 		    " ignored";
 		continue;
@@ -522,7 +525,8 @@ function load_argument_map
 	    {
 		$errors[] =
 		    "badly formatted range member" .
-		    " for option $opt of type $type\n" .
+		    " for option $opt of type $type" .
+		    PHP_EOL .
 		    " in template.optn file; option" .
 		    " ignored";
 		continue;
@@ -533,7 +537,8 @@ function load_argument_map
 	    {
 		$warnings[] =
 		    "option $opt value $ovalue from" .
-		    " $problem.optn file\n" .
+		    " $problem.optn file" .
+		    PHP_EOL .
 		    " is not numeric; $ovalue ignored";
 		$ovalue = NULL;
 	    }
@@ -546,7 +551,8 @@ function load_argument_map
 	    {
 		$warnings[] =
 		    "option $opt value $ovalue from" .
-		    " $problem.optn file\n" .
+		    " $problem.optn file" .
+		    PHP_EOL .
 		    " is not natural number;" .
 		    " $ovalue ignored";
 		$ovalue = NULL;
@@ -558,7 +564,8 @@ function load_argument_map
 		$warnings[] =
 		    "option $opt value $ovalue" .
 		    " from $problem.optn file" .
-		    " is too small\n" .
+		    " is too small" .
+		    PHP_EOL .
 		    "    (less than {$range[0]});" .
 		    " {$range[0]} used instead";
 		$ovalue = $range[0];
@@ -570,7 +577,8 @@ function load_argument_map
 		$warnings[] =
 		    "option $opt value $ovalue" .
 		    " from $problem.optn file" .
-		    " is too large\n" .
+		    " is too large" .
+		    PHP_EOL .
 		    "    (greater than {$range[1]});" .
 		    " {$range[1]} used instead";
 		$ovalue = $range[1];
@@ -586,7 +594,8 @@ function load_argument_map
 	    {
 		$errors[] =
 		    "no default member for option" .
-		    " $opt of type $type in\n" .
+		    " $opt of type $type in" .
+		    PHP_EOL .
 		    " template.optn file, and no" .
 		    " valid $problem.optn value;" .
 		    " option ignored";
@@ -597,7 +606,8 @@ function load_argument_map
 	{
 	    $errors[] =
                 "option $opt in template.optn file" .
-		" has neither values\n" .
+		" has neither values" .
+		PHP_EOL .
 		"    nor type members; option ignored";
 	    continue;
 	}
@@ -620,7 +630,8 @@ function load_argument_map
 	else
 	    $errors[] =
 	        "option $opt in template.optn file" .
-		" has neither argname\n" .
+		" has neither argname" .
+		PHP_EOL .
 		"    nor valname members; option" .
 		" ignored";
     }
@@ -1094,20 +1105,20 @@ function compile_commands ( $runfile, $work, $commands )
     $r = '';  // Value to write to $runfile
     $n = 0;   // Line count
     $cont = 0;   // Next line is continuation.
-    $r .= "trap 'echo \$n \$? DONE' EXIT\n";
-    $r .= "n=B; echo $$ PID\n";
-    $r .= "n=B; set -e\n";
+    $r .= "trap 'echo \$n \$? DONE' EXIT" . PHP_EOL;
+    $r .= "n=B; echo $$ PID" . PHP_EOL;
+    $r .= "n=B; set -e" . PHP_EOL;
     foreach ( $commands as $c )
     {
         ++ $n;
 	if ( ! cont )
-	    $r .= "n=$n; $c\n";
+	    $r .= "n=$n; $c" . PHP_EOL;
 	else
-	    $r .= "          $c\n";
+	    $r .= "          $c" . PHP_EOL;
 
         $cont = preg_match ( '/^(.*\h)\\\\$/', $c );
     }
-    $r = "n=D; exit 0\n";
+    $r = "n=D; exit 0" . PHP_EOL;
     if ( ! file_put_contents 
 	    ( "$epm_data/$work/$runfile.sh", $r ) )
 	ERROR ( "cannot write $work/$runfile.sh" );
@@ -1122,14 +1133,14 @@ function compile_commands ( $runfile, $work, $commands )
 function execute_commands ( $runfile, $work )
 {
     $r = '';
-    $r .= "cd $epm_data/$work\n";
-    $r .= "export EPM_HOME=$epm_home\n";
-    $r .= "export EPM_DATA=$epm_data\n";
-    $r .= "export EPM_UID=$uid\n";
-    $r .= "export EPM_PROBLEM=$problem\n";
-    $r .= "export EPM_WORK=$work\n";
+    $r .= "cd $epm_data/$work" . PHP_EOL;
+    $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
+    $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
+    $r .= "export EPM_UID=$uid" . PHP_EOL;
+    $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
+    $r .= "export EPM_WORK=$work" . PHP_EOL;
     $r .= "bash $runfile.sh >$runfile.shout" .
-                         " 2>$funfile.sherr\n";
+                         " 2>$funfile.sherr" . PHP_EOL;
 	// bash appears to flush echo output even when
 	// stdout is redirected to a file, and so
 	// `echo $$ PID;' promptly echoes PID.
@@ -1139,6 +1150,57 @@ function execute_commands ( $runfile, $work )
     if ( pclose ( $desc ) == -1 )
         ERROR ( "error executing pclose for" .
 	        " $runfile.sh in $work" );
+}
+
+function get_commands_display
+    ( & $display, & $display_map, $runfile, $work )
+{
+    $display = '';
+    $display_status = false;
+    $display_map = [];
+    $c = file_get_contents 
+	    ( "$epm_data/$work/$runfile.sh", $r );
+    if ( $c === false )
+	ERROR ( "cannot read $work/$runfile.sh" );
+    $c = explode ( PHP_EOL, $c );
+    $count = 0;
+    $cont = 0;
+    foreach ( $c as $line )
+    {
+        if ( ! $cont
+	     &&
+	     ! preg_match ( '/^n=[0-9]+;(.*)$/', $line,
+	                    $matches ) )
+	    continue;
+	++ $count;
+	if ( ! $cont ) $line = $matches[1];
+	$statfile = NULL;
+	if ( preg_match
+	         ( '/-status\h+(\H+\.[a-z]stat)\h/',
+	           $line, $matches ) )
+	{
+	    $statfile = $matches[1];
+	    $display_map[$statfile] = $count;
+	}
+	$line = ( $cont ? '    ' : '' ) . $line;
+	$hline = htmlspecialchars ( $line );
+	$display .= "<tr><td><pre>$hline</pre></td>";
+	if ( isset ( $statfile ) )
+	    $display .= "<td><pre"
+	              . " id='stat_time$count'>"
+		      . "</pre></td><td><pre"
+	              . " id='stat_exit$count'>"
+		      . "</pre></td></td>";
+	$display = "</tr>" . PHP_EOL;
+	$cont = preg_match ( '\h\\$', $line );
+    }
+    if ( count ( $display_map ) > 0 )
+    {
+        $header = "<tr><th>Commands</th>"
+	        . "<th>CPU Time<br>(seconds)</th>"
+		. "<th>Exit Code</th></tr>" . PHP_EOL;
+	$display = $header . $display;
+    }
 }
 
 
@@ -1154,7 +1216,7 @@ function run_commands
     $e = '';
     foreach ( $commands as $c )
     {
-	$e .= "\n    $c";
+	$e .= PHP_EOL . "    $c";
         if ( preg_match ( '/^(.*\h)\\\\$/', $c,
 	                  $matches ) )
 	{

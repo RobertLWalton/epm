@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 07:57:57 EST 2020
+    // Date:	Sun Jan 12 13:57:21 EST 2020
 
     // Display and edit user information in:
     //
@@ -154,8 +154,8 @@
 	    if ( $user_admin === NULL )
 	    {
 		$m = json_last_error_msg();
-		ERROR ( "cannot decode json in $f:\n" .
-			"    $m" );
+		ERROR ( "cannot decode json in $f:" .
+		        PHP_EOL . "    $m" );
 	    }
 	    foreach ( ['full_name',
 		       'organization',
@@ -421,61 +421,64 @@
 
     if ( count ( $errors ) > 0 )
     {
-        echo '<h3>Errors:</h3>' . "\n";
-	echo "<div style='margin-left:20px'>\n";
+        echo '<h3>Errors:</h3>' . PHP_EOL;
+	echo "<div style='margin-left:20px'>" . PHP_EOL;
 	foreach ( $errors as $value )
 	{
 	    $hvalue = htmlspecialchars ( $value );
-	    echo "<mark>$hvalue</mark><br>\n";
+	    echo "<mark>$hvalue</mark><br>" . PHP_EOL;
 	}
-	echo '</div>' . "\n";
+	echo '</div>' . PHP_EOL;
     }
 
     if ( count ( $emails ) == 0 )
         echo "<mark>Its a good idea to add a second" .
-	     " email address.</mark><br>\n";
+	     " email address.</mark><br>" . PHP_EOL;
 
     if ( $edit )
-	echo "<h3>Edit User Email Addresses:</h3>\n";
+	echo "<h3>Edit User Email Addresses:</h3>" .
+	     PHP_EOL;
     else
-	echo "<h3>User Email Addresses:</h3>\n";
+	echo "<h3>User Email Addresses:</h3>" . PHP_EOL;
 
-    echo "<div style='margin-left:20px'>\n";
+    echo "<div style='margin-left:20px'>" . PHP_EOL;
     $hemail = htmlspecialchars ( $email );
     echo "$hemail&nbsp;&nbsp;&nbsp;&nbsp;" .
-         "(used for this login)<br>\n";
+         "(used for this login)<br>" . PHP_EOL;
     foreach ( $emails as $e )
     {
 	$he = htmlspecialchars ( $e );
 	if ( $edit )
 	    echo "<form style='display:inline'".
 		 " method='POST'" .
-		 " action='user.php'>\n" .
+		 " action='user.php'>" . PHP_EOL .
 		 "$he" .
 		 "&nbsp;&nbsp;&nbsp;&nbsp;" .
 		 "<button type='submit'" .
 		 " name='delete_email'" .
-		 " value='$he'>Delete</button><br>\n" .
-		 "</form>\n";
+		 " value='$he'>Delete</button><br>" .
+		 PHP_EOL .
+		 "</form>" . PHP_EOL;
 	else
-	    echo "$he<br>\n";
+	    echo "$he<br>" . PHP_EOL;
     }
     if ( $edit
          &&
 	 count ( $emails ) + 1 < $max_emails )
 	echo "<form style='display:inline'".
 	     " method='POST'" .
-	     " action='user.php'>\n" .
+	     " action='user.php'>" . PHP_EOL .
 	     "<input type='email' name='new_email'" .
 	     " value='' size='40' placeholder=" .
 	     "'Another Email Address'" .
 	     " title='Add another email address" .
-	     " to the account'>\n" .
-	     "&nbsp;&nbsp;&nbsp;&nbsp;\n" .
-	     "<input type='submit' value='Add'>\n" .
-	     "</form>\n";
+	     " to the account'>" . PHP_EOL .
+	     "&nbsp;&nbsp;&nbsp;&nbsp;" . PHP_EOL .
+	     "<input type='submit' value='Add'>" .
+	     PHP_EOL;
+	     "</form>" . PHP_EOL;
 
-    echo "</div>\n";
+    echo "</div>" . PHP_EOL;
 
     $location_placeholder =
 	 "Town, State (and Country) of Organization";
