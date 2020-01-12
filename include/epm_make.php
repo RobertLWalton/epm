@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jan  8 18:37:17 EST 2020
+// Date:    Sat Jan 11 23:25:18 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1082,6 +1082,55 @@ function get_commands ( $control )
     return substitute_match
                ( $commands, $argument_map );
 }
+
+// Compile $commands into the file $runfile.  $runfile
+// is in $work which is in $epm_data.
+//
+function compile_commands ( $runfile, $work, $commands )
+{
+    global $epm_data;
+
+    $r = '';  // Value to write to $runfile
+    $n = 0;   // Line count
+    $cont = 0;   // Next line is continuation.
+    $r .= "trap 'echo \$n \$? DONE' EXIT\n";
+    $r .= "n=B; set -e\n";
+    foreach ( $commands as $c )
+    {
+        ++ $n;
+	if ( ! cont )
+	    $r .= "n=$n; $c\n";
+	else
+	    $r .= "          $c\n";
+
+        $cont = preg_match ( '/^(.*\h)\\\\$/', $c );
+    }
+    $r = "n=D; exit 0\n";
+    if ( ! file_put_contents 
+	    ( "$epm_data/$work/$runfile", $r ) )
+	ERROR ( "cannot write $work/$runfile" );
+}
+
+// Execute $runfile in background.
+//
+function execute_commands ( $runfile, $work )
+{
+    $r = '';
+    $r .= "cd $epm_data/$work\n";
+    $r .= "export EPM_HOME=$epm_home\n";
+    $r .= "export EPM_DATA=$epm_data\n";
+    $r .= "export EPM_UID=$uid\n";
+    $r .= "export EPM_PROBLEM=$problem\n";
+    $r .= "export EPM_WORK=$work\n";
+    $r .= "sh $runfile\n";
+    $desc = popen ( $r, 'w' );
+    if ( $desc === false )
+        ERROR ( "cannot execute $runfile in $work" );
+    if ( pclose ( $desc ) == -1 )
+        ERROR ( "error executing pclose for $runfile" .
+	        " in $work" );
+}
+
 
 // Run $commands in $work.  Append output to output
 // and error messages to $errors.

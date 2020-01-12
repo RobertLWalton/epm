@@ -9,10 +9,10 @@ $is_epm_test = true;
 
 $epm_data = getcwd() . '/epm_make_test_data';
 $epm_home = dirname ( getcwd() );
-$_SESSION = [ 'epm_userid' => 1,
-              'epm_problem' => 'prob',
-              'epm_home' => $epm_home,
+$_SESSION = [ 'epm_home' => $epm_home,
 	      'epm_data' => $epm_data ];
+$uid = 1;
+$problem = 'prob';
 $_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
 $c = file_get_contents
     ( '../src/default_admin.params' );
@@ -58,8 +58,6 @@ $prob_optn = <<<'EOT'
 }
 EOT;
 
-$userid = $_SESSION['epm_userid'];
-$problem = $_SESSION['epm_problem'];
 include ( '../include/epm_make.php' );
 
 function check ( $expression, $value )
