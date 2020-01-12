@@ -3,24 +3,22 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Dec 27 03:27:50 EST 2019
+// Date:	Sun Jan 12 06:08:45 EST 2020
 
 $is_epm_test = true;
 
 $epm_data = getcwd() . '/epm_make_test_data';
 $epm_home = dirname ( getcwd() );
-$_SESSION = [ 'epm_home' => $epm_home,
-	      'epm_data' => $epm_data ];
 $uid = 1;
 $problem = 'prob';
-$_SERVER = [ 'DOCUMENT_ROOT' => dirname ( getcwd() ) ];
-$c = file_get_contents
-    ( '../src/default_admin.params' );
-$_SESSION['epm_admin_params'] =
-    json_decode ( $c, true );
 
 $prob_dir = 'users/user1/prob';
 $proj_dir = 'projects/proj1/prob';
+
+$epm_upload_maxsize = 256 * 1024;
+$upload_target_ext = [
+    "c" => "",
+    "java" => "class" ];
 
 function setup_test_dirs ()
 {
