@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jan 11 23:25:18 EST 2020
+// Date:    Sun Jan 12 07:04:47 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1083,8 +1083,9 @@ function get_commands ( $control )
                ( $commands, $argument_map );
 }
 
-// Compile $commands into the file $runfile.  $runfile
-// is in $work which is in $epm_data.
+// Compile $commands into the file:
+//
+//	$epm_data/$work/$runfile.sh
 //
 function compile_commands ( $runfile, $work, $commands )
 {
@@ -1094,6 +1095,7 @@ function compile_commands ( $runfile, $work, $commands )
     $n = 0;   // Line count
     $cont = 0;   // Next line is continuation.
     $r .= "trap 'echo \$n \$? DONE' EXIT\n";
+    $r .= "n=B; echo $$ PID\n";
     $r .= "n=B; set -e\n";
     foreach ( $commands as $c )
     {
@@ -1107,11 +1109,15 @@ function compile_commands ( $runfile, $work, $commands )
     }
     $r = "n=D; exit 0\n";
     if ( ! file_put_contents 
-	    ( "$epm_data/$work/$runfile", $r ) )
-	ERROR ( "cannot write $work/$runfile" );
+	    ( "$epm_data/$work/$runfile.sh", $r ) )
+	ERROR ( "cannot write $work/$runfile.sh" );
 }
 
-// Execute $runfile in background.
+// Execute $runfile.sh within $epm_data/$work in
+// background with empty standard input.  Put standard
+// output in $runfile.shout and standard error in
+// $runfile.sherr.  The standard output is line
+// buffered (as per stdbuf(1) -oL ).
 //
 function execute_commands ( $runfile, $work )
 {
@@ -1122,13 +1128,17 @@ function execute_commands ( $runfile, $work )
     $r .= "export EPM_UID=$uid\n";
     $r .= "export EPM_PROBLEM=$problem\n";
     $r .= "export EPM_WORK=$work\n";
-    $r .= "sh $runfile\n";
+    $r .= "bash $runfile.sh >$runfile.shout" .
+                         " 2>$funfile.sherr\n";
+	// bash appears to flush echo output even when
+	// stdout is redirected to a file, and so
+	// `echo $$ PID;' promptly echoes PID.
     $desc = popen ( $r, 'w' );
     if ( $desc === false )
-        ERROR ( "cannot execute $runfile in $work" );
+        ERROR ( "cannot execute $runfile.sh in $work" );
     if ( pclose ( $desc ) == -1 )
-        ERROR ( "error executing pclose for $runfile" .
-	        " in $work" );
+        ERROR ( "error executing pclose for" .
+	        " $runfile.sh in $work" );
 }
 
 
