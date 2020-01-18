@@ -234,8 +234,6 @@ check ( '$GLOBALS["show"]',
         ["users/user1/prob/+work+/prob.err",
 	 "users/user1/prob/+work+/prob.out"] );
 
-exit ( 0 );
-
 // Simulate upload for prob.c.
 //
 setup_test_dirs();
