@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun Jan 12 06:08:45 EST 2020
+// Date:	Sat Jan 18 06:34:08 EST 2020
 
 $is_epm_test = true;
 
@@ -181,6 +181,33 @@ check ( 'preg_match ( "/-Wpedantic/", ' .
 file_put_contents
     ( "$epm_data/$work/prob.c", $prob_c );
 
+compile_commands ( 'prob', $work, $commands );
+$sh = <<<'EOT'
+trap 'echo $n $? DONE' EXIT
+n=B; echo $$ PID
+n=B; set -e
+n=1; gcc -Og -Wpedantic -o prob prob.c   \
+              > prob.out 2> prob.err
+n=D; exit 0
+
+EOT;  // the blank line is needed to get an ending \n.
+
+check ( "file_get_contents
+	     ( '$epm_data/$work/prob.sh' )",
+        $sh );
+
+execute_commands ( 'prob', $work );
+
+$shout = file_get_contents
+    ( "$epm_data/$work/prob.shout" );
+check ( "preg_match
+            ( '/^[0-9]+ PID\nD 0 DONE\n$/',
+	      '$shout' )", 1 );
+$sherr = file_get_contents
+    ( "$epm_data/$work/prob.sherr" );
+check ( "'$sherr' == ''", True );
+
+/*
 $errors = [];
 $output = [];
 run_commands ( $commands, $work, $output, $errors );
@@ -193,6 +220,7 @@ $output = [];
 run_commands ( $checks, $work, $output, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["output"]', [] );
+*/
 
 $errors = [];
 move_keep ( $control, $work, $prob_dir,
@@ -205,6 +233,8 @@ $show = compute_show
 check ( '$GLOBALS["show"]',
         ["users/user1/prob/+work+/prob.err",
 	 "users/user1/prob/+work+/prob.out"] );
+
+exit ( 0 );
 
 // Simulate upload for prob.c.
 //

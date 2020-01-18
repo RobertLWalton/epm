@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jan 12 13:46:57 EST 2020
+// Date:    Sat Jan 18 06:08:28 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1111,14 +1111,14 @@ function compile_commands ( $runfile, $work, $commands )
     foreach ( $commands as $c )
     {
         ++ $n;
-	if ( ! cont )
+	if ( ! $cont )
 	    $r .= "n=$n; $c" . PHP_EOL;
 	else
 	    $r .= "          $c" . PHP_EOL;
 
         $cont = preg_match ( '/^(.*\h)\\\\$/', $c );
     }
-    $r = "n=D; exit 0" . PHP_EOL;
+    $r .= "n=D; exit 0" . PHP_EOL;
     if ( ! file_put_contents 
 	    ( "$epm_data/$work/$runfile.sh", $r ) )
 	ERROR ( "cannot write $work/$runfile.sh" );
@@ -1132,6 +1132,8 @@ function compile_commands ( $runfile, $work, $commands )
 //
 function execute_commands ( $runfile, $work )
 {
+    global $epm_data, $epm_home, $uid, $problem;
+
     $r = '';
     $r .= "cd $epm_data/$work" . PHP_EOL;
     $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
@@ -1140,7 +1142,7 @@ function execute_commands ( $runfile, $work )
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
     $r .= "export EPM_WORK=$work" . PHP_EOL;
     $r .= "bash $runfile.sh >$runfile.shout" .
-                         " 2>$funfile.sherr" . PHP_EOL;
+                         " 2>$runfile.sherr" . PHP_EOL;
 	// bash appears to flush echo output even when
 	// stdout is redirected to a file, and so
 	// `echo $$ PID;' promptly echoes PID.
