@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jan 18 06:08:28 EST 2020
+// Date:    Sat Jan 18 11:58:33 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1142,7 +1142,7 @@ function execute_commands ( $runfile, $work )
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
     $r .= "export EPM_WORK=$work" . PHP_EOL;
     $r .= "bash $runfile.sh >$runfile.shout" .
-                         " 2>$runfile.sherr" . PHP_EOL;
+                         " 2>$runfile.sherr &" . PHP_EOL;
 	// bash appears to flush echo output even when
 	// stdout is redirected to a file, and so
 	// `echo $$ PID;' promptly echoes PID.

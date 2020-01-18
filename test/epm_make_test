@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jan 18 06:34:08 EST 2020
+// Date:	Sat Jan 18 11:58:13 EST 2020
 
 $is_epm_test = true;
 
@@ -198,8 +198,14 @@ check ( "file_get_contents
 
 execute_commands ( 'prob', $work );
 
-$shout = file_get_contents
-    ( "$epm_data/$work/prob.shout" );
+$shout = '';
+while ( ! preg_match ( '/DONE\n$/', $shout ) )
+{
+    $shout = @file_get_contents
+	( "$epm_data/$work/prob.shout" );
+    usleep ( 10000 );
+}
+
 check ( "preg_match
             ( '/^[0-9]+ PID\nD 0 DONE\n$/',
 	      '$shout' )", 1 );
