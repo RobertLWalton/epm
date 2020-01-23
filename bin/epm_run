@@ -3,12 +3,12 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Dec 27 03:34:49 EST 2019
+// Date:	Thu Jan 23 06:44:08 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
 EPM_DATA=data-directory \
-EPM_USERID=userid \
+EPM_UID=uid \
 EPM_PROBLEM=problem \
 EPM_WORK=working-subdirectory \
     epm_run [-r|-s] run-file [status-file]
@@ -70,7 +70,7 @@ if ( $argc != ( $run == "c" ? 2 : 3 ) )
 //
 $epm_home = getenv ( 'EPM_HOME' );
 $epm_data = getenv ( 'EPM_DATA' );
-$userid   = getenv ( 'EPM_USERID' );
+$uid      = getenv ( 'EPM_UID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
 $work     = getenv ( 'EPM_WORK' );
 $rfile    = $argv[1];
@@ -83,7 +83,7 @@ $include = "$epm_home/include";
 
 include "$include/epm_make.php";
 
-$problem_dir = "users/user$userid/$problem";
+$problem_dir = "users/user$uid/$problem";
 
 load_file_caches ( $problem_dir );
 
