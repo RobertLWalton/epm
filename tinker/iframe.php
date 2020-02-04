@@ -8,7 +8,8 @@ if ( isset ( $_GET['message'] ) )
     $message = $_GET['message'];
     echo "<pre>$message</pre>\n";
     echo "<br><br>\n";
-    echo "80 character line:<br>\n";
+    echo "10pt 80 character line:<br>\n";
+    echo "<pre style='font-size:10pt'>";
     echo "0123456789" .
          "0123456789" .
          "0123456789" .
@@ -17,6 +18,29 @@ if ( isset ( $_GET['message'] ) )
          "0123456789" .
          "0123456789" .
          "0123456789";
+    echo "</pre><br>\n";
+    echo "12pt 80 character line:<br>\n";
+    echo "<pre style='font-size:12pt'>";
+    echo "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789";
+    echo "</pre><br>\n";
+    echo "15pt 80 character line:<br>\n";
+    echo "<pre style='font-size:15pt'>";
+    echo "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789";
+    echo "</pre><br>\n";
     echo "</body>\n";
     echo "</html>\n";
     exit;
@@ -33,14 +57,14 @@ function create_iframe ( message ) {
     let h = window.innerHeight;
     let w = window.innerWidth;
     iframe = document.createElement("IFRAME");
-    iframe.height = 95*h/100;
-    iframe.width = 700;
+    iframe.height = h/3;
+    iframe.width = 800;
     iframe.style.cssFloat = "right";
     iframe.src =
         '/tinker/iframe.php?message=' + message
 	+ " inner: " + h + "x" + w
-	+ " outer: " + window.outerHeight
-	+ "x" + window.outerWidth;
+	+ " iframe: " + iframe.height
+	+ "x" + iframe.width;
     document.body.appendChild ( iframe );
 }
 </script>
