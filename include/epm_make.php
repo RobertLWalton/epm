@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jan 18 11:58:33 EST 2020
+// Date:    Tue Feb  4 06:09:06 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1248,6 +1248,82 @@ function run_commands
     }
 }
 
+// Execute CHECKS.  Append failures to $errors.
+//
+// The different types of checks are:
+//
+//	EMPTY filename
+//	    Checks that file exists and is empty.
+//
+//	SUCCESS filename
+//	    Checks that file ends with the line:
+//		D 0 DONE
+//	    and is less than 1 megabyte in size.
+//
+function execute_checks
+	( $control, $work, & $errors )
+{
+    global $epm_data;
+
+    if ( ! isset ( $control[2]['CHECKS'] ) )
+        return;
+    $checks = $control[2]['CHECKS'];
+    foreach ( $checks as $check )
+    {
+        if ( ! preg_match ( '/^\s*(\S+)\s+(\S+)\s*$/',
+	                    $check, $matches ) )
+	{
+	    $errors[] = "malformed CHECKS item: $check";
+	    continue;
+	}
+	$test = $matches[1];
+	$file = "$epm_data/$work/$matches[2]";
+
+	$size = @filesize ( $file );
+	if ( $size === false )
+	{
+	    $errors[] = "file $file does not exist";
+	    continue;
+	}
+
+	if ( $test == 'EMPTY' )
+	{
+	    if ( $size != 0 )
+		$errors[] = "file $file is not empty";
+	    continue;
+	}
+
+	if ( $size > 1024 * 1024 )
+	{
+	    $errors[] = "file $file too large"
+	               . " ($size > 1 megabyte)";
+	    continue;
+	}
+
+	$contents = @file_get_contents ( $file );
+	if ( $contents === false )
+	{
+	    $errors[] = "file $file is not readable";
+	    continue;
+	}
+
+	if ( $test == 'SUCCESS' )
+	{
+	    if ( ! preg_match ( '/(^|\n)D 0 DONE$/',
+	                        $contents ) )
+	    {
+		$name = pathinfo
+		    ( $file, PATHINFO_FILENAME );
+		$errors[] =
+		    "execution of $name failed";
+	    }
+	    continue;
+	}
+
+	$errors[] = "bad test in CHECKS item: $test";
+    }
+}
+
 // Move KEEP files, if any, from $work to $local_dir.
 // List last component names of files moved in $moved.
 // Append error messages to $errors.
@@ -1403,9 +1479,8 @@ function make_file
     if ( count ( $errors ) > $errors_size )
         return;
 
-    if ( isset ( $control[2]['CHECKS'] ) )
-	run_commands ( $control[2]['CHECKS'], $work,
-	               $output, $errors );
+    execute_checks
+	 ( $control, $work, $errors );
 }
 
 // Given the file $src make the file $des and keep any
