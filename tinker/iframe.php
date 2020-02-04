@@ -1,4 +1,11 @@
 <html>
+<style>
+iframe.right {
+    float: right;
+    width: 9in;
+    height: 5in;
+};
+</style>
 <body>
 
 <?php
@@ -57,21 +64,29 @@ function create_iframe ( message ) {
     let h = window.innerHeight;
     let w = window.innerWidth;
     iframe = document.createElement("IFRAME");
-    iframe.height = h/3;
-    iframe.width = 800;
-    iframe.style.cssFloat = "right";
+    iframe.className = 'right';
     iframe.src =
-        '/tinker/iframe.php?message=' + message
-	+ " inner: " + h + "x" + w
-	+ " iframe: " + iframe.height
-	+ "x" + iframe.width;
+        '/tinker/iframe.php?message=' + message;
     document.body.appendChild ( iframe );
 }
 </script>
 
-<div style='float:left;width:48%'>
+<div style='float:left'>
 <button onclick='create_iframe("ONE")'>ONE</button><br>
 <button onclick='create_iframe("TWO")'>TWO</button><br>
+<?php
+    echo "12pt 80 character line:<br>\n";
+    echo "<pre style='font-size:12pt'>";
+    echo "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789" .
+         "0123456789";
+    echo "</pre><br>\n";
+?>
 </div>
 </body>
 </html>
