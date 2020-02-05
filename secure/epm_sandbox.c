@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Wed Feb  5 10:52:20 EST 2020
+ * Date:	Wed Feb  5 14:20:25 EST 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -592,14 +592,17 @@ int main ( int argc, char ** argv )
 	struct rusage usage;
 
 	int r = 0;
-	int t = 100000;
+	int t = 10000;  /* 10 milliseconds */
 	int signaled = 0;
+	int saved_errno;
 
 	while ( r == 0 )
 	{
 	    usleep ( t );
 	    if ( t < 1600000 ) t *= 2;
+	        /* 1.6 seconds maximum delay */
 	    r = waitpid ( child, & status, WNOHANG );
+	    saved_errno = errno;
 
 	    if ( getrusage ( RUSAGE_CHILDREN,
 			     & usage ) < 0 )
@@ -640,7 +643,10 @@ int main ( int argc, char ** argv )
 			       MAXRSS );
 	}
 	if ( r < 0 )
+	{
+	    errno = saved_errno;
 	    errno_exit ( "wait" );
+	}
 
 	if ( status_file != NULL )
 	{
