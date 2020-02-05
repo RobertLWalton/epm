@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb  5 03:46:48 EST 2020
+    // Date:	Wed Feb  5 06:15:17 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -385,29 +385,41 @@
         $show_file = find_show_file ( $show_files );
     }
 
-    if ( isset ( $show_file ) )
-    {
-	$base = pathinfo ( $show_file, 
-	                   PATHINFO_BASENAME );
-	$ext = pathinfo ( $show_file, 
-	                  PATHINFO_EXTENSION );
-	$type = $display_file_type[$ext];
-	$page = $display_file_map[$type];
-	if ( $page != NULL )
-	    echo "<iframe" .
-		 " src='/page/$page" .
-		 "?filename=$base'" .
-		 " style='width:50%;height:97%;" .
-		 "float:right'>" . PHP_EOL .
-		 "</iframe>" . PHP_EOL;
-    }
-
 ?>
 
 <html>
+<style>
+    div.left {
+	background-color: #96F9F3;
+	width: 47%;
+	font-size: 12pt;
+	float: left;
+    }
+    iframe.right {
+	width: 9in;
+	font-size: 12pt;
+	float: right;
+	height: 99%;
+    }
+</style>
+
+<script>
+    var iframe;
+
+    function create_iframe ( page, filename ) {
+	if ( iframe != undefined ) iframe.remove();
+
+	iframe = document.createElement("IFRAME");
+	iframe.className = 'right';
+	iframe.name = filename;
+	iframe.src =
+	    '/page/' + page + '?filename=' + filename;
+	document.body.appendChild ( iframe );
+    }
+</script>
 <body>
 
-<div style="background-color:#96F9F3;width:47%;float:left">
+<div class='left'>
 <?php 
 
     if ( $delete_problem )
@@ -679,6 +691,19 @@ EOT;
 	    }
 	}
 	echo "</div>" . PHP_EOL;
+    }
+
+    if ( isset ( $show_file ) )
+    {
+	$base = pathinfo ( $show_file, 
+	                   PATHINFO_BASENAME );
+	$ext = pathinfo ( $show_file, 
+	                  PATHINFO_EXTENSION );
+	$type = $display_file_type[$ext];
+	$page = $display_file_map[$type];
+	if ( $page != NULL ) echo <<<EOT
+<script>create_iframe ( '$page', '$base' );</script>
+EOT;
     }
 ?>
 
