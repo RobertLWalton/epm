@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Thu Dec 26 06:50:43 EST 2019
+ * Date:	Wed Feb  5 10:52:20 EST 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -67,6 +67,9 @@ char documentation [] =
 "    following fields, with fields separated by a\n"
 "    single space character:\n"
 "\f\n"
+"        COUNT      Natural number count of the num-\n"
+"                   ber of times this file has been\n"
+"                   re-written.\n"
 "        STATE      One of:\n"
 "                     R  running\n"
 "                     E  terminated with exit code\n"
@@ -85,17 +88,15 @@ char documentation [] =
 "        USERTIME   user mode cpu time (sec)\n"
 "        SYSTIME    system mode cpu time (sec)\n"
 "        MAXRSS     max resident set size (kilobytes)\n"
-"        STATE      copy of STATE.\n"
+"        COUNT      copy of COUNT.\n"
 "\n"
 "    All fields are integer except USERTIME and"
 				" SYSTIME\n"
 "    are floating point and unset limit fields are\n"
-"    `unlimited'.  EXITCODE, SIGNAL, USERTIME,"
-                                         " SYSTIME,\n"
-"    and MAXRSS are unused and 0 if STATE is R.\n"
-"    If beginning and ending STATE do not match,\n"
-"    or STATUS-FILE is empty, re-read file as a race\n"
-"    condition is likely.\n"
+"    `unlimited'.  EXITCODE and SIGNAL are unused\n"
+"    and 0 if STATE is R.  If beginning and ending\n"
+"    COUNT do not match, or STATUS-FILE is empty,\n"
+"    re-read the file as a race condition is likely.\n"
 "\n"
 "    Without any -env options, the environment in\n"
 "    which `program ...' executes is empty.  There\n"
@@ -207,13 +208,15 @@ rlim_t processes = RLIM_INFINITY;
 /* Write status line into status_fd.
  */
 int status_fd;  /* status_file descriptor */
+int COUNT = 0;
 int write_status
     ( char STATE, int EXITCODE, int SIGNAL,
       double USERTIME, double SYSTIME, long MAXRSS )
 {
     char status_line[4000];
     char * p = status_line;
-    p += sprintf ( p, "%c %ld", STATE, (long) child );
+    p += sprintf ( p, "%d %c %ld", COUNT, STATE,
+                      (long) child );
 
     if ( cputime == RLIM_INFINITY )
         p += sprintf ( p, " unlimited" );
@@ -263,14 +266,15 @@ int write_status
         p += sprintf
 	    ( p, " %lu", (unsigned long ) processes );
 
-    p += sprintf ( p, " %d %d %.6f %.6f %lu %c\n",
+    p += sprintf ( p, " %d %d %.6f %.6f %lu %d\n",
                    EXITCODE, SIGNAL, USERTIME, SYSTIME,
-		   MAXRSS, STATE );
+		   MAXRSS, COUNT );
     if ( ftruncate ( status_fd, 0 ) < 0 )
 	errno_exit ( "truncating STATUS-FILE" );
     if ( write ( status_fd, status_line,
                             p - status_line ) < 0 )
 	errno_exit ( "writing STATUS-FILE" );
+    ++ COUNT;
 }
 
 
@@ -577,41 +581,69 @@ int main ( int argc, char ** argv )
 	    write_status ( 'R', 0, 0, 0, 0, 0 );
 	}
 
+	double USERTIME = 0;
+	double SYSTIME = 0;
+	long MAXRSS = 0;
+	char STATE = 'R';
+	int EXITCODE = 0;
+	int SIGNAL = 0;
+
 	int status;
-
-	if ( wait ( & status ) < 0 )
-	    errno_exit ( "wait" );
-
-	int signaled = WIFSIGNALED ( status );
-	int SIGNAL =
-	    ( signaled ? WTERMSIG ( status ) : 0 );
-	int EXITCODE =
-	    ( signaled ? 0 : WEXITSTATUS ( status ) );
-
 	struct rusage usage;
-	if ( getrusage ( RUSAGE_CHILDREN,
-			 & usage ) < 0 )
-	    errno_exit
-		( "genrusage RUSAGE_CHILDREN" );
 
-	double USERTIME = usage.ru_utime.tv_sec
-		        + 1e-6 * usage.ru_utime.tv_usec;
-	double SYSTIME = usage.ru_stime.tv_sec
-		       + 1e-6 * usage.ru_stime.tv_usec;
+	int r = 0;
+	int t = 100000;
+	int signaled = 0;
 
-        if ( signaled && SIGNAL == SIGKILL
-	              && USERTIME + SYSTIME >= cputime )
-	    SIGNAL = SIGXCPU;
+	while ( r == 0 )
+	{
+	    usleep ( t );
+	    if ( t < 1600000 ) t *= 2;
+	    r = waitpid ( child, & status, WNOHANG );
 
+	    if ( getrusage ( RUSAGE_CHILDREN,
+			     & usage ) < 0 )
+		errno_exit
+		    ( "genrusage RUSAGE_CHILDREN" );
 
-	long MAXRSS = usage.ru_maxrss;
+	    USERTIME = usage.ru_utime.tv_sec
+		     + 1e-6 * usage.ru_utime.tv_usec;
+	    SYSTIME = usage.ru_stime.tv_sec
+		    + 1e-6 * usage.ru_stime.tv_usec;
+	    MAXRSS = usage.ru_maxrss;
+
+	    if ( r > 0 )
+	    {
+		signaled = WIFSIGNALED ( status );
+		SIGNAL =
+		    ( signaled ?
+		          WTERMSIG ( status ) : 0 );
+		EXITCODE =
+		    ( signaled ?
+		          0 : WEXITSTATUS ( status ) );
+
+		if ( signaled && SIGNAL == SIGKILL
+			      &&    USERTIME + SYSTIME
+			         >= cputime )
+		    SIGNAL = SIGXCPU;
+		STATE = ( signaled ? 'S' : 'E' );
+	    }
+	    else if ( r < 0 )
+	    {
+	        EXITCODE = errno;
+		STATE = 'E';
+	    }
+
+	    if ( status_file != NULL )
+		write_status ( STATE, EXITCODE, SIGNAL,
+			       USERTIME, SYSTIME,
+			       MAXRSS );
+	}
+	if ( r < 0 )
+	    errno_exit ( "wait" );
 
 	if ( status_file != NULL )
 	{
-	    write_status ( ( signaled ? 'S' : 'E' ),
-	                   EXITCODE, SIGNAL,
-			   USERTIME, SYSTIME,
-			   MAXRSS );
 	    if ( close ( status_fd ) < 0 )
 		errno_exit
 		    ( "closing STATUS-FILE" );
