@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan 12 14:03:04 EST 2020
+    // Date:	Wed Feb  5 03:46:48 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -20,11 +20,31 @@
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
+    $errors = [];    // Error messages to be shown.
+    $warnings = [];  // Warning messages to be shown.
+
+    // The only $_SESSION state particular to this page
+    // is $_SESSION['EPM_PROBLEM'].  The rest of the
+    // state is in the file system.
+
     // Set $problem to current problem, or NULL if none.
-    // Also set $problem_dir if $problem not NULL.
+    // Also set $problem_dir to the problem directory if
+    // $problem not NULL and the problem directory
+    // exists.  If $problem is not NULL but the problem
+    // directory does not exist, the problem has been
+    // deleted by another session.
+    //
+    // Also lock the problem directory for the duration
+    // of the execution of this page.
     //
     $problem = NULL;
     $problem_dir = NULL;
+    $delete_problem = false;
+        // True to ask whether current problem is to be
+	// deleted.
+    $deleted_problem = NULL;
+        // Set to announce that $deleted_problem has
+	// been deleted.
     if ( isset ( $_POST['new_problem'] ) )
     {
         $problem = trim ( $_POST['new_problem'] );
@@ -63,7 +83,6 @@
 		        " $user_dir/$problem" );
 	    umask ( $m );
 	}
-        unset ( $_SESSION['delete_problem_tag'] );
     }
     elseif ( isset ( $_POST['selected_problem'] ) )
     {
@@ -80,7 +99,38 @@
 		" problem: $problem";
 	    $problem = NULL;
 	}
-        unset ( $_SESSION['delete_problem_tag'] );
+    }
+    elseif ( isset ( $_POST['delete_problem'] ) )
+    {
+	$prob = $_POST['delete_problem'];
+	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
+	     ||
+	     $prob != $_SESSION['EPM_PROBLEM'] )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	$delete_problem = true;
+    }
+    elseif ( isset ( $_POST['delete_problem_yes'] ) )
+    {
+	$prob = $_POST['delete_problem_yes'];
+	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
+	     ||
+	     $prob != $_SESSION['EPM_PROBLEM'] )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	unset ( $_SESSION['EPM_PROBLEM'] );
+	$d = "$epm_data/$user_dir/$prob";
+	exec ( "rm -rf $d" );
+	$deleted_problem = $prob;
+    }
+    else if ( isset ( $_POST['delete_problem_no'] ) )
+    {
+	$prob = $_POST['delete_problem_no'];
+	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
+	     ||
+	     $prob != $_SESSION['EPM_PROBLEM'] )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
     }
 
     if (    ! isset ( $problem )
@@ -89,9 +139,34 @@
     elseif ( isset ( $problem ) )
 	$_SESSION['EPM_PROBLEM'] = $problem;
 
+    $lock_desc = NULL;
+    function shutdown ()
+    {
+        global $lock_desc;
+	if ( isset ( $lock_desc ) )
+	    flock ( $lock_desc, LOCK_UN );
+    }
+    register_shutdown_function ( 'shutdown' );
+
     if ( isset ( $problem ) )
+    {
 	$problem_dir =
 	    "users/user$uid/$problem";
+	if ( ! is_dir ( "$epm_data/$problem_dir" ) )
+	{
+	    $errors[] = "problem $problem has been"
+	             . " deleted by another session";
+	    $problem_dir = NULL;
+	}
+	else
+	{
+	    $lock_desc =
+		fopen ( "$epm_data/$problem_dir/lock",
+		        "w" );
+	    flock ( $lock_desc, LOCK_EX );
+	}
+
+    }
     else
 	$problem_dir = NULL;
 
@@ -99,64 +174,17 @@
     //
     $show_file = NULL;  // File to be shown to right.
     $show_files = [];   // Files to be shown to left.
-    $errors = [];	// Error messages to be shown.
-    $warnings = [];	// Warining messages to be
-    			// shown.
     $file_made = false;
         // True if $output, $commands, and $kept are to
 	// be displayed.
     $uploaded_file = NULL;
         // 'name' of uploaded file, if any file was
 	// uploaded.
-    $delete_problem = false;
-        // True to ask whether current problem is to be
-	// deleted.
-    $deleted_problem = NULL;
-        // Set to announce that $deleted_problem has
-	// been deleted.
     $creatables = [];
     if ( isset ( $_SESSION['epm_creatables'] ) )
     {
         $creatables = $_SESSION['epm_creatables'];
 	unset ( $_SESSION['epm_creatables'] );
-    }
-
-    if ( isset ( $_POST['delete_problem'] ) )
-    {
-	$prob = $_POST['delete_problem'];
-	if ( $prob != $problem )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	$delete_problem_tag =
-	    bin2hex ( random_bytes ( 8 ) );
-	$_SESSION['delete_problem_tag'] =
-	    $delete_problem_tag;
-	$delete_problem = true;
-    }
-    else if ( isset ( $_POST['delete_problem_yes'] ) )
-    {
-        if ( ! isset ( $_SESSION['delete_problem_tag'] )
-	     ||
-	        $_SESSION['delete_problem_tag']
-	     != $_POST['delete_problem_yes'] )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-        unset ( $_SESSION['delete_problem_tag'] );
-	exec ( "rm -rf $epm_data/$problem_dir" );
-	$deleted_problem = $problem;
-	$problem = NULL;
-	$problem_dir = NULL;
-	unset ( $_SESSION['EPM_PROBLEM'] );
-    }
-    else if ( isset ( $_POST['delete_problem_no'] ) )
-    {
-        if ( ! isset ( $_SESSION['delete_problem_tag'] )
-	     ||
-	        $_SESSION['delete_problem_tag']
-	     != $_POST['delete_problem_no'] )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-        unset ( $_SESSION['delete_problem_tag'] );
     }
 
     // Set $problems to list of available problems.
@@ -230,7 +258,7 @@
     //
     if ( $method != 'POST' ) /* Do Nothing */;
     elseif ( ! isset ( $problem_dir ) )
-	exit ( "ACCESS: illegal POST to problem.php" );
+	/* Do Nothing */;
     elseif ( isset ( $_POST['show_file'] ) )
     {
 	require "$epm_home/include/epm_make.php";
@@ -393,11 +421,11 @@
 	     " problem $problem?";
 	echo "&nbsp;&nbsp;<button type='submit'" .
 	     " name='delete_problem_yes'" .
-	     " value='$delete_problem_tag'>" .
+	     " value='$problem'>" .
 	     "YES</button>";
 	echo "&nbsp;&nbsp;<button type='submit'" .
 	     " name='delete_problem_no'" .
-	     " value='$delete_problem_tag'>" .
+	     " value='$problem'>" .
 	     "NO</button>";
 	echo "</form></div>" . PHP_EOL;
     }

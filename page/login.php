@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan 12 14:21:01 EST 2020
+    // Date:	Wed Feb  5 04:11:05 EST 2020
 
     // Handles login for a session.
     //
@@ -312,9 +312,25 @@
 
     if ( ! is_dir ( "$epm_data/admin" ) )
     {
-	mkdir ( "$epm_data/admin", 0770 );
-	mkdir ( "$epm_data/admin/email", 0770 );
-	mkdir ( "$epm_data/admin/browser", 0770 );
+        $m = umask ( 06 );
+
+	if ( ! is_dir ( $epm_data ) )
+	    @mkdir ( $epm_data, 0771 );
+
+	@mkdir ( "$epm_data/admin", 0770 );
+	@mkdir ( "$epm_data/admin/email", 0770 );
+	@mkdir ( "$epm_data/admin/browser", 0770 );
+	@mkdir ( "$epm_data/users", 0771 );
+
+	if ( ! is_dir ( "$epm_data/admin" ) )
+	     ERROR
+		 ( 'cannot make admin directory' );
+
+	if ( ! is_dir ( "$epm_data/users" ) )
+	     ERROR
+		 ( 'cannot make users directory' );
+
+	umask ( $m );
     }
 
     $op = NULL;

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan 12 13:57:21 EST 2020
+    // Date:	Wed Feb  5 04:11:38 EST 2020
 
     // Display and edit user information in:
     //
@@ -247,7 +247,9 @@
     }
     elseif ( isset ( $_POST['edit'] ) )
         $edit = true;
-    elseif ( isset ( $_POST['new_email'] ) )
+    elseif ( isset ( $_POST['add_email'] )
+             &&
+	     isset ( $_POST['new_email'] ) )
     {
     	if ( sanitize_email
 	         ( $e, $_POST['new_email'] ) )
@@ -324,7 +326,7 @@
 	    unlock();
 	}
     }
-    elseif ( isset ( $_POST['data'] ) )
+    elseif ( isset ( $_POST['update'] ) )
     {
 	// Read and check all the form data.
 	//
@@ -366,17 +368,18 @@
 
 	if ( $new_user )
 	{
-	    umask ( 06 );
+	    $m = umask ( 06 );
 
 	    if ( ! is_dir ( "$epm_data/users" ) )
-	        mkdir ( "$epm_data/users", 0771 );
+	         ERROR
+		     ( 'cannot open users directory' );
 
 	    while ( ! mkdir ( $epm_data .
 	                      "/users/user$uid",
 	                      0771 ) )
 	        ++ $uid;
 
-	    umask ( 07 );
+	    umask ( $m );
 
 	    $_SESSION['EPM_USER_ID'] = $uid;
 	    $item = [ $uid,
@@ -474,7 +477,8 @@
 	     " title='Add another email address" .
 	     " to the account'>" . PHP_EOL .
 	     "&nbsp;&nbsp;&nbsp;&nbsp;" . PHP_EOL .
-	     "<input type='submit' value='Add'>" .
+	     "<input type='submit'" .
+	     " name='add_email' value='Add'>" .
 	     PHP_EOL;
 	     "</form>" . PHP_EOL;
 
@@ -509,8 +513,8 @@
 	     placeholder='$location_placeholder'>
 	     </td></tr>
 	<tr><td></td><td style='text-align:right'>
-	    <input type='submit' name='data'
-		   value='Update'></td></tr>
+	    <input type='submit' name='update'
+		   value='update'></td></tr>
 	</table></form>
 EOT;
     else
