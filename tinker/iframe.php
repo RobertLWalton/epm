@@ -4,7 +4,11 @@ iframe.right {
     float: right;
     width: 9in;
     height: 5in;
-};
+}
+div.left {
+    float: left;
+    font-size: 12pt;
+}
 </style>
 <body>
 
@@ -71,7 +75,7 @@ function create_iframe ( message ) {
 }
 </script>
 
-<div style='float:left'>
+<div class='left'>
 <button onclick='create_iframe("ONE")'>ONE</button><br>
 <button onclick='create_iframe("TWO")'>TWO</button><br>
 <?php
