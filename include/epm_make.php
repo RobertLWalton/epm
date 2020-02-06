@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb  4 06:09:06 EST 2020
+// Date:    Thu Feb  6 02:04:18 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -699,62 +699,50 @@ function load_file_caches ( $local_dir )
 }
 
 // Given $templates computed by find_templates and the
-// caches computed by $make_file_caches, return the
+// caches computed by load_file_caches, return the
 // control, i.e., the selected element of $templates,
 // and set $local_required to the list of $local_file_
-// cache files required by the control and $remote_
-// required to the list of $remote_file_cache files
-// required by the control.
+// cache files required by the control, $remote_required
+// to the list of $remote_file_cache files required by
+// the control, and $creatable to the list of files that
+// the control requires to be created (locally).
 //
-// If multiple templates satisfy required file
-// constraints, ones with the largest number of required
-// files are selected.  It is an error if more than
-// one is selected by this rule.
-//
-// It is an error if no template is found with all its
-// required files found, or if more than one template is
-// found with the maximum number of required files all
-// of which are found.
+// If multiple templates satisfy required file con-
+// straints, ones with the largest total number of files
+// that are required or be created are selected.  It is
+// an error if more than one is selected by this rule,
+// or if no template meets the constraints.
 //
 // Any errors cause error messages to be appended to
-// the $errors list, NULL to be returned, and $required
-// to be set to [].
+// the $errors list and NULL to be returned.
 //
 // Only the last component of a file name is listed in
-// $local_required or $remote_required.  The directory
-// containing a $remote_required file can be found using
-// $remote_file_cache.
+// $local_required, $remote_required, or $creatable.
+// The directory containing a $remote_required file can
+// be found using $remote_file_cache.
 //
-// If NULL is returned and one or more templates with
-// all their REQUIRED or LOCAL-REQUIRED not-found files
-// are CREATABLE, the union of these not-found creatable
-// files of all these templates is returned in
-// $creatables, and appropriate error messages listing
-// these files are appended to $errors.  Otherwise
-// $creatables is [].  Only the last component of a file
-// is listed in $creatables.
+// Load_file_caches must be called before this function
+// is called.
 //
 function find_control
 	( $templates,
 	  & $local_required, & $remote_required,
-	  & $creatables, & $errors )
+	  & $creatable, & $errors )
 {
     global $local_file_cache, $remote_file_cache;
-
-    // Note: if $uploaded is not NULL, all templates
-    // not listing $uploaded as REQUIRED or LOCAL-
-    // REQUIRED are not considered (rejected).
 
     $best_template = NULL;
         // Element of $templates for the first element
 	// of $best_found.
     $best_found = [];
         // List of elements of the form [template,
-	// lfiles,rfiles] where lfiles is the value for
-	// $local_required and $rfiles is the value for
-	// $remote_required, and only templates with NO
-	// not found files and the most number of found
-	// files are listed.
+	// lfiles,rfiles,cfiles] where lfiles is the
+	// value for $local_required, $rfiles is the
+	// value for $remote_required, $cfiles is the
+	// value for $creatable, and only templates with
+	// NO not found files or creatable and the most
+	// total number of found or creatable files are
+	// listed.
     $best_found_count = -1;
         // Number of files listed in each element
 	// of $best_found.
@@ -764,34 +752,34 @@ function find_control
 	// of REQUIRED and LOCAL-REQUIRED files that
 	// were not found or CREATABLE, and rfiles
 	// is the list of REMOTE-REQUIRED files that
-	// were not found, and only templates with
-	// at least 1 such file are included, and
-	// only those with the least total number of
-	// such files.
+	// were not found, only templates with at least
+	// 1 such file are included, and only those with
+	// the least total number of such files.
     $best_not_found_count = 1000000000;
         // Number of files listed in each element
 	// of $best_not_found;
-    $not_found_creatable = [];
-        // List of elements of the form [template,
-	// cfiles] where cfiles lists the REQUIRED
-	// and LOCAL-REQUIRED files that were not found
-	// but were CREATABLE, and only templates with
-	// no other not-found files are listed.
+
     foreach ( $templates as $template )
     {
         $json = $template[2];
 	$creatables = [];
 	if ( isset ( $json['CREATABLE'] ) )
-	    $creatables = $json['CREATABLE'];
-	if ( ! is_array ( $creatables ) )
-	    ERROR ( "{$template[0]} json CREATABLE" .
-	            " is not a list" );
+	{
+	    $cs = $json['CREATABLE'];
+	    if ( ! is_array ( $cs ) )
+		ERROR
+		    ( "{$template[0]} json CREATABLE" .
+		      " is not a list" );
+	    foreach ( $cs as $c )
+	        $creatables[$c] = true;
+	}
 	$fllist = [];
 	    // Local required files found.
 	$frlist = [];
 	    // Remote required files found.
 	$clist = [];
-	    // Required files not found but creatable.
+	    // Files not found but CREATABLE that can
+	    // be local.
 	$nfllist = [];
 	    // Required files not found and not
 	    // creatable that can be local.
@@ -801,14 +789,16 @@ function find_control
 
 	if ( isset ( $json['LOCAL-REQUIRES'] ) )
 	{
+	    if ( ! is_array ( $json['LOCAL-REQUIRES'] ) )
+		ERROR
+		    ( "{$template[0]} json" .
+		      " LOCAL-REQUIRES is not a list" );
 	    foreach ( $json['LOCAL-REQUIRES'] as $f )
 	    {
 		if ( isset ( $local_file_cache[$f] ) )
 		    $fllist[] = $f;
 		else
-		if (     array_search
-		           ( $f, $creatables, true )
-		     !== false )
+		if ( isset ( $creatables[$f] ) )
 		    $clist[] = $f;
 		else
 		    $nfllist[] = $f;
@@ -817,6 +807,10 @@ function find_control
 
 	if ( isset ( $json['REQUIRES'] ) )
 	{
+	    if ( ! is_array ( $json['REQUIRES'] ) )
+		ERROR
+		    ( "{$template[0]} json" .
+		      " REQUIRES is not a list" );
 	    foreach ( $json['REQUIRES'] as $f )
 	    {
 		if ( isset ( $local_file_cache[$f] ) )
@@ -825,9 +819,7 @@ function find_control
 		if ( isset ( $remote_file_cache[$f] ) )
 		    $frlist[] = $f;
 		else
-		if (     array_search
-		           ( $f, $creatables, true )
-		     !== false )
+		if ( isset ( $creatables[$f] ) )
 		    $clist[] = $f;
 		else
 		    $nfllist[] = $f;
@@ -836,6 +828,12 @@ function find_control
 
 	if ( isset ( $json['REMOTE-REQUIRES'] ) )
 	{
+	    if ( ! is_array
+	               ( $json['REMOTE-REQUIRES'] ) )
+		ERROR
+		    ( "{$template[0]} json" .
+		      " REMOTE-REQUIRES is not" .
+		      " a list" );
 	    foreach ( $json['REMOTE-REQUIRES'] as $f )
 	    {
 		if ( isset ( $remote_file_cache[$f] ) )
@@ -860,17 +858,11 @@ function find_control
 	    continue;
 	}
 
-	$ccount = count ( $clist );
-	if ( $ccount > 0 )
-	{
-	    $not_found_creatable[] =
-	        [$template[0],$clist];
-	    continue;
-	}
-
 	$fcount = count ( $fllist )
-	        + count ( $frlist );
-	$element = [$template[0],$fllist,$frlist];
+	        + count ( $frlist )
+		+ count ( $clist );
+	$element =
+	    [$template[0],$fllist,$frlist,$clist];
 	if ( $fcount == $best_found_count )
 	    $best_found[] = $element;
 	else if ( $fcount > $best_found_count )
@@ -880,10 +872,10 @@ function find_control
 	    $best_template = $template;
 	    $local_required = $fllist;
 	    $remote_required = $frlist;
+	    $creatable = $clist;
 	}
     }
 
-    $creatables = [];
     if ( count ( $best_found ) == 1 )
 	return $best_template;
     else if ( count ( $best_found ) > 1 )
@@ -893,31 +885,17 @@ function find_control
 	    " number of existing required files:";
 	foreach ( $best_found as $e )
 	{
-	    $m = pretty_template ( $e[0] )
-	       . ' NEEDS';
+	    $errors[] = pretty_template ( $e[0] )
+	              . ' NEEDS:';
 	    if ( ! empty ( $e[1] ) )
-	        $m .= ' LOCAL '
-		    . implode ( ',', $e[1] );
+	        $errors = '    LOCAL '
+		        . implode ( ',', $e[1] );
 	    if ( ! empty ( $e[2] ) )
-	        $m .= ' REMOTE '
-		    . implode ( ',', $e[2] );
-	    $errors[] = $m;
-	}
-    }
-    else if ( count ( $not_found_creatable ) > 0 )
-    {
-	$errors[] =
-	    "templates found need to have files" .
-	    " created:";
-	foreach ( $not_found_creatable as $e )
-	{
-	    $m = pretty_template ( $e[0] )
-	       . ' NEEDS CREATABLE '
-	       . implode ( ',', $e[1] );
-	    $errors[] = $m;
-	    // Append $e[1] to $creatables.
-	    foreach ( $e[1] as $f )
-		$creatables[] = $f;
+	        $errors = '    REMOTE '
+		        . implode ( ',', $e[2] );
+	    if ( ! empty ( $e[3] ) )
+	        $errors = '    CREATABLE '
+		        . implode ( ',', $e[3] );
 	}
     }
     else
@@ -927,22 +905,17 @@ function find_control
 	    " files exist; closest are:";
 	foreach ( $best_not_found as $e )
 	{
-	    $m = pretty_template ( $e[0] )
-	       . ' NEEDS';
+	    $errors[] = pretty_template ( $e[0] )
+	              . ' NEEDS:';
 	    if ( ! empty ( $e[1] ) )
-	        $m .= ' LOCAL '
-		    . implode ( ',', $e[1] );
+	        $errors[] = '    LOCAL '
+		          . implode ( ',', $e[1] );
 	    if ( ! empty ( $e[2] ) )
-	        $m .= ' REMOTE '
-		    . implode ( ',', $e[2] );
-	    $errors[] = $m;
+	        $errors[] = '    REMOTE '
+		          . implode ( ',', $e[2] );
 	}
     }
 
-    $creatables = array_unique ( $creatables );
-    $creatables = array_slice ( $creatables, 0 );
-        // Reindex array.
-    $required = [];
     return NULL;
 }
 
@@ -1406,24 +1379,25 @@ function compute_show
 // command has exit code != 0, later commands in this
 // list are not executed).
 //
-// If the make template cannot be found but there are
-// some templates that would work if some file are
-// created, $creatables is set to list these files as
-// per find_control, and error messages are appended to
-// $errors listing these files.
+// Find_control is used to find the template and lists
+// of required and creatable files needed.  Any files
+// that need to be created are created by calling
+// create_file, and a message indicating the creation
+// is appended to $warnings.
 //
 function make_file
 	( $src, $des, $condition,
 	  $problem, $work,
 	  $uploaded, $uploaded_tmp,
 	  & $control, & $commands,
-	  & $output, & $creatables,
+	  & $output, & $warnings,
 	  & $errors )
 {
-    global $epm_data, $is_epm_test;
+    global $epm_data, $is_epm_test, $uid;
 
     $commands = [];
     $errors_size = count ( $errors );
+    $problem_dir = "users/user$uid/$problem";
 
     find_templates
 	( $problem, $src, $des, $condition,
@@ -1438,12 +1412,25 @@ function make_file
 
     $control = find_control
 	( $templates, $local_required, $remote_required,
-	  $creatables, $errors );
+	  $creatable, $errors );
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) ) return;
 
     cleanup_working ( $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
+
+    foreach ( $creatable as $f )
+        create_file
+	    ( $f, $problem_dir, $warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
+
+    foreach ( $creatable as $f )
+    {
+	if ( ! symlink ( "$epm_data/$problem_dir/$f",
+	                 "$epm_data/$work/$f" ) )
+	    $errors[] = "cannot symbolically link"
+	              . " $work/$f to $problem_dir/$f";
+    }
 
     link_required
 	( $local_required, $remote_required,
@@ -1503,7 +1490,7 @@ function make_and_keep_file
 	( $src, $des, $problem,
 	  $work, $local_dir,
 	  & $commands, & $moved, & $show,
-	  & $output, & $creatables,
+	  & $output,
 	  & $warnings, & $errors )
 {
     load_file_caches ( $local_dir );
@@ -1522,8 +1509,8 @@ function make_and_keep_file
 		$work,
 		NULL, NULL /* no upload, upload_tmp */,
 		$control, $commands,
-		$output, $creatables, 
-		$errors );
+		$output,
+		$warnings, $errors );
 
     if ( count ( $errors ) == $errors_size )
 	move_keep ( $control, $work, $local_dir,
@@ -1555,7 +1542,7 @@ function make_and_keep_file
 function process_upload
 	( $upload, $problem, $work, $local_dir,
 	  & $commands, & $moved, & $show,
-	  & $output, & $creatables,
+	  & $output,
 	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
@@ -1645,8 +1632,8 @@ function process_upload
 		$work,
 		$fname, $ftmp_name,
 		$control, $commands,
-		$output, $creatables,
-		$errors );
+		$output,
+		$warnings, $errors );
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
@@ -1660,10 +1647,13 @@ SHOW:
 }
 
 // Create the named file, which was listed in
-// $createables.
+// $createables.  If the file is created, append
+// a message to $warnings indicating the file was
+// created.
 //
 function create_file
-	( $filename, $problem_dir, & $errors )
+	( $filename, $problem_dir,
+	  & $warnings, & $errors )
 {
     global $epm_data;
 
@@ -1684,6 +1674,8 @@ function create_file
 	    if ( ! copy ( $g, $f ) )
 		ERROR ( "create_file: cannot copy $o" .
 		        " to $filename" );
+	    $warnings[] =
+	        "$filename was created by copying $o";
 	    return true;
 	}
 	else
@@ -1702,6 +1694,9 @@ function create_file
 	    ERROR ( "create_file: cannot symbolically" .
 		    " link $filename to" .
 		    " /usr/bin/epm_default_$b" );
+	$warnings[] =
+	    "$filename was created by linking to" .
+	    " /usr/bin/epm_default_$b";
 	return true;
     }
     else

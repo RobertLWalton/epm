@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb  5 06:15:17 EST 2020
+    // Date:	Thu Feb  6 02:05:42 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -161,7 +161,7 @@
 	else
 	{
 	    $lock_desc =
-		fopen ( "$epm_data/$problem_dir/lock",
+		fopen ( "$epm_data/$problem_dir/+lock+",
 		        "w" );
 	    flock ( $lock_desc, LOCK_EX );
 	}
@@ -180,12 +180,6 @@
     $uploaded_file = NULL;
         // 'name' of uploaded file, if any file was
 	// uploaded.
-    $creatables = [];
-    if ( isset ( $_SESSION['epm_creatables'] ) )
-    {
-        $creatables = $_SESSION['epm_creatables'];
-	unset ( $_SESSION['epm_creatables'] );
-    }
 
     // Set $problems to list of available problems.
     //
@@ -235,7 +229,9 @@
 	{
 	    if ( preg_match ( '/^\./', $fname ) )
 	        continue;
-	    if ( $fname == "+work+" ) continue;
+	    if ( ! preg_match ( '/^[_\-.A-Za-z0-9]+$/',
+	                        $fname ) )
+	        continue;
 	    $ext = pathinfo
 	        ( $fname, PATHINFO_EXTENSION );
 	    if ( ! isset ( $display_file_type[$ext] ) )
@@ -288,23 +284,6 @@
 	$problem_file_names = NULL;
 	    // Clear cache.
     }
-    elseif ( isset ( $_POST['create'] ) )
-    {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f, etc.
-
-        $f = $_POST['create'];
-	$n = array_search ( $f, $creatables, true );
-	if ( $n === false )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	if ( create_file ( $f, $problem_dir, $errors ) )
-	{
-	    array_splice ( $creatables, $n, 1 );
-	    $problem_file_names = NULL;
-		// Clear cache.
-	}
-    }
     elseif ( isset ( $_POST['make'] ) )
     {
 	require "$epm_home/include/epm_make.php";
@@ -329,7 +308,7 @@
 	    ( $src, $des, $problem,
 	      "$d/+work+", $d,
 	      $commands, $kept, $show_files,
-	      $output, $creatables,
+	      $output,
 	      $warnings, $errors );
 	$file_made = true;
 	$problem_file_names = NULL;
@@ -358,7 +337,7 @@
 		( $upload_info, $problem,
 		  "$d/+work+", $d,
 		  $commands, $kept,
-		  $show_files, $output, $creatables,
+		  $show_files, $output,
 		  $warnings, $errors );
 	    $file_made = true;
 	    $problem_file_names = NULL;
@@ -523,28 +502,6 @@ EOT;
 
     if ( isset ( $problem ) )
     {
-	if ( ! empty ( $creatables ) )
-	{
-	    $_SESSION['epm_creatables'] = $creatables;
-	    echo "<div style='" .
-	         "background-color:#F5F81A'>" .
-		 PHP_EOL .
-	         "<form action='problem.php'" .
-		 " method='POST'>" . PHP_EOL .
-	         "Files that Need to be" .
-	         " Created:" .
-		 "<table style='display:block'>";
-	    foreach ( $creatables as $fname )
-	    {
-		echo "<tr>" .
-		     "<td style='text-align:right'>" .
-		     "<button type='submit'" .
-		     " name='create' value='$fname'>" .
-		     "$fname</button></td></tr>" .
-		     PHP_EOL;
-	    }
-	    echo "</table></form></div>" . PHP_EOL;
-	}
         $count = 0;
 	foreach ( problem_file_names() as $fname )
 	{
