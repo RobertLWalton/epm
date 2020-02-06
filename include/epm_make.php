@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb  6 02:04:18 EST 2020
+// Date:    Thu Feb  6 04:22:59 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -70,7 +70,7 @@ $template_roots[] = $epm_home;
 function get_json ( $r, $file )
 {
     $f = "$r/$file";
-    $c = file_get_contents ( $f );
+    $c = @file_get_contents ( $f );
     if ( $c === false )
 	ERROR ( "cannot read readable $file" );
     $c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
@@ -223,7 +223,7 @@ function load_template_cache()
     if ( isset ( $template_cache) ) return;
     foreach ( $template_roots as $r )
     {
-	$dircontents = scandir ( "$r/template" );
+	$dircontents = @scandir ( "$r/template" );
 	if ( $dircontents === false )
 	    ERROR ( "cannot read " .
 	            ( $r == $epm_data ? "DATA" :
@@ -673,7 +673,7 @@ function load_file_caches ( $local_dir )
     $remote_file_cache = [];
     foreach ( $remote_dirs as $dir )
     {
-	$c = scandir ( "$epm_data/$dir" );
+	$c = @scandir ( "$epm_data/$dir" );
 	if ( $c === false )
 	    ERROR ( "cannot read $dir" );
 
@@ -687,7 +687,7 @@ function load_file_caches ( $local_dir )
 	}
     }
 
-    $c = scandir ( "$epm_data/$local_dir" );
+    $c = @scandir ( "$epm_data/$local_dir" );
     if ( $c === false )
 	ERROR ( "cannot read $local_dir" );
     foreach ( $c as $fname )
@@ -1119,25 +1119,42 @@ function execute_commands ( $runfile, $work )
 	// bash appears to flush echo output even when
 	// stdout is redirected to a file, and so
 	// `echo $$ PID;' promptly echoes PID.
-    $desc = popen ( $r, 'w' );
+    $desc = @popen ( $r, 'w' );
     if ( $desc === false )
         ERROR ( "cannot execute $runfile.sh in $work" );
-    if ( pclose ( $desc ) == -1 )
+    if ( @pclose ( $desc ) == -1 )
         ERROR ( "error executing pclose for" .
 	        " $runfile.sh in $work" );
 }
 
+# Read $work/$runfile and output the commands in it in
+# the format of a sequence of HTML rows (<tr>...</tr>'s)
+# plus a map of -status file names to row numbers
+# containing the -status file name.  A row associated
+# with one of these numbers $n has rightmost entries:
+#
+#    <td><pre id='stat_time$n'><pre></td>
+#    <td><pre id='stat_exit$n'><pre></td>
+#
+# The HTML format is output in $display and $display_
+# map is set so that
+#
+#	$display_map[$f] = $n
+#
+# where $f is a -status file name and $n is its contain-
+# ing command line number.
+#	
 function get_commands_display
     ( & $display, & $display_map, $runfile, $work )
 {
     $display = '';
     $display_status = false;
     $display_map = [];
-    $c = file_get_contents 
-	    ( "$epm_data/$work/$runfile.sh", $r );
+    $c = @file_get_contents 
+	    ( "$epm_data/$work/$runfile.sh" );
     if ( $c === false )
 	ERROR ( "cannot read $work/$runfile.sh" );
-    $c = explode ( PHP_EOL, $c );
+    $c = explode ( "\n", $c );
     $count = 0;
     $cont = 0;
     foreach ( $c as $line )
@@ -1149,9 +1166,10 @@ function get_commands_display
 	    continue;
 	++ $count;
 	if ( ! $cont ) $line = $matches[1];
+	$line = rtrim ( $line );
 	$statfile = NULL;
 	if ( preg_match
-	         ( '/-status\h+(\H+\.[a-z]stat)\h/',
+	         ( '/-status\h+(\H+\.[a-z]\d*stat)\h/',
 	           $line, $matches ) )
 	{
 	    $statfile = $matches[1];
@@ -1165,9 +1183,9 @@ function get_commands_display
 	              . " id='stat_time$count'>"
 		      . "</pre></td><td><pre"
 	              . " id='stat_exit$count'>"
-		      . "</pre></td></td>";
-	$display = "</tr>" . PHP_EOL;
-	$cont = preg_match ( '\h\\$', $line );
+		      . "</pre></td>";
+	$display .= "</tr>" . PHP_EOL;
+	$cont = preg_match ( '(^|\h)\\$', $line );
     }
     if ( count ( $display_map ) > 0 )
     {
