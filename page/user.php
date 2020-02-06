@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb  5 04:11:38 EST 2020
+    // Date:	Thu Feb  6 04:26:31 EST 2020
 
     // Display and edit user information in:
     //
@@ -45,7 +45,8 @@
     {
         global $lock_desc, $epm_data;
         $lock_desc =
-	    fopen ( "$epm_data/admin/email/lock", "w" );
+	    fopen ( "$epm_data/admin/email/+lock+",
+	            "w" );
 	flock ( $lock_desc, LOCK_EX );
     }
     function unlock()
