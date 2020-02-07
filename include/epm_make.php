@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb  6 04:22:59 EST 2020
+// Date:    Fri Feb  7 01:27:11 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1078,7 +1078,7 @@ function compile_commands ( $runfile, $work, $commands )
     $r = '';  // Value to write to $runfile
     $n = 0;   // Line count
     $cont = 0;   // Next line is continuation.
-    $r .= "trap 'echo \$n \$? DONE' EXIT" . PHP_EOL;
+    $r .= "trap 'echo ::\$n \$? DONE' EXIT" . PHP_EOL;
     $r .= "n=B; echo $$ PID" . PHP_EOL;
     $r .= "n=B; set -e" . PHP_EOL;
     foreach ( $commands as $c )
@@ -1089,7 +1089,7 @@ function compile_commands ( $runfile, $work, $commands )
 	else
 	    $r .= "          $c" . PHP_EOL;
 
-        $cont = preg_match ( '/^(.*\h)\\\\$/', $c );
+        $cont = preg_match ( '/^(|.*\h)\\\\$/', $c );
     }
     $r .= "n=D; exit 0" . PHP_EOL;
     if ( ! file_put_contents 
@@ -1127,8 +1127,8 @@ function execute_commands ( $runfile, $work )
 	        " $runfile.sh in $work" );
 }
 
-# Read $work/$runfile and output the commands in it in
-# the format of a sequence of HTML rows (<tr>...</tr>'s)
+# Read $work/$runfile.sh and output its commands in the
+# format of a sequence of HTML rows (<tr>...</tr>'s)
 # plus a map of -status file names to row numbers
 # containing the -status file name.  A row associated
 # with one of these numbers $n has rightmost entries:
@@ -1147,6 +1147,8 @@ function execute_commands ( $runfile, $work )
 function get_commands_display
     ( & $display, & $display_map, $runfile, $work )
 {
+    global $epm_data;
+
     $display = '';
     $display_status = false;
     $display_map = [];
@@ -1185,7 +1187,7 @@ function get_commands_display
 	              . " id='stat_exit$count'>"
 		      . "</pre></td>";
 	$display .= "</tr>" . PHP_EOL;
-	$cont = preg_match ( '(^|\h)\\$', $line );
+        $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
     }
     if ( count ( $display_map ) > 0 )
     {
@@ -1196,6 +1198,58 @@ function get_commands_display
     }
 }
 
+# Read $work/$runfile.shout and output the results of
+# running $work/$runfile.sh.  If the run is finished,
+# return [n,code] where n is the value of the variable
+# $n in the shell script and code is the exit code.
+# So n is 'D' for normal completion, the line number
+# of the first line of the terminating command from
+# get_commands for abnormal completion, and something
+# else (e.g. 'B') for system error.
+#
+# If the run is not finished, return true if the run
+# is still running and false if it has died.
+#
+function get_command_results ( $runfile, $work )
+{
+    global $epm_data;
+
+    $count = 0;
+    $pid = -1;
+    while ( true )
+    {
+	$c = @file_get_contents 
+		( "$epm_data/$work/$runfile.shout" );
+	if ( $c !== false
+	     &&
+	     preg_match ( '/^n=B; (\d+) PID\n/',
+	                  $c, $matches ) )
+	{
+	    $pid = $matches[1];
+	    break;
+	}
+
+	# Poll every 10 ms for 10 seconds.
+	# This allows shell time to start up and create
+	# .shout file and write first line.
+
+	usleep ( 10000 );
+	if ( $count == 1000 )
+	    ERROR ( "cannot read $work/$runfile.shout" );
+	$count += 1;
+    }
+
+    if ( ! preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
+                        $c, $matches ) )
+    {
+        return posix_kill ( $pid, 0 );
+	#
+	# Sending signal 0 does not actually send a
+	# signal but returns true if the process is
+	# still running and false otherwise.
+    }
+    return [$matches[1], $matches[2]];
+}
 
 // Run $commands in $work.  Append output to output
 // and error messages to $errors.

@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jan 18 11:58:13 EST 2020
+// Date:	Fri Feb  7 02:22:09 EST 2020
 
 $is_epm_test = true;
 
@@ -183,7 +183,7 @@ file_put_contents
 
 compile_commands ( 'prob', $work, $commands );
 $sh = <<<'EOT'
-trap 'echo $n $? DONE' EXIT
+trap 'echo ::$n $? DONE' EXIT
 n=B; echo $$ PID
 n=B; set -e
 n=1; gcc -Og -Wpedantic -o prob prob.c   \
@@ -207,7 +207,7 @@ while ( ! preg_match ( '/DONE\n$/', $shout ) )
 }
 
 check ( "preg_match
-            ( '/^[0-9]+ PID\nD 0 DONE\n$/',
+            ( '/^[0-9]+ PID\n::D 0 DONE\n$/',
 	      '$shout' )", 1 );
 $sherr = file_get_contents
     ( "$epm_data/$work/prob.sherr" );
