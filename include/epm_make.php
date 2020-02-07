@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Feb  7 01:27:11 EST 2020
+// Date:    Fri Feb  7 03:10:32 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1207,10 +1207,19 @@ function get_commands_display
 # get_commands for abnormal completion, and something
 # else (e.g. 'B') for system error.
 #
-# If the run is not finished, return true if the run
-# is still running and false if it has died.
+# If the run is not finished and $wait is 0, return true
+# if the run is running and false if it has died.
 #
-function get_command_results ( $runfile, $work )
+# If the run is not finished, and $wait is > 0, poll
+# every 100ms until the run finished or dies or $wait/10
+# seconds have elapsed.  If the run finishes or dies,
+# return as above.  If $wait seconds elapse, return
+# true to indicate the run is still running.
+#
+# It is unwise to set $wait to a value larger than 100.
+#
+function get_command_results
+	( $runfile, $work, $wait = 10 )
 {
     global $epm_data;
 
@@ -1222,7 +1231,7 @@ function get_command_results ( $runfile, $work )
 		( "$epm_data/$work/$runfile.shout" );
 	if ( $c !== false
 	     &&
-	     preg_match ( '/^n=B; (\d+) PID\n/',
+	     preg_match ( '/^(\d+) PID\n/',
 	                  $c, $matches ) )
 	{
 	    $pid = $matches[1];
@@ -1239,16 +1248,37 @@ function get_command_results ( $runfile, $work )
 	$count += 1;
     }
 
-    if ( ! preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
-                        $c, $matches ) )
+    $count = 0;
+    while ( true )
     {
-        return posix_kill ( $pid, 0 );
+	if ( $c !== false
+	     &&
+             preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
+	                  $c, $matches ) )
+	{
+	    return [$matches[1], $matches[2]];
+	}
+
+	exec ( "kill -0 $pid",
+	       $kill_output, $kill_status );
 	#
 	# Sending signal 0 does not actually send a
 	# signal but returns true if the process is
-	# still running and false otherwise.
+	# still running and false otherwise.  Note
+	# that the posix_kill function is not available
+	# in vanilla PHP.
+
+	if ( $kill_status != 0 ) return false;
+	if ( $wait == 0 ) return true;
+
+	# Poll every 100 ms for wait/10 seconds.
+
+	usleep ( 100000 );
+	if ( $count == $wait ) return true;
+	$count += 1;
+	$c = @file_get_contents 
+		( "$epm_data/$work/$runfile.shout" );
     }
-    return [$matches[1], $matches[2]];
 }
 
 // Run $commands in $work.  Append output to output

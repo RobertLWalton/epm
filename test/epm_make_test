@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Feb  7 02:22:09 EST 2020
+// Date:	Fri Feb  7 02:56:05 EST 2020
 
 $is_epm_test = true;
 
@@ -198,35 +198,17 @@ check ( "file_get_contents
 
 execute_commands ( 'prob', $work );
 
-$shout = '';
-while ( ! preg_match ( '/DONE\n$/', $shout ) )
-{
-    $shout = @file_get_contents
-	( "$epm_data/$work/prob.shout" );
-    usleep ( 10000 );
-}
+$r = get_command_results ( 'prob', $work );
+check ( '$GLOBALS["r"]', ['D','0'] );
+
+$shout = @file_get_contents
+    ( "$epm_data/$work/prob.shout" );
 
 check ( "preg_match
             ( '/^[0-9]+ PID\n::D 0 DONE\n$/',
 	      '$shout' )", 1 );
-$sherr = file_get_contents
-    ( "$epm_data/$work/prob.sherr" );
-check ( "'$sherr' == ''", True );
-
-/*
-$errors = [];
-$output = [];
-run_commands ( $commands, $work, $output, $errors );
-check ( '$GLOBALS["errors"]', [] );
-check ( '$GLOBALS["output"]', [] );
-
-$checks = $control[2]['CHECKS'];
-$errors = [];
-$output = [];
-run_commands ( $checks, $work, $output, $errors );
-check ( '$GLOBALS["errors"]', [] );
-check ( '$GLOBALS["output"]', [] );
-*/
+check ( "file_get_contents
+             ( '$epm_data/$work/prob.sherr' )", '' );
 
 $errors = [];
 move_keep ( $control, $work, $prob_dir,
