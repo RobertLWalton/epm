@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Feb  7 02:56:05 EST 2020
+// Date:	Fri Feb  7 07:10:18 EST 2020
 
 $is_epm_test = true;
 
@@ -195,6 +195,17 @@ EOT;  // the blank line is needed to get an ending \n.
 check ( "file_get_contents
 	     ( '$epm_data/$work/prob.sh' )",
         $sh );
+
+get_commands_display
+    ( $display, $display_map, 'prob', $work );
+
+$disp = <<<'EOT'
+<tr><td><pre>gcc -Og -Wpedantic -o prob prob.c   \</pre></td></tr>
+<tr><td><pre>    &gt; prob.out 2&gt; prob.err</pre></td></tr>
+
+EOT;
+
+check ( '$GLOBALS["display"]', $disp );
 
 execute_commands ( 'prob', $work );
 

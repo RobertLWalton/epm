@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Feb  7 03:10:32 EST 2020
+// Date:    Fri Feb  7 07:09:44 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1168,7 +1168,7 @@ function get_commands_display
 	    continue;
 	++ $count;
 	if ( ! $cont ) $line = $matches[1];
-	$line = rtrim ( $line );
+	$line = trim ( $line );
 	$statfile = NULL;
 	if ( preg_match
 	         ( '/-status\h+(\H+\.[a-z]\d*stat)\h/',
