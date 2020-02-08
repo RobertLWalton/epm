@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb  8 06:46:23 EST 2020
+    // Date:	Sat Feb  8 07:02:33 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -327,7 +327,6 @@
 		// Do this first as it may change $f,
 		// etc.
 
-	    $d = "users/user$uid/$problem";
 	    process_upload
 		( $upload_info,
 		  $problem, "$problem_dir/+work+",
@@ -373,6 +372,15 @@
 	float: right;
 	height: 99%;
     }
+    div.runfile }
+	font-size: 12pt;
+	background-color: #c0ffc0;
+    }
+    .commands {
+	font-size: 12pt;
+	margin-left: 20px;
+    }
+	echo "<div style='background-color:#c0ffc0;'>" .
 </style>
 
 <script>
@@ -557,12 +565,13 @@ EOT;
 
     if ( $runfile )
     {
-	echo "<div style='background-color:#c0ffc0;'>" .
+	echo "<div class='runfile'>" .
 	     PHP_EOL;
 	get_commands_display
 	    ( $display, $display_map,
 	      $runfile, "$problem_dir/+work+" );
-	echo "<table>" . PHP_EOL;
+	echo "Commands:<br>" . PHP_EOL;
+	echo "<table style='margin-left:20px;font-size:12pt'>" . PHP_EOL;
 	echo $display . PHP_EOL;
 	echo "</table>" . PHP_EOL;
         if ( count ( $kept ) > 0 )
