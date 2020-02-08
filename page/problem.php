@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb  6 02:05:42 EST 2020
+    // Date:	Sat Feb  8 06:46:23 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -174,9 +174,9 @@
     //
     $show_file = NULL;  // File to be shown to right.
     $show_files = [];   // Files to be shown to left.
-    $file_made = false;
-        // True if $output, $commands, and $kept are to
-	// be displayed.
+    $runfile = NULL;
+        // Non-NULL if there are commands to be
+	// displayed.
     $uploaded_file = NULL;
         // 'name' of uploaded file, if any file was
 	// uploaded.
@@ -302,17 +302,13 @@
 		         true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-	$output = [];
-	$d = "users/user$uid/$problem";
 	make_and_keep_file
-	    ( $src, $des, $problem,
-	      "$d/+work+", $d,
-	      $commands, $kept, $show_files,
-	      $output,
+	    ( $src, $des,
+	      $problem, "$problem_dir/+work+",
+	      $problem_dir, 100,
+	      $runfile, $kept, $show_files,
 	      $warnings, $errors );
-	$file_made = true;
-	$problem_file_names = NULL;
-	    // Clear cache.
+	$problem_file_names = NULL; // Clear cache.
     }
     elseif ( isset ( $_POST['upload'] ) )
     {
@@ -331,17 +327,14 @@
 		// Do this first as it may change $f,
 		// etc.
 
-	    $output = [];
 	    $d = "users/user$uid/$problem";
 	    process_upload
-		( $upload_info, $problem,
-		  "$d/+work+", $d,
-		  $commands, $kept,
-		  $show_files, $output,
+		( $upload_info,
+		  $problem, "$problem_dir/+work+",
+		  $problem_dir, 100,
+		  $runfile, $kept, $show_files,
 		  $warnings, $errors );
-	    $file_made = true;
-	    $problem_file_names = NULL;
-		// Clear cache.
+	    $problem_file_names = NULL; // Clear cache.
 	}
 	else
 	    $errors[] = "no file selected for upload";
@@ -562,39 +555,19 @@ EOT;
 EOT;
     }
 
-    if ( $file_made )
+    if ( $runfile )
     {
-	echo "<div style='background-color:#c0ffc0;'>";
-        if ( count ( $output ) > 0 )
-	{
-	    echo "Output:<br><ul>" . PHP_EOL;
-	    foreach ( $output as $e )
-	        echo "<li><pre style='margin:0 0'>" .
-		     "$e</pre>" . PHP_EOL;
-	     echo "</ul>" . PHP_EOL;
-	}
-        if ( count ( $commands ) > 0 )
-	{
-	    echo "Commands:<br><ul>" . PHP_EOL;
-	    $e = '';
-	    foreach ( $commands as $c )
-	    {
-	        if ( preg_match ( '/^.*\h\\\\$/', $c ) )
-		    $e .= "$c" . PHP_EOL;
-		else
-		{
-		    $e .= "$c";
-		    echo "<li><pre" .
-		         " style='margin:0 0'>" .
-			 "$e</pre>" . PHP_EOL;
-		    $e = '';
-		}
-	    }
-	    echo "</ul>" . PHP_EOL;
-	}
+	echo "<div style='background-color:#c0ffc0;'>" .
+	     PHP_EOL;
+	get_commands_display
+	    ( $display, $display_map,
+	      $runfile, "$problem_dir/+work+" );
+	echo "<table>" . PHP_EOL;
+	echo $display . PHP_EOL;
+	echo "</table>" . PHP_EOL;
         if ( count ( $kept ) > 0 )
 	{
-	    echo "Kept:<ul>" . PHP_EOL;
+	    echo "<br>Kept:<ul>" . PHP_EOL;
 	    foreach ( $kept as $e )
 	        echo "<li><pre style='margin:0 0'>" .
 		     "$e</pre>" . PHP_EOL;

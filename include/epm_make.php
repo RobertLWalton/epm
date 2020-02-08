@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Feb  7 07:09:44 EST 2020
+// Date:    Sat Feb  8 06:46:34 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -374,7 +374,8 @@ function get_template_optn()
 // $problem_optn.
 //
 $problem_optn = NULL;
-function get_problem_optn ( $problem, $allow_local_optn )
+function get_problem_optn
+	( $problem, $allow_local_optn )
 {
     global $epm_data, $problem_optn,
            $local_file_cache, $remote_file_cache;
@@ -789,7 +790,8 @@ function find_control
 
 	if ( isset ( $json['LOCAL-REQUIRES'] ) )
 	{
-	    if ( ! is_array ( $json['LOCAL-REQUIRES'] ) )
+	    if ( ! is_array
+	               ( $json['LOCAL-REQUIRES'] ) )
 		ERROR
 		    ( "{$template[0]} json" .
 		      " LOCAL-REQUIRES is not a list" );
@@ -1115,7 +1117,8 @@ function execute_commands ( $runfile, $work )
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
     $r .= "export EPM_WORK=$work" . PHP_EOL;
     $r .= "bash $runfile.sh >$runfile.shout" .
-                         " 2>$runfile.sherr &" . PHP_EOL;
+                         " 2>$runfile.sherr &" .
+			 PHP_EOL;
 	// bash appears to flush echo output even when
 	// stdout is redirected to a file, and so
 	// `echo $$ PID;' promptly echoes PID.
@@ -1244,7 +1247,8 @@ function get_command_results
 
 	usleep ( 10000 );
 	if ( $count == 1000 )
-	    ERROR ( "cannot read $work/$runfile.shout" );
+	    ERROR
+	        ( "cannot read $work/$runfile.shout" );
 	$count += 1;
     }
 
@@ -1399,12 +1403,12 @@ function execute_checks
     }
 }
 
-// Move KEEP files, if any, from $work to $local_dir.
+// Move KEEP files, if any, from $work to $problem_dir.
 // List last component names of files moved in $moved.
 // Append error messages to $errors.
 //
 function move_keep
-	( $control, $work, $local_dir,
+	( $control, $work, $problem_dir,
 	  & $moved, & $errors )
 {
     global $epm_data;
@@ -1418,7 +1422,7 @@ function move_keep
     foreach ( $keep as $fname )
     {
         $wfile = "$work/$fname";
-        $lfile = "$local_dir/$fname";
+        $lfile = "$problem_dir/$fname";
 	if ( ! file_exists ( "$epm_data/$wfile" ) )
 	{
 	    $c = pretty_template ( $control[0] );
@@ -1440,11 +1444,16 @@ function move_keep
 // Return list of files to be shown.  File and directory
 // names are relative to $epm_data.  Files that have not
 // been moved are in $work, and moved files are in
-// $local_dir.  Files that are not readable are ignored;
-// there can be no errors.
+// $problem_dir.  Files that are not readable are
+// ignored; there can be no errors.
+//
+// This function can be called when there have been
+// previous errors, as long as $control is valid and
+// $moved is the list of files that have actuall been
+// moved.
 //
 function compute_show
-	( $control, $work, $local_dir, $moved )
+	( $control, $work, $problem_dir, $moved )
 {
     global $epm_data;
 
@@ -1457,7 +1466,7 @@ function compute_show
     {
 	if (     array_search ( $fname, $moved, true )
 	     !== false )
-	    $sfile = "$local_dir/$fname";
+	    $sfile = "$problem_dir/$fname";
 	else
 	    $sfile = "$work/$fname";
 	if ( is_readable ( "$epm_data/$sfile" ) )
@@ -1466,40 +1475,46 @@ function compute_show
     return $slist;
 }
 
-// Run commands and CHECKS to make file $des from file
-// $src.  If some file (usually $src) is uploaded, its
-// name is $upload and its tmp_name is $uploaded_tmp,
-// and it will be moved into the working directory
-// (but will not be checked for size and other errors).
+// Starts commands and to make file $des from file $src.
+// If some file (e.g., $src) is uploaded, its name is
+// $upload and its tmp_name is $uploaded_tmp, and it
+// will be moved into the working directory (but will
+// not be checked for size and other errors).
 //
 // Load_file_caches and load_argument_map must be called
 // before this function is called.
 //
-// Output from exec is appended to $output, errors are
-// appended to $errors, the commands executed (but not
-// the checks) are returned in $commands (if an early
-// command has exit code != 0, later commands in this
-// list are not executed).
-//
 // Find_control is used to find the template and lists
-// of required and creatable files needed.  Any files
-// that need to be created are created by calling
-// create_file, and a message indicating the creation
-// is appended to $warnings.
+// of required and creatable files needed.  The template
+// is returned in $control.  Any files that need to be
+// created are created by calling create_file and a mes-
+// sage indicating the creation is appended to
+// $warnings.
 //
-function make_file
-	( $src, $des, $condition,
-	  $problem, $work,
+// The runfile name is returned in $runfile, and is the
+// same as $des with its extension deleted.  The shell
+// file is $runfile.sh and its output is $runfile.shout.
+// If the run does not start because of errors, $runfile
+// is NULL.
+//
+// Errors append to $errors.  If there are errors, the
+// run is NOT started.
+//
+// This function does NOT wait for the run to complete.
+// See finish_make_file below.
+//
+function start_make_file
+	( $src, $des, $condition, $problem,
+	  $work, $problem_dir, $wait,
 	  $uploaded, $uploaded_tmp,
-	  & $control, & $commands,
-	  & $output, & $warnings,
-	  & $errors )
+	  & $control, & $runfile,
+	  & $warnings, & $errors )
 {
-    global $epm_data, $is_epm_test, $uid;
+    global $epm_data, $is_epm_test;
 
-    $commands = [];
+    $control = NULL;
+    $runfile = NULL;
     $errors_size = count ( $errors );
-    $problem_dir = "users/user$uid/$problem";
 
     find_templates
 	( $problem, $src, $des, $condition,
@@ -1516,7 +1531,7 @@ function make_file
 	( $templates, $local_required, $remote_required,
 	  $creatable, $errors );
     if ( count ( $errors ) > $errors_size ) return;
-    if ( is_null ( $control ) ) return;
+    if ( is_null ( $control ) ) return false;
 
     cleanup_working ( $work, $errors );
     if ( count ( $errors ) > $errors_size ) return;
@@ -1564,38 +1579,86 @@ function make_file
 
     $commands = get_commands ( $control );
 
-    run_commands ( $commands, $work, $output, $errors );
-    if ( count ( $errors ) > $errors_size )
-        return;
+    $runfile = pathinfo ( $des, PATHINFO_FILENAME );
 
-    execute_checks
-	 ( $control, $work, $errors );
+    compile_commands ( $runfile, $work, $commands );
+    execute_commands ( $runfile, $work );
+}
+
+# Finish execution of a run started by start_make_file.
+# If the run has died or has not finished in $wait/10
+# seconds or has had an error, an error message is
+# appended to $errors.  Otherwise CHECKs are run and
+# if it does not append error messages to $errors, the
+# KEEP files are moved to $problem_dir.  $moved is
+# returned as the list of KEEP files actually moved to
+# $problem_dir, and will be empty if CHECKs fail or
+# the run does not finish successfully.  $show is
+# returned as the list of files to show, even if there
+# are errors, but does not include any non-readable
+# files.  All file and directory names are relative
+# to $epm_data, except that only the last component
+# of a file name is listed in $moved.
+#
+function finish_make_file
+	( $control, $runfile,
+	  $work, $problem_dir, $wait,
+	  & $moved, & $show,
+	  & $warnings, & $errors )
+{
+    $errors_size = count ( $errors );
+    $moved = [];
+
+    $r = get_command_results ( $runfile, $work, $wait );
+
+    if ( $r === false )
+        $errors[] = "SYSTEM_ERROR: $runfile.sh died";
+    elseif ( $r === true )
+        $errors[] = "SYSTEM_ERROR: $runfile.sh did not"
+	          . " finish in time";
+    elseif ( $r != ['D',0] )
+        $errors[] = "command line ${r[0]} returned"
+	          . " exit code ${r[1]}";
+    if ( count ( $errors ) > $errors_size )
+        goto SHOW;
+
+    execute_checks ( $control, $work, $errors );
+    if ( count ( $errors ) > $errors_size )
+        goto SHOW;
+
+    move_keep ( $control, $work, $problem_dir,
+		$moved, $errors );
+ 
+SHOW:
+
+    $show = compute_show
+        ( $control, $work, $problem_dir, $moved );
 }
 
 // Given the file $src make the file $des and keep any
 // files the make template said should be kept.  The
 // template must have NO CONDITION, and local
-// problem.optn file is allowed.  Upon return, if there
-// are no errors, $moved is the list of files moved, and
-// $show is the list of files to show.  All file names
-// are relative to $epm_data.  $commands is the list of
-// commands executed.  Errors append error message lines
-// to $errors and warnings append to $warnings.
+// problem.optn file is allowed.
 //
-// If the make template cannot be found but there are
-// some templates that would work if some file are
-// created, $creatables is set to list these files as
-// per find_control, and error messages are appended to
-// $errors listing these files.
+// Upon return, $runfile is the run file (its actually
+// $work/$runfile.sh), $moved is the list of files
+// moved, and $show is the list of files to show.  All
+// file names in $show are relative to $epm_data, but
+// only the last file name component is listed in
+// $moved.  If the run did not start, $runfile is NULL
+// and $moved and $show are empty.  Otherwise $moved
+// and $show are accurate even if there are errors.
+//
+// Errors append error message lines to $errors and
+// warnings append to $warnings.
 //
 function make_and_keep_file
-	( $src, $des, $problem,
-	  $work, $local_dir,
-	  & $commands, & $moved, & $show,
-	  & $output,
+	( $src, $des,
+	  $problem, $work, $problem_dir, $wait,
+	  & $runfile, & $moved, & $show,
 	  & $warnings, & $errors )
 {
-    load_file_caches ( $local_dir );
+    load_file_caches ( $problem_dir );
 
     $errors_size = count ( $errors );
 
@@ -1603,23 +1666,22 @@ function make_and_keep_file
         ( $problem, true, $warnings, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
+    $runfile = NULL;
     $moved = [];
-    $output = [];
-    make_file ( $src, $des,
-                NULL /* no CONDITION */,
-                $problem,
-		$work,
-		NULL, NULL /* no upload, upload_tmp */,
-		$control, $commands,
-		$output,
-		$warnings, $errors );
+    $show = [];
+    start_make_file
+        ( $src, $des, NULL /* no CONDITION */,
+          $problem, $work, $problem_dir, $wait,
+	  NULL, NULL /* no upload, upload_tmp */,
+	  $control, $runfile,
+	  $warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
 
-    if ( count ( $errors ) == $errors_size )
-	move_keep ( $control, $work, $local_dir,
-		    $moved, $errors );
- 
-    $show = compute_show
-        ( $control, $work, $local_dir, $moved );
+    finish_make_file
+	( $control, $runfile,
+	  $work, $problem_dir, $wait,
+	  $moved, $show,
+	  $warnings, $errors );
 }
 
 // Process an uploaded file whose $_FILES[...] value
@@ -1642,17 +1704,17 @@ function make_and_keep_file
 // $errors listing these files.
 //
 function process_upload
-	( $upload, $problem, $work, $local_dir,
-	  & $commands, & $moved, & $show,
-	  & $output,
+	( $upload,
+	  $problem, $work, $problem_dir, $wait,
+	  & $runfile, & $moved, & $show,
 	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
-           $upload_target_ext, $epm_upload_maxsize,
-	   $remote_file_cache;
+           $upload_target_ext, $epm_upload_maxsize;
 
-    load_file_caches ( $local_dir );
+    load_file_caches ( $problem_dir );
 
+    $runfile = NULL;
     $moved = [];
     $show = [];
     $errors_size = count ( $errors );
@@ -1670,7 +1732,7 @@ function process_upload
 	    " other than letter, digit, ., -, or _";
 	return;
     }
-    if ( ! preg_match ( '/^(.+)\.([^.]+)$/',
+    if ( ! preg_match ( '/^([^.]+)\.([^.]+)$/',
                         $fname, $matches ) )
     {
         $errors[] =
@@ -1728,24 +1790,19 @@ function process_upload
         ( $problem, true, $warnings, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
-    $output = [];
-    make_file ( $fname, $tname, "UPLOAD $fname",
-                $problem,
-		$work,
-		$fname, $ftmp_name,
-		$control, $commands,
-		$output,
-		$warnings, $errors );
-    if ( count ( $errors ) > $errors_size )
-        goto SHOW;
+    start_make_file
+        ( $fname, $tname, "UPLOAD $fname",
+          $problem, $work, $problem_dir, $wait,
+	  $fname, $ftmp_name,
+	  $control, $runfile,
+	  $warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
 
-    move_keep ( $control, $work, $local_dir,
-                $moved, $errors );
-             
-SHOW:
-
-    $show = compute_show
-        ( $control, $work, $local_dir, $moved );
+    finish_make_file
+	( $control, $runfile,
+	  $work, $problem_dir, $wait,
+	  $moved, $show,
+	  $warnings, $errors );
 }
 
 // Create the named file, which was listed in
@@ -1792,7 +1849,8 @@ function create_file
                            $filename, $matches ) )
     {
 	$b = $matches[1];
-	if ( ! symlink ( "/usr/bin/epm_default_$b", $f ) )
+	if ( ! symlink
+	           ( "/usr/bin/epm_default_$b", $f ) )
 	    ERROR ( "create_file: cannot symbolically" .
 		    " link $filename to" .
 		    " /usr/bin/epm_default_$b" );
