@@ -474,7 +474,7 @@
 
 		if ( isset ( $data['CNUM'] ) )
 		{
-		    $efile = "admin/email"
+		    $efile = "admin/email/"
 			   . rawurlencode
 			       ( $data['EMAIL'] );
 		    $data['TCOUNT'] += 1;

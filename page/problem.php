@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb  8 07:02:33 EST 2020
+    // Date:	Sat Feb  8 14:19:34 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -360,24 +360,29 @@
 
 <html>
 <style>
+    h5 {
+        font-size: 14pt;
+	margin: 0 0 0 0;
+	display:inline;
+    }
+    pre, b, button, input, select, u {
+        font-size: 12pt;
+	display:inline;
+    }
     div.left {
 	background-color: #96F9F3;
 	width: 47%;
-	font-size: 12pt;
 	float: left;
     }
     iframe.right {
 	width: 9in;
-	font-size: 12pt;
 	float: right;
 	height: 99%;
     }
     div.runfile }
-	font-size: 12pt;
 	background-color: #c0ffc0;
     }
     .commands {
-	font-size: 12pt;
 	margin-left: 20px;
     }
 	echo "<div style='background-color:#c0ffc0;'>" .
@@ -458,10 +463,11 @@
     echo <<<EOT
     <form style='display:inline'
           action='user.php' method='GET'>
-    User: <input type='submit' value='$email'>
-    </form>
+    <h5>User:</h5> <input type='submit' value='$email'>
     &nbsp;&nbsp;&nbsp;&nbsp;
-    <b>Current Problem:</b>&nbsp;$current_problem
+    <h5>Current Problem:</h5>&nbsp;
+    <pre>$current_problem</pre></b>
+    </form>
 EOT;
     if ( isset ( $problem ) )
         echo "&nbsp;&nbsp;&nbsp;&nbsp;" .
@@ -495,7 +501,7 @@ EOT;
     <form action='problem.php' method='POST'
 	  style='display:inline'>
     <tr><td style='text-align:right'>
-    or Create New Problem:</td><td>
+    <h5>or Create New Problem:<h5></td><td>
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name" id="create">
     </td></tr></table></form>
@@ -509,8 +515,8 @@ EOT;
 	    if ( ++ $count == 1 )
 	        echo "<form action='problem.php'" .
 		     " method='POST'>" .
-		     " Current Problem Files" .
-		     " (most recent first):" .
+		     "<h5>Current Problem Files" .
+		     " (most recent first):</h5>" .
 		     "<table style='display:block'>";
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>" .
@@ -570,13 +576,13 @@ EOT;
 	get_commands_display
 	    ( $display, $display_map,
 	      $runfile, "$problem_dir/+work+" );
-	echo "Commands:<br>" . PHP_EOL;
-	echo "<table style='margin-left:20px;font-size:12pt'>" . PHP_EOL;
+	echo "<h5>Commands:</h5>" . PHP_EOL;
+	echo "<table style='margin-left:20px;'>" . PHP_EOL;
 	echo $display . PHP_EOL;
 	echo "</table>" . PHP_EOL;
         if ( count ( $kept ) > 0 )
 	{
-	    echo "<br>Kept:<ul>" . PHP_EOL;
+	    echo "<h5>Kept:</h5><ul>" . PHP_EOL;
 	    foreach ( $kept as $e )
 	        echo "<li><pre style='margin:0 0'>" .
 		     "$e</pre>" . PHP_EOL;
