@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb  8 14:19:34 EST 2020
+    // Date:	Sat Feb  8 20:29:47 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -379,8 +379,11 @@
 	float: right;
 	height: 99%;
     }
-    div.runfile }
-	background-color: #c0ffc0;
+    div.runfile {
+	background-color: #C0FFC0;
+    }
+    div.show {
+	background-color: #E5C4E7;
     }
     .commands {
 	margin-left: 20px;
@@ -582,27 +585,28 @@ EOT;
 	echo "</table>" . PHP_EOL;
         if ( count ( $kept ) > 0 )
 	{
-	    echo "<h5>Kept:</h5><ul>" . PHP_EOL;
+	    echo "<h5>Kept:</h5>" . PHP_EOL;
+	    echo "<div style='margin-left:20px'>" .
+	         PHP_EOL;
 	    foreach ( $kept as $e )
-	        echo "<li><pre style='margin:0 0'>" .
-		     "$e</pre>" . PHP_EOL;
-	     echo "</ul>" . PHP_EOL;
+	        echo "<pre style='margin:0 0'>" .
+		     "$e</pre><br>" . PHP_EOL;
+	     echo "</div>" . PHP_EOL;
 	}
 	echo "</div>" . PHP_EOL;
     }
 
     if ( count ( $show_files ) > 0 )
     {
-	echo "<div style='" .
-	     "background-color:" .
-	     "#AEF9B0;'>" . PHP_EOL;
+	echo "<br><div class='show'>" . PHP_EOL;
 	foreach ( $show_files as $f )
 	{
 	    $f = "$epm_data/$f";
 	    $b = basename ( $f );
 	    if ( filesize ( $f ) == 0 )
 	    {
-		echo "<u>$b</u> is empty<br>" . PHP_EOL;
+		echo "<u><pre>$b</pre></u>" .
+		     " is empty<br>" . PHP_EOL;
 		continue;
 	    }
 	    $ext = pathinfo ( $f, PATHINFO_EXTENSION );
@@ -613,11 +617,14 @@ EOT;
 
 	    if ( $type == 'utf8' )
 	    {
-		echo "<u>$b</u>:<br>" . PHP_EOL;
+		echo "<u><pre>$b:</pre></u>" . PHP_EOL;
 		$c = file_get_contents ( $f );
 		$hc = htmlspecialchars ( $c );
-		echo "<pre>$hc</pre>" .
-		     PHP_EOL . PHP_EOL;
+		echo "<br><div" .
+		     " style='margin-left:20px'>" .
+		     PHP_EOL;
+		echo "<pre>$hc</pre>" .  PHP_EOL;
+		echo "</div>" .  PHP_EOL;
 	    }
 	    else
 	    {
@@ -632,7 +639,8 @@ EOT;
 		}
 		else
 		    $t = $type;
-		echo "<u>$b</u> is $t<br>" . PHP_EOL;
+		echo "<pre><u>$b</u> is $t</pre><br>" .
+		     PHP_EOL;
 	    }
 	}
 	echo "</div>" . PHP_EOL;

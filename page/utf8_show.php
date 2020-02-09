@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan 12 13:53:56 EST 2020
+    // Date:	Sat Feb  8 20:33:33 EST 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // File may be in current problem directory
@@ -61,10 +61,10 @@
     if ( array_slice ( $lines, -1, 1 ) == [""] )
 	array_splice ( $lines, -1, 1 );
     $count = 0;
-    echo "<h3 style='margin-bottom:0em'>" .
-         "$printname</h3><br>" . PHP_EOL;
+    echo "<h2 style='margin-bottom:0'>" .
+         "<pre>$printname</pre></h2>" . PHP_EOL;
     echo "<div style='background-color:#d0fbd1;'>" .
-         "<table>" . PHP_EOL;
+         "<table style='font-size:12pt'>" . PHP_EOL;
     foreach ( $lines as $line )
     {
 	++ $count;
