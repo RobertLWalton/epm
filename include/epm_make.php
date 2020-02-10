@@ -1153,6 +1153,9 @@ function execute_commands ( $runfile, $work )
 //
 // where message specifies the cause of failure.
 //
+// If status file could not be read or was misformatted,
+// return NULL.
+//
 function get_status ( $work, $sfile )
 {
     global $epm_data;
