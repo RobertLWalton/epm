@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Feb 10 01:27:06 EST 2020
+// Date:    Mon Feb 10 01:29:13 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1133,6 +1133,149 @@ function execute_commands ( $runfile, $work )
 	        " $runfile.sh in $work" );
 }
 
+// Read epm_sandbox -status file $work/$sfile and return
+// its essentual contents.
+//
+// If sandboxed command is still running, return:
+//
+//	['R', time]
+//
+// where time is the total CPU time in seconds so far.
+//
+// If sandboxed command is successfully done (with exit
+// code 0) return:
+//
+//	['D', time]
+//
+// If sandboxed command terminated with failure, return:
+//
+//	['F', time, message]
+//
+// where message specifies the cause of failure.
+//
+function get_status ( $work, $sfile )
+{
+    global $epm_data;
+
+    $count = 0;
+    while ( true )
+    {
+        if ( $count == 500 ) return NULL;
+	    // Give up after 5 seconds.
+	elseif ( $count != 0 ) usleep ( 10000 );
+	    // Poll every 10 milliseconds.
+	$count += 1;
+
+	$c = @file_get_contents
+	    ( "$epm_data/$work/$sfile" );
+	if ( $c === false ) continue;
+	$c = explode ( ' ', $c );
+	if ( count ( $c ) != 17 ) continue;
+	if ( $c[0] != $c[16] ) continue;
+	$state    = $c[1];
+	$cputime  = $c[3];
+	$space    = $c[4];
+	$filesize = $c[7];
+	$exitcode = $c[11];
+	$signal   = $c[12];
+	$usertime = $c[13];
+	$systime  = $c[14];
+	break;
+    }
+
+    if ( ! preg_match ( '/^\d*(|\.\d+)$/', $usertime )
+         ||
+         ! preg_match ( '/^\d*(|\.\d+)$/', $usertime ) )
+        return NULL;
+
+    $time = stringf ( '%.3f', $usertime + $systime );
+
+    if ( $state == 'E' && $exitcode > 128 )
+    {
+        $state = 'S';
+	$signal = $exitcode - 128;
+    }
+
+    if ( $state == 'R' )
+        return ['R', $time];
+    elseif ( $state == 'E' && $exitcode == 0 )
+        return ['S', $time];
+    elseif ( $state == 'E' )
+    {
+        switch ( $exitcode )
+	{
+	    case 126:
+	        $m = 'invoked command could not'
+		   . ' execute';
+		break;
+	    case 127:
+	        $m = 'command not found';
+		break;
+	    case 128:
+	        $m = 'invalid argument to exit';
+		break;
+	    default:
+	        $m = "command failed with exit code"
+		   . " $exitcode";
+	}
+	return ['F', $time, $m];
+    }
+    elseif ( $state == 'S' )
+    {
+        switch ( $signal )
+	{
+	    case 24:
+	        $m = "CPU time limit ($cputime sec)"
+		   . " exceeded";
+		break;
+	    case 25:
+	        $m = "output file size limit"
+		   . " ($filesize bytes) exceeded";
+		break;
+	    case 1:
+	        $m = 'terminated by hangup signal';
+		break;
+	    case 2:
+	        $m = 'terminated by interrupt signal';
+		break;
+	    case 3:
+	        $m = 'terminated by quit signal';
+		break;
+	    case 6:
+	        $m = 'terminated by abort';
+		break;
+	    case 8:
+	        $m = 'terminated by floating point'
+		   . ' exception signal';
+		break;
+	    case 9:
+	        $m = 'terminated by kill signal';
+		break;
+	    case 7:
+	    case 10:
+	    case 11:
+	        $m = 'terminated invalid memory'
+		   . ' reference';
+		break;
+	    case 13:
+	        $m = 'terminated by broken pipe';
+		break;
+	    case 14:
+	        $m = 'terminated by alarm timer';
+		break;
+	    case 15:
+	        $m = 'terminated by termination signal';
+		break;
+	    default:
+	        $m = "command failed with signal"
+		   . " $signal";
+	}
+	return ['F', $time, $m];
+    }
+    else
+        return NULL;
+}
+
 # Read $work/$runfile.sh and output its commands in the
 # format of a sequence of HTML rows (<tr>...</tr>'s)
 # plus a map of -status file names to row numbers
@@ -1276,48 +1419,6 @@ function get_command_results
 	$count += 1;
 	$c = @file_get_contents 
 		( "$epm_data/$work/$runfile.shout" );
-    }
-}
-
-// Run $commands in $work.  Append output to output
-// and error messages to $errors.
-//
-function run_commands
-	( $commands, $work, & $output, & $errors )
-{
-    global $epm_data, $epm_home, $uid, $problem;
-
-    $command = '';
-    $e = '';
-    foreach ( $commands as $c )
-    {
-	$e .= PHP_EOL . "    $c";
-        if ( preg_match ( '/^(.*\h)\\\\$/', $c,
-	                  $matches ) )
-	{
-	    $command .= $matches[1];
-	    continue;
-	}
-	else
-	    $command .= $c;
-
-        exec ( "cd $epm_data/$work;" .
-	       " export EPM_HOME=$epm_home;" .
-	       " export EPM_DATA=$epm_data;" .
-	       " export EPM_UID=$uid;" .
-	       " export EPM_PROBLEM=$problem;" .
-	       " export EPM_WORK=$work;" .
-	       " $command",
-	       $output, $ret );
-	if ( $ret != 0 )
-	{
-	    $errors[] =
-		"error code $ret returned upon" .
-		" executing$e";
-	    return;
-	}
-	$command = '';
-	$e = '';
     }
 }
 
