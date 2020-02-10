@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Feb  8 06:46:34 EST 2020
+// Date:    Mon Feb 10 00:24:25 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -27,16 +27,29 @@ if ( ! isset ( $uid ) )
 if ( ! isset ( $problem ) )
     exit ( 'ACCESS ERROR: $problem not set' );
 
-umask ( 06 );
-    // In order for epm_sandbox to be able to access
-    // and execute.
-
 if ( ! isset ( $is_epm_test ) )
     $is_epm_test = false;
     // True means we are running a test script that is
     // NOT driven by an http server.  Some functions,
     // notably move_uploaded_file, will not work
     // in this test script environment.
+
+// Return true if process with $pid is still running,
+// and false otherwise.
+//
+function is_running ( $pid )
+{
+    exec ( "kill -s 0 $pid",
+	   $kill_output, $kill_status );
+    #
+    # Sending signal 0 does not actually send a
+    # signal but returns status 0 if the process is
+    # still running and status non-0 otherwise.
+    # Note that the posix_kill function is not
+    # available in vanilla PHP.
+
+    return ( $kill_status == 0 );
+}
 
 // Problem Parameters:
 //
@@ -921,61 +934,50 @@ function find_control
     return NULL;
 }
 
-// Clean up a working directory.  If it has a PID file,
-// kill the PID.  Then if it exists, unlink its contents
-// and the directory itself, orphaning the directory.
-// Then create a new directory under the same name.
+// Clean up a working directory.  For each .shout file,
+// finds its PID and if that is still running, kills it
+// with SIGKILL.  Then executes rm -rf on the directory.
+// Lastly, creates a new directory under the same name.
 //
 // Directory name is relative to epm_data.
 //
-// If directory cannot be cleaned up, issues system
-// alert and adds to errors.
-//
-function cleanup_working ( $dir, & $errors )
+function cleanup_working ( $work )
 {
     global $epm_data;
-    $d = "$epm_data/$dir";
-
-    if ( file_exists ( "$d/PID" ) )
+    $d = "$epm_data/$work";
+    $c = @scandir ( $d );
+    if ( $c !== false )
     {
-        $PID = file_get_contents ( "$d/PID" );
-
-	// PID file if it exists has the form
-	//
-	//    pid:expire
-	//
-	// where it may be assumed that if time()
-	// >= expire the process that originally
-	// had pid is dead.  This is necessary because
-	// pid's can be reused, though (almost)
-	// certainly not within the same hour.
-	//
-	if ( $PID )
+	foreach ( $c as $fname )
 	{
-	    $pair = explode ( $PID, ":" );
-	    if ( count ( $pair ) == 2 )
-	    {
-		$pid = $pair[0];
-		$expire = $pair[1];
-		if ( time() < $expire )
-		{
-		    exec ( "kill -1 $PID" );
-		    usleep ( 500000 );
-		    exec ( "kill -9 $PID" );
-		}
-	    }
+	    if ( ! preg_match ( '/^(.+)\.shout$/',
+	                        $fname ) )
+	        continue;
+
+	    $fc = @file_get_contents ( "$d/$fname" );
+	    if ( $fc === false ) continue;
+
+	    if ( ! preg_match ( '/^(\d+) PID\n/',
+	                        $fc, $matches ) )
+		continue;
+	    $pid = $matched[1];
+	    if ( ! is_running ( $pid ) )
+	        continue;
+	    exec ( "kill -s KILL $pid" );
 	}
     }
 
     if ( file_exists ( $d ) )
         exec ( "rm -rf $d" );
 
+    $m = umask ( 06 );
     if ( ! mkdir ( $d, 0771) )
 	// Must give o+x permission so epm_sandbox can
 	// execute programs that are in working
 	// directory.
 	//
 	ERROR ( "could not make $dir" );
+    umask ( $m );
 }
 
 // Link files from the required lists into the working
@@ -1263,16 +1265,7 @@ function get_command_results
 	    return [$matches[1], $matches[2]];
 	}
 
-	exec ( "kill -0 $pid",
-	       $kill_output, $kill_status );
-	#
-	# Sending signal 0 does not actually send a
-	# signal but returns true if the process is
-	# still running and false otherwise.  Note
-	# that the posix_kill function is not available
-	# in vanilla PHP.
-
-	if ( $kill_status != 0 ) return false;
+	if ( ! is_running ( $pid ) ) return false;
 	if ( $wait == 0 ) return true;
 
 	# Poll every 100 ms for wait/10 seconds.
@@ -1533,8 +1526,7 @@ function start_make_file
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) ) return false;
 
-    cleanup_working ( $work, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
+    cleanup_working ( $work );
 
     foreach ( $creatable as $f )
         create_file
