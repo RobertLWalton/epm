@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Feb 10 01:09:44 EST 2020
+// Date:    Mon Feb 10 01:27:06 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -903,14 +903,14 @@ function find_control
 	    $errors[] = pretty_template ( $e[0] )
 	              . ' NEEDS:';
 	    if ( ! empty ( $e[1] ) )
-	        $errors = '    LOCAL '
-		        . implode ( ',', $e[1] );
+	        $errors[] = '    LOCAL '
+		          . implode ( ',', $e[1] );
 	    if ( ! empty ( $e[2] ) )
-	        $errors = '    REMOTE '
-		        . implode ( ',', $e[2] );
+	        $errors[] = '    REMOTE '
+		          . implode ( ',', $e[2] );
 	    if ( ! empty ( $e[3] ) )
-	        $errors = '    CREATABLE '
-		        . implode ( ',', $e[3] );
+	        $errors[] = '    CREATABLE '
+		          . implode ( ',', $e[3] );
 	}
     }
     else
