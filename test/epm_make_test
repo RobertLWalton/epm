@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Feb  7 07:10:18 EST 2020
+// Date:	Mon Feb 10 00:31:37 EST 2020
 
 $is_epm_test = true;
 
@@ -167,8 +167,7 @@ check ( '$GLOBALS["control"][2]["KEEP"]',
 
 $errors = [];
 $work = "$prob_dir/+work+";
-cleanup_working ( $work, $errors );
-check ( '$GLOBALS["errors"]', [] );
+cleanup_working ( $work );
 
 $errors = [];
 link_required ( $local_required, $remote_required,
@@ -240,7 +239,7 @@ file_put_contents ( "$epm_data/tmp/prob.c", $prob_c );
 
 $errors = [];
 $warnings = [];
-$output = [];
+$runfile = NULL;
 
 $_FILES['uploaded_file'] =
     ['name' => 'prob.c',
@@ -248,14 +247,12 @@ $_FILES['uploaded_file'] =
      'size' => '1000',
      'tmp_name' => "$epm_data/tmp/prob.c"];
 process_upload ( $_FILES['uploaded_file'],
-		 'prob', $work, $prob_dir,
-		 $commands, $moved, $show,
-		 $output, $creatables,
+		 'prob', $work, $prob_dir, 100,
+		 $runfile, $moved, $show,
 		 $warnings, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["warnings"]', [] );
-check ( '$GLOBALS["output"]', [] );
-check ( 'count ( $GLOBALS["commands"] )', 2 );
+check ( '$GLOBALS["runfile"]', 'prob' );
 check ( '$GLOBALS["moved"]', ["prob", "prob.c"] );
 check ( '$GLOBALS["show"]',
         ["users/user1/prob/+work+/prob.err",
