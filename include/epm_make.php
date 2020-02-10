@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Feb 10 00:24:25 EST 2020
+// Date:    Mon Feb 10 01:09:44 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -39,7 +39,7 @@ if ( ! isset ( $is_epm_test ) )
 //
 function is_running ( $pid )
 {
-    exec ( "kill -s 0 $pid",
+    exec ( "kill -s 0 $pid 2>/dev/null",
 	   $kill_output, $kill_status );
     #
     # Sending signal 0 does not actually send a
@@ -960,10 +960,11 @@ function cleanup_working ( $work )
 	    if ( ! preg_match ( '/^(\d+) PID\n/',
 	                        $fc, $matches ) )
 		continue;
-	    $pid = $matched[1];
+	    $pid = $matches[1];
 	    if ( ! is_running ( $pid ) )
 	        continue;
-	    exec ( "kill -s KILL $pid" );
+	    exec
+	        ( "kill -s KILL $pid >/dev/null 2>&1" );
 	}
     }
 
