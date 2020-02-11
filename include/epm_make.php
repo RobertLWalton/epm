@@ -1375,9 +1375,12 @@ function get_commands_display ( & $display )
     $r_message = NULL;
     $exitcode = -1;
     if ( $r === false )
-        ERROR ( 'run died for no good reason,' .
-	        ' try again' );
-    elseif ( $r !== true )
+        ERROR ( "run $runfile.sh died for no good" .
+	        " reason, try again" );
+    elseif ( $r !== true && $r[0] == 'B' )
+        ERROR ( "run $runfile.sh died during startup," .
+	        " try again" );
+    elseif ( $r !== true && $r[0] != 'D' )
     {
         if ( ! update_runmap ( $r[1] ) )
 	{
@@ -1388,19 +1391,13 @@ function get_commands_display ( & $display )
     else
 	update_runmap();
 
-    $keys = array_keys ( $m );
-    sort ( $keys, SORT_NUMERIC );
-    $last = count ( $keys );
-    $i = 0;
-
     $display = "<table id='command_table'>" . PHP_EOL;
-    $display_status = false;
     $c = @file_get_contents 
 	    ( "$epm_data/$work/$runfile.sh" );
     if ( $c === false )
 	ERROR ( "cannot read $work/$runfile.sh" );
     $c = explode ( "\n", $c );
-    $count = 0;
+    $n = 0;
     $cont = 0;
     $stars = '';
     $messages = [];
@@ -1413,42 +1410,55 @@ function get_commands_display ( & $display )
     {
         if ( ! $cont
 	     &&
-	     ! preg_match ( '/^n=[0-9]+;(.*)$/', $line,
+	     ! preg_match ( '/^n=([0-9])+;(.*)$/', $line,
 	                    $matches ) )
 	    continue;
-	++ $count;
-	if ( ! $cont ) $line = $matches[1];
+	++ $n;
+	if ( ! $cont )
+	{
+	    if ( $n != $matches[1] )
+	        ERROR ( "n={$matches[1]} in" .
+		        " $runfile.sh should" .
+			" equal $n" );
+	    $line = $matches[2];
+	}
 	$line = trim ( $line );
 	$line = ( $cont ? '    ' : '' ) . $line;
 	$hline = htmlspecialchars ( $line );
 	$display .= "<tr><td><pre>$hline</pre></td>";
 
-	if ( $count == $r_line )
-	    $display .= "<td class='red'>*</td>";
+	if ( $n == $r_line )
+	    $display .=
+	        "<td><pre class='red'>*</pre></td>";
 
-	elseif ( $i < $last && $count = $keys[$i] )
+	elseif ( isset ( $m[$n] ) )
 	{
-	    $me = $m[$keys[$i]];
-	    $i += 1;
+	    $mentry = $m[$n];
 
-	    $state = $me[1];
-	    if ( $state == 'X' ) continue;
-	    elseif ( $state == 'R' )
+	    $state = $mentry[1];
+	    if ( $state == 'X' )
+	    {
 		$display .=
-		    "<td><pre id='stat_time$count'>" .
+		    "<td><pre id='stat_time$n'>" .
 		    "</pre></td>";
+	    }
+	    elseif ( $state == 'R' )
+	    {
+		$display .=
+		    "<td><pre id='stat_time$n'>" .
+		    "{$mentry[2]}</pre></td>";
+	    }
+	    elseif ( $state == 'D' )
+		$display .=
+		    "<td><pre>{$mentry[2]}<pre><td>";
 	    else
 	    {
-		$display .= "<td><pre>${me[2]}<pre>";
-	        if ( $state == 'F' )
-		{
-		    $stars .= '*';
-		    $messages[] = "$stars $me[4]";
-		    $display .=
-		        "&nbsp<pre class='red'>" .
-			"$stars<pre>";
-		}
-		$display .= "</td>";
+		$stars .= '*';
+		$display .=
+		    "<td><pre>{$mentry[2]}<pre>" .
+		    "&nbsp<pre class='red'>" .
+		    "$stars<pre><td>";
+		$messages[] = "$stars {$mentry[4]}";
 	    }
 	}
 	$display .= "</tr>" . PHP_EOL;
@@ -1826,8 +1836,8 @@ function finish_make_file
         $errors[] = "SYSTEM_ERROR: $runfile.sh did not"
 	          . " finish in time";
     elseif ( $r != ['D',0] )
-        $errors[] = "command line ${r[0]} returned"
-	          . " exit code ${r[1]}";
+        $errors[] = "command line {$r[0]} returned"
+	          . " exit code {$r[1]}";
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 

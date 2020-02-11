@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 11 03:09:59 EST 2020
+    // Date:	Tue Feb 11 15:03:05 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -369,7 +369,7 @@
         font-size: 12pt;
 	display:inline;
     }
-    pre.red, td.red {
+    pre.red {
         font-color: red;
     }
     div.left {
@@ -388,7 +388,7 @@
     div.show {
 	background-color: #E5C4E7;
     }
-    div.commands {
+    div.indented {
 	margin-left: 20px;
     }
 	echo "<div style='background-color:#c0ffc0;'>" .
@@ -444,23 +444,21 @@
     {
 	echo "<div style='background-color:#F5F81A'>" .
 	     PHP_EOL;
-	echo "Errors:" . PHP_EOL;
-	echo "<div style='margin-left:20px;" .
-	                "font-size:110%'>" . PHP_EOL;
+	echo "<h5>Errors:</h5>" . PHP_EOL;
+	echo "<div class='indented'>" . PHP_EOL;
 	foreach ( $errors as $e )
-	    echo "<pre style='margin:0 0'>$e</pre>" .
-	         "<br>" . PHP_EOL;
-	echo "</div></div>" . PHP_EOL;
+	    echo "<pre>$e</pre><br>" . PHP_EOL;
+	echo "<br></div></div>" . PHP_EOL;
     }
     if ( count ( $warnings ) > 0 )
     {
 	echo "<div style='background-color:#ffc0ff'>" .
 	     PHP_EOL;
-	echo "Warnings:" . PHP_EOL;
-	echo "<div style='margin-left:20px'>" . PHP_EOL;
+	echo "<h5>Warnings:</h5>" . PHP_EOL;
+	echo "<div class='indented'>" . PHP_EOL;
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>" . PHP_EOL;
-	echo "</div></div>" . PHP_EOL;
+	echo "<br></div></div>" . PHP_EOL;
     }
 
     $current_problem = ( isset ( $problem ) ?
@@ -581,17 +579,16 @@ EOT;
 	     PHP_EOL;
 	get_commands_display ( $display );
 	echo "<h5>Commands:</h5>" . PHP_EOL;
-	echo "<div class='commands'>" . PHP_EOL;
+	echo "<div class='indented'>" . PHP_EOL;
 	echo $display . PHP_EOL;
 	echo "</div>" . PHP_EOL;
         if ( count ( $kept ) > 0 )
 	{
 	    echo "<h5>Kept:</h5>" . PHP_EOL;
-	    echo "<div class='commands'>" . PHP_EOL;
+	    echo "<div class='indented'>" . PHP_EOL;
 	    foreach ( $kept as $e )
-	        echo "<pre style='margin:0 0'>" .
-		     "$e</pre><br>" . PHP_EOL;
-	     echo "</div>" . PHP_EOL;
+	        echo "<pre>$e</pre><br>" . PHP_EOL;
+	    echo "<br></div>" . PHP_EOL;
 	}
 	echo "</div>" . PHP_EOL;
     }
