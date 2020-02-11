@@ -369,6 +369,9 @@
         font-size: 12pt;
 	display:inline;
     }
+    pre.red, td.red {
+        font-color: red;
+    }
     div.left {
 	background-color: #96F9F3;
 	width: 47%;

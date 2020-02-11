@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 11 05:32:31 EST 2020
+// Date:    Tue Feb 11 10:12:14 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1098,13 +1098,15 @@ function get_commands ( $control )
 //	   [filename, 'D', time]
 //	     if file subprocess is completed with exit
 //	     code 0
-//	   [filename, 'F', time, message]
+//	   [filename, 'F', time, exitcode, message]
 //	     if file subprocess is completed with non-0
 //           exit code, where message is a string giving
 //           the cause of subprocess termination
 //
 // Here time is the total CPU execution time in seconds
-// of the subprocess (so far).
+// of the subprocess (so far).  If a subprocess was
+// terminated by a signal, the signal number is added to
+// 128 to make the exitcode.
 //
 function compile_commands ( $runfile, $work, $commands )
 {
@@ -1149,14 +1151,14 @@ function compile_commands ( $runfile, $work, $commands )
 
 // Update $_SESSION['EPM_RUNMAP']map by reading status
 // files in last-line-first order.  Return true if one
-// of the entries newly updated has failed ('F') state,
-// and false otherwise.
+// of the entries newly updated has failed ('F') state
+// with the given exitcode, and false otherwise.
 //
-function update_runmap ()
+function update_runmap ( $exitcode = -1 )
 {
     $work = & $_SESSION['EPM_WORK'];
     $m = & $_SESSION['EPM_RUNMAP'];
-    $f = false;
+    $r = false;
     foreach ( $m as $key )
     {
         $e = $m[$key];
@@ -1165,10 +1167,12 @@ function update_runmap ()
 	if ( $stat != NULL )
 	{
 	    $m[$key] = $stat;
-	    if ( $stat[1] == 'F' ) $f = true;
+	    if (    $stat[1] == 'F'
+	         && $stat[3] == $exitcode )
+		$r = true;
 	}
     }
-    return $f;
+    return $r;
 }
 
 // Read epm_sandbox -status file $work/$sfile and return
@@ -1217,10 +1221,10 @@ function get_status ( $work, $sfile )
 
     $time = stringf ( '%.3f', $usertime + $systime );
 
-    if ( $state == 'E' && $exitcode > 128 )
+    if ( $state == 'S' )
     {
-        $state = 'S';
-	$signal = $exitcode - 128;
+        $state = 'E';
+	$exitcode = $signal + 128;
     }
 
     if ( $state == 'R' )
@@ -1231,13 +1235,7 @@ function get_status ( $work, $sfile )
     {
         $m = get_exit_message
 	    ( $exitcode, $cputime, $filesize );
-	return [$sfile, 'F', $time, $m];
-    }
-    elseif ( $state == 'S' )
-    {
-        $m = get_exit_message
-	    ( $signal + 128, $cputime, $filesize );
-	return [$sfile, 'F', $time, $m];
+	return [$sfile, 'F', $time, $exitcode, $m];
     }
     else
         return NULL;
@@ -1373,13 +1371,29 @@ function get_commands_display ( & $display )
     $runfile = $_SESSION['EPM_RUNFILE'];
     $m = & $_SESSION['EPM_RUNMAP'];
     $r = get_command_results ( $runfile, $work, 0 );
-    update_runmap();
+    $r_line = NULL;
+    $r_message = NULL;
+    $exitcode = -1;
+    if ( $r === false )
+        ERROR ( 'run died for no good reason,' .
+	        ' try again' );
+    elseif ( $r !== true )
+    {
+        if ( ! update_runmap ( $r[1] ) )
+	{
+	    $r_line = $r[0];
+	    $r_message = get_exit_message ( $r[1] );
+	}
+    }
+    else
+	update_runmap();
+
     $keys = array_keys ( $m );
     sort ( $keys, SORT_NUMERIC );
     $last = count ( $keys );
     $i = 0;
 
-    $display = '<table>' . PHP_EOL;
+    $display = "<table id='command_table'>" . PHP_EOL;
     $display_status = false;
     $c = @file_get_contents 
 	    ( "$epm_data/$work/$runfile.sh" );
@@ -1388,6 +1402,13 @@ function get_commands_display ( & $display )
     $c = explode ( "\n", $c );
     $count = 0;
     $cont = 0;
+    $stars = '';
+    $messages = [];
+    if ( $r_line != NULL )
+    {
+        $stars = '*';
+	$messages[] = "$stars $r_message";
+    }
     foreach ( $c as $line )
     {
         if ( ! $cont
@@ -1401,16 +1422,44 @@ function get_commands_display ( & $display )
 	$line = ( $cont ? '    ' : '' ) . $line;
 	$hline = htmlspecialchars ( $line );
 	$display .= "<tr><td><pre>$hline</pre></td>";
-	if ( $i < $last && $count = $keys[$i] )
+
+	if ( $count == $r_line )
+	    $display .= "<td class='red'>*</td>";
+
+	elseif ( $i < $last && $count = $keys[$i] )
 	{
-	    $display .= "<td><pre id='stat_time$count'>"
-	              . "</pre></td>";
+	    $me = $m[$keys[$i]];
 	    $i += 1;
+
+	    $state = $me[1];
+	    if ( $state == 'X' ) continue;
+	    elseif ( $state == 'R' )
+		$display .=
+		    "<td><pre id='stat_time$count'>" .
+		    "</pre></td>";
+	    else
+	    {
+		$display .= "<td><pre>${me[2]}<pre>";
+	        if ( $state == 'F' )
+		{
+		    $stars .= '*';
+		    $messages[] = "$stars $me[4]";
+		    $display .=
+		        "&nbsp<pre class='red'>" .
+			"$stars<pre>";
+		}
+		$display .= "</td>";
+	    }
 	}
 	$display .= "</tr>" . PHP_EOL;
         $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
     }
     $display .= '</table>' . PHP_EOL;
+    if ( count ( $messages ) > 0 )
+    {
+        foreach ( $messages as $m )
+	    $display .= "<br><pre class='red'>$m<pre>";
+    }
 }
 
 # Read $work/$runfile.shout and output the results of

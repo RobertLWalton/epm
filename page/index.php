@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jan  9 07:31:31 EST 2020
+// Date:    Tue Feb 11 11:15:33 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -271,9 +271,10 @@ function EPM_ERROR_HANDLER
     global $epm_data;
 
     if ( $errno & ( E_USER_NOTICE |
-                    E_USER_WARNING |
-                    E_USER_ERROR ) )
+                    E_USER_WARNING ) )
         $class = 'USER';
+    elseif ( $errno & E_USER_ERROR )
+        $class = 'EPM';
     else
         $class = 'SYSTEM';
 
