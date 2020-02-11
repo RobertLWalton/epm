@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 11 03:04:26 EST 2020
+// Date:    Tue Feb 11 04:02:41 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1088,8 +1088,23 @@ function get_commands ( $control )
 //     $_SESSION['EPM_WORK'] to $work
 //     $_SESSION['EPM_RUNFILE'] to $runfile
 //     $_SESSION['EPM_RUNMAP'] to a map from
-//	   command line numbers to status file names,
-//         sorted in last-line-number-first order
+//	 command line numbers sorted in last-line-
+//       number-first order to:
+//
+//	   [filename, 'X']
+//	     if file does not exist yet
+//	   [filename, 'R', time]
+//	     if file subprocess is still running
+//	   [filename, 'D', time]
+//	     if file subprocess is completed with exit
+//	     code 0
+//	   [filename, 'F', time, message]
+//	     if file subprocess is completed with non-0
+//           exit code, where message is a string giving
+//           the cause of subprocess termination
+//
+// Here time is the total CPU execution time in seconds
+// of the subprocess (so far).
 //
 function compile_commands ( $runfile, $work, $commands )
 {
@@ -1117,7 +1132,7 @@ function compile_commands ( $runfile, $work, $commands )
 	if ( preg_match
 	         ( '/-status\h+(\H+\.[a-z]\d*stat)\h/',
 	           $line, $matches ) )
-	    $m[$n] = $matches[1];
+	    $m[$n] = [$matches[1],'X'];
 
         $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
     }
@@ -1126,64 +1141,36 @@ function compile_commands ( $runfile, $work, $commands )
 	    ( "$epm_data/$work/$runfile.sh", $r ) )
 	ERROR ( "cannot write $work/$runfile.sh" );
 
+    krsort ( $m, SORT_NUMERIC );
     $_SESSIONS['EPM_WORK'] = $work;
     $_SESSIONS['EPM_RUNFILE'] = $runfile;
     $_SESSIONS['EPM_RUNMAP'] = $m;
 }
 
-// Execute $runfile.sh within $epm_data/$work in
-// background with empty standard input.  Put standard
-// output in $runfile.shout and standard error in
-// $runfile.sherr.  The standard output is line
-// buffered (as per stdbuf(1) -oL ).
+// Update $_SESSION['EPM_RUNMAP']map by reading status
+// files in last-line-first order.
 //
-function execute_commands ( $runfile, $work )
+function update_runstat ()
 {
-    global $epm_data, $epm_home, $uid, $problem;
-
-    $r = '';
-    $r .= "cd $epm_data/$work" . PHP_EOL;
-    $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
-    $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
-    $r .= "export EPM_UID=$uid" . PHP_EOL;
-    $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
-    $r .= "export EPM_WORK=$work" . PHP_EOL;
-    $r .= "bash $runfile.sh >$runfile.shout" .
-                         " 2>$runfile.sherr &" .
-			 PHP_EOL;
-	// bash appears to flush echo output even when
-	// stdout is redirected to a file, and so
-	// `echo $$ PID;' promptly echoes PID.
-    $desc = @popen ( $r, 'w' );
-    if ( $desc === false )
-        ERROR ( "cannot execute $runfile.sh in $work" );
-    if ( @pclose ( $desc ) == -1 )
-        ERROR ( "error executing pclose for" .
-	        " $runfile.sh in $work" );
+    $work = & $_SESSION['EPM_WORK'];
+    $m = & $_SESSION['EPM_RUNMAP'];
+    foreach ( $m as $key )
+    {
+        $e = $m[$key];
+	if ( $e[1] != 'X' ) continue;
+	$stat = get_status ( $work, $e[0] );
+	if ( $stat != NULL )
+	    $m[$key] = $stat;
+    }
 }
 
 // Read epm_sandbox -status file $work/$sfile and return
-// its essentual contents.
-//
-// If sandboxed command is still running, return:
-//
-//	['R', time]
-//
-// where time is the total CPU time in seconds so far.
-//
-// If sandboxed command is successfully done (with exit
-// code 0) return:
-//
-//	['D', time]
-//
-// If sandboxed command terminated with failure, return:
-//
-//	['F', time, message]
-//
-// where message specifies the cause of failure.
+// value to store in $_SESSION['EPM_RUNMAP'] entry.
 //
 // If status file could not be read or was misformatted,
-// return NULL.
+// return NULL.  In the misformatted case, retries are
+// done every 10 milliseconds for 2 seconds.  In the
+// not-readable case return is immediate.
 //
 function get_status ( $work, $sfile )
 {
@@ -1192,15 +1179,16 @@ function get_status ( $work, $sfile )
     $count = 0;
     while ( true )
     {
-        if ( $count == 500 ) return NULL;
-	    // Give up after 5 seconds.
+        if ( $count == 200 ) return NULL;
+	    // Give up after 2 seconds.
 	elseif ( $count != 0 ) usleep ( 10000 );
 	    // Poll every 10 milliseconds.
 	$count += 1;
 
 	$c = @file_get_contents
 	    ( "$epm_data/$work/$sfile" );
-	if ( $c === false ) continue;
+	if ( $c === false )
+	    return NULL;
 	$c = explode ( ' ', $c );
 	if ( count ( $c ) != 17 ) continue;
 	if ( $c[0] != $c[16] ) continue;
@@ -1229,9 +1217,9 @@ function get_status ( $work, $sfile )
     }
 
     if ( $state == 'R' )
-        return ['R', $time];
+        return [$sfile, 'R', $time];
     elseif ( $state == 'E' && $exitcode == 0 )
-        return ['S', $time];
+        return [$sfile, 'S', $time];
     elseif ( $state == 'E' )
     {
         switch ( $exitcode )
@@ -1250,7 +1238,7 @@ function get_status ( $work, $sfile )
 	        $m = "command failed with exit code"
 		   . " $exitcode";
 	}
-	return ['F', $time, $m];
+	return [$sfile, 'F', $time, $m];
     }
     elseif ( $state == 'S' )
     {
@@ -1302,10 +1290,41 @@ function get_status ( $work, $sfile )
 	        $m = "command failed with signal"
 		   . " $signal";
 	}
-	return ['F', $time, $m];
+	return [$sfile, 'F', $time, $m];
     }
     else
         return NULL;
+}
+
+// Execute $runfile.sh within $epm_data/$work in
+// background with empty standard input.  Put standard
+// output in $runfile.shout and standard error in
+// $runfile.sherr.  The standard output is line
+// buffered (as per stdbuf(1) -oL ).
+//
+function execute_commands ( $runfile, $work )
+{
+    global $epm_data, $epm_home, $uid, $problem;
+
+    $r = '';
+    $r .= "cd $epm_data/$work" . PHP_EOL;
+    $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
+    $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
+    $r .= "export EPM_UID=$uid" . PHP_EOL;
+    $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
+    $r .= "export EPM_WORK=$work" . PHP_EOL;
+    $r .= "bash $runfile.sh >$runfile.shout" .
+                         " 2>$runfile.sherr &" .
+			 PHP_EOL;
+	// bash appears to flush echo output even when
+	// stdout is redirected to a file, and so
+	// `echo $$ PID;' promptly echoes PID.
+    $desc = @popen ( $r, 'w' );
+    if ( $desc === false )
+        ERROR ( "cannot execute $runfile.sh in $work" );
+    if ( @pclose ( $desc ) == -1 )
+        ERROR ( "error executing pclose for" .
+	        " $runfile.sh in $work" );
 }
 
 # Read $work/$runfile.sh and output its commands in the
