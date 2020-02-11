@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Feb 10 01:29:13 EST 2020
+// Date:    Tue Feb 11 03:04:26 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1076,30 +1076,59 @@ function get_commands ( $control )
 //
 //	$epm_data/$work/$runfile.sh
 //
+// This is compiled so that when its run terminates,
+// its output file (its .shout file) will end with
+// '::n e DONE\n' where n is the line number of the
+// terminating commands first line, e is the exit
+// code, and if the run terminates normally, n is 'D'
+// and e is 0.
+//
+// Also set the following:
+//
+//     $_SESSION['EPM_WORK'] to $work
+//     $_SESSION['EPM_RUNFILE'] to $runfile
+//     $_SESSION['EPM_RUNMAP'] to a map from
+//	   command line numbers to status file names,
+//         sorted in last-line-number-first order
+//
 function compile_commands ( $runfile, $work, $commands )
 {
     global $epm_data;
 
+    unset ( $_SESSIONS['EPM_WORK'] );
+    unset ( $_SESSIONS['EPM_RUNFILE'] );
+    unset ( $_SESSIONS['EPM_RUNMAP'] );
+
     $r = '';  // Value to write to $runfile
+    $m = [];  // Runmap.
     $n = 0;   // Line count
     $cont = 0;   // Next line is continuation.
     $r .= "trap 'echo ::\$n \$? DONE' EXIT" . PHP_EOL;
     $r .= "n=B; echo $$ PID" . PHP_EOL;
     $r .= "n=B; set -e" . PHP_EOL;
-    foreach ( $commands as $c )
+    foreach ( $commands as $line )
     {
         ++ $n;
 	if ( ! $cont )
-	    $r .= "n=$n; $c" . PHP_EOL;
+	    $r .= "n=$n; $line" . PHP_EOL;
 	else
-	    $r .= "          $c" . PHP_EOL;
+	    $r .= "          $line" . PHP_EOL;
 
-        $cont = preg_match ( '/^(|.*\h)\\\\$/', $c );
+	if ( preg_match
+	         ( '/-status\h+(\H+\.[a-z]\d*stat)\h/',
+	           $line, $matches ) )
+	    $m[$n] = $matches[1];
+
+        $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
     }
     $r .= "n=D; exit 0" . PHP_EOL;
     if ( ! file_put_contents 
 	    ( "$epm_data/$work/$runfile.sh", $r ) )
 	ERROR ( "cannot write $work/$runfile.sh" );
+
+    $_SESSIONS['EPM_WORK'] = $work;
+    $_SESSIONS['EPM_RUNFILE'] = $runfile;
+    $_SESSIONS['EPM_RUNMAP'] = $m;
 }
 
 // Execute $runfile.sh within $epm_data/$work in
@@ -1297,7 +1326,7 @@ function get_status ( $work, $sfile )
 # ing command line number.
 #	
 function get_commands_display
-    ( & $display, & $display_map, $runfile, $work )
+    ( & $display, $runfile, $work )
 {
     global $epm_data;
 
@@ -1321,23 +1350,9 @@ function get_commands_display
 	++ $count;
 	if ( ! $cont ) $line = $matches[1];
 	$line = trim ( $line );
-	$statfile = NULL;
-	if ( preg_match
-	         ( '/-status\h+(\H+\.[a-z]\d*stat)\h/',
-	           $line, $matches ) )
-	{
-	    $statfile = $matches[1];
-	    $display_map[$statfile] = $count;
-	}
 	$line = ( $cont ? '    ' : '' ) . $line;
 	$hline = htmlspecialchars ( $line );
 	$display .= "<tr><td><pre>$hline</pre></td>";
-	if ( isset ( $statfile ) )
-	    $display .= "<td><pre"
-	              . " id='stat_time$count'>"
-		      . "</pre></td><td><pre"
-	              . " id='stat_exit$count'>"
-		      . "</pre></td>";
 	$display .= "</tr>" . PHP_EOL;
         $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
     }

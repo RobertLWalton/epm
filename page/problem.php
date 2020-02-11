@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb  8 20:29:47 EST 2020
+    // Date:	Tue Feb 11 03:09:59 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -577,7 +577,7 @@ EOT;
 	echo "<div class='runfile'>" .
 	     PHP_EOL;
 	get_commands_display
-	    ( $display, $display_map,
+	    ( $display,
 	      $runfile, "$problem_dir/+work+" );
 	echo "<h5>Commands:</h5>" . PHP_EOL;
 	echo "<table style='margin-left:20px;'>" . PHP_EOL;
