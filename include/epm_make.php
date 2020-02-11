@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 11 04:02:41 EST 2020
+// Date:    Tue Feb 11 04:08:34 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1110,9 +1110,9 @@ function compile_commands ( $runfile, $work, $commands )
 {
     global $epm_data;
 
-    unset ( $_SESSIONS['EPM_WORK'] );
-    unset ( $_SESSIONS['EPM_RUNFILE'] );
-    unset ( $_SESSIONS['EPM_RUNMAP'] );
+    unset ( $_SESSION['EPM_WORK'] );
+    unset ( $_SESSION['EPM_RUNFILE'] );
+    unset ( $_SESSION['EPM_RUNMAP'] );
 
     $r = '';  // Value to write to $runfile
     $m = [];  // Runmap.
@@ -1142,26 +1142,33 @@ function compile_commands ( $runfile, $work, $commands )
 	ERROR ( "cannot write $work/$runfile.sh" );
 
     krsort ( $m, SORT_NUMERIC );
-    $_SESSIONS['EPM_WORK'] = $work;
-    $_SESSIONS['EPM_RUNFILE'] = $runfile;
-    $_SESSIONS['EPM_RUNMAP'] = $m;
+    $_SESSION['EPM_WORK'] = $work;
+    $_SESSION['EPM_RUNFILE'] = $runfile;
+    $_SESSION['EPM_RUNMAP'] = $m;
 }
 
 // Update $_SESSION['EPM_RUNMAP']map by reading status
-// files in last-line-first order.
+// files in last-line-first order.  Return true if one
+// of the entries newly updated has failed ('F') state,
+// and false otherwise.
 //
-function update_runstat ()
+function update_runmap ()
 {
     $work = & $_SESSION['EPM_WORK'];
     $m = & $_SESSION['EPM_RUNMAP'];
+    $f = false;
     foreach ( $m as $key )
     {
         $e = $m[$key];
 	if ( $e[1] != 'X' ) continue;
 	$stat = get_status ( $work, $e[0] );
 	if ( $stat != NULL )
+	{
 	    $m[$key] = $stat;
+	    if ( $stat[1] == 'F' ) $f = true;
+	}
     }
+    return $f;
 }
 
 // Read epm_sandbox -status file $work/$sfile and return
@@ -1327,31 +1334,40 @@ function execute_commands ( $runfile, $work )
 	        " $runfile.sh in $work" );
 }
 
-# Read $work/$runfile.sh and output its commands in the
-# format of a sequence of HTML rows (<tr>...</tr>'s)
-# plus a map of -status file names to row numbers
-# containing the -status file name.  A row associated
-# with one of these numbers $n has rightmost entries:
+# Using data recorded in $_SESSION by compile_commands,
+# output, and updating this data, return HTML listing
+# the compiled commands and their exit codes messages.
+#
+# First get_command_results is called, and then
+# update_runmap.
+#
+# Each command line gets a row in a table, and if that
+# command line number has 'X' or 'R' state in the
+# runmap, the second column for the row is given the
+# HTML:
 #
 #    <td><pre id='stat_time$n'><pre></td>
-#    <td><pre id='stat_exit$n'><pre></td>
 #
-# The HTML format is output in $display and $display_
-# map is set so that
-#
-#	$display_map[$f] = $n
-#
-# where $f is a -status file name and $n is its contain-
-# ing command line number.
+# The lowest line number for which such a second column
+# is output is returned; if there are no such -1 is
+# returned.  The HTML is returned in $display.
 #	
-function get_commands_display
-    ( & $display, $runfile, $work )
+function get_commands_display ( & $display )
 {
     global $epm_data;
 
-    $display = '';
+    $work = $_SESSION['EPM_WORK'];
+    $runfile = $_SESSION['EPM_RUNFILE'];
+    $m = & $_SESSION['EPM_RUNMAP'];
+    $r = get_command_results ( $runfile, $work, 0 );
+    update_runmap();
+    $keys = array_keys ( $m );
+    sort ( $keys, SORT_NUMERIC );
+    $last = count ( $keys );
+    $i = 0;
+
+    $display = '<table>' . PHP_EOL;
     $display_status = false;
-    $display_map = [];
     $c = @file_get_contents 
 	    ( "$epm_data/$work/$runfile.sh" );
     if ( $c === false )
@@ -1372,16 +1388,16 @@ function get_commands_display
 	$line = ( $cont ? '    ' : '' ) . $line;
 	$hline = htmlspecialchars ( $line );
 	$display .= "<tr><td><pre>$hline</pre></td>";
+	if ( $i < $last && $count = $keys[$i] )
+	{
+	    $display .= "<td><pre id='stat_time$count'>"
+	              . "</pre></td>";
+	    $i += 1;
+	}
 	$display .= "</tr>" . PHP_EOL;
         $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
     }
-    if ( count ( $display_map ) > 0 )
-    {
-        $header = "<tr><th>Commands</th>"
-	        . "<th>CPU Time<br>(seconds)</th>"
-		. "<th>Exit Code</th></tr>" . PHP_EOL;
-	$display = $header . $display;
-    }
+    $display .= '</table>' . PHP_EOL;
 }
 
 # Read $work/$runfile.shout and output the results of

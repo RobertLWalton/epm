@@ -385,7 +385,7 @@
     div.show {
 	background-color: #E5C4E7;
     }
-    .commands {
+    div.commands {
 	margin-left: 20px;
     }
 	echo "<div style='background-color:#c0ffc0;'>" .
@@ -576,18 +576,15 @@ EOT;
     {
 	echo "<div class='runfile'>" .
 	     PHP_EOL;
-	get_commands_display
-	    ( $display,
-	      $runfile, "$problem_dir/+work+" );
+	get_commands_display ( $display );
 	echo "<h5>Commands:</h5>" . PHP_EOL;
-	echo "<table style='margin-left:20px;'>" . PHP_EOL;
+	echo "<div class='commands'>" . PHP_EOL;
 	echo $display . PHP_EOL;
-	echo "</table>" . PHP_EOL;
+	echo "</div>" . PHP_EOL;
         if ( count ( $kept ) > 0 )
 	{
 	    echo "<h5>Kept:</h5>" . PHP_EOL;
-	    echo "<div style='margin-left:20px'>" .
-	         PHP_EOL;
+	    echo "<div class='commands'>" . PHP_EOL;
 	    foreach ( $kept as $e )
 	        echo "<pre style='margin:0 0'>" .
 		     "$e</pre><br>" . PHP_EOL;
