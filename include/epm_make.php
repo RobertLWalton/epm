@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 11 04:08:34 EST 2020
+// Date:    Tue Feb 11 05:32:31 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1229,78 +1229,91 @@ function get_status ( $work, $sfile )
         return [$sfile, 'S', $time];
     elseif ( $state == 'E' )
     {
-        switch ( $exitcode )
-	{
-	    case 126:
-	        $m = 'invoked command could not'
-		   . ' execute';
-		break;
-	    case 127:
-	        $m = 'command not found';
-		break;
-	    case 128:
-	        $m = 'invalid argument to exit';
-		break;
-	    default:
-	        $m = "command failed with exit code"
-		   . " $exitcode";
-	}
+        $m = get_exit_message
+	    ( $exitcode, $cputime, $filesize );
 	return [$sfile, 'F', $time, $m];
     }
     elseif ( $state == 'S' )
     {
-        switch ( $signal )
-	{
-	    case 24:
-	        $m = "CPU time limit ($cputime sec)"
-		   . " exceeded";
-		break;
-	    case 25:
-	        $m = "output file size limit"
-		   . " ($filesize bytes) exceeded";
-		break;
-	    case 1:
-	        $m = 'terminated by hangup signal';
-		break;
-	    case 2:
-	        $m = 'terminated by interrupt signal';
-		break;
-	    case 3:
-	        $m = 'terminated by quit signal';
-		break;
-	    case 6:
-	        $m = 'terminated by abort';
-		break;
-	    case 8:
-	        $m = 'terminated by floating point'
-		   . ' exception signal';
-		break;
-	    case 9:
-	        $m = 'terminated by kill signal';
-		break;
-	    case 7:
-	    case 10:
-	    case 11:
-	        $m = 'terminated invalid memory'
-		   . ' reference';
-		break;
-	    case 13:
-	        $m = 'terminated by broken pipe';
-		break;
-	    case 14:
-	        $m = 'terminated by alarm timer';
-		break;
-	    case 15:
-	        $m = 'terminated by termination signal';
-		break;
-	    default:
-	        $m = "command failed with signal"
-		   . " $signal";
-	}
+        $m = get_exit_message
+	    ( $signal + 128, $cputime, $filesize );
 	return [$sfile, 'F', $time, $m];
     }
     else
         return NULL;
+}
+
+function get_exit_message
+	( $code, $cputime = NULL, $filesize = NULL )
+{
+    if ( $code <= 128 ) switch ( $code )
+    {
+	case 126:
+	    return 'invoked command could not'
+		 . ' execute';
+	case 127:
+	    return 'command not found';
+	case 128:
+	    return 'invalid argument to exit';
+	default:
+	    return "command failed with exit code"
+	         . " $code";
+    }
+    elseif ( $code <= 256 ) switch ( $code - 128 )
+    {
+	case 24:
+	    return "CPU time limit"
+	         . ( isset ( $cputime ) ?
+	             " ($cputime sec)" : "" )
+	         . " exceeded";
+	    break;
+	case 25:
+	    return "output file size limit"
+	         . ( isset ( $filesize ) ?
+	             " ($filesize bytes)" : "" )
+		 . " exceeded";
+	    break;
+	case 1:
+	    return 'terminated by hangup signal';
+	    break;
+	case 2:
+	    return 'terminated by interrupt signal';
+	    break;
+	case 3:
+	    return 'terminated by quit signal';
+	    break;
+	case 6:
+	    return 'terminated by abort';
+	    break;
+	case 8:
+	    return 'terminated by floating point'
+	       . ' exception signal';
+	    break;
+	case 9:
+	    return 'terminated by kill signal';
+	    break;
+	case 7:
+	case 10:
+	case 11:
+	    return 'terminated invalid memory'
+	       . ' reference';
+	    break;
+	case 13:
+	    return 'terminated by broken pipe';
+	    break;
+	case 14:
+	    return 'terminated by alarm timer';
+	    break;
+	case 15:
+	    return 'terminated by termination signal';
+	    break;
+	default:
+	    return "command failed with signal "
+	         . ( $code - 128 );
+    }
+    else
+	return "command failed with exit code"
+	     . " $code";
 }
 
 // Execute $runfile.sh within $epm_data/$work in
