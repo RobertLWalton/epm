@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 12 06:56:12 EST 2020
+// Date:    Wed Feb 12 13:14:23 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -15,8 +15,7 @@
 //          $epm_home.
 //
 // To include this program, be sure the following are
-// defined.  Also either define $admin_params correctly
-// or leave it undefined and this file will define it.
+// defined.
 
 if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
@@ -33,23 +32,6 @@ if ( ! isset ( $is_epm_test ) )
     // NOT driven by an http server.  Some functions,
     // notably move_uploaded_file, will not work
     // in this test script environment.
-
-// Return true if process with $pid is still running,
-// and false otherwise.
-//
-function is_running ( $pid )
-{
-    exec ( "kill -s 0 $pid 2>/dev/null",
-	   $kill_output, $kill_status );
-    #
-    # Sending signal 0 does not actually send a
-    # signal but returns status 0 if the process is
-    # still running and status non-0 otherwise.
-    # Note that the posix_kill function is not
-    # available in vanilla PHP.
-
-    return ( $kill_status == 0 );
-}
 
 // Problem Parameters:
 //
@@ -71,6 +53,23 @@ $template_roots = [];
 if ( is_dir ( "$epm_data/template" ) )
     $template_roots[] = $epm_data;
 $template_roots[] = $epm_home;
+
+// Return true if process with $pid is still running,
+// and false otherwise.
+//
+function is_running ( $pid )
+{
+    exec ( "kill -s 0 $pid 2>/dev/null",
+	   $kill_output, $kill_status );
+    #
+    # Sending signal 0 does not actually send a
+    # signal but returns status 0 if the process is
+    # still running and status non-0 otherwise.
+    # Note that the posix_kill function is not
+    # available in vanilla PHP.
+
+    return ( $kill_status == 0 );
+}
 
 // Function to get and decode json file, which must be
 // readable.  It is a fatal error if the file cannot be
@@ -386,16 +385,26 @@ function get_template_optn()
 // from $remote_file_cache.  Cache the result in
 // $problem_optn.
 //
+// This function calls load_file_caches.
+//
 $problem_optn = NULL;
+$problem_optn_allow_local = NULL;
 function get_problem_optn
-	( $problem, $allow_local_optn )
+	( $problem, $problem_dir, $allow_local_optn )
 {
-    global $epm_data, $problem_optn,
+    global $epm_data,
+           $problem_optn, $problem_optn_allow_local,
            $local_file_cache, $remote_file_cache;
 
-    if ( isset ( $problem_optn ) )
-        return $problem_optn;
+    if ( isset ( $problem_optn )
+	 &&     $problem_optn_allow_local
+	    === $allow_local_optn )
+	    return $problem_optn;
 
+    $problem_optn = [];
+    $problem_optn_allow_local = $allow_local_optn;
+
+    load_file_caches ( $problem_dir );
     $f = "$problem.optn";
     $files = [];
     if ( isset ( $remote_file_cache[$f] ) )
@@ -404,7 +413,6 @@ function get_problem_optn
          && isset ( $local_file_cache[$f] ) )
         $files[] = "{$local_file_cache[$f]}/$f";
 
-    $problem_optn = [];
     foreach ( $files as $f )
     {
         if ( ! is_readable ( "$epm_data/$f" ) )
@@ -428,16 +436,18 @@ function get_problem_optn
 // options that cannot be given any value.
 //
 $argument_map = NULL;
+$argument_map_allow_local = NULL;
 function load_argument_map
-	( $problem, $allow_local_optn,
+	( $problem, $problem_dir, $allow_local_optn,
 	  & $warnings, & $errors )
 {
-    global $template_optn, $problem_optn,
-           $argument_map;
+    global $argument_map;
     if ( isset ( $argument_map ) ) return;
 
-    get_template_optn();
-    get_problem_optn( $problem, $allow_local_optn );
+    $template_optn = get_template_optn();
+    $problem_optn =
+        get_problem_optn ( $problem, $problem_dir,
+	                   $allow_local_optn );
 
     $arg_map = [];
     $val_map = [];
@@ -1734,7 +1744,7 @@ function compute_show
 //
 function start_make_file
 	( $src, $des, $condition, $problem,
-	  $work, $problem_dir, $wait,
+	  $allow_local_optn, $work, $problem_dir,
 	  $uploaded, $uploaded_tmp,
 	  & $control, & $runfile,
 	  & $warnings, & $errors )
@@ -1744,6 +1754,11 @@ function start_make_file
     $control = NULL;
     $runfile = NULL;
     $errors_size = count ( $errors );
+
+    load_argument_map
+	( $problem, $problem_dir, $allow_local_optn,
+	  $warnings, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
 
     find_templates
 	( $problem, $src, $des, $condition,
@@ -1890,16 +1905,12 @@ function make_and_keep_file
 
     $errors_size = count ( $errors );
 
-    load_argument_map
-        ( $problem, true, $warnings, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
     $runfile = NULL;
     $moved = [];
     $show = [];
     start_make_file
         ( $src, $des, NULL /* no CONDITION */,
-          $problem, $work, $problem_dir, $wait,
+          $problem, true, $work, $problem_dir,
 	  NULL, NULL /* no upload, upload_tmp */,
 	  $control, $runfile,
 	  $warnings, $errors );
@@ -2014,13 +2025,9 @@ function process_upload
 
     $ftmp_name = $upload['tmp_name'];
 
-    load_argument_map
-        ( $problem, true, $warnings, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
     start_make_file
         ( $fname, $tname, "UPLOAD $fname",
-          $problem, $work, $problem_dir, $wait,
+          $problem, true, $work, $problem_dir,
 	  $fname, $ftmp_name,
 	  $control, $runfile,
 	  $warnings, $errors );
