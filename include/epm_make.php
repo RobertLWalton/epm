@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 12 01:02:25 EST 2020
+// Date:    Wed Feb 12 06:56:12 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1150,25 +1150,24 @@ function compile_commands ( $runfile, $work, $commands )
 }
 
 // Update $_SESSION['EPM_RUNMAP']map by reading status
-// files in last-line-first order.  Return true if one
-// of the entries newly updated has failed ('F') state
-// with the given exitcode, and false otherwise.
+// files in last-line-first order.  Return a list of
+// keys whose time values have changed.
 //
-function update_runmap ( $exitcode = -1 )
+function update_runmap ()
 {
     $work = $_SESSION['EPM_WORK'];
     $m = & $_SESSION['EPM_RUNMAP'];
-    $r = false;
+    $r = [];
     foreach ( $m as $key => $e )
     {
-	if ( $e[1] != 'X' ) continue;
+	if ( $e[1] == 'D' || $e[1] == 'F' )
+	    continue;
 	$stat = get_status ( $work, $e[0] );
 	if ( $stat != NULL )
 	{
+	    if ( $e[1] == 'X' || $e[2] != $stat[2] )
+	        $r[] = $key;
 	    $m[$key] = $stat;
-	    if (    $stat[1] == 'F'
-	         && $stat[3] == $exitcode )
-		$r = true;
 	}
     }
     return $r;
@@ -1373,23 +1372,33 @@ function get_commands_display ( & $display )
     $r = get_command_results ( $runfile, $work, 0 );
     $r_line = NULL;
     $r_message = NULL;
-    $exitcode = -1;
     if ( $r === false )
         ERROR ( "run $runfile.sh died for no good" .
 	        " reason, try again" );
     elseif ( $r !== true && $r[0] == 'B' )
         ERROR ( "run $runfile.sh died during startup," .
 	        " try again" );
-    elseif ( $r !== true && $r[0] != 'D' )
+
+    update_runmap();
+    if ( $r !== true && $r[0] != 'D' )
     {
-        if ( ! update_runmap ( $r[1] ) )
+	$r_line = $r[0];
+	$r_message = get_exit_message ( $r[1] );
+
+	// If there is a failed ('F') runmap entry
+	// with the same exit code ($r[1]) suppress
+	// the r_message.
+	//
+	foreach ( $m as $key => $e )
 	{
-	    $r_line = $r[0];
-	    $r_message = get_exit_message ( $r[1] );
+	    if ( $e[1] == 'F' && $e[3] == $r[1] )
+	    {
+		$r_line = NULL;
+		$r_message = NULL;
+		break;
+	    }
 	}
     }
-    else
-	update_runmap();
 
     $display = "<table id='command_table'>" . PHP_EOL;
     $c = @file_get_contents 
