@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 11 23:37:36 EST 2020
+    // Date:	Wed Feb 12 01:02:06 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -391,7 +391,9 @@
     div.indented {
 	margin-left: 20px;
     }
-	echo "<div style='background-color:#c0ffc0;'>" .
+    td.time {
+	color: #0052CC;
+    }
 </style>
 
 <script>

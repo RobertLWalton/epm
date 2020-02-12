@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 11 23:37:12 EST 2020
+// Date:    Wed Feb 12 01:02:25 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1129,7 +1129,7 @@ function compile_commands ( $runfile, $work, $commands )
 	if ( ! $cont )
 	    $r .= "n=$n; $line" . PHP_EOL;
 	else
-	    $r .= "          $line" . PHP_EOL;
+	    $r .= $line . PHP_EOL;
 
 	if ( preg_match
 	         ( '/-status\h+(\H+\.[a-z]\d*stat)\h/',
@@ -1156,12 +1156,11 @@ function compile_commands ( $runfile, $work, $commands )
 //
 function update_runmap ( $exitcode = -1 )
 {
-    $work = & $_SESSION['EPM_WORK'];
+    $work = $_SESSION['EPM_WORK'];
     $m = & $_SESSION['EPM_RUNMAP'];
     $r = false;
-    foreach ( $m as $key )
+    foreach ( $m as $key => $e )
     {
-        $e = $m[$key];
 	if ( $e[1] != 'X' ) continue;
 	$stat = get_status ( $work, $e[0] );
 	if ( $stat != NULL )
@@ -1200,6 +1199,7 @@ function get_status ( $work, $sfile )
 	    ( "$epm_data/$work/$sfile" );
 	if ( $c === false )
 	    return NULL;
+	$c = trim ( $c );
 	$c = explode ( ' ', $c );
 	if ( count ( $c ) != 17 ) continue;
 	if ( $c[0] != $c[16] ) continue;
@@ -1216,10 +1216,10 @@ function get_status ( $work, $sfile )
 
     if ( ! preg_match ( '/^\d*(|\.\d+)$/', $usertime )
          ||
-         ! preg_match ( '/^\d*(|\.\d+)$/', $usertime ) )
+         ! preg_match ( '/^\d*(|\.\d+)$/', $systime ) )
         return NULL;
 
-    $time = stringf ( '%.3f', $usertime + $systime );
+    $time = sprintf ( '%.3f', $usertime + $systime );
 
     if ( $state == 'S' )
     {
@@ -1422,8 +1422,7 @@ function get_commands_display ( & $display )
 			" equal $n" );
 	    $line = $matches[2];
 	}
-	$line = trim ( $line );
-	$line = ( $cont ? '    ' : '' ) . $line;
+	$line = rtrim ( $line );
 	$hline = htmlspecialchars ( $line );
 	$display .= "<tr><td><pre>$hline</pre></td>";
 
@@ -1433,33 +1432,34 @@ function get_commands_display ( & $display )
 
 	elseif ( isset ( $m[$n] ) )
 	{
+	    $display .= "<td class='time'>";
 	    $mentry = $m[$n];
 
 	    $state = $mentry[1];
 	    if ( $state == 'X' )
 	    {
 		$display .=
-		    "<td><pre id='stat_time$n'>" .
-		    "</pre></td>";
+		    "<pre id='stat_time$n'></pre>";
 	    }
 	    elseif ( $state == 'R' )
 	    {
 		$display .=
-		    "<td><pre id='stat_time$n'>" .
-		    "{$mentry[2]}</pre></td>";
+		    "<pre id='stat_time$n'>" .
+		    "{$mentry[2]}s</pre>";
 	    }
-	    elseif ( $state == 'D' )
+	    elseif ( $state == 'S' )
 		$display .=
-		    "<td><pre>{$mentry[2]}<pre><td>";
+		    "<pre>{$mentry[2]}s<pre>";
 	    else
 	    {
 		$stars .= '*';
 		$display .=
-		    "<td><pre>{$mentry[2]}<pre>" .
+		    "<pre>{$mentry[2]}s<pre>" .
 		    "&nbsp<pre class='red'>" .
-		    "$stars<pre><td>";
+		    "$stars<pre>";
 		$messages[] = "$stars {$mentry[4]}";
 	    }
+	    $display .= "</td>";
 	}
 	$display .= "</tr>" . PHP_EOL;
         $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
