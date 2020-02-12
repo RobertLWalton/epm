@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 12 01:02:06 EST 2020
+    // Date:	Wed Feb 12 14:02:51 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -304,8 +304,7 @@
 	           " problem.php" );
 	make_and_keep_file
 	    ( $src, $des,
-	      $problem, "$problem_dir/+work+",
-	      $problem_dir, 100,
+	      "$problem_dir/+work+", 100,
 	      $runfile, $kept, $show_files,
 	      $warnings, $errors );
 	$problem_file_names = NULL; // Clear cache.
@@ -329,8 +328,7 @@
 
 	    process_upload
 		( $upload_info,
-		  $problem, "$problem_dir/+work+",
-		  $problem_dir, 100,
+		  "$problem_dir/+work+", 100,
 		  $runfile, $kept, $show_files,
 		  $warnings, $errors );
 	    $problem_file_names = NULL; // Clear cache.

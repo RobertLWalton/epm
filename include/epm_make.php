@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 12 13:14:23 EST 2020
+// Date:    Wed Feb 12 14:02:40 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -25,6 +25,8 @@ if ( ! isset ( $uid ) )
     exit ( 'ACCESS ERROR: $uid not set' );
 if ( ! isset ( $problem ) )
     exit ( 'ACCESS ERROR: $problem not set' );
+if ( ! isset ( $problem_dir ) )
+    exit ( 'ACCESS ERROR: $problem_dir not set' );
 
 if ( ! isset ( $is_epm_test ) )
     $is_epm_test = false;
@@ -37,7 +39,7 @@ if ( ! isset ( $is_epm_test ) )
 //
 if ( ! isset ( $problem_params ) )
 {
-    $f = "users/user$uid/$problem/problem.params";
+    $f = "$problem_dir/problem.params";
     $problem_params = [];
     if ( is_readable ( "$epm_data/$f" ) )
 	$problem_params = get_json ( $epm_data, $f );
@@ -112,16 +114,16 @@ function pretty_template ( $template )
     return $r;
 }
 
-// Given a problem name, file names, and a template,
-// determine if the template matches the problem and
-// file name.  If no, return NULL.  If yes, return an
-// array containing the map from wild card symbols to
-// their values.  Note that if the template does not
-// contain PPPP or any other wildcard, this may be an
-// empty array, but will not be NULL.
+// Given file names, and a template, determine if the
+// template matches $problem and the file names.  If
+// no, return NULL.  If yes, return an array containing
+// the map from wild card symbols to their values.  Note
+// that if the template does not contain PPPP or any
+// other wildcard, this may be an empty array, but will
+// not be NULL.
 //
-// If PPPP is in the template, replace it with problem
-// name before proceeding futher.
+// If PPPP is in the template, replace it with $problem
+// before proceeding futher.
 //
 // Either $filenames is a single name and $template
 // is just the source or just the destination part of
@@ -129,9 +131,10 @@ function pretty_template ( $template )
 // $srcfile:$desfile an $template is the part of the
 // .tmpl file name before the second :.
 //
-function template_match
-    ( $problem, $filenames, $template )
+function template_match ( $filenames, $template )
 {
+    global $problem;
+
     // Turn template into a regexp.
     //
     $template = preg_replace
@@ -298,11 +301,10 @@ function get_template_json ( $template )
 //
 // but with wildcards in json replaced by their matches
 // found from matching the source and destination file
-// names and problem name to the template.
+// names and $problem to the template.
 //
 function find_templates
-    ( $problem, $srcfile, $desfile, $condition,
-      & $templates )
+    ( $srcfile, $desfile, $condition, & $templates )
 {
     global $template_cache;
     load_template_cache();
@@ -322,8 +324,7 @@ function find_templates
 	$tdes = $matches[2];
 
 	$match = template_match
-	    ( $problem, "$srcfile:$desfile",
-			"$tsrc:$tdes" );
+	    ( "$srcfile:$desfile", "$tsrc:$tdes" );
 
 	if ( is_null ( $match ) ) continue;
 
@@ -378,7 +379,7 @@ function get_template_optn()
     return $template_optn;
 }
 
-// Get the PPPP.optn file for problem PPPP from
+// Get the PPPP.optn file for $problem PPPP from
 // $remote_file_cache, if it exists.  Then if
 // $allow_local_optn is true, get PPPP.optn from $local_
 // file_cache and use it to any override options gotten
@@ -389,10 +390,9 @@ function get_template_optn()
 //
 $problem_optn = NULL;
 $problem_optn_allow_local = NULL;
-function get_problem_optn
-	( $problem, $problem_dir, $allow_local_optn )
+function get_problem_optn ( $allow_local_optn )
 {
-    global $epm_data,
+    global $epm_data, $problem,
            $problem_optn, $problem_optn_allow_local,
            $local_file_cache, $remote_file_cache;
 
@@ -404,7 +404,7 @@ function get_problem_optn
     $problem_optn = [];
     $problem_optn_allow_local = $allow_local_optn;
 
-    load_file_caches ( $problem_dir );
+    load_file_caches();
     $f = "$problem.optn";
     $files = [];
     if ( isset ( $remote_file_cache[$f] ) )
@@ -438,16 +438,20 @@ function get_problem_optn
 $argument_map = NULL;
 $argument_map_allow_local = NULL;
 function load_argument_map
-	( $problem, $problem_dir, $allow_local_optn,
-	  & $warnings, & $errors )
+	( $allow_local_optn, & $warnings, & $errors )
 {
-    global $argument_map;
-    if ( isset ( $argument_map ) ) return;
+    global $argument_map, $argument_map_allow_local,
+           $problem;
+    if ( isset ( $argument_map )
+         &&
+	    $allow_local_optn
+	 == $argument_map_allow_local )
+        return;
+    $argument_map_allow_local = $allow_local_optn;
 
     $template_optn = get_template_optn();
     $problem_optn =
-        get_problem_optn ( $problem, $problem_dir,
-	                   $allow_local_optn );
+        get_problem_optn ( $allow_local_optn );
 
     $arg_map = [];
     $val_map = [];
@@ -677,15 +681,15 @@ function load_argument_map
 //
 // $remote_file_cache is for the directories listed in
 // $remote_dirs.   $local_file_cache is for the files
-// listed in the single directory $local_dir.  All
+// listed in the single directory $problem_dir.  All
 // directories names are relative to $epm_data.  This
 // function does NOT return a value.
 //
 $local_file_cache = NULL;
 $remote_file_cache = NULL;
-function load_file_caches ( $local_dir )
+function load_file_caches()
 {
-    global $epm_data, $remote_dirs,
+    global $epm_data, $remote_dirs, $problem_dir,
            $remote_file_cache, $local_file_cache;
 
     if ( isset ( $local_file_cache )
@@ -711,14 +715,14 @@ function load_file_caches ( $local_dir )
 	}
     }
 
-    $c = @scandir ( "$epm_data/$local_dir" );
+    $c = @scandir ( "$epm_data/$problem_dir" );
     if ( $c === false )
-	ERROR ( "cannot read $local_dir" );
+	ERROR ( "cannot read $problem_dir" );
     foreach ( $c as $fname )
     {
 	if ( preg_match  ( '/^\.+$/', $fname ) )
 	    continue;
-	$local_file_cache[$fname] = $local_dir;
+	$local_file_cache[$fname] = $problem_dir;
     }
 }
 
@@ -745,8 +749,7 @@ function load_file_caches ( $local_dir )
 // The directory containing a $remote_required file can
 // be found using $remote_file_cache.
 //
-// Load_file_caches must be called before this function
-// is called.
+// This function calls load_file_caches.
 //
 function find_control
 	( $templates,
@@ -754,6 +757,7 @@ function find_control
 	  & $creatable, & $errors )
 {
     global $local_file_cache, $remote_file_cache;
+    load_file_caches();
 
     $best_template = NULL;
         // Element of $templates for the first element
@@ -1429,8 +1433,8 @@ function get_commands_display ( & $display )
     {
         if ( ! $cont
 	     &&
-	     ! preg_match ( '/^n=([0-9])+;(.*)$/', $line,
-	                    $matches ) )
+	     ! preg_match ( '/^n=([0-9])+;(.*)$/',
+	                    $line, $matches ) )
 	    continue;
 	++ $n;
 	if ( ! $cont )
@@ -1647,10 +1651,9 @@ function execute_checks
 // Append error messages to $errors.
 //
 function move_keep
-	( $control, $work, $problem_dir,
-	  & $moved, & $errors )
+	( $control, $work, & $moved, & $errors )
 {
-    global $epm_data;
+    global $epm_data, $problem_dir;
 
     $moved = [];
 
@@ -1688,13 +1691,12 @@ function move_keep
 //
 // This function can be called when there have been
 // previous errors, as long as $control is valid and
-// $moved is the list of files that have actuall been
+// $moved is the list of files that have actually been
 // moved.
 //
-function compute_show
-	( $control, $work, $problem_dir, $moved )
+function compute_show ( $control, $work, $moved )
 {
-    global $epm_data;
+    global $epm_data, $problem_dir;
 
     if ( ! isset ( $control[2]['SHOW'] ) )
         return [];
@@ -1720,9 +1722,6 @@ function compute_show
 // will be moved into the working directory (but will
 // not be checked for size and other errors).
 //
-// Load_file_caches and load_argument_map must be called
-// before this function is called.
-//
 // Find_control is used to find the template and lists
 // of required and creatable files needed.  The template
 // is returned in $control.  Any files that need to be
@@ -1743,26 +1742,25 @@ function compute_show
 // See finish_make_file below.
 //
 function start_make_file
-	( $src, $des, $condition, $problem,
-	  $allow_local_optn, $work, $problem_dir,
+	( $src, $des, $condition,
+	  $allow_local_optn, $work,
 	  $uploaded, $uploaded_tmp,
 	  & $control, & $runfile,
 	  & $warnings, & $errors )
 {
-    global $epm_data, $is_epm_test;
+    global $epm_data, $is_epm_test,
+           $problem, $problem_dir;
 
     $control = NULL;
     $runfile = NULL;
     $errors_size = count ( $errors );
 
     load_argument_map
-	( $problem, $problem_dir, $allow_local_optn,
-	  $warnings, $errors );
+	( $allow_local_optn, $warnings, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
     find_templates
-	( $problem, $src, $des, $condition,
-	  $templates );
+	( $src, $des, $condition, $templates );
     if ( count ( $templates ) == 0 )
     {
         $errors[] =
@@ -1780,8 +1778,7 @@ function start_make_file
     cleanup_working ( $work );
 
     foreach ( $creatable as $f )
-        create_file
-	    ( $f, $problem_dir, $warnings, $errors );
+        create_file ( $f, $warnings, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
     foreach ( $creatable as $f )
@@ -1845,7 +1842,7 @@ function start_make_file
 #
 function finish_make_file
 	( $control, $runfile,
-	  $work, $problem_dir, $wait,
+	  $work, $wait,
 	  & $moved, & $show,
 	  & $warnings, & $errors )
 {
@@ -1869,13 +1866,11 @@ function finish_make_file
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
-    move_keep ( $control, $work, $problem_dir,
-		$moved, $errors );
+    move_keep ( $control, $work, $moved, $errors );
  
 SHOW:
 
-    $show = compute_show
-        ( $control, $work, $problem_dir, $moved );
+    $show = compute_show ( $control, $work, $moved );
 }
 
 // Given the file $src make the file $des and keep any
@@ -1897,11 +1892,11 @@ SHOW:
 //
 function make_and_keep_file
 	( $src, $des,
-	  $problem, $work, $problem_dir, $wait,
+	  $work, $wait,
 	  & $runfile, & $moved, & $show,
 	  & $warnings, & $errors )
 {
-    load_file_caches ( $problem_dir );
+    load_file_caches();
 
     $errors_size = count ( $errors );
 
@@ -1910,7 +1905,7 @@ function make_and_keep_file
     $show = [];
     start_make_file
         ( $src, $des, NULL /* no CONDITION */,
-          $problem, true, $work, $problem_dir,
+          true, $work,
 	  NULL, NULL /* no upload, upload_tmp */,
 	  $control, $runfile,
 	  $warnings, $errors );
@@ -1918,7 +1913,7 @@ function make_and_keep_file
 
     finish_make_file
 	( $control, $runfile,
-	  $work, $problem_dir, $wait,
+	  $work, $wait,
 	  $moved, $show,
 	  $warnings, $errors );
 }
@@ -1932,7 +1927,7 @@ function make_and_keep_file
 // get_commands.  Output from commands executed is
 // appended to $output (this does not include writes to
 // standard error by bash, which are lost).  List of
-// KEEP files moved to problem directory is placed in
+// KEEP files moved to $problem_dir is placed in
 // $moved, and list of SHOW files is placed in $show.
 // File names in these are relative to $epm_data.
 //
@@ -1944,14 +1939,14 @@ function make_and_keep_file
 //
 function process_upload
 	( $upload,
-	  $problem, $work, $problem_dir, $wait,
+	  $work, $wait,
 	  & $runfile, & $moved, & $show,
 	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
            $upload_target_ext, $epm_upload_maxsize;
 
-    load_file_caches ( $problem_dir );
+    load_file_caches();
 
     $runfile = NULL;
     $moved = [];
@@ -2027,7 +2022,7 @@ function process_upload
 
     start_make_file
         ( $fname, $tname, "UPLOAD $fname",
-          $problem, true, $work, $problem_dir,
+          true, $work,
 	  $fname, $ftmp_name,
 	  $control, $runfile,
 	  $warnings, $errors );
@@ -2035,21 +2030,20 @@ function process_upload
 
     finish_make_file
 	( $control, $runfile,
-	  $work, $problem_dir, $wait,
+	  $work, $wait,
 	  $moved, $show,
 	  $warnings, $errors );
 }
 
-// Create the named file, which was listed in
-// $createables.  If the file is created, append
-// a message to $warnings indicating the file was
-// created.
+// Create the named file in $problem_dir.  If the
+// file is created, append a message to $warnings
+// indicating the file was created.  Errors append
+// to $errors.
 //
 function create_file
-	( $filename, $problem_dir,
-	  & $warnings, & $errors )
+	( $filename, & $warnings, & $errors )
 {
-    global $epm_data;
+    global $epm_data, $problem_dir;
 
     $f = "$epm_data/$problem_dir/$filename";
     if ( @lstat ( $f ) !== false )
