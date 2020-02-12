@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 11 15:03:05 EST 2020
+    // Date:	Tue Feb 11 23:37:36 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -370,7 +370,7 @@
 	display:inline;
     }
     pre.red {
-        font-color: red;
+        color: #BB0000;
     }
     div.left {
 	background-color: #96F9F3;

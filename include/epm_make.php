@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 11 10:12:14 EST 2020
+// Date:    Tue Feb 11 23:37:12 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1293,7 +1293,7 @@ function get_exit_message
 	case 7:
 	case 10:
 	case 11:
-	    return 'terminated invalid memory'
+	    return 'terminated by invalid memory'
 	       . ' reference';
 	    break;
 	case 13:

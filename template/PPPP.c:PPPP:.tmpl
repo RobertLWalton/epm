@@ -1,7 +1,8 @@
 {
 
 "COMMANDS": ["gcc GCCFLAGS -o PPPP PPPP.c LIBRARIES \\",
-             "    > PPPP.out 2> PPPP.err"],
+             "    > PPPP.out 2> PPPP.err",
+	     "chmod o+x PPPP"],
 
 "CONDITION": "UPLOAD PPPP.c",
 "KEEP":    ["PPPP", "PPPP.c"],
