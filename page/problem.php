@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 13 11:26:44 EST 2020
+    // Date:	Thu Feb 13 11:38:49 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -744,7 +744,7 @@ EOT;
 	    if ( item[0] == 'RELOAD' )
 	    {
 	    	reload.submit();
-		break;
+		return;
 	    }
 	    try {
 		if ( item[0] == 'TIME'
@@ -766,6 +766,7 @@ EOT;
 		       err.message );
 	    }
 	}
+	REQUEST_UPDATE();
     }
 
     var REQUEST_IN_PROGRESS = false;
