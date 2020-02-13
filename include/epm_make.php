@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 12 14:02:40 EST 2020
+// Date:    Thu Feb 13 02:44:50 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -63,12 +63,12 @@ function is_running ( $pid )
 {
     exec ( "kill -s 0 $pid 2>/dev/null",
 	   $kill_output, $kill_status );
-    #
-    # Sending signal 0 does not actually send a
-    # signal but returns status 0 if the process is
-    # still running and status non-0 otherwise.
-    # Note that the posix_kill function is not
-    # available in vanilla PHP.
+    //
+    // Sending signal 0 does not actually send a
+    // signal but returns status 0 if the process is
+    // still running and status non-0 otherwise.
+    // Note that the posix_kill function is not
+    // available in vanilla PHP.
 
     return ( $kill_status == 0 );
 }
@@ -1097,7 +1097,7 @@ function get_commands ( $control )
 // code, and if the run terminates normally, n is 'D'
 // and e is 0.
 //
-// Also set the following:
+// Also sets the following:
 //
 //     $_SESSION['EPM_WORK'] to $work
 //     $_SESSION['EPM_RUNFILE'] to $runfile
@@ -1122,6 +1122,13 @@ function get_commands ( $control )
 // terminated by a signal, the signal number is added to
 // 128 to make the exitcode.
 //
+// Lastly unsets:
+//
+//     $_SESSION['EPM_RUNRESULT']
+//
+// thereby indicating the $runfile has not yet been
+// executed.
+//
 function compile_commands ( $runfile, $work, $commands )
 {
     global $epm_data;
@@ -1129,6 +1136,7 @@ function compile_commands ( $runfile, $work, $commands )
     unset ( $_SESSION['EPM_WORK'] );
     unset ( $_SESSION['EPM_RUNFILE'] );
     unset ( $_SESSION['EPM_RUNMAP'] );
+    unset ( $_SESSION['EPM_RUNRESULT'] );
 
     $r = '';  // Value to write to $runfile
     $m = [];  // Runmap.
@@ -1333,6 +1341,9 @@ function get_exit_message
 // $runfile.sherr.  The standard output is line
 // buffered (as per stdbuf(1) -oL ).
 //
+// Sets $_SESSION['EPM_RUNRESULT'] to true, which
+// indicated that the $runfile has started execution.
+//
 function execute_commands ( $runfile, $work )
 {
     global $epm_data, $epm_home, $uid, $problem;
@@ -1356,26 +1367,27 @@ function execute_commands ( $runfile, $work )
     if ( @pclose ( $desc ) == -1 )
         ERROR ( "error executing pclose for" .
 	        " $runfile.sh in $work" );
+    $_SESSION['EPM_RUNRESULT'] = true;
 }
 
-# Using data recorded in $_SESSION by compile_commands,
-# output, and updating this data, return HTML listing
-# the compiled commands and their exit codes messages.
-#
-# First get_command_results is called, and then
-# update_runmap.
-#
-# Each command line gets a row in a table, and if that
-# command line number has 'X' or 'R' state in the
-# runmap, the second column for the row is given the
-# HTML:
-#
-#    <td><pre id='stat_time$n'><pre></td>
-#
-# The lowest line number for which such a second column
-# is output is returned; if there are no such -1 is
-# returned.  The HTML is returned in $display.
-#	
+// Using data recorded in $_SESSION by compile_commands,
+// output, and updating this data, return HTML listing
+// the compiled commands and their exit codes messages.
+//
+// First update_command_results is called, and then
+// update_runmap.
+//
+// Each command line gets a row in a table, and if that
+// command line number has 'X' or 'R' state in the
+// runmap, the second column for the row is given the
+// HTML:
+//
+//    <td><pre id='stat_time$n'><pre></td>
+//
+// The lowest line number for which such a second column
+// is output is returned; if there are no such -1 is
+// returned.  The HTML is returned in $display.
+//	
 function get_commands_display ( & $display )
 {
     global $epm_data;
@@ -1383,7 +1395,7 @@ function get_commands_display ( & $display )
     $work = $_SESSION['EPM_WORK'];
     $runfile = $_SESSION['EPM_RUNFILE'];
     $m = & $_SESSION['EPM_RUNMAP'];
-    $r = get_command_results ( $runfile, $work, 0 );
+    $r = update_command_results ( 0 );
     $r_line = NULL;
     $r_message = NULL;
     if ( $r === false )
@@ -1495,37 +1507,52 @@ function get_commands_display ( & $display )
     }
 }
 
-# Read $work/$runfile.shout and output the results of
-# running $work/$runfile.sh.  If the run is finished,
-# return [n,code] where n is the value of the variable
-# $n in the shell script and code is the exit code.
-# So n is 'D' for normal completion, the line number
-# of the first line of the terminating command from
-# get_commands for abnormal completion, and something
-# else (e.g. 'B') for system error.
-#
-# If the run is not finished and $wait is 0, return true
-# if the run is running and false if it has died.
-#
-# If the run is not finished, and $wait is > 0, poll
-# every 100ms until the run finished or dies or $wait/10
-# seconds have elapsed.  If the run finishes or dies,
-# return as above.  If $wait seconds elapse, return
-# true to indicate the run is still running.
-#
-# It is unwise to set $wait to a value larger than 100.
-#
-function get_command_results
-	( $runfile, $work, $wait = 10 )
+// Read $work/$runfile.shout and write the result so far
+// of running $work/$runfile.sh into
+//
+//	$_SESSION['EPM_RUNRESULT']
+//
+// Also return this result.
+//
+// If the run is finished, the result is [n,code] where
+// n is the value of the variable $n in the shell script
+// and code is the exit code.  For a normal completion,
+// n is 'D'.  For an abnormal completing, n is the line
+// number of the first line of the terminating command
+// from get_commands.  If n is 'B', a startup command
+// terminated, which is an EPM system error.
+//
+// If the run is not finished and $wait is 0, the result
+// is true if the run is running and false if it has
+// died.
+//
+// If the run is not finished, and $wait is > 0, poll
+// every 0.1 seconds until the run finished or dies or
+// $wait/10 seconds have elapsed.  If the run finishes
+// or dies, the result is as above.  Otherwise the
+// result is true to indicate the run is still running.
+//
+// It is unwise to set $wait to a value larger than 100.
+//
+function update_command_results ( $wait = 10 )
 {
-    global $epm_data;
+    global $epm_data, $epm_shell_timeout;
+    $runfile = $_SESSION['EPM_RUNFILE'];
+    $work = $_SESSION['EPM_WORK'];
+    $result = $_SESSION['EPM_RUNRESULT'];
+    if ( is_array ( $result ) || $result === false )
+        return $result;
 
+    $shout = "$epm_data/$work/$runfile.shout";
+    $shtime = false;
+
+    // Get pid.
+    //
     $count = 0;
     $pid = -1;
     while ( true )
     {
-	$c = @file_get_contents 
-		( "$epm_data/$work/$runfile.shout" );
+	$c = @file_get_contents  ( $shout );
 	if ( $c !== false
 	     &&
 	     preg_match ( '/^(\d+) PID\n/',
@@ -1535,17 +1562,39 @@ function get_command_results
 	    break;
 	}
 
-	# Poll every 10 ms for 10 seconds.
-	# This allows shell time to start up and create
-	# .shout file and write first line.
+	if ( $shtime === false )
+	    $shtime = @filemtime ( $shout );
+	    // Delay doing this until we must.
+	    // No point in doing it more than once
+	    // as result is cached by PHP (see
+	    // PHP clearstatcache function).
+
+	// Typically $shtime is false.  It will only
+	// not be false if execution started some
+	// time ago and died, in which case this code
+	// reduces delay in discovering death.
+	//
+	if (    $shtime !== false
+	     && time() > $shtime + $epm_shell_timeout )
+	{
+	    $_SESSION['EPM_RUNRESULT'] = false;
+	    return false;
+	}
+
+	// Poll every 10 ms for $epm_shell_timeout
+	// seconds.
 
 	usleep ( 10000 );
-	if ( $count == 1000 )
-	    ERROR
-	        ( "cannot read $work/$runfile.shout" );
+	if ( $count == 100 * $epm_shell_timeout )
+	{
+	    $_SESSION['EPM_RUNRESULT'] = false;
+	    return false;
+	}
 	$count += 1;
     }
 
+    // Get result.
+    //
     $count = 0;
     while ( true )
     {
@@ -1554,19 +1603,27 @@ function get_command_results
              preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
 	                  $c, $matches ) )
 	{
-	    return [$matches[1], $matches[2]];
+	    $result = [$matches[1], $matches[2]];
+	    $_SESSION['EPM_RUNRESULT'] = $result;
+	    return $result;
 	}
 
-	if ( ! is_running ( $pid ) ) return false;
-	if ( $wait == 0 ) return true;
+	if ( ! is_running ( $pid ) )
+	{
+	    $_SESSION['EPM_RUNRESULT'] = false;
+	    return false;
+	}
 
-	# Poll every 100 ms for wait/10 seconds.
-
+	// Poll every 100 ms for wait/10 seconds.
+	//
+	if ( $count >= $wait )
+	{
+	    $_SESSION['EPM_RUNRESULT'] = true;
+	    return false;
+	}
 	usleep ( 100000 );
-	if ( $count == $wait ) return true;
 	$count += 1;
-	$c = @file_get_contents 
-		( "$epm_data/$work/$runfile.shout" );
+	$c = @file_get_contents ( $shout );
     }
 }
 
@@ -1825,21 +1882,21 @@ function start_make_file
     execute_commands ( $runfile, $work );
 }
 
-# Finish execution of a run started by start_make_file.
-# If the run has died or has not finished in $wait/10
-# seconds or has had an error, an error message is
-# appended to $errors.  Otherwise CHECKs are run and
-# if it does not append error messages to $errors, the
-# KEEP files are moved to $problem_dir.  $moved is
-# returned as the list of KEEP files actually moved to
-# $problem_dir, and will be empty if CHECKs fail or
-# the run does not finish successfully.  $show is
-# returned as the list of files to show, even if there
-# are errors, but does not include any non-readable
-# files.  All file and directory names are relative
-# to $epm_data, except that only the last component
-# of a file name is listed in $moved.
-#
+// Finish execution of a run started by start_make_file.
+// If the run has died or has not finished in $wait/10
+// seconds or has had an error, an error message is
+// appended to $errors.  Otherwise CHECKs are run and
+// if it does not append error messages to $errors, the
+// KEEP files are moved to $problem_dir.  $moved is
+// returned as the list of KEEP files actually moved to
+// $problem_dir, and will be empty if CHECKs fail or
+// the run does not finish successfully.  $show is
+// returned as the list of files to show, even if there
+// are errors, but does not include any non-readable
+// files.  All file and directory names are relative
+// to $epm_data, except that only the last component
+// of a file name is listed in $moved.
+//
 function finish_make_file
 	( $control, $runfile,
 	  $work, $wait,
@@ -1849,7 +1906,7 @@ function finish_make_file
     $errors_size = count ( $errors );
     $moved = [];
 
-    $r = get_command_results ( $runfile, $work, $wait );
+    $r = update_command_results ( $wait );
 
     if ( $r === false )
         $errors[] = "SYSTEM_ERROR: $runfile.sh died";

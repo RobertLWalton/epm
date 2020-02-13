@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 11 11:15:33 EST 2020
+// Date:    Thu Feb 13 02:45:55 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -116,6 +116,11 @@ $epm_expiration_times =
 
 $epm_upload_maxsize = 256*1024;  // 256 kilobytes.
     // Maximum size of uploaded file.
+
+$epm_shell_timeout = 3;
+    // Number of seconds to wait for the shell to
+    // startup and execute initialization commands
+    // for a .sh script.
 
 $upload_target_ext = [
     // If file YYYY.EEE is uploadable, then
