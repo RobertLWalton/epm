@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb  5 04:11:05 EST 2020
+    // Date:	Thu Feb 13 04:40:18 EST 2020
 
     // Handles login for a session.
     //
@@ -629,7 +629,7 @@ function ALERT ( message )
     setTimeout ( function () { alert ( message ); } );
 }
 
-var REQUUEST_IN_PROGRESS = false;
+var REQUEST_IN_PROGRESS = false;
 function SEND ( data, callback, error_message )
 {
     xhttp.onreadystatechange = function() {
@@ -649,7 +649,7 @@ function SEND ( data, callback, error_message )
 	REQUEST_IN_PROGRESS = false;
 	LOG ( 'xhttp response: '
 	      + this.responseText );
-	callback ( this.responseText )
+	callback ( this.responseText );
     };
     xhttp.open ( 'POST', "login.php", true );
     xhttp.setRequestHeader

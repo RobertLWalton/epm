@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 12 14:02:51 EST 2020
+    // Date:	Thu Feb 13 04:39:52 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -338,13 +338,6 @@
     }
 
 
-?>
-
-<?php 
-
-    // If a file is to be shown to the right, output
-    // it before anything else.
-    //
     if ( count ( $show_files ) > 0 )
     {
         if ( ! function_exists ( "find_show_file" ) )
@@ -353,6 +346,11 @@
 		    " while setting show_files" );
         $show_file = find_show_file ( $show_files );
     }
+
+    $debug = ( $epm_debug != ''
+               &&
+	       preg_match ( $epm_debug, $php_self ) );
+	// True to enable javascript logging.
 
 ?>
 
@@ -395,6 +393,11 @@
 </style>
 
 <script>
+    var LOG = function(message) {};
+    <?php if ( $debug )
+              echo "LOG = console.log;" . PHP_EOL;
+    ?>
+
     var iframe;
 
     function create_iframe ( page, filename ) {
@@ -658,5 +661,111 @@ EOT;
 ?>
 
 </div>
+
+<form action='problem.php' method='POST'>
+<input type='hidden' id='reload'
+       name='reload' value='reload'>
+</form>
+
+<script>
+    var xhttp = new XMLHttpRequest();
+
+    function FAIL ( message )
+    {
+	// Alert must be scheduled as separate task.
+	//
+	LOG ( "call to FAIL: " + message );
+    <?php
+	if ( $debug )
+	    echo <<<'EOT'
+		setTimeout ( function () {
+		    alert ( message );
+		    window.location.reload ( true );
+		});
+EOT;
+	else
+	    echo <<<'EOT'
+		throw "CALL TO FAIL: " + message;
+EOT;
+    ?>
+    }
+
+
+    function ALERT ( message )
+    {
+	// Alert must be scheduled as separate task.
+	//
+	setTimeout
+	    ( function () { alert ( message ); } );
+    }
+
+    var reload = document.getElementById("reload");
+
+    function PROCESS_RESPONSE ( response )
+    {
+        response = response.trim().split( "\n" );
+	for ( i = 0; i < response.length; ++ i )
+	{
+	    let item = response[i].trim().split( ' ' );
+	    if ( item.length == 0 ) continue;
+	    if ( item[0] == 'RELOAD' )
+	    {
+	    	reload.submit();
+		break;
+	    }
+	    try {
+		if ( item[0] == 'TIME'
+			  &&
+			  item.length == 3 )
+		{
+		    let n = "stat_time" + item[1];
+		    let e = document.getElementById(n);
+		    e.innerText = item[2];
+		}
+		else
+		    FAIL ( 'bad response item: ' +
+			   response[i] );
+	    }
+	    catch ( err )
+	    {
+		FAIL ( 'bad response item: ' +
+		       response[i] + "\n    " +
+		       err.message );
+	    }
+	}
+    }
+
+    var REQUEST_IN_PROGRESS = false;
+    function REQUEST_UPDATE()
+    {
+	xhttp.onreadystatechange = function() {
+	    LOG ( 'xhttp state changed to state '
+		  + this.readyState );
+	    if ( this.readyState !== XMLHttpRequest.DONE
+		 ||
+		 ! REQUEST_IN_PROGRESS )
+		return;
+
+	    if ( this.status != 200 )
+		FAIL ( 'Bad response status ('
+		       + this.status
+		       + ') from server on'
+		       + ' update request' );
+
+	    REQUEST_IN_PROGRESS = false;
+	    LOG ( 'xhttp response: '
+		  + this.responseText );
+	    PROCESS_RESPONSE ( this.responseText );
+	};
+	xhttp.open ( 'POST', "login.php", true );
+	xhttp.setRequestHeader
+	    ( "Content-Type",
+	      "application/x-www-form-urlencoded" );
+	REQUEST_IN_PROGRESS = true;
+	LOG ( 'xhttp sent: ' + data );
+	xhttp.send ( data );
+    }
+
+</script>
 </body>
 </html>
