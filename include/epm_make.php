@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb 13 02:44:50 EST 2020
+// Date:    Thu Feb 13 10:59:04 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1619,7 +1619,7 @@ function update_command_results ( $wait = 10 )
 	if ( $count >= $wait )
 	{
 	    $_SESSION['EPM_RUNRESULT'] = true;
-	    return false;
+	    return true;
 	}
 	usleep ( 100000 );
 	$count += 1;

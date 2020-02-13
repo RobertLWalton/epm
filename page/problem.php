@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 13 04:39:52 EST 2020
+    // Date:	Thu Feb 13 11:26:44 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -336,6 +336,39 @@
 	else
 	    $errors[] = "no file selected for upload";
     }
+    elseif ( isset ( $_POST['reload'] )
+             &&
+	     isset ( $_SESSION['EPM_RUNFILE'] ) )
+    {
+        $runfile = $_SESSION['EPM_RUNFILE'];
+    }
+    elseif ( isset ( $_POST['update'] ) )
+    {
+	$count = 0;
+	while ( true )
+	{
+	    $r = update_command_results ( 0 );
+	    if ( $r !== true || $count == 50 )
+	    {
+	        echo 'RELOAD';
+		exit;
+	    }
+	    $r = update_runmap();
+	    if ( count ( $r ) > 0 )
+	    {
+		$runmap = & $_SESSION['EPM_RUNMAP'];
+	        foreach ( $r as $n )
+		{
+		    $e = $runmap[$n];
+		    echo "TIME $n {$e[2]}\n";
+		}
+		exit;
+	    }
+	    usleep ( 100000 );
+	    $count += 1;
+	}
+    }
+        
 
 
     if ( count ( $show_files ) > 0 )
