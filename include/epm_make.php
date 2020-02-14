@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Feb 14 06:32:17 EST 2020
+// Date:    Fri Feb 14 11:52:33 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1375,7 +1375,8 @@ function execute_commands ( $runfile, $work )
 // the compiled commands and their exit codes messages.
 //
 // First update_command_results is called, and then
-// update_runmap.
+// update_runmap.  The HTML listing reflects the results
+// of these calls.
 //
 // Each command line gets a row in a table, and if that
 // command line number has 'X' or 'R' state in the
@@ -1384,10 +1385,6 @@ function execute_commands ( $runfile, $work )
 //
 //    <td><pre id='stat_time$n'><pre></td>
 //
-// The lowest line number for which such a second column
-// is output is returned; if there are no such -1 is
-// returned.  The HTML is returned in $display.
-//	
 function get_commands_display ( & $display )
 {
     global $epm_data;
@@ -1396,17 +1393,12 @@ function get_commands_display ( & $display )
     $runfile = $_SESSION['EPM_RUNFILE'];
     $m = & $_SESSION['EPM_RUNMAP'];
     $r = update_command_results();
+    update_runmap();
+
     $r_line = NULL;
     $r_message = NULL;
-    if ( $r === false )
-        ERROR ( "run $runfile.sh died for no good" .
-	        " reason, try again" );
-    elseif ( $r !== true && $r[0] == 'B' )
-        ERROR ( "run $runfile.sh died during startup," .
-	        " try again" );
 
-    update_runmap();
-    if ( $r !== true && $r[0] != 'D' )
+    if ( is_array ( $r ) && $r[0] != 'D' )
     {
 	$r_line = $r[0];
 	$r_message = get_exit_message ( $r[1] );
@@ -1424,6 +1416,18 @@ function get_commands_display ( & $display )
 		break;
 	    }
 	}
+    }
+    elseif ( is_array ( $r ) && $r[0] == 'B' )
+    {
+        $r_line = 1;
+	$r_message = "run $runfile.sh died during"
+	           . " startup, try again";
+    }
+    elseif ( $r == false )
+    {
+        $r_line = 1;
+	$r_message = "run $runfile.sh died for no good"
+	           . " reason, try again";
     }
 
     $display = "<table id='command_table'>" . PHP_EOL;
