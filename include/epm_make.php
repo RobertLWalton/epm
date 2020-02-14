@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Feb 14 11:52:33 EST 2020
+// Date:    Fri Feb 14 13:33:25 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1138,9 +1138,9 @@ function compile_commands ( $runfile, $work, $commands )
     unset ( $_SESSION['EPM_RUNMAP'] );
     unset ( $_SESSION['EPM_RUNRESULT'] );
 
-    $r = '';  // Value to write to $runfile
-    $m = [];  // Runmap.
-    $n = 0;   // Line count
+    $r = '';     // Value to write to $runfile
+    $map = [];   // Runmap.
+    $n = 0;      // Line count
     $cont = 0;   // Next line is continuation.
     $r .= "trap 'echo ::\$n \$? DONE' EXIT" . PHP_EOL;
     $r .= "n=B; echo $$ PID" . PHP_EOL;
@@ -1156,7 +1156,7 @@ function compile_commands ( $runfile, $work, $commands )
 	if ( preg_match
 	         ( '/-status\h+(\H+\.[a-z]\d*stat)\h/',
 	           $line, $matches ) )
-	    $m[$n] = [$matches[1],'X'];
+	    $map[$n] = [$matches[1],'X'];
 
         $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
     }
@@ -1165,10 +1165,10 @@ function compile_commands ( $runfile, $work, $commands )
 	    ( "$epm_data/$work/$runfile.sh", $r ) )
 	ERROR ( "cannot write $work/$runfile.sh" );
 
-    krsort ( $m, SORT_NUMERIC );
+    krsort ( $map, SORT_NUMERIC );
     $_SESSION['EPM_WORK'] = $work;
     $_SESSION['EPM_RUNFILE'] = $runfile;
-    $_SESSION['EPM_RUNMAP'] = $m;
+    $_SESSION['EPM_RUNMAP'] = $map;
 }
 
 // Update $_SESSION['EPM_RUNMAP']map by reading status
@@ -1178,9 +1178,9 @@ function compile_commands ( $runfile, $work, $commands )
 function update_runmap ()
 {
     $work = $_SESSION['EPM_WORK'];
-    $m = & $_SESSION['EPM_RUNMAP'];
+    $map = & $_SESSION['EPM_RUNMAP'];
     $r = [];
-    foreach ( $m as $key => $e )
+    foreach ( $map as $key => $e )
     {
 	if ( $e[1] == 'D' || $e[1] == 'F' )
 	    continue;
@@ -1189,7 +1189,7 @@ function update_runmap ()
 	{
 	    if ( $e[1] == 'X' || $e[2] != $stat[2] )
 	        $r[] = $key;
-	    $m[$key] = $stat;
+	    $map[$key] = $stat;
 	}
     }
     return $r;
@@ -1391,7 +1391,7 @@ function get_commands_display ( & $display )
 
     $work = $_SESSION['EPM_WORK'];
     $runfile = $_SESSION['EPM_RUNFILE'];
-    $m = & $_SESSION['EPM_RUNMAP'];
+    $map = & $_SESSION['EPM_RUNMAP'];
     $r = update_command_results();
     update_runmap();
 
@@ -1407,7 +1407,7 @@ function get_commands_display ( & $display )
 	// with the same exit code ($r[1]) suppress
 	// the r_message.
 	//
-	foreach ( $m as $key => $e )
+	foreach ( $map as $key => $e )
 	{
 	    if ( $e[1] == 'F' && $e[3] == $r[1] )
 	    {
@@ -1423,7 +1423,7 @@ function get_commands_display ( & $display )
 	$r_message = "run $runfile.sh died during"
 	           . " startup, try again";
     }
-    elseif ( $r == false )
+    elseif ( $r === false )
     {
         $r_line = 1;
 	$r_message = "run $runfile.sh died for no good"
@@ -1469,10 +1469,10 @@ function get_commands_display ( & $display )
 	    $display .=
 	        "<td><pre class='red'>*</pre></td>";
 
-	elseif ( isset ( $m[$n] ) )
+	elseif ( isset ( $map[$n] ) )
 	{
 	    $display .= "<td class='time'>";
-	    $mentry = $m[$n];
+	    $mentry = $map[$n];
 
 	    $state = $mentry[1];
 	    if ( $state == 'X' )
@@ -1606,6 +1606,9 @@ function update_command_results ( $wait = 0 )
     $count = 0;
     while ( true )
     {
+	$r = is_running ( $pid );
+
+	$c = @file_get_contents ( $shout );
 	if ( $c !== false
 	     &&
              preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
@@ -1616,7 +1619,10 @@ function update_command_results ( $wait = 0 )
 	    return $result;
 	}
 
-	if ( ! is_running ( $pid ) )
+	// If its not running must be sure shout file
+	// does not indicate it is done.
+	//
+	if ( ! $r )
 	{
 	    $_SESSION['EPM_RUNRESULT'] = false;
 	    return false;
@@ -1631,7 +1637,6 @@ function update_command_results ( $wait = 0 )
 	}
 	usleep ( 100000 );
 	$count += 1;
-	$c = @file_get_contents ( $shout );
     }
 }
 

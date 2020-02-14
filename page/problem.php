@@ -174,6 +174,7 @@
     //
     $show_file = NULL;  // File to be shown to right.
     $show_files = [];   // Files to be shown to left.
+    $kept = [];		// Files kept.
     $runfile = NULL;
         // Non-NULL if there are commands to be
 	// displayed.
@@ -347,10 +348,16 @@
              &&
 	     isset ( $_SESSION['EPM_RUNFILE'] ) )
     {
+	require "$epm_home/include/epm_make.php";
+	    // Do this first as it may change $f, etc.
+
         $runfile = $_SESSION['EPM_RUNFILE'];
     }
     elseif ( isset ( $_POST['update'] ) )
     {
+	require "$epm_home/include/epm_make.php";
+	    // Do this first as it may change $f, etc.
+
 	$count = 0;
 	while ( true )
 	{
@@ -376,9 +383,11 @@
 	}
     }
 
-    if ( isset ( $_SESSION['EPM_CONTROL'] )
+    if ( isset ( $runfile )
          &&
-	 update_command_results(100) !== true )
+	 isset ( $_SESSION['EPM_CONTROL'] )
+         &&
+	 update_command_results() !== true )
     {
         finish_make_file 
 	    ( $kept, $show_files, $warnings, $errors );
@@ -439,11 +448,6 @@
 </style>
 
 <script>
-    var LOG = function(message) {};
-    <?php if ( $debug )
-              echo "LOG = console.log;" . PHP_EOL;
-    ?>
-
     var iframe;
 
     function create_iframe ( page, filename ) {
@@ -708,12 +712,17 @@ EOT;
 
 </div>
 
-<form action='problem.php' method='POST'>
-<input type='hidden' id='reload'
+<form action='problem.php' method='POST' id='reload'>
+<input type='hidden'
        name='reload' value='reload'>
 </form>
 
 <script>
+    var LOG = function(message) {};
+    <?php if ( $debug )
+              echo "LOG = console.log;" . PHP_EOL;
+    ?>
+
     var xhttp = new XMLHttpRequest();
 
     function FAIL ( message )
@@ -788,7 +797,7 @@ EOT;
 	xhttp.onreadystatechange = function() {
 	    LOG ( 'xhttp state changed to state '
 		  + this.readyState );
-	    if ( this.readyState !== XMLHttpRequest.DONE
+	    if ( this.readyState != XMLHttpRequest.DONE
 		 ||
 		 ! REQUEST_IN_PROGRESS )
 		return;
@@ -804,15 +813,22 @@ EOT;
 		  + this.responseText );
 	    PROCESS_RESPONSE ( this.responseText );
 	};
-	xhttp.open ( 'POST', "login.php", true );
+	xhttp.open ( 'POST', "problem.php", true );
 	xhttp.setRequestHeader
 	    ( "Content-Type",
 	      "application/x-www-form-urlencoded" );
 	REQUEST_IN_PROGRESS = true;
-	LOG ( 'xhttp sent: ' + data );
-	xhttp.send ( data );
+	LOG ( 'xhttp sent: update' );
+	xhttp.send ( 'update=update' );
     }
+    <?php
+	if ( isset ( $runfile )
+	     &&
+	     isset ( $_SESSION['EPM_CONTROL'] ) )
+	    echo "REQUEST_UPDATE();" . PHP_EOL;
+    ?>
 
 </script>
+
 </body>
 </html>
