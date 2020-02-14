@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 14 06:31:20 EST 2020
+    // Fri Feb 14 07:22:15 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -308,8 +308,10 @@
 	      NULL, NULL /* no upload, upload_tmp */,
 	      $warnings, $errors );
 	if ( isset ( $_SESSION['EPM_RUNFILE'] ) )
+	{
 	    $runfile = $_SESSION['EPM_RUNFILE'];
-	$problem_file_names = NULL; // Clear cache.
+	    $problem_file_names = NULL; // Clear cache.
+	}
     }
     elseif ( isset ( $_POST['upload'] ) )
     {
@@ -332,8 +334,11 @@
 		( $upload_info, "$problem_dir/+work+",
 		  $warnings, $errors );
 	    if ( isset ( $_SESSION['EPM_RUNFILE'] ) )
+	    {
 		$runfile = $_SESSION['EPM_RUNFILE'];
-	    $problem_file_names = NULL; // Clear cache.
+		$problem_file_names = NULL;
+		    // Clear cache.
+	    }
 	}
 	else
 	    $errors[] = "no file selected for upload";

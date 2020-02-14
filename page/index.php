@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb 13 02:45:55 EST 2020
+// Date:    Fri Feb 14 07:20:20 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -231,15 +231,10 @@ else if ( ! isset ( $_SESSION['EPM_USER_ID'] ) )
 	exit;
     }
 }
-else if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
+else if ( $php_self == "/index.php" )
 {
-    if ( $php_self != "/page/problem.php"
-         &&
-	 $php_self != "/page/user.php" )
-    {
-	header ( 'Location: /page/problem.php' );
-	exit;
-    }
+    header ( 'Location: /page/problem.php' );
+    exit;
 }
 
 function DEBUG ( $message )
@@ -274,6 +269,9 @@ function EPM_ERROR_HANDLER
 	( $errno, $message, $file, $line )
 {
     global $epm_data;
+
+    if ( error_reporting() == 0 )
+        return true;
 
     if ( $errno & ( E_USER_NOTICE |
                     E_USER_WARNING ) )
