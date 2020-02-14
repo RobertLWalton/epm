@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb 13 10:59:04 EST 2020
+// Date:    Fri Feb 14 06:32:17 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1395,7 +1395,7 @@ function get_commands_display ( & $display )
     $work = $_SESSION['EPM_WORK'];
     $runfile = $_SESSION['EPM_RUNFILE'];
     $m = & $_SESSION['EPM_RUNMAP'];
-    $r = update_command_results ( 0 );
+    $r = update_command_results();
     $r_line = NULL;
     $r_message = NULL;
     if ( $r === false )
@@ -1514,6 +1514,10 @@ function get_commands_display ( & $display )
 //
 // Also return this result.
 //
+// If the value of $_SESSION['EPM_RUNRESULT'] already
+// indicates the run is finished, this function does
+// nothing but return this value.
+//
 // If the run is finished, the result is [n,code] where
 // n is the value of the variable $n in the shell script
 // and code is the exit code.  For a normal completion,
@@ -1534,7 +1538,7 @@ function get_commands_display ( & $display )
 //
 // It is unwise to set $wait to a value larger than 100.
 //
-function update_command_results ( $wait = 10 )
+function update_command_results ( $wait = 0 )
 {
     global $epm_data, $epm_shell_timeout;
     $runfile = $_SESSION['EPM_RUNFILE'];
@@ -1798,16 +1802,23 @@ function compute_show ( $control, $work, $moved )
 // This function does NOT wait for the run to complete.
 // See finish_make_file below.
 //
+// This function begins by unsetting
+//
+//	$_SESSION['EPM_CONTROL]'
+//
+// and if there are no errors, this function ends by
+// setting this to the control found by find_control.
+//
 function start_make_file
 	( $src, $des, $condition,
 	  $allow_local_optn, $work,
 	  $uploaded, $uploaded_tmp,
-	  & $control, & $runfile,
 	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
            $problem, $problem_dir;
 
+    unset ( $_SESSION['EPM_CONTROL'] );
     $control = NULL;
     $runfile = NULL;
     $errors_size = count ( $errors );
@@ -1880,36 +1891,63 @@ function start_make_file
 
     compile_commands ( $runfile, $work, $commands );
     execute_commands ( $runfile, $work );
+    $_SESSION['EPM_CONTROL'] = $control;
 }
 
 // Finish execution of a run started by start_make_file.
-// If the run has died or has not finished in $wait/10
-// seconds or has had an error, an error message is
-// appended to $errors.  Otherwise CHECKs are run and
-// if it does not append error messages to $errors, the
-// KEEP files are moved to $problem_dir.  $moved is
-// returned as the list of KEEP files actually moved to
-// $problem_dir, and will be empty if CHECKs fail or
-// the run does not finish successfully.  $show is
-// returned as the list of files to show, even if there
-// are errors, but does not include any non-readable
-// files.  All file and directory names are relative
-// to $epm_data, except that only the last component
-// of a file name is listed in $moved.
+//
+// This function requires that
+//
+//	$_SESSION['EPM_RUNFILE']
+//	$_SESSION['EPM_WORK']
+//
+// be set and will do nothing if
+//
+//	$_SESSION['EPM_CONTROL']
+//
+// is not set.  Otherwise it unsets this last global
+// after getting its value.
+//
+// This function begins by calling get_command_result
+// with zero wait.
+//
+// If the run has died or has an error, an error message
+// is appended to $errors.
+// 
+// Otherwise control CHECKs are run and if they do not
+// append error messages to $errors, the control KEEP
+// files are moved to $problem_dir.  $kept is returned
+// as the list of KEEP files actually moved, and will
+// will be empty if CHECKs fail or the run has not
+// finish successfully.
+//
+// $show is returned as the list of control SHOW files
+// to show, even if there are errors, but does not
+// include any non-readable files.
+// 
+// All file and directory names are relative to
+// $epm_data, except that only the last component
+// of a file name is listed in $kept.
 //
 function finish_make_file
-	( $control, $runfile,
-	  $work, $wait,
-	  & $moved, & $show,
-	  & $warnings, & $errors )
+	( & $kept, & $show, & $warnings, & $errors )
 {
-    $errors_size = count ( $errors );
-    $moved = [];
+    if ( ! isset ( $_SESSION['EPM_CONTROL'] ) )
+        return;
+    $control = $_SESSION['EPM_CONTROL'];
+    $runfile = $_SESSION['EPM_RUNFILE'];
+    $work = $_SESSION['EPM_WORK'];
 
-    $r = update_command_results ( $wait );
+    unset ( $_SESSION['EPM_CONTROL'] );
+    $kept = [];
+    $show = [];
+    $errors_size = count ( $errors );
+
+    $r = update_command_results();
 
     if ( $r === false )
-        $errors[] = "SYSTEM_ERROR: $runfile.sh died";
+        $errors[] = "SYSTEM_ERROR: $runfile.sh died;"
+	          . " try again";
     elseif ( $r === true )
         $errors[] = "SYSTEM_ERROR: $runfile.sh did not"
 	          . " finish in time";
@@ -1923,11 +1961,11 @@ function finish_make_file
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
-    move_keep ( $control, $work, $moved, $errors );
+    move_keep ( $control, $work, $kept, $errors );
  
 SHOW:
 
-    $show = compute_show ( $control, $work, $moved );
+    $show = compute_show ( $control, $work, $kept );
 }
 
 // Given the file $src make the file $des and keep any
@@ -1995,19 +2033,13 @@ function make_and_keep_file
 // $errors listing these files.
 //
 function process_upload
-	( $upload,
-	  $work, $wait,
-	  & $runfile, & $moved, & $show,
-	  & $warnings, & $errors )
+	( $upload, $work, & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
            $upload_target_ext, $epm_upload_maxsize;
 
     load_file_caches();
 
-    $runfile = NULL;
-    $moved = [];
-    $show = [];
     $errors_size = count ( $errors );
 
     if ( ! is_array ( $upload ) )
@@ -2081,14 +2113,6 @@ function process_upload
         ( $fname, $tname, "UPLOAD $fname",
           true, $work,
 	  $fname, $ftmp_name,
-	  $control, $runfile,
-	  $warnings, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
-    finish_make_file
-	( $control, $runfile,
-	  $work, $wait,
-	  $moved, $show,
 	  $warnings, $errors );
 }
 

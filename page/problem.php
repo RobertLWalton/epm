@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 13 11:38:49 EST 2020
+    // Date:	Fri Feb 14 06:31:20 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -302,11 +302,13 @@
 		         true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-	make_and_keep_file
-	    ( $src, $des,
-	      "$problem_dir/+work+", 100,
-	      $runfile, $kept, $show_files,
+	start_make_file
+	    ( $src, $des, NULL /* no condition */,
+	      true, "$problem_dir/+work+",
+	      NULL, NULL /* no upload, upload_tmp */,
 	      $warnings, $errors );
+	if ( isset ( $_SESSION['EPM_RUNFILE'] ) )
+	    $runfile = $_SESSION['EPM_RUNFILE'];
 	$problem_file_names = NULL; // Clear cache.
     }
     elseif ( isset ( $_POST['upload'] ) )
@@ -327,10 +329,10 @@
 		// etc.
 
 	    process_upload
-		( $upload_info,
-		  "$problem_dir/+work+", 100,
-		  $runfile, $kept, $show_files,
+		( $upload_info, "$problem_dir/+work+",
 		  $warnings, $errors );
+	    if ( isset ( $_SESSION['EPM_RUNFILE'] ) )
+		$runfile = $_SESSION['EPM_RUNFILE'];
 	    $problem_file_names = NULL; // Clear cache.
 	}
 	else
@@ -368,8 +370,14 @@
 	    $count += 1;
 	}
     }
-        
 
+    if ( isset ( $_SESSION['EPM_CONTROL'] )
+         &&
+	 update_command_results(100) !== true )
+    {
+        finish_make_file 
+	    ( $kept, $show_files, $warnings, $errors );
+    }
 
     if ( count ( $show_files ) > 0 )
     {
