@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Feb 15 04:38:38 EST 2020
+// Date:    Sat Feb 15 09:08:36 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1342,8 +1342,39 @@ function get_exit_message
 // buffered (as per stdbuf(1) -oL ).
 //
 // Sets $_SESSION['EPM_RUNRESULT'] to true, which
-// indicated that the $runfile has started execution.
+// indicates that the $runfile has started execution.
 //
+function execute_commands_2 ( $runfile, $work )
+{
+    global $epm_data, $epm_home, $uid, $problem;
+
+    $cwd = "$epm_data/$work";
+
+    $desc = array (
+        0 => ['file', '/dev/null', 'r'],
+	1 => ['file', "$cwd/$runfile.shout", 'w'],
+	2 => ['file', "$cwd/$runfile.sherr", 'w'],
+        3 => ['file', '/dev/null', 'r'],
+        4 => ['file', '/dev/null', 'r'],
+        5 => ['file', '/dev/null', 'r'],
+        6 => ['file', '/dev/null', 'r'] );
+	// Must kill fd 3,4,5,6 as leaving them open
+	// forces the connection to the browser to
+	// stay open and prevents xhttp response from
+	// completing on exit.
+
+    $env = getenv();
+    $env['EPM_HOME'] = $epm_home;
+    $env['EPM_DATA'] = $epm_data;
+    $env['EPM_UID'] = $uid;
+    $env['EPM_PROBLEM'] = $problem;
+    $env['EPM_WORK'] = $work;
+
+    $cmd = "bash $runfile.sh";
+    $process = proc_open
+        ( $cmd, $desc, $pipes, $cwd, $env );
+    $_SESSION['EPM_RUNRESULT'] = true;
+}
 function execute_commands ( $runfile, $work )
 {
     global $epm_data, $epm_home, $uid, $problem;
@@ -1355,6 +1386,17 @@ function execute_commands ( $runfile, $work )
     $r .= "export EPM_UID=$uid" . PHP_EOL;
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
     $r .= "export EPM_WORK=$work" . PHP_EOL;
+    $r .= "exec 0<&-" . PHP_EOL;
+    $r .= "exec 1<&-" . PHP_EOL;
+    $r .= "exec 2<&-" . PHP_EOL;
+    $r .= "exec 3<&-" . PHP_EOL;
+    $r .= "exec 4<&-" . PHP_EOL;
+    $r .= "exec 5<&-" . PHP_EOL;
+    $r .= "exec 6<&-" . PHP_EOL;
+	// Must kill fd 3,4,5,6 as leaving them open
+	// forces the connection to the browser to
+	// stay open and prevents xhttp response from
+	// completing on exit.
     $r .= "bash $runfile.sh >$runfile.shout" .
                          " 2>$runfile.sherr &" .
 			 PHP_EOL;
