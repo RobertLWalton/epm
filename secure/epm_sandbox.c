@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Fri Feb 14 20:08:00 EST 2020
+ * Date:	Sat Feb 15 04:06:16 EST 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -602,6 +602,10 @@ int main ( int argc, char ** argv )
 	int EXITCODE = 0;
 	int SIGNAL = 0;
 
+	pid_t r;
+	int status;
+	int saved_errno;
+
 	if ( child_stat_fd >= 0 ) while ( 1 )
 	{
 	    usleep ( 100000 ); /* 100 milliseconds */
@@ -614,6 +618,14 @@ int main ( int argc, char ** argv )
 			       sizeof ( child_stat ) - 1 );
 	    if ( s < 0 ) break;
 	    child_stat[s] = 0;
+
+	    /* child_stat_fd may remain open and readable
+	     * after process dies.
+	     */
+
+	    r = waitpid ( child, & status, WNOHANG );
+	    saved_errno = errno;
+	    if ( r != 0 ) break;
 
 	    char * p = child_stat;
 
@@ -644,16 +656,11 @@ int main ( int argc, char ** argv )
 	    write_status ( STATE, EXITCODE, SIGNAL,
 			   USERTIME, SYSTIME, MAXRSS );
 	}
+	if ( child_stat_fd >= 0 )
+	    close ( child_stat_fd );
 
-	int status;
 	struct rusage usage;
-
 	int signaled = 0;
-	int saved_errno;
-
-	pid_t r = waitpid ( child, & status, 0 );
-	saved_errno = errno;
-
 	if ( getrusage ( RUSAGE_CHILDREN,
 			 & usage ) < 0 )
 	    errno_exit
@@ -697,9 +704,6 @@ int main ( int argc, char ** argv )
 	    errno = saved_errno;
 	    errno_exit ( "wait" );
 	}
-
-	if ( child_stat_fd >= 0 )
-	    close ( child_stat_fd );
 
 	if ( status_fd >= 0 )
 	{

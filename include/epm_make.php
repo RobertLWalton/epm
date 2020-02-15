@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Feb 14 13:33:25 EST 2020
+// Date:    Sat Feb 15 04:38:38 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1361,12 +1361,7 @@ function execute_commands ( $runfile, $work )
 	// bash appears to flush echo output even when
 	// stdout is redirected to a file, and so
 	// `echo $$ PID;' promptly echoes PID.
-    $desc = @popen ( $r, 'w' );
-    if ( $desc === false )
-        ERROR ( "cannot execute $runfile.sh in $work" );
-    if ( @pclose ( $desc ) == -1 )
-        ERROR ( "error executing pclose for" .
-	        " $runfile.sh in $work" );
+    exec ( $r );
     $_SESSION['EPM_RUNRESULT'] = true;
 }
 
@@ -1604,11 +1599,9 @@ function update_command_results ( $wait = 0 )
     // Get result.
     //
     $count = 0;
+    $r = true;
     while ( true )
     {
-	$r = is_running ( $pid );
-
-	$c = @file_get_contents ( $shout );
 	if ( $c !== false
 	     &&
              preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
@@ -1637,6 +1630,9 @@ function update_command_results ( $wait = 0 )
 	}
 	usleep ( 100000 );
 	$count += 1;
+
+	$r = is_running ( $pid );
+	$c = @file_get_contents ( $shout );
     }
 }
 
@@ -1917,7 +1913,7 @@ function start_make_file
 // is not set.  Otherwise it unsets this last global
 // after getting its value.
 //
-// This function begins by calling get_command_result
+// This function begins by calling update_command_result
 // with zero wait.
 //
 // If the run has died or has an error, an error message

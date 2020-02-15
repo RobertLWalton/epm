@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 14 21:13:58 EST 2020
+    // Date:	Sat Feb 15 03:47:32 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -348,6 +348,7 @@
              &&
 	     isset ( $_SESSION['EPM_RUNFILE'] ) )
     {
+	DEBUG ( 'reload' );
 	require "$epm_home/include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
@@ -362,6 +363,9 @@
 	while ( true )
 	{
 	    $r = update_command_results ( 0 );
+	    DEBUG ( "update r = " .
+	            ( is_array ( $r ) ? implode ( ' ' , $r )
+		                      : strval ( $r ) ) );
 	    if ( $r !== true || $count == 50 )
 	    {
 	        echo 'RELOAD';
@@ -377,8 +381,9 @@
 		    $e = $runmap[$n];
 		    echo "TIME $n {$e[2]}\n";
 		    DEBUG ( "update replied TIME $n" .
-		            " {$e[2]}\n" );
+		            " {$e[2]}" );
 		}
+		DEBUG ( 'update replied with TIMEs' );
 		exit;
 	    }
 	    usleep ( 100000 );
@@ -766,7 +771,9 @@ EOT;
 	{
 	    let item = response[i].trim().split( ' ' );
 	    if ( item.length == 0 ) continue;
-	    if ( item[0] == 'RELOAD' )
+	    if ( item[0] == '' )
+	        continue;
+	    else if ( item[0] == 'RELOAD' )
 	    {
 	    	reload.submit();
 		return;
