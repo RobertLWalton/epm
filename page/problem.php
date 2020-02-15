@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 15 03:47:32 EST 2020
+    // Date:	Sat Feb 15 15:39:19 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -308,7 +308,7 @@
 	      true, "$problem_dir/+work+",
 	      NULL, NULL /* no upload, upload_tmp */,
 	      $warnings, $errors );
-	if ( isset ( $_SESSION['EPM_RUNFILE'] ) )
+	if ( isset ( $_SESSION['EPM_CONTROL'] ) )
 	{
 	    $runfile = $_SESSION['EPM_RUNFILE'];
 	    $problem_file_names = NULL; // Clear cache.
@@ -334,7 +334,7 @@
 	    process_upload
 		( $upload_info, "$problem_dir/+work+",
 		  $warnings, $errors );
-	    if ( isset ( $_SESSION['EPM_RUNFILE'] ) )
+	    if ( isset ( $_SESSION['EPM_CONTROL'] ) )
 	    {
 		$runfile = $_SESSION['EPM_RUNFILE'];
 		$problem_file_names = NULL;
@@ -693,7 +693,7 @@ EOT;
 		         ( '/symbolic link/', $t ) )
 		{
 		    $t = trim ( $t );
-		    $t = "$t which is $type";
+		    $t .= "\n    which is $type";
 		}
 		else
 		    $t = $type;
@@ -785,7 +785,7 @@ EOT;
 		{
 		    let n = "stat_time" + item[1];
 		    let e = document.getElementById(n);
-		    e.innerText = item[2];
+		    e.innerText = item[2] + 's';
 		}
 		else
 		    FAIL ( 'bad response item: ' +

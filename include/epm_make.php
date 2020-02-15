@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Feb 15 09:08:36 EST 2020
+// Date:    Sat Feb 15 15:39:59 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2197,8 +2197,8 @@ function create_file
 	else
 	{
 	    $errors[] =
-	        "$o is not readable ($filename is" .
-		" made by copying $o)";
+	        "$o is not readable\n" .
+		"    ($filename is made by copying $o)";
 	    return false;
 	}
     }

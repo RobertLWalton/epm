@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Sat Feb 15 04:06:16 EST 2020
+ * Date:	Sat Feb 15 13:32:20 EST 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -610,22 +610,22 @@ int main ( int argc, char ** argv )
 	{
 	    usleep ( 100000 ); /* 100 milliseconds */
 
-	    off_t sk =
-	        lseek ( child_stat_fd, 0, SEEK_SET );
-	    if ( sk < 0 ) break;
+	    lseek ( child_stat_fd, 0, SEEK_SET );
 	    ssize_t s = read ( child_stat_fd,
 	                       child_stat,
 			       sizeof ( child_stat ) - 1 );
-	    if ( s < 0 ) break;
-	    child_stat[s] = 0;
+	    if ( s >= 0 ) child_stat[s] = 0;
 
-	    /* child_stat_fd may remain open and readable
-	     * after process dies.
+	    /* child_stat_fd may or may not remain open and
+	     * readable after process dies, so we ignore
+	     * errors in reading it and use waitpid to see
+	     * if child has died.
 	     */
 
 	    r = waitpid ( child, & status, WNOHANG );
 	    saved_errno = errno;
 	    if ( r != 0 ) break;
+	    if ( s < 0 ) continue;
 
 	    char * p = child_stat;
 
@@ -656,6 +656,9 @@ int main ( int argc, char ** argv )
 	    write_status ( STATE, EXITCODE, SIGNAL,
 			   USERTIME, SYSTIME, MAXRSS );
 	}
+	else
+	    r = waitpid ( child, & status, 0 );
+
 	if ( child_stat_fd >= 0 )
 	    close ( child_stat_fd );
 
