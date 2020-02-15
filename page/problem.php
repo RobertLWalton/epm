@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Fri Feb 14 07:22:15 EST 2020
+    // Date:	Fri Feb 14 21:13:58 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -365,6 +365,7 @@
 	    if ( $r !== true || $count == 50 )
 	    {
 	        echo 'RELOAD';
+		DEBUG ( 'update replied RELOAD' );
 		exit;
 	    }
 	    $r = update_runmap();
@@ -375,6 +376,8 @@
 		{
 		    $e = $runmap[$n];
 		    echo "TIME $n {$e[2]}\n";
+		    DEBUG ( "update replied TIME $n" .
+		            " {$e[2]}\n" );
 		}
 		exit;
 	    }

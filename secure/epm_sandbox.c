@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Wed Feb  5 14:20:25 EST 2020
+ * Date:	Fri Feb 14 20:08:00 EST 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -192,7 +192,10 @@ int is_executable ( const char * program )
 
 /* Information for STATUS-FILE. */
 
-pid_t child;  /* Child PID. */
+pid_t child;           /* Child PID. */
+char child_stat[4000]; /* /proc/PID/stat line */
+int child_stat_fd;     /* /proc/PID/stat file desc */
+double sec_per_tick;   /* 1.0/clock-ticks-per-second */
 
 /* Options with default values. */
 
@@ -579,6 +582,17 @@ int main ( int argc, char ** argv )
 		    ( "opening STATUS-FILE" );
 
 	    write_status ( 'R', 0, 0, 0, 0, 0 );
+
+	    char fname[100];
+	    sprintf ( fname, "/proc/%d/stat", child );
+	    child_stat_fd = open ( fname, O_RDONLY );
+	    sec_per_tick =
+	        1.0 / sysconf ( _SC_CLK_TCK );
+	}
+	else
+	{
+	    status_fd = -1;
+	    child_stat_fd = -1;
 	}
 
 	double USERTIME = 0;
@@ -588,67 +602,106 @@ int main ( int argc, char ** argv )
 	int EXITCODE = 0;
 	int SIGNAL = 0;
 
+	if ( child_stat_fd >= 0 ) while ( 1 )
+	{
+	    usleep ( 100000 ); /* 100 milliseconds */
+
+	    off_t sk =
+	        lseek ( child_stat_fd, 0, SEEK_SET );
+	    if ( sk < 0 ) break;
+	    ssize_t s = read ( child_stat_fd,
+	                       child_stat,
+			       sizeof ( child_stat ) - 1 );
+	    if ( s < 0 ) break;
+	    child_stat[s] = 0;
+
+	    char * p = child_stat;
+
+	    /* Skip to field 14.
+	     */
+	    while ( * p != ')' && * p ) ++ p;
+	    int i;
+	    for ( i = 1; i <= 12; ++ i )
+	    {
+		while ( * p && ! isspace ( * p ) ) ++ p;
+	        while ( isspace ( * p ) ) ++ p;
+	    }
+	    while ( isspace ( * p ) ) ++ p;
+	    if ( * p == 0 ) continue;
+
+	    /* Read user and system times.
+	     */
+	    char * endp;
+	    USERTIME = sec_per_tick
+	             * strtol ( p, & endp, 10 );
+	    if ( ! isspace ( * endp ) ) continue;
+	    p = endp;
+	    while ( isspace ( * p ) ) ++ p;
+	    SYSTIME = sec_per_tick
+	            * strtol ( p, & endp, 10 );
+	    if ( ! isspace ( * endp ) ) continue;
+
+	    write_status ( STATE, EXITCODE, SIGNAL,
+			   USERTIME, SYSTIME, MAXRSS );
+	}
+
 	int status;
 	struct rusage usage;
 
-	int r = 0;
-	int t = 10000;  /* 10 milliseconds */
 	int signaled = 0;
 	int saved_errno;
 
-	while ( r == 0 )
+	pid_t r = waitpid ( child, & status, 0 );
+	saved_errno = errno;
+
+	if ( getrusage ( RUSAGE_CHILDREN,
+			 & usage ) < 0 )
+	    errno_exit
+		( "genrusage RUSAGE_CHILDREN" );
+
+	USERTIME = usage.ru_utime.tv_sec
+		 + 1e-6 * usage.ru_utime.tv_usec;
+	SYSTIME = usage.ru_stime.tv_sec
+		+ 1e-6 * usage.ru_stime.tv_usec;
+	MAXRSS = usage.ru_maxrss;
+
+	if ( r >= 0 )
 	{
-	    usleep ( t );
-	    if ( t < 1600000 ) t *= 2;
-	        /* 1.6 seconds maximum delay */
-	    r = waitpid ( child, & status, WNOHANG );
-	    saved_errno = errno;
+	    signaled = WIFSIGNALED ( status );
+	    SIGNAL =
+		( signaled ?
+		      WTERMSIG ( status ) : 0 );
+	    EXITCODE =
+		( signaled ?
+		      0 : WEXITSTATUS ( status ) );
 
-	    if ( getrusage ( RUSAGE_CHILDREN,
-			     & usage ) < 0 )
-		errno_exit
-		    ( "genrusage RUSAGE_CHILDREN" );
-
-	    USERTIME = usage.ru_utime.tv_sec
-		     + 1e-6 * usage.ru_utime.tv_usec;
-	    SYSTIME = usage.ru_stime.tv_sec
-		    + 1e-6 * usage.ru_stime.tv_usec;
-	    MAXRSS = usage.ru_maxrss;
-
-	    if ( r > 0 )
-	    {
-		signaled = WIFSIGNALED ( status );
-		SIGNAL =
-		    ( signaled ?
-		          WTERMSIG ( status ) : 0 );
-		EXITCODE =
-		    ( signaled ?
-		          0 : WEXITSTATUS ( status ) );
-
-		if ( signaled && SIGNAL == SIGKILL
-			      &&    USERTIME + SYSTIME
-			         >= cputime )
-		    SIGNAL = SIGXCPU;
-		STATE = ( signaled ? 'S' : 'E' );
-	    }
-	    else if ( r < 0 )
-	    {
-	        EXITCODE = errno;
-		STATE = 'E';
-	    }
-
-	    if ( status_file != NULL )
-		write_status ( STATE, EXITCODE, SIGNAL,
-			       USERTIME, SYSTIME,
-			       MAXRSS );
+	    if ( signaled && SIGNAL == SIGKILL
+			  &&    USERTIME + SYSTIME
+			     >= cputime )
+		SIGNAL = SIGXCPU;
+	    STATE = ( signaled ? 'S' : 'E' );
 	}
+	else if ( r < 0 )
+	{
+	    EXITCODE = errno;
+	    STATE = 'E';
+	}
+
+	if ( status_fd >= 0 )
+	    write_status ( STATE, EXITCODE, SIGNAL,
+			   USERTIME, SYSTIME,
+			   MAXRSS );
+
 	if ( r < 0 )
 	{
 	    errno = saved_errno;
 	    errno_exit ( "wait" );
 	}
 
-	if ( status_file != NULL )
+	if ( child_stat_fd >= 0 )
+	    close ( child_stat_fd );
+
+	if ( status_fd >= 0 )
 	{
 	    if ( close ( status_fd ) < 0 )
 		errno_exit
