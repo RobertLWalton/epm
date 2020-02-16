@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Feb 15 15:39:59 EST 2020
+// Date:    Sun Feb 16 03:55:36 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1486,7 +1486,7 @@ function get_commands_display ( & $display )
     {
         if ( ! $cont
 	     &&
-	     ! preg_match ( '/^n=([0-9])+;(.*)$/',
+	     ! preg_match ( '/^n=([0-9]+);(.*)$/',
 	                    $line, $matches ) )
 	    continue;
 	++ $n;

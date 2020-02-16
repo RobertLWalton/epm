@@ -2,10 +2,13 @@
 {
 
 "COMMANDS": ["chmod o+r . PPPP.class",
-             "epm_sandbox GSARGS GSPACE generate_PPPP \\",
+             "epm_sandbox GSARGS GSPACE \\",
+             "    -status XXXX-PPPP.gstat generate_PPPP \\",
 	     "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
 	     "  epm_sandbox SSARGS \\",
-	     "    java JFLAGS PPPP DARGS \\",
+	     "    -status XXXX-PPPP.sstat java \\",
+	     "    JFLAGS \\",
+	     "    PPPP DARGS \\",
 	     "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
 	     "chmod o-r . PPPP.class"],
 

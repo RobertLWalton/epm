@@ -1,12 +1,12 @@
 {
 
 "COMMANDS": ["javac -encoding UTF-8 -sourcepath . -d . \\",
-             "    PPPP.java > PPPP.out 2> PPPP.err"],
+             "    PPPP.java > PPPP.cout 2> PPPP.cerr"],
 
 "CONDITION": "UPLOAD PPPP.java",
 "KEEP":    ["PPPP.class", "PPPP.java"],
-"SHOW":    ["PPPP.err","PPPP.out"],
-"CHECKS":  ["EMPTY PPPP.err",
-            "EMPTY PPPP.out"]
+"SHOW":    ["PPPP.cerr","PPPP.cout","PPPP.java"],
+"CHECKS":  ["EMPTY PPPP.cerr",
+            "EMPTY PPPP.cout"]
 }
 

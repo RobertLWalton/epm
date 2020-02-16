@@ -1,13 +1,13 @@
 {
 
 "COMMANDS": ["gcc GCCFLAGS -o PPPP PPPP.c LIBRARIES \\",
-             "    > PPPP.out 2> PPPP.err",
+             "    > PPPP.cout 2> PPPP.cerr",
 	     "chmod o+x PPPP"],
 
 "CONDITION": "UPLOAD PPPP.c",
 "KEEP":    ["PPPP", "PPPP.c"],
-"SHOW":    ["PPPP.err","PPPP.out"],
-"CHECKS":  ["EMPTY PPPP.err",
-            "EMPTY PPPP.out"]
+"SHOW":    ["PPPP.cerr","PPPP.cout", "PPPP.c"],
+"CHECKS":  ["EMPTY PPPP.cerr",
+            "EMPTY PPPP.cout"]
 
 }
