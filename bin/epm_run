@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Jan 23 06:44:08 EST 2020
+// Date:	Mon Feb 17 07:35:49 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -73,6 +73,8 @@ $epm_data = getenv ( 'EPM_DATA' );
 $uid      = getenv ( 'EPM_UID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
 $work     = getenv ( 'EPM_WORK' );
+$problem_dir = "users/user$uid/$problem";
+
 $rfile    = $argv[1];
 if ( $argc > 2 )
     $sfile    = $argv[2];
