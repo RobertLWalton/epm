@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 15 15:39:19 EST 2020
+    // Date:	Mon Feb 17 05:19:06 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -616,6 +616,19 @@ EOT;
 		     " name='make'" .
 		     " value='$fname:$b.score'>" .
 		     "Make .score</button></td>";
+	    }
+	    elseif ( preg_match ( '/^(.+)\.fout$/',
+	                          $fname, $matches ) )
+	    {
+		$b = $matches[1];
+		echo "<td><button type='submit'" .
+		     " name='make'" .
+		     " value='$fname:$b.score'>" .
+		     "Make .score</button></td>";
+		echo "<td><button type='submit'" .
+		     " name='make'" .
+		     " value='$fname:$b.ftest'>" .
+		     "Make .ftest</button></td>";
 	    }
 	    echo "</tr>";
 	}

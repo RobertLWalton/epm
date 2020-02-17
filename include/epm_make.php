@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Feb 16 03:55:36 EST 2020
+// Date:    Mon Feb 17 05:21:52 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2180,29 +2180,7 @@ function create_file
 	return true;
     }
 
-    if ( preg_match ( '/^(.+\..)test/', $filename,
-                                          $matches ) )
-    {
-	$o = "{$matches[1]}out";
-	$g = "$epm_data/$problem_dir/$o";
-	if ( is_readable ( $g ) )
-	{
-	    if ( ! copy ( $g, $f ) )
-		ERROR ( "create_file: cannot copy $o" .
-		        " to $filename" );
-	    $warnings[] =
-	        "$filename was created by copying $o";
-	    return true;
-	}
-	else
-	{
-	    $errors[] =
-	        "$o is not readable\n" .
-		"    ($filename is made by copying $o)";
-	    return false;
-	}
-    }
-    else if ( preg_match ( '/^(generate|filter)_.+$/',
+    if ( preg_match ( '/^(generate|filter)_.+$/',
                            $filename, $matches ) )
     {
 	$b = $matches[1];
