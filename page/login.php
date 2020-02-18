@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 13 04:40:18 EST 2020
+    // Date:	Tue Feb 18 05:37:14 EST 2020
 
     // Handles login for a session.
     //
@@ -553,7 +553,9 @@
 
 <div id='get_email' style.display='none'>
 <input type='text' id='email_in'
-       placeholder='Enter Email Address'>
+       placeholder='Enter Email Address'
+       autofocus
+       title='address (to be) associated with account'>
 </div>
 
 <div id='show_email' style.display='none'>

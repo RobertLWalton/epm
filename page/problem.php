@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 17 05:19:06 EST 2020
+    // Date:	Tue Feb 18 05:42:59 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -528,7 +528,8 @@
     echo <<<EOT
     <form style='display:inline'
           action='user.php' method='GET'>
-    <h5>User:</h5> <input type='submit' value='$email'>
+    <h5>User:</h5> <input type='submit' value='$email'
+                    title='click to see user profile'>
     &nbsp;&nbsp;&nbsp;&nbsp;
     <h5>Current Problem:</h5>&nbsp;
     <pre>$current_problem</pre></b>
@@ -555,7 +556,8 @@ EOT;
 	     "<input type='submit'" .
 	     " name='goto_problem'" .
 	     " value='Go To Problem:'></td>" . PHP_EOL;
-        echo "<td><select name='selected_problem'>" .
+        echo "<td><select name='selected_problem'
+	           title='problem to go to'>" .
 	     PHP_EOL;
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
@@ -642,7 +644,8 @@ EOT;
 	       value="$epm_upload_maxsize">
 	<input type="submit" name="upload"
 	       value="Upload File:">
-	<input type="file" name="uploaded_file">
+	<input type="file" name="uploaded_file"
+	       title="file to upload">
 	</form>
 EOT;
     }
