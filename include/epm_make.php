@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 18 13:27:31 EST 2020
+// Date:    Tue Feb 18 14:12:17 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1588,6 +1588,21 @@ function update_command_results ( $wait = 0 )
     if ( is_array ( $result ) || $result === false )
         return $result;
 
+    $result = get_command_results
+    	( $runbase, $work, $wait );
+    $_SESSION['EPM_RUNRESULT'] = $result;
+    return $result;
+}
+
+// Same as update_command_results, except ignores
+// $_SESSION, takes parameters as arguments, reads
+// $runbase.shout, and just returns the result.
+//
+function get_command_results
+	( $runbase, $work, $wait = 0 )
+{
+    global $epm_data, $epm_shell_timeout;
+
     $shout = "$epm_data/$work/$runbase.shout";
     $shtime = false;
 
@@ -1622,7 +1637,6 @@ function update_command_results ( $wait = 0 )
 	if (    $shtime !== false
 	     && time() > $shtime + $epm_shell_timeout )
 	{
-	    $_SESSION['EPM_RUNRESULT'] = false;
 	    return false;
 	}
 
@@ -1632,7 +1646,6 @@ function update_command_results ( $wait = 0 )
 	usleep ( 10000 );
 	if ( $count == 100 * $epm_shell_timeout )
 	{
-	    $_SESSION['EPM_RUNRESULT'] = false;
 	    return false;
 	}
 	$count += 1;
@@ -1650,7 +1663,6 @@ function update_command_results ( $wait = 0 )
 	                  $c, $matches ) )
 	{
 	    $result = [$matches[1], $matches[2]];
-	    $_SESSION['EPM_RUNRESULT'] = $result;
 	    return $result;
 	}
 
@@ -1659,7 +1671,6 @@ function update_command_results ( $wait = 0 )
 	//
 	if ( ! $r )
 	{
-	    $_SESSION['EPM_RUNRESULT'] = false;
 	    return false;
 	}
 
@@ -1667,7 +1678,6 @@ function update_command_results ( $wait = 0 )
 	//
 	if ( $count >= $wait )
 	{
-	    $_SESSION['EPM_RUNRESULT'] = true;
 	    return true;
 	}
 	usleep ( 100000 );
