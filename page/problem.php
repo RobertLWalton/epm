@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 18 05:42:59 EST 2020
+    // Date:	Tue Feb 18 13:26:30 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -175,7 +175,7 @@
     $show_file = NULL;  // File to be shown to right.
     $show_files = [];   // Files to be shown to left.
     $kept = [];		// Files kept.
-    $runfile = NULL;
+    $runbase = NULL;
         // Non-NULL if there are commands to be
 	// displayed.
     $uploaded_file = NULL;
@@ -310,7 +310,7 @@
 	      $warnings, $errors );
 	if ( isset ( $_SESSION['EPM_CONTROL'] ) )
 	{
-	    $runfile = $_SESSION['EPM_RUNFILE'];
+	    $runbase = $_SESSION['EPM_RUNBASE'];
 	    $problem_file_names = NULL; // Clear cache.
 	}
     }
@@ -336,7 +336,7 @@
 		  $warnings, $errors );
 	    if ( isset ( $_SESSION['EPM_CONTROL'] ) )
 	    {
-		$runfile = $_SESSION['EPM_RUNFILE'];
+		$runbase = $_SESSION['EPM_RUNBASE'];
 		$problem_file_names = NULL;
 		    // Clear cache.
 	    }
@@ -346,13 +346,13 @@
     }
     elseif ( isset ( $_POST['reload'] )
              &&
-	     isset ( $_SESSION['EPM_RUNFILE'] ) )
+	     isset ( $_SESSION['EPM_RUNBASE'] ) )
     {
 	DEBUG ( 'reload' );
 	require "$epm_home/include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
-        $runfile = $_SESSION['EPM_RUNFILE'];
+        $runbase = $_SESSION['EPM_RUNBASE'];
     }
     elseif ( isset ( $_POST['update'] ) )
     {
@@ -391,7 +391,7 @@
 	}
     }
 
-    if ( isset ( $runfile )
+    if ( isset ( $runbase )
          &&
 	 isset ( $_SESSION['EPM_CONTROL'] )
          &&
@@ -441,7 +441,7 @@
 	float: right;
 	height: 99%;
     }
-    div.runfile {
+    div.command_display {
 	background-color: #C0FFC0;
     }
     div.show {
@@ -650,9 +650,9 @@ EOT;
 EOT;
     }
 
-    if ( $runfile )
+    if ( $runbase )
     {
-	echo "<div class='runfile'>" .
+	echo "<div class='command_display'>" .
 	     PHP_EOL;
 	get_commands_display ( $display );
 	echo "<h5>Commands:</h5>" . PHP_EOL;
@@ -848,7 +848,7 @@ EOT;
 	xhttp.send ( 'update=update' );
     }
     <?php
-	if ( isset ( $runfile )
+	if ( isset ( $runbase )
 	     &&
 	     isset ( $_SESSION['EPM_CONTROL'] ) )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;

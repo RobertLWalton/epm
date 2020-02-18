@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Feb 17 05:21:52 EST 2020
+// Date:    Tue Feb 18 13:27:31 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1088,7 +1088,7 @@ function get_commands ( $control )
 
 // Compile $commands into the file:
 //
-//	$epm_data/$work/$runfile.sh
+//	$epm_data/$work/$runbase.sh
 //
 // This is compiled so that when its run terminates,
 // its output file (its .shout file) will end with
@@ -1100,7 +1100,7 @@ function get_commands ( $control )
 // Also sets the following:
 //
 //     $_SESSION['EPM_WORK'] to $work
-//     $_SESSION['EPM_RUNFILE'] to $runfile
+//     $_SESSION['EPM_RUNBASE'] to $runbase
 //     $_SESSION['EPM_RUNMAP'] to a map from
 //	 command line numbers sorted in last-line-
 //       number-first order to:
@@ -1126,19 +1126,19 @@ function get_commands ( $control )
 //
 //     $_SESSION['EPM_RUNRESULT']
 //
-// thereby indicating the $runfile has not yet been
+// thereby indicating the $runbase.sh has not yet been
 // executed.
 //
-function compile_commands ( $runfile, $work, $commands )
+function compile_commands ( $runbase, $work, $commands )
 {
     global $epm_data;
 
     unset ( $_SESSION['EPM_WORK'] );
-    unset ( $_SESSION['EPM_RUNFILE'] );
+    unset ( $_SESSION['EPM_RUNBASE'] );
     unset ( $_SESSION['EPM_RUNMAP'] );
     unset ( $_SESSION['EPM_RUNRESULT'] );
 
-    $r = '';     // Value to write to $runfile
+    $r = '';     // Value to write to $runbase.sh
     $map = [];   // Runmap.
     $n = 0;      // Line count
     $cont = 0;   // Next line is continuation.
@@ -1162,12 +1162,12 @@ function compile_commands ( $runfile, $work, $commands )
     }
     $r .= "n=D; exit 0" . PHP_EOL;
     if ( ! file_put_contents 
-	    ( "$epm_data/$work/$runfile.sh", $r ) )
-	ERROR ( "cannot write $work/$runfile.sh" );
+	    ( "$epm_data/$work/$runbase.sh", $r ) )
+	ERROR ( "cannot write $work/$runbase.sh" );
 
     krsort ( $map, SORT_NUMERIC );
     $_SESSION['EPM_WORK'] = $work;
-    $_SESSION['EPM_RUNFILE'] = $runfile;
+    $_SESSION['EPM_RUNBASE'] = $runbase;
     $_SESSION['EPM_RUNMAP'] = $map;
 }
 
@@ -1335,16 +1335,16 @@ function get_exit_message
 	     . " $code";
 }
 
-// Execute $runfile.sh within $epm_data/$work in
+// Execute $runbase.sh within $epm_data/$work in
 // background with empty standard input.  Put standard
-// output in $runfile.shout and standard error in
-// $runfile.sherr.  The standard output is line
+// output in $runbase.shout and standard error in
+// $runbase.sherr.  The standard output is line
 // buffered (as per stdbuf(1) -oL ).
 //
 // Sets $_SESSION['EPM_RUNRESULT'] to true, which
-// indicates that the $runfile has started execution.
+// indicates that the $runbase.sh has started execution.
 //
-function execute_commands_2 ( $runfile, $work )
+function execute_commands_2 ( $runbase, $work )
 {
     global $epm_data, $epm_home, $uid, $problem;
 
@@ -1352,8 +1352,8 @@ function execute_commands_2 ( $runfile, $work )
 
     $desc = array (
         0 => ['file', '/dev/null', 'r'],
-	1 => ['file', "$cwd/$runfile.shout", 'w'],
-	2 => ['file', "$cwd/$runfile.sherr", 'w'],
+	1 => ['file', "$cwd/$runbase.shout", 'w'],
+	2 => ['file', "$cwd/$runbase.sherr", 'w'],
         3 => ['file', '/dev/null', 'r'],
         4 => ['file', '/dev/null', 'r'],
         5 => ['file', '/dev/null', 'r'],
@@ -1370,12 +1370,12 @@ function execute_commands_2 ( $runfile, $work )
     $env['EPM_PROBLEM'] = $problem;
     $env['EPM_WORK'] = $work;
 
-    $cmd = "bash $runfile.sh";
+    $cmd = "bash $runbase.sh";
     $process = proc_open
         ( $cmd, $desc, $pipes, $cwd, $env );
     $_SESSION['EPM_RUNRESULT'] = true;
 }
-function execute_commands ( $runfile, $work )
+function execute_commands ( $runbase, $work )
 {
     global $epm_data, $epm_home, $uid, $problem;
 
@@ -1397,8 +1397,8 @@ function execute_commands ( $runfile, $work )
 	// forces the connection to the browser to
 	// stay open and prevents xhttp response from
 	// completing on exit.
-    $r .= "bash $runfile.sh >$runfile.shout" .
-                         " 2>$runfile.sherr &" .
+    $r .= "bash $runbase.sh >$runbase.shout" .
+                         " 2>$runbase.sherr &" .
 			 PHP_EOL;
 	// bash appears to flush echo output even when
 	// stdout is redirected to a file, and so
@@ -1427,7 +1427,7 @@ function get_commands_display ( & $display )
     global $epm_data;
 
     $work = $_SESSION['EPM_WORK'];
-    $runfile = $_SESSION['EPM_RUNFILE'];
+    $runbase = $_SESSION['EPM_RUNBASE'];
     $map = & $_SESSION['EPM_RUNMAP'];
     $r = update_command_results();
     update_runmap();
@@ -1457,21 +1457,21 @@ function get_commands_display ( & $display )
     elseif ( is_array ( $r ) && $r[0] == 'B' )
     {
         $r_line = 1;
-	$r_message = "run $runfile.sh died during"
+	$r_message = "run $runbase.sh died during"
 	           . " startup, try again";
     }
     elseif ( $r === false )
     {
         $r_line = 1;
-	$r_message = "run $runfile.sh died for no good"
+	$r_message = "run $runbase.sh died for no good"
 	           . " reason, try again";
     }
 
     $display = "<table id='command_table'>" . PHP_EOL;
     $c = @file_get_contents 
-	    ( "$epm_data/$work/$runfile.sh" );
+	    ( "$epm_data/$work/$runbase.sh" );
     if ( $c === false )
-	ERROR ( "cannot read $work/$runfile.sh" );
+	ERROR ( "cannot read $work/$runbase.sh" );
     $c = explode ( "\n", $c );
     $n = 0;
     $cont = 0;
@@ -1494,7 +1494,7 @@ function get_commands_display ( & $display )
 	{
 	    if ( $n != $matches[1] )
 	        ERROR ( "n={$matches[1]} in" .
-		        " $runfile.sh should" .
+		        " $runbase.sh should" .
 			" equal $n" );
 	    $line = $matches[2];
 	}
@@ -1548,8 +1548,8 @@ function get_commands_display ( & $display )
     }
 }
 
-// Read $work/$runfile.shout and write the result so far
-// of running $work/$runfile.sh into
+// Read $work/$runbase.shout and write the result so far
+// of running $work/$runbase.sh into
 //
 //	$_SESSION['EPM_RUNRESULT']
 //
@@ -1582,13 +1582,13 @@ function get_commands_display ( & $display )
 function update_command_results ( $wait = 0 )
 {
     global $epm_data, $epm_shell_timeout;
-    $runfile = $_SESSION['EPM_RUNFILE'];
+    $runbase = $_SESSION['EPM_RUNBASE'];
     $work = $_SESSION['EPM_WORK'];
     $result = $_SESSION['EPM_RUNRESULT'];
     if ( is_array ( $result ) || $result === false )
         return $result;
 
-    $shout = "$epm_data/$work/$runfile.shout";
+    $shout = "$epm_data/$work/$runbase.shout";
     $shtime = false;
 
     // Get pid.
@@ -1830,18 +1830,15 @@ function compute_show ( $control, $work, $moved )
 // will be moved into the working directory (but will
 // not be checked for size and other errors).
 //
+// This function begins by calling load_argument_map
+// with $allow_local_optn.
+//
 // Find_control is used to find the template and lists
 // of required and creatable files needed.  The template
 // is returned in $control.  Any files that need to be
 // created are created by calling create_file and a mes-
 // sage indicating the creation is appended to
 // $warnings.
-//
-// The runfile name is returned in $runfile, and is the
-// same as $des with its extension deleted.  The shell
-// file is $runfile.sh and its output is $runfile.shout.
-// If the run does not start because of errors, $runfile
-// is NULL.
 //
 // Errors append to $errors.  If there are errors, the
 // run is NOT started.
@@ -1867,7 +1864,7 @@ function start_make_file
 
     unset ( $_SESSION['EPM_CONTROL'] );
     $control = NULL;
-    $runfile = NULL;
+    $runbase = NULL;
     $errors_size = count ( $errors );
 
     load_argument_map
@@ -1934,10 +1931,10 @@ function start_make_file
 
     $commands = get_commands ( $control );
 
-    $runfile = pathinfo ( $des, PATHINFO_FILENAME );
+    $runbase = pathinfo ( $des, PATHINFO_FILENAME );
 
-    compile_commands ( $runfile, $work, $commands );
-    execute_commands ( $runfile, $work );
+    compile_commands ( $runbase, $work, $commands );
+    execute_commands ( $runbase, $work );
     $_SESSION['EPM_CONTROL'] = $control;
 }
 
@@ -1945,7 +1942,7 @@ function start_make_file
 //
 // This function requires that
 //
-//	$_SESSION['EPM_RUNFILE']
+//	$_SESSION['EPM_RUNBASE']
 //	$_SESSION['EPM_WORK']
 //
 // be set and will do nothing if
@@ -1982,7 +1979,7 @@ function finish_make_file
     if ( ! isset ( $_SESSION['EPM_CONTROL'] ) )
         return;
     $control = $_SESSION['EPM_CONTROL'];
-    $runfile = $_SESSION['EPM_RUNFILE'];
+    $runbase = $_SESSION['EPM_RUNBASE'];
     $work = $_SESSION['EPM_WORK'];
 
     unset ( $_SESSION['EPM_CONTROL'] );
@@ -1993,10 +1990,10 @@ function finish_make_file
     $r = update_command_results();
 
     if ( $r === false )
-        $errors[] = "SYSTEM_ERROR: $runfile.sh died;"
+        $errors[] = "SYSTEM_ERROR: $runbase.sh died;"
 	          . " try again";
     elseif ( $r === true )
-        $errors[] = "SYSTEM_ERROR: $runfile.sh did not"
+        $errors[] = "SYSTEM_ERROR: $runbase.sh did not"
 	          . " finish in time";
     elseif ( $r != ['D',0] )
         $errors[] = "command line {$r[0]} returned"
@@ -2015,49 +2012,18 @@ SHOW:
     $show = compute_show ( $control, $work, $kept );
 }
 
-// Given the file $src make the file $des and keep any
-// files the make template said should be kept.  The
-// template must have NO CONDITION, and local
-// problem.optn file is allowed.
+// TBD
 //
-// Upon return, $runfile is the run file (its actually
-// $work/$runfile.sh), $moved is the list of files
-// moved, and $show is the list of files to show.  All
-// file names in $show are relative to $epm_data, but
-// only the last file name component is listed in
-// $moved.  If the run did not start, $runfile is NULL
-// and $moved and $show are empty.  Otherwise $moved
-// and $show are accurate even if there are errors.
-//
-// Errors append error message lines to $errors and
-// warnings append to $warnings.
-//
-function make_and_keep_file
-	( $src, $des,
-	  $work, $wait,
-	  & $runfile, & $moved, & $show,
-	  & $warnings, & $errors )
+function start_run ( $runbase, $submit, $rundir )
 {
-    load_file_caches();
+    $commands = [ '${EPM_HOME}/bin/epm_run' .
+    		  ($submit ? ' -s' : '' ) . ' \\',
+		  " $runbase.sh $runbase.stat \\",
+		  " >$runbase.rout 2>$runbase.rerr"];
 
-    $errors_size = count ( $errors );
-
-    $runfile = NULL;
-    $moved = [];
-    $show = [];
-    start_make_file
-        ( $src, $des, NULL /* no CONDITION */,
-          true, $work,
-	  NULL, NULL /* no upload, upload_tmp */,
-	  $control, $runfile,
-	  $warnings, $errors );
-    if ( count ( $errors ) > $errors_size ) return;
-
-    finish_make_file
-	( $control, $runfile,
-	  $work, $wait,
-	  $moved, $show,
-	  $warnings, $errors );
+    compile_commands
+        ( $runbase, $rundir, $commands );
+    execute_commands ( $runbase, $rundir );
 }
 
 // Process an uploaded file whose $_FILES[...] value

@@ -114,22 +114,22 @@ include "$include/epm_make.php";
 
 load_file_caches();
 
-$rdata = $epm_data;
+$rundata = $epm_data;
 if ( $dryrun
      &&
      is_readable ( "$runfile" ) )
 {
-    $rdir = ".";
-    $rdata = ".";
+    $rundir = ".";
+    $rundata = ".";
 }
 else if ( ! $submit
           &&
 	  isset ( $local_file_cache[$runfile] ) )
-    $rdir = $local_file_cache[$runfile];
+    $rundir = $local_file_cache[$runfile];
 else if ( $submit
           &&
 	  isset ( $remote_file_cache[$runfile] ) )
-    $rdir = $remote_file_cache[$runfile];
+    $rundir = $remote_file_cache[$runfile];
 else
 {
     echo "epm_run: cannot find $runfile" . PHP_EOL;
@@ -139,10 +139,10 @@ else
 // Compute $runin as the list of lines of .run file.
 //
 $runin = @file_get_contents
-		( "$rdata/$rdir/$runfile" );
+		( "$rundata/$rundir/$runfile" );
 if ( $runin === false )
 {
-    echo "epm_run: $rdir/$runfile is not readable" .
+    echo "epm_run: $rundir/$runfile is not readable" .
          PHP_EOL;
     exit ( 1 );
 }
