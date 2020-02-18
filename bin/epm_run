@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Feb 17 07:35:49 EST 2020
+// Date:	Tue Feb 18 02:09:21 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -11,47 +11,78 @@ EPM_DATA=data-directory \
 EPM_UID=uid \
 EPM_PROBLEM=problem \
 EPM_WORK=working-subdirectory \
-    epm_run [-r|-s] run-file [status-file]
-
-With no options, just checks the run-file to see if
-it can be run with -r: i.e., all the .in files listed
-are local and have associated local .ftest files.  The
-status-file must be omitted in this case.  The result
-is in the standard output.
-
-With options, executes the run defined by the run-file
-in background.  With -r, local .in and .ftest files are
-used, and it is an error if any do not exist locally, or
-if the .run file is not local.
-
-With -s only remote .in and .ftest files are used, and
-it is an error if any do not exist remotely, or if the
-.run file is not remote.  The background job writes its
-current status to the status-file, and outputs its final
-result in the standard output.
+    epm_run [-d|-s] run-file [status-file]
 
 Many parameters are environment variables so they will
 not be listed when the command is listed.  The working-
-subdirectory is relative to the data-directory.  The
-status-file is relative to the working-subdirectory.
-The .run file is looked up on the local and remote
-directories, and the .score's are computed using
-templates that have no CONDITION for -r or have SUBMIT
-CONDITION for -s.
+subdirectory is relative to the data-directory.
+
+The -d option performs a dry run that does not
+execute any subprocesses or produce any scores.
+The status-file is not used in this case.  The result
+in the standard output just lists errors.  The exit
+code is 0 for no errors, 1 if there are errors.  The
+run-file may be in the current directory in this case.
+
+Without -s, .in and .ftest files must be local, and
+templates with NO CONDITION are used.
+
+With -s, templates with the SUBMIT CONDITION are used,
+the run-file must be remote, and the templates will
+require that the .in, .ftest, generate_PPPP, and filter_
+PPPP files be remote.
+
+If there is a status-file, it is updated every few
+tenths of a second with base name of the current input
+file and the current execution times of the solution,
+generate, and filter programs.  The status-file name
+is relative to the current working directory of this
+program.
+
+A summary of the results is written to the standard
+output.  Without the -d option, this includes the line:
+
+	Run Score: XXXX
+
+where XXXX is `Completely Correct' or something else.
+If the Run Score is not `Completely Correct', the
+output also includes the line:
+
+	First Failed Test Case: YYYY
+
+where YYYY is the basename for the test case.  The
+test case files YYYY.in and YYYY.ftest may then be
+symbolically linked to the local directory, if they
+are not already there, but this program does not do
+this.
+
+But the individual .in file tests are done in the
+EPM_WORK directory, which is treated the same as it is
+when tests are run directly from the problems.php page
+(but it may or may not be the same directory).
 
 EOT;
 
-if ( $argc < 2 )
+if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
 {
     echo $document;
     exit ( 0 );
 }
 
-$run = "c";
-if ( preg_match ( '/^-(.)$/', $argv[1], $matches ) )
+$dryrun = false;
+$submit = false;
+$runfile = NULL;
+$statfile = NULL;
+
+while ( $argc >= 2
+        &&
+	preg_match ( '/^-(.)$/', $argv[1], $matches ) )
 {
-    $run = $matches[1];
-    if ( ! preg_match ( '/[rs]/', $run ) )
+    if ( $matches[1] == 'd' )
+        $dryrun = true;
+    elseif ( $matches[1] == 's' )
+        $submit = true;
+    else
     {
         echo "epm_run: bad option {$argv[1]}\n";
 	exit (1);
@@ -59,11 +90,13 @@ if ( preg_match ( '/^-(.)$/', $argv[1], $matches ) )
     array_shift ( $argv );
     -- $argc;
 }
-if ( $argc != ( $run == "c" ? 2 : 3 ) )
+if ( $argc < 2 || $argc > 3 )
 {
     echo "epm_run: wrong number of arguments\n";
     exit (1);
 }
+$runfile = $argv[1];
+if ( $argc == 3 ) $statfile = $argv[2];
 
 // Note: $_ENV does NOT work here because $ is not in
 // ini variables_order.  But getenv does work.
@@ -73,48 +106,44 @@ $epm_data = getenv ( 'EPM_DATA' );
 $uid      = getenv ( 'EPM_UID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
 $work     = getenv ( 'EPM_WORK' );
+
 $problem_dir = "users/user$uid/$problem";
-
-$rfile    = $argv[1];
-if ( $argc > 2 )
-    $sfile    = $argv[2];
-else
-    $sfile    = NULL;
-
 $include = "$epm_home/include";
 
 include "$include/epm_make.php";
 
-$problem_dir = "users/user$uid/$problem";
+load_file_caches();
 
-load_file_caches ( $problem_dir );
-
-if ( $run == "c"
+$rdata = $epm_data;
+if ( $dryrun
      &&
-     is_readable ( "$epm_data/$work/$rfile" ) )
-    $rdir = $work;
-else if ( $run == "r"
+     is_readable ( "$runfile" ) )
+{
+    $rdir = ".";
+    $rdata = ".";
+}
+else if ( ! $submit
           &&
-	  isset ( $local_file_cache[$rfile] ) )
-    $rdir = $local_file_cache[$rfile];
-else if ( $run == "s"
+	  isset ( $local_file_cache[$runfile] ) )
+    $rdir = $local_file_cache[$runfile];
+else if ( $submit
           &&
-	  isset ( $remote_file_cache[$rfile] ) )
-    $rdir = $remote_file_cache[$rfile];
+	  isset ( $remote_file_cache[$runfile] ) )
+    $rdir = $remote_file_cache[$runfile];
 else
 {
-    fprintf ( STDERR, "epm_run: cannot find %s\n",
-                      $rfile );
+    echo "epm_run: cannot find $runfile" . PHP_EOL;
     exit ( 1 );
 }
 
 // Compute $runin as the list of lines of .run file.
 //
-$runin = file_get_contents ( "$epm_data/$rdir/$rfile" );
+$runin = @file_get_contents
+		( "$rdata/$rdir/$runfile" );
 if ( $runin === false )
 {
-    fprintf ( STDERR, "epm_run: %s is not readable\n",
-                      "$rdir/$rfile" );
+    echo "epm_run: $rdir/$runfile is not readable" .
+         PHP_EOL;
     exit ( 1 );
 }
 
@@ -127,10 +156,16 @@ if ( array_slice ( $runin, -1, 1 ) == [""] )
 // Check that .in and .ftest files are locatable and
 // readable.
 //
-if ( $run == 's' )
+if ( $submit )
+{
     $cache = & $remote_file_cache;
+    $cname = 'REMOTE';
+}
 else
+{
     $cache = & $local_file_cache;
+    $cname = 'LOCAL';
+}
 
 $errors = 0;
 foreach ( $runin as $infile )
@@ -139,10 +174,8 @@ foreach ( $runin as $infile )
                ( "/^([-_A-Za-z0-9]+)-$problem\\.in\$/",
 	         $infile, $matches ) )
     {
-	fprintf
-	    ( STDERR,
-	      "epm_run: %s is not acceptable .in file" .
-	      " name\n", $infile );
+        echo "epm_run: $infile is not acceptable .in" .
+	     " file name" . PHP_EOL;
 	if ( $errors >= 5 ) break;
 	else continue;
     }
@@ -150,26 +183,24 @@ foreach ( $runin as $infile )
 
     if ( ! isset ( $cache[$infile] ) )
     {
-	fprintf
-	    ( STDERR, "epm_run: cannot find %s\n",
-	              $infile );
+	echo "epm_run: cannot find $cname $infile" .
+	     PHP_EOL;
 	if ( ++ $errors >= 5 ) break;
 	else continue;
     }
     $indir = $cache[$infile];
     if ( ! is_readable ( "$epm_data/$indir/$infile" ) )
     {
-	fprintf
-	    ( STDERR, "epm_run: cannot read %s\n",
-	              "$indir/$infile" );
+	echo "epm_run: cannot read $cname" .
+	     " $indir/$infile" .  PHP_EOL;
 	if ( ++ $errors >= 5 ) break;
 	else continue;
     }
     $ftestfile = "$inbase.ftest";
     if ( ! isset ( $cache[$ftestfile] ) )
     {
-	fprintf ( STDERR, "epm_run: cannot find %s\n",
-	                  $ftestfile );
+	echo "epm_run: cannot find $cname $ftestfile" .
+	     PHP_EOL;
 	if ( ++ $errors >= 5 ) break;
 	else continue;
     }
@@ -177,24 +208,22 @@ foreach ( $runin as $infile )
     if ( ! is_readable
                ( "$epm_data/$ftestdir/$ftestfile" ) )
     {
-	fprintf
-	    ( STDERR, "epm_run: cannot read %s\n",
-	              "$ftestdir/$ftestfile" );
+	echo "epm_run: cannot read $cname" .
+	     " $ftestdir/$ftestfile" .  PHP_EOL;
 	if ( ++ $errors >= 5 ) break;
 	else continue;
     }
 }
 if ( $errors > 0 ) exit ( 1 );
 
-if ( $run == 'c' ) exit ( 0 );
+if ( $dryrun ) exit ( 0 );
 
 
 load_template_cache();
 
 $warnings = [];
 $errors   = [];
-load_argument_map
-    ( $problem, false, $warnings, $errors );
+load_argument_map ( ! $submit, $warnings, $errors );
 
 var_dump ( $argument_map );
 var_dump ( $warnings );
