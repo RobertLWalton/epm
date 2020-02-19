@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 19 03:08:40 EST 2020
+// Date:    Wed Feb 19 04:51:58 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -948,17 +948,18 @@ function find_control
     return NULL;
 }
 
-// Clean up a working directory.  For each .shout file,
-// finds its PID and if that is still running, kills it
-// with SIGKILL.  Then executes rm -rf on the directory.
-// Lastly, creates a new directory under the same name.
+// Clean up a working or run directory.  For each .shout
+// file, finds its PID and if that is still running,
+// kills it with SIGKILL.  Then executes rm -rf on the
+// directory.  Lastly, creates a new directory under the
+// same name.
 //
 // Directory name is relative to epm_data.
 //
-function cleanup_working ( $workdir )
+function cleanup_dir ( $dir )
 {
     global $epm_data;
-    $d = "$epm_data/$workdir";
+    $d = "$epm_data/$dir";
     $c = @scandir ( $d );
     if ( $c !== false )
     {
@@ -988,8 +989,7 @@ function cleanup_working ( $workdir )
     $m = umask ( 06 );
     if ( ! mkdir ( $d, 0771) )
 	// Must give o+x permission so epm_sandbox can
-	// execute programs that are in working
-	// directory.
+	// execute programs that are in directory.
 	//
 	ERROR ( "could not make $dir" );
     umask ( $m );
@@ -1005,12 +1005,22 @@ function cleanup_working ( $workdir )
 //
 // Errors cause error messages to be appended to errors.
 //
+// WARNING: $workdir must not contain . or .. component
+//          names.
+//
 function link_required
 	( $local_required, $remote_required, $workdir,
 	  & $errors )
 {
     global $epm_data,
            $local_file_cache, $remote_file_cache;
+
+    $reldir = preg_replace
+        ( '#[^/]+#', '..', $workdir );
+	// Name of $epm_data relative to
+	// $epm_data/$workdir, used so that symbolic
+	// link can be printed without printing
+	// name of $epm_data.
 
     // Make list of elements of form [file,target,link]
     // where target is to become the value of the
@@ -1034,7 +1044,7 @@ function link_required
 	            " \$remote_required not" .
 	            " in \$remote_file_cache" );
 	$d = $remote_file_cache[$f];
-        $list[] = ["$d/$f", "../../../../$d/$f", $f];
+        $list[] = ["$d/$f", "$reldir/$d/$f", $f];
     }
 
     foreach ( $list as $e )
@@ -1892,7 +1902,7 @@ function start_make_file
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) ) return false;
 
-    cleanup_working ( $workdir );
+    cleanup_dir ( $workdir );
 
     foreach ( $creatable as $f )
         create_file ( $f, $warnings, $errors );
@@ -2023,21 +2033,100 @@ SHOW:
     $show = compute_show ( $control, $workdir, $kept );
 }
 
-// Sets:
+// Create new $rundir, link $epm_data/$runfile to
+// $epm_data/$rundir, compile into $epm_data/$rundir/
+// $runbase.sh the command:
+//
+//	epm_run [-s] $runbase.run $runbase.stat \
+//		>$runbase.rout 2>$runbase.rerr
+//
+// and execute $runbase.sh in background.  The -s
+// option is expressed iff $submit is true.
+//
+// WARNINGS: $runfile must have extension .run and
+//           $rundir must not contain . or .. component
+//           names.
+//
+// This function begins by unsetting
+//
+//      $_SESSION['EPM_RUNDIR']
+//      $_SESSION['EPM_RUNBASE']
+//
+// If there are no errors, this function sets:
 //
 //     $_SESSION['EPM_RUNDIR'] to $rundir
 //     $_SESSION['EPM_RUNBASE'] to $runbase
 //
-function start_run ( $runbase, $submit, $rundir )
+function start_run
+	( $runfile, $rundir, $submit, & $errors )
 {
+    global $epm_data,
+           $local_file_cache, $remote_file_cache;
+
+    unset ( $_SESSION['EPM_RUNDIR'] );
+    unset ( $_SESSION['EPM_RUNBASE'] );
+
+    load_file_caches();
+
+    $reldir = preg_replace
+        ( '#[^/]+#', '..', $rundir );
+	// Name of $epm_data relative to
+	// $epm_data/$rundir, used so that symbolic
+	// link can be printed without printing
+	// name of $epm_data.
+
+    cleanup_dir ( $rundir );
+
+    if ( ! $submit )
+    {
+	if ( ! isset ( $local_file_cache[$runfile] ) )
+	{
+	    $errors[] = "cannot find $runfile in local"
+	              . " directory";
+	    return;
+	}
+	$d = $local_file_cache[$runfile];
+	$f = "$d/$runfile";
+	$d = "..";
+    }
+    else
+    {
+	if ( ! isset ( $remote_file_cache[$runfile] ) )
+	{
+	    $errors[] = "cannot find $runfile in remote"
+	              . " directory";
+	    return;
+	}
+	$d = $remote_file_cache[$f];
+	$f = "$d/$runfile";
+	$d = "$relfile/$d";
+    }
+
+    if ( ! is_readable ( "$epm_data/$f" ) )
+    {
+	$errors[] = "cannot read $f";
+	return;
+    }
+
+    if ( ! symlink ( "$d/$runfile",
+                     "$epm_data/$rundir/$runfile" ) )
+    {
+	$errors[] = "cannot symbolically link"
+		  . " $rundir/$runfile to $d/$runfile";
+	return;
+    }
+
+    $runbase = pathinfo ( $file, PATHINFO_FILENAME );
+
     $commands = [ '${EPM_HOME}/bin/epm_run' .
     		  ($submit ? ' -s' : '' ) . ' \\',
-		  " $runbase.sh $runbase.stat \\",
+		  " $runbase.run $runbase.stat \\",
 		  " >$runbase.rout 2>$runbase.rerr"];
 
     compile_commands
         ( $map, $runbase, $rundir, $commands );
     execute_commands ( $runbase, $rundir );
+
     $_SESSION['EPM_RUNDIR'] = $rundir;
     $_SESSION['EPM_RUNBASE'] = $runbase;
 }
