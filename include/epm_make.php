@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 19 04:51:58 EST 2020
+// Date:    Wed Feb 19 15:06:51 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -956,7 +956,11 @@ function find_control
 //
 // Directory name is relative to epm_data.
 //
-function cleanup_dir ( $dir )
+// Warnings are issued if a .sh file process is killed or
+// did not start properly (no `$$ PID' line in .shout
+// file).
+//
+function cleanup_dir ( $dir, $warnings )
 {
     global $epm_data;
     $d = "$epm_data/$dir";
@@ -968,18 +972,25 @@ function cleanup_dir ( $dir )
 	    if ( ! preg_match ( '/^(.+)\.shout$/',
 	                        $fname ) )
 	        continue;
+	    $base = pathinfo
+		( $fname, PATHINFO_FILENAME );
 
 	    $fc = @file_get_contents ( "$d/$fname" );
-	    if ( $fc === false ) continue;
-
-	    if ( ! preg_match ( '/^(\d+) PID\n/',
+	    if ( $fc === false 
+	         ||
+	         ! preg_match ( '/^(\d+) PID\n/',
 	                        $fc, $matches ) )
+	    {
+		$warnings[] = "$dir/$base.sh did not"
+		            . " start properly";
 		continue;
+	    }
 	    $pid = $matches[1];
 	    if ( ! is_running ( $pid ) )
 	        continue;
-	    exec
-	        ( "kill -s KILL $pid >/dev/null 2>&1" );
+	    exec ( "kill -s KILL -$pid" .
+	           "    >/dev/null 2>&1" );
+	    $warnings[] = "killed $dir/$base.sh";
 	}
     }
 
@@ -1339,6 +1350,72 @@ function get_exit_message
 // with empty standard input.  Put standard output in
 // $base.shout and standard error in $base.sherr.
 //
+// If $base.sh does not start properly (does not write
+// `$$ PID\n' to output file within $epm_shell_timeout
+// seconds), outputs an error message.
+//
+function execute_commands ( $base, $dir, $errors )
+{
+    global $epm_data, $epm_home, $uid, $problem,
+	   $epm_shell_timeout;
+
+    $r = '';
+    $r .= "cd $epm_data/$dir" . PHP_EOL;
+    $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
+    $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
+    $r .= "export EPM_UID=$uid" . PHP_EOL;
+    $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
+    $r .= "export EPM_WORKDIR=$dir" . PHP_EOL;
+    $r .= "exec 0<&-" . PHP_EOL;
+    $r .= "exec 1<&-" . PHP_EOL;
+    $r .= "exec 2<&-" . PHP_EOL;
+    $r .= "exec 3<&-" . PHP_EOL;
+    $r .= "exec 4<&-" . PHP_EOL;
+    $r .= "exec 5<&-" . PHP_EOL;
+    $r .= "exec 6<&-" . PHP_EOL;
+	// Must kill fd 3,4,5,6 as leaving them open
+	// forces the connection to the browser to
+	// stay open and prevents xhttp response from
+	// completing on exit.
+    $r .= "setsid bash $base.sh >$base.shout" .
+          "    2>$base.sherr &" .  PHP_EOL;
+	// bash appears to flush echo output even when
+	// stdout is redirected to a file, and so
+	// `echo $$ PID;' promptly echoes PID.
+	//
+	// setsid turns the bash execution into its
+	// own process group so it can be killed as
+	// a process group.
+    exec ( $r );
+
+    $count = 0;
+    $f = "$dir/$base.shout";
+    while ( true )
+    {
+	$c = @file_get_contents  ( "$epm_data/$f" );
+	if ( $c !== false
+	     &&
+	     preg_match ( '/^(\d+) PID\n/',
+	                  $c, $matches ) )
+	    break;
+
+	// Poll every 10 ms for $epm_shell_timeout
+	// seconds.
+
+	usleep ( 10000 );
+	if ( $count == 100 * $epm_shell_timeout )
+	{
+	    $errors[] = "$dir/$base.sh failed to start";
+	    return;
+	}
+	$count += 1;
+    }
+}
+// This _2 version is just used to prove that FDs
+// 3, 4, 5, 6 need to be closed evern for proc_open.
+// However, as proc_close cannot be used, it is
+// not completely correct.
+//
 function execute_commands_2 ( $base, $dir )
 {
     global $epm_data, $epm_home, $uid, $problem;
@@ -1368,36 +1445,6 @@ function execute_commands_2 ( $base, $dir )
     $cmd = "bash $base.sh";
     $process = proc_open
         ( $cmd, $desc, $pipes, $cwd, $env );
-}
-function execute_commands ( $base, $dir )
-{
-    global $epm_data, $epm_home, $uid, $problem;
-
-    $r = '';
-    $r .= "cd $epm_data/$dir" . PHP_EOL;
-    $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
-    $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
-    $r .= "export EPM_UID=$uid" . PHP_EOL;
-    $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
-    $r .= "export EPM_WORKDIR=$dir" . PHP_EOL;
-    $r .= "exec 0<&-" . PHP_EOL;
-    $r .= "exec 1<&-" . PHP_EOL;
-    $r .= "exec 2<&-" . PHP_EOL;
-    $r .= "exec 3<&-" . PHP_EOL;
-    $r .= "exec 4<&-" . PHP_EOL;
-    $r .= "exec 5<&-" . PHP_EOL;
-    $r .= "exec 6<&-" . PHP_EOL;
-	// Must kill fd 3,4,5,6 as leaving them open
-	// forces the connection to the browser to
-	// stay open and prevents xhttp response from
-	// completing on exit.
-    $r .= "bash $base.sh >$base.shout" .
-                         " 2>$base.sherr &" .
-			 PHP_EOL;
-	// bash appears to flush echo output even when
-	// stdout is redirected to a file, and so
-	// `echo $$ PID;' promptly echoes PID.
-    exec ( $r );
 }
 
 // First update_command_results is called, and then
@@ -1902,7 +1949,7 @@ function start_make_file
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) ) return false;
 
-    cleanup_dir ( $workdir );
+    cleanup_dir ( $workdir, $warnings );
 
     foreach ( $creatable as $f )
         create_file ( $f, $warnings, $errors );
@@ -1950,7 +1997,8 @@ function start_make_file
 
     compile_commands
         ( $map, $workbase, $workdir, $commands );
-    execute_commands ( $workbase, $workdir );
+    execute_commands ( $workbase, $workdir, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
 
     $_SESSION['EPM_WORKDIR'] = $workdir;
     $_SESSION['EPM_WORKBASE'] = $workbase;
@@ -2033,18 +2081,20 @@ SHOW:
     $show = compute_show ( $control, $workdir, $kept );
 }
 
-// Create new $rundir, link $epm_data/$runfile to
+// Create new $rundir, link $epm_data/$d/$runfile to
 // $epm_data/$rundir, compile into $epm_data/$rundir/
 // $runbase.sh the command:
 //
-//	epm_run [-s] $runbase.run $runbase.stat \
+//	epm_run [-s] $runfile $runbase.stat \
 //		>$runbase.rout 2>$runbase.rerr
 //
-// and execute $runbase.sh in background.  The -s
-// option is expressed iff $submit is true.
+// and execute $runbase.sh in background.  Here $runbase
+// is $runfile without its extension.  The -s option is
+// expressed iff $submit is true.  $d is the local (if
+// no -s) or remote (if -s) directory in which $runfile
+// is found, as per load_file_caches.
 //
-// WARNINGS: $runfile must have extension .run and
-//           $rundir must not contain . or .. component
+// WARNINGS: $rundir must not contain . or .. component
 //           names.
 //
 // This function begins by unsetting
@@ -2066,6 +2116,8 @@ function start_run
     unset ( $_SESSION['EPM_RUNDIR'] );
     unset ( $_SESSION['EPM_RUNBASE'] );
 
+    $errors_size = count ( $errors );
+
     load_file_caches();
 
     $reldir = preg_replace
@@ -2075,7 +2127,7 @@ function start_run
 	// link can be printed without printing
 	// name of $epm_data.
 
-    cleanup_dir ( $rundir );
+    cleanup_dir ( $rundir, $warnings );
 
     if ( ! $submit )
     {
@@ -2087,7 +2139,7 @@ function start_run
 	}
 	$d = $local_file_cache[$runfile];
 	$f = "$d/$runfile";
-	$d = "..";
+	$e = "..";
     }
     else
     {
@@ -2099,7 +2151,7 @@ function start_run
 	}
 	$d = $remote_file_cache[$f];
 	$f = "$d/$runfile";
-	$d = "$relfile/$d";
+	$e = "$relfile/$d";
     }
 
     if ( ! is_readable ( "$epm_data/$f" ) )
@@ -2108,7 +2160,7 @@ function start_run
 	return;
     }
 
-    if ( ! symlink ( "$d/$runfile",
+    if ( ! symlink ( "$e/$runfile",
                      "$epm_data/$rundir/$runfile" ) )
     {
 	$errors[] = "cannot symbolically link"
@@ -2120,12 +2172,13 @@ function start_run
 
     $commands = [ '${EPM_HOME}/bin/epm_run' .
     		  ($submit ? ' -s' : '' ) . ' \\',
-		  " $runbase.run $runbase.stat \\",
-		  " >$runbase.rout 2>$runbase.rerr"];
+		  "    $runfile $runbase.stat \\",
+		  "    >$runbase.rout 2>$runbase.rerr"];
 
     compile_commands
         ( $map, $runbase, $rundir, $commands );
-    execute_commands ( $runbase, $rundir );
+    execute_commands ( $runbase, $rundir, $errors );
+    if ( count ( $errors ) > $errors_size ) return;
 
     $_SESSION['EPM_RUNDIR'] = $rundir;
     $_SESSION['EPM_RUNBASE'] = $runbase;
