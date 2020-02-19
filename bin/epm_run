@@ -225,6 +225,11 @@ $warnings = [];
 $errors   = [];
 load_argument_map ( ! $submit, $warnings, $errors );
 
+if ( count ( $errors ) == 0 )
+foreach ( $runin as $infile )
+{
+}
+
 var_dump ( $argument_map );
 var_dump ( $warnings );
 var_dump ( $errors );

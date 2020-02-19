@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 18 13:26:30 EST 2020
+    // Date:	Wed Feb 19 03:05:20 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -28,7 +28,7 @@
     // state is in the file system.
 
     // Set $problem to current problem, or NULL if none.
-    // Also set $problem_dir to the problem directory if
+    // Also set $probdir to the problem directory if
     // $problem not NULL and the problem directory
     // exists.  If $problem is not NULL but the problem
     // directory does not exist, the problem has been
@@ -38,7 +38,7 @@
     // of the execution of this page.
     //
     $problem = NULL;
-    $problem_dir = NULL;
+    $probdir = NULL;
     $delete_problem = false;
         // True to ask whether current problem is to be
 	// deleted.
@@ -150,32 +150,32 @@
 
     if ( isset ( $problem ) )
     {
-	$problem_dir =
+	$probdir =
 	    "users/user$uid/$problem";
-	if ( ! is_dir ( "$epm_data/$problem_dir" ) )
+	if ( ! is_dir ( "$epm_data/$probdir" ) )
 	{
 	    $errors[] = "problem $problem has been"
 	             . " deleted by another session";
-	    $problem_dir = NULL;
+	    $probdir = NULL;
 	}
 	else
 	{
 	    $lock_desc =
-		fopen ( "$epm_data/$problem_dir/+lock+",
+		fopen ( "$epm_data/$probdir/+lock+",
 		        "w" );
 	    flock ( $lock_desc, LOCK_EX );
 	}
 
     }
     else
-	$problem_dir = NULL;
+	$probdir = NULL;
 
     // Data Set by GET and POST Requests:
     //
     $show_file = NULL;  // File to be shown to right.
     $show_files = [];   // Files to be shown to left.
     $kept = [];		// Files kept.
-    $runbase = NULL;
+    $workbase = NULL;
         // Non-NULL if there are commands to be
 	// displayed.
     $uploaded_file = NULL;
@@ -210,13 +210,13 @@
         // Cache of problem_file_names().
     function problem_file_names()
     {
-        global $epm_data, $problem_dir,
+        global $epm_data, $probdir,
 	       $problem_file_names, $display_file_type;
 
 	if ( isset ( $problem_file_names ) )
 	    return $problem_file_names;
 
-	if ( ! isset ( $problem_dir ) )
+	if ( ! isset ( $probdir ) )
 	{
 	    $problem_file_names = [];
 	    return $problem_file_names;
@@ -225,7 +225,7 @@
 	clearstatcache();
 	$map = [];
 
-	foreach ( scandir ( "$epm_data/$problem_dir" )
+	foreach ( scandir ( "$epm_data/$probdir" )
 	          as $fname )
 	{
 	    if ( preg_match ( '/^\./', $fname ) )
@@ -237,7 +237,7 @@
 	        ( $fname, PATHINFO_EXTENSION );
 	    if ( ! isset ( $display_file_type[$ext] ) )
 		continue;
-	    $f = "$problem_dir/$fname";
+	    $f = "$probdir/$fname";
 	    $map[$fname] =
 	        filemtime ( "$epm_data/$f" );
 	}
@@ -250,11 +250,11 @@
 	return $problem_file_names;
     }
 
-    // Remaining POSTs require $problem and $problem_dir
+    // Remaining POSTs require $problem and $probdir
     // to be non-NULL.
     //
     if ( $method != 'POST' ) /* Do Nothing */;
-    elseif ( ! isset ( $problem_dir ) )
+    elseif ( ! isset ( $probdir ) )
 	/* Do Nothing */;
     elseif ( isset ( $_POST['show_file'] ) )
     {
@@ -279,7 +279,7 @@
 		       true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-	$f = "$problem_dir/$f";
+	$f = "$probdir/$f";
         if ( ! unlink ( "$epm_data/$f" ) )
 	    $errors[] = "could not delete $f";
 	$problem_file_names = NULL;
@@ -305,12 +305,12 @@
 	           " problem.php" );
 	start_make_file
 	    ( $src, $des, NULL /* no condition */,
-	      true, "$problem_dir/+work+",
+	      true, "$probdir/+work+",
 	      NULL, NULL /* no upload, upload_tmp */,
 	      $warnings, $errors );
 	if ( isset ( $_SESSION['EPM_CONTROL'] ) )
 	{
-	    $runbase = $_SESSION['EPM_RUNBASE'];
+	    $workbase = $_SESSION['EPM_WORKBASE'];
 	    $problem_file_names = NULL; // Clear cache.
 	}
     }
@@ -332,11 +332,11 @@
 		// etc.
 
 	    process_upload
-		( $upload_info, "$problem_dir/+work+",
+		( $upload_info, "$probdir/+work+",
 		  $warnings, $errors );
 	    if ( isset ( $_SESSION['EPM_CONTROL'] ) )
 	    {
-		$runbase = $_SESSION['EPM_RUNBASE'];
+		$workbase = $_SESSION['EPM_WORKBASE'];
 		$problem_file_names = NULL;
 		    // Clear cache.
 	    }
@@ -346,13 +346,12 @@
     }
     elseif ( isset ( $_POST['reload'] )
              &&
-	     isset ( $_SESSION['EPM_RUNBASE'] ) )
+	     isset ( $_SESSION['EPM_WORKBASE'] ) )
     {
-	DEBUG ( 'reload' );
 	require "$epm_home/include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
-        $runbase = $_SESSION['EPM_RUNBASE'];
+        $workbase = $_SESSION['EPM_WORKBASE'];
     }
     elseif ( isset ( $_POST['update'] ) )
     {
@@ -363,27 +362,20 @@
 	while ( true )
 	{
 	    $r = update_command_results ( 0 );
-	    DEBUG ( "update r = " .
-	            ( is_array ( $r ) ? implode ( ' ' , $r )
-		                      : strval ( $r ) ) );
 	    if ( $r !== true || $count == 50 )
 	    {
 	        echo 'RELOAD';
-		DEBUG ( 'update replied RELOAD' );
 		exit;
 	    }
-	    $r = update_runmap();
+	    $r = update_workmap();
 	    if ( count ( $r ) > 0 )
 	    {
-		$runmap = & $_SESSION['EPM_RUNMAP'];
+		$workmap = & $_SESSION['EPM_WORKMAP'];
 	        foreach ( $r as $n )
 		{
-		    $e = $runmap[$n];
+		    $e = $workmap[$n];
 		    echo "TIME $n {$e[2]}\n";
-		    DEBUG ( "update replied TIME $n" .
-		            " {$e[2]}" );
 		}
-		DEBUG ( 'update replied with TIMEs' );
 		exit;
 	    }
 	    usleep ( 100000 );
@@ -391,7 +383,7 @@
 	}
     }
 
-    if ( isset ( $runbase )
+    if ( isset ( $workbase )
          &&
 	 isset ( $_SESSION['EPM_CONTROL'] )
          &&
@@ -650,7 +642,7 @@ EOT;
 EOT;
     }
 
-    if ( $runbase )
+    if ( $workbase )
     {
 	echo "<div class='command_display'>" .
 	     PHP_EOL;
@@ -848,7 +840,7 @@ EOT;
 	xhttp.send ( 'update=update' );
     }
     <?php
-	if ( isset ( $runbase )
+	if ( isset ( $workbase )
 	     &&
 	     isset ( $_SESSION['EPM_CONTROL'] ) )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;

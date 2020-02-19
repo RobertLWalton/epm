@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 18 14:12:17 EST 2020
+// Date:    Wed Feb 19 03:08:40 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -25,8 +25,8 @@ if ( ! isset ( $uid ) )
     exit ( 'ACCESS ERROR: $uid not set' );
 if ( ! isset ( $problem ) )
     exit ( 'ACCESS ERROR: $problem not set' );
-if ( ! isset ( $problem_dir ) )
-    exit ( 'ACCESS ERROR: $problem_dir not set' );
+if ( ! isset ( $probdir ) )
+    exit ( 'ACCESS ERROR: $probdir not set' );
 
 if ( ! isset ( $is_epm_test ) )
     $is_epm_test = false;
@@ -39,7 +39,7 @@ if ( ! isset ( $is_epm_test ) )
 //
 if ( ! isset ( $problem_params ) )
 {
-    $f = "$problem_dir/problem.params";
+    $f = "$probdir/problem.params";
     $problem_params = [];
     if ( is_readable ( "$epm_data/$f" ) )
 	$problem_params = get_json ( $epm_data, $f );
@@ -681,7 +681,7 @@ function load_argument_map
 //
 // $remote_file_cache is for the directories listed in
 // $remote_dirs.   $local_file_cache is for the files
-// listed in the single directory $problem_dir.  All
+// listed in the single directory $probdir.  All
 // directories names are relative to $epm_data.  This
 // function does NOT return a value.
 //
@@ -689,7 +689,7 @@ $local_file_cache = NULL;
 $remote_file_cache = NULL;
 function load_file_caches()
 {
-    global $epm_data, $remote_dirs, $problem_dir,
+    global $epm_data, $remote_dirs, $probdir,
            $remote_file_cache, $local_file_cache;
 
     if ( isset ( $local_file_cache )
@@ -715,14 +715,14 @@ function load_file_caches()
 	}
     }
 
-    $c = @scandir ( "$epm_data/$problem_dir" );
+    $c = @scandir ( "$epm_data/$probdir" );
     if ( $c === false )
-	ERROR ( "cannot read $problem_dir" );
+	ERROR ( "cannot read $probdir" );
     foreach ( $c as $fname )
     {
 	if ( preg_match  ( '/^\.+$/', $fname ) )
 	    continue;
-	$local_file_cache[$fname] = $problem_dir;
+	$local_file_cache[$fname] = $probdir;
     }
 }
 
@@ -955,10 +955,10 @@ function find_control
 //
 // Directory name is relative to epm_data.
 //
-function cleanup_working ( $work )
+function cleanup_working ( $workdir )
 {
     global $epm_data;
-    $d = "$epm_data/$work";
+    $d = "$epm_data/$workdir";
     $c = @scandir ( $d );
     if ( $c !== false )
     {
@@ -996,8 +996,8 @@ function cleanup_working ( $work )
 }
 
 // Link files from the required lists into the working
-// working directory.  The required lists are computed
-// by find_control and only contain names of last
+// directory.  The required lists are computed by
+// find_control and only contain names of last
 // components, that for remoted_required must be looked
 // up in the remote_file_cache.  It is a fatal error if
 // a required file is NOT listed in the appropriate
@@ -1006,7 +1006,7 @@ function cleanup_working ( $work )
 // Errors cause error messages to be appended to errors.
 //
 function link_required
-	( $local_required, $remote_required, $work,
+	( $local_required, $remote_required, $workdir,
 	  & $errors )
 {
     global $epm_data,
@@ -1014,7 +1014,7 @@ function link_required
 
     // Make list of elements of form [file,target,link]
     // where target is to become the value of the
-    // symbolic link in work, and file is the name of
+    // symbolic link in workdir, and file is the name of
     // the file relative to $epm_data.
     //
     $list = [];
@@ -1061,10 +1061,10 @@ function link_required
 	    }
 	}
 
-	if ( ! symlink ( $t, "$epm_data/$work/$l" ) )
+	if ( ! symlink ( $t, "$epm_data/$workdir/$l" ) )
 	{
 	    $errors[] = "cannot symbolically link"
-	              . " $work/$l to $t";
+	              . " $workdir/$l to $t";
 	    continue;
 	}
     }
@@ -1088,57 +1088,27 @@ function get_commands ( $control )
 
 // Compile $commands into the file:
 //
-//	$epm_data/$work/$runbase.sh
+//	$epm_data/$dir/$base.sh
 //
-// This is compiled so that when its run terminates,
-// its output file (its .shout file) will end with
-// '::n e DONE\n' where n is the line number of the
-// terminating commands first line, e is the exit
-// code, and if the run terminates normally, n is 'D'
+// This is compiled so that the first line of the
+// output file (the $base.shout file) will have the
+// form `i PID' where i is the shell process identifier,
+// and when the shell terminates the output file will
+// end with '::n e DONE\n', where n is the line number
+// of the terminating command's first line, and e is the
+// exit code.  If the run terminates normally, n is 'D'
 // and e is 0.
 //
-// Also sets the following:
+// The status map is initialized in $map.  See update_
+// workmap for its format.  Initially all entries have
+// the form [statfile, 'X'].
 //
-//     $_SESSION['EPM_WORK'] to $work
-//     $_SESSION['EPM_RUNBASE'] to $runbase
-//     $_SESSION['EPM_RUNMAP'] to a map from
-//	 command line numbers sorted in last-line-
-//       number-first order to:
-//
-//	   [filename, 'X']
-//	     if file does not exist yet
-//	   [filename, 'R', time]
-//	     if file subprocess is still running
-//	   [filename, 'D', time]
-//	     if file subprocess is completed with exit
-//	     code 0
-//	   [filename, 'F', time, exitcode, message]
-//	     if file subprocess is completed with non-0
-//           exit code, where message is a string giving
-//           the cause of subprocess termination
-//
-// Here time is the total CPU execution time in seconds
-// of the subprocess (so far).  If a subprocess was
-// terminated by a signal, the signal number is added to
-// 128 to make the exitcode.
-//
-// Lastly unsets:
-//
-//     $_SESSION['EPM_RUNRESULT']
-//
-// thereby indicating the $runbase.sh has not yet been
-// executed.
-//
-function compile_commands ( $runbase, $work, $commands )
+function compile_commands
+	( & $map, $base, $dir, $commands )
 {
     global $epm_data;
 
-    unset ( $_SESSION['EPM_WORK'] );
-    unset ( $_SESSION['EPM_RUNBASE'] );
-    unset ( $_SESSION['EPM_RUNMAP'] );
-    unset ( $_SESSION['EPM_RUNRESULT'] );
-
-    $r = '';     // Value to write to $runbase.sh
+    $r = '';     // Value to write to $base.sh
     $map = [];   // Runmap.
     $n = 0;      // Line count
     $cont = 0;   // Next line is continuation.
@@ -1162,29 +1132,48 @@ function compile_commands ( $runbase, $work, $commands )
     }
     $r .= "n=D; exit 0" . PHP_EOL;
     if ( ! file_put_contents 
-	    ( "$epm_data/$work/$runbase.sh", $r ) )
-	ERROR ( "cannot write $work/$runbase.sh" );
+	    ( "$epm_data/$dir/$base.sh", $r ) )
+	ERROR ( "cannot write $dir/$base.sh" );
 
     krsort ( $map, SORT_NUMERIC );
-    $_SESSION['EPM_WORK'] = $work;
-    $_SESSION['EPM_RUNBASE'] = $runbase;
-    $_SESSION['EPM_RUNMAP'] = $map;
 }
 
-// Update $_SESSION['EPM_RUNMAP']map by reading status
-// files in last-line-first order.  Return a list of
-// keys whose time values have changed.
+// Update the $_SESSION['EPM_WORKMAP'] status map by
+// reading status files in last-line-first order.
+// Return a list of keys whose time values have changed.
+// Inputs $_SESSION['EPM_WORKDIR'].
 //
-function update_runmap ()
+// A status map is a map from command line numbers
+// sorted in last-line-number-first order to:
+//
+//     [statfile, 'X']
+//       if statfile does not exist yet
+//     [statfile, 'R', time]
+//       if statfile subprocess is still running
+//     [statfile, 'D', time]
+//       if statfile subprocess is completed with exit
+//       code 0
+//     [statfile, 'F', time, exitcode, message]
+//       if statfile subprocess is completed with non-0
+//       exit code, where message is a string giving
+//       the cause of subprocess termination
+//
+// Here statfile is the last component of the name of a
+// *.*stat status file, and time is the total CPU
+// execution time in seconds of the subprocess (so far).
+// If a subprocess was terminated by a signal, the
+// signal number is added to 128 to make the exitcode.
+//
+function update_workmap ()
 {
-    $work = $_SESSION['EPM_WORK'];
-    $map = & $_SESSION['EPM_RUNMAP'];
+    $workdir = $_SESSION['EPM_WORKDIR'];
+    $map = & $_SESSION['EPM_WORKMAP'];
     $r = [];
     foreach ( $map as $key => $e )
     {
 	if ( $e[1] == 'D' || $e[1] == 'F' )
 	    continue;
-	$stat = get_status ( $work, $e[0] );
+	$stat = get_status ( $workdir, $e[0] );
 	if ( $stat != NULL )
 	{
 	    if ( $e[1] == 'X' || $e[2] != $stat[2] )
@@ -1195,15 +1184,16 @@ function update_runmap ()
     return $r;
 }
 
-// Read epm_sandbox -status file $work/$sfile and return
-// value to store in $_SESSION['EPM_RUNMAP'] entry.
+// Read epm_sandbox -status file $workdir/$sfile and
+// return value to store in $_SESSION['EPM_WORKMAP']
+// entry.
 //
 // If status file could not be read or was misformatted,
 // return NULL.  In the misformatted case, retries are
 // done every 10 milliseconds for 2 seconds.  In the
 // not-readable case return is immediate.
 //
-function get_status ( $work, $sfile )
+function get_status ( $workdir, $sfile )
 {
     global $epm_data;
 
@@ -1217,7 +1207,7 @@ function get_status ( $work, $sfile )
 	$count += 1;
 
 	$c = @file_get_contents
-	    ( "$epm_data/$work/$sfile" );
+	    ( "$epm_data/$workdir/$sfile" );
 	if ( $c === false )
 	    return NULL;
 	$c = trim ( $c );
@@ -1335,25 +1325,20 @@ function get_exit_message
 	     . " $code";
 }
 
-// Execute $runbase.sh within $epm_data/$work in
-// background with empty standard input.  Put standard
-// output in $runbase.shout and standard error in
-// $runbase.sherr.  The standard output is line
-// buffered (as per stdbuf(1) -oL ).
+// Execute $base.sh within $epm_data/$dir in background
+// with empty standard input.  Put standard output in
+// $base.shout and standard error in $base.sherr.
 //
-// Sets $_SESSION['EPM_RUNRESULT'] to true, which
-// indicates that the $runbase.sh has started execution.
-//
-function execute_commands_2 ( $runbase, $work )
+function execute_commands_2 ( $base, $dir )
 {
     global $epm_data, $epm_home, $uid, $problem;
 
-    $cwd = "$epm_data/$work";
+    $cwd = "$epm_data/$dir";
 
     $desc = array (
         0 => ['file', '/dev/null', 'r'],
-	1 => ['file', "$cwd/$runbase.shout", 'w'],
-	2 => ['file', "$cwd/$runbase.sherr", 'w'],
+	1 => ['file', "$cwd/$base.shout", 'w'],
+	2 => ['file', "$cwd/$base.sherr", 'w'],
         3 => ['file', '/dev/null', 'r'],
         4 => ['file', '/dev/null', 'r'],
         5 => ['file', '/dev/null', 'r'],
@@ -1368,24 +1353,23 @@ function execute_commands_2 ( $runbase, $work )
     $env['EPM_DATA'] = $epm_data;
     $env['EPM_UID'] = $uid;
     $env['EPM_PROBLEM'] = $problem;
-    $env['EPM_WORK'] = $work;
+    $env['EPM_WORKDIR'] = $dir;
 
-    $cmd = "bash $runbase.sh";
+    $cmd = "bash $base.sh";
     $process = proc_open
         ( $cmd, $desc, $pipes, $cwd, $env );
-    $_SESSION['EPM_RUNRESULT'] = true;
 }
-function execute_commands ( $runbase, $work )
+function execute_commands ( $base, $dir )
 {
     global $epm_data, $epm_home, $uid, $problem;
 
     $r = '';
-    $r .= "cd $epm_data/$work" . PHP_EOL;
+    $r .= "cd $epm_data/$dir" . PHP_EOL;
     $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
     $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
     $r .= "export EPM_UID=$uid" . PHP_EOL;
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
-    $r .= "export EPM_WORK=$work" . PHP_EOL;
+    $r .= "export EPM_WORKDIR=$dir" . PHP_EOL;
     $r .= "exec 0<&-" . PHP_EOL;
     $r .= "exec 1<&-" . PHP_EOL;
     $r .= "exec 2<&-" . PHP_EOL;
@@ -1397,23 +1381,19 @@ function execute_commands ( $runbase, $work )
 	// forces the connection to the browser to
 	// stay open and prevents xhttp response from
 	// completing on exit.
-    $r .= "bash $runbase.sh >$runbase.shout" .
-                         " 2>$runbase.sherr &" .
+    $r .= "bash $base.sh >$base.shout" .
+                         " 2>$base.sherr &" .
 			 PHP_EOL;
 	// bash appears to flush echo output even when
 	// stdout is redirected to a file, and so
 	// `echo $$ PID;' promptly echoes PID.
     exec ( $r );
-    $_SESSION['EPM_RUNRESULT'] = true;
 }
 
-// Using data recorded in $_SESSION by compile_commands,
-// output, and updating this data, return HTML listing
-// the compiled commands and their exit codes messages.
-//
 // First update_command_results is called, and then
-// update_runmap.  The HTML listing reflects the results
-// of these calls.
+// update_workmap.  Then return an HTML listing
+// displaying the commands started by start_make_file
+// and their results.
 //
 // Each command line gets a row in a table, and if that
 // command line number has 'X' or 'R' state in the
@@ -1426,11 +1406,11 @@ function get_commands_display ( & $display )
 {
     global $epm_data;
 
-    $work = $_SESSION['EPM_WORK'];
-    $runbase = $_SESSION['EPM_RUNBASE'];
-    $map = & $_SESSION['EPM_RUNMAP'];
+    $workdir = $_SESSION['EPM_WORKDIR'];
+    $workbase = $_SESSION['EPM_WORKBASE'];
+    $map = & $_SESSION['EPM_WORKMAP'];
     $r = update_command_results();
-    update_runmap();
+    update_workmap();
 
     $r_line = NULL;
     $r_message = NULL;
@@ -1457,21 +1437,21 @@ function get_commands_display ( & $display )
     elseif ( is_array ( $r ) && $r[0] == 'B' )
     {
         $r_line = 1;
-	$r_message = "run $runbase.sh died during"
+	$r_message = "run $workbase.sh died during"
 	           . " startup, try again";
     }
     elseif ( $r === false )
     {
         $r_line = 1;
-	$r_message = "run $runbase.sh died for no good"
+	$r_message = "run $workbase.sh died for no good"
 	           . " reason, try again";
     }
 
     $display = "<table id='command_table'>" . PHP_EOL;
     $c = @file_get_contents 
-	    ( "$epm_data/$work/$runbase.sh" );
+	    ( "$epm_data/$workdir/$workbase.sh" );
     if ( $c === false )
-	ERROR ( "cannot read $work/$runbase.sh" );
+	ERROR ( "cannot read $workdir/$workbase.sh" );
     $c = explode ( "\n", $c );
     $n = 0;
     $cont = 0;
@@ -1494,7 +1474,7 @@ function get_commands_display ( & $display )
 	{
 	    if ( $n != $matches[1] )
 	        ERROR ( "n={$matches[1]} in" .
-		        " $runbase.sh should" .
+		        " $workbase.sh should" .
 			" equal $n" );
 	    $line = $matches[2];
 	}
@@ -1548,14 +1528,14 @@ function get_commands_display ( & $display )
     }
 }
 
-// Read $work/$runbase.shout and write the result so far
-// of running $work/$runbase.sh into
+// Read $workdir/$workbase.shout and write the result so
+// far of running $workdir/$workbase.sh into
 //
-//	$_SESSION['EPM_RUNRESULT']
+//	$_SESSION['EPM_WORKRESULT']
 //
 // Also return this result.
 //
-// If the value of $_SESSION['EPM_RUNRESULT'] already
+// If the value of $_SESSION['EPM_WORKRESULT'] already
 // indicates the run is finished, this function does
 // nothing but return this value.
 //
@@ -1582,28 +1562,27 @@ function get_commands_display ( & $display )
 function update_command_results ( $wait = 0 )
 {
     global $epm_data, $epm_shell_timeout;
-    $runbase = $_SESSION['EPM_RUNBASE'];
-    $work = $_SESSION['EPM_WORK'];
-    $result = $_SESSION['EPM_RUNRESULT'];
+    $workbase = $_SESSION['EPM_WORKBASE'];
+    $workdir = $_SESSION['EPM_WORKDIR'];
+    $result = $_SESSION['EPM_WORKRESULT'];
     if ( is_array ( $result ) || $result === false )
         return $result;
 
     $result = get_command_results
-    	( $runbase, $work, $wait );
-    $_SESSION['EPM_RUNRESULT'] = $result;
+    	( $workbase, $workdir, $wait );
+    $_SESSION['EPM_WORKRESULT'] = $result;
     return $result;
 }
 
 // Same as update_command_results, except ignores
 // $_SESSION, takes parameters as arguments, reads
-// $runbase.shout, and just returns the result.
+// $base.shout, and just returns the result.
 //
-function get_command_results
-	( $runbase, $work, $wait = 0 )
+function get_command_results ( $base, $dir, $wait = 0 )
 {
     global $epm_data, $epm_shell_timeout;
 
-    $shout = "$epm_data/$work/$runbase.shout";
+    $shout = "$epm_data/$dir/$base.shout";
     $shtime = false;
 
     // Get pid.
@@ -1701,7 +1680,7 @@ function get_command_results
 //	    and is less than 1 megabyte in size.
 //
 function execute_checks
-	( $control, $work, & $errors )
+	( $control, $workdir, & $errors )
 {
     global $epm_data;
 
@@ -1717,7 +1696,7 @@ function execute_checks
 	    continue;
 	}
 	$test = $matches[1];
-	$file = "$epm_data/$work/$matches[2]";
+	$file = "$epm_data/$workdir/$matches[2]";
 
 	$size = @filesize ( $file );
 	if ( $size === false )
@@ -1764,14 +1743,14 @@ function execute_checks
     }
 }
 
-// Move KEEP files, if any, from $work to $problem_dir.
+// Move KEEP files, if any, from $workdir to $probdir.
 // List last component names of files moved in $moved.
 // Append error messages to $errors.
 //
 function move_keep
-	( $control, $work, & $moved, & $errors )
+	( $control, $workdir, & $moved, & $errors )
 {
-    global $epm_data, $problem_dir;
+    global $epm_data, $probdir;
 
     $moved = [];
 
@@ -1781,8 +1760,8 @@ function move_keep
     $keep = $control[2]['KEEP'];
     foreach ( $keep as $fname )
     {
-        $wfile = "$work/$fname";
-        $lfile = "$problem_dir/$fname";
+        $wfile = "$workdir/$fname";
+        $lfile = "$probdir/$fname";
 	if ( ! file_exists ( "$epm_data/$wfile" ) )
 	{
 	    $c = pretty_template ( $control[0] );
@@ -1803,8 +1782,8 @@ function move_keep
 
 // Return list of files to be shown.  File and directory
 // names are relative to $epm_data.  Files that have not
-// been moved are in $work, and moved files are in
-// $problem_dir.  Files that are not readable are
+// been moved are in $workdir, and moved files are in
+// $probdir.  Files that are not readable are
 // ignored; there can be no errors.
 //
 // This function can be called when there have been
@@ -1812,9 +1791,9 @@ function move_keep
 // $moved is the list of files that have actually been
 // moved.
 //
-function compute_show ( $control, $work, $moved )
+function compute_show ( $control, $workdir, $moved )
 {
-    global $epm_data, $problem_dir;
+    global $epm_data, $probdir;
 
     if ( ! isset ( $control[2]['SHOW'] ) )
         return [];
@@ -1825,9 +1804,9 @@ function compute_show ( $control, $work, $moved )
     {
 	if (     array_search ( $fname, $moved, true )
 	     !== false )
-	    $sfile = "$problem_dir/$fname";
+	    $sfile = "$probdir/$fname";
 	else
-	    $sfile = "$work/$fname";
+	    $sfile = "$workdir/$fname";
 	if ( is_readable ( "$epm_data/$sfile" ) )
 	    $slist[] = "$sfile";
     }
@@ -1858,23 +1837,39 @@ function compute_show ( $control, $work, $moved )
 //
 // This function begins by unsetting
 //
+//      $_SESSION['EPM_WORKDIR']
+//      $_SESSION['EPM_WORKBASE']
+//      $_SESSION['EPM_WORKMAP']
+//	$_SESSION['EPM_WORKRESULT']
 //	$_SESSION['EPM_CONTROL]'
 //
-// and if there are no errors, this function ends by
-// setting this to the control found by find_control.
+// If there are no errors, this function sets:
+//
+//     $_SESSION['EPM_WORKDIR'] to $dir
+//     $_SESSION['EPM_WORKBASE'] to $base
+//     $_SESSION['EPM_WORKMAP'] to the status map
+//	    initialized by compile_command
+//     $_SESSION['EPM_WORKRESULT'] to true
+//     $_SESSION['EPM_CONTROL'] to the control
+//	    found by find_control
 //
 function start_make_file
 	( $src, $des, $condition,
-	  $allow_local_optn, $work,
+	  $allow_local_optn, $workdir,
 	  $uploaded, $uploaded_tmp,
 	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
-           $problem, $problem_dir;
+           $problem, $probdir;
 
+    unset ( $_SESSION['EPM_WORKDIR'] );
+    unset ( $_SESSION['EPM_WORKBASE'] );
+    unset ( $_SESSION['EPM_WORKMAP'] );
+    unset ( $_SESSION['EPM_WORKRESULT'] );
     unset ( $_SESSION['EPM_CONTROL'] );
+
     $control = NULL;
-    $runbase = NULL;
+    $workbase = NULL;
     $errors_size = count ( $errors );
 
     load_argument_map
@@ -1897,7 +1892,7 @@ function start_make_file
     if ( count ( $errors ) > $errors_size ) return;
     if ( is_null ( $control ) ) return false;
 
-    cleanup_working ( $work );
+    cleanup_working ( $workdir );
 
     foreach ( $creatable as $f )
         create_file ( $f, $warnings, $errors );
@@ -1905,20 +1900,20 @@ function start_make_file
 
     foreach ( $creatable as $f )
     {
-	if ( ! symlink ( "$epm_data/$problem_dir/$f",
-	                 "$epm_data/$work/$f" ) )
+	if ( ! symlink ( "$epm_data/$probdir/$f",
+	                 "$epm_data/$workdir/$f" ) )
 	    $errors[] = "cannot symbolically link"
-	              . " $work/$f to $problem_dir/$f";
+	              . " $workdir/$f to $probdir/$f";
     }
 
     link_required
 	( $local_required, $remote_required,
-	  $work, $errors );
+	  $workdir, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
     if ( isset ( $uploaded ) )
     {
-	$f = "$work/$uploaded";
+	$f = "$workdir/$uploaded";
 	if ( file_exists ( "$epm_data/$f" ) )
 	    ERROR ( "uploaded file is $uploaded but" .
 		    " $f already exists" );
@@ -1941,10 +1936,16 @@ function start_make_file
 
     $commands = get_commands ( $control );
 
-    $runbase = pathinfo ( $des, PATHINFO_FILENAME );
+    $workbase = pathinfo ( $des, PATHINFO_FILENAME );
 
-    compile_commands ( $runbase, $work, $commands );
-    execute_commands ( $runbase, $work );
+    compile_commands
+        ( $map, $workbase, $workdir, $commands );
+    execute_commands ( $workbase, $workdir );
+
+    $_SESSION['EPM_WORKDIR'] = $workdir;
+    $_SESSION['EPM_WORKBASE'] = $workbase;
+    $_SESSION['EPM_WORKMAP'] = $map;
+    $_SESSION['EPM_WORKRESULT'] = true;
     $_SESSION['EPM_CONTROL'] = $control;
 }
 
@@ -1952,8 +1953,8 @@ function start_make_file
 //
 // This function requires that
 //
-//	$_SESSION['EPM_RUNBASE']
-//	$_SESSION['EPM_WORK']
+//	$_SESSION['EPM_WORKBASE']
+//	$_SESSION['EPM_WORKDIR']
 //
 // be set and will do nothing if
 //
@@ -1970,7 +1971,7 @@ function start_make_file
 // 
 // Otherwise control CHECKs are run and if they do not
 // append error messages to $errors, the control KEEP
-// files are moved to $problem_dir.  $kept is returned
+// files are moved to $probdir.  $kept is returned
 // as the list of KEEP files actually moved, and will
 // will be empty if CHECKs fail or the run has not
 // finish successfully.
@@ -1989,8 +1990,8 @@ function finish_make_file
     if ( ! isset ( $_SESSION['EPM_CONTROL'] ) )
         return;
     $control = $_SESSION['EPM_CONTROL'];
-    $runbase = $_SESSION['EPM_RUNBASE'];
-    $work = $_SESSION['EPM_WORK'];
+    $workbase = $_SESSION['EPM_WORKBASE'];
+    $workdir = $_SESSION['EPM_WORKDIR'];
 
     unset ( $_SESSION['EPM_CONTROL'] );
     $kept = [];
@@ -2000,10 +2001,10 @@ function finish_make_file
     $r = update_command_results();
 
     if ( $r === false )
-        $errors[] = "SYSTEM_ERROR: $runbase.sh died;"
+        $errors[] = "SYSTEM_ERROR: $workbase.sh died;"
 	          . " try again";
     elseif ( $r === true )
-        $errors[] = "SYSTEM_ERROR: $runbase.sh did not"
+        $errors[] = "SYSTEM_ERROR: $workbase.sh did not"
 	          . " finish in time";
     elseif ( $r != ['D',0] )
         $errors[] = "command line {$r[0]} returned"
@@ -2011,18 +2012,21 @@ function finish_make_file
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
-    execute_checks ( $control, $work, $errors );
+    execute_checks ( $control, $workdir, $errors );
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
-    move_keep ( $control, $work, $kept, $errors );
+    move_keep ( $control, $workdir, $kept, $errors );
  
 SHOW:
 
-    $show = compute_show ( $control, $work, $kept );
+    $show = compute_show ( $control, $workdir, $kept );
 }
 
-// TBD
+// Sets:
+//
+//     $_SESSION['EPM_RUNDIR'] to $rundir
+//     $_SESSION['EPM_RUNBASE'] to $runbase
 //
 function start_run ( $runbase, $submit, $rundir )
 {
@@ -2032,8 +2036,10 @@ function start_run ( $runbase, $submit, $rundir )
 		  " >$runbase.rout 2>$runbase.rerr"];
 
     compile_commands
-        ( $runbase, $rundir, $commands );
+        ( $map, $runbase, $rundir, $commands );
     execute_commands ( $runbase, $rundir );
+    $_SESSION['EPM_RUNDIR'] = $rundir;
+    $_SESSION['EPM_RUNBASE'] = $runbase;
 }
 
 // Process an uploaded file whose $_FILES[...] value
@@ -2045,7 +2051,7 @@ function start_run ( $runbase, $submit, $rundir )
 // get_commands.  Output from commands executed is
 // appended to $output (this does not include writes to
 // standard error by bash, which are lost).  List of
-// KEEP files moved to $problem_dir is placed in
+// KEEP files moved to $probdir is placed in
 // $moved, and list of SHOW files is placed in $show.
 // File names in these are relative to $epm_data.
 //
@@ -2056,7 +2062,7 @@ function start_run ( $runbase, $submit, $rundir )
 // $errors listing these files.
 //
 function process_upload
-	( $upload, $work, & $warnings, & $errors )
+	( $upload, $workdir, & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
            $upload_target_ext, $epm_upload_maxsize;
@@ -2134,12 +2140,12 @@ function process_upload
 
     start_make_file
         ( $fname, $tname, "UPLOAD $fname",
-          true, $work,
+          true, $workdir,
 	  $fname, $ftmp_name,
 	  $warnings, $errors );
 }
 
-// Create the named file in $problem_dir.  If the
+// Create the named file in $probdir.  If the
 // file is created, append a message to $warnings
 // indicating the file was created.  Errors append
 // to $errors.
@@ -2147,9 +2153,9 @@ function process_upload
 function create_file
 	( $filename, & $warnings, & $errors )
 {
-    global $epm_data, $problem_dir;
+    global $epm_data, $probdir;
 
-    $f = "$epm_data/$problem_dir/$filename";
+    $f = "$epm_data/$probdir/$filename";
     if ( @lstat ( $f ) !== false )
     {
 	$errors[] = "$filename already exists";

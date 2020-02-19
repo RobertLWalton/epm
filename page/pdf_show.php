@@ -2,7 +2,7 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan  8 08:26:03 EST 2020
+    // Date:	Wed Feb 19 03:05:29 EST 2020
 
     // Show the PDF file $_GET['filename'].
     // File may be in current problem directory
@@ -15,7 +15,7 @@
     $uid = $_SESSION['EPM_USER_ID'];
     $problem = $_SESSION['EPM_PROBLEM'];
 
-    $problem_dir = "users/user$uid/$problem";
+    $probdir = "users/user$uid/$problem";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -26,8 +26,8 @@
 
     $filename = $_GET['filename'];
     $printname = "<u>$filename</u>:";
-    $f = "$problem_dir/$filename";
-    $g = "$problem_dir/+work+/$filename";
+    $f = "$probdir/$filename";
+    $g = "$probdir/+work+/$filename";
     if ( ! is_readable ( "$epm_data/$f" ) )
     {
         if ( ! is_readable ( "$epm_data/$g" ) )

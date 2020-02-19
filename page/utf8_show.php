@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb  8 20:33:33 EST 2020
+    // Date:	Wed Feb 19 03:05:41 EST 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // File may be in current problem directory
@@ -24,7 +24,7 @@
     $uid = $_SESSION['EPM_USER_ID'];
     $problem = $_SESSION['EPM_PROBLEM'];
 
-    $problem_dir = "users/user$uid/$problem";
+    $probdir = "users/user$uid/$problem";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -35,8 +35,8 @@
 
     $filename = $_GET['filename'];
     $printname = "<u>$filename</u>:";
-    $f = "$problem_dir/$filename";
-    $g = "$problem_dir/+work+/$filename";
+    $f = "$probdir/$filename";
+    $g = "$probdir/+work+/$filename";
     if ( ! is_readable ( "$epm_data/$f" ) )
     {
         if ( ! is_readable ( "$epm_data/$g" ) )
@@ -55,7 +55,7 @@
     $c = file_get_contents ( "$epm_data/$f" );
     if ( $c === false )
 	exit
-	    ( "SYSTEM ERROR: cannot read readable $f" ); 
+	    ( "SYSTEM ERROR: cannot read readable $f" );
 
     $lines = explode ( "\n", $c );
     if ( array_slice ( $lines, -1, 1 ) == [""] )
