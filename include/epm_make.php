@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 19 15:06:51 EST 2020
+// Date:    Thu Feb 20 03:38:42 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -344,7 +344,7 @@ function find_templates
 }
 
 // Get the template.optn file json with overrides from
-// earlier template directories and users/user$id
+// earlier template directories and users/user$uid
 // directory.  Cache result in $template_optn.
 //
 $template_optn = NULL;
@@ -956,8 +956,8 @@ function find_control
 //
 // Directory name is relative to epm_data.
 //
-// Warnings are issued if a .sh file process is killed or
-// did not start properly (no `$$ PID' line in .shout
+// Warnings are issued if a .sh file process is killed
+// or did not start properly (no `$$ PID' line in .shout
 // file).
 //
 function cleanup_dir ( $dir, $warnings )
@@ -1732,8 +1732,8 @@ function get_command_results ( $base, $dir, $wait = 0 )
 //	    Checks that file exists and is empty.
 //
 //	SUCCESS filename
-//	    Checks that file ends with the line:
-//		D 0 DONE
+//	    Checks that file ends with:
+//		::D 0 DONE
 //	    and is less than 1 megabyte in size.
 //
 function execute_checks
@@ -1753,9 +1753,9 @@ function execute_checks
 	    continue;
 	}
 	$test = $matches[1];
-	$file = "$epm_data/$workdir/$matches[2]";
+	$file = "$workdir/$matches[2]";
 
-	$size = @filesize ( $file );
+	$size = @filesize ( "$epm_data/$file" );
 	if ( $size === false )
 	{
 	    $errors[] = "file $file does not exist";
@@ -1776,7 +1776,8 @@ function execute_checks
 	    continue;
 	}
 
-	$contents = @file_get_contents ( $file );
+	$contents = @file_get_contents
+	    ( "$epm_data/$file" );
 	if ( $contents === false )
 	{
 	    $errors[] = "file $file is not readable";
@@ -1785,18 +1786,20 @@ function execute_checks
 
 	if ( $test == 'SUCCESS' )
 	{
-	    if ( ! preg_match ( '/(^|\n)D 0 DONE$/',
-	                        $contents ) )
+	    if ( !  preg_match ( '/::D 0 DONE$/',
+	                         $contents ) )
 	    {
 		$name = pathinfo
 		    ( $file, PATHINFO_FILENAME );
 		$errors[] =
-		    "execution of $name failed";
+		    "execution of commands in" .
+		    " $name.sh failed";
 	    }
 	    continue;
 	}
+	
 
-	$errors[] = "bad test in CHECKS item: $test";
+	$errors[] = "bad test in CHECKS item: $check";
     }
 }
 
@@ -1829,8 +1832,9 @@ function move_keep
 	if ( ! rename ( "$epm_data/$wfile",
 	                "$epm_data/$lfile" ) )
 	{
-	    $errors[] = "SYSTEM ERROR: could not rename"
-	              . " $wfile to $lfile";
+	    $e = "could not rename $wfile to $lfile";
+	    WARN ( $e );
+	    $errors[] = "EPM SYSTEM ERROR: $e";
 	    continue;
 	}
 	$moved[] = $fname;
@@ -2090,22 +2094,24 @@ SHOW:
 //
 // and execute $runbase.sh in background.  Here $runbase
 // is $runfile without its extension.  The -s option is
-// expressed iff $submit is true.  $d is the local (if
-// no -s) or remote (if -s) directory in which $runfile
-// is found, as per load_file_caches.
+// expressed iff $submit is true.  The $d directory is
+// the directory in which $runfile is found by load_
+// file_caches, and is local if no -s or remote if -s.
 //
-// WARNINGS: $rundir must not contain . or .. component
-//           names.
+// WARNING: $rundir must not contain . or .. component
+//          names.
 //
 // This function begins by unsetting
 //
 //      $_SESSION['EPM_RUNDIR']
 //      $_SESSION['EPM_RUNBASE']
+//      $_SESSION['EPM_RUNSUBMIT']
 //
 // If there are no errors, this function sets:
 //
 //     $_SESSION['EPM_RUNDIR'] to $rundir
 //     $_SESSION['EPM_RUNBASE'] to $runbase
+//     $_SESSION['EPM_RUNSUBMIT'] to $submit
 //
 function start_run
 	( $runfile, $rundir, $submit, & $errors )
@@ -2138,7 +2144,6 @@ function start_run
 	    return;
 	}
 	$d = $local_file_cache[$runfile];
-	$f = "$d/$runfile";
 	$e = "..";
     }
     else
@@ -2150,9 +2155,9 @@ function start_run
 	    return;
 	}
 	$d = $remote_file_cache[$f];
-	$f = "$d/$runfile";
 	$e = "$relfile/$d";
     }
+    $f = "$d/$runfile";
 
     if ( ! is_readable ( "$epm_data/$f" ) )
     {
@@ -2164,7 +2169,7 @@ function start_run
                      "$epm_data/$rundir/$runfile" ) )
     {
 	$errors[] = "cannot symbolically link"
-		  . " $rundir/$runfile to $d/$runfile";
+		  . " $rundir/$runfile to $f";
 	return;
     }
 
@@ -2182,6 +2187,113 @@ function start_run
 
     $_SESSION['EPM_RUNDIR'] = $rundir;
     $_SESSION['EPM_RUNBASE'] = $runbase;
+    $_SESSION['EPM_RUNSUBMIT'] = $submit;
+}
+    
+
+function finish_run ( & $errors )
+{
+    global $epm_data, $probdir, $submit_lock_desc,
+           $uid, $problem;
+
+    $rundir = $_SESSION['EPM_RUNDIR'];
+    $runbase = $_SESSION['EPM_RUNBASE'];
+    $submit = $_SESSION['EPM_RUNSUBMIT'];
+
+    $rout = "$rundir/$runbase.rout";
+    $rerr = "$rundir/$runbase.rerr";
+    $shout = "$rundir/$runbase.shout";
+
+    $contents = @file_get_contents
+        ( "$epm_data/$shout" );
+    if ( $contents === false )
+    {
+	$errors[] = "file $shout is not readable";
+	return;
+    }
+    if ( !  preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
+		          $contents, $matches ) )
+    {
+	$errors[] = "execution of $runbase.sh died";
+	return;
+    }
+    $line = $matches[1];
+    $code = $matches[2];
+    {
+	$errors[] = "execution of $runbase.sh failed"
+	          . " with error code $code";
+	return;
+    }
+
+    $size = @filesize ( "$epm_data/$rerr" );
+    if ( $size === false )
+    {
+	$errors[] = "file $rerr does not exist";
+	return;
+    }
+    if ( $size != 0 )
+    {
+	$errors[] = "file $rerr is not empty";
+	return;
+    }
+    if ( ! is_readable ( "$epm_data/$rout" ) )
+    {
+	$errors[] = "file $rout is not readable";
+	return;
+    }
+
+    if ( ! $submit )
+    {
+        $c = 1;
+	while ( true )
+	{
+	    $f = "$probdir/$rout-$c";
+	    if ( ! file_exists ( "$epm_data/$f" ) )
+	    {
+	        if ( ! rename
+		           ( "$epm_data/$rundir/$rout",
+			     "$epm_data/$f" ) )
+		{
+		    $e = "could not rename"
+		       . " $rundir/$rout to $f";
+		    WARN ( $e );
+		    $errors[] = "EPM SYSTEM ERROR: $e";
+		    // lock on $probdir/+lock+ should
+		    // have prevented race condition
+		}
+		break;
+	    }
+	    $c += 1;
+	}
+    }
+    else
+    {
+	$d = "admin/submit/user$uid/$problem";
+	@mkdir ( "$epm_data/$d", 0770, true );
+
+        $c = 1;
+	while ( true )
+	{
+	    $f = "$d/$rout-s$c";
+
+	    if ( ! file_exists ( "$epm_data/$f" ) )
+	    {
+	        if ( ! rename
+		           ( "$epm_data/$rundir/$rout",
+			     "$epm_data/$f" ) )
+		{
+		    $e = "could not rename"
+		       . " $rundir/$rout to $f";
+		    WARN ( $e );
+		    $errors[] = "EPM SYSTEM ERROR: $e";
+		    // lock on $probdir/+lock+ should
+		    // have prevented race condition
+		}
+		break;
+	    }
+	    $c += 1;
+	}
+    }
 }
 
 // Process an uploaded file whose $_FILES[...] value
@@ -2262,9 +2374,10 @@ function process_upload
 		          . " try again";
 		break;
 	    default:
-	        $errors[] = "SYSTEM ERROR uploading"
-		          . " $fname, PHP upload error"
-			  . " code $ferror";
+	        $e = "uploading $fname, PHP upload"
+		   . " error code $ferror";
+		WARN ( $e );
+		$errors[] = "EPM SYSTEM ERROR: $e";
 	}
 	return;
     }
