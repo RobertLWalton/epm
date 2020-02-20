@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb 20 04:35:25 EST 2020
+// Date:    Thu Feb 20 10:43:10 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1447,7 +1447,7 @@ function execute_commands_2 ( $base, $dir )
         ( $cmd, $desc, $pipes, $cwd, $env );
 }
 
-// First update_command_results is called, and then
+// First update_work_results is called, and then
 // update_workmap.  Then return an HTML listing
 // displaying the commands started by start_make_file
 // and their results.
@@ -1466,7 +1466,7 @@ function get_commands_display ( & $display )
     $workdir = $_SESSION['EPM_WORKDIR'];
     $workbase = $_SESSION['EPM_WORKBASE'];
     $map = & $_SESSION['EPM_WORKMAP'];
-    $r = update_command_results();
+    $r = update_work_results();
     update_workmap();
 
     $r_line = NULL;
@@ -1616,9 +1616,9 @@ function get_commands_display ( & $display )
 //
 // It is unwise to set $wait to a value larger than 100.
 //
-function update_command_results ( $wait = 0 )
+function update_work_results ( $wait = 0 )
 {
-    global $epm_data, $epm_shell_timeout;
+    global $epm_data;
     $workbase = $_SESSION['EPM_WORKBASE'];
     $workdir = $_SESSION['EPM_WORKDIR'];
     $result = $_SESSION['EPM_WORKRESULT'];
@@ -1631,7 +1631,25 @@ function update_command_results ( $wait = 0 )
     return $result;
 }
 
-// Same as update_command_results, except ignores
+// Ditto but updates $_SESSION['EPM_RUNRESULT]' by
+// reading $rundir/$runbase.shout.
+//
+function update_run_results ( $wait = 0 )
+{
+    global $epm_data;
+    $runbase = $_SESSION['EPM_RUNBASE'];
+    $rundir = $_SESSION['EPM_RUNDIR'];
+    $result = $_SESSION['EPM_RUNRESULT'];
+    if ( is_array ( $result ) || $result === false )
+        return $result;
+
+    $result = get_command_results
+    	( $runbase, $rundir, $wait );
+    $_SESSION['EPM_RUNRESULT'] = $result;
+    return $result;
+}
+
+// Same as update_work_results, except ignores
 // $_SESSION, takes parameters as arguments, reads
 // $base.shout, and just returns the result.
 //
@@ -2025,7 +2043,7 @@ function start_make_file
 // is not set.  Otherwise it unsets this last global
 // after getting its value.
 //
-// This function begins by calling update_command_result
+// This function begins by calling update_work_result
 // with zero wait.
 //
 // If the run has died or has an error, an error message
@@ -2060,7 +2078,7 @@ function finish_make_file
     $show = [];
     $errors_size = count ( $errors );
 
-    $r = update_command_results();
+    $r = update_work_results();
 
     if ( $r === false )
         $errors[] = "SYSTEM_ERROR: $workbase.sh died;"
@@ -2106,12 +2124,14 @@ SHOW:
 //      $_SESSION['EPM_RUNDIR']
 //      $_SESSION['EPM_RUNBASE']
 //      $_SESSION['EPM_RUNSUBMIT']
+//      $_SESSION['EPM_RUNRESULT']
 //
 // If there are no errors, this function sets:
 //
 //     $_SESSION['EPM_RUNDIR'] to $rundir
 //     $_SESSION['EPM_RUNBASE'] to $runbase
 //     $_SESSION['EPM_RUNSUBMIT'] to $submit
+//     $_SESSION['EPM_RUNRESULT'] to true
 //
 function start_run
 	( $runfile, $rundir, $submit, & $errors )
@@ -2122,6 +2142,7 @@ function start_run
     unset ( $_SESSION['EPM_RUNDIR'] );
     unset ( $_SESSION['EPM_RUNBASE'] );
     unset ( $_SESSION['EPM_RUNSUBMIT'] );
+    unset ( $_SESSION['EPM_RUNRESULT'] );
 
     $errors_size = count ( $errors );
 
@@ -2189,6 +2210,7 @@ function start_run
     $_SESSION['EPM_RUNDIR'] = $rundir;
     $_SESSION['EPM_RUNBASE'] = $runbase;
     $_SESSION['EPM_RUNSUBMIT'] = $submit;
+    $_SESSION['EPM_RUNRESULT'] = true;
 }
     
 
@@ -2199,32 +2221,26 @@ function finish_run ( & $errors )
     $rundir = $_SESSION['EPM_RUNDIR'];
     $runbase = $_SESSION['EPM_RUNBASE'];
     $submit = $_SESSION['EPM_RUNSUBMIT'];
+    $result = $_SESSION['EPM_RUNRESULT'];
+
+    if ( $result === true )
+        ERROR ( "finish_run called with 'true'" .
+	        " session EPM_RUNRESULT" );
+
+    if ( $result === false )
+    {
+        $errors[] = "$rundir/$runbase.sh died";
+	return;
+    }
+    if ( $result != ['D',0] )
+    {
+        $errors[] = "$rundir/$runbase.sh terminated"
+	          . " with error code {$result[1]}";
+	return;
+    }
 
     $rout = "$rundir/$runbase.rout";
     $rerr = "$rundir/$runbase.rerr";
-    $shout = "$rundir/$runbase.shout";
-    $sh = "$rundir/$runbase.sh";
-
-    $contents = @file_get_contents
-        ( "$epm_data/$shout" );
-    if ( $contents === false )
-    {
-	$errors[] = "file $shout is not readable";
-	return;
-    }
-    if ( !  preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
-		          $contents, $matches ) )
-    {
-	$errors[] = "execution of $sh died";
-	return;
-    }
-    $code = $matches[2];
-    if ( $matches[1] != 'D' || $code != 0 )
-    {
-	$errors[] = "execution of $sh failed"
-	          . " with error code $code";
-	return;
-    }
 
     $size = @filesize ( "$epm_data/$rerr" );
     if ( $size === false )

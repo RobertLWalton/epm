@@ -1,153 +1,38 @@
 <?php
 
-    // File:	problem.php
+    // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 20 10:50:52 EST 2020
+    // Date:	Thu Feb 20 10:29:52 EST 2020
 
-    // Selects user problem.  Displays and uploads
-    // problem files.
+    // Starts and monitors problem runs.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    if ( isset ( $_SESSION['EPM_RUNRESULT'] )
-         &&
-	 $_SESSION['EPM_RUNRESULT'] === true )
+    if ( ! isset ( $_SERVER['EPM_PROBLEM'] ) )
     {
-	// Run still running.
-	//
-	header ( 'Location: /page/run.php' );
+	header ( 'Location: /page/problem.php' );
 	exit;
     }
-
-    // require "$epm_home/include/debug_info.php";
-
-    $uid = $_SESSION['EPM_USER_ID'];
-    $email = $_SESSION['EPM_EMAIL'];
-
-    $user_dir = "users/user$uid";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
-    $errors = [];    // Error messages to be shown.
-    $warnings = [];  // Warning messages to be shown.
+    // require "$epm_home/include/debug_info.php";
 
-    // The only $_SESSION state particular to this page
-    // is $_SESSION['EPM_PROBLEM'].  The rest of the
-    // state is in the file system.
+    $uid = $_SESSION['EPM_USER_ID'];
+    $email = $_SESSION['EPM_EMAIL'];
+    $problem = $_SESSION['EPM_PROBLEM'];
+    $probdir = "users/user$uid/$problem";
 
-    // Set $problem to current problem, or NULL if none.
-    // Also set $probdir to the problem directory if
-    // $problem not NULL and the problem directory
-    // exists.  If $problem is not NULL but the problem
-    // directory does not exist, the problem has been
-    // deleted by another session.
-    //
-    // Also lock the problem directory for the duration
-    // of the execution of this page.
-    //
-    $problem = NULL;
-    $probdir = NULL;
-    $delete_problem = false;
-        // True to ask whether current problem is to be
-	// deleted.
-    $deleted_problem = NULL;
-        // Set to announce that $deleted_problem has
-	// been deleted.
-    if ( isset ( $_POST['new_problem'] ) )
+    if ( ! is_dir ( "$epm_data/$probdir" ) )
     {
-        $problem = trim ( $_POST['new_problem'] );
-	$d = "$epm_data/$user_dir/$problem";
-	if ( $problem == '' )
-	{
-	    // User hit carriage return on empty
-	    // field.
-	    $problem = NULL;
-	}
-	elseif ( ! preg_match ( '/^[-_A-Za-z0-9]+$/',
-	                        $problem )
-	         ||
-	         ! preg_match ( '/[A-Za-z]/', $problem )
-	       )
-	{
-	    $errors[] =
-	        "problem name $problem contains an" .
-		" illegal character or" .
-		" does not contain a letter";
-	    $problem = NULL;
-	}
-	else
-	if ( is_dir ( "$d" ) )
-	{
-	    $errors[] =
-	        "trying to create $problem which" .
-		" already exists";
-	    $problem = NULL;
-	}
-	else
-	{
-	    $m = umask ( 06 );
-	    if ( ! mkdir ( "$d", 0771 ) )
-		ERROR ( "cannot make" .
-		        " $user_dir/$problem" );
-	    umask ( $m );
-	}
+	// Some other session deleted the problem;
+	// let problem.php deal with it.
+	//
+	header ( 'Location: /page/problem.php' );
+	exit;
     }
-    elseif ( isset ( $_POST['selected_problem'] ) )
-    {
-        $problem = trim ( $_POST['selected_problem'] );
-	if ( ! preg_match
-	           ( '/^[-_A-Za-z0-9]+$/', $problem ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	else
-	if ( ! is_dir
-	         ( "$epm_data/$user_dir/$problem" ) )
-	{
-	    $errors[] =
-	        "trying to select non-existant" .
-		" problem: $problem";
-	    $problem = NULL;
-	}
-    }
-    elseif ( isset ( $_POST['delete_problem'] ) )
-    {
-	$prob = $_POST['delete_problem'];
-	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
-	     ||
-	     $prob != $_SESSION['EPM_PROBLEM'] )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	$delete_problem = true;
-    }
-    elseif ( isset ( $_POST['delete_problem_yes'] ) )
-    {
-	$prob = $_POST['delete_problem_yes'];
-	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
-	     ||
-	     $prob != $_SESSION['EPM_PROBLEM'] )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	unset ( $_SESSION['EPM_PROBLEM'] );
-	$d = "$epm_data/$user_dir/$prob";
-	exec ( "rm -rf $d" );
-	$deleted_problem = $prob;
-    }
-    else if ( isset ( $_POST['delete_problem_no'] ) )
-    {
-	$prob = $_POST['delete_problem_no'];
-	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
-	     ||
-	     $prob != $_SESSION['EPM_PROBLEM'] )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-    }
-
-    if (    ! isset ( $problem )
-         && isset ( $_SESSION['EPM_PROBLEM'] ) )
-        $problem = $_SESSION['EPM_PROBLEM'];
-    elseif ( isset ( $problem ) )
-	$_SESSION['EPM_PROBLEM'] = $problem;
 
     $lock_desc = NULL;
     function shutdown ()
@@ -157,260 +42,80 @@
 	    flock ( $lock_desc, LOCK_UN );
     }
     register_shutdown_function ( 'shutdown' );
+    $lock_desc =
+	fopen ( "$epm_data/$probdir/+lock+", "w" );
+    flock ( $lock_desc, LOCK_EX );
 
-    if ( isset ( $problem ) )
+    require "$epm_home/include/epm_make.php";
+    load_file_caches();
+
+    $errors = [];    // Error messages to be shown.
+    $warnings = [];  // Warning messages to be shown.
+
+    if ( isset ( $_SESSION['EPM_RUNRESULT'] )
+         &&
+	 $_SESSION['EPM_RUNRESULT'] === true )
+         &&
+	 update_run_results() !== true )
     {
-	$probdir =
-	    "users/user$uid/$problem";
-	if ( ! is_dir ( "$epm_data/$probdir" ) )
-	{
-	    $errors[] = "problem $problem has been"
-	             . " deleted by another session";
-	    $probdir = NULL;
-	    $problem = NULL;
-	    unset ( $_SESSION['EPM_PROBLEM'] );
-	}
-	else
-	{
-	    $lock_desc =
-		fopen ( "$epm_data/$probdir/+lock+",
-		        "w" );
-	    flock ( $lock_desc, LOCK_EX );
-	}
-
-    }
-    else
-	$probdir = NULL;
-
-    // Data Set by GET and POST Requests:
-    //
-    $show_file = NULL;  // File to be shown to right.
-    $show_files = [];   // Files to be shown to left.
-    $kept = [];		// Files kept.
-    $workbase = NULL;
-        // Non-NULL if there are commands to be
-	// displayed.
-    $uploaded_file = NULL;
-        // 'name' of uploaded file, if any file was
-	// uploaded.
-
-    // Set $problems to list of available problems.
-    //
-    $problems = [];
-
-    $desc = opendir ( "$epm_data/$user_dir" );
-    if ( $desc === false )
-         ERROR ( "cannot open $user_dir" );
-    while ( true )
-    {
-	$value = readdir ( $desc );
-	if ( ! $value )
-	{
-	    closedir ( $desc );
-	    break;
-	}
-	if ( preg_match
-	         ( '/^[-_A-Za-z0-9]+$/', $value ) )
-	    $problems[] = $value;
+        finish_run ( $errors );
     }
 
-    // Return DISPLAYABLE problem file names, sorted
-    // most recent first.
-    //
-    $problem_file_names = NULL;
-        // Cache of problem_file_names().
-    function problem_file_names()
+    $runbase = NULL;
+    $rundir = NULL;
+    $runsubmit = false;
+    if ( isset ( $_SESSION['EPM_RUNBASE'] ) )
     {
-        global $epm_data, $probdir,
-	       $problem_file_names, $display_file_type;
-
-	if ( isset ( $problem_file_names ) )
-	    return $problem_file_names;
-
-	if ( ! isset ( $probdir ) )
-	{
-	    $problem_file_names = [];
-	    return $problem_file_names;
-	}
-
-	clearstatcache();
-	$map = [];
-
-	foreach ( scandir ( "$epm_data/$probdir" )
-	          as $fname )
-	{
-	    if ( preg_match ( '/^\./', $fname ) )
-	        continue;
-	    if ( ! preg_match ( '/^[_\-.A-Za-z0-9]+$/',
-	                        $fname ) )
-	        continue;
-	    $ext = pathinfo
-	        ( $fname, PATHINFO_EXTENSION );
-	    if ( ! isset ( $display_file_type[$ext] ) )
-		continue;
-	    $f = "$probdir/$fname";
-	    $map[$fname] =
-	        filemtime ( "$epm_data/$f" );
-	}
-	arsort ( $map, SORT_NUMERIC );
-	    // Note, keys cannot be floating point and
-	    // files often share modification times.
-	foreach ( $map as $key => $value )
-	    $problem_file_names[] = $key;
-
-	return $problem_file_names;
+        $runbase = $_SESSION['EPM_RUNBASE'];
+        $rundir = $_SESSION['EPM_RUNDIR'];
+        $runsubmit = $_SESSION['EPM_RUNSUBMIT'];
     }
 
-    // Remaining POSTs require $problem and $probdir
-    // to be non-NULL.
-    //
+// TBD
+
     if ( $method != 'POST' ) /* Do Nothing */;
-    elseif ( ! isset ( $probdir ) )
-	/* Do Nothing */;
-    elseif ( isset ( $_POST['show_file'] ) )
+    elseif ( isset ( $_POST['execute_run'] ) )
     {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f,
-	    // etc.  Needed if we set show_files.
-
-	$f = $_POST['show_file'];
-	if ( array_search
-	         ( $f, problem_file_names(), true )
-	     === false )
+	$f = $_POST['execute_run'];
+	if ( unset ( $local_file_cache[$f] ) )
 	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	           " run.php" );
 
-	$show_files[] = "users/user$uid/$problem/$f";
+	// TBD
     }
-    elseif ( isset ( $_POST['delete_file'] ) )
+    elseif ( isset ( $_POST['submit_run'] ) )
     {
-	$f = $_POST['delete_file'];
-	if ( array_search
-	         ( $f, problem_file_names(),
-		       true ) === false )
+	$f = $_POST['submit_run'];
+	if ( unset ( $remote_file_cache[$f] ) )
 	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	$f = "$probdir/$f";
-        if ( ! unlink ( "$epm_data/$f" ) )
-	    $errors[] = "could not delete $f";
-	$problem_file_names = NULL;
-	    // Clear cache.
-    }
-    elseif ( isset ( $_POST['make'] ) )
-    {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f, etc.
+	           " run.php" );
 
-        $m = $_POST['make'];
-	if ( ! preg_match ( '/^([^:]+):([^:]+)$/', $m,
-	                    $matches ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	$src = $matches[1];
-	$des = $matches[2];
-		 	    
-	if ( array_search
-	         ( $src, problem_file_names(),
-		         true ) === false )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	start_make_file
-	    ( $src, $des, NULL /* no condition */,
-	      true, "$probdir/+work+",
-	      NULL, NULL /* no upload, upload_tmp */,
-	      $warnings, $errors );
-	if ( isset ( $_SESSION['EPM_CONTROL'] ) )
-	{
-	    $workbase = $_SESSION['EPM_WORKBASE'];
-	    $problem_file_names = NULL; // Clear cache.
-	}
-    }
-    elseif ( isset ( $_POST['upload'] ) )
-    {
-	if ( isset ( $_FILES['uploaded_file']
-	                     ['name'] ) )
-	{
-	    $upload_info = $_FILES['uploaded_file'];
-	    $uploaded_file = $upload_info['name'];
-	}
-	else
-	    $uploaded_file = '';
-
-	if ( $uploaded_file != '' )
-	{
-	    require "$epm_home/include/epm_make.php";
-		// Do this first as it may change $f,
-		// etc.
-
-	    process_upload
-		( $upload_info, "$probdir/+work+",
-		  $warnings, $errors );
-	    if ( isset ( $_SESSION['EPM_CONTROL'] ) )
-	    {
-		$workbase = $_SESSION['EPM_WORKBASE'];
-		$problem_file_names = NULL;
-		    // Clear cache.
-	    }
-	}
-	else
-	    $errors[] = "no file selected for upload";
+	// TBD
     }
     elseif ( isset ( $_POST['reload'] )
              &&
-	     isset ( $_SESSION['EPM_WORKBASE'] ) )
+	     isset ( $runbase ) )
     {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f, etc.
-
-        $workbase = $_SESSION['EPM_WORKBASE'];
+        // Do nothing here.
     }
     elseif ( isset ( $_POST['update'] ) )
     {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f, etc.
-
-	$count = 0;
-	while ( true )
+	if ( ! isset ( $_SESSION['EPM_RUNRESULT'] )
+	     !!
+	     $_SESSION['EPM_RUNRESULT'] !== true )
 	{
-	    $r = update_work_results ( 0 );
-	    if ( $r !== true || $count == 50 )
-	    {
-	        echo 'RELOAD';
-		exit;
-	    }
-	    $r = update_workmap();
-	    if ( count ( $r ) > 0 )
-	    {
-		$workmap = & $_SESSION['EPM_WORKMAP'];
-	        foreach ( $r as $n )
-		{
-		    $e = $workmap[$n];
-		    echo "TIME $n {$e[2]}\n";
-		}
-		exit;
-	    }
-	    usleep ( 100000 );
-	    $count += 1;
+	    echo 'RELOAD';
+	    exit;
 	}
-    }
-
-    if ( isset ( $workbase )
-         &&
-	 isset ( $_SESSION['EPM_CONTROL'] )
-         &&
-	 update_work_results() !== true )
-    {
-        finish_make_file 
-	    ( $kept, $show_files, $warnings, $errors );
-    }
-
-    if ( count ( $show_files ) > 0 )
-    {
-        if ( ! function_exists ( "find_show_file" ) )
-	    ERROR ( "problem.php:" .
-	            " failed to load epm_make.php" .
-		    " while setting show_files" );
-        $show_file = find_show_file ( $show_files );
+	else
+	{
+	    $f = "$rundir/$runbase.stat";
+	    $contents = @file_get_contents
+	        ( "$epm_data/$f" );
+	    if ( $contents !== false )
+	        echo $contents;
+	    exit;
+	}
     }
 
     $debug = ( $epm_debug != ''
@@ -861,3 +566,4 @@ EOT;
 
 </body>
 </html>
+
