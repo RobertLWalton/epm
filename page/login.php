@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 18 05:37:14 EST 2020
+    // Date:	Thu Feb 20 04:37:18 EST 2020
 
     // Handles login for a session.
     //
@@ -438,7 +438,8 @@
 	$iv = hex2bin
 	    ( "00000000000000000000000000000000" );
 	$handshake = bin2hex ( openssl_encrypt
-	    ( hex2bin ( $data['HANDSHAKE'] ), "aes-128-cbc",
+	    ( hex2bin ( $data['HANDSHAKE'] ),
+	      "aes-128-cbc",
 	      hex2bin ( $data['KEYA'] ),
 	      OPENSSL_RAW_DATA, $iv ) );
 
@@ -575,7 +576,8 @@ Delete All Tickets
 </div>
 
 <div id='get_cnum' style.display='none'>
-A Confirmation Number has been sent to the above Email Address.
+A Confirmation Number has been sent
+to the above Email Address.
 <br>
 Please <input type='text' size='40' id='cnum_in'
        placeholder='Enter Confirmation Number'>
@@ -584,7 +586,8 @@ Please <input type='text' size='40' id='cnum_in'
 <script>
 
 var LOG = function(message) {};
-<?php if ( $debug ) echo "LOG = console.log;" . PHP_EOL ?>
+<?php if ( $debug )
+          echo "LOG = console.log;" . PHP_EOL ?>
 
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;
@@ -679,7 +682,8 @@ function hex2ArrayBuffer ( hex )
     var result = new ArrayBuffer ( length );
     var view = new Uint8Array ( result );
     for ( var i = 0; i < length; ++ i )
-        view[i] = parseInt ( hex.substr ( 2*i, 2 ), 16 );
+        view[i] =
+	    parseInt ( hex.substr ( 2*i, 2 ), 16 );
     return result;
 }
 

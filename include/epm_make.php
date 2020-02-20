@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb 20 03:38:42 EST 2020
+// Date:    Thu Feb 20 04:35:25 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2121,6 +2121,7 @@ function start_run
 
     unset ( $_SESSION['EPM_RUNDIR'] );
     unset ( $_SESSION['EPM_RUNBASE'] );
+    unset ( $_SESSION['EPM_RUNSUBMIT'] );
 
     $errors_size = count ( $errors );
 
@@ -2144,7 +2145,7 @@ function start_run
 	    return;
 	}
 	$d = $local_file_cache[$runfile];
-	$e = "..";
+	$r = "..";
     }
     else
     {
@@ -2155,7 +2156,7 @@ function start_run
 	    return;
 	}
 	$d = $remote_file_cache[$f];
-	$e = "$relfile/$d";
+	$r = "$relfile/$d";
     }
     $f = "$d/$runfile";
 
@@ -2165,7 +2166,7 @@ function start_run
 	return;
     }
 
-    if ( ! symlink ( "$e/$runfile",
+    if ( ! symlink ( "$r/$runfile",
                      "$epm_data/$rundir/$runfile" ) )
     {
 	$errors[] = "cannot symbolically link"
@@ -2173,7 +2174,7 @@ function start_run
 	return;
     }
 
-    $runbase = pathinfo ( $file, PATHINFO_FILENAME );
+    $runbase = pathinfo ( $runfile, PATHINFO_FILENAME );
 
     $commands = [ '${EPM_HOME}/bin/epm_run' .
     		  ($submit ? ' -s' : '' ) . ' \\',
@@ -2193,8 +2194,7 @@ function start_run
 
 function finish_run ( & $errors )
 {
-    global $epm_data, $probdir, $submit_lock_desc,
-           $uid, $problem;
+    global $epm_data, $probdir, $uid, $problem;
 
     $rundir = $_SESSION['EPM_RUNDIR'];
     $runbase = $_SESSION['EPM_RUNBASE'];
@@ -2203,6 +2203,7 @@ function finish_run ( & $errors )
     $rout = "$rundir/$runbase.rout";
     $rerr = "$rundir/$runbase.rerr";
     $shout = "$rundir/$runbase.shout";
+    $sh = "$rundir/$runbase.sh";
 
     $contents = @file_get_contents
         ( "$epm_data/$shout" );
@@ -2214,13 +2215,13 @@ function finish_run ( & $errors )
     if ( !  preg_match ( '/::([A-Z0-9]+) (\d+) DONE$/',
 		          $contents, $matches ) )
     {
-	$errors[] = "execution of $runbase.sh died";
+	$errors[] = "execution of $sh died";
 	return;
     }
-    $line = $matches[1];
     $code = $matches[2];
+    if ( $matches[1] != 'D' || $code != 0 )
     {
-	$errors[] = "execution of $runbase.sh failed"
+	$errors[] = "execution of $sh failed"
 	          . " with error code $code";
 	return;
     }
@@ -2247,15 +2248,15 @@ function finish_run ( & $errors )
         $c = 1;
 	while ( true )
 	{
-	    $f = "$probdir/$rout-$c";
+	    $f = "$probdir/$runbase.rout-$c";
 	    if ( ! file_exists ( "$epm_data/$f" ) )
 	    {
 	        if ( ! rename
-		           ( "$epm_data/$rundir/$rout",
+		           ( "$epm_data/$rout",
 			     "$epm_data/$f" ) )
 		{
 		    $e = "could not rename"
-		       . " $rundir/$rout to $f";
+		       . " $rout to $f";
 		    WARN ( $e );
 		    $errors[] = "EPM SYSTEM ERROR: $e";
 		    // lock on $probdir/+lock+ should
@@ -2264,26 +2265,31 @@ function finish_run ( & $errors )
 		break;
 	    }
 	    $c += 1;
+	    if ( $c > 10000 )
+	        ERROR ( "too many .rout files in" .
+		        " $probdir" );
 	}
     }
     else
     {
 	$d = "admin/submit/user$uid/$problem";
 	@mkdir ( "$epm_data/$d", 0770, true );
+	if ( ! is_dir ( "$epm_data/$d" ) )
+	    ERROR ( "could not make directory $d" );
 
         $c = 1;
 	while ( true )
 	{
-	    $f = "$d/$rout-s$c";
+	    $f = "$d/$runbase.rout-s$c";
 
 	    if ( ! file_exists ( "$epm_data/$f" ) )
 	    {
 	        if ( ! rename
-		           ( "$epm_data/$rundir/$rout",
+		           ( "$epm_data/$rout",
 			     "$epm_data/$f" ) )
 		{
 		    $e = "could not rename"
-		       . " $rundir/$rout to $f";
+		       . " $rout to $f";
 		    WARN ( $e );
 		    $errors[] = "EPM SYSTEM ERROR: $e";
 		    // lock on $probdir/+lock+ should
@@ -2292,6 +2298,8 @@ function finish_run ( & $errors )
 		break;
 	    }
 	    $c += 1;
+	    if ( $c > 10000 )
+	        ERROR ( "too many .rout files in $d" );
 	}
     }
 }
