@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Feb 16 03:31:33 EST 2020
+// Date:    Fri Feb 21 14:50:20 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -100,7 +100,7 @@ session_name ( "EPM_859036254367" );
     // specific 12 digit random number.
 
 $epm_debug = '';
-$epm_debug = '/(login|user|problem)/';
+$epm_debug = '/(login|user|problem|run)/';
     // If not '', this must be a regular expression
     // which when matched to $php_self enables the
     // DEBUG function to write to $epm_data/debug.log.

@@ -2,13 +2,13 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 21 12:01:30 EST 2020
+    // Date:	Fri Feb 21 14:57:12 EST 2020
 
     // Starts and monitors problem runs.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    if ( ! isset ( $_SERVER['EPM_PROBLEM'] ) )
+    if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
     {
 	header ( 'Location: /page/problem.php' );
 	exit;
@@ -56,7 +56,7 @@
     if ( isset ( $_POST['execute_run'] ) )
     {
 	$f = $_POST['execute_run'];
-	if ( unset ( $local_file_cache[$f] ) )
+	if ( ! isset ( $local_file_cache[$f] ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " run.php" );
 	start_run ( $f, "$probdir/+run+", false,
@@ -66,7 +66,7 @@
     elseif ( isset ( $_POST['submit_run'] ) )
     {
 	$f = $_POST['submit_run'];
-	if ( unset ( $remote_file_cache[$f] ) )
+	if ( ! isset ( $remote_file_cache[$f] ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " run.php" );
 	start_run ( $f, "$probdir/+run+", true,
@@ -79,7 +79,7 @@
     //
     if ( isset ( $_SESSION['EPM_RUNRESULT'] )
          &&
-	 $_SESSION['EPM_RUNRESULT'] === true )
+	 $_SESSION['EPM_RUNRESULT'] === true
          &&
 	 update_run_results() !== true )
     {
@@ -123,7 +123,7 @@
 	}
     }
 
-    if ( $method == 'POST' && ! $post_processed ))
+    if ( $method == 'POST' && ! $post_processed )
         exit ( 'UNACCEPTABLE HTTP POST' );
 
 

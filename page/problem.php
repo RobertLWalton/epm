@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 21 03:19:10 EST 2020
+    // Date:	Fri Feb 21 14:45:45 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -553,20 +553,28 @@ EOT;
          " method='POST'>";
     if ( count ( $problems ) > 0 )
     {
+	echo "<tr>" . PHP_EOL;
 	echo "<form action='problem.php'" .
 	     " method='POST'" .
 	     " style='display:inline'>" . PHP_EOL;
-	echo "<tr><td style='text-align:right'>" .
+	echo "<td style='text-align:right'>" .
 	     "<input type='submit'" .
 	     " name='goto_problem'" .
 	     " value='Go To Problem:'></td>" . PHP_EOL;
-        echo "<td><select name='selected_problem'
-	           title='problem to go to'>" .
-	     PHP_EOL;
+        echo "<td><select name='selected_problem'" .
+	     " title='problem to go to'>" .  PHP_EOL;
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
 	             "$value</option>" . PHP_EOL;
-        echo "</select></td></tr></form>" . PHP_EOL;
+        echo "</select></td>" . PHP_EOL;
+        echo "</form>" . PHP_EOL;
+	echo "<form action='run.php'" .
+	     " method='GET'" .
+	     " style='display:inline'>" . PHP_EOL;
+	echo "<td><button type='submit'>" .
+	     "Go to Run Page</button></td></form>" .
+	     PHP_EOL;
+	echo "</tr>" . PHP_EOL;
     }
     echo <<<EOT
     <form action='problem.php' method='POST'
