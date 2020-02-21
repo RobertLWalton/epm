@@ -51,7 +51,42 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $post_processed = false;
 
+    $runbase = NULL;
+    $rundir = NULL;
+    $runsubmit = NULL;
+    if ( isset ( $_SESSION['EPM_RUNBASE'] ) )
+    {
+        $runbase = $_SESSION['EPM_RUNBASE'];
+        $rundir = $_SESSION['EPM_RUNDIR'];
+        $runsubmit = $_SESSION['EPM_RUNSUBMIT'];
+    }
+
+    if ( isset ( $_POST['execute_run'] ) )
+    {
+	$f = $_POST['execute_run'];
+	if ( unset ( $local_file_cache[$f] ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " run.php" );
+	start_run ( $f, "$probdir/+run+", false,
+	            $errors );
+	$post_processed = true;
+    }
+    elseif ( isset ( $_POST['submit_run'] ) )
+    {
+	$f = $_POST['submit_run'];
+	if ( unset ( $remote_file_cache[$f] ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " run.php" );
+	start_run ( $f, "$probdir/+run+", true,
+	            $errors );
+	$post_processed = true;
+    }
+
+    // Do this after execute or submit but before
+    // update and reload.
+    //
     if ( isset ( $_SESSION['EPM_RUNRESULT'] )
          &&
 	 $_SESSION['EPM_RUNRESULT'] === true )
@@ -61,47 +96,17 @@
         finish_run ( $errors );
     }
 
-    $runbase = NULL;
-    $rundir = NULL;
-    $runsubmit = false;
-    if ( isset ( $_SESSION['EPM_RUNBASE'] ) )
-    {
-        $runbase = $_SESSION['EPM_RUNBASE'];
-        $rundir = $_SESSION['EPM_RUNDIR'];
-        $runsubmit = $_SESSION['EPM_RUNSUBMIT'];
-    }
-
-// TBD
-
-    if ( $method != 'POST' ) /* Do Nothing */;
-    elseif ( isset ( $_POST['execute_run'] ) )
-    {
-	$f = $_POST['execute_run'];
-	if ( unset ( $local_file_cache[$f] ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " run.php" );
-
-	// TBD
-    }
-    elseif ( isset ( $_POST['submit_run'] ) )
-    {
-	$f = $_POST['submit_run'];
-	if ( unset ( $remote_file_cache[$f] ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " run.php" );
-
-	// TBD
-    }
-    elseif ( isset ( $_POST['reload'] )
+    if ( isset ( $_POST['reload'] )
              &&
 	     isset ( $runbase ) )
     {
         // Do nothing here.
+	$post_processed = true;
     }
     elseif ( isset ( $_POST['update'] ) )
     {
 	if ( ! isset ( $_SESSION['EPM_RUNRESULT'] )
-	     !!
+	     ||
 	     $_SESSION['EPM_RUNRESULT'] !== true )
 	{
 	    echo 'RELOAD';
@@ -118,10 +123,22 @@
 	}
     }
 
+    if ( $method == 'POST' && ! $post_processed ))
+        exit ( 'UNACCEPTABLE HTTP POST' );
+
+
     $debug = ( $epm_debug != ''
                &&
 	       preg_match ( $epm_debug, $php_self ) );
 	// True to enable javascript logging.
+
+    $local_run_files = [];
+    foreach ( $local_file_cache as $fname => $fdir )
+    {
+        if ( preg_match ( '/^.+\.run$/', $fname ) )
+	    $local_run_files[] = $fname;
+    }
+    sort ( $local_run_files );
 
 ?>
 
@@ -149,7 +166,7 @@
 	float: right;
 	height: 99%;
     }
-    div.command_display {
+    div.run_display {
 	background-color: #C0FFC0;
     }
     div.show {
@@ -166,49 +183,24 @@
 <script>
     var iframe;
 
-    function create_iframe ( page, filename ) {
+    function runshow ( runfile ) {
 	if ( iframe != undefined ) iframe.remove();
 
 	iframe = document.createElement("IFRAME");
 	iframe.className = 'right';
-	iframe.name = filename;
+	iframe.name = runfile;
 	iframe.src =
-	    '/page/' + page + '?filename=' + filename;
+	    '/page/utf8_show.php?filename=' +
+	    runfile;
 	document.body.appendChild ( iframe );
     }
 </script>
 <body>
 
 <div class='left'>
+
 <?php 
 
-    if ( $delete_problem )
-    {
-	echo "<div style='background-color:#F5F81A'>" .
-	     PHP_EOL;
-	echo "<form method='POST'" .
-	     " style='display:inline'" .
-	     " action=problem.php>";
-	echo "Do you really want to delete current" .
-	     " problem $problem?";
-	echo "&nbsp;&nbsp;<button type='submit'" .
-	     " name='delete_problem_yes'" .
-	     " value='$problem'>" .
-	     "YES</button>";
-	echo "&nbsp;&nbsp;<button type='submit'" .
-	     " name='delete_problem_no'" .
-	     " value='$problem'>" .
-	     "NO</button>";
-	echo "</form></div>" . PHP_EOL;
-    }
-    else if ( isset ( $deleted_problem ) )
-    {
-	echo "<div style='background-color:#F5F81A'>" .
-	     PHP_EOL;
-	echo "Problem $deleted_problem has been" .
-	     " deleted!<br>";
-	echo "</div>" . PHP_EOL;
-    }
     if ( count ( $errors ) > 0 )
     {
 	echo "<div style='background-color:#F5F81A'>" .
@@ -230,9 +222,6 @@
 	echo "<br></div></div>" . PHP_EOL;
     }
 
-    $current_problem = ( isset ( $problem ) ?
-                                 $problem :
-			         "none selected" );
     echo <<<EOT
     <form style='display:inline'
           action='user.php' method='GET'>
@@ -240,191 +229,56 @@
                     title='click to see user profile'>
     &nbsp;&nbsp;&nbsp;&nbsp;
     <h5>Current Problem:</h5>&nbsp;
-    <pre>$current_problem</pre></b>
+    <pre>$problem</pre></b>
     </form>
 EOT;
-    if ( isset ( $problem ) )
-        echo "&nbsp;&nbsp;&nbsp;&nbsp;" .
-	     "<form style='display:inline'" .
-	     " action='problem.php' method='POST'>" .
-             " <button type='submit'" .
-	     " name='delete_problem'" .
-	     " value='$problem'>" .
-	     "Delete Current Problem</button>" .
-	     "</form>";
-    echo "<br>";
-    echo "<table><form action='problem.php'" .
-         " method='POST'>";
-    if ( count ( $problems ) > 0 )
-    {
-	echo "<form action='problem.php'" .
-	     " method='POST'" .
-	     " style='display:inline'>" . PHP_EOL;
-	echo "<tr><td style='text-align:right'>" .
-	     "<input type='submit'" .
-	     " name='goto_problem'" .
-	     " value='Go To Problem:'></td>" . PHP_EOL;
-        echo "<td><select name='selected_problem'
-	           title='problem to go to'>" .
-	     PHP_EOL;
-	foreach ( $problems as $value )
-	    echo "    <option value='$value'>" .
-	             "$value</option>" . PHP_EOL;
-        echo "</select></td></tr></form>" . PHP_EOL;
-    }
-    echo <<<EOT
-    <form action='problem.php' method='POST'
-	  style='display:inline'>
-    <tr><td style='text-align:right'>
-    <h5>or Create New Problem:<h5></td><td>
-    <input type="text" size="32" name="new_problem"
-           placeholder="New Problem Name" id="create">
-    </td></tr></table></form>
-EOT;
 
-    if ( isset ( $problem ) )
+    if ( count ( $local_run_files ) > 0 )
     {
-        $count = 0;
-	foreach ( problem_file_names() as $fname )
+	echo "<form action='run.php' method='POST'>" .
+	     "<h5>Current Problem Run Files</h5>" .
+	     "<table style='display:block'>";
+	foreach ( $local_run_files as $fname )
 	{
-	    if ( ++ $count == 1 )
-	        echo "<form action='problem.php'" .
-		     " method='POST'>" .
-		     "<h5>Current Problem Files" .
-		     " (most recent first):</h5>" .
-		     "<table style='display:block'>";
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>" .
-	         "<button type='submit'" .
-	         " name='show_file' value='$fname'>" .
+	         "<button onclick='runshow($fname)'>" .
 		 $fname . "</button></td>";
 	    echo "<td><button type='submit'" .
-	         " name='delete_file' value='$fname'>" .
-		 "Delete</button></td>";
-	    if ( preg_match ( '/^(.+)\.in$/', $fname,
-	                      $matches ) )
-	    {
-		$b = $matches[1];
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " value='$fname:$b.sin'>" .
-		     "Make .sin</button></td>";
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " value='$fname:$b.sout'>" .
-		     "Make .sout</button></td>";
-	    }
-	    elseif ( preg_match ( '/^(.+)\.sout$/',
-	                          $fname, $matches ) )
-	    {
-		$b = $matches[1];
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " value='$fname:$b.fout'>" .
-		     "Make .fout</button></td>";
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " value='$fname:$b.score'>" .
-		     "Make .score</button></td>";
-	    }
-	    elseif ( preg_match ( '/^(.+)\.fout$/',
-	                          $fname, $matches ) )
-	    {
-		$b = $matches[1];
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " value='$fname:$b.score'>" .
-		     "Make .score</button></td>";
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " value='$fname:$b.ftest'>" .
-		     "Make .ftest</button></td>";
-	    }
+	         " name='execute_run' value='$fname'>" .
+		 "Run</button></td>";
 	    echo "</tr>";
 	}
-	if ( $count > 0 ) echo "</table></form>";
+	echo "</table></form>";
+    }
 
-        echo <<<EOT
-
-	<form enctype="multipart/form-data"
-	      action="problem.php" method="post">
-	<input type="hidden" name="MAX_FILE_SIZE"
-	       value="$epm_upload_maxsize">
-	<input type="submit" name="upload"
-	       value="Upload File:">
-	<input type="file" name="uploaded_file"
-	       title="file to upload">
-	</form>
+    if ( isset ( $runbase ) )
+    {
+	$r = $_SESSION['EPM_RUNRESULT'];
+	if ( $r === true )
+	    $h = 'Currently Executing Run';
+	else
+	    $h = 'Last Completed Run';
+	$c = file_get_contents
+	    ( "$epm_data/$rundir/$runbase.stat" );
+	if ( $c === false )
+	    $c = '(no status available)';
+	echo <<<EOT
+	<div class='run_display'>
+	<h5>$h&nbsp;-&nbsp;$runbase.run:</h5><br>
+	<div class='indented'>
+	<pre id='status'>$c</pre>
 EOT;
-    }
-
-    if ( $workbase )
-    {
-	echo "<div class='command_display'>" .
-	     PHP_EOL;
-	get_commands_display ( $display );
-	echo "<h5>Commands:</h5>" . PHP_EOL;
-	echo "<div class='indented'>" . PHP_EOL;
-	echo $display . PHP_EOL;
-	echo "</div>" . PHP_EOL;
-        if ( count ( $kept ) > 0 )
-	{
-	    echo "<h5>Kept:</h5>" . PHP_EOL;
-	    echo "<div class='indented'>" . PHP_EOL;
-	    foreach ( $kept as $e )
-	        echo "<pre>$e</pre><br>" . PHP_EOL;
-	    echo "<br></div>" . PHP_EOL;
-	}
-	echo "</div>" . PHP_EOL;
-    }
-
-    if ( count ( $show_files ) > 0 )
-    {
-	echo "<br><div class='show'>" . PHP_EOL;
-	foreach ( $show_files as $f )
-	{
-	    $f = "$epm_data/$f";
-	    $b = basename ( $f );
-	    if ( filesize ( $f ) == 0 )
-	    {
-		echo "<u><pre>$b</pre></u>" .
-		     " is empty<br>" . PHP_EOL;
-		continue;
-	    }
-	    $ext = pathinfo ( $f, PATHINFO_EXTENSION );
-	    if ( ! isset ( $display_file_type[$ext] ) )
-	        continue;
-	    $type = $display_file_type[$ext];
-	    if ( $type == 'pdf' ) $type = 'PDF file';
-
-	    if ( $type == 'utf8' )
-	    {
-		echo "<u><pre>$b:</pre></u>" . PHP_EOL;
-		$c = file_get_contents ( $f );
-		$hc = htmlspecialchars ( $c );
-		echo "<br><div" .
-		     " style='margin-left:20px'>" .
-		     PHP_EOL;
-		echo "<pre>$hc</pre>" .  PHP_EOL;
-		echo "</div>" .  PHP_EOL;
-	    }
-	    else
-	    {
-		$t = exec ( "file -h $f" );
-		$t = explode ( ":", $t );
-		$t = $t[1];
-		if ( preg_match
-		         ( '/symbolic link/', $t ) )
-		{
-		    $t = trim ( $t );
-		    $t .= "\n    which is $type";
-		}
-		else
-		    $t = $type;
-		echo "<pre><u>$b</u> is $t</pre><br>" .
-		     PHP_EOL;
-	    }
-	}
+	if ( r === false )
+	    echo "<br><pre class='red'>Run Died" .
+	         " Unexpectedly<pre>" . PHP_EOL;
+	elseif ( r === true || r == ['D',0] )
+	    /* Do Nothing */;
+	else
+	    echo "<br><pre class='red'>Run Terminated" .
+	         " Prematurely With Exit Code" .
+		 " {$r[1]}<pre>" .
+		 PHP_EOL;
 	echo "</div>" . PHP_EOL;
     }
 

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 20 10:50:52 EST 2020
+    // Date:	Fri Feb 21 03:19:10 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -455,6 +455,7 @@
     }
     td.time {
 	color: #0052CC;
+	text-align: right;
     }
 </style>
 
@@ -589,10 +590,21 @@ EOT;
 		     " (most recent first):</h5>" .
 		     "<table style='display:block'>";
 	    echo "<tr>";
-	    echo "<td style='text-align:right'>" .
-	         "<button type='submit'" .
-	         " name='show_file' value='$fname'>" .
-		 $fname . "</button></td>";
+	    echo "<td style='text-align:right'>";
+	    $fext = pathinfo ( $fname, 
+			       PATHINFO_EXTENSION );
+	    $ftype = $display_file_type[$fext];
+	    if ( isset ( $display_file_map[$ftype] ) )
+	    {
+	        $fpage = $display_file_map[$ftype];
+	        echo "<button type='button'" .
+		     " onclick='create_iframe" .
+		     "(\"$fpage\",\"$fname\")'>";
+	    }
+	    else
+	        echo "<button type='submit'" .
+	             " name='show_file' value='$fname'>";
+	    echo $fname . "</button></td>";
 	    echo "<td><button type='submit'" .
 	         " name='delete_file' value='$fname'>" .
 		 "Delete</button></td>";
