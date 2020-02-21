@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 20 10:29:52 EST 2020
+    // Date:	Fri Feb 21 12:01:30 EST 2020
 
     // Starts and monitors problem runs.
 
@@ -53,16 +53,6 @@
     $warnings = [];  // Warning messages to be shown.
     $post_processed = false;
 
-    $runbase = NULL;
-    $rundir = NULL;
-    $runsubmit = NULL;
-    if ( isset ( $_SESSION['EPM_RUNBASE'] ) )
-    {
-        $runbase = $_SESSION['EPM_RUNBASE'];
-        $rundir = $_SESSION['EPM_RUNDIR'];
-        $runsubmit = $_SESSION['EPM_RUNSUBMIT'];
-    }
-
     if ( isset ( $_POST['execute_run'] ) )
     {
 	$f = $_POST['execute_run'];
@@ -94,6 +84,16 @@
 	 update_run_results() !== true )
     {
         finish_run ( $errors );
+    }
+
+    $runbase = NULL;
+    $rundir = NULL;
+    $runsubmit = NULL;
+    if ( isset ( $_SESSION['EPM_RUNBASE'] ) )
+    {
+        $runbase = $_SESSION['EPM_RUNBASE'];
+        $rundir = $_SESSION['EPM_RUNDIR'];
+        $runsubmit = $_SESSION['EPM_RUNSUBMIT'];
     }
 
     if ( isset ( $_POST['reload'] )
@@ -166,17 +166,17 @@
 	float: right;
 	height: 99%;
     }
+    div.errors {
+	background-color: #F5F81A;
+    }
+    div.warnings {
+	background-color: #FFC0FF;
+    }
     div.run_display {
 	background-color: #C0FFC0;
     }
-    div.show {
-	background-color: #E5C4E7;
-    }
     div.indented {
 	margin-left: 20px;
-    }
-    td.time {
-	color: #0052CC;
     }
 </style>
 
@@ -203,8 +203,7 @@
 
     if ( count ( $errors ) > 0 )
     {
-	echo "<div style='background-color:#F5F81A'>" .
-	     PHP_EOL;
+	echo "<div class='errors'>" .  PHP_EOL;
 	echo "<h5>Errors:</h5>" . PHP_EOL;
 	echo "<div class='indented'>" . PHP_EOL;
 	foreach ( $errors as $e )
@@ -213,8 +212,7 @@
     }
     if ( count ( $warnings ) > 0 )
     {
-	echo "<div style='background-color:#ffc0ff'>" .
-	     PHP_EOL;
+	echo "<div class='warnings'>" .  PHP_EOL;
 	echo "<h5>Warnings:</h5>" . PHP_EOL;
 	echo "<div class='indented'>" . PHP_EOL;
 	foreach ( $warnings as $e )
@@ -227,10 +225,15 @@
           action='user.php' method='GET'>
     <h5>User:</h5> <input type='submit' value='$email'
                     title='click to see user profile'>
+    </form>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <form style='display:inline'
+          action='problem.php' method='GET'>
+    <button type='submit'>Go To Problem Page</button>
+    </form>
     &nbsp;&nbsp;&nbsp;&nbsp;
     <h5>Current Problem:</h5>&nbsp;
     <pre>$problem</pre></b>
-    </form>
 EOT;
 
     if ( count ( $local_run_files ) > 0 )
@@ -242,7 +245,8 @@ EOT;
 	{
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>" .
-	         "<button onclick='runshow($fname)'>" .
+	         "<button type='button' onclick=" .
+		 "'runshow(\"$fname\")'>" .
 		 $fname . "</button></td>";
 	    echo "<td><button type='submit'" .
 	         " name='execute_run' value='$fname'>" .
@@ -265,40 +269,25 @@ EOT;
 	    $c = '(no status available)';
 	echo <<<EOT
 	<div class='run_display'>
-	<h5>$h&nbsp;-&nbsp;$runbase.run:</h5><br>
+	<h5>$h&nbsp;-&nbsp;$runbase.run:</h5>
 	<div class='indented'>
 	<pre id='status'>$c</pre>
 EOT;
-	if ( r === false )
+	if ( $r === false )
 	    echo "<br><pre class='red'>Run Died" .
 	         " Unexpectedly<pre>" . PHP_EOL;
-	elseif ( r === true || r == ['D',0] )
-	    /* Do Nothing */;
-	else
+	elseif ( $r !== true && $r != ['D',0] )
 	    echo "<br><pre class='red'>Run Terminated" .
 	         " Prematurely With Exit Code" .
 		 " {$r[1]}<pre>" .
 		 PHP_EOL;
 	echo "</div>" . PHP_EOL;
     }
-
-    if ( isset ( $show_file ) )
-    {
-	$base = pathinfo ( $show_file, 
-	                   PATHINFO_BASENAME );
-	$ext = pathinfo ( $show_file, 
-	                  PATHINFO_EXTENSION );
-	$type = $display_file_type[$ext];
-	$page = $display_file_map[$type];
-	if ( $page != NULL ) echo <<<EOT
-<script>create_iframe ( '$page', '$base' );</script>
-EOT;
-    }
 ?>
 
 </div>
 
-<form action='problem.php' method='POST' id='reload'>
+<form action='run.php' method='POST' id='reload'>
 <input type='hidden'
        name='reload' value='reload'>
 </form>
@@ -344,38 +333,13 @@ EOT;
 
     function PROCESS_RESPONSE ( response )
     {
-        response = response.trim().split( "\n" );
-	for ( i = 0; i < response.length; ++ i )
+        if ( response == 'RELOAD' )
 	{
-	    let item = response[i].trim().split( ' ' );
-	    if ( item.length == 0 ) continue;
-	    if ( item[0] == '' )
-	        continue;
-	    else if ( item[0] == 'RELOAD' )
-	    {
-	    	reload.submit();
-		return;
-	    }
-	    try {
-		if ( item[0] == 'TIME'
-			  &&
-			  item.length == 3 )
-		{
-		    let n = "stat_time" + item[1];
-		    let e = document.getElementById(n);
-		    e.innerText = item[2] + 's';
-		}
-		else
-		    FAIL ( 'bad response item: ' +
-			   response[i] );
-	    }
-	    catch ( err )
-	    {
-		FAIL ( 'bad response item: ' +
-		       response[i] + "\n    " +
-		       err.message );
-	    }
+	    reload.submit();
+	    return;
 	}
+	let e = document.getElementById('status');
+	e.innerText = response;
 	REQUEST_UPDATE();
     }
 
@@ -401,7 +365,7 @@ EOT;
 		  + this.responseText );
 	    PROCESS_RESPONSE ( this.responseText );
 	};
-	xhttp.open ( 'POST', "problem.php", true );
+	xhttp.open ( 'POST', "run.php", true );
 	xhttp.setRequestHeader
 	    ( "Content-Type",
 	      "application/x-www-form-urlencoded" );
@@ -420,4 +384,3 @@ EOT;
 
 </body>
 </html>
-
