@@ -2,9 +2,12 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb 20 10:43:10 EST 2020
+// Date:    Sat Feb 22 15:31:17 EST 2020
 
 // Functions used to make files from other files.
+//
+// Used by epm_run, so $_SESSION must be declared as
+// a global.
 //
 // Note that file names can have -, _, ., /, but no
 // other special characters.  Of course uploaded
@@ -1187,6 +1190,8 @@ function compile_commands
 //
 function update_workmap ()
 {
+    global $_SESSION;
+
     $workdir = $_SESSION['EPM_WORKDIR'];
     $map = & $_SESSION['EPM_WORKMAP'];
     $r = [];
@@ -1461,7 +1466,7 @@ function execute_commands_2 ( $base, $dir )
 //
 function get_commands_display ( & $display )
 {
-    global $epm_data;
+    global $epm_data, $_SESSION;
 
     $workdir = $_SESSION['EPM_WORKDIR'];
     $workbase = $_SESSION['EPM_WORKBASE'];
@@ -1618,7 +1623,7 @@ function get_commands_display ( & $display )
 //
 function update_work_results ( $wait = 0 )
 {
-    global $epm_data;
+    global $epm_data, $_SESSION;
     $workbase = $_SESSION['EPM_WORKBASE'];
     $workdir = $_SESSION['EPM_WORKDIR'];
     $result = $_SESSION['EPM_WORKRESULT'];
@@ -1636,7 +1641,7 @@ function update_work_results ( $wait = 0 )
 //
 function update_run_results ( $wait = 0 )
 {
-    global $epm_data;
+    global $epm_data, $_SESSION;
     $runbase = $_SESSION['EPM_RUNBASE'];
     $rundir = $_SESSION['EPM_RUNDIR'];
     $result = $_SESSION['EPM_RUNRESULT'];
@@ -1939,7 +1944,7 @@ function start_make_file
 	  & $warnings, & $errors )
 {
     global $epm_data, $is_epm_test,
-           $problem, $probdir;
+           $problem, $probdir, $_SESSION;
 
     unset ( $_SESSION['EPM_WORKDIR'] );
     unset ( $_SESSION['EPM_WORKBASE'] );
@@ -2216,7 +2221,8 @@ function start_run
 
 function finish_run ( & $errors )
 {
-    global $epm_data, $probdir, $uid, $problem;
+    global $epm_data, $probdir, $uid, $problem,
+           $_SESSION;
 
     $rundir = $_SESSION['EPM_RUNDIR'];
     $runbase = $_SESSION['EPM_RUNBASE'];

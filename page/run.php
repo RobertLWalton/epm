@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 22 01:49:38 EST 2020
+    // Date:	Sat Feb 22 15:30:47 EST 2020
 
     // Starts and monitors problem runs.
 
@@ -283,7 +283,7 @@ EOT;
 		 $runresult != ['D',0] )
 	    echo "<br><pre class='red'>Run Terminated" .
 	         " Prematurely With Exit Code" .
-		 " {$r[1]}<pre>" .
+		 " {$runresult[1]}<pre>" .
 		 PHP_EOL;
 	echo "</div>" . PHP_EOL;
     }

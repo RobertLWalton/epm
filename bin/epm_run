@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Feb 21 19:45:55 EST 2020
+// Date:	Sat Feb 22 11:40:11 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -234,29 +234,85 @@ if ( isset ( $statfile ) )
     }
 }
 
-
 load_template_cache();
 
 $warnings = [];
 $errors   = [];
 load_argument_map ( ! $submit, $warnings, $errors );
 
-if ( count ( $errors ) == 0 )
-foreach ( $runin as $infile )
-{
-    if ( isset ( $desc ) )
-        fwrite ( $desc, $infile . PHP_EOL );
-    sleep ( 2 );
-    echo $infile . PHP_EOL;
-}
-if ( isset ( $desc ) )
-    fwrite ( $desc, 'DONE' . PHP_EOL );
-
 if ( count ( $errors ) > 0 )
 {
-    echo 'ERRORS:' . PHP_EOL;
     foreach ( $errors as $e )
-        echo "    $e" . PHP_EOL;
+	echo "epm_run: $e" .  PHP_EOL;
+    exit ( 1 );
 }
+
+$lines = [];
+foreach ( $runin as $base )
+{
+    start_make_file
+	( "$base.in", "$base.score",
+	   $submit ? 'SUBMIT': NULL,
+	   true, "$probdir/+work+",
+	   NULL, NULL /* no upload, upload_tmp */,
+	   $warnings, $errors );
+    if ( count ( $warnings ) > 0 )
+    {
+        echo "epm_run: WARNINGS during $base:" .
+	     PHP_EOL;
+	foreach ( $warnings as $w )
+	    echo "    $w" . PHP_EOL;
+    }
+    if ( count ( $errors ) > 0 )
+    {
+        echo "epm_run: ERRORS during $base:" . PHP_EOL;
+	foreach ( $errors as $e )
+	    echo "    $e" . PHP_EOL;
+	exit ( 1 );
+    }
+    $map = & $_SESSION['EPM_WORKMAP'];
+    $lines[] = $base;
+    $count = count ( $lines );
+    if ( $count > 10 ) $count = 10;
+    $r = NULL;
+    while ( true )
+    {
+        $r = update_work_results();
+	update_work_map();
+	$line = $base;
+	foreach ( $map as $key => $e )
+	{
+	    if ( $e[1] == 'X' ) continue;
+	    preg_match ( '/\.(.+)stat$/', $e[0],
+	                 $matches );
+	    $line .= " {$matches[1]}:{$e[2]}s";
+	}
+	$lines[-1] = $line;
+	if ( isset ( $statfile ) )
+	{
+	    $status = "";
+	    for ( $i = 1; $i <= $count; $i += 1 )
+		$status .= $lines[-$i] . PHP_EOL;
+	    file_put_contents ( $statfile, $status );
+	}
+	if ( $r !== true ) break;
+	usleep ( 500000 );
+    }
+    if ( $r === false )
+    {
+        echo "epm_run: $base died" . PHP_EOL;
+	exit ( 1 );
+    }
+    elseif ( $r[0] == 'F' )
+    {
+        echo "epm_run: $base failed with exit code" .
+	     " {$r[2]}:" . PHP_EOL .
+	     "    {$r[3]}" . PHP_EOL;
+	exit ( 1 );
+    }
+    echo $lines[-1] . PHP_EOL;
+}
+
+exit ( 0 );
 
 ?>
