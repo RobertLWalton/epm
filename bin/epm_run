@@ -3,14 +3,14 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Feb 18 02:09:21 EST 2020
+// Date:	Fri Feb 21 19:45:55 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
 EPM_DATA=data-directory \
 EPM_UID=uid \
 EPM_PROBLEM=problem \
-EPM_WORK=working-subdirectory \
+EPM_DIR=working-subdirectory \
     epm_run [-d|-s] run-file [status-file]
 
 Many parameters are environment variables so they will
@@ -105,9 +105,9 @@ $epm_home = getenv ( 'EPM_HOME' );
 $epm_data = getenv ( 'EPM_DATA' );
 $uid      = getenv ( 'EPM_UID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
-$work     = getenv ( 'EPM_WORK' );
+$dir      = getenv ( 'EPM_DIR' );
 
-$problem_dir = "users/user$uid/$problem";
+$probdir = "users/user$uid/$problem";
 $include = "$epm_home/include";
 
 include "$include/epm_make.php";
@@ -135,6 +135,10 @@ else
     echo "epm_run: cannot find $runfile" . PHP_EOL;
     exit ( 1 );
 }
+
+echo "Run-File: $runfile" . PHP_EOL;
+$time = strftime ( "%FT%T%z" );
+echo "Start-Time: $time" . PHP_EOL;
 
 // Compute $runin as the list of lines of .run file.
 //
@@ -218,6 +222,18 @@ if ( $errors > 0 ) exit ( 1 );
 
 if ( $dryrun ) exit ( 0 );
 
+$desc = NULL;
+if ( isset ( $statfile ) )
+{
+    $desc = fopen ( $statfile, 'w' );
+    if ( $desc === false )
+    {
+	echo "epm_run: cannot open $statfile" .
+	     " for writing" .  PHP_EOL;
+	exit ( 1 );
+    }
+}
+
 
 load_template_cache();
 
@@ -228,10 +244,19 @@ load_argument_map ( ! $submit, $warnings, $errors );
 if ( count ( $errors ) == 0 )
 foreach ( $runin as $infile )
 {
+    if ( isset ( $desc ) )
+        fwrite ( $desc, $infile . PHP_EOL );
+    sleep ( 2 );
+    echo $infile . PHP_EOL;
 }
+if ( isset ( $desc ) )
+    fwrite ( $desc, 'DONE' . PHP_EOL );
 
-var_dump ( $argument_map );
-var_dump ( $warnings );
-var_dump ( $errors );
+if ( count ( $errors ) > 0 )
+{
+    echo 'ERRORS:' . PHP_EOL;
+    foreach ( $errors as $e )
+        echo "    $e" . PHP_EOL;
+}
 
 ?>

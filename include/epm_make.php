@@ -1365,7 +1365,7 @@ function execute_commands ( $base, $dir, $errors )
     $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
     $r .= "export EPM_UID=$uid" . PHP_EOL;
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
-    $r .= "export EPM_WORKDIR=$dir" . PHP_EOL;
+    $r .= "export EPM_DIR=$dir" . PHP_EOL;
     $r .= "exec 0<&-" . PHP_EOL;
     $r .= "exec 1<&-" . PHP_EOL;
     $r .= "exec 2<&-" . PHP_EOL;
