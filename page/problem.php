@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 21 14:45:45 EST 2020
+    // Date:	Sat Feb 22 02:15:55 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -355,6 +355,29 @@
 	else
 	    $errors[] = "no file selected for upload";
     }
+    elseif ( isset ( $_POST['run'] ) )
+    {
+	require "$epm_home/include/epm_make.php";
+	    // Do this first as it may change $f, etc.
+
+        $f = $_POST['run'];
+	if ( ! preg_match ( '/\.run$/', $f ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+		 	    
+	if ( array_search
+	         ( $f, problem_file_names(),
+		       true ) === false )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	start_run
+	    ( $f, "$probdir/+run+", false, $errors );
+        if ( isset ( $_SESSION['EPM_RUNRESULT'] ) )
+	{
+	    header ( 'Location: /page/run.php' );
+	    exit;
+	}
+    }
     elseif ( isset ( $_POST['reload'] )
              &&
 	     isset ( $_SESSION['EPM_WORKBASE'] ) )
@@ -655,6 +678,13 @@ EOT;
 		     " value='$fname:$b.ftest'>" .
 		     "Make .ftest</button></td>";
 	    }
+	    elseif ( preg_match ( '/\.run$/', $fname ) )
+	    {
+		echo "<td><button type='submit'" .
+		     " name='run'" .
+		     " value='$fname'>" .
+		     "Run</button></td>";
+	    }
 	    echo "</tr>";
 	}
 	if ( $count > 0 ) echo "</table></form>";
@@ -760,8 +790,7 @@ EOT;
 </div>
 
 <form action='problem.php' method='POST' id='reload'>
-<input type='hidden'
-       name='reload' value='reload'>
+<input type='hidden' name='reload' value='reload'>
 </form>
 
 <script>

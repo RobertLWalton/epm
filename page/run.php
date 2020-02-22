@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 21 14:57:12 EST 2020
+    // Date:	Sat Feb 22 01:49:38 EST 2020
 
     // Starts and monitors problem runs.
 
@@ -89,11 +89,13 @@
     $runbase = NULL;
     $rundir = NULL;
     $runsubmit = NULL;
+    $runresult = NULL;
     if ( isset ( $_SESSION['EPM_RUNBASE'] ) )
     {
         $runbase = $_SESSION['EPM_RUNBASE'];
         $rundir = $_SESSION['EPM_RUNDIR'];
         $runsubmit = $_SESSION['EPM_RUNSUBMIT'];
+        $runresult = $_SESSION['EPM_RUNRESULT'];
     }
 
     if ( isset ( $_POST['reload'] )
@@ -105,15 +107,16 @@
     }
     elseif ( isset ( $_POST['update'] ) )
     {
-	if ( ! isset ( $_SESSION['EPM_RUNRESULT'] )
+	if ( ! isset ( $runresult )
 	     ||
-	     $_SESSION['EPM_RUNRESULT'] !== true )
+	     $runresult !== true )
 	{
 	    echo 'RELOAD';
 	    exit;
 	}
 	else
 	{
+	    usleep ( 500000 );
 	    $f = "$rundir/$runbase.stat";
 	    $contents = @file_get_contents
 	        ( "$epm_data/$f" );
@@ -258,8 +261,7 @@ EOT;
 
     if ( isset ( $runbase ) )
     {
-	$r = $_SESSION['EPM_RUNRESULT'];
-	if ( $r === true )
+	if ( $runresult === true )
 	    $h = 'Currently Executing Run';
 	else
 	    $h = 'Last Completed Run';
@@ -273,10 +275,12 @@ EOT;
 	<div class='indented'>
 	<pre id='status'>$c</pre>
 EOT;
-	if ( $r === false )
+	if ( $runresult === false )
 	    echo "<br><pre class='red'>Run Died" .
 	         " Unexpectedly<pre>" . PHP_EOL;
-	elseif ( $r !== true && $r != ['D',0] )
+	elseif ( $runresult !== true
+	         &&
+		 $runresult != ['D',0] )
 	    echo "<br><pre class='red'>Run Terminated" .
 	         " Prematurely With Exit Code" .
 		 " {$r[1]}<pre>" .
@@ -288,8 +292,7 @@ EOT;
 </div>
 
 <form action='run.php' method='POST' id='reload'>
-<input type='hidden'
-       name='reload' value='reload'>
+<input type='hidden' name='reload' value='reload'>
 </form>
 
 <script>
@@ -333,7 +336,7 @@ EOT;
 
     function PROCESS_RESPONSE ( response )
     {
-        if ( response == 'RELOAD' )
+        if ( response.trim() == 'RELOAD' )
 	{
 	    reload.submit();
 	    return;
@@ -374,9 +377,7 @@ EOT;
 	xhttp.send ( 'update=update' );
     }
     <?php
-	if ( isset ( $workbase )
-	     &&
-	     isset ( $_SESSION['EPM_CONTROL'] ) )
+	if ( $runresult === true )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;
     ?>
 
