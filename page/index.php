@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Feb 21 14:50:20 EST 2020
+// Date:    Sat Feb 22 03:19:05 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -306,5 +306,15 @@ function EPM_ERROR_HANDLER
 }
 
 set_error_handler ( 'EPM_ERROR_HANDLER' );
+
+function HELP ( $item )
+{
+    echo "<button type='button'" .
+         " onclick='window.open(" .
+	 "\"/page/help.html#$item\"," .
+	 "\"EPM HELP\"," .
+	 "\"height=800px,width=800px\")'>" .
+	 "?</button>" . PHP_EOL;
+}
 
 ?>
