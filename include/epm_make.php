@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Feb 23 04:15:44 EST 2020
+// Date:    Sun Feb 23 05:22:45 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2130,6 +2130,7 @@ SHOW:
 //      $_SESSION['EPM_RUNBASE']
 //      $_SESSION['EPM_RUNSUBMIT']
 //      $_SESSION['EPM_RUNRESULT']
+//      $_SESSION['EPM_RUNOUT']
 //
 // If there are no errors, this function sets:
 //
@@ -2148,6 +2149,7 @@ function start_run
     unset ( $_SESSION['EPM_RUNBASE'] );
     unset ( $_SESSION['EPM_RUNSUBMIT'] );
     unset ( $_SESSION['EPM_RUNRESULT'] );
+    unset ( $_SESSION['EPM_RUNOUT'] );
 
     $errors_size = count ( $errors );
 
@@ -2284,6 +2286,9 @@ function finish_run ( & $errors )
 		    // lock on $probdir/+lock+ should
 		    // have prevented race condition
 		}
+		else
+		    $_SESSION['EPM_RUNOUT'] =
+		        "$runbase-$c.rout";
 		break;
 	    }
 	    $c += 1;
@@ -2317,6 +2322,9 @@ function finish_run ( & $errors )
 		    // lock on $probdir/+lock+ should
 		    // have prevented race condition
 		}
+		else
+		    $_SESSION['EPM_RUNOUT'] =
+		        "$runbase-{$c}s.rout";
 		break;
 	    }
 	    $c += 1;

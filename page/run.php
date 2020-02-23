@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb 23 04:08:43 EST 2020
+    // Date:	Sun Feb 23 05:50:03 EST 2020
 
     // Starts and monitors problem runs.
 
@@ -420,6 +420,11 @@ EOT;
     <?php
 	if ( $runresult === true )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;
+	elseif ( isset ( $_SESSION['EPM_RUNOUT'] ) )
+	{
+	    $f = $_SESSION['EPM_RUNOUT'];
+	    echo "SHOW('$f');" . PHP_EOL;
+	}
     ?>
 
 </script>
