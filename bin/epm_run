@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Feb 22 11:40:11 EST 2020
+// Date:	Sat Feb 22 20:20:00 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -69,6 +69,12 @@ if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
     exit ( 0 );
 }
 
+function ERROR ( $message )
+{
+    echo $message . PHP_EOL;
+    exit ( 1 );
+}
+
 $dryrun = false;
 $submit = false;
 $runfile = NULL;
@@ -83,18 +89,12 @@ while ( $argc >= 2
     elseif ( $matches[1] == 's' )
         $submit = true;
     else
-    {
-        echo "epm_run: bad option {$argv[1]}\n";
-	exit (1);
-    }
+        ERROR ( "epm_run: bad option {$argv[1]}" );
     array_shift ( $argv );
     -- $argc;
 }
 if ( $argc < 2 || $argc > 3 )
-{
-    echo "epm_run: wrong number of arguments\n";
-    exit (1);
-}
+    ERROR ( "epm_run: wrong number of arguments" );
 $runfile = $argv[1];
 if ( $argc == 3 ) $statfile = $argv[2];
 
@@ -131,10 +131,7 @@ else if ( $submit
 	  isset ( $remote_file_cache[$runfile] ) )
     $rundir = $remote_file_cache[$runfile];
 else
-{
-    echo "epm_run: cannot find $runfile" . PHP_EOL;
-    exit ( 1 );
-}
+    ERROR ( "epm_run: cannot find $runfile" );
 
 echo "Run-File: $runfile" . PHP_EOL;
 $time = strftime ( "%FT%T%z" );
@@ -145,11 +142,8 @@ echo "Start-Time: $time" . PHP_EOL;
 $runin = @file_get_contents
 		( "$rundata/$rundir/$runfile" );
 if ( $runin === false )
-{
-    echo "epm_run: $rundir/$runfile is not readable" .
-         PHP_EOL;
-    exit ( 1 );
-}
+    ERROR ( "epm_run: $rundir/$runfile is not" .
+            " readable" );
 
 $runin = preg_replace ( '#(\R|^)\h*//.*#', '', $runin );
     // Get rid of `//...' comments.
@@ -222,18 +216,6 @@ if ( $errors > 0 ) exit ( 1 );
 
 if ( $dryrun ) exit ( 0 );
 
-$desc = NULL;
-if ( isset ( $statfile ) )
-{
-    $desc = fopen ( $statfile, 'w' );
-    if ( $desc === false )
-    {
-	echo "epm_run: cannot open $statfile" .
-	     " for writing" .  PHP_EOL;
-	exit ( 1 );
-    }
-}
-
 load_template_cache();
 
 $warnings = [];
@@ -248,8 +230,9 @@ if ( count ( $errors ) > 0 )
 }
 
 $lines = [];
-foreach ( $runin as $base )
+foreach ( $runin as $infile )
 {
+    $base = pathinfo ( $infile, PATHINFO_FILENAME );
     start_make_file
 	( "$base.in", "$base.score",
 	   $submit ? 'SUBMIT': NULL,
@@ -278,7 +261,7 @@ foreach ( $runin as $base )
     while ( true )
     {
         $r = update_work_results();
-	update_work_map();
+	update_workmap();
 	$line = $base;
 	foreach ( $map as $key => $e )
 	{
@@ -299,17 +282,11 @@ foreach ( $runin as $base )
 	usleep ( 500000 );
     }
     if ( $r === false )
-    {
-        echo "epm_run: $base died" . PHP_EOL;
-	exit ( 1 );
-    }
+        ERROR ( "epm_run: $base died" );
     elseif ( $r[0] == 'F' )
-    {
-        echo "epm_run: $base failed with exit code" .
-	     " {$r[2]}:" . PHP_EOL .
-	     "    {$r[3]}" . PHP_EOL;
-	exit ( 1 );
-    }
+        ERROR ( "epm_run: $base failed with exit code" .
+	        " {$r[2]}:" . PHP_EOL .
+	        "    {$r[3]}" );
     echo $lines[-1] . PHP_EOL;
 }
 

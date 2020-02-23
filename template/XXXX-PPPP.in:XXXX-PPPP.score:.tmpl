@@ -10,15 +10,14 @@
              "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
 	     "  epm_sandbox FSARGS FSPACE filter_PPPP \\",
 	     "    3< XXXX-PPPP.sout > XXXX-PPPP.fout \\",
-	     "    2> XXXX-PPPP.ferr"],
-             "epm_score SCORING-ARGS \\"
-	     "    < XXXX-PPPP.fout XXXX-PPPP.ftest \\"
+	     "    2> XXXX-PPPP.ferr",
+             "epm_score SCORING-ARGS \\",
+	     "    < XXXX-PPPP.fout XXXX-PPPP.ftest \\",
 	     "    > XXXX-PPPP.score 2>> XXXX-PPPP.err"],
 
-"LOCAL-REQUIRES":["PPPP"],
-"REMOTE-REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.ftest",
-                   "generate_PPPP", "filter_PPPP"],
-"CONDITION": "SUBMIT"
+"LOCAL-REQUIRES":
+	["PPPP","XXXX-PPPP.in", "XXXX-PPPP.ftest"],
+"REQUIRES":["generate_PPPP", "filter_PPPP"]
 
 }
 
