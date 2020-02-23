@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 22 15:30:47 EST 2020
+    // Date:	Sun Feb 23 04:08:43 EST 2020
 
     // Starts and monitors problem runs.
 
@@ -136,12 +136,16 @@
 	// True to enable javascript logging.
 
     $local_run_files = [];
+    $rout_files = [];
     foreach ( $local_file_cache as $fname => $fdir )
     {
         if ( preg_match ( '/^.+\.run$/', $fname ) )
 	    $local_run_files[] = $fname;
+        elseif ( preg_match ( '/^.+\.rout$/', $fname ) )
+	    $rout_files[] = $fname;
     }
     sort ( $local_run_files );
+    sort ( $rout_files );
 
 ?>
 
@@ -152,7 +156,11 @@
 	margin: 0 0 0 0;
 	display:inline;
     }
-    pre, b, button, input, select, u {
+    th {
+        font-size: 14pt;
+	text-align: center;
+    }
+    pre, b, button, input, select, u, td {
         font-size: 12pt;
 	display:inline;
     }
@@ -163,6 +171,12 @@
 	background-color: #96F9F3;
 	width: 47%;
 	float: left;
+    }
+    div.file_left {
+	float: left;
+    }
+    div.file_right {
+	float: right;
     }
     iframe.right {
 	width: 9in;
@@ -177,6 +191,7 @@
     }
     div.run_display {
 	background-color: #C0FFC0;
+	clear: both;
     }
     div.indented {
 	margin-left: 20px;
@@ -186,7 +201,7 @@
 <script>
     var iframe;
 
-    function runshow ( runfile ) {
+    function SHOW ( runfile ) {
 	if ( iframe != undefined ) iframe.remove();
 
 	iframe = document.createElement("IFRAME");
@@ -239,24 +254,50 @@
     <pre>$problem</pre></b>
 EOT;
 
-    if ( count ( $local_run_files ) > 0 )
+    $lc = count ( $local_run_files );
+    $rc = count ( $rout_files );
+    if ( $lc + $rc > 0 )
     {
-	echo "<form action='run.php' method='POST'>" .
-	     "<h5>Current Problem Run Files</h5>" .
-	     "<table style='display:block'>";
-	foreach ( $local_run_files as $fname )
+        echo "<div>" . PHP_EOL;
+	if ( $lc > 0 )
 	{
-	    echo "<tr>";
-	    echo "<td style='text-align:right'>" .
-	         "<button type='button' onclick=" .
-		 "'runshow(\"$fname\")'>" .
-		 $fname . "</button></td>";
-	    echo "<td><button type='submit'" .
-	         " name='execute_run' value='$fname'>" .
-		 "Run</button></td>";
-	    echo "</tr>";
+	    echo "<div class='file_left'>" . PHP_EOL;
+	    echo "<form action='run.php' method='POST'>" .
+	         "<table style='display:block'>";
+	    echo "<tr><th colspan='2'>Run Files" .
+	         "</th></tr>" . PHP_EOL;
+	    foreach ( $local_run_files as $runf )
+	    {
+		echo "<tr>" .
+		     "<td style='text-align:right'>" .
+		     "<button type='button' onclick=" .
+		     "'SHOW(\"$runf\")'>" .
+		     $runf . "</button></td>";
+		echo "<td><button type='submit'" .
+		     " name='execute_run'" .
+		     " value='$runf'>" .
+		     "Run</button></td></tr>" . PHP_EOL;
+	    }
+	    echo "</table></form></div>" . PHP_EOL;
 	}
-	echo "</table></form>";
+	if ( $rc > 0 )
+	{
+	    echo "<div class='file_right'>" .
+	         "<table style='display:block'>" .
+		 PHP_EOL;
+	    echo "<tr><th>Output Files" .
+	         "</th></tr>" . PHP_EOL;
+	    foreach ( $rout_files as $routf )
+	    {
+		echo "<tr>" .
+		     "<td style='text-align:right'>" .
+		     "<button type='button' onclick=" .
+		     "'SHOW(\"$routf\")'>" .
+		     $routf . "</button></td>";
+	    }
+	    echo "</table></div>" . PHP_EOL;
+	}
+        echo "</div>" . PHP_EOL;
     }
 
     if ( isset ( $runbase ) )

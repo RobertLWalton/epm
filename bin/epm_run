@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Feb 22 20:20:00 EST 2020
+// Date:	Sun Feb 23 04:10:36 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -71,8 +71,13 @@ if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
 
 function ERROR ( $message )
 {
-    echo $message . PHP_EOL;
+    echo 'epm_run: ' . $message . PHP_EOL;
     exit ( 1 );
+}
+
+function WARN ( $message )
+{
+    echo 'epm_run: warning: ' . $message . PHP_EOL;
 }
 
 $dryrun = false;
@@ -89,12 +94,12 @@ while ( $argc >= 2
     elseif ( $matches[1] == 's' )
         $submit = true;
     else
-        ERROR ( "epm_run: bad option {$argv[1]}" );
+        ERROR ( "bad option {$argv[1]}" );
     array_shift ( $argv );
     -- $argc;
 }
 if ( $argc < 2 || $argc > 3 )
-    ERROR ( "epm_run: wrong number of arguments" );
+    ERROR ( "wrong number of arguments" );
 $runfile = $argv[1];
 if ( $argc == 3 ) $statfile = $argv[2];
 
@@ -131,7 +136,7 @@ else if ( $submit
 	  isset ( $remote_file_cache[$runfile] ) )
     $rundir = $remote_file_cache[$runfile];
 else
-    ERROR ( "epm_run: cannot find $runfile" );
+    ERROR ( "cannot find $runfile" );
 
 echo "Run-File: $runfile" . PHP_EOL;
 $time = strftime ( "%FT%T%z" );
@@ -142,8 +147,7 @@ echo "Start-Time: $time" . PHP_EOL;
 $runin = @file_get_contents
 		( "$rundata/$rundir/$runfile" );
 if ( $runin === false )
-    ERROR ( "epm_run: $rundir/$runfile is not" .
-            " readable" );
+    ERROR ( "$rundir/$runfile is not readable" );
 
 $runin = preg_replace ( '#(\R|^)\h*//.*#', '', $runin );
     // Get rid of `//...' comments.
@@ -282,9 +286,9 @@ foreach ( $runin as $infile )
 	usleep ( 500000 );
     }
     if ( $r === false )
-        ERROR ( "epm_run: $base died" );
+        ERROR ( "$base died" );
     elseif ( $r[0] == 'F' )
-        ERROR ( "epm_run: $base failed with exit code" .
+        ERROR ( "$base failed with exit code" .
 	        " {$r[2]}:" . PHP_EOL .
 	        "    {$r[3]}" );
     echo $lines[-1] . PHP_EOL;

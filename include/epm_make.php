@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Feb 22 15:31:17 EST 2020
+// Date:    Sun Feb 23 04:15:44 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2270,7 +2270,7 @@ function finish_run ( & $errors )
         $c = 1;
 	while ( true )
 	{
-	    $f = "$probdir/$runbase.rout-$c";
+	    $f = "$probdir/$runbase-$c.rout";
 	    if ( ! file_exists ( "$epm_data/$f" ) )
 	    {
 	        if ( ! rename
@@ -2302,7 +2302,7 @@ function finish_run ( & $errors )
         $c = 1;
 	while ( true )
 	{
-	    $f = "$d/$runbase.rout-s$c";
+	    $f = "$d/$runbase-{$c}s.rout";
 
 	    if ( ! file_exists ( "$epm_data/$f" ) )
 	    {
