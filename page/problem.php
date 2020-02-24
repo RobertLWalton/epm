@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 24 03:31:08 EST 2020
+    // Date:	Mon Feb 24 05:17:50 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -186,7 +186,6 @@
     //
     $show_file = NULL;  // File to be shown to right.
     $show_files = [];   // Files to be shown to left.
-    $kept = [];		// Files kept.
     $workbase = NULL;
         // Non-NULL if there are commands to be
 	// displayed.
@@ -428,8 +427,8 @@
          &&
 	 update_work_results() !== true )
     {
-        finish_make_file 
-	    ( $kept, $show_files, $warnings, $errors );
+        finish_make_file ( $warnings, $errors );
+	$show_files = $_SESSION['EPM_WORK']['SHOW'];
     }
 
     if ( count ( $show_files ) > 0 )
@@ -639,7 +638,8 @@ EOT;
 	    }
 	    else
 	        echo "<button type='submit'" .
-	             " name='show_file' value='$fname'>";
+	             " name='show_file'" .
+		     " value='$fname'>";
 	    echo $fname . "</button></td>";
 	    echo "<td><button type='submit'" .
 	         " name='delete_file' value='$fname'>" .
@@ -721,6 +721,7 @@ EOT;
 	echo "<div class='indented'>" . PHP_EOL;
 	echo $display . PHP_EOL;
 	echo "</div>" . PHP_EOL;
+	$kept = $_SESSION['EPM_WORK']['KEPT'];
         if ( count ( $kept ) > 0 )
 	{
 	    echo "<h5>Kept:</h5>" . PHP_EOL;

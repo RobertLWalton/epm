@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 24 03:31:18 EST 2020
+    // Date:	Mon Feb 24 05:19:42 EST 2020
 
     // Starts and monitors problem runs.
 
@@ -264,7 +264,8 @@ EOT;
 	if ( $lc > 0 )
 	{
 	    echo "<div class='file_left'>" . PHP_EOL;
-	    echo "<form action='run.php' method='POST'>" .
+	    echo "<form action='run.php'" .
+	         "      method='POST'>" .
 	         "<table style='display:block'>";
 	    echo "<tr><th colspan='2'>Run Files" .
 	         "</th></tr>" . PHP_EOL;

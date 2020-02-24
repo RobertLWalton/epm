@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Feb 22 03:19:05 EST 2020
+// Date:    Mon Feb 24 05:20:32 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -197,7 +197,8 @@ if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
 {
     $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];
     $_SESSION['EPM_SESSION_TIME'] =
-        strftime ( "%FT%T%z", $_SERVER['REQUEST_TIME'] );
+        strftime ( "%FT%T%z",
+	           $_SERVER['REQUEST_TIME'] );
     file_put_contents (
         "$epm_data/error.log",
 	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .

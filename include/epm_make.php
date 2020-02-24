@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Feb 24 03:06:13 EST 2020
+// Date:    Mon Feb 24 05:18:01 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1764,14 +1764,12 @@ function get_command_results ( $base, $dir, $wait = 0 )
 //		::D 0 DONE
 //	    and is less than 1 megabyte in size.
 //
-function execute_checks
-	( $control, $workdir, & $errors )
+function execute_checks ( $checks, & $errors )
 {
-    global $epm_data;
+    global $epm_data, $_SESSION;
 
-    if ( ! isset ( $control[2]['CHECKS'] ) )
-        return;
-    $checks = $control[2]['CHECKS'];
+    $workdir = $_SESSION['EPM_WORK']['DIR'];
+
     foreach ( $checks as $check )
     {
         if ( ! preg_match ( '/^\s*(\S+)\s+(\S+)\s*$/',
@@ -1831,30 +1829,27 @@ function execute_checks
     }
 }
 
-// Move KEEP files, if any, from $workdir to $probdir.
-// List last component names of files moved in $moved.
-// Append error messages to $errors.
+// Move $keep files, if any, from EPM_WORK DIR to
+// $probdir.  List of last component names of files
+// moved is placed in EPM_WORK KEPT.  Error messages
+// are appended to $errors.
 //
-function move_keep
-	( $control, $workdir, & $moved, & $errors )
+function move_keep ( $keep, & $errors )
 {
-    global $epm_data, $probdir;
+    global $epm_data, $probdir, $_SESSION;
 
-    $moved = [];
-
-    if ( ! isset ( $control[2]['KEEP'] ) )
-        return;
-
-    $keep = $control[2]['KEEP'];
+    $work = & $_SESSION['EPM_WORK'];
+    $workdir = $work['DIR'];
+    $work['KEPT'] = [];
+    $moved = & $work['KEPT'];
     foreach ( $keep as $fname )
     {
         $wfile = "$workdir/$fname";
         $lfile = "$probdir/$fname";
 	if ( ! file_exists ( "$epm_data/$wfile" ) )
 	{
-	    $c = pretty_template ( $control[0] );
 	    $errors[] = "KEEP file $fname was not"
-	              . " made by $c";
+	              . " made by {$work['TEMPLATE']}";
 	    continue;
 	}
 	if ( ! rename ( "$epm_data/$wfile",
@@ -1869,26 +1864,25 @@ function move_keep
     }
 }
 
-// Return list of files to be shown.  File and directory
-// names are relative to $epm_data.  Files that have not
-// been moved are in $workdir, and moved files are in
-// $probdir.  Files that are not readable are
-// ignored; there can be no errors.
+// Return list of files to be shown in EPM_WORK SHOW.
+// Files that have not been moved are in EPM_WORK DIR,
+// and moved files are in $probdir.  Files that are
+// not readable are ignored; there can be no errors.
+// File and directory names are relative to $epm_data.
 //
 // This function can be called when there have been
-// previous errors, as long as $control is valid and
-// $moved is the list of files that have actually been
-// moved.
+// previous errors, as long as EPM_WORK is valid.
 //
-function compute_show ( $control, $workdir, $moved )
+function compute_show ( $show )
 {
-    global $epm_data, $probdir;
+    global $epm_data, $probdir, $_SESSION;
 
-    if ( ! isset ( $control[2]['SHOW'] ) )
-        return [];
+    $work = & $_SESSION['EPM_WORK'];
+    $workdir = $work['DIR'];
+    $moved = $work['KEPT'];
 
-    $slist = [];
-    $show = $control[2]['SHOW'];
+    $work['SHOW'] = [];
+    $slist = & $work['SHOW'];
     foreach ( $show as $fname )
     {
 	if (     array_search ( $fname, $moved, true )
@@ -1899,7 +1893,6 @@ function compute_show ( $control, $workdir, $moved )
 	if ( is_readable ( "$epm_data/$sfile" ) )
 	    $slist[] = "$sfile";
     }
-    return $slist;
 }
 
 // Starts commands and to make file $des from file $src.
@@ -1936,7 +1929,13 @@ function compute_show ( $control, $workdir, $moved )
 //	    initialized by compile_command
 //     $_SESSION['EPM_WORK']['RESULT'] to true
 //     $_SESSION['EPM_WORK']['CONTROL'] to the control
-//	    found by find_control
+//	    found by find_control (note this is unset
+//	    by finish_make_file)
+//     $_SESSION['EPM_WORK']['TEMPLATE'] to pretty_
+//	    template of template file name (for error
+//	    messages).
+//     $_SESSION['EPM_WORK']['KEPT'] to []
+//     $_SESSION['EPM_WORK']['SHOW'] to []
 //
 function start_make_file
 	( $src, $des, $condition,
@@ -2030,6 +2029,9 @@ function start_make_file
     $work['MAP'] = $map;
     $work['RESULT'] = true;
     $work['CONTROL'] = $control;
+    $work['TEMPLATE'] = pretty_template ( $control[0] );
+    $work['KEPT'] = [];
+    $work['SHOW'] = [];
 }
 
 // Finish execution of a run started by start_make_file.
@@ -2067,8 +2069,7 @@ function start_make_file
 // $epm_data, except that only the last component
 // of a file name is listed in $kept.
 //
-function finish_make_file
-	( & $kept, & $show, & $warnings, & $errors )
+function finish_make_file ( & $warnings, & $errors )
 {
     global $_SESSION;
 
@@ -2098,15 +2099,19 @@ function finish_make_file
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
-    execute_checks ( $control, $workdir, $errors );
+    if ( isset ( $control[2]['CHECKS'] ) )
+        execute_checks ( $control[2]['CHECKS'],
+	                 $errors );
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
-    move_keep ( $control, $workdir, $kept, $errors );
+    if ( isset ( $control[2]['KEEP'] ) )
+        move_keep ( $control[2]['KEEP'], $errors );
  
 SHOW:
 
-    $show = compute_show ( $control, $workdir, $kept );
+    if ( isset ( $control[2]['SHOW'] ) )
+        compute_show ( $control[2]['SHOW'] );
 }
 
 // Create new $rundir, link $epm_data/$d/$runfile to
