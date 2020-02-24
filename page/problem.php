@@ -2,16 +2,16 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb 23 03:59:10 EST 2020
+    // Date:	Mon Feb 24 03:31:08 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    if ( isset ( $_SESSION['EPM_RUNRESULT'] )
+    if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
          &&
-	 $_SESSION['EPM_RUNRESULT'] === true )
+	 $_SESSION['EPM_RUN']['RESULT'] === true )
     {
 	// Run still running.
 	//
@@ -319,9 +319,10 @@
 	      true, "$probdir/+work+",
 	      NULL, NULL /* no upload, upload_tmp */,
 	      $warnings, $errors );
-	if ( isset ( $_SESSION['EPM_CONTROL'] ) )
+	if ( isset
+	         ( $_SESSION['EPM_WORK']['CONTROL'] ) )
 	{
-	    $workbase = $_SESSION['EPM_WORKBASE'];
+	    $workbase = $_SESSION['EPM_WORK']['BASE'];
 	    $problem_file_names = NULL; // Clear cache.
 	}
     }
@@ -345,9 +346,11 @@
 	    process_upload
 		( $upload_info, "$probdir/+work+",
 		  $warnings, $errors );
-	    if ( isset ( $_SESSION['EPM_CONTROL'] ) )
+	    if ( isset ( $_SESSION['EPM_WORK']
+	                          ['CONTROL'] ) )
 	    {
-		$workbase = $_SESSION['EPM_WORKBASE'];
+		$workbase =
+		    $_SESSION['EPM_WORK']['BASE'];
 		$problem_file_names = NULL;
 		    // Clear cache.
 	    }
@@ -371,8 +374,9 @@
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	start_run
-	    ( $f, "$probdir/+run+", false, $errors );
-        if ( isset ( $_SESSION['EPM_RUNRESULT'] ) )
+	    ( "$probdir/+work+", $f, "$probdir/+run+",
+	      false, $errors );
+        if ( isset ( $_SESSION['EPM_RUN']['RESULT'] ) )
 	{
 	    header ( 'Location: /page/run.php' );
 	    exit;
@@ -380,12 +384,12 @@
     }
     elseif ( isset ( $_POST['reload'] )
              &&
-	     isset ( $_SESSION['EPM_WORKBASE'] ) )
+	     isset ( $_SESSION['EPM_WORK']['BASE'] ) )
     {
 	require "$epm_home/include/epm_make.php";
 	    // Do this first as it may change $f, etc.
 
-        $workbase = $_SESSION['EPM_WORKBASE'];
+        $workbase = $_SESSION['EPM_WORK']['BASE'];
     }
     elseif ( isset ( $_POST['update'] ) )
     {
@@ -404,7 +408,8 @@
 	    $r = update_workmap();
 	    if ( count ( $r ) > 0 )
 	    {
-		$workmap = & $_SESSION['EPM_WORKMAP'];
+		$workmap =
+		    & $_SESSION['EPM_WORK']['MAP'];
 	        foreach ( $r as $n )
 		{
 		    $e = $workmap[$n];
@@ -419,7 +424,7 @@
 
     if ( isset ( $workbase )
          &&
-	 isset ( $_SESSION['EPM_CONTROL'] )
+	 isset ( $_SESSION['EPM_WORK']['CONTROL'] )
          &&
 	 update_work_results() !== true )
     {
@@ -906,7 +911,8 @@ EOT;
     <?php
 	if ( isset ( $workbase )
 	     &&
-	     isset ( $_SESSION['EPM_CONTROL'] ) )
+	     isset (
+	         $_SESSION['EPM_WORK']['CONTROL'] ) )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;
     ?>
 

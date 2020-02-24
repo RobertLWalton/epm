@@ -3,15 +3,15 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun Feb 23 04:10:36 EST 2020
+// Date:	Mon Feb 24 03:26:38 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
 EPM_DATA=data-directory \
 EPM_UID=uid \
 EPM_PROBLEM=problem \
-EPM_DIR=working-subdirectory \
-    epm_run [-d|-s] run-file [status-file]
+EPM_DIR=run-subdirectory \
+    epm_run [-d|-s] work-dir run-file [status-file]
 
 Many parameters are environment variables so they will
 not be listed when the command is listed.  The working-
@@ -57,7 +57,7 @@ are not already there, but this program does not do
 this.
 
 But the individual .in file tests are done in the
-EPM_WORK directory, which is treated the same as it is
+work-dir directory, which is treated the same as it is
 when tests are run directly from the problems.php page
 (but it may or may not be the same directory).
 
@@ -82,6 +82,7 @@ function WARN ( $message )
 
 $dryrun = false;
 $submit = false;
+$workdir = NULL;
 $runfile = NULL;
 $statfile = NULL;
 
@@ -98,10 +99,11 @@ while ( $argc >= 2
     array_shift ( $argv );
     -- $argc;
 }
-if ( $argc < 2 || $argc > 3 )
+if ( $argc < 3 || $argc > 4 )
     ERROR ( "wrong number of arguments" );
-$runfile = $argv[1];
-if ( $argc == 3 ) $statfile = $argv[2];
+$workdir = $argv[1];
+$runfile = $argv[2];
+if ( $argc == 4 ) $statfile = $argv[3];
 
 // Note: $_ENV does NOT work here because $ is not in
 // ini variables_order.  But getenv does work.
@@ -240,7 +242,7 @@ foreach ( $runin as $infile )
     start_make_file
 	( "$base.in", "$base.score",
 	   $submit ? 'SUBMIT': NULL,
-	   true, "$probdir/+work+",
+	   true, $workdir,
 	   NULL, NULL /* no upload, upload_tmp */,
 	   $warnings, $errors );
     if ( count ( $warnings ) > 0 )
@@ -257,7 +259,7 @@ foreach ( $runin as $infile )
 	    echo "    $e" . PHP_EOL;
 	exit ( 1 );
     }
-    $map = & $_SESSION['EPM_WORKMAP'];
+    $map = & $_SESSION['EPM_WORK']['MAP'];
     $lines[] = $base;
     $count = count ( $lines );
     if ( $count > 10 ) $count = 10;

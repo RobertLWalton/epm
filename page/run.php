@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb 23 05:50:03 EST 2020
+    // Date:	Mon Feb 24 03:31:18 EST 2020
 
     // Starts and monitors problem runs.
 
@@ -59,7 +59,8 @@
 	if ( ! isset ( $local_file_cache[$f] ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " run.php" );
-	start_run ( $f, "$probdir/+run+", false,
+	start_run ( "$probdir/+work+", $f,
+	            "$probdir/+run+", false,
 	            $errors );
 	$post_processed = true;
     }
@@ -69,7 +70,8 @@
 	if ( ! isset ( $remote_file_cache[$f] ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " run.php" );
-	start_run ( $f, "$probdir/+run+", true,
+	start_run ( "$probdir/+work+", $f,
+	            "$probdir/+run+", true,
 	            $errors );
 	$post_processed = true;
     }
@@ -77,9 +79,9 @@
     // Do this after execute or submit but before
     // update and reload.
     //
-    if ( isset ( $_SESSION['EPM_RUNRESULT'] )
+    if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
          &&
-	 $_SESSION['EPM_RUNRESULT'] === true
+	 $_SESSION['EPM_RUN']['RESULT'] === true
          &&
 	 update_run_results() !== true )
     {
@@ -90,12 +92,12 @@
     $rundir = NULL;
     $runsubmit = NULL;
     $runresult = NULL;
-    if ( isset ( $_SESSION['EPM_RUNBASE'] ) )
+    if ( isset ( $_SESSION['EPM_RUN']['BASE'] ) )
     {
-        $runbase = $_SESSION['EPM_RUNBASE'];
-        $rundir = $_SESSION['EPM_RUNDIR'];
-        $runsubmit = $_SESSION['EPM_RUNSUBMIT'];
-        $runresult = $_SESSION['EPM_RUNRESULT'];
+        $runbase = $_SESSION['EPM_RUN']['BASE'];
+        $rundir = $_SESSION['EPM_RUN']['DIR'];
+        $runsubmit = $_SESSION['EPM_RUN']['SUBMIT'];
+        $runresult = $_SESSION['EPM_RUN']['RESULT'];
     }
 
     if ( isset ( $_POST['reload'] )
@@ -420,9 +422,9 @@ EOT;
     <?php
 	if ( $runresult === true )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;
-	elseif ( isset ( $_SESSION['EPM_RUNOUT'] ) )
+	elseif ( isset ( $_SESSION['EPM_RUN']['OUT'] ) )
 	{
-	    $f = $_SESSION['EPM_RUNOUT'];
+	    $f = $_SESSION['EPM_RUN']['OUT'];
 	    echo "SHOW('$f');" . PHP_EOL;
 	}
     ?>

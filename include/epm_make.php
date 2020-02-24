@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Feb 23 05:22:45 EST 2020
+// Date:    Mon Feb 24 03:06:13 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1162,10 +1162,10 @@ function compile_commands
     krsort ( $map, SORT_NUMERIC );
 }
 
-// Update the $_SESSION['EPM_WORKMAP'] status map by
+// Update the $_SESSION['EPM_WORK']['MAP'] status map by
 // reading status files in last-line-first order.
 // Return a list of keys whose time values have changed.
-// Inputs $_SESSION['EPM_WORKDIR'].
+// Inputs $_SESSION['EPM_WORK']['DIR'].
 //
 // A status map is a map from command line numbers
 // sorted in last-line-number-first order to:
@@ -1192,8 +1192,9 @@ function update_workmap ()
 {
     global $_SESSION;
 
-    $workdir = $_SESSION['EPM_WORKDIR'];
-    $map = & $_SESSION['EPM_WORKMAP'];
+    $work = & $_SESSION['EPM_WORK'];
+    $workdir = $work['DIR'];
+    $map = & $work['MAP'];
     $r = [];
     foreach ( $map as $key => $e )
     {
@@ -1211,8 +1212,8 @@ function update_workmap ()
 }
 
 // Read epm_sandbox -status file $workdir/$sfile and
-// return value to store in $_SESSION['EPM_WORKMAP']
-// entry.
+// return value to store in $_SESSION['EPM_WORK']['MAP']
+// entry (but do not store it).
 //
 // If status file could not be read or was misformatted,
 // return NULL.  In the misformatted case, retries are
@@ -1445,7 +1446,7 @@ function execute_commands_2 ( $base, $dir )
     $env['EPM_DATA'] = $epm_data;
     $env['EPM_UID'] = $uid;
     $env['EPM_PROBLEM'] = $problem;
-    $env['EPM_WORKDIR'] = $dir;
+    $env['EPM_DIR'] = $dir;
 
     $cmd = "bash $base.sh";
     $process = proc_open
@@ -1468,9 +1469,10 @@ function get_commands_display ( & $display )
 {
     global $epm_data, $_SESSION;
 
-    $workdir = $_SESSION['EPM_WORKDIR'];
-    $workbase = $_SESSION['EPM_WORKBASE'];
-    $map = & $_SESSION['EPM_WORKMAP'];
+    $work = & $_SESSION['EPM_WORK'];
+    $workdir = $work['DIR'];
+    $workbase = $work['BASE'];
+    $map = & $work['MAP'];
     $r = update_work_results();
     update_workmap();
 
@@ -1593,13 +1595,13 @@ function get_commands_display ( & $display )
 // Read $workdir/$workbase.shout and write the result so
 // far of running $workdir/$workbase.sh into
 //
-//	$_SESSION['EPM_WORKRESULT']
+//	$_SESSION['EPM_WORK']['RESULT']
 //
 // Also return this result.
 //
-// If the value of $_SESSION['EPM_WORKRESULT'] already
-// indicates the run is finished, this function does
-// nothing but return this value.
+// If the value of $_SESSION['EPM_WORK']['RESULT']
+// already indicates the run is finished, this function
+// does nothing but return this value.
 //
 // If the run is finished, the result is [n,code] where
 // n is the value of the variable $n in the shell script
@@ -1624,33 +1626,36 @@ function get_commands_display ( & $display )
 function update_work_results ( $wait = 0 )
 {
     global $epm_data, $_SESSION;
-    $workbase = $_SESSION['EPM_WORKBASE'];
-    $workdir = $_SESSION['EPM_WORKDIR'];
-    $result = $_SESSION['EPM_WORKRESULT'];
+
+    $work = & $_SESSION['EPM_WORK'];
+    $workbase = $work['BASE'];
+    $workdir = $work['DIR'];
+    $result = $work['RESULT'];
     if ( is_array ( $result ) || $result === false )
         return $result;
 
     $result = get_command_results
     	( $workbase, $workdir, $wait );
-    $_SESSION['EPM_WORKRESULT'] = $result;
+    $work['RESULT'] = $result;
     return $result;
 }
 
-// Ditto but updates $_SESSION['EPM_RUNRESULT]' by
+// Ditto but updates $_SESSION['EPM_RUN']['RESULT]' by
 // reading $rundir/$runbase.shout.
 //
 function update_run_results ( $wait = 0 )
 {
     global $epm_data, $_SESSION;
-    $runbase = $_SESSION['EPM_RUNBASE'];
-    $rundir = $_SESSION['EPM_RUNDIR'];
-    $result = $_SESSION['EPM_RUNRESULT'];
+    $run = & $_SESSION['EPM_RUN'];
+    $runbase = $run['BASE'];
+    $rundir = $run['DIR'];
+    $result = $run['RESULT'];
     if ( is_array ( $result ) || $result === false )
         return $result;
 
     $result = get_command_results
     	( $runbase, $rundir, $wait );
-    $_SESSION['EPM_RUNRESULT'] = $result;
+    $run['RESULT'] = $result;
     return $result;
 }
 
@@ -1921,20 +1926,16 @@ function compute_show ( $control, $workdir, $moved )
 //
 // This function begins by unsetting
 //
-//      $_SESSION['EPM_WORKDIR']
-//      $_SESSION['EPM_WORKBASE']
-//      $_SESSION['EPM_WORKMAP']
-//	$_SESSION['EPM_WORKRESULT']
-//	$_SESSION['EPM_CONTROL]'
+//      $_SESSION['EPM_WORK'] = []
 //
 // If there are no errors, this function sets:
 //
-//     $_SESSION['EPM_WORKDIR'] to $dir
-//     $_SESSION['EPM_WORKBASE'] to $base
-//     $_SESSION['EPM_WORKMAP'] to the status map
+//     $_SESSION['EPM_WORK']['DIR'] to $dir
+//     $_SESSION['EPM_WORK']['BASE'] to $base
+//     $_SESSION['EPM_WORK']['MAP'] to the status map
 //	    initialized by compile_command
-//     $_SESSION['EPM_WORKRESULT'] to true
-//     $_SESSION['EPM_CONTROL'] to the control
+//     $_SESSION['EPM_WORK']['RESULT'] to true
+//     $_SESSION['EPM_WORK']['CONTROL'] to the control
 //	    found by find_control
 //
 function start_make_file
@@ -1946,11 +1947,8 @@ function start_make_file
     global $epm_data, $is_epm_test,
            $problem, $probdir, $_SESSION;
 
-    unset ( $_SESSION['EPM_WORKDIR'] );
-    unset ( $_SESSION['EPM_WORKBASE'] );
-    unset ( $_SESSION['EPM_WORKMAP'] );
-    unset ( $_SESSION['EPM_WORKRESULT'] );
-    unset ( $_SESSION['EPM_CONTROL'] );
+    $_SESSION['EPM_WORK'] = [];
+    $work = & $_SESSION['EPM_WORK'];
 
     $control = NULL;
     $workbase = NULL;
@@ -2027,23 +2025,23 @@ function start_make_file
     execute_commands ( $workbase, $workdir, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
-    $_SESSION['EPM_WORKDIR'] = $workdir;
-    $_SESSION['EPM_WORKBASE'] = $workbase;
-    $_SESSION['EPM_WORKMAP'] = $map;
-    $_SESSION['EPM_WORKRESULT'] = true;
-    $_SESSION['EPM_CONTROL'] = $control;
+    $work['DIR'] = $workdir;
+    $work['BASE'] = $workbase;
+    $work['MAP'] = $map;
+    $work['RESULT'] = true;
+    $work['CONTROL'] = $control;
 }
 
 // Finish execution of a run started by start_make_file.
 //
 // This function requires that
 //
-//	$_SESSION['EPM_WORKBASE']
-//	$_SESSION['EPM_WORKDIR']
+//	$_SESSION['EPM_WORK']['BASE']
+//	$_SESSION['EPM_WORK']['DIR']
 //
 // be set and will do nothing if
 //
-//	$_SESSION['EPM_CONTROL']
+//	$_SESSION['EPM_WORK']['CONTROL']
 //
 // is not set.  Otherwise it unsets this last global
 // after getting its value.
@@ -2072,13 +2070,16 @@ function start_make_file
 function finish_make_file
 	( & $kept, & $show, & $warnings, & $errors )
 {
-    if ( ! isset ( $_SESSION['EPM_CONTROL'] ) )
-        return;
-    $control = $_SESSION['EPM_CONTROL'];
-    $workbase = $_SESSION['EPM_WORKBASE'];
-    $workdir = $_SESSION['EPM_WORKDIR'];
+    global $_SESSION;
 
-    unset ( $_SESSION['EPM_CONTROL'] );
+    $work = & $_SESSION['EPM_WORK'];
+    if ( ! isset ( $work['CONTROL'] ) )
+        return;
+    $control = $work['CONTROL'];
+    $workbase = $work['BASE'];
+    $workdir = $work['DIR'];
+
+    unset ( $work['CONTROL'] );
     $kept = [];
     $show = [];
     $errors_size = count ( $errors );
@@ -2112,7 +2113,7 @@ SHOW:
 // $epm_data/$rundir, compile into $epm_data/$rundir/
 // $runbase.sh the command:
 //
-//	epm_run [-s] $runfile $runbase.stat \
+//	epm_run [-s] $workdir $runfile $runbase.stat \
 //		>$runbase.rout 2>$runbase.rerr
 //
 // and execute $runbase.sh in background.  Here $runbase
@@ -2124,32 +2125,26 @@ SHOW:
 // WARNING: $rundir must not contain . or .. component
 //          names.
 //
-// This function begins by unsetting
+// This function begins by setting
 //
-//      $_SESSION['EPM_RUNDIR']
-//      $_SESSION['EPM_RUNBASE']
-//      $_SESSION['EPM_RUNSUBMIT']
-//      $_SESSION['EPM_RUNRESULT']
-//      $_SESSION['EPM_RUNOUT']
+//      $_SESSION['EPM_RUN'] = []
 //
 // If there are no errors, this function sets:
 //
-//     $_SESSION['EPM_RUNDIR'] to $rundir
-//     $_SESSION['EPM_RUNBASE'] to $runbase
-//     $_SESSION['EPM_RUNSUBMIT'] to $submit
-//     $_SESSION['EPM_RUNRESULT'] to true
+//     $_SESSION['EPM_RUN']['DIR'] to $rundir
+//     $_SESSION['EPM_RUN']['BASE'] to $runbase
+//     $_SESSION['EPM_RUN']['SUBMIT'] to $submit
+//     $_SESSION['EPM_RUN']['RESULT'] to true
 //
 function start_run
-	( $runfile, $rundir, $submit, & $errors )
+	( $workdir, $runfile, $rundir, $submit,
+	            & $errors )
 {
     global $epm_data,
            $local_file_cache, $remote_file_cache;
 
-    unset ( $_SESSION['EPM_RUNDIR'] );
-    unset ( $_SESSION['EPM_RUNBASE'] );
-    unset ( $_SESSION['EPM_RUNSUBMIT'] );
-    unset ( $_SESSION['EPM_RUNRESULT'] );
-    unset ( $_SESSION['EPM_RUNOUT'] );
+    $_SESSION['EPM_RUN'] = [];
+    $run = & $_SESSION['EPM_RUN'];
 
     $errors_size = count ( $errors );
 
@@ -2204,7 +2199,8 @@ function start_run
 
     $runbase = pathinfo ( $runfile, PATHINFO_FILENAME );
 
-    $commands = [ '${EPM_HOME}/bin/epm_run' .
+    $commands = [ '${EPM_HOME}/bin/epm_run ' .
+                  $workdir .
     		  ($submit ? ' -s' : '' ) . ' \\',
 		  "    $runfile $runbase.stat \\",
 		  "    >$runbase.rout 2>$runbase.rerr"];
@@ -2214,10 +2210,10 @@ function start_run
     execute_commands ( $runbase, $rundir, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
-    $_SESSION['EPM_RUNDIR'] = $rundir;
-    $_SESSION['EPM_RUNBASE'] = $runbase;
-    $_SESSION['EPM_RUNSUBMIT'] = $submit;
-    $_SESSION['EPM_RUNRESULT'] = true;
+    $run['DIR'] = $rundir;
+    $run['BASE'] = $runbase;
+    $run['SUBMIT'] = $submit;
+    $run['RESULT'] = true;
 }
     
 
@@ -2226,14 +2222,15 @@ function finish_run ( & $errors )
     global $epm_data, $probdir, $uid, $problem,
            $_SESSION;
 
-    $rundir = $_SESSION['EPM_RUNDIR'];
-    $runbase = $_SESSION['EPM_RUNBASE'];
-    $submit = $_SESSION['EPM_RUNSUBMIT'];
-    $result = $_SESSION['EPM_RUNRESULT'];
+    $run = & $_SESSION['EPM_RUN'];
+    $rundir = $run['DIR'];
+    $runbase = $run['BASE'];
+    $submit = $run['SUBMIT'];
+    $result = $run['RESULT'];
 
     if ( $result === true )
         ERROR ( "finish_run called with 'true'" .
-	        " session EPM_RUNRESULT" );
+	        " session EPM_RUN RESULT" );
 
     if ( $result === false )
     {
@@ -2287,8 +2284,7 @@ function finish_run ( & $errors )
 		    // have prevented race condition
 		}
 		else
-		    $_SESSION['EPM_RUNOUT'] =
-		        "$runbase-$c.rout";
+		    $run['OUT'] = "$runbase-$c.rout";
 		break;
 	    }
 	    $c += 1;
@@ -2323,8 +2319,7 @@ function finish_run ( & $errors )
 		    // have prevented race condition
 		}
 		else
-		    $_SESSION['EPM_RUNOUT'] =
-		        "$runbase-{$c}s.rout";
+		    $run['OUT'] = "$runbase-{$c}s.rout";
 		break;
 	    }
 	    $c += 1;
