@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 24 05:17:50 EST 2020
+    // Date:	Tue Feb 25 02:57:11 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -19,7 +19,8 @@
 	exit;
     }
 
-    // require "$epm_home/include/debug_info.php";
+    // if ( ! isset ( $_POST['update'] ) ) // xhttp
+    //     require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_USER_ID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -266,35 +267,35 @@
     if ( $method != 'POST' ) /* Do Nothing */;
     elseif ( ! isset ( $probdir ) )
 	/* Do Nothing */;
-    elseif ( isset ( $_POST['show_file'] ) )
+    elseif ( isset ( $_POST['delete_files'] ) )
     {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f,
-	    // etc.  Needed if we set show_files.
-
-	$f = $_POST['show_file'];
-	if ( array_search
-	         ( $f, problem_file_names(), true )
-	     === false )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-
-	$show_files[] = "users/user$uid/$problem/$f";
-    }
-    elseif ( isset ( $_POST['delete_file'] ) )
-    {
-	$f = $_POST['delete_file'];
-	if ( array_search
-	         ( $f, problem_file_names(),
-		       true ) === false )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	$f = "$probdir/$f";
-        if ( ! unlink ( "$epm_data/$f" ) )
-	    $errors[] = "could not delete $f";
+        // Process file deletions for other posts.
+	//
+	$files = $_POST['delete_files'];
+	$files = explode ( ',', $files );
+	foreach ( $files as $f )
+	{
+	    if ( $f == '' ) continue;
+	    if ( array_search
+		     ( $f, problem_file_names(),
+			   true ) === false )
+		exit ( "ACCESS: illegal POST to" .
+		       " problem.php" );
+	}
+	foreach ( $files as $f )
+	{
+	    if ( $f == '' ) continue;
+	    $g = "$probdir/$f";
+	    if ( ! unlink ( "$epm_data/$g" ) )
+		$errors[] = "could not delete $g";
+	}
 	$problem_file_names = NULL;
 	    // Clear cache.
     }
+
+    if ( $method != 'POST' ) /* Do Nothing */;
+    elseif ( ! isset ( $probdir ) )
+	/* Do Nothing */;
     elseif ( isset ( $_POST['make'] ) )
     {
 	require "$epm_home/include/epm_make.php";
@@ -489,7 +490,7 @@
 <script>
     var iframe;
 
-    function create_iframe ( page, filename ) {
+    function CREATE_IFRAME ( page, filename ) {
 	if ( iframe != undefined ) iframe.remove();
 
 	iframe = document.createElement("IFRAME");
@@ -498,6 +499,34 @@
 	iframe.src =
 	    '/page/' + page + '?filename=' + filename;
 	document.body.appendChild ( iframe );
+    }
+
+    var DELETE_LIST = [];
+
+    function TOGGLE_DELETE ( count, fname )
+    {
+	var FILE = document.getElementById
+	               ("file" + count);
+	var DELETE = document.getElementById
+	               ("delete" + count);
+        let i = DELETE_LIST.findIndex
+	            ( x => x == fname );
+	if ( i == -1 )
+	{
+	    DELETE_LIST.push ( fname );
+	    DELETE.innerText = "UnDelete";
+	    FILE.style = 'text-decoration:line-through';
+
+	}
+	else
+	{
+	    DELETE_LIST.splice ( i, 1 );
+	    DELETE.innerText = "  Delete";
+	    FILE.style = 'text-decoration:';
+	}
+	var DELETE_FILES = document.getElementById
+			       ("delete_files");
+	DELETE_FILES.value = DELETE_LIST.toString();
     }
 </script>
 <body>
@@ -615,13 +644,20 @@ EOT;
 
     if ( isset ( $problem ) )
     {
+        echo <<<'EOT'
+	<form action='problem.php'
+	      enctype='multipart/form-data'
+	      method='POST'
+	      id='execute_form'>
+	<input id='delete_files'
+	       name='delete_files' value=''
+	       type='hidden'>
+EOT;
         $count = 0;
 	foreach ( problem_file_names() as $fname )
 	{
 	    if ( ++ $count == 1 )
-	        echo "<form action='problem.php'" .
-		     " method='POST'>" .
-		     "<h5>Current Problem Files" .
+	        echo "<h5>Current Problem Files" .
 		     " (most recent first):</h5>" .
 		     "<table style='display:block'>";
 	    echo "<tr>";
@@ -633,17 +669,19 @@ EOT;
 	    {
 	        $fpage = $display_file_map[$ftype];
 	        echo "<button type='button'" .
-		     " onclick='create_iframe" .
-		     "(\"$fpage\",\"$fname\")'>";
+		     " onclick='CREATE_IFRAME" .
+		     "(\"$fpage\",\"$fname\")'>" .
+		     "<pre id='file$count'>" .
+	             $fname . "</pre></button></td>";
 	    }
 	    else
-	        echo "<button type='submit'" .
-	             " name='show_file'" .
-		     " value='$fname'>";
-	    echo $fname . "</button></td>";
-	    echo "<td><button type='submit'" .
-	         " name='delete_file' value='$fname'>" .
-		 "Delete</button></td>";
+	        echo "<pre id='file$count'>" .
+	             $fname . "</pre></td>";
+	    echo "<td><button type='button'" .
+	         " onclick='TOGGLE_DELETE" .
+		 "($count, \"$fname\")'>" .
+		 "<pre id='delete$count'>" .
+		 "  Delete</pre></button></td>";
 	    if ( preg_match ( '/^(.+)\.in$/', $fname,
 	                      $matches ) )
 	    {
@@ -694,20 +732,26 @@ EOT;
 		     " value='$fname'>" .
 		     "Run</button></td>";
 	    }
+	    if ( ! isset ( $display_file_map[$ftype] ) )
+	    {
+		echo "<td colspan='10'>" .
+		     "<pre>$ftype</pre></td>";
+	    }
 	    echo "</tr>";
 	}
-	if ( $count > 0 ) echo "</table></form>";
+	if ( $count > 0 ) echo "</table>";
 
         echo <<<EOT
 
-	<form enctype="multipart/form-data"
-	      action="problem.php" method="post">
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$epm_upload_maxsize">
 	<input type="submit" name="upload"
 	       value="Upload File:">
 	<input type="file" name="uploaded_file"
 	       title="file to upload">
+	<pre>          </pre>
+	<input type="submit" name="execute_deletes"
+	       value="Execute Deletions">
 	</form>
 EOT;
     }
@@ -792,7 +836,7 @@ EOT;
 	$type = $display_file_type[$ext];
 	$page = $display_file_map[$type];
 	if ( $page != NULL ) echo <<<EOT
-<script>create_iframe ( '$page', '$base' );</script>
+<script>CREATE_IFRAME ( '$page', '$base' );</script>
 EOT;
     }
 ?>
