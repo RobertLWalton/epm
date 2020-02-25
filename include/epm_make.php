@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 25 04:41:11 EST 2020
+// Date:    Tue Feb 25 06:07:56 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2209,10 +2209,10 @@ function start_run
 
     $runbase = pathinfo ( $runfile, PATHINFO_FILENAME );
 
-    $commands = [ '${EPM_HOME}/bin/epm_run ' .
-                  $workdir .
+    $commands = [ '${EPM_HOME}/bin/epm_run' .
     		  ($submit ? ' -s' : '' ) . ' \\',
-		  "    $runfile $runbase.stat \\",
+                  "    $runfile" .
+		  " $workdir $runbase.stat \\",
 		  "    >$runbase.rout 2>$runbase.rerr"];
 
     compile_commands
