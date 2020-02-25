@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 25 08:06:13 EST 2020
+    // Date:	Tue Feb 25 11:36:22 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -472,6 +472,9 @@
 	float: right;
 	height: 99%;
     }
+    div.problem_display {
+	background-color: #F2D9D9;
+    }
     div.command_display {
 	background-color: #C0FFC0;
     }
@@ -482,7 +485,7 @@
 	margin-left: 20px;
     }
     td.time {
-	color: #0052CC;
+	color: #99003D;
 	text-align: right;
     }
 </style>
@@ -645,6 +648,7 @@ EOT;
     if ( isset ( $problem ) )
     {
         echo <<<'EOT'
+	<div class='problem_display'>
 	<form action='problem.php'
 	      enctype='multipart/form-data'
 	      method='POST'
@@ -768,7 +772,7 @@ EOT;
 	<pre>          </pre>
 	<input type="submit" name="execute_deletes"
 	       value="Execute Deletions">
-	</form>
+	</form></div>
 EOT;
     }
 
