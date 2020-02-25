@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 25 04:42:27 EST 2020
+    // Date:	Tue Feb 25 08:06:13 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -514,14 +514,14 @@
 	if ( i == -1 )
 	{
 	    DELETE_LIST.push ( fname );
-	    DELETE.innerText = "UnDelete";
+	    DELETE.innerHTML = "+";
 	    FILE.style = 'text-decoration:line-through';
 
 	}
 	else
 	{
 	    DELETE_LIST.splice ( i, 1 );
-	    DELETE.innerText = "  Delete";
+	    DELETE.innerHTML = "&Chi;";
 	    FILE.style = 'text-decoration:';
 	}
 	var DELETE_FILES = document.getElementById
@@ -679,25 +679,33 @@ EOT;
 	             $fname . "</pre></td>";
 	    echo "<td><button type='button'" .
 	         " onclick='TOGGLE_DELETE" .
-		 "($count, \"$fname\")'>" .
+		 "($count, \"$fname\")'" .
+		 " title='Delete(X) or Un-Delete(+)" .
+		 " $fname'>" .
 		 "<pre id='delete$count'>" .
-		 "  Delete</pre></button></td>";
+		 "&Chi;</pre></button></td>";
 	    if ( preg_match ( '/^(.+)\.in$/', $fname,
 	                      $matches ) )
 	    {
 		$b = $matches[1];
 		echo "<td><button type='submit'" .
 		     " name='make'" .
+		     " title='Make $b.sin" .
+		     " from $fname'" .
 		     " value='$fname:$b.sin'>" .
-		     "Make .sin</button></td>";
+		     "&rArr;.sin</button></td>";
 		echo "<td><button type='submit'" .
 		     " name='make'" .
+		     " title='Make $b.sout" .
+		     " from $fname'" .
 		     " value='$fname:$b.sout'>" .
-		     "Make .sout</button></td>";
+		     "&rArr;.sout</button></td>";
 		echo "<td><button type='submit'" .
 		     " name='make'" .
+		     " title='Make $b.score" .
+		     " from $fname'" .
 		     " value='$fname:$b.score'>" .
-		     "Make .score</button></td>";
+		     "&rArr;.score</button></td>";
 	    }
 	    elseif ( preg_match ( '/^(.+)\.sout$/',
 	                          $fname, $matches ) )
@@ -705,12 +713,16 @@ EOT;
 		$b = $matches[1];
 		echo "<td><button type='submit'" .
 		     " name='make'" .
+		     " title='Make $b.fout" .
+		     " from $fname'" .
 		     " value='$fname:$b.fout'>" .
-		     "Make .fout</button></td>";
+		     "&rArr;.fout</button></td>";
 		echo "<td><button type='submit'" .
 		     " name='make'" .
+		     " title='Make $b.score" .
+		     " from $fname'" .
 		     " value='$fname:$b.score'>" .
-		     "Make .score</button></td>";
+		     "&rArr;.score</button></td>";
 	    }
 	    elseif ( preg_match ( '/^(.+)\.fout$/',
 	                          $fname, $matches ) )
@@ -718,12 +730,16 @@ EOT;
 		$b = $matches[1];
 		echo "<td><button type='submit'" .
 		     " name='make'" .
+		     " title='Make $b.score" .
+		     " from $fname'" .
 		     " value='$fname:$b.score'>" .
-		     "Make .score</button></td>";
+		     "&rArr;.score</button></td>";
 		echo "<td><button type='submit'" .
 		     " name='make'" .
+		     " title='Make $b.ftest" .
+		     " from $fname'" .
 		     " value='$fname:$b.ftest'>" .
-		     "Make .ftest</button></td>";
+		     "&rArr;.ftest</button></td>";
 	    }
 	    elseif ( preg_match ( '/\.run$/', $fname ) )
 	    {
