@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 25 02:57:11 EST 2020
+    // Date:	Tue Feb 25 04:42:27 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -318,7 +318,7 @@
 	    ( $src, $des, NULL /* no condition */,
 	      true, "$probdir/+work+",
 	      NULL, NULL /* no upload, upload_tmp */,
-	      $warnings, $errors );
+	      $errors );
 	if ( isset
 	         ( $_SESSION['EPM_WORK']['CONTROL'] ) )
 	{

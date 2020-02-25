@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Feb 24 05:18:01 EST 2020
+// Date:    Tue Feb 25 04:41:11 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1936,18 +1936,21 @@ function compute_show ( $show )
 //	    messages).
 //     $_SESSION['EPM_WORK']['KEPT'] to []
 //     $_SESSION['EPM_WORK']['SHOW'] to []
+//     $_SESSION['EPM_WORK']['WARNINGS'] to warnings
 //
 function start_make_file
 	( $src, $des, $condition,
 	  $allow_local_optn, $workdir,
 	  $uploaded, $uploaded_tmp,
-	  & $warnings, & $errors )
+	  & $errors )
 {
     global $epm_data, $is_epm_test,
            $problem, $probdir, $_SESSION;
 
     $_SESSION['EPM_WORK'] = [];
     $work = & $_SESSION['EPM_WORK'];
+    $work['WARNINGS'] = [];
+    $warnings = & $work['WARNINGS'];
 
     $control = NULL;
     $workbase = NULL;
@@ -2076,6 +2079,8 @@ function finish_make_file ( & $warnings, & $errors )
     $work = & $_SESSION['EPM_WORK'];
     if ( ! isset ( $work['CONTROL'] ) )
         return;
+    $warnings = array_merge
+        ( $warnings, $work['WARNINGS'] );
     $control = $work['CONTROL'];
     $workbase = $work['BASE'];
     $workdir = $work['DIR'];
@@ -2435,7 +2440,7 @@ function process_upload
         ( $fname, $tname, "UPLOAD $fname",
           true, $workdir,
 	  $fname, $ftmp_name,
-	  $warnings, $errors );
+	  $errors );
 }
 
 // Create the named file in $probdir.  If the
