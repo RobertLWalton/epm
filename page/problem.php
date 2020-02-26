@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 06:54:32 EST 2020
+    // Date:	Wed Feb 26 09:06:46 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -130,6 +130,8 @@
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	unset ( $_SESSION['EPM_PROBLEM'] );
+	$_SESSION['EPM_WORK'] = [];
+	$_SESSION['EPM_RUN'] = [];
 	$d = "$epm_data/$user_dir/$prob";
 	exec ( "rm -rf $d" );
 	$deleted_problem = $prob;
@@ -148,7 +150,11 @@
          && isset ( $_SESSION['EPM_PROBLEM'] ) )
         $problem = $_SESSION['EPM_PROBLEM'];
     elseif ( isset ( $problem ) )
+    {
 	$_SESSION['EPM_PROBLEM'] = $problem;
+	$_SESSION['EPM_WORK'] = [];
+	$_SESSION['EPM_RUN'] = [];
+    }
 
     $lock_desc = NULL;
     function shutdown ()
@@ -170,6 +176,8 @@
 	    $probdir = NULL;
 	    $problem = NULL;
 	    unset ( $_SESSION['EPM_PROBLEM'] );
+	    $_SESSION['EPM_WORK'] = [];
+	    $_SESSION['EPM_RUN'] = [];
 	}
 	else
 	{
@@ -182,6 +190,9 @@
     }
     else
 	$probdir = NULL;
+
+    require "$epm_home/include/epm_make.php";
+        // Do this after setting $problem and $probdir.
 
     // Data Set by GET and POST Requests:
     //
@@ -357,9 +368,6 @@
 	/* Do Nothing */;
     elseif ( isset ( $_POST['make'] ) )
     {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f, etc.
-
         $m = $_POST['make'];
 	if ( ! preg_match ( '/^([^:]+):([^:]+)$/', $m,
 	                    $matches ) )
@@ -392,23 +400,14 @@
 	    $uploaded_file = '';
 
 	if ( $uploaded_file != '' )
-	{
-	    require "$epm_home/include/epm_make.php";
-		// Do this first as it may change $f,
-		// etc.
-
 	    process_upload
 		( $upload_info, "$probdir/+work+",
 		  $warnings, $errors );
-	}
 	else
 	    $errors[] = "no file selected for upload";
     }
     elseif ( isset ( $_POST['run'] ) )
     {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f, etc.
-
         $f = $_POST['run'];
 	if ( ! preg_match ( '/\.run$/', $f ) )
 	    exit ( "ACCESS: illegal POST to" .
@@ -433,14 +432,10 @@
              &&
 	     isset ( $_SESSION['EPM_WORK']['BASE'] ) )
     {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f, etc.
+	/* Do Nothing */
     }
     elseif ( isset ( $_POST['update'] ) )
     {
-	require "$epm_home/include/epm_make.php";
-	    // Do this first as it may change $f, etc.
-
 	$count = 0;
 	while ( true )
 	{
@@ -856,7 +851,6 @@ EOT;
 
 	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
 	{
-	    require "$epm_home/include/epm_make.php";
 	    echo "<div class='command_display'>" .
 		 PHP_EOL;
 	    get_commands_display ( $display );
