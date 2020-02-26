@@ -252,6 +252,78 @@
 	return $names;
     }
 
+    function file_info
+            ( $dir, $fname, $count, & $display_list )
+    {
+        global $epm_data, $display_file_type,
+	       $display_file_map;
+
+	$fext = pathinfo ( $fname, 
+			   PATHINFO_EXTENSION );
+	$ftype = $display_file_type[$fext];
+
+	$f = "$epm_data/$dir/$fname";
+	$fsize = NULL;
+	$fsize = @filesize ( $f );
+	$fcontents = NULL;
+	$flines = NULL;
+	$fdisplay = false;
+	if (    $ftype == 'utf8'
+	     && isset ( $fsize )
+	     && $fsize <= 8000 )
+	{
+	    $fcontents = "$fname contents could"
+		       . " not be read\n";
+	    $fcontents = @file_get_contents ( $f );
+	    $flines =
+		count ( explode
+			    ( "\n", $fcontents ) )
+		- 1;
+	}
+	if ( isset ( $fsize ) && $fsize == 0 )
+	    $fcomment = '(Empty)';
+	elseif ( $ftype == 'utf8' )
+	{
+	    if (    $flines == 1
+		 && strlen ( $fcontents ) <= 31 )
+		$fcomment = '{'
+			  . trim ( $fcontents )
+			  . '}';
+	    elseif ( isset ( $flines ) )
+	    {
+		$fcomment = "($flines Lines)";
+		if ( $flines <= 200 )
+		{
+		    $display_list[] =
+			[$count, $fname,
+			 $fcontents];
+		    $fdisplay = true;
+		}
+	    }
+	    elseif ( isset ( $fsize ) )
+		$fcomment = "($fsize Bytes)";
+	    else
+		$fcomment = "";
+	}
+	elseif ( isset ( $display_file_map
+			       [$ftype] ) )
+	{
+	    if ( isset ( $fsize ) )
+		$fcomment = "($fsize Bytes)";
+	    else
+		$fcomment = "";
+	}
+	else
+	{
+	    if ( is_link ( $f ) )
+		$fcomment = "Link to $ftype";
+	    else 
+		$fcomment = $ftype;
+	}
+
+	return [$fext, $ftype, $fdisplay, $fcomment];
+    }
+
     // Remaining POSTs require $problem and $probdir
     // to be non-NULL.
     //
@@ -680,66 +752,11 @@ EOT;
 		     "<table style='display:block'>";
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>";
-	    $fext = pathinfo ( $fname, 
-			       PATHINFO_EXTENSION );
-	    $ftype = $display_file_type[$fext];
-
-	    $f = "$epm_data/$probdir/$fname";
-	    $fsize = NULL;
-	    $fsize = @filesize ( $f );
-	    $fcontents = NULL;
-	    $flines = NULL;
-	    $fdisplay = false;
-	    if (    $ftype == 'utf8'
-	         && isset ( $fsize )
-		 && $fsize <= 8000 )
-	    {
-		$fcontents = "$fname contents could"
-			   . " not be read\n";
-		$fcontents = @file_get_contents ( $f );
-		$flines =
-		    count ( explode
-		                ( "\n", $fcontents ) )
-		    - 1;
-	    }
-	    if ( isset ( $fsize ) && $fsize == 0 )
-	        $fcomment = '(Empty)';
-	    elseif ( $ftype == 'utf8' )
-	    {
-		if (    $flines == 1
-		     && strlen ( $fcontents[0] ) <= 30 )
-		    $fcomment = "{{$fcontents[0]}}";
-		elseif ( isset ( $flines ) )
-		{
-		    $fcomment = "($flines Lines)";
-		    if ( $flines <= 200 )
-		    {
-			$display_list[] =
-			    [$count, $fname,
-			     $fcontents];
-			$fdisplay = true;
-		    }
-		}
-		elseif ( isset ( $fsize ) )
-		    $fcomment = "($fsize Bytes)";
-		else
-		    $fcomment = "";
-	    }
-	    elseif ( isset ( $display_file_map
-	                           [$ftype] ) )
-	    {
-		if ( isset ( $fsize ) )
-		    $fcomment = "($fsize Bytes)";
-		else
-		    $fcomment = "";
-	    }
-	    else
-	    {
-	        if ( is_link ( $f ) )
-		    $fcomment = "Link to $ftype";
-		else 
-		    $fcomment = $ftype;
-	    }
+	    list ( $fext, $ftype, $fdisplay, $fcomment )
+	        = file_info ( $probdir, $fname, $count,
+		              $display_list );
+	    $fbase = pathinfo ( $fname, 
+			        PATHINFO_FILENAME );
 
 	    if ( isset ( $display_file_map[$ftype] ) )
 	    {
@@ -777,64 +794,58 @@ EOT;
 		<pre id='delete$count'>&Chi;</pre>
 		</button></td>
 EOT;
-	    if ( preg_match ( '/^(.+)\.in$/', $fname,
-	                      $matches ) )
+	    if ( $fext == 'in' )
 	    {
-		$b = $matches[1];
 		echo "<td><button type='submit'" .
 		     " name='make'" .
-		     " title='Make $b.sin" .
+		     " title='Make $fbase.sin" .
 		     " from $fname'" .
-		     " value='$fname:$b.sin'>" .
+		     " value='$fname:$fbase.sin'>" .
 		     "&rArr;.sin</button></td>";
 		echo "<td><button type='submit'" .
 		     " name='make'" .
-		     " title='Make $b.sout" .
+		     " title='Make $fbase.sout" .
 		     " from $fname'" .
-		     " value='$fname:$b.sout'>" .
+		     " value='$fname:$fbase.sout'>" .
 		     "&rArr;.sout</button></td>";
 		echo "<td><button type='submit'" .
 		     " name='make'" .
-		     " title='Make $b.score" .
+		     " title='Make $fbase.score" .
 		     " from $fname'" .
-		     " value='$fname:$b.score'>" .
+		     " value='$fname:$fbase.score'>" .
 		     "&rArr;.score</button></td>";
 	    }
-	    elseif ( preg_match ( '/^(.+)\.sout$/',
-	                          $fname, $matches ) )
+	    elseif ( $fext == 'sout' )
 	    {
-		$b = $matches[1];
 		echo "<td><button type='submit'" .
 		     " name='make'" .
-		     " title='Make $b.fout" .
+		     " title='Make $fbase.fout" .
 		     " from $fname'" .
-		     " value='$fname:$b.fout'>" .
+		     " value='$fname:$fbase.fout'>" .
 		     "&rArr;.fout</button></td>";
 		echo "<td><button type='submit'" .
 		     " name='make'" .
-		     " title='Make $b.score" .
+		     " title='Make $fbase.score" .
 		     " from $fname'" .
-		     " value='$fname:$b.score'>" .
+		     " value='$fname:$fbase.score'>" .
 		     "&rArr;.score</button></td>";
 	    }
-	    elseif ( preg_match ( '/^(.+)\.fout$/',
-	                          $fname, $matches ) )
+	    elseif ( $fext == 'fout' )
 	    {
-		$b = $matches[1];
 		echo "<td><button type='submit'" .
 		     " name='make'" .
-		     " title='Make $b.score" .
+		     " title='Make $fbase.score" .
 		     " from $fname'" .
-		     " value='$fname:$b.score'>" .
+		     " value='$fname:$fbase.score'>" .
 		     "&rArr;.score</button></td>";
 		echo "<td><button type='submit'" .
 		     " name='make'" .
-		     " title='Make $b.ftest" .
+		     " title='Make $fbase.ftest" .
 		     " from $fname'" .
-		     " value='$fname:$b.ftest'>" .
+		     " value='$fname:$fbase.ftest'>" .
 		     "&rArr;.ftest</button></td>";
 	    }
-	    elseif ( preg_match ( '/\.run$/', $fname ) )
+	    elseif ( $fext == 'run' )
 	    {
 		echo "<td><button type='submit'" .
 		     " name='run'" .
