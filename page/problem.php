@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 01:55:24 EST 2020
+    // Date:	Wed Feb 26 02:17:12 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -215,28 +215,19 @@
     }
 
     // Return DISPLAYABLE problem file names, sorted
-    // most recent first.
+    // most recent first, that are in the given
+    // directory.  Only the last component of each
+    // name is returned.  The directory is relative
+    // to $epm_data.
     //
-    $problem_file_names = NULL;
-        // Cache of problem_file_names().
-    function problem_file_names()
+    function problem_file_names ( $dir )
     {
-        global $epm_data, $probdir,
-	       $problem_file_names, $display_file_type;
-
-	if ( isset ( $problem_file_names ) )
-	    return $problem_file_names;
-
-	if ( ! isset ( $probdir ) )
-	{
-	    $problem_file_names = [];
-	    return $problem_file_names;
-	}
+        global $epm_data, $display_file_type;
 
 	clearstatcache();
 	$map = [];
 
-	foreach ( scandir ( "$epm_data/$probdir" )
+	foreach ( scandir ( "$epm_data/$dir" )
 	          as $fname )
 	{
 	    if ( preg_match ( '/^\./', $fname ) )
@@ -248,17 +239,17 @@
 	        ( $fname, PATHINFO_EXTENSION );
 	    if ( ! isset ( $display_file_type[$ext] ) )
 		continue;
-	    $f = "$probdir/$fname";
 	    $map[$fname] =
-	        filemtime ( "$epm_data/$f" );
+	        filemtime ( "$epm_data/$dir/$fname" );
 	}
 	arsort ( $map, SORT_NUMERIC );
 	    // Note, keys cannot be floating point and
 	    // files often share modification times.
+	$names = [];
 	foreach ( $map as $key => $value )
-	    $problem_file_names[] = $key;
+	    $names[] = $key;
 
-	return $problem_file_names;
+	return $names;
     }
 
     // Remaining POSTs require $problem and $probdir
@@ -277,7 +268,8 @@
 	{
 	    if ( $f == '' ) continue;
 	    if ( array_search
-		     ( $f, problem_file_names(),
+		     ( $f, problem_file_names
+		     		( $probdir ),
 			   true ) === false )
 		exit ( "ACCESS: illegal POST to" .
 		       " problem.php" );
@@ -289,8 +281,6 @@
 	    if ( ! unlink ( "$epm_data/$g" ) )
 		$errors[] = "could not delete $g";
 	}
-	$problem_file_names = NULL;
-	    // Clear cache.
     }
 
     if ( $method != 'POST' ) /* Do Nothing */;
@@ -310,7 +300,8 @@
 	$des = $matches[2];
 		 	    
 	if ( array_search
-	         ( $src, problem_file_names(),
+	         ( $src, problem_file_names
+		 	     ( $probdir ),
 		         true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
@@ -323,7 +314,6 @@
 	         ( $_SESSION['EPM_WORK']['CONTROL'] ) )
 	{
 	    $workbase = $_SESSION['EPM_WORK']['BASE'];
-	    $problem_file_names = NULL; // Clear cache.
 	}
     }
     elseif ( isset ( $_POST['upload'] ) )
@@ -351,8 +341,6 @@
 	    {
 		$workbase =
 		    $_SESSION['EPM_WORK']['BASE'];
-		$problem_file_names = NULL;
-		    // Clear cache.
 	    }
 	}
 	else
@@ -369,7 +357,8 @@
 	           " problem.php" );
 		 	    
 	if ( array_search
-	         ( $f, problem_file_names(),
+	         ( $f, problem_file_names
+		 	   ( $probdir ),
 		       true ) === false )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
@@ -650,7 +639,7 @@ EOT;
     </td></tr></table></form>
 EOT;
 
-    if ( isset ( $problem ) )
+    if ( isset ( $probdir ) )
     {
         echo <<<'EOT'
 	<div class='problem_display'>
@@ -663,7 +652,8 @@ EOT;
 	       type='hidden'>
 EOT;
         $count = 0;
-	foreach ( problem_file_names() as $fname )
+	foreach ( problem_file_names( $probdir )
+	          as $fname )
 	{
 	    if ( ++ $count == 1 )
 	        echo "<h5>Current Problem Files" .
