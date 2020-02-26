@@ -998,7 +998,10 @@ function cleanup_dir ( $dir, $warnings )
     }
 
     if ( file_exists ( $d ) )
+    {
         exec ( "rm -rf $d" );
+	clearstatcache();
+    }
 
     $m = umask ( 06 );
     if ( ! mkdir ( $d, 0771) )

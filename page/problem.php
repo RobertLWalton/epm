@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 09:06:46 EST 2020
+    // Date:	Wed Feb 26 13:11:40 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -191,8 +191,10 @@
     else
 	$probdir = NULL;
 
-    require "$epm_home/include/epm_make.php";
-        // Do this after setting $problem and $probdir.
+    if ( isset ( $problem ) )
+	require "$epm_home/include/epm_make.php";
+        // Do this after setting $problem and $probdir,
+	// unless this is a GET and not a POST.
 
     // Data Set by GET and POST Requests:
     //
@@ -508,6 +510,8 @@
 	width: 50%;
 	float: left;
         font-size: 0.8vw;
+	height: 99%;
+	overflow: scroll;
     }
     iframe.right {
 	width: 48%;
@@ -521,6 +525,8 @@
     div.command_display {
 	background-color: #C0FFC0;
     }
+    div.work_display {
+	background-color: #F2D9D9;
     div.show {
 	background-color: #E5C4E7;
     }
@@ -845,7 +851,7 @@ EOT;
 	       title="file to upload">
 	<pre>          </pre>
 	<input type="submit" name="execute_deletes"
-	       value="Execute Deletions">
+	       value="Delete Marked (Over-Struck) Files">
 	</form></div>
 EOT;
 
@@ -871,6 +877,59 @@ EOT;
 	    echo "</div>" . PHP_EOL;
 	}
 
+	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
+	{
+	    $workdir = $_SESSION['EPM_WORK']['DIR'];
+	    $count_first = $count + 1;
+	    foreach ( problem_file_names( $workdir )
+		      as $fname )
+	    {
+		if ( ++ $count == $count_first )
+		    echo "<div class='work_display'>" .
+		         "<h5>Current Working Files" .
+			 " (most recent first):</h5>" .
+			 "<table style='display:block'>";
+		echo "<tr>";
+		echo "<td style='text-align:right'>";
+		list ( $fext, $ftype, $fdisplay, $fcomment )
+		    = file_info ( $workdir, $fname, $count,
+				  $display_list );
+
+		if ( isset ( $display_file_map[$ftype] ) )
+		{
+		    $fpage = $display_file_map[$ftype];
+		    echo <<<EOT
+			<button type='button'
+			   title='Show $fname at Right'
+			   onclick='CREATE_IFRAME
+			      ("$fpage","$fname")'>
+			 <pre id='file$count'>$fname</pre>
+			 </button></td>
+EOT;
+		}
+		else
+		    echo <<<EOT
+			<pre id='file$count'>$fname</pre>
+			</td>
+EOT;
+		if ( $fdisplay )
+		    echo <<<EOT
+			<td><button type='button'
+			     onclick='TOGGLE_SHOW($count)'
+			     title='(Un)Show $fname Below'>
+			<pre id='show$count'>&darr;</pre>
+			</td>
+EOT;
+		else
+		    echo "<td></td>";
+
+		echo "<td colspan='10'>" .
+		     "<pre>$fcomment</pre></td>";
+		echo "</tr>";
+	    }
+	    if ( $count > 0 ) echo "</table></div>";
+	}
+
 	if ( count ( $display_list ) > 0 )
 	{
 	    foreach ( $display_list as $pair )
@@ -889,56 +948,6 @@ EOT;
 EOT;
 	    }
 	}
-    }
-
-    if ( count ( $show_files ) > 0 )
-    {
-	echo "<br><div class='show'>" . PHP_EOL;
-	foreach ( $show_files as $f )
-	{
-	    $f = "$epm_data/$f";
-	    $b = basename ( $f );
-	    if ( filesize ( $f ) == 0 )
-	    {
-		echo "<u><pre>$b</pre></u>" .
-		     " is empty<br>" . PHP_EOL;
-		continue;
-	    }
-	    $ext = pathinfo ( $f, PATHINFO_EXTENSION );
-	    if ( ! isset ( $display_file_type[$ext] ) )
-	        continue;
-	    $type = $display_file_type[$ext];
-	    if ( $type == 'pdf' ) $type = 'PDF file';
-
-	    if ( $type == 'utf8' )
-	    {
-		echo "<u><pre>$b:</pre></u>" . PHP_EOL;
-		$c = file_get_contents ( $f );
-		$hc = htmlspecialchars ( $c );
-		echo "<br><div" .
-		     " style='margin-left:20px'>" .
-		     PHP_EOL;
-		echo "<pre>$hc</pre>" .  PHP_EOL;
-		echo "</div>" .  PHP_EOL;
-	    }
-	    else
-	    {
-		$t = exec ( "file -h $f" );
-		$t = explode ( ":", $t );
-		$t = $t[1];
-		if ( preg_match
-		         ( '/symbolic link/', $t ) )
-		{
-		    $t = trim ( $t );
-		    $t .= "\n    which is $type";
-		}
-		else
-		    $t = $type;
-		echo "<pre><u>$b</u> is $t</pre><br>" .
-		     PHP_EOL;
-	    }
-	}
-	echo "</div>" . PHP_EOL;
     }
 
     if ( isset ( $show_file ) )
