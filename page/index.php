@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Feb 24 05:20:32 EST 2020
+// Date:    Wed Feb 26 00:36:19 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -113,6 +113,9 @@ $epm_expiration_times =
 	[ 2*24*60*60, 7*24*60*60, 30*24*60*60];
     // [2, 7, 30] days; ticket expiration times
     // for 1st, 2nd, and >= 3rd tickets.
+
+$epm_file_maxsize = 16*1024*1024;  // 16 megabytes.
+    // Maximum size any file.
 
 $epm_upload_maxsize = 256*1024;  // 256 kilobytes.
     // Maximum size of uploaded file.

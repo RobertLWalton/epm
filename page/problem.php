@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 25 11:36:22 EST 2020
+    // Date:	Wed Feb 26 01:55:24 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -451,26 +451,31 @@
 <html>
 <style>
     h5 {
-        font-size: 14pt;
+        font-size: 1vw;
 	margin: 0 0 0 0;
 	display:inline;
     }
     pre, b, button, input, select, u {
-        font-size: 12pt;
 	display:inline;
+        font-size: 0.8vw;
+    }
+    pre {
+	font-family: "Courier New", Courier, monospace;
     }
     pre.red {
         color: #BB0000;
     }
     div.left {
 	background-color: #96F9F3;
-	width: 47%;
+	width: 50%;
 	float: left;
+        font-size: 0.8vw;
     }
     iframe.right {
-	width: 9in;
+	width: 48%;
 	float: right;
 	height: 99%;
+        font-size: 0.8vw;
     }
     div.problem_display {
 	background-color: #F2D9D9;
