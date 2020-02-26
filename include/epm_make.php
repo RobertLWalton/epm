@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 26 08:24:52 EST 2020
+// Date:    Wed Feb 26 14:41:51 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -74,6 +74,16 @@ function is_running ( $pid )
     // available in vanilla PHP.
 
     return ( $kill_status == 0 );
+}
+
+// Do what PHP symlink should do, but symlink is known
+// to fail sometimes for no good reason (see comments
+// on PHP documentation site - and this behavior has
+// also been observed in EPM testing).
+//
+function symbolic_link ( $target, $link )
+{
+    return exec ( "ln -s $target $link 2>&1" ) == '';
 }
 
 // Function to get and decode json file, which must be
@@ -1088,7 +1098,8 @@ function link_required
 	    }
 	}
 
-	if ( ! symlink ( $t, "$epm_data/$workdir/$l" ) )
+	if ( ! symbolic_link
+	           ( $t, "$epm_data/$workdir/$l" ) )
 	{
 	    $errors[] = "cannot symbolically link"
 	              . " $workdir/$l to $t";
@@ -1987,8 +1998,9 @@ function start_make_file
 
     foreach ( $creatable as $f )
     {
-	if ( ! symlink ( "$epm_data/$probdir/$f",
-	                 "$epm_data/$workdir/$f" ) )
+	if ( ! symbolic_link
+	           ( "$epm_data/$probdir/$f",
+	             "$epm_data/$workdir/$f" ) )
 	    $errors[] = "cannot symbolically link"
 	              . " $workdir/$f to $probdir/$f";
     }
@@ -2228,8 +2240,9 @@ function start_run
 	return;
     }
 
-    if ( ! symlink ( "$r/$runfile",
-                     "$epm_data/$rundir/$runfile" ) )
+    if ( ! symbolic_link
+               ( "$r/$runfile",
+                 "$epm_data/$rundir/$runfile" ) )
     {
 	$errors[] = "cannot symbolically link"
 		  . " $rundir/$runfile to $f";
@@ -2493,7 +2506,7 @@ function create_file
                            $filename, $matches ) )
     {
 	$b = $matches[1];
-	if ( ! symlink
+	if ( ! symbolic_link
 	           ( "/usr/bin/epm_default_$b", $f ) )
 	    ERROR ( "create_file: cannot symbolically" .
 		    " link $filename to" .
