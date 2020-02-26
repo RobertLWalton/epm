@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 04:43:13 EST 2020
+    // Date:	Wed Feb 26 06:54:32 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -498,6 +498,24 @@
 	document.body.appendChild ( iframe );
     }
 
+    function TOGGLE_SHOW ( count )
+    {
+	var SHOW = document.getElementById
+	               ("show" + count);
+	var CONTENTS = document.getElementById
+	                   ("contents" + count);
+	if ( CONTENTS.hidden )
+	{
+	    SHOW.innerHTML = "&uarr;";
+	    CONTENTS.hidden = false;
+	}
+	else
+	{
+	    SHOW.innerHTML = "&darr;";
+	    CONTENTS.hidden = true;
+	}
+    }
+
     var DELETE_LIST = [];
 
     function TOGGLE_DELETE ( count, fname )
@@ -671,6 +689,7 @@ EOT;
 	    $fsize = @filesize ( $f );
 	    $fcontents = NULL;
 	    $flines = NULL;
+	    $fdisplay = false;
 	    if (    $ftype == 'utf8'
 	         && isset ( $fsize )
 		 && $fsize <= 8000 )
@@ -694,9 +713,12 @@ EOT;
 		{
 		    $fcomment = "($flines Lines)";
 		    if ( $flines <= 200 )
+		    {
 			$display_list[] =
 			    [$count, $fname,
 			     $fcontents];
+			$fdisplay = true;
+		    }
 		}
 		elseif ( isset ( $fsize ) )
 		    $fcomment = "($fsize Bytes)";
@@ -722,22 +744,39 @@ EOT;
 	    if ( isset ( $display_file_map[$ftype] ) )
 	    {
 	        $fpage = $display_file_map[$ftype];
-	        echo "<button type='button'" .
-		     " onclick='CREATE_IFRAME" .
-		     "(\"$fpage\",\"$fname\")'>" .
-		     "<pre id='file$count'>" .
-	             $fname . "</pre></button></td>";
+	        echo <<<EOT
+		    <button type='button'
+		       title='Show $fname at Right'
+		       onclick='CREATE_IFRAME
+		          ("$fpage","$fname")'>
+		     <pre id='file$count'>$fname</pre>
+		     </button></td>
+EOT;
 	    }
 	    else
-	        echo "<pre id='file$count'>" .
-	             $fname . "</pre></td>";
-	    echo "<td><button type='button'" .
-	         " onclick='TOGGLE_DELETE" .
-		 "($count, \"$fname\")'" .
-		 " title='Delete(X) or Un-Delete(+)" .
-		 " $fname'>" .
-		 "<pre id='delete$count'>" .
-		 "&Chi;</pre></button></td>";
+	        echo <<<EOT
+		    <pre id='file$count'>$fname</pre>
+		    </td>
+EOT;
+	    if ( $fdisplay )
+		echo <<<EOT
+		    <td><button type='button'
+			 onclick='TOGGLE_SHOW($count)'
+			 title='(Un)Show $fname Below'>
+		    <pre id='show$count'>&darr;</pre>
+		    </td>
+EOT;
+	    else
+	        echo "<td></td>";
+
+	    echo <<<EOT
+		<td><button type='button'
+		     onclick='TOGGLE_DELETE
+			($count, "$fname")'
+		     title='(Un)Delete $fname'>
+		<pre id='delete$count'>&Chi;</pre>
+		</button></td>
+EOT;
 	    if ( preg_match ( '/^(.+)\.in$/', $fname,
 	                      $matches ) )
 	    {
