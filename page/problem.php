@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 03:37:44 EST 2020
+    // Date:	Wed Feb 26 04:43:13 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -678,12 +678,10 @@ EOT;
 		$fcontents = "$fname contents could"
 			   . " not be read\n";
 		$fcontents = @file_get_contents ( $f );
-		$fcontents = explode
-		    ( "\n", $fcontents );
-		while ( array_slice ( $fcontents, -1 )
-		        == [''] )
-		    array_splice ( $fcontents, -1 );
-		$flines = count ( $fcontents );
+		$flines =
+		    count ( explode
+		                ( "\n", $fcontents ) )
+		    - 1;
 	    }
 	    if ( isset ( $fsize ) && $fsize == 0 )
 	        $fcomment = '(Empty)';
@@ -695,8 +693,10 @@ EOT;
 		elseif ( isset ( $flines ) )
 		{
 		    $fcomment = "($flines Lines)";
-		    $display_list[] =
-		        [$fname, $fcontents];
+		    if ( $flines <= 200 )
+			$display_list[] =
+			    [$count, $fname,
+			     $fcontents];
 		}
 		elseif ( isset ( $fsize ) )
 		    $fcomment = "($fsize Bytes)";
@@ -824,6 +824,21 @@ EOT;
 
 	if ( count ( $display_list ) > 0 )
 	{
+	    foreach ( $display_list as $pair )
+	    {
+		$count = $pair[0];
+	        $fname = $pair[1];
+		$fcontents = $pair[2];
+		$fcontents = htmlspecialchars
+		    ( $fcontents );
+		echo <<<EOT
+		<div hidden id='contents$count'>
+		<h5>$fname:</h5><br>
+		<div class='indented'>
+		<pre>$fcontents</pre>
+		</div></div>
+EOT;
+	    }
 	}
     }
 
