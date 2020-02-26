@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 02:17:12 EST 2020
+    // Date:	Wed Feb 26 03:37:44 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -652,6 +652,7 @@ EOT;
 	       type='hidden'>
 EOT;
         $count = 0;
+	$display_list = [];
 	foreach ( problem_file_names( $probdir )
 	          as $fname )
 	{
@@ -664,6 +665,60 @@ EOT;
 	    $fext = pathinfo ( $fname, 
 			       PATHINFO_EXTENSION );
 	    $ftype = $display_file_type[$fext];
+
+	    $f = "$epm_data/$probdir/$fname";
+	    $fsize = NULL;
+	    $fsize = @filesize ( $f );
+	    $fcontents = NULL;
+	    $flines = NULL;
+	    if (    $ftype == 'utf8'
+	         && isset ( $fsize )
+		 && $fsize <= 8000 )
+	    {
+		$fcontents = "$fname contents could"
+			   . " not be read\n";
+		$fcontents = @file_get_contents ( $f );
+		$fcontents = explode
+		    ( "\n", $fcontents );
+		while ( array_slice ( $fcontents, -1 )
+		        == [''] )
+		    array_splice ( $fcontents, -1 );
+		$flines = count ( $fcontents );
+	    }
+	    if ( isset ( $fsize ) && $fsize == 0 )
+	        $fcomment = '(Empty)';
+	    elseif ( $ftype == 'utf8' )
+	    {
+		if (    $flines == 1
+		     && strlen ( $fcontents[0] ) <= 30 )
+		    $fcomment = "{{$fcontents[0]}}";
+		elseif ( isset ( $flines ) )
+		{
+		    $fcomment = "($flines Lines)";
+		    $display_list[] =
+		        [$fname, $fcontents];
+		}
+		elseif ( isset ( $fsize ) )
+		    $fcomment = "($fsize Bytes)";
+		else
+		    $fcomment = "";
+	    }
+	    elseif ( isset ( $display_file_map
+	                           [$ftype] ) )
+	    {
+		if ( isset ( $fsize ) )
+		    $fcomment = "($fsize Bytes)";
+		else
+		    $fcomment = "";
+	    }
+	    else
+	    {
+	        if ( is_link ( $f ) )
+		    $fcomment = "Link to $ftype";
+		else 
+		    $fcomment = $ftype;
+	    }
+
 	    if ( isset ( $display_file_map[$ftype] ) )
 	    {
 	        $fpage = $display_file_map[$ftype];
@@ -747,11 +802,8 @@ EOT;
 		     " value='$fname'>" .
 		     "Run</button></td>";
 	    }
-	    if ( ! isset ( $display_file_map[$ftype] ) )
-	    {
-		echo "<td colspan='10'>" .
-		     "<pre>$ftype</pre></td>";
-	    }
+	    echo "<td colspan='10'>" .
+		 "<pre>$fcomment</pre></td>";
 	    echo "</tr>";
 	}
 	if ( $count > 0 ) echo "</table>";
@@ -769,6 +821,10 @@ EOT;
 	       value="Execute Deletions">
 	</form></div>
 EOT;
+
+	if ( count ( $display_list ) > 0 )
+	{
+	}
     }
 
     if ( $workbase )

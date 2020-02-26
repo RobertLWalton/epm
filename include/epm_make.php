@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Feb 25 06:07:56 EST 2020
+// Date:    Wed Feb 26 03:32:58 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2064,6 +2064,9 @@ function start_make_file
 // will be empty if CHECKs fail or the run has not
 // finish successfully.
 //
+// File larger than $epm_file_maxsize are deleted and
+// an error message is generated.
+//
 // $show is returned as the list of control SHOW files
 // to show, even if there are errors, but does not
 // include any non-readable files.
@@ -2074,7 +2077,7 @@ function start_make_file
 //
 function finish_make_file ( & $warnings, & $errors )
 {
-    global $_SESSION;
+    global $_SESSION, $epm_data, $epm_file_maxsize;
 
     $work = & $_SESSION['EPM_WORK'];
     if ( ! isset ( $work['CONTROL'] ) )
@@ -2084,6 +2087,25 @@ function finish_make_file ( & $warnings, & $errors )
     $control = $work['CONTROL'];
     $workbase = $work['BASE'];
     $workdir = $work['DIR'];
+
+    $fnames = [];
+    $fnames = @ scandir ( "$epm_data/$workdir" );
+    clearstatcache();
+    foreach ( $fnames as $fname )
+    {
+        if ( preg_match ( '/^\.+$/', $fname ) )
+	    continue;
+	$f = "$workdir/$fname";
+        $fsize = 0;
+	$fsize = @filesize ( "$epm_data/$f" );
+	if ( $fsize <= $epm_file_maxsize )
+	    continue;
+	$errors[] = "deleting $f because it is too"
+	          . " large ($fsize bytes)";
+	if ( ! unlink ( "$epm_data/$f" ) )
+	    $errors[] = "EPM SYSTEM ERROR: failed"
+	              . " to delete $f";
+    }
 
     unset ( $work['CONTROL'] );
     $kept = [];
