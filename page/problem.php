@@ -187,9 +187,6 @@
     //
     $show_file = NULL;  // File to be shown to right.
     $show_files = [];   // Files to be shown to left.
-    $workbase = NULL;
-        // Non-NULL if there are commands to be
-	// displayed.
     $uploaded_file = NULL;
         // 'name' of uploaded file, if any file was
 	// uploaded.
@@ -382,11 +379,6 @@
 	      true, "$probdir/+work+",
 	      NULL, NULL /* no upload, upload_tmp */,
 	      $errors );
-	if ( isset
-	         ( $_SESSION['EPM_WORK']['CONTROL'] ) )
-	{
-	    $workbase = $_SESSION['EPM_WORK']['BASE'];
-	}
     }
     elseif ( isset ( $_POST['upload'] ) )
     {
@@ -408,12 +400,6 @@
 	    process_upload
 		( $upload_info, "$probdir/+work+",
 		  $warnings, $errors );
-	    if ( isset ( $_SESSION['EPM_WORK']
-	                          ['CONTROL'] ) )
-	    {
-		$workbase =
-		    $_SESSION['EPM_WORK']['BASE'];
-	    }
 	}
 	else
 	    $errors[] = "no file selected for upload";
@@ -449,8 +435,6 @@
     {
 	require "$epm_home/include/epm_make.php";
 	    // Do this first as it may change $f, etc.
-
-        $workbase = $_SESSION['EPM_WORK']['BASE'];
     }
     elseif ( isset ( $_POST['update'] ) )
     {
@@ -483,9 +467,7 @@
 	}
     }
 
-    if ( isset ( $workbase )
-         &&
-	 isset ( $_SESSION['EPM_WORK']['CONTROL'] )
+    if ( isset ( $_SESSION['EPM_WORK']['CONTROL'] )
          &&
 	 update_work_results() !== true )
     {
@@ -872,6 +854,29 @@ EOT;
 	</form></div>
 EOT;
 
+	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
+	{
+	    require "$epm_home/include/epm_make.php";
+	    echo "<div class='command_display'>" .
+		 PHP_EOL;
+	    get_commands_display ( $display );
+	    echo "<h5>Commands Last Executed:</h5>" .
+	         PHP_EOL;
+	    echo "<div class='indented'>" . PHP_EOL;
+	    echo $display . PHP_EOL;
+	    echo "</div>" . PHP_EOL;
+	    $kept = $_SESSION['EPM_WORK']['KEPT'];
+	    if ( count ( $kept ) > 0 )
+	    {
+		echo "<h5>Kept:</h5>" . PHP_EOL;
+		echo "<div class='indented'>" . PHP_EOL;
+		foreach ( $kept as $e )
+		    echo "<pre>$e</pre><br>" . PHP_EOL;
+		echo "<br></div>" . PHP_EOL;
+	    }
+	    echo "</div>" . PHP_EOL;
+	}
+
 	if ( count ( $display_list ) > 0 )
 	{
 	    foreach ( $display_list as $pair )
@@ -890,27 +895,6 @@ EOT;
 EOT;
 	    }
 	}
-    }
-
-    if ( $workbase )
-    {
-	echo "<div class='command_display'>" .
-	     PHP_EOL;
-	get_commands_display ( $display );
-	echo "<h5>Commands:</h5>" . PHP_EOL;
-	echo "<div class='indented'>" . PHP_EOL;
-	echo $display . PHP_EOL;
-	echo "</div>" . PHP_EOL;
-	$kept = $_SESSION['EPM_WORK']['KEPT'];
-        if ( count ( $kept ) > 0 )
-	{
-	    echo "<h5>Kept:</h5>" . PHP_EOL;
-	    echo "<div class='indented'>" . PHP_EOL;
-	    foreach ( $kept as $e )
-	        echo "<pre>$e</pre><br>" . PHP_EOL;
-	    echo "<br></div>" . PHP_EOL;
-	}
-	echo "</div>" . PHP_EOL;
     }
 
     if ( count ( $show_files ) > 0 )
@@ -1090,9 +1074,7 @@ EOT;
 	xhttp.send ( 'update=update' );
     }
     <?php
-	if ( isset ( $workbase )
-	     &&
-	     isset (
+	if ( isset (
 	         $_SESSION['EPM_WORK']['CONTROL'] ) )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;
     ?>

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 26 03:32:58 EST 2020
+// Date:    Wed Feb 26 08:24:52 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2160,6 +2160,9 @@ SHOW:
 // This function begins by setting
 //
 //      $_SESSION['EPM_RUN'] = []
+//      $_SESSION['EPM_WORK'] = []
+//	    -- this last to clear displays of work
+//             directory
 //
 // If there are no errors, this function sets:
 //
@@ -2176,6 +2179,7 @@ function start_run
            $local_file_cache, $remote_file_cache;
 
     $_SESSION['EPM_RUN'] = [];
+    $_SESSION['EPM_WORK'] = [];
     $run = & $_SESSION['EPM_RUN'];
 
     $errors_size = count ( $errors );
