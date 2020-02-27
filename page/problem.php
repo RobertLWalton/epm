@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 21:01:30 EST 2020
+    // Date:	Thu Feb 27 03:37:23 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -490,6 +490,9 @@
 
 <html>
 <style>
+    .no-margin {
+	margin: 0 0 0 0;
+    }
     h5 {
         font-size: 1vw;
 	margin: 0 0 0 0;
@@ -552,21 +555,19 @@
 	document.body.appendChild ( iframe );
     }
 
-    function TOGGLE_SHOW ( count )
+    function TOGGLE_BODY ( toggle, body )
     {
-	var SHOW = document.getElementById
-	               ("show" + count);
-	var CONTENTS = document.getElementById
-	                   ("contents" + count);
-	if ( CONTENTS.hidden )
+	var TOGGLE = document.getElementById ( toggle );
+	var BODY = document.getElementById ( body );
+	if ( BODY.hidden )
 	{
-	    SHOW.innerHTML = "&uarr;";
-	    CONTENTS.hidden = false;
+	    TOGGLE.innerHTML = "&uarr;";
+	    BODY.hidden = false;
 	}
 	else
 	{
-	    SHOW.innerHTML = "&darr;";
-	    CONTENTS.hidden = true;
+	    TOGGLE.innerHTML = "&darr;";
+	    BODY.hidden = true;
 	}
     }
 
@@ -713,12 +714,22 @@ EOT;
 
     if ( isset ( $probdir ) )
     {
-        echo <<<'EOT'
+        echo <<<EOT
 	<div class='problem_display'>
+	<button type='button'
+		onclick='TOGGLE_BODY
+		     ("problems_toggle",
+		      "problems_body")'
+		title='(Un)Show Problems'>
+		<pre id='problems_toggle'>&uarr;</pre>
+		</button>
+	<h5>Current Problem Files (most recent first):</h5>
+	<div id='problems_body'>
 	<form action='problem.php'
 	      enctype='multipart/form-data'
 	      method='POST'
-	      id='execute_form'>
+	      id='execute_form'
+	      class='no-margin'>
 	<input id='delete_files'
 	       name='delete_files' value=''
 	       type='hidden'>
@@ -729,9 +740,7 @@ EOT;
 	          as $fname )
 	{
 	    if ( ++ $count == 1 )
-	        echo "<h5>Current Problem Files" .
-		     " (most recent first):</h5>" .
-		     "<table style='display:block'>";
+	        echo "<table style='display:block'>";
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>";
 	    list ( $fext, $ftype, $fdisplay, $fcomment )
@@ -760,7 +769,9 @@ EOT;
 	    if ( $fdisplay )
 		echo <<<EOT
 		    <td><button type='button'
-			 onclick='TOGGLE_SHOW($count)'
+			 onclick='TOGGLE_BODY
+			     ("show$count",
+			      "contents$count")'
 			 title='(Un)Show $fname Below'>
 		    <pre id='show$count'>&darr;</pre>
 		    </td>
@@ -851,7 +862,7 @@ EOT;
 	<pre>          </pre>
 	<input type="submit" name="execute_deletes"
 	       value="Delete Marked (Over-Struck) Files">
-	</form></div>
+	</form></div></div>
 EOT;
 
 	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
@@ -859,8 +870,17 @@ EOT;
 	    echo "<div class='command_display'>" .
 		 PHP_EOL;
 	    get_commands_display ( $display );
-	    echo "<h5>Commands Last Executed:</h5>" .
-	         PHP_EOL;
+	    echo <<<EOT
+	    <button type='button'
+		    onclick='TOGGLE_BODY
+			 ("command_toggle",
+			  "command_body")'
+		    title='(Un)Show Commands'>
+		    <pre id='command_toggle'>&uarr;</pre>
+		    </button>
+	    <h5>Commands Last Executed:</h5>
+	    <div id='command_body'>
+EOT;
 	    echo "<div class='indented'>" . PHP_EOL;
 	    echo $display . PHP_EOL;
 	    echo "</div>" . PHP_EOL;
@@ -874,64 +894,80 @@ EOT;
 		echo "<br></div>" . PHP_EOL;
 	    }
 	    echo "</div>" . PHP_EOL;
-	}
 
-	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
-	{
-	    $workdir = $_SESSION['EPM_WORK']['DIR'];
-	    $count_first = $count + 1;
-	    foreach ( problem_file_names( $workdir )
-		      as $fname )
+	    $working_files =
+	        problem_file_names( $workdir );
+
+	    if ( count ( $working_files ) > 0 )
 	    {
-	        $f = "$epm_data/$workdir/$fname";
-	        if ( is_link ( $f ) )
-		    continue;
+		echo <<<EOT
+		<div class='work_display'>
+		<button type='button'
+			onclick='TOGGLE_BODY
+			     ("working_toggle",
+			      "working_body")'
+			title='(Un)Show Problems'>
+			<pre id='working_toggle'>&uarr;</pre>
+			</button>
+		<h5>Current Working Files (most recent first):</h5>
+		<div id='working_body'>
+		<table style='display:block'>
+EOT;
 
-		if ( ++ $count == $count_first )
-		    echo "<div class='work_display'>" .
-		         "<h5>Current Working Files" .
-			 " (most recent first):</h5>" .
-			 "<table style='display:block'>";
-		echo "<tr>";
-		echo "<td style='text-align:right'>";
-		list ( $fext, $ftype, $fdisplay, $fcomment )
-		    = file_info ( $workdir, $fname, $count,
-				  $display_list );
-
-		if ( $fdisplay )
+		$workdir = $_SESSION['EPM_WORK']['DIR'];
+		$count_first = $count + 1;
+		foreach ( problem_file_names( $workdir )
+			  as $fname )
 		{
-		    $fpage = $display_file_map[$ftype];
-		    echo <<<EOT
-			<button type='button'
-			   title='Show $fname at Right'
-			   onclick='CREATE_IFRAME
-			      ("utf8_show.php",
-			       "+work+/$fname")'>
-			 <pre id='file$count'>$fname</pre>
-			 </button></td>
-EOT;
-		}
-		else
-		    echo <<<EOT
-			<pre id='file$count'>$fname</pre>
-			</td>
-EOT;
-		if ( $fdisplay )
-		    echo <<<EOT
-			<td><button type='button'
-			     onclick='TOGGLE_SHOW($count)'
-			     title='(Un)Show $fname Below'>
-			<pre id='show$count'>&darr;</pre>
-			</td>
-EOT;
-		else
-		    echo "<td></td>";
+		    $f = "$epm_data/$workdir/$fname";
+		    if ( is_link ( $f ) )
+			continue;
 
-		echo "<td colspan='10'>" .
-		     "<pre>$fcomment</pre></td>";
-		echo "</tr>";
+		    ++ $count;
+		    echo "<tr>";
+		    echo "<td style='text-align:right'>";
+		    list ( $fext, $ftype, $fdisplay, $fcomment )
+			= file_info ( $workdir, $fname, $count,
+				      $display_list );
+
+		    if ( $fdisplay )
+		    {
+			$fpage = $display_file_map[$ftype];
+			echo <<<EOT
+			<button type='button'
+			        title='Show $fname at Right'
+			         onclick='CREATE_IFRAME
+				  ("utf8_show.php",
+				   "+work+/$fname")'>
+			     <pre id='file$count'>$fname</pre>
+			     </button></td>
+EOT;
+		    }
+		    else
+			echo <<<EOT
+			    <pre id='file$count'>$fname</pre>
+			    </td>
+EOT;
+		    if ( $fdisplay )
+			echo <<<EOT
+			    <td><button type='button'
+				 onclick='TOGGLE_BODY
+				     ("show$count",
+				      "contents$count")'
+				 title='(Un)Show $fname Below'>
+			    <pre id='show$count'>&darr;</pre>
+			    </button></td>
+EOT;
+		    else
+			echo "<td></td>";
+
+		    echo "<td colspan='10'>" .
+			 "<pre>$fcomment</pre></td>";
+		    echo "</tr>";
+		}
+		echo "</table></div>";
+		echo "</div>";
 	    }
-	    if ( $count > 0 ) echo "</table></div>";
 	}
 
 	if ( count ( $display_list ) > 0 )
