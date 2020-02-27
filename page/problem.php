@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 27 03:37:23 EST 2020
+    // Date:	Thu Feb 27 06:03:22 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -95,7 +95,9 @@
 	    umask ( $m );
 	}
     }
-    elseif ( isset ( $_POST['selected_problem'] ) )
+    elseif ( isset ( $_POST['goto_problem'] )
+             &&
+             isset ( $_POST['selected_problem'] ) )
     {
         $problem = trim ( $_POST['selected_problem'] );
 	if ( ! preg_match
@@ -509,12 +511,14 @@
         color: #BB0000;
     }
     div.left {
-	background-color: #96F9F3;
 	width: 50%;
 	float: left;
         font-size: 0.8vw;
 	height: 99%;
 	overflow: scroll;
+    }
+    div.manage {
+	background-color: #96F9F3;
     }
     div.problem_display {
 	background-color: #F2D9D9;
@@ -656,60 +660,59 @@
                                  $problem :
 			         "none selected" );
     echo <<<EOT
-    <form style='display:inline'
-          action='user.php' method='GET'>
+    <div class='manage'>
+    <form action='problem.php' method='POST'
+          style='margin:0 0 1vh 0'>
+    <table style='width:100%'>
+    <tr>
+    <td style='width:33%'>
     <h5>User:</h5> <input type='submit' value='$email'
+		    formaction='user.php'
+		    formmethod='GET'
                     title='click to see user profile'>
-    &nbsp;&nbsp;&nbsp;&nbsp;
+    </td>
+    <td style='width:33%'>
     <h5>Current Problem:</h5>&nbsp;
     <pre>$current_problem</pre></b>
-    </form>
+    </td>
 EOT;
     if ( isset ( $problem ) )
-        echo "&nbsp;&nbsp;&nbsp;&nbsp;" .
-	     "<form style='display:inline'" .
-	     " action='problem.php' method='POST'>" .
-             " <button type='submit'" .
+        echo "<td style='width:33%'>" .
+	     "<button type='submit'" .
 	     " name='delete_problem'" .
 	     " value='$problem'>" .
-	     "Delete Current Problem</button>" .
-	     "</form>";
-    echo "<br>";
-    echo "<table><form action='problem.php'" .
-         " method='POST'>";
+	     "Delete Current Problem</button></td>";
+    echo "</tr>";
     if ( count ( $problems ) > 0 )
     {
-	echo "<tr>" . PHP_EOL;
-	echo "<form action='problem.php'" .
-	     " method='POST'" .
-	     " style='display:inline'>" . PHP_EOL;
-	echo "<td style='text-align:right'>" .
-	     "<input type='submit'" .
+	echo "<tr><td></td><td>" . PHP_EOL;
+	echo "<input type='submit'" .
 	     " name='goto_problem'" .
-	     " value='Go To Problem:'></td>" . PHP_EOL;
-        echo "<td><select name='selected_problem'" .
+	     " value='Go To Problem:'>" . PHP_EOL;
+        echo "<select name='selected_problem'" .
 	     " title='problem to go to'>" .  PHP_EOL;
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
 	             "$value</option>" . PHP_EOL;
         echo "</select></td>" . PHP_EOL;
-        echo "</form>" . PHP_EOL;
-	echo "<form action='run.php'" .
-	     " method='GET'" .
-	     " style='display:inline'>" . PHP_EOL;
-	echo "<td><button type='submit'>" .
-	     "Go to Run Page</button></td></form>" .
-	     PHP_EOL;
+	if ( isset ( $problem ) )
+	    echo "<td><input type='submit' .
+			     formaction='run.php' .
+			     formmethod='GET' .
+			     value='Go to Run Page'></td>" .
+		 PHP_EOL;
 	echo "</tr>" . PHP_EOL;
     }
     echo <<<EOT
+    </table></form>
     <form action='problem.php' method='POST'
-	  style='display:inline'>
-    <tr><td style='text-align:right'>
-    <h5>or Create New Problem:<h5></td><td>
+          class='no-margin'>
+    <h5>or Create New Problem:<h5>
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name" id="create">
-    </td></tr></table></form>
+    </form>
+    <br><pre style='font-size:1vh'>   </pre>
+    </div>
 EOT;
 
     if ( isset ( $probdir ) )
