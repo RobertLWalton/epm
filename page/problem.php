@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 14:52:29 EST 2020
+    // Date:	Wed Feb 26 21:01:30 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -513,12 +513,6 @@
 	height: 99%;
 	overflow: scroll;
     }
-    iframe.right {
-	width: 48%;
-	float: right;
-	height: 99%;
-        font-size: 0.8vw;
-    }
     div.problem_display {
 	background-color: #F2D9D9;
     }
@@ -535,6 +529,12 @@
 	color: #99003D;
 	text-align: right;
     }
+    iframe.right {
+	width: 48%;
+	float: right;
+	height: 99%;
+    }
+
 </style>
 
 <script>
@@ -547,7 +547,8 @@
 	iframe.className = 'right';
 	iframe.name = filename;
 	iframe.src =
-	    '/page/' + page + '?filename=' + filename;
+	    '/page/' + page + '?filename='
+	             + encodeURIComponent ( filename );
 	document.body.appendChild ( iframe );
     }
 
@@ -882,6 +883,10 @@ EOT;
 	    foreach ( problem_file_names( $workdir )
 		      as $fname )
 	    {
+	        $f = "$epm_data/$workdir/$fname";
+	        if ( is_link ( $f ) )
+		    continue;
+
 		if ( ++ $count == $count_first )
 		    echo "<div class='work_display'>" .
 		         "<h5>Current Working Files" .
@@ -893,14 +898,15 @@ EOT;
 		    = file_info ( $workdir, $fname, $count,
 				  $display_list );
 
-		if ( isset ( $display_file_map[$ftype] ) )
+		if ( $fdisplay )
 		{
 		    $fpage = $display_file_map[$ftype];
 		    echo <<<EOT
 			<button type='button'
 			   title='Show $fname at Right'
 			   onclick='CREATE_IFRAME
-			      ("$fpage","$fname")'>
+			      ("utf8_show.php",
+			       "+work+/$fname")'>
 			 <pre id='file$count'>$fname</pre>
 			 </button></td>
 EOT;
