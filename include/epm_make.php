@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 26 14:41:51 EST 2020
+// Date:    Thu Feb 27 07:37:44 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -2318,31 +2318,13 @@ function finish_run ( & $errors )
 
     if ( ! $submit )
     {
-        $c = 1;
-	while ( true )
+	$f = "$probdir/$runbase.rout";
+	if ( ! rename ( "$epm_data/$rout",
+	                "$epm_data/$f" ) )
 	{
-	    $f = "$probdir/$runbase-$c.rout";
-	    if ( ! file_exists ( "$epm_data/$f" ) )
-	    {
-	        if ( ! rename
-		           ( "$epm_data/$rout",
-			     "$epm_data/$f" ) )
-		{
-		    $e = "could not rename"
-		       . " $rout to $f";
-		    WARN ( $e );
-		    $errors[] = "EPM SYSTEM ERROR: $e";
-		    // lock on $probdir/+lock+ should
-		    // have prevented race condition
-		}
-		else
-		    $run['OUT'] = "$runbase-$c.rout";
-		break;
-	    }
-	    $c += 1;
-	    if ( $c > 10000 )
-	        ERROR ( "too many .rout files in" .
-		        " $probdir" );
+	    $e = "could not rename $rout to $f";
+	    WARN ( $e );
+	    $errors[] = "EPM SYSTEM ERROR: $e";
 	}
     }
     else

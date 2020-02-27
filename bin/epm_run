@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Feb 25 06:08:50 EST 2020
+// Date:	Thu Feb 27 08:00:03 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -147,10 +147,6 @@ else if ( $submit
 else
     ERROR ( "cannot find $runfile" );
 
-echo "Run-File: $runfile" . PHP_EOL;
-$time = strftime ( "%FT%T%z" );
-echo "Start-Time: $time" . PHP_EOL;
-
 // Compute $runin as the list of lines of .run file.
 //
 $runin = @file_get_contents
@@ -242,7 +238,12 @@ if ( count ( $errors ) > 0 )
     exit ( 1 );
 }
 
+echo "Run-File: $runfile" . PHP_EOL;
+$time = strftime ( "%FT%T%z" );
+echo "Start-Time: $time" . PHP_EOL;
+
 $lines = [];
+$max_map = ['g' => 0, 's' => 0, 'f' => 0];
 foreach ( $runin as $infile )
 {
     $base = pathinfo ( $infile, PATHINFO_FILENAME );
@@ -301,7 +302,24 @@ foreach ( $runin as $infile )
 	        " {$r[2]}:" . PHP_EOL .
 	        "    {$r[3]}" );
     echo $lines[-1] . PHP_EOL;
+    foreach ( $map as $key => $e )
+    {
+	if ( $e[1] == 'X' ) continue;
+	preg_match ( '/\.(.).*stat$/', $e[0],
+		     $matches );
+        $t = $matches[1];
+	if ( $max_map[$t] < $e[2] )
+	    $max_map[$t] = $e[2];
+    }
 }
+$max_label = ['g' => 'Generate', 's' => 'Solution',
+              'f' => 'Filter'];
+foreach ( $max_map as $key => $value )
+    echo "Maximum-{$max_label[$key]}-Time: {$value}s" .
+         PHP_EOL;
+
+$time = strftime ( "%FT%T%z" );
+echo "Stop-Time: $time" . PHP_EOL;
 
 exit ( 0 );
 
