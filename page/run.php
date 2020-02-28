@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 27 11:54:06 EST 2020
+    // Date:	Fri Feb 28 12:18:38 EST 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -214,7 +214,7 @@
 	    }
 	}
 	arsort ( $map, SORT_NUMERIC );
-	for ( $map as $key => $value )
+	foreach ( $map as $key => $value )
 	    $map[$key] = $fmap[$key];
     }
 
@@ -224,36 +224,19 @@
 <head>
 <style>
     h5 {
-        font-size: 14pt;
+        font-size: 1vw;
 	margin: 0 0 0 0;
 	display:inline;
     }
-    th {
-        font-size: 14pt;
-	text-align: center;
-    }
-    pre, b, button, input, select, u, td {
-        font-size: 12pt;
+    pre, b, button, input, select, u {
 	display:inline;
+        font-size: 0.8vw;
+    }
+    pre {
+	font-family: "Courier New", Courier, monospace;
     }
     pre.red {
         color: #BB0000;
-    }
-    div.left {
-	background-color: #96F9F3;
-	width: 47%;
-	float: left;
-    }
-    div.file_left {
-	float: left;
-    }
-    div.file_right {
-	float: right;
-    }
-    iframe.right {
-	width: 9in;
-	float: right;
-	height: 99%;
     }
     div.errors {
 	background-color: #F5F81A;
@@ -313,6 +296,7 @@
 	echo "<br></div></div>" . PHP_EOL;
     }
 
+    // TBD Revise forms
     echo <<<EOT
     <form style='display:inline'
           action='user.php' method='GET'>
@@ -359,7 +343,7 @@ EOT;
     }
 
     $n = 0;
-    display_list = [];
+    $display_list = [];
     compute_run_map
         ( $local_map, $local_file_cache, $rundir );
     if ( $local_map != [] )
@@ -546,11 +530,6 @@ EOT;
     <?php
 	if ( $runresult === true )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;
-	elseif ( isset ( $_SESSION['EPM_RUN']['OUT'] ) )
-	{
-	    $f = $_SESSION['EPM_RUN']['OUT'];
-	    echo "SHOW('$f');" . PHP_EOL;
-	}
     ?>
 
 </script>
