@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 28 12:18:38 EST 2020
+    // Date:	Fri Feb 28 15:39:49 EST 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -167,13 +167,16 @@
 
 	    $f = "$epm_data/$fdir/$fname";
 	    if ( ! is_readable ( $f ) ) continue;
+	    $ftime = @filemtime ( $f );
+	    if ( $ftime === false ) continue;
 	    $fcontents = @file_get_contents ( $f );
 	    if ( $fcontents === false ) continue;
 	    if ( $fcontents == '' ) continue;
 
 	    $base = pathinfo
 	        ( $fname, PATHINFO_FILENAME );
-	    $fmap[$base][$ext] = [$fname,$fcontents];
+	    $fmap[$base][$ext] =
+	        [$fname,$ftime,$fcontents];
 	}
 	
 	if ( isset ( $rundir ) )
@@ -189,13 +192,16 @@
 
 		$f = "$epm_data/$rundir/$fname";
 		if ( ! is_readable ( $f ) ) continue;
+		$ftime = @filemtime ( $f );
+		if ( $ftime === false ) continue;
 		$fcontents = @file_get_contents ( $f );
 		if ( $fcontents === false ) continue;
 		if ( $fcontents == '' ) continue;
 
 		$base = pathinfo
 		    ( $fname, PATHINFO_FILENAME );
-		$fmap[$base][$ext] = [$fname,$contents];
+		$fmap[$base][$ext] =
+		    [$fname,$ftime,$fcontents];
 	    }
 	}
 
@@ -204,13 +210,8 @@
 	{
 	    foreach ( $exts as $ext ) // rout is last
 	    {
-		if ( !isset ( $e[$ext] ) ) continue;
-	        $ftime = @filemtime
-		    ( "$epm_data/" .
-		      $e[$ext][1] . "/" .
-		      $e[$ext][0] );
-		if ( $ftime === false ) continue;
-		$map[$key] = $ftime;
+		if ( ! isset ( $e[$ext] ) ) continue;
+		$map[$key] = $e[1];
 	    }
 	}
 	arsort ( $map, SORT_NUMERIC );
@@ -361,7 +362,7 @@ EOT;
 	    echo "<td>";
 	    if ( isset ( $e['run'] ) )
 	    {
-	        list ( $fname, $fcontents ) =
+	        list ( $fname, $ftime, $fcontents ) =
 		    $e['run'];
 		$display_list[] =
 		    ["run$n",$fname,$fcontents];
@@ -370,7 +371,7 @@ EOT;
 		             id='s_run$n'
 		             onclick='TOGGLE
 		                 ("s_run$n","run$n")'
-			>$darr;</button>
+			>&darr;</button>
 		     <pre>$fname</pre>
 EOT;
 		if ( $fdir != $rundir )
@@ -386,7 +387,7 @@ EOT;
 	    echo "<td>";
 	    if ( isset ( $e['rerr'] ) )
 	    {
-	        list ( $fname, $fcontents ) =
+	        list ( $fname, $ftime, $fcontents ) =
 		    $e['rerr'];
 		$display_list[] =
 		    ["rerr$n",$fname,$fcontents];
@@ -395,7 +396,7 @@ EOT;
 		             id='s_rerr$n'
 		             onclick='TOGGLE
 		                 ("s_rerr$n","rerr$n")'
-			>$darr;</button>
+			>&darr;</button>
 		     <pre>$fname</pre>
 EOT;
 	    }
@@ -404,7 +405,7 @@ EOT;
 	    echo "<td>";
 	    if ( isset ( $e['rout'] ) )
 	    {
-	        list ( $fname, $fcontents ) =
+	        list ( $fname, $ftime, $fcontents ) =
 		    $e['rout'];
 		$display_list[] =
 		    ["rout$n",$fname,$fcontents];
@@ -413,7 +414,7 @@ EOT;
 		             id='s_rout$n'
 		             onclick='TOGGLE
 		                 ("s_rout$n","rout$n")'
-			>$darr;</button>
+			>&darr;</button>
 		     <pre>$fname</pre>
 EOT;
 	    }
