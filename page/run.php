@@ -2,9 +2,10 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 24 05:19:42 EST 2020
+    // Date:	Thu Feb 27 11:54:06 EST 2020
 
-    // Starts and monitors problem runs.
+    // Starts and monitors problem runs and displays
+    // results.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -56,7 +57,9 @@
     if ( isset ( $_POST['execute_run'] ) )
     {
 	$f = $_POST['execute_run'];
-	if ( ! isset ( $local_file_cache[$f] ) )
+	if ( ! isset ( $local_file_cache[$f] )
+	     ||
+	     ! preg_match ( '/\.run$/', $f ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " run.php" );
 	start_run ( "$probdir/+work+", $f,
@@ -67,7 +70,9 @@
     elseif ( isset ( $_POST['submit_run'] ) )
     {
 	$f = $_POST['submit_run'];
-	if ( ! isset ( $remote_file_cache[$f] ) )
+	if ( ! isset ( $remote_file_cache[$f] )
+	     ||
+	     ! preg_match ( '/\.run$/', $f ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " run.php" );
 	start_run ( "$probdir/+work+", $f,
@@ -101,8 +106,8 @@
     }
 
     if ( isset ( $_POST['reload'] )
-             &&
-	     isset ( $runbase ) )
+	 &&
+	 isset ( $runbase ) )
     {
         // Do nothing here.
 	$post_processed = true;
@@ -137,21 +142,86 @@
 	       preg_match ( $epm_debug, $php_self ) );
 	// True to enable javascript logging.
 
-    $local_run_files = [];
-    $rout_files = [];
-    foreach ( $local_file_cache as $fname => $fdir )
+    // Compute $map[$base][$ext] => [$fname,$fdir]
+    // where $fname is $base.$ext, $ext is one $exts,
+    // $fdir is the directory containing $fname,
+    // relative to $epm_data, and $map[.] is sorted
+    // in order of modification time of $base....,
+    // most recent first.  To compute modification
+    // time $ext's are taken in preference order
+    // rout, rerr, run.
+    //
+    $exts = ['run','rerr','rout'];
+        // In reverse preference order.
+    function compute_run_map ( & $map, $cache, $rundir )
     {
-        if ( preg_match ( '/^.+\.run$/', $fname ) )
-	    $local_run_files[] = $fname;
-        elseif ( preg_match ( '/^.+\.rout$/', $fname ) )
-	    $rout_files[] = $fname;
+        global $epm_data, $exts;
+
+        $fmap = [];
+	if ( isset ( $cache ) )
+	    foreach ( $cache as $fname => $fdir )
+	{
+	    $ext = pathinfo
+	        ( $fname, PATHINFO_EXTENSION );
+	    if ( ! in_array ( $ext, $exts ) ) continue;
+
+	    $f = "$epm_data/$fdir/$fname";
+	    if ( ! is_readable ( $f ) ) continue;
+	    $fcontents = @file_get_contents ( $f );
+	    if ( $fcontents === false ) continue;
+	    if ( $fcontents == '' ) continue;
+
+	    $base = pathinfo
+	        ( $fname, PATHINFO_FILENAME );
+	    $fmap[$base][$ext] = [$fname,$fcontents];
+	}
+	
+	if ( isset ( $rundir ) )
+	{
+	    $files = @scandir ( "$epm_data/$rundir" );
+	    if ( $files === false )
+	        ERROR ( "cannot read $rundir" );
+	    foreach ( $files as $fname )
+	    {
+		$ext = pathinfo
+		    ( $fname, PATHINFO_EXTENSION );
+		if ( ! in_array ( $ext, $exts ) ) continue;
+
+		$f = "$epm_data/$rundir/$fname";
+		if ( ! is_readable ( $f ) ) continue;
+		$fcontents = @file_get_contents ( $f );
+		if ( $fcontents === false ) continue;
+		if ( $fcontents == '' ) continue;
+
+		$base = pathinfo
+		    ( $fname, PATHINFO_FILENAME );
+		$fmap[$base][$ext] = [$fname,$contents];
+	    }
+	}
+
+	$map = [];
+	foreach ( $fmap as $key => $e )
+	{
+	    foreach ( $exts as $ext ) // rout is last
+	    {
+		if ( !isset ( $e[$ext] ) ) continue;
+	        $ftime = @filemtime
+		    ( "$epm_data/" .
+		      $e[$ext][1] . "/" .
+		      $e[$ext][0] );
+		if ( $ftime === false ) continue;
+		$map[$key] = $ftime;
+	    }
+	}
+	arsort ( $map, SORT_NUMERIC );
+	for ( $map as $key => $value )
+	    $map[$key] = $fmap[$key];
     }
-    sort ( $local_run_files );
-    sort ( $rout_files );
 
 ?>
 
 <html>
+<head>
 <style>
     h5 {
         font-size: 14pt;
@@ -201,23 +271,26 @@
 </style>
 
 <script>
-    var iframe;
 
-    function SHOW ( runfile ) {
-	if ( iframe != undefined ) iframe.remove();
-
-	iframe = document.createElement("IFRAME");
-	iframe.className = 'right';
-	iframe.name = runfile;
-	iframe.src =
-	    '/page/utf8_show.php?filename=' +
-	    runfile;
-	document.body.appendChild ( iframe );
+    function TOGGLE ( s, c )
+    {
+	var SWITCH = document.getElementById ( s );
+	var CONTENTS = document.getElementById ( c );
+	if ( CONTENTS.hidden )
+	{
+	    SWITCH.innerHTML = "&uarr;";
+	    CONTENTS.hidden = false;
+	}
+	else
+	{
+	    SWITCH.innerHTML = "&darr;";
+	    CONTENTS.hidden = true;
+	}
     }
 </script>
-<body>
 
-<div class='left'>
+</head>
+<body>
 
 <?php 
 
@@ -256,53 +329,6 @@
     <pre>$problem</pre></b>
 EOT;
 
-    $lc = count ( $local_run_files );
-    $rc = count ( $rout_files );
-    if ( $lc + $rc > 0 )
-    {
-        echo "<div>" . PHP_EOL;
-	if ( $lc > 0 )
-	{
-	    echo "<div class='file_left'>" . PHP_EOL;
-	    echo "<form action='run.php'" .
-	         "      method='POST'>" .
-	         "<table style='display:block'>";
-	    echo "<tr><th colspan='2'>Run Files" .
-	         "</th></tr>" . PHP_EOL;
-	    foreach ( $local_run_files as $runf )
-	    {
-		echo "<tr>" .
-		     "<td style='text-align:right'>" .
-		     "<button type='button' onclick=" .
-		     "'SHOW(\"$runf\")'>" .
-		     $runf . "</button></td>";
-		echo "<td><button type='submit'" .
-		     " name='execute_run'" .
-		     " value='$runf'>" .
-		     "Run</button></td></tr>" . PHP_EOL;
-	    }
-	    echo "</table></form></div>" . PHP_EOL;
-	}
-	if ( $rc > 0 )
-	{
-	    echo "<div class='file_right'>" .
-	         "<table style='display:block'>" .
-		 PHP_EOL;
-	    echo "<tr><th>Output Files" .
-	         "</th></tr>" . PHP_EOL;
-	    foreach ( $rout_files as $routf )
-	    {
-		echo "<tr>" .
-		     "<td style='text-align:right'>" .
-		     "<button type='button' onclick=" .
-		     "'SHOW(\"$routf\")'>" .
-		     $routf . "</button></td>";
-	    }
-	    echo "</table></div>" . PHP_EOL;
-	}
-        echo "</div>" . PHP_EOL;
-    }
-
     if ( isset ( $runbase ) )
     {
 	if ( $runresult === true )
@@ -331,9 +357,106 @@ EOT;
 		 PHP_EOL;
 	echo "</div>" . PHP_EOL;
     }
-?>
 
-</div>
+    $n = 0;
+    display_list = [];
+    compute_run_map
+        ( $local_map, $local_file_cache, $rundir );
+    if ( $local_map != [] )
+    {
+    	echo <<<EOT
+	<div>
+    	<form action='run.php' method='POST'>
+	<table>
+EOT;
+	foreach ( $local_map as $fbase => $e )
+	{
+	    ++ $n;
+
+	    echo "<tr>";
+	    echo "<td>";
+	    if ( isset ( $e['run'] ) )
+	    {
+	        list ( $fname, $fcontents ) =
+		    $e['run'];
+		$display_list[] =
+		    ["run$n",$fname,$fcontents];
+		echo <<<EOT
+		     <button type='button'
+		             id='s_run$n'
+		             onclick='TOGGLE
+		                 ("s_run$n","run$n")'
+			>$darr;</button>
+		     <pre>$fname</pre>
+EOT;
+		if ( $fdir != $rundir )
+		    echo <<<EOT
+			 <button type='submit'
+				 name='submit_local'
+				 value='$fname'
+			     >Run</button>
+EOT;
+	    }
+	    echo "</td>";
+
+	    echo "<td>";
+	    if ( isset ( $e['rerr'] ) )
+	    {
+	        list ( $fname, $fcontents ) =
+		    $e['rerr'];
+		$display_list[] =
+		    ["rerr$n",$fname,$fcontents];
+		echo <<<EOT
+		     <button type='button'
+		             id='s_rerr$n'
+		             onclick='TOGGLE
+		                 ("s_rerr$n","rerr$n")'
+			>$darr;</button>
+		     <pre>$fname</pre>
+EOT;
+	    }
+	    echo "</td>";
+
+	    echo "<td>";
+	    if ( isset ( $e['rout'] ) )
+	    {
+	        list ( $fname, $fcontents ) =
+		    $e['rout'];
+		$display_list[] =
+		    ["rout$n",$fname,$fcontents];
+		echo <<<EOT
+		     <button type='button'
+		             id='s_rout$n'
+		             onclick='TOGGLE
+		                 ("s_rout$n","rout$n")'
+			>$darr;</button>
+		     <pre>$fname</pre>
+EOT;
+	    }
+	    echo "</td>";
+	    echo "</tr>";
+	}
+
+        echo "</div>";
+    }
+
+    if ( count ( $display_list ) > 0 )
+    {
+	foreach ( $display_list as $e )
+	{
+	    list ( $id, $fname, $fcontents ) = $e;
+	    $fcontents = htmlspecialchars
+		( $fcontents );
+	    echo <<<EOT
+	    <div hidden id='$id'>
+	    <h5>$fname:</h5><br>
+	    <div class='indented'>
+	    <pre>$fcontents</pre>
+	    </div></div>
+EOT;
+	}
+    }
+?>
 
 <form action='run.php' method='POST' id='reload'>
 <input type='hidden' name='reload' value='reload'>
