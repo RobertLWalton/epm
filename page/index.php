@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 26 21:00:55 EST 2020
+// Date:    Sat Feb 29 05:14:40 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -124,6 +124,12 @@ $epm_shell_timeout = 3;
     // Number of seconds to wait for the shell to
     // startup and execute initialization commands
     // for a .sh script.
+
+$epm_name =
+    '/^[A-Za-z0-9][-_A-Za-z0-9]*(|\.[A-Za-z0-9]+)$/';
+    // Regular expression matching only legal EPM
+    // public file names (not matching +XXX+ names
+    // used internally).
 
 $upload_target_ext = [
     // If file YYYY.EEE is uploadable, then

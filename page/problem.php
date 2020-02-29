@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 29 03:46:43 EST 2020
+    // Date:	Sat Feb 29 05:17:08 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -234,7 +234,7 @@
     //
     function problem_file_names ( $dir )
     {
-        global $epm_data, $display_file_type;
+        global $epm_data, $display_file_type, $epm_name;
 
 	clearstatcache();
 	$map = [];
@@ -244,8 +244,7 @@
 	{
 	    if ( preg_match ( '/^\./', $fname ) )
 	        continue;
-	    if ( ! preg_match ( '/^[_\-.A-Za-z0-9]+$/',
-	                        $fname ) )
+	    if ( ! preg_match ( $epm_name, $fname ) )
 	        continue;
 	    $ext = pathinfo
 	        ( $fname, PATHINFO_EXTENSION );

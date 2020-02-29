@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec  1 08:42:52 EST 2019
+// Date:	Sat Feb 29 05:01:21 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -47,6 +47,9 @@ char documentation [] =
 "    test_file.  Then returns proofs for the first\n"
 "    several errors found, if any.\n"
 "\n"
+"    The program exit code is 0 unless there are\n"
+"    errors in the program arguments.\n"
+"\n"
 "    The possible score line values are:\n"
 "\n"
 "                Completely Correct\n"
@@ -72,9 +75,9 @@ char documentation [] =
 "                   | sign? fraction exponent?\n"
 "                   | integer decimal-point exponent?\n"
 "                   | integer exponent\n"
-"\n"
-"        fraction ::= decimal-point digit+\n"
 "\f\n"
+"        fraction ::= decimal-point digit+\n"
+"\n"
 "        exponent ::= 'e' integer\n"
 "                   | 'E' integer\n"
 "\n"
@@ -106,7 +109,7 @@ char documentation [] =
 "        For matching word tokens, if they have\n"
 "        matched letters of different case, it is\n"
 "        Incorrect Output.\n"
-"\n"
+"\f\n"
 "    -decimal\n"
 "        For matching numbers, if the test file num-\n"
 "        ber has no exponent and has digits after a\n"
@@ -114,7 +117,7 @@ char documentation [] =
 "        ber has an exponent or has a different num-\n"
 "        ber of digits after its decimal point, or\n"
 "        has no decimal point, it is a Format Error.\n"
-"\f\n"
+"\n"
 "    -number A R\n"
 "        All numbers, even integers, are converted\n"
 "        to floating point.  Then if the difference\n"
@@ -146,14 +149,14 @@ char documentation [] =
 "    ber is floating point, then the numbers are com-\n"
 "    pared using the A and R given in the -number or\n"
 "    -float option.  Otherwise they must be equal.\n"
-"\n"
+"\f\n"
 "    The relative difference between two numbers x\n"
 "    and y is:\n"
 "\n"
 "                        | x - y |\n"
 "                     ----------------\n"
 "                     max ( |x|, |y| )\n"
-"\f\n"
+"\n"
 "    and is never larger than 2.  If x == y == 0 this\n"
 "    relative difference is taken to be zero.\n"
 "\n"
@@ -271,7 +274,7 @@ void check_incorrect ( void )
 	for ( int i = 0;
 	      i < incorrect_errors.size(); ++ i )
 	    cout << incorrect_errors[i] << endl;
-	exit ( 1 );
+	exit ( 0 );
     }
 }
 void check_format ( void )
@@ -282,7 +285,7 @@ void check_format ( void )
 	for ( int i = 0;
 	      i < format_errors.size(); ++ i )
 	    cout << format_errors[i] << endl;
-	exit ( 1 );
+	exit ( 0 );
     }
 }
 
