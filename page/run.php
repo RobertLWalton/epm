@@ -189,6 +189,7 @@
 		$ext = pathinfo
 		    ( $fname, PATHINFO_EXTENSION );
 		if ( ! in_array ( $ext, $exts ) ) continue;
+		if ( $ext == 'run' ) continue;
 
 		$f = "$epm_data/$rundir/$fname";
 		if ( ! is_readable ( $f ) ) continue;
@@ -211,7 +212,7 @@
 	    foreach ( $exts as $ext ) // rout is last
 	    {
 		if ( ! isset ( $e[$ext] ) ) continue;
-		$map[$key] = $e[1];
+		$map[$key] = $e[$ext][1];
 	    }
 	}
 	arsort ( $map, SORT_NUMERIC );
@@ -320,7 +321,7 @@ EOT;
 	    $h = 'Currently Executing Run';
 	else
 	    $h = 'Last Completed Run';
-	$c = file_get_contents
+	$c = @file_get_contents
 	    ( "$epm_data/$rundir/$runbase.stat" );
 	if ( $c === false )
 	    $c = '(no status available)';
@@ -373,13 +374,10 @@ EOT;
 		                 ("s_run$n","run$n")'
 			>&darr;</button>
 		     <pre>$fname</pre>
-EOT;
-		if ( $fdir != $rundir )
-		    echo <<<EOT
-			 <button type='submit'
-				 name='submit_local'
-				 value='$fname'
-			     >Run</button>
+		     <button type='submit'
+			     name='submit_local'
+			     value='$fname'
+			 >Run</button>
 EOT;
 	    }
 	    echo "</td>";

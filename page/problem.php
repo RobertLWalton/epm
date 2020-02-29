@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 27 06:03:22 EST 2020
+    // Date:	Fri Feb 28 20:22:44 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -870,6 +870,7 @@ EOT;
 
 	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
 	{
+	    $workdir = $_SESSION['EPM_WORK']['DIR'];
 	    echo "<div class='command_display'>" .
 		 PHP_EOL;
 	    get_commands_display ( $display );

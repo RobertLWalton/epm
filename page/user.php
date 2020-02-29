@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb  6 04:26:31 EST 2020
+    // Date:	Fri Feb 28 20:17:25 EST 2020
 
     // Display and edit user information in:
     //
@@ -67,9 +67,6 @@
 	    'location' => ''];
     elseif ( $method != 'POST' )
         exit ( "UNACCEPTABLE HTTP METHOD $method" );
-    else
-        DEBUG ( 'user.php POST: ' .
-	        json_encode ( $_POST ) );
 
     $data = & $_SESSION['EPM_USER_EDIT_DATA'];
 

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Feb 27 07:37:44 EST 2020
+// Date:    Fri Feb 28 20:14:34 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -973,7 +973,7 @@ function find_control
 // or did not start properly (no `$$ PID' line in .shout
 // file).
 //
-function cleanup_dir ( $dir, $warnings )
+function cleanup_dir ( $dir, & $warnings )
 {
     global $epm_data;
     $d = "$epm_data/$dir";

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 22 03:19:22 EST 2020
+    // Date:	Fri Feb 28 20:16:28 EST 2020
 
     // Handles login for a session.
     //
@@ -220,7 +220,6 @@
     //
     function reply ( $reply )
     {
-        DEBUG ( 'REPLIED: ' . $reply );
 	echo ( $reply );
 	exit;
     }
@@ -335,11 +334,7 @@
 
     $op = NULL;
     if ( isset ( $_POST['op'] ) )
-    {
 	$op = $_POST['op'];
-	DEBUG ( 'RECEIVED QUERY: ' .
-	        json_encode ( $_POST ) );
-    }
 
     // Process POSTs from xhttp.
     //
