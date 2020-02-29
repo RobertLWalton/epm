@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 28 15:39:49 EST 2020
+    // Date:	Fri Feb 28 20:08:58 EST 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -422,7 +422,7 @@ EOT;
 	    echo "</tr>";
 	}
 
-        echo "</div>";
+        echo "</table></form></div>";
     }
 
     if ( count ( $display_list ) > 0 )
