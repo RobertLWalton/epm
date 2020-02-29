@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 28 20:28:22 EST 2020
+    // Date:	Sat Feb 29 04:17:29 EST 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -225,14 +225,17 @@
 <html>
 <head>
 <style>
+    .no-margin {
+	margin: 0 0 0 0;
+    }
     h5 {
-        font-size: 1vw;
+        font-size: 14pt;
 	margin: 0 0 0 0;
 	display:inline;
     }
     pre, b, button, input, select, u {
 	display:inline;
-        font-size: 0.8vw;
+        font-size: 12pt;
     }
     pre {
 	font-family: "Courier New", Courier, monospace;
@@ -246,7 +249,23 @@
     div.warnings {
 	background-color: #FFC0FF;
     }
-    div.run_display {
+    div.manage {
+	background-color: #96F9F3;
+	padding-bottom: 20px;
+    }
+    pre.problem {
+        color: #CC00FF;
+        font-size: 14pt;
+    }
+    div.run_list {
+	background-color: #F2D9D9;
+	clear: both;
+    }
+    div.run {
+	background-color: #C0FFC0;
+	clear: both;
+    }
+    div.file {
 	background-color: #C0FFC0;
 	clear: both;
     }
@@ -298,21 +317,27 @@
 	echo "<br></div></div>" . PHP_EOL;
     }
 
-    // TBD Revise forms
     echo <<<EOT
-    <form style='display:inline'
-          action='user.php' method='GET'>
+    <div class='manage'>
+    <form method='GET'>
+    <table>
+    <td>
     <h5>User:</h5> <input type='submit' value='$email'
+                    formaction='user.php'
                     title='click to see user profile'>
-    </form>
-    &nbsp;&nbsp;&nbsp;&nbsp;
-    <form style='display:inline'
-          action='problem.php' method='GET'>
-    <button type='submit'>Go To Problem Page</button>
-    </form>
-    &nbsp;&nbsp;&nbsp;&nbsp;
+    </td>
+    <td style='padding-left:50px'>
+    <button type='submit'
+            formaction='problem.php'>Go To Problem Page
+    </button>
+    </td>
+    <td style='padding-left:50px'>
     <h5>Current Problem:</h5>&nbsp;
-    <pre>$problem</pre></b>
+    <pre class='problem'>$problem</pre></b>
+    </td>
+    </table>
+    </form>
+    </div>
 EOT;
 
     if ( isset ( $runbase ) )
@@ -326,7 +351,7 @@ EOT;
 	if ( $c === false )
 	    $c = '(no status available)';
 	echo <<<EOT
-	<div class='run_display'>
+	<div class='run'>
 	<h5>$h&nbsp;-&nbsp;$runbase.run:</h5>
 	<div class='indented'>
 	<pre id='status'>$c</pre>
@@ -351,8 +376,9 @@ EOT;
     if ( $local_map != [] )
     {
     	echo <<<EOT
-	<div>
-    	<form action='run.php' method='POST'>
+	<div class='run_list'>
+    	<form action='run.php' method='POST'
+	      class='no-margin'>
 	<table>
 EOT;
 	foreach ( $local_map as $fbase => $e )
@@ -382,25 +408,7 @@ EOT;
 	    }
 	    echo "</td>";
 
-	    echo "<td>";
-	    if ( isset ( $e['rerr'] ) )
-	    {
-	        list ( $fname, $ftime, $fcontents ) =
-		    $e['rerr'];
-		$display_list[] =
-		    ["rerr$n",$fname,$fcontents];
-		echo <<<EOT
-		     <button type='button'
-		             id='s_rerr$n'
-		             onclick='TOGGLE
-		                 ("s_rerr$n","rerr$n")'
-			>&darr;</button>
-		     <pre>$fname</pre>
-EOT;
-	    }
-	    echo "</td>";
-
-	    echo "<td>";
+	    echo "<td style='padding-left:40px'>";
 	    if ( isset ( $e['rout'] ) )
 	    {
 	        list ( $fname, $ftime, $fcontents ) =
@@ -412,6 +420,24 @@ EOT;
 		             id='s_rout$n'
 		             onclick='TOGGLE
 		                 ("s_rout$n","rout$n")'
+			>&darr;</button>
+		     <pre>$fname</pre>
+EOT;
+	    }
+	    echo "</td>";
+
+	    echo "<td style='padding-left:40px'>";
+	    if ( isset ( $e['rerr'] ) )
+	    {
+	        list ( $fname, $ftime, $fcontents ) =
+		    $e['rerr'];
+		$display_list[] =
+		    ["rerr$n",$fname,$fcontents];
+		echo <<<EOT
+		     <button type='button'
+		             id='s_rerr$n'
+		             onclick='TOGGLE
+		                 ("s_rerr$n","rerr$n")'
 			>&darr;</button>
 		     <pre>$fname</pre>
 EOT;
@@ -431,7 +457,7 @@ EOT;
 	    $fcontents = htmlspecialchars
 		( $fcontents );
 	    echo <<<EOT
-	    <div hidden id='$id'>
+	    <div hidden id='$id' class='file'>
 	    <h5>$fname:</h5><br>
 	    <div class='indented'>
 	    <pre>$fcontents</pre>

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 28 20:22:44 EST 2020
+    // Date:	Sat Feb 29 03:46:43 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -520,6 +520,10 @@
     div.manage {
 	background-color: #96F9F3;
     }
+    pre.problem {
+        color: #CC00FF;
+        font-size: 1vw;
+    }
     div.problem_display {
 	background-color: #F2D9D9;
     }
@@ -673,7 +677,7 @@
     </td>
     <td style='width:33%'>
     <h5>Current Problem:</h5>&nbsp;
-    <pre>$current_problem</pre></b>
+    <pre class='problem'>$current_problem</pre></b>
     </td>
 EOT;
     if ( isset ( $problem ) )
