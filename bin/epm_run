@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Feb 27 08:00:03 EST 2020
+// Date:	Sat Feb 29 05:30:48 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -310,6 +310,18 @@ foreach ( $runin as $infile )
         $t = $matches[1];
 	if ( $max_map[$t] < $e[2] )
 	    $max_map[$t] = $e[2];
+    }
+    $f = "$workdir/$base.score";
+    $score = @file_get_contents ( "$epm_data/$f" );
+    if ( $score === false )
+        ERROR ( "cannot read $f" );
+    if ( trim ( $score ) != 'Completely Correct' )
+    {
+	$score = explode ( "\n", $score );
+	$score = trim ( $score[0] );
+	echo "Score: $score" . PHP_EOL;
+	echo "First-Failed-Test-Case: $base" . PHP_EOL;
+	break;
     }
 }
 $max_label = ['g' => 'Generate', 's' => 'Solution',
