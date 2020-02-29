@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 28 20:17:25 EST 2020
+    // Date:	Sat Feb 29 04:27:43 EST 2020
 
     // Display and edit user information in:
     //
@@ -108,7 +108,7 @@
 	    }
 	    if ( preg_match ( '/^\.\.*$/', $value ) )
 		continue;
-	    if ( $value == 'lock' )
+	    if ( $value == '+lock+' )
 	        continue;
 	    $f = "admin/email/$value";
 	    $c = file_get_contents ( "$epm_data/$f" );

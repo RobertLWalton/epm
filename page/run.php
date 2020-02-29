@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 29 04:17:29 EST 2020
+    // Date:	Sat Feb 29 04:32:55 EST 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -465,6 +465,9 @@ EOT;
 EOT;
 	}
     }
+    if ( isset ( $runbase ) && $runresult !== true )
+        echo "<script>" .
+	     "TOGGLE('s_rout1','rout1')</script>";
 ?>
 
 <form action='run.php' method='POST' id='reload'>
