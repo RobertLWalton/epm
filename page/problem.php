@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 29 05:17:08 EST 2020
+    // Date:	Sat Feb 29 07:47:10 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -200,8 +200,6 @@
 
     // Data Set by GET and POST Requests:
     //
-    $show_file = NULL;  // File to be shown to right.
-    $show_files = [];   // Files to be shown to left.
     $uploaded_file = NULL;
         // 'name' of uploaded file, if any file was
 	// uploaded.
@@ -350,10 +348,9 @@
 	foreach ( $files as $f )
 	{
 	    if ( $f == '' ) continue;
-	    if ( array_search
+	    if ( ! in_array
 		     ( $f, problem_file_names
-		     		( $probdir ),
-			   true ) === false )
+		     	       ( $probdir ) ) )
 		exit ( "ACCESS: illegal POST to" .
 		       " problem.php" );
 	}
@@ -379,10 +376,9 @@
 	$src = $matches[1];
 	$des = $matches[2];
 		 	    
-	if ( array_search
-	         ( $src, problem_file_names
-		 	     ( $probdir ),
-		         true ) === false )
+	if ( ! in_array
+		 ( $src, problem_file_names
+			   ( $probdir ) ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	start_make_file
@@ -416,10 +412,9 @@
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 		 	    
-	if ( array_search
-	         ( $f, problem_file_names
-		 	   ( $probdir ),
-		       true ) === false )
+	if ( ! in_array
+		 ( $f, problem_file_names
+			   ( $probdir ) ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	start_run
@@ -468,19 +463,7 @@
     if ( isset ( $_SESSION['EPM_WORK']['CONTROL'] )
          &&
 	 update_work_results() !== true )
-    {
         finish_make_file ( $warnings, $errors );
-	$show_files = $_SESSION['EPM_WORK']['SHOW'];
-    }
-
-    if ( count ( $show_files ) > 0 )
-    {
-        if ( ! function_exists ( "find_show_file" ) )
-	    ERROR ( "problem.php:" .
-	            " failed to load epm_make.php" .
-		    " while setting show_files" );
-        $show_file = find_show_file ( $show_files );
-    }
 
     $debug = ( $epm_debug != ''
                &&
@@ -720,6 +703,7 @@ EOT;
 
     if ( isset ( $probdir ) )
     {
+	$show_map = [];
         echo <<<EOT
 	<div class='problem_display'>
 	<button type='button'
@@ -773,6 +757,8 @@ EOT;
 		    </td>
 EOT;
 	    if ( $fdisplay )
+	    {
+	        $show_map[$fname] = $count;
 		echo <<<EOT
 		    <td><button type='button'
 			 onclick='TOGGLE_BODY
@@ -782,6 +768,7 @@ EOT;
 		    <pre id='show$count'>&darr;</pre>
 		    </td>
 EOT;
+	    }
 	    else
 	        echo "<td></td>";
 
@@ -956,6 +943,8 @@ EOT;
 			    </td>
 EOT;
 		    if ( $fdisplay )
+		    {
+			$show_map[$fname] = $count;
 			echo <<<EOT
 			    <td><button type='button'
 				 onclick='TOGGLE_BODY
@@ -965,6 +954,7 @@ EOT;
 			    <pre id='show$count'>&darr;</pre>
 			    </button></td>
 EOT;
+		    }
 		    else
 			echo "<td></td>";
 
@@ -995,19 +985,45 @@ EOT;
 EOT;
 	    }
 	}
+
+	if ( isset ( $_SESSION['EPM_WORK']['SHOW'] ) )
+	{
+	    $show_files = $_SESSION['EPM_WORK']['SHOW'];
+	    $files = [];
+	    foreach ( $show_files as $fname )
+	    {
+		$fname = pathinfo
+		    ( $fname, PATHINFO_BASENAME );
+	        if ( isset ( $show_map[$fname] ) )
+		    $files[] = $fname;
+	    }
+	    if ( count ( $files ) > 0 )
+	    {
+		$base = pathinfo ( $files[0], 
+				   PATHINFO_BASENAME );
+		$ext = pathinfo ( $files[0], 
+				  PATHINFO_EXTENSION );
+		$type = $display_file_type[$ext];
+		$page = $display_file_map[$type];
+		if ( $page != NULL ) echo <<<EOT
+                <script>CREATE_IFRAME
+		        ( '$page', '$base' );</script>
+EOT;
+	    }
+	    if ( count ( $files ) > 1 )
+	    {
+	        $c = $show_map[$files[1]];
+		echo <<<EOT
+		<script>TOGGLE_BODY
+			    ("show$count",
+			     "contents$count");</script>
+EOT;
+	    }
+	}
     }
 
     if ( isset ( $show_file ) )
     {
-	$base = pathinfo ( $show_file, 
-	                   PATHINFO_BASENAME );
-	$ext = pathinfo ( $show_file, 
-	                  PATHINFO_EXTENSION );
-	$type = $display_file_type[$ext];
-	$page = $display_file_map[$type];
-	if ( $page != NULL ) echo <<<EOT
-<script>CREATE_IFRAME ( '$page', '$base' );</script>
-EOT;
     }
 ?>
 

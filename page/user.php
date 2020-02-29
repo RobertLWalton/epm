@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 29 04:27:43 EST 2020
+    // Date:	Sat Feb 29 07:25:22 EST 2020
 
     // Display and edit user information in:
     //
@@ -257,8 +257,7 @@
 	    $f = "admin/email/$re";
 	    if ( is_readable ( "$epm_data/$f" )
 	         ||
-		     array_search ( $e, $emails, true )
-		 !== false )
+		 in_array ( $e, $emails ) )
 	    {
 	        $errors[] =
 		    "email address $e is already" .
