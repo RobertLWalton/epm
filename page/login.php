@@ -553,7 +553,7 @@
        autofocus
        title='address (to be) associated with account'>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<?php HELP('Login_Email')?>
+<?php HELP('login-page')?>
 </div>
 
 <div id='show_email' style.display='none'>

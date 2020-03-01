@@ -1,16 +1,31 @@
 <html>
+<!--
+	File:	help.html
+	Author:	walton@acm.org
+	Date:	Sat Feb 29 23:30:22 EST 2020
+-->
 <style>
 div.header {
 text-align: center;
+position: fixed;
+top: 0;
+right: 0;
 }
 div.text {
 }
-h5 {
+h1 {
+font-size: 16pt;
+text-decoration: underline;
+}
+h2 {
 font-size: 14pt;
 }
 p {
 margin-left: 10px;
 font-size: 12pt;
+}
+p.inline {
+display: inline;
 }
 </style>
 <body>
@@ -19,16 +34,31 @@ font-size: 12pt;
 </div>
 <div class='text'>
 
-<a name="TOD"><h5>Table of Contents</h5>
+<a name="TOC"><h1>Table of Contents</h1>
 <p>
 <ul>
-<li><a href="#Login_Email">Login Email</a><br>
+<li><a href="#login-page">Login Page</a><br>
+<ul>
+<li><a href="#login-email">User Email Address</a><br>
+</ul>
+<li><a href="#problem-page">Problem Page
+<ul>
+<li><a href="#problem-names">Problem Names</a><br>
+<li><a href="#current-problem-files">Current Problem Files</a><br>
+</ul>
 
 </div>
 <div class='text'>
-<a name="Login_Email"><h5>Login Email</h5>
+
+<a name="login-page"><h1>Login Page</h1>
+
+<p>The <b>login page</b> manages login using email addresses to
+identify a user and confirmation numbers to create tickets for
+the user in the browser.
+
+<a name="login-email"><h2>User Email Address</h2>
 <p>
-Your email address serves as your account name,
+Your <b>email address</b> serves as your account name,
 and also as the place to which confirmation numbers
 will be sent.
 <p>
@@ -38,6 +68,73 @@ email address.
 You can have up to 3 email addresses associated with
 your account.  Its a good idea to have at least 2,
 in case one is not working when you need it.
+
+<a name="login-ticket"><h2>Browser Ticket</h2>
+<p>
+A browser <b>ticket</b> is stored in the browser local memory
+and enables a user to log in by giving only the email
+address associated with ticket.  There is a separate
+ticket for each email address and each browser.
+<p>
+A ticket is created using a <b>confirmation number</b> sent to
+the email address and entered into the browser.  A ticket
+expires after a certain interval: 2 days for the first ticket,
+7 days for the second ticket, and 30 days for each
+ticket thereafter (a new ticket obtained before the previous
+ticket expires is not counted as a new ticket for these
+purposes).
+
+<a name="problem-page"><h1>Problem Page</h1>
+
+<p>
+At any given time you have a <b>current problem</b> you are working on.
+The <b>problem page</b> allows you to create problems, select an
+existing problem, and manage the current problem.
+<p>
+On the problem page:
+<table style='margin-left:20px'>
+<tr><td>&darr;</td><td>means `show below'</td></tr>
+<tr><td>&uarr;</td><td>means `hide'</td></tr>
+<tr><td>&Chi;</td><td>means `mark for deletion';
+deletion does not occur until you `Delete Marked Files'
+or make a new file</td></tr>
+<tr><td>+</td><td>means `remove deletion mark'</td></tr>
+<tr><td>&rArr;</td><td>means `make a new file with given extension from the file named on the same line'</td></tr>
+</table>
+
+
+<a name="problem-names"><h2>Problem Names</h2>
+<p>
+A <b>problem name</b> can contain only letters, digits, and the
+special characters dash(<pre.inline>-</pre>) and
+underline(<pre.inline>_</pre>).
+In addition, it must begin with a letter.
+
+<a name="current-problem-files"><h2>Current Problem Files</h2>
+<p>
+The <b>current problem files</b> are the files that you have uploaded
+or created for the problem.  These files are stored in the problem
+directory and can be viewed, used, or deleted.  They are displayed
+in the `Current Problem File' table, one line per file.
+<p>
+Clicking on a file name will show the file with line numbers
+to the right, unless
+the page is too narrow in which case it will show the file below.
+<p>
+Clicking on &darr; will show the file below.
+<p>
+Files that are a single short line cannot be shown but their contents
+are displayed in <pre.inline>{ }</pre> brackets at the end of the
+file's line.
+<p>
+Empty files and binary files cannot be shown but their nature is
+displayed at the end of the file's line.
+<p>
+Displayable files are assumed to be encoded in UTF-8 or PDF.
+A UTF-8 file that is displayable has its number of lines indicated
+at the end of the file's line.
+
+
 
 </div>
 </body>

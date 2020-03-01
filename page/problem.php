@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 29 07:47:10 EST 2020
+    // Date:	Sun Mar  1 00:57:52 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -651,24 +651,30 @@
           style='margin:0 0 1vh 0'>
     <table style='width:100%'>
     <tr>
-    <td style='width:33%'>
+    <td style='width:30%'>
     <h5>User:</h5> <input type='submit' value='$email'
 		    formaction='user.php'
 		    formmethod='GET'
                     title='click to see user profile'>
     </td>
-    <td style='width:33%'>
+    <td style='width:30%'>
     <h5>Current Problem:</h5>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
     </td>
+    <td style='width:30%'>
 EOT;
     if ( isset ( $problem ) )
-        echo "<td style='width:33%'>" .
-	     "<button type='submit'" .
+        echo "<button type='submit'" .
 	     " name='delete_problem'" .
 	     " value='$problem'>" .
-	     "Delete Current Problem</button></td>";
-    echo "</tr>";
+	     "Delete Current Problem</button>";
+    echo <<<EOT
+    </td>
+    <td style='width:10%;text-align:right'>
+EOT;
+    HELP ( 'problem-page' );
+    echo "</td></tr>";
+
     if ( count ( $problems ) > 0 )
     {
 	echo "<tr><td></td><td>" . PHP_EOL;
@@ -706,6 +712,9 @@ EOT;
 	$show_map = [];
         echo <<<EOT
 	<div class='problem_display'>
+	<table style='width:100%'>
+	<tr>
+	<td style='width:90%'>
 	<button type='button'
 		onclick='TOGGLE_BODY
 		     ("problems_toggle",
@@ -714,6 +723,14 @@ EOT;
 		<pre id='problems_toggle'>&uarr;</pre>
 		</button>
 	<h5>Current Problem Files (most recent first):</h5>
+	</td>
+	<td style='width:10%;text-align:right'>
+EOT;
+	HELP ( 'current-problem-files' );
+	echo <<<EOT
+	</td>
+	</tr>
+	</table>
 	<div id='problems_body'>
 	<form action='problem.php'
 	      enctype='multipart/form-data'
