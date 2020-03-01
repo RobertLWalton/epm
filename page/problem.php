@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar  1 00:57:52 EST 2020
+    // Date:	Sun Mar  1 06:30:47 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -645,6 +645,7 @@
     $current_problem = ( isset ( $problem ) ?
                                  $problem :
 			         "none selected" );
+    $problem_page_help = HELP ( 'problem-page' );
     echo <<<EOT
     <div class='manage'>
     <form action='problem.php' method='POST'
@@ -671,9 +672,10 @@ EOT;
     echo <<<EOT
     </td>
     <td style='width:10%;text-align:right'>
+    {$problem_page_help}
+    </td>
+    </tr>
 EOT;
-    HELP ( 'problem-page' );
-    echo "</td></tr>";
 
     if ( count ( $problems ) > 0 )
     {
@@ -709,6 +711,8 @@ EOT;
 
     if ( isset ( $probdir ) )
     {
+	$current_problem_files_help =
+	    HELP ( 'current-problem-files' );
 	$show_map = [];
         echo <<<EOT
 	<div class='problem_display'>
@@ -725,9 +729,7 @@ EOT;
 	<h5>Current Problem Files (most recent first):</h5>
 	</td>
 	<td style='width:10%;text-align:right'>
-EOT;
-	HELP ( 'current-problem-files' );
-	echo <<<EOT
+	{$current_problem_files_help}
 	</td>
 	</tr>
 	</table>

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 28 20:16:28 EST 2020
+    // Date:	Sun Mar  1 06:28:52 EST 2020
 
     // Handles login for a session.
     //
@@ -553,7 +553,7 @@
        autofocus
        title='address (to be) associated with account'>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<?php HELP('login-page')?>
+<?php echo ( HELP('login-page') )?>
 </div>
 
 <div id='show_email' style.display='none'>
@@ -570,6 +570,8 @@ Get New Ticket
 <button onclick="RESET_BROWSER()">
 Delete All Tickets
 </button>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<?php echo ( HELP('browser-ticket') )?>
 </div>
 
 <div id='get_cnum' style.display='none'>

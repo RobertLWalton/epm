@@ -1,8 +1,8 @@
 <html>
 <!--
-	File:	help.html
-	Author:	walton@acm.org
-	Date:	Sat Feb 29 23:30:22 EST 2020
+File:	help.html
+Author:	Robert L Walton <walton@acm.org>
+Date:	Sun Mar  1 06:28:27 EST 2020
 -->
 <style>
 div.header {
@@ -27,10 +27,13 @@ font-size: 12pt;
 p.inline {
 display: inline;
 }
+table.top-align td {
+vertical-align: top;
+}
 </style>
 <body>
 <div class='header'>
-<a href="#TOC">Go To Table of Contents</a>
+<a href="#TOC" title='Go to Table of Contents'>TOC</a>
 </div>
 <div class='text'>
 
@@ -40,6 +43,7 @@ display: inline;
 <li><a href="#login-page">Login Page</a><br>
 <ul>
 <li><a href="#login-email">User Email Address</a><br>
+<li><a href="#browser-ticket">Browser Ticket</a><br>
 </ul>
 <li><a href="#problem-page">Problem Page
 <ul>
@@ -68,31 +72,47 @@ email address.
 You can have up to 3 email addresses associated with
 your account.  Its a good idea to have at least 2,
 in case one is not working when you need it.
+<p>
+An account is on an <a name='EPM-server'><b>EPM server</b></a>.
+EPM servers are named
+by the document root URL used to access them, and EPM servers with
+different names are independent of each other (even
+if they are running on the same computer).
 
-<a name="login-ticket"><h2>Browser Ticket</h2>
+<a name="browser-ticket"><h2>Browser Ticket</h2>
 <p>
 A browser <b>ticket</b> is stored in the browser local memory
 and enables a user to log in by giving only the email
 address associated with ticket.  There is a separate
-ticket for each email address and each browser.
+ticket for each <a href='#EPM-server'>EPM server</a>,
+each email address of an account on that server, and each browser.
 <p>
 A ticket is created using a <b>confirmation number</b> sent to
 the email address and entered into the browser.  A ticket
 expires after a certain interval: 2 days for the first ticket,
 7 days for the second ticket, and 30 days for each
-ticket thereafter (a new ticket obtained before the previous
-ticket expires is not counted as a new ticket for these
-purposes).
+ticket thereafter.  In counting tickets, only <b>expired tickets</b>
+are counted, so if you keep getting tickets before the previous
+one expires, all your tickets will expire in the same number of days.
+<p>
+The `<b>Get New Ticket</b>' button removes the ticket for the
+entered email address and <a href='#EPM-server'>EPM server name</a>
+from the browser and returns to the initial
+login page.
+<p>
+The `<b>Delete All Tickets</b>' button removes the <u>all</u>
+tickets for the current EPM server from the browser and returns
+to the initial login page.
 
 <a name="problem-page"><h1>Problem Page</h1>
 
 <p>
-At any given time you have a <b>current problem</b> you are working on.
+At any given time you need to have a <b>current problem</b> you are working on.
 The <b>problem page</b> allows you to create problems, select an
 existing problem, and manage the current problem.
 <p>
 On the problem page:
-<table style='margin-left:20px'>
+<table style='margin-left:20px' class='top-align'>
 <tr><td>&darr;</td><td>means `show below'</td></tr>
 <tr><td>&uarr;</td><td>means `hide'</td></tr>
 <tr><td>&Chi;</td><td>means `mark for deletion';
@@ -105,7 +125,8 @@ or make a new file</td></tr>
 
 <a name="problem-names"><h2>Problem Names</h2>
 <p>
-A <b>problem name</b> can contain only letters, digits, and the
+A <a name='problem-name'><b>problem name</b></a>
+can contain only letters, digits, and the
 special characters dash(<pre.inline>-</pre>) and
 underline(<pre.inline>_</pre>).
 In addition, it must begin with a letter.
@@ -116,6 +137,14 @@ The <b>current problem files</b> are the files that you have uploaded
 or created for the problem.  These files are stored in the problem
 directory and can be viewed, used, or deleted.  They are displayed
 in the `Current Problem File' table, one line per file.
+<p>
+Current problem <a name='file-names'><b>file names</b></a> must have particular
+<a href='#extensions'>extensions</a> that specify their role within
+the problem.  The rest of a file name can contain
+only letters, digits, and the special characters dash(<pre.inline>-</pre>) and
+underline(<pre.inline>_</pre>), must begin with a letter, and must
+end with a dash(<pre.inline>-</pre>) followed by the 
+<a href='#problem-name'>problem name</a>.
 <p>
 Clicking on a file name will show the file with line numbers
 to the right, unless
@@ -130,7 +159,8 @@ file's line.
 Empty files and binary files cannot be shown but their nature is
 displayed at the end of the file's line.
 <p>
-Displayable files are assumed to be encoded in UTF-8 or PDF.
+Displayable files must be encoded in UTF-8 or PDF.
+PDF files can only be displayed by clicking on the file name.
 A UTF-8 file that is displayable has its number of lines indicated
 at the end of the file's line.
 
