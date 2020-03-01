@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Mar  1 06:28:27 EST 2020
+Date:	Sun Mar  1 10:52:46 EST 2020
 -->
 <style>
 div.header {
@@ -58,7 +58,7 @@ vertical-align: top;
 
 <p>The <b>login page</b> manages login using email addresses to
 identify a user and confirmation numbers to create tickets for
-the user in the browser.
+the user in the user's browser.
 
 <a name="login-email"><h2>User Email Address</h2>
 <p>
@@ -87,13 +87,19 @@ address associated with ticket.  There is a separate
 ticket for each <a href='#EPM-server'>EPM server</a>,
 each email address of an account on that server, and each browser.
 <p>
-A ticket is created using a <b>confirmation number</b> sent to
-the email address and entered into the browser.  A ticket
+A ticket is created using a
+<a name='confirmation-number'><b>confirmation number</b></a> sent to
+the email address by the EPM server and copied from the email
+into the browser by the user.  A ticket
 expires after a certain interval: 2 days for the first ticket,
 7 days for the second ticket, and 30 days for each
 ticket thereafter.  In counting tickets, only <b>expired tickets</b>
 are counted, so if you keep getting tickets before the previous
 one expires, all your tickets will expire in the same number of days.
+<p>
+A confirmation number is only used during ticket creation, and
+cannot be used to create more than one ticket.  It is not saved
+by the EPM server or browser.
 <p>
 The `<b>Get New Ticket</b>' button removes the ticket for the
 entered email address and <a href='#EPM-server'>EPM server name</a>
