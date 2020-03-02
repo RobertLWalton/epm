@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  2 02:59:58 EST 2020
+    // Date:	Mon Mar  2 04:23:12 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -1038,6 +1038,15 @@ EOT;
 	{
 	    $show_files = $_SESSION['EPM_WORK']['SHOW'];
 	    $files = [];
+
+	    if ( count ( $show_files ) > 1
+	         &&
+		 preg_match ( '/\.pdf$/',
+		              $show_files[0] ) )
+		$files[] = pathinfo
+		    ( array_shift ( $show_files ),
+		      PATHINFO_BASENAME );
+
 	    foreach ( $show_files as $fname )
 	    {
 		$fname = pathinfo

@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Mar  1 10:52:46 EST 2020
+Date:	Mon Mar  2 04:31:50 EST 2020
 -->
 <style>
 div.header {
@@ -30,6 +30,16 @@ display: inline;
 table.top-align td {
 vertical-align: top;
 }
+.indented {
+margin-left: 20px;
+}
+table.extension {
+margin-left: 20px;
+border-spacing: 20px 0;
+}
+table.extension td {
+vertical-align: top;
+}
 </style>
 <body>
 <div class='header'>
@@ -48,6 +58,7 @@ vertical-align: top;
 <li><a href="#problem-page">Problem Page
 <ul>
 <li><a href="#problem-names">Problem Names</a><br>
+<li><a href="#problem-marks">Problem Marks</a><br>
 <li><a href="#current-problem-files">Current Problem Files</a><br>
 </ul>
 
@@ -116,6 +127,17 @@ to the initial login page.
 At any given time you need to have a <b>current problem</b> you are working on.
 The <b>problem page</b> allows you to create problems, select an
 existing problem, and manage the current problem.
+
+
+<a name="problem-names"><h2>Problem Names</h2>
+<p>
+A <a name='problem-name'><b>problem name</b></a>
+can contain only letters, digits, and the
+special characters dash(<pre.inline>-</pre>) and
+underline(<pre.inline>_</pre>).
+In addition, it must begin with a letter.
+
+<a name="problem-marks"><h2>Problem Marks</h2>
 <p>
 On the problem page:
 <table style='margin-left:20px' class='top-align'>
@@ -128,15 +150,6 @@ or make a new file</td></tr>
 <tr><td>&rArr;</td><td>means `make a new file with given extension from the file named on the same line'</td></tr>
 </table>
 
-
-<a name="problem-names"><h2>Problem Names</h2>
-<p>
-A <a name='problem-name'><b>problem name</b></a>
-can contain only letters, digits, and the
-special characters dash(<pre.inline>-</pre>) and
-underline(<pre.inline>_</pre>).
-In addition, it must begin with a letter.
-
 <a name="current-problem-files"><h2>Current Problem Files</h2>
 <p>
 The <b>current problem files</b> are the files that you have uploaded
@@ -145,7 +158,7 @@ directory and can be viewed, used, or deleted.  They are displayed
 in the `Current Problem File' table, one line per file.
 <p>
 Current problem <a name='file-names'><b>file names</b></a> must have particular
-<a href='#extensions'>extensions</a> that specify their role within
+<a href='#file-extensions'>extensions</a> that specify their role within
 the problem.  The rest of a file name can contain
 only letters, digits, and the special characters dash(<pre.inline>-</pre>) and
 underline(<pre.inline>_</pre>), must begin with a letter, and must
@@ -170,7 +183,77 @@ PDF files can only be displayed by clicking on the file name.
 A UTF-8 file that is displayable has its number of lines indicated
 at the end of the file's line.
 
-
+<a name="file-extensions"><h2>File Extensions</h2>
+<p>
+EPM files have <b>extensions</b> that indicate their format
+and purpose:
+<!-- &#8209; is no-breaking hyphen -->
+<div class='indented'>
+<b>Files That Are Uploaded:</b><br>
+<table class='extension'>
+<tr><td>PPPP.c</td><td>C Program Source File</td></tr>
+<tr><td>PPPP.cc</td><td>C++ Program Source File</td></tr>
+<tr><td>PPPP.py</td><td>PYTHON Program Source File</td></tr>
+<tr><td>PPPP.java</td><td>JAVA Program Source File</td></tr>
+<tr><td>PPPP.tex</td><td>LATEX Document Source File</td></tr>
+<tr><td>XXXX&#8209;PPPP.in</td><td>Solution Input File</td></tr>
+<tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files</td></tr>
+</table>
+<b>Files Made During Upload:</b><br>
+<table class='extension'>
+<tr><td>PPPP</td><td>C/C++ Program Binary File,
+                     made from PPPP.c or PPPP.cc file</td></tr>
+<tr><td>PPPP.pyc</td><td>PYTHON Program Binary File,
+                     made from PPPP.py file</td></tr>
+<tr><td>PPPP.class</td><td>JAVA Program Binary File,
+                     made from PPPP.java file</td></tr>
+<tr><td>PPPP.pdf</td><td>Document PDF File,
+                     made from PPPP.tex file</td></tr>
+<tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
+                     made from XXXX&#8209;PPPP.in file
+		     (and compiled solution and generate program)</td></tr>
+</table>
+<b>Files Made From Other Files (Not During Upload):</b><br>
+<table class='extension'>
+<tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
+                     made from XXXX&#8209;PPPP.in file
+		     by generate program</td></tr>
+<tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
+                     made from XXXX&#8209;PPPP.in file
+		     by generate program and solution
+		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.fout</td><td>Filtered Solution Output File,
+                     made from XXXX&#8209;PPPP.sout file
+		     by filter program
+<tr><td>XXXX&#8209;PPPP.score</td><td>Scoring Output File,
+                     made from XXXX&#8209;PPPP.fout
+                     and XXXX&#8209;PPPP.ftest files
+		     by scoring program, or
+                     made from XXXX&#8209;PPPP.sout
+                     and XXXX&#8209;PPPP.ftest files
+		     by filter and scoring programs, or
+                     made from XXXX&#8209;PPPP.in
+                     and XXXX&#8209;PPPP.ftest files
+		     by genereate, solution, filter
+		     and scoring programs
+		     </td></tr>
+</table>
+<b>Working Files That Should Be Empty:</b><br>
+<table class='extension'>
+<tr><td>PPPP.cout<br>XXXX&#8209;PPPP.cout</td>
+    <td>Compiler Output File, empty except for .tex</td></tr>
+<tr><td>PPPP.cerr</td><td>Error Output from compilation
+		     during upload</td></tr>
+<tr><td>XXXX&#8209;PPPP.gYerr</td><td>Error Output from
+		     generate program (if generate program
+		     is run twice Y is 1 or 2, else Y is
+		     missing)</td></tr>
+<tr><td>XXXX&#8209;PPPP.ferr</td><td>Error Output from
+		     filter program</td></tr>
+<tr><td>XXXX&#8209;PPPP.serr</td><td>Error Output from
+		     solution program</td></tr>
+</table>
+</div>
 
 </div>
 </body>
