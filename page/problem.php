@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar  1 06:30:47 EST 2020
+    // Date:	Mon Mar  2 02:59:58 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -515,7 +515,13 @@
     div.work_display {
 	background-color: #F2D9D9;
     }
-    div.indented {
+    div.file-name {
+	background-color: #B3E6FF;
+    }
+    div.file-contents {
+	background-color: #C0FFC0;
+    }
+    .indented {
 	margin-left: 20px;
     }
     td.time {
@@ -545,18 +551,24 @@
 	document.body.appendChild ( iframe );
     }
 
-    function TOGGLE_BODY ( toggle, body )
+    function TOGGLE_BODY ( name, thing )
     {
-	var TOGGLE = document.getElementById ( toggle );
-	var BODY = document.getElementById ( body );
+	var BUTTON = document.getElementById
+		( name + '_button' );
+	var MARK = document.getElementById
+		( name + '_mark' );
+	var BODY = document.getElementById
+		( name + '_body' );
 	if ( BODY.hidden )
 	{
-	    TOGGLE.innerHTML = "&uarr;";
+	    MARK.innerHTML = "&uarr;";
+	    BUTTON.title = "Hide " + thing;
 	    BODY.hidden = false;
 	}
 	else
 	{
-	    TOGGLE.innerHTML = "&darr;";
+	    MARK.innerHTML = "&darr;";
+	    BUTTON.title = "Show " + thing;
 	    BODY.hidden = true;
 	}
     }
@@ -567,21 +579,27 @@
     {
 	var FILE = document.getElementById
 	               ("file" + count);
-	var DELETE = document.getElementById
-	               ("delete" + count);
+	var BUTTON = document.getElementById
+	               ("button" + count);
+	var MARK = document.getElementById
+	               ("mark" + count);
         let i = DELETE_LIST.findIndex
 	            ( x => x == fname );
 	if ( i == -1 )
 	{
 	    DELETE_LIST.push ( fname );
-	    DELETE.innerHTML = "+";
+	    MARK.innerHTML = "+";
+	    BUTTON.title = "Cancel " + fname +
+	                   " Deletion Mark";
 	    FILE.style = 'text-decoration:line-through';
 
 	}
 	else
 	{
 	    DELETE_LIST.splice ( i, 1 );
-	    DELETE.innerHTML = "&Chi;";
+	    MARK.innerHTML = "&Chi;";
+	    BUTTON.title = "Mark " + fname +
+	                   " For Deletion";
 	    FILE.style = 'text-decoration:';
 	}
 	var DELETE_FILES = document.getElementById
@@ -658,11 +676,11 @@
 		    formmethod='GET'
                     title='click to see user profile'>
     </td>
-    <td style='width:30%'>
+    <td style='width:40%'>
     <h5>Current Problem:</h5>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
     </td>
-    <td style='width:30%'>
+    <td style='width:20%'>
 EOT;
     if ( isset ( $problem ) )
         echo "<button type='submit'" .
@@ -720,11 +738,12 @@ EOT;
 	<tr>
 	<td style='width:90%'>
 	<button type='button'
+		id='problems_button'
 		onclick='TOGGLE_BODY
-		     ("problems_toggle",
-		      "problems_body")'
-		title='(Un)Show Problems'>
-		<pre id='problems_toggle'>&uarr;</pre>
+		     ("problems",
+		      "Current Problem Files")'
+		title='Hide Current Problem Files'>
+		<pre id='problems_mark'>&uarr;</pre>
 		</button>
 	<h5>Current Problem Files (most recent first):</h5>
 	</td>
@@ -780,11 +799,13 @@ EOT;
 	        $show_map[$fname] = $count;
 		echo <<<EOT
 		    <td><button type='button'
+		         id='file{$count}_button'
 			 onclick='TOGGLE_BODY
-			     ("show$count",
-			      "contents$count")'
-			 title='(Un)Show $fname Below'>
-		    <pre id='show$count'>&darr;</pre>
+			     ("file$count",
+			      "$fname Below")'
+			 title='Show $fname Below'>
+		    <pre id='file{$count}_mark'
+		        >&darr;</pre>
 		    </td>
 EOT;
 	    }
@@ -793,10 +814,11 @@ EOT;
 
 	    echo <<<EOT
 		<td><button type='button'
+		     id='button$count'
 		     onclick='TOGGLE_DELETE
 			($count, "$fname")'
-		     title='(Un)Delete $fname'>
-		<pre id='delete$count'>&Chi;</pre>
+		     title='Mark $fname For Deletion'>
+		<pre id='mark$count'>&Chi;</pre>
 		</button></td>
 EOT;
 	    if ( $fext == 'in' )
@@ -885,14 +907,15 @@ EOT;
 	    get_commands_display ( $display );
 	    echo <<<EOT
 	    <button type='button'
+	    	    id='commands_button'
 		    onclick='TOGGLE_BODY
-			 ("command_toggle",
-			  "command_body")'
-		    title='(Un)Show Commands'>
-		    <pre id='command_toggle'>&uarr;</pre>
+			 ("commands",
+			  "Commands Last Executed")'
+		    title='Hide Commands Last Executed'>
+		    <pre id='commands_mark'>&uarr;</pre>
 		    </button>
 	    <h5>Commands Last Executed:</h5>
-	    <div id='command_body'>
+	    <div id='commands_body'>
 EOT;
 	    echo "<div class='indented'>" . PHP_EOL;
 	    echo $display . PHP_EOL;
@@ -916,12 +939,13 @@ EOT;
 		echo <<<EOT
 		<div class='work_display'>
 		<button type='button'
-			onclick='TOGGLE_BODY
-			     ("working_toggle",
-			      "working_body")'
-			title='(Un)Show Problems'>
-			<pre id='working_toggle'>&uarr;</pre>
-			</button>
+		    id='working_button'
+		    onclick='TOGGLE_BODY
+			 ("working",
+			  "Current Working Files")'
+		    title='Hide Current Working Files'>
+		    <pre id='working_mark'>&uarr;</pre>
+		    </button>
 		<h5>Current Working Files (most recent first):</h5>
 		<div id='working_body'>
 		<table style='display:block'>
@@ -966,11 +990,13 @@ EOT;
 			$show_map[$fname] = $count;
 			echo <<<EOT
 			    <td><button type='button'
+			         id='file{$count}_button'
 				 onclick='TOGGLE_BODY
-				     ("show$count",
-				      "contents$count")'
-				 title='(Un)Show $fname Below'>
-			    <pre id='show$count'>&darr;</pre>
+				     ("file$count",
+				      "$fname Below")'
+				 title='Show $fname Below'>
+			    <pre id='file{$count}_mark'
+			        >&darr;</pre>
 			    </button></td>
 EOT;
 		    }
@@ -996,11 +1022,14 @@ EOT;
 		$fcontents = htmlspecialchars
 		    ( $fcontents );
 		echo <<<EOT
-		<div hidden id='contents$count'>
+		<div hidden
+		     id='file{$count}_body'
+		     class='file-name'>
 		<h5>$fname:</h5><br>
+		<div class='file-contents'>
 		<div class='indented'>
 		<pre>$fcontents</pre>
-		</div></div>
+		</div></div></div>
 EOT;
 	    }
 	}
@@ -1034,8 +1063,9 @@ EOT;
 	        $c = $show_map[$files[1]];
 		echo <<<EOT
 		<script>TOGGLE_BODY
-			    ("show$count",
-			     "contents$count");</script>
+			    ("file$count",
+			     "{$files[1]} Below");
+			     </script>
 EOT;
 	    }
 	}
