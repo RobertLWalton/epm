@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Mar  3 23:44:05 EST 2020
+// Date:	Wed Mar  4 03:07:16 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -49,19 +49,21 @@ char documentation [] =
 "    The program exit code is 0 unless there are\n"
 "    errors in the program arguments.  If there are\n"
 "    just errors detected by comparing the output_\n"
-"    file to the ext file, the exit code is 0.\n"
+"    file to the test file, the exit code is 0.\n"
 "\n"
 "    To find errors, file lines are parsed into\n"
 "    tokens, and sucessive tokens of pairs of non-\n"
 "    blank lines are matched.  A token is a word, a\n"
 "    number, or a separator.   White-space is not\n"
-"    part of any token.\n"
+"    part of any token, but the last column of each\n"
+"    token is recorded and may be used to require the\n"
+"    output file to have the same spacing as the test\n"
+"    file.\n"
 "\n"
 "    A word is just a string of ASCII letters.  A\n"
-"    A number is a string with the syntax:\n"
+"    number is a string with the syntax:\n"
 "\n"
-"        number ::= integer\n"
-"                 | float\n"
+"        number ::= integer | float\n"
 "\n"
 "        integer ::= sign? digit+\n"
 "\n"
@@ -75,9 +77,18 @@ char documentation [] =
 "        exponent ::= 'e' integer\n"
 "                   | 'E' integer\n"
 "\n"
+"    Note that any number with either a decimal\n"
+"    point or an exponent is a float.\n"
+"\n"
 "    A separator is a string of non-whitespace, non-\n"
-"    letter, non-digit characters that is not part\n"
-"    of a number.\n"
+"    letter, non-digit ASCII characters that is not\n"
+"    part of a number.\n"
+"\n"
+"    Non-ASCII characters and ASCII control charac-\n"
+"    ters other than space, horizontal tab, newline,\n"
+"    and carriage return are considered illegal, and\n"
+"    are treated as space characters that separate\n"
+"    tokens.\n"
 "\n"
 "    Tokens are scanned left to right with longer\n"
 "    tokens being preferred at each point.  When com-\n"
@@ -89,25 +100,31 @@ char documentation [] =
 "    expected token may be an integer or float\n"
 "    number.\n"
 "\f\n"
-"    The types of errors detected are:\n"
+"    The types of errors detected, in (roughly) most-\n"
+"    severe-first order, are:\n"
 "\n"
 "        output ends too soon\n"
 "        superfluous lines at end of output\n"
-"        extra tokens at end of line\n"
 "        tokens missing from end of line\n"
+"        extra tokens at end of line\n"
+"\n"
 "        token is not a number\n"
 "        token is not a word\n"
 "        token is not a separator\n"
+"\n"
 "        unequal words\n"
 "        unequal separators\n"
 "        unequal numbers\n"
 "        unequal integers\n"
-"        number has wrong number of decimal places*\n"
+"\n"
 "        number is not an integer*\n"
 "        integer has high order zeros*\n"
 "        integer has sign*\n"
+"\n"
+"        number has wrong number of decimal places*\n"
 "        word letter cases do not match*\n"
 "        token end columns are not equal*\n"
+"\n"
 "        illegal character in line*\n"
 "        superflous blank line*\n"
 "        missing blank line*\n"
@@ -146,30 +163,43 @@ char documentation [] =
 "        Do NOT ignore `number has wrong number of\n"
 "        decimal places' errors.  The number of\n"
 "        decimal places expected is the number in\n"
-"        the test number token (must be >= 1).\n"
+"        the test number token.\n"
 "\n"
 "    -integer\n"
 "        Do NOT ignore `number is not an integer'\n"
-"        errors.\n"
+"        errors.  This means that if the test token\n"
+"        is an integer, the output token must be an\n"
+"        integer.\n"
 "\n"
+"        When both `-integer' and `-float A R' are\n"
+"        given, care must be taken that all test\n"
+"        number tokens that are to be compared using\n"
+"        -float contain a decimal point.\n"
+"\f\n"
 "    -zeros\n"
 "        Do NOT ignore `integer has high order\n"
-"        zeros' errors.\n"
+"        zeros' errors.  The output integer token\n"
+"        will not be allowed to have a high order\n"
+"        zero unless the test integer token has a\n"
+"        high order zero.\n"
 "\n"
 "    -sign\n"
 "        Do NOT ignore `integer has sign' errors.\n"
+"        The output integer token will not be\n"
+"        allowed to have a sign unless the test\n"
+"        integer token has a sign.\n"
 "\n"
 "    -case\n"
 "        Do NOT ignore `word letter cases do not\n"
 "        match' errors.\n"
-"\f\n"
+"\n"
 "    -column\n"
 "        Do NOT ignore `token end columns are not\n"
 "        equal' errors.  When computing the column\n"
 "        of a character, tabs are set every 8 col-\n"
 "        umns.\n"
 "\n"
-"    -illegal-character\n"
+"    -illegal\n"
 "        Do NOT ignore `illegal character in line'\n"
 "        errors.\n"
 "\n"
@@ -179,11 +209,8 @@ char documentation [] =
 "\n"
 "    To compare numbers otherwise, they are convert-\n"
 "    ed to IEEE 64 bit numbers.  It is possible that\n"
-"    a converted number will be an infinity.  When\n"
-"    + or - infinity is compared to any not-exactly-\n"
-"    equal-value, the absolute difference is infinity\n"
-"    and the relative difference is 1.\n"
-"\n"
+"    a converted number will be an infinity.\n"
+"\f\n"
 "    The relative difference between two numbers x\n"
 "    and y is:\n"
 "\n"
@@ -191,8 +218,14 @@ char documentation [] =
 "                     ----------------\n"
 "                     max ( |x|, |y| )\n"
 "\n"
-"    and is never larger than 2.  If x == y == 0 this\n"
-"    relative difference is taken to be zero.\n"
+"    and is never larger than 2 (unless x or y is an\n"
+"    infinity).  If x == y == 0 this relative differ-\n"
+"    ence is taken to be zero.\n"
+"\n"
+"    When + or - infinity is compared to any not-\n"
+"    exactly-equal value, the differences are\n"
+"    infinity, and when compared to an exactly-equal\n"
+"    value, the differences are 0.\n"
 ;
 
 // Options:
@@ -200,7 +233,8 @@ char documentation [] =
 bool debug = false;
 bool float_opt = false;
 double number_A = 0;
-double number_R = 4;
+double number_R = NAN;
+    // Do disable A or R, set these to NAN.
 
 enum token_type {
     NO_TOKEN = 0,
@@ -241,17 +275,13 @@ struct file
 			// the current token.  The first
 			// column is 1.
     int places;		// Number of decimal places if
-    			// type == FLOAT_TYPE.  0 other-
-			// wise.
-    bool has_exponent;	// True iff token has an expo-
-    			// nent and type == FLOAT_TYPE.
-    bool has_decimal;	// True iff token has an decimal
-    			// point and type == FLOAT_TYPE.
-    bool has_sign;	// True iff token has sign and
-    			// type == INTEGER_TYPE.
-    bool has_high_zero;	// True iff token has high order
-    			// zero and type == INTEGER_TYPE.
-
+    			// type == FLOAT_TOKEN.  0 for
+			// type == INTEGER_TOKEN.
+    bool has_sign;	// When type == INTEGER_TOKEN,
+                        // true iff token has sign.
+    bool has_high_zero;	// When type == INTEGER_TOKEN,
+                        // true iff token has high order
+			// zero.
     char token[81];	// Copy of token for error
     			// messages, computed by the
 			// `token' function.  Middle
@@ -304,7 +334,7 @@ void open_files ( const char * output_file_name,
 // replace them with `...'.  Returned value is only
 // valid until next call to this function with same f.
 //
-const char * token ( file & f, int width = 40 )
+const char * token ( file & f, int width = 20 )
 {
     assert ( f.type != NO_TOKEN );
     assert ( width >= 15 );
@@ -349,7 +379,7 @@ struct error_type
 
     error_type ( const char * option_name = NULL )
     {
-        this-> option_name = option_name;
+        this->option_name = option_name;
 	ignore = ( option_name != NULL );
 	buffer[0] = 0;
 	count = 0;
@@ -364,33 +394,28 @@ struct error_type
 //
 error_type superfluous_blank_line ( "blank" );
 error_type missing_blank_line ( "blank" );
-
 error_type illegal_character_in_line
 		( "illegal-character" );
 
-error_type number_has_exponent ( "exponent" );
-error_type number_has_no_decimal ( "decimal" );
-error_type integer_has_high_order_zeros ( "zeros" );
-error_type integer_has_sign ( "sign" );
-
-error_type word_letter_cases_do_not_match ( "case" );
 error_type token_end_columns_are_not_equal
 		( "column" );
+error_type word_letter_cases_do_not_match ( "case" );
 error_type number_has_wrong_number_of_places
 		( "places" );
 
-error_type unequal_words;
-error_type unequal_separators;
-error_type unequal_numbers;
+error_type integer_has_sign ( "sign" );
+error_type integer_has_high_order_zeros ( "zeros" );
+error_type token_is_not_an_integer
+		( "integer" );
+
 error_type unequal_integers;
+error_type unequal_numbers;
+error_type unequal_separators;
+error_type unequal_words;
 
-error_type integer_has_decimal;
-error_type integer_has_exponent;
-
-error_type token_is_not_a_number;
-error_type token_is_not_an_integer;
-error_type token_is_not_a_word;
 error_type token_is_not_a_separator;
+error_type token_is_not_a_word;
+error_type token_is_not_a_number;
 
 error_type extra_tokens_at_end_of_line;
 error_type tokens_missing_from_end_of_line;
@@ -401,9 +426,10 @@ error_type output_ends_too_soon;
 // Increment e.count, and return if new count is > 1.
 // Else write error message to be output into e.buffer.
 // Message begins with current file lines, and is
-// followed by printf of format... .  This last must
-// consist of one or more lines each begining with
-// 4 spaces and ending with a line feed.
+// followed by printf of format... preceded by 4 spaces
+// and followed by a newline.  If more than one line
+// is to be output, each non-last line must be indicated
+// by '\n    ' (including 4 spaces).
 //
 void error ( error_type & e, const char * format... )
 {
@@ -431,10 +457,14 @@ void error ( error_type & e, const char * format... )
 	    }
 	}
     }
+    strcpy ( p, "    " );
+    p += 4;
     va_list args;
     va_start ( args, format );
-    vsprintf ( p, format, args );
+    p += vsprintf ( p, format, args );
     va_end ( args );
+    * p ++ = '\n';
+    * p = 0;
 }
 
 
@@ -474,7 +504,8 @@ void get_line ( file & f )
 
 // Get next token.  If file at_end or file type is
 // EOL_TOKEN do nothing.  Otherwise set f.type,
-// f.column, f.start, and f.end.
+// f.column, f.start, f.end, f.column, f.places,
+// f.has_sign, and f.has_high_zero.
 //
 void get_token ( file & f )
 {
@@ -485,47 +516,58 @@ void get_token ( file & f )
     const char * p = lp + f.end;
     bool point_found;  // Declare here before goto's.
     const char * q;    // Ditto.
-    while ( * p && isspace ( * p ) )
+    while ( * p && (    ! isgraph ( * p )
+                     || ! isascii ( * p ) ) )
     {
         if ( * p == ' ' ) ++ f.column;
 	else if ( * p == '\t' )
 	    f.column += 8 - ( f.column % 8 );
 	else if ( * p == '\f' )
 	    error ( illegal_character_in_line,
-	          "    form feed character in"
-		  " column %d", f.column );
+	            "form feed character in column %d",
+		    f.column );
 	else if ( * p == '\v' )
 	    error ( illegal_character_in_line,
-	            "    vertical space character"
-		    " in column %d", f.column );
+	            "vertical space character in"
+		    " column %d", f.column );
+	else if ( ! isascii ( * p ) )
+	{
+	    error ( illegal_character_in_line,
+	            "non-ASCII character %X in"
+		    " column %d",
+		    (unsigned char) * p, f.column );
+	    ++ f.column;
+	}
+	else if ( * p != '\r' && ! isgraph ( * p ) )
+	    error ( illegal_character_in_line,
+	            "ASCII control character %X in"
+		    " column %d",
+		    (unsigned char) * p, f.column );
 	// else its carriage return and we ignore it.
 	
 	++ p;
     }
 
     f.start = p - lp;
-    f.places = 0;
-    f.has_exponent = false;
-    f.has_decimal = false;
-    f.has_high_zero = false;
-    f.has_sign = false;
 
     if ( * p == 0 )
     {
         f.type = EOL_TOKEN;
 	goto TOKEN_DONE;
     }
-    if ( isalpha ( * p ) )
+    if ( isalpha ( * p ) && isascii ( * p ) )
     {
 	++ p;
-	while ( isalpha ( * p ) ) ++ p;
+	while ( isalpha ( * p ) && isascii ( * p ) )
+	    ++ p;
 	f.type = WORD_TOKEN;
 	goto TOKEN_DONE;
     }
     q = p;
     while ( * p && ! isdigit ( * p )
 		&& ! isalpha ( * p )
-		&& ! isspace ( * p ) )
+		&& ! isspace ( * p )
+		&& isascii ( * p ) )
 	 ++ p;
     if ( isdigit ( * p ) )
     {
@@ -542,25 +584,36 @@ void get_token ( file & f )
 
     // p must be start of number.
     //
+    f.type = INTEGER_TOKEN;
+    f.places = 0;
+    f.has_high_zero = false;
+    f.has_sign = false;
+
     if ( * p == '+' || * p == '-' )
         f.has_sign = true, ++ p;
-    f.has_decimal = ( * p == '.' );
-    if ( f.has_decimal ) ++ p;
+    if ( * p == '.' )
+    {
+	++ p;
+	f.type = FLOAT_TOKEN;
+    }
     assert ( isdigit ( * p ) );
         // There must be at least one digit as we were
 	// at start of number.
+    if ( * p == '0' && isdigit ( p[1] ) )
+        f.has_high_zero = true;
     q = p;
     ++ p;
     while ( isdigit ( * p ) ) ++ p;
-    if ( f.has_decimal ) f.places = p - q;
+    if ( f.type == FLOAT_TOKEN ) f.places = p - q;
     if ( * p == '.' )
     {
-        if ( f.has_decimal )
+        if ( f.type == FLOAT_TOKEN )
 	{
-	    f.type = FLOAT_TOKEN;
+	    // point seen before in token
+	    //
 	    goto TOKEN_DONE;
 	}
-	f.has_decimal = true;
+	f.type = FLOAT_TOKEN;
 	++ p;
 	q = p;
 	while ( isdigit ( * p ) ) ++ p;
@@ -576,36 +629,23 @@ void get_token ( file & f )
 	    ++ p;
 	    while ( isdigit ( * p ) ) ++ p;
 	    f.type = FLOAT_TOKEN;
-	    f.has_exponent = true;
 	    goto TOKEN_DONE;
 	}
 	p = q;
     }
-    f.type = ( f.has_decimal ? FLOAT_TOKEN
-                             : INTEGER_TOKEN );
 
 TOKEN_DONE:
 
     f.end = p - lp;
     f.column += f.end - f.start;
 
-    if ( ! debug ) return;
 
-    cout << f.id
-         << " " << f.line_number
-         << ":" << f.column
-	 << " " << token_type_name[f.type]
-	 << " ";
-    for ( int i = f.start; i < f.end; ++ i )
-    {
-        if ( i > f.start + 40 )
-	{
-	    cout << "...";
-	    break;
-	}
-	cout << f.line[i];
-    }
-    cout << endl;
+    if ( debug )
+	cout << f.id
+	     << " " << f.line_number
+	     << ":" << f.column
+	     << " " << token_type_name[f.type]
+	     << " " << token ( f, 40 ) << endl;
 }
 
 // Computes the floating point value of the current
@@ -662,6 +702,59 @@ bool integers_are_equal ( void )
     return strncmp ( p1, p2, p1 - e1 ) == 0;
 }
 
+// Compare number tokens using IEEE floating point.
+// Also check number of decimal places if necessary.
+//
+void compare_numbers ( void )
+{
+    double n1 = number ( output );
+    double n2 = number ( test );
+
+    // Note: if n1 and n2 are both infinities of the
+    // same sign, they compare equal.
+    //
+    // Note: no double can be > NAN.
+    //
+    if ( n1 != n2
+	 &&
+	 fabs ( n1 - n2 ) > number_A )
+	error ( unequal_numbers,
+		"output token %s and test token %s"
+		" are unequal numbers,\n    their"
+		" absolute difference %g is > %g",
+		token ( output ),
+		token ( test ),
+		fabs ( n1 - n2 ),
+		number_A );
+    else if ( n1 != n2 )
+    {
+	double divisor =
+	    max ( fabs ( n1 ), fabs ( n2 ) );
+	double r = fabs ( n1 - n2 )
+		 / divisor;
+	if ( r > number_R )
+	    error ( unequal_numbers,
+		    "    output token %s and"
+		    " test token %s are unequal"
+		    " numbers,\n"
+		    "    their relative"
+		    " difference %g is > %g",
+		    token ( output ),
+		    token ( test ),
+		    r, number_R );
+    }
+    if ( output.places != test.places
+	 &&
+	 !  number_has_wrong_number_of_places.ignore )
+	error
+	( number_has_wrong_number_of_places,
+	  "    output token %s and test"
+	  " token %s have different numbers"
+	  " of decimal places",
+	  token ( output ),
+	  token ( test ) );
+}
+
 // Main program.
 //
 int main ( int argc, char ** argv )
@@ -669,7 +762,6 @@ int main ( int argc, char ** argv )
 
     // Process options.
 
-    bool float_opt = false;
     while ( argc >= 2 && argv[1][0] == '-' )
     {
 
@@ -699,7 +791,9 @@ int main ( int argc, char ** argv )
 
 	    ++ argv, -- argc;
 	    if ( argc < 2 ) break;
-	    if ( strcmp ( "-", argv[1] ) != 0 )
+	    if ( strcmp ( "-", argv[1] ) == 0 )
+	        number_A = NAN;
+	    else
 	    {
 	        char * endp;
 		number_A = strtod ( argv[1], & endp );
@@ -714,7 +808,9 @@ int main ( int argc, char ** argv )
 
 	    ++ argv, -- argc;
 	    if ( argc < 2 ) break;
-	    if ( strcmp ( "-", argv[1] ) != 0 )
+	    if ( strcmp ( "-", argv[1] ) == 0 )
+	        number_R = NAN;
+	    else
 	    {
 	        char * endp;
 		number_R = strtod ( argv[1], & endp );
@@ -758,7 +854,7 @@ int main ( int argc, char ** argv )
         ++ argv, -- argc;
     }
 
-    if ( argc < 2 )
+    if ( argc < 3 )
     {
         cerr << "file name(s) missing"
 	     << endl;
@@ -791,7 +887,7 @@ int main ( int argc, char ** argv )
 	{
 	    if ( ! ignore_blank )
 	        error ( superfluous_blank_line,
-		        "    superfluous blank line" );
+		        "superfluous blank line" );
 	    while ( output.is_blank )
 	        get_line ( output );
 	}
@@ -799,7 +895,7 @@ int main ( int argc, char ** argv )
 	{
 	    if ( ! ignore_blank )
 	        error ( missing_blank_line,
-		        "    missing blank line" );
+		        "missing blank line" );
 	    while ( test.is_blank )
 	        get_line ( test );
 	}
@@ -810,34 +906,30 @@ int main ( int argc, char ** argv )
 	if ( output.at_end )
 	{
 	    error ( output_ends_too_soon,
-	            "    output ends too soon" );
+	            "output ends too soon" );
 	    break;
 	}
 
 	if ( test.at_end )
 	{
 	    error ( superfluous_lines_at_end_of_output,
-	            "    superfluous lines at end of"
+	            "superfluous lines at end of"
 		    " output" );
 	    break;
 	}
 
 	// Loop to check tokens of non-blank lines.
 	// 
+	bool ignore_case =
+	    word_letter_cases_do_not_match.ignore;
 	bool ignore_column =
 	    token_end_columns_are_not_equal.ignore;
+	bool ignore_integer =
+	    token_is_not_an_integer.ignore;
 	bool ignore_high_zero =
 	    integer_has_high_order_zeros.ignore;
 	bool ignore_sign =
 	    integer_has_sign.ignore;
-	bool ignore_case =
-	    word_letter_cases_do_not_match.ignore;
-	bool ignore_places =
-	    number_has_wrong_number_of_places.ignore;
-	bool ignore_exponent =
-	    number_has_exponent.ignore;
-	bool ignore_point =
-	    number_has_no_decimal.ignore;
 
 	while ( true )
 	{
@@ -852,17 +944,16 @@ int main ( int argc, char ** argv )
 	    if ( output.type == EOL_TOKEN )
 	    {
 		error ( tokens_missing_from_end_of_line,
-		        "    token %s and following"
-			" tokens missing from end of"
-			" output line", token ( test ) );
+		        "token %s and following tokens"
+			" missing from end of output"
+			" line", token ( test ) );
 		break;
 	    }
 	    if ( test.type == EOL_TOKEN )
 	    {
 		error ( extra_tokens_at_end_of_line,
-		        "    extra token %s and"
-			" following tokens at end of"
-			" output line",
+		        "extra token %s and following"
+			" tokens at end of output line",
 			token ( output ) );
 		break;
 	    }
@@ -870,9 +961,9 @@ int main ( int argc, char ** argv )
 	    if (    ! ignore_column
 	         && output.column != test.column )
 		error ( token_end_columns_are_not_equal,
-		        "    output token %s does not"
-			" end in the same column as"
-			" test token %s",
+		        "output token %s does not end"
+			" in the same column as test"
+			" token %s",
 			token ( output ),
 			token ( test ) );
 
@@ -880,29 +971,20 @@ int main ( int argc, char ** argv )
 	    {
 		if ( output.type == FLOAT_TOKEN )
 		{
-		    if ( output.has_decimal )
+		    if ( ! ignore_integer )
 			error
-			  ( integer_has_decimal,
-			    "    output token %s has a"
-			    " decimal point but it"
-			    " should be an integer"
-			    " (should be %s)",
+			  ( token_is_not_an_integer,
+			    "output token %s should be"
+			    " an integer because test"
+			    " token %s is an integer",
 			    token ( output ),
 			    token ( test ) );
-		    if ( output.has_decimal )
-			error
-			  ( integer_has_exponent,
-			    "    output token %s has an"
-			    " exponent point but it"
-			    " should be an integer"
-			    " (should be %s)",
-			    token ( output ),
-			    token ( test ) );
+		    compare_numbers();
 		}
 	        else if ( output.type != INTEGER_TOKEN )
 		    error ( token_is_not_an_integer,
-		            "    output token %s is not"
-			    " an integer"
+		            "output token %s is not"
+			    " a number"
 			    " (should be %s)",
 			    token ( output ),
 			    token ( test ) );
@@ -911,8 +993,9 @@ int main ( int argc, char ** argv )
 		    if ( ! integers_are_equal() )
 		      error
 		        ( unequal_integers,
-			  "    output token %s is not"
-			  " equal to test token %s",
+			  "output integer token %s is"
+			  " not equal to test integer"
+			  " token %s",
 			  token ( output ),
 			  token ( test ) );
 		    if ( output.has_high_zero
@@ -922,8 +1005,8 @@ int main ( int argc, char ** argv )
 			 ! ignore_high_zero )
 		      error
 			( integer_has_high_order_zeros,
-			  "    output token %s has high"
-			  " order zeros"
+			  "output integer token %s has"
+			  " high order zeros"
 			  " (unlike test token %s)",
 			  token ( output ),
 			  token ( test ) );
@@ -934,108 +1017,37 @@ int main ( int argc, char ** argv )
 			 ! ignore_high_zero )
 		      error
 			( integer_has_sign,
-			  "    output token %s has"
+			  "output integer token %s has"
 			  " sign"
 			  " (unlike test token %s)",
 			  token ( output ),
 			  token ( test ) );
 		}
 	    }
-	    else if ( test.type == FLOAT_TOKEN
-	              &&
-		      output.type != FLOAT_TOKEN
-	              &&
-		      output.type != INTEGER_TOKEN )
-		error ( token_is_not_a_number,
-			"    output token %s is not"
-			" a number (should be %s)",
-			token ( output ),
-			token ( test ) );
 	    else if ( test.type == FLOAT_TOKEN )
 	    {
-		double n1 = number ( output );
-		double n2 = number ( test );
-
-		// Note: if n1 and n2 are both
-		// infinities of the same sign, they
-		// compare equal.
-		//
-		if ( n1 != n2
+	        if ( output.type != FLOAT_TOKEN
 		     &&
-		     fabs ( n1 - n2 ) > number_A )
-		    error ( unequal_numbers,
-		            "    output token %s and"
-			    " test token %s are unequal"
-			    " numbers,\n"
-			    "    their absolute"
-			    " difference %g is > %g",
+		     output.type != INTEGER_TOKEN )
+		    error ( token_is_not_a_number,
+			    "output token %s is not"
+			    " a number (should be %s)",
 			    token ( output ),
-			    token ( test ),
-			    fabs ( n1 - n2 ),
-			    number_A );
-		else if ( n1 != n2 )
-		{
-		    double divisor =
-			max ( fabs ( n1 ), fabs ( n2 ) );
-		    double r = fabs ( n1 - n2 )
-		             / divisor;
-		    if ( r > number_R )
-			error ( unequal_numbers,
-				"    output token %s and"
-				" test token %s are unequal"
-				" numbers,\n"
-				"    their relative"
-				" difference %g is > %g",
-				token ( output ),
-				token ( test ),
-				r, number_R );
-		}
-		if ( output.places != test.places
-		     &&
-		     ! ignore_places )
-		    error
-		    ( number_has_wrong_number_of_places,
-		      "    output token %s and test"
-		      " token %s have different numbers"
-		      " of decimal places",
-		      token ( output ),
-		      token ( test ) );
-		if ( output.has_exponent
-		     &&
-		     ! test.has_exponent
-		     &&
-		     ! ignore_exponent )
-		    error
-			( number_has_exponent,
-			  "    output token %s has an"
-			  " exponent but test token %s"
-			  " does not",
-			  token ( output ),
-			  token ( test ) );
-		if ( ! output.has_decimal
-		     &&
-		     test.has_decimal
-		     &&
-		     ! ignore_exponent )
-		    error
-			( number_has_no_decimal,
-			  "    output token %s has NO"
-			  " decimal point but test"
-			  " token %s does",
-			  token ( output ),
-			  token ( test ) );
+			    token ( test ) );
+		else
+		    compare_numbers();
 	    }
 	    else if ( test.type != output.type )
 	    {
 		if ( test.type == WORD_TOKEN )
 		    error ( token_is_not_a_word,
-		            "    output token %s is not"
+		            "output token %s is not"
 			    " a word (should be %s)",
 			    token ( output ),
 			    token ( test ) );
 		if ( test.type == WORD_TOKEN )
 		    error ( token_is_not_a_separator,
-		            "    output token %s is not"
+		            "output token %s is not"
 			    " a separator"
 			    " (should be %s)",
 			    token ( output ),
@@ -1058,7 +1070,7 @@ int main ( int argc, char ** argv )
 		    error ( test.type == WORD_TOKEN ?
 		                unequal_words :
 		                unequal_separators,
-		            "   output token %s and"
+		            "output token %s and"
 			    " test token %s are"
 			    " unequal %ss",
 			    token ( output ),
@@ -1073,7 +1085,7 @@ int main ( int argc, char ** argv )
 		     strncmp ( p1, p2, test_len ) != 0 )
 		    error
 		      ( word_letter_cases_do_not_match,
-		        "    output token %s and test"
+		        "output token %s and test"
 			" token %s do not have matching"
 			" letter cases",
 			token ( output ),
