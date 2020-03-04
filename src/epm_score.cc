@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Mar  4 11:20:40 EST 2020
+// Date:	Wed Mar  4 15:23:16 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -31,7 +31,9 @@ using std::vector;
 using std::ifstream;
 using std::max;
 
-unsigned const PROOF_LIMIT = 5;
+unsigned const LIMIT = 5;
+char const ILLEGAL = '?';
+    // May not be space character.
 
 char documentation [] =
 "epm_score [options] output_file test_file\n"
@@ -86,19 +88,20 @@ char documentation [] =
 "\n"
 "    Non-ASCII characters and ASCII control charac-\n"
 "    ters other than space, horizontal tab, newline,\n"
-"    and carriage return are considered illegal, and\n"
-"    are treated as space characters that separate\n"
-"    tokens.\n"
+"    carriage return, vertical space, and form feed\n"
+"    replaced by ? and then treated as separator\n"
+"    characters.   Vertical space and form feed\n"
+"    characters are treated as within-line space\n"
+"    characters that do not change the column.\n"
 "\n"
 "    Tokens are scanned left to right with longer\n"
 "    tokens being preferred at each point.  When com-\n"
 "    paring tokens, the type of the token in the test\n"
 "    input determines the type of token expected.\n"
-"\f\n"
+"\n"
 "    The types of errors detected, in (roughly) most-\n"
 "    severe-first order, are:\n"
 "\n"
-"        illegal character in line\n"
 "        output ends too soon\n"
 "        superfluous lines at end of output\n"
 "        tokens missing from end of line\n"
@@ -112,7 +115,7 @@ char documentation [] =
 "        unequal separators\n"
 "        unequal numbers\n"
 "        unequal integers\n"
-"\n"
+"\f\n"
 "        number is not an integer*\n"
 "        integer has high order zeros*\n"
 "        integer has sign*\n"
@@ -142,13 +145,13 @@ char documentation [] =
 "    -blank\n"
 "        Do NOT ignore `superflous blank line' and\n"
 "        `missing blank line' errors.\n"
-"\f\n"
+"\n"
 "    -float A R\n"
 "        When either test or output token is a float,\n"
 "        and both are numbers, the two numbers are\n"
 "        both converted to IEEE floating point and\n"
 "        tested for equality.\n"
-"\n"
+"\f\n"
 "        If the absolute difference is larger than\n"
 "        A, or the relative difference is larger\n"
 "        than R, the two tokens are unequal.  See\n"
@@ -180,14 +183,14 @@ char documentation [] =
 "        given, care must be taken that all test\n"
 "        number tokens that are to be compared using\n"
 "        -float contain a decimal point.\n"
-"\f\n"
+"\n"
 "    -zeros\n"
 "        Do NOT ignore `integer has high order\n"
 "        zeros' errors.  The output integer token\n"
 "        will not be allowed to have a high order\n"
 "        zero unless the test integer token has a\n"
 "        high order zero.\n"
-"\n"
+"\f\n"
 "    -sign\n"
 "        Do NOT ignore `integer has sign' errors.\n"
 "        The output integer token will not be\n"
@@ -211,7 +214,7 @@ char documentation [] =
 "    To compare numbers otherwise, they are convert-\n"
 "    ed to IEEE 64 bit numbers.  It is possible that\n"
 "    a converted number will be an infinity.\n"
-"\f\n"
+"\n"
 "    The relative difference between two numbers x\n"
 "    and y is:\n"
 "\n"
@@ -236,6 +239,8 @@ bool float_opt = false;
 double number_A = 0;
 double number_R = NAN;
     // Do disable A or R, set these to NAN.
+long int limit = LIMIT;
+    // Limit on error_type_stack length.
 
 enum token_type {
     NO_TOKEN = 0,
@@ -292,8 +297,8 @@ struct file
 // The two files.
 //
 file files[2];
-file & output = files[0];;
-file & test = files[1];;
+file & output = files[0];
+file & test = files[1];
 
 // Open files for reading.
 //
@@ -325,6 +330,74 @@ void open_files ( const char * output_file_name,
 	    exit ( 1 );
 	}
     }
+}
+
+// Get next line.  If end of file, set at_end and clear
+// is_blank.  If called when file is at_end, to nothing.
+// If file not at_end, set token type to NO_TOKEN,
+// set is_blank, and initialize start, end, and column
+// to 0.
+//
+// Illegal characters are replaced by ILLEGAL.
+//
+void get_line ( file & f )
+{
+    if ( f.at_end ) return;
+    ++ f.line_number;
+    if ( ! getline ( f.stream, f.line ) )
+         f.at_end = true, f.is_blank = false;
+    else
+    {
+        // We do a fast scan to check for illegal
+	// characters before replacing any, as
+	// replacement may take time.
+	//
+        const char * p = f.line.c_str();
+	f.is_blank = true;
+	bool has_illegal = false;
+	while ( ! has_illegal && * p )
+	{
+	    if ( ! isascii ( * p ) )
+	    {
+	        has_illegal = true;
+		f.is_blank = false;
+	    }
+	    else if ( isspace ( * p ) )
+	        continue;
+	    else if ( isgraph ( * p ) )
+	        f.is_blank = false;
+	    else
+	    {
+	        has_illegal = true;
+		f.is_blank = false;
+	    }
+	}
+	if ( has_illegal )
+	  for ( size_t i = 0; i < f.line.size(); ++ i )
+	{
+	    char & c = f.line[i];
+	    if ( ! isascii ( c ) )
+		c = ILLEGAL;
+	    else if ( ! isgraph ( c )
+		      &&
+		      ! isspace ( c ) )
+		c = ILLEGAL;
+	}
+
+	f.type   = NO_TOKEN;
+	f.start  = 0;
+	f.end    = 0;
+	f.column = 0;
+    }
+
+    if ( ! debug ) return;
+
+    cout << f.id
+         << " " << f.line_number
+         << ": "
+	 << ( f.at_end ? "<end-of-file>" :
+	                 f.line.c_str() )
+	 << endl;
 }
 
 // Return representation of f's token that has at most
@@ -440,25 +513,25 @@ error_type superfluous_lines_at_end_of_output
     ( "Superfluous Lines At End Of Output" );
 error_type output_ends_too_soon
     ( "Output Ends To Soon" );
-error_type illegal_character_in_line
-    ( "Illegal Character in Line" );
 
-// Increment e.count, and return if new count is > 1.
-// Else write error message to be output into e.buffer.
-// Message begins with current file lines, and is
-// followed by printf of format... preceded by 4 spaces
-// and followed by a newline.  If more than one line
-// is to be output, each non-last line must be indicated
-// by '\n    ' (including 4 spaces).
+// Stack of error_types.  An error_type is pushed into
+// this stack when first encountered, using error_type_
+// count as the length of the stack.  If stack length
+// becomes above limit, the program gives up before
+// processing the next line pair.
 //
-void error ( error_type & e, const char * format... )
-{
-    if ( ++ e.count > 1 ) return;
+error_type * error_type_stack[100];
+int error_type_count = 0;
 
-    char * p = e.buffer;
+// Write error message content describing current lines
+// for both files into buffer denoted by p and return
+// pointer to NUL at end of content.
+//
+char * print_file_lines ( char * p )
+{
     for ( int i = 0; i < 2; ++ i )
     {
-        p += sprintf ( p, "%s line %d: ",
+        p += sprintf ( p, "  %s line %d: ",
 	               files[i].id,
 		       files[i].line_number );
 	if ( files[i].at_end )
@@ -477,6 +550,28 @@ void error ( error_type & e, const char * format... )
 	    }
 	}
     }
+    return p;
+}
+
+// Increment e.count, and return if new count is > 1.
+// Else put e on error_type_stack and write an error
+// message to be output into e.buffer.
+//
+// Message begins with current file lines, indented by
+// 2 spaces.  This is followed by printf of format...
+// preceded by 4 spaces and followed by a newline.
+//
+// If more than one line is to be output by printf, each
+// non-last line must be indicated by '\n    '
+// (including 4 spaces).
+//
+void error ( error_type & e, const char * format... )
+{
+    if ( ++ e.count > 1 ) return;
+
+    error_type_stack[error_type_count++] = & e;
+
+    char * p = print_file_lines ( e.buffer );
     strcpy ( p, "    " );
     p += 4;
     va_list args;
@@ -485,41 +580,6 @@ void error ( error_type & e, const char * format... )
     va_end ( args );
     * p ++ = '\n';
     * p = 0;
-}
-
-
-// Get next line.  If end of file, set at_end and clear
-// is_blank.  If called when file is at_end, to nothing.
-// If file not at_end, set token type to NO_TOKEN,
-// set is_blank, and initialize start, end, and column
-// to 0.
-//
-void get_line ( file & f )
-{
-    if ( f.at_end ) return;
-    ++ f.line_number;
-    if ( ! getline ( f.stream, f.line ) )
-         f.at_end = true, f.is_blank = false;
-    else
-    {
-        const char * p = f.line.c_str();
-	f.is_blank = true;
-	while ( f.is_blank && * p )
-	    f.is_blank = isspace(*p++);
-	f.type   = NO_TOKEN;
-	f.start  = 0;
-	f.end    = 0;
-	f.column = 0;
-    }
-
-    if ( ! debug ) return;
-
-    cout << f.id
-         << " " << f.line_number
-         << ": "
-	 << ( f.at_end ? "<end-of-file>" :
-	                 f.line.c_str() )
-	 << endl;
 }
 
 // Get next token.  If file at_end or file type is
@@ -534,41 +594,12 @@ void get_token ( file & f )
 
     const char * lp = f.line.c_str();
     const char * p = lp + f.end;
-    bool point_found;  // Declare here before goto's.
     const char * q;    // Ditto.
-    while ( * p && (    ! isgraph ( * p )
-                     || ! isascii ( * p ) ) )
+    while ( * p && isspace ( * p ) )
     {
         if ( * p == ' ' ) ++ f.column;
 	else if ( * p == '\t' )
 	    f.column += 8 - ( f.column % 8 );
-	else if ( * p == '\f' )
-	    error ( illegal_character_in_line,
-	            "form feed character in column %d"
-		    " of %s",
-		    f.column, f.id );
-	else if ( * p == '\v' )
-	    error ( illegal_character_in_line,
-	            "vertical space character in"
-		    " column %d of %s",
-		    f.column, f.id );
-	else if ( ! isascii ( * p ) )
-	{
-	    error ( illegal_character_in_line,
-	            "non-ASCII character %02X in"
-		    " column %d of %s",
-		    (unsigned char) * p,
-		    f.column, f.id );
-	    ++ f.column;
-	}
-	else if ( * p != '\r' && ! isgraph ( * p ) )
-	    error ( illegal_character_in_line,
-	            "ASCII control character %02X in"
-		    " column %d of %s",
-		    (unsigned char) * p,
-		    f.column, f.id );
-	// else its carriage return and we ignore it.
-	
 	++ p;
     }
 
@@ -579,19 +610,17 @@ void get_token ( file & f )
         f.type = EOL;
 	goto TOKEN_DONE;
     }
-    if ( isalpha ( * p ) && isascii ( * p ) )
+    if ( isalpha ( * p ) )
     {
 	++ p;
-	while ( isalpha ( * p ) && isascii ( * p ) )
-	    ++ p;
+	while ( isalpha ( * p ) ) ++ p;
 	f.type = WORD;
 	goto TOKEN_DONE;
     }
     q = p;
     while ( * p && ! isdigit ( * p )
 		&& ! isalpha ( * p )
-		&& ! isspace ( * p )
-		&& isascii ( * p ) )
+		&& ! isspace ( * p ) )
 	 ++ p;
     if ( isdigit ( * p ) )
     {
@@ -758,11 +787,10 @@ void compare_numbers ( void )
 		 / divisor;
 	if ( r > number_R )
 	    error ( unequal_numbers,
-		    "    output token %s and"
-		    " test token %s are unequal"
-		    " numbers,\n"
-		    "    their relative"
-		    " difference %g is > %g",
+		    "output token %s and test token"
+		    " %s are unequal numbers,\n    "
+		    "their relative difference %g"
+		    " is > %g",
 		    token ( output ),
 		    token ( test ),
 		    r, number_R );
@@ -801,10 +829,31 @@ int main ( int argc, char ** argv )
 	    pclose ( out );
 	    exit ( 0 );
 	}
+        else if ( strncmp ( "deb", name, 3 ) == 0 )
+	    debug = true;
+	else if ( strcmp ( "limit", name ) == 0 )
+	{
+	    if ( limit != LIMIT )
+	    {
+	        cerr << "too many " << argv[1]
+		     << " options";
+		exit ( 1 );
+	    }
+
+	    ++ argv, -- argc;
+	    if ( argc < 2 ) break;
+	    char * endp;
+	    limit = strtol ( argv[1], & endp, 10 );
+	    if ( * endp || limit < 0 )
+	    {
+		cerr << "Unrecognized L for"
+			" -limit: "
+		     << argv[1] << endl;
+		exit ( 1 );
+	    }
+	}
         else if ( strcmp ( "float", name ) == 0 )
 	{
-	    // special case.
-	    //
 	    if ( float_opt )
 	    {
 	        cerr << "too many " << argv[1]
@@ -823,7 +872,7 @@ int main ( int argc, char ** argv )
 		number_A = strtod ( argv[1], & endp );
 		if ( * endp )
 		{
-		    cerr << "Unrecognized A in"
+		    cerr << "Unrecognized A for"
 		            " -float: "
 			 << argv[1] << endl;
 		    exit ( 1 );
@@ -840,7 +889,7 @@ int main ( int argc, char ** argv )
 		number_R = strtod ( argv[1], & endp );
 		if ( * endp )
 		{
-		    cerr << "Unrecognized R in"
+		    cerr << "Unrecognized R for"
 		            " -float: "
 			 << argv[1] << endl;
 		    exit ( 1 );
@@ -854,6 +903,7 @@ int main ( int argc, char ** argv )
 	    while ( ep != NULL )
 	    {
 		error_type & e = * ep;
+		if ( e.option_name == NULL ) continue;
 	        if (    strcmp ( name, e.option_name )
 		     != 0 )
 		    continue;
@@ -891,17 +941,42 @@ int main ( int argc, char ** argv )
 	exit ( 1 );
     }
 
+    bool ignore_blank =
+        superfluous_blank_line.ignore;
+    bool ignore_case =
+	word_letter_cases_do_not_match.ignore;
+    bool ignore_column =
+	token_end_columns_are_not_equal.ignore;
+    bool ignore_integer =
+	token_is_not_an_integer.ignore;
+    bool ignore_high_zero =
+	integer_has_high_order_zeros.ignore;
+    bool ignore_sign =
+	integer_has_sign.ignore;
+
     // Open files.
 
     open_files ( argv[1], argv[2] );
 
     // Loop through lines.
     //
-    bool ignore_blank = superfluous_blank_line.ignore;
     while ( true )
     {
         get_line ( output );
 	get_line ( test );
+
+	if ( error_type_count > limit )
+	{
+	    char buffer[4096];
+	    print_file_lines ( buffer );
+	    cout << error_type_count
+	         << " Types of Errors Detected"
+		 << endl
+		 << "Giving Up At:"
+		 << endl
+		 << buffer;
+	    break;
+	}
 
 	if ( output.is_blank
 	     &&
@@ -944,17 +1019,6 @@ int main ( int argc, char ** argv )
 
 	// Loop to check tokens of non-blank lines.
 	// 
-	bool ignore_case =
-	    word_letter_cases_do_not_match.ignore;
-	bool ignore_column =
-	    token_end_columns_are_not_equal.ignore;
-	bool ignore_integer =
-	    token_is_not_an_integer.ignore;
-	bool ignore_high_zero =
-	    integer_has_high_order_zeros.ignore;
-	bool ignore_sign =
-	    integer_has_sign.ignore;
-
 	while ( true )
 	{
 	    get_token ( output );
@@ -968,15 +1032,17 @@ int main ( int argc, char ** argv )
 	    if ( output.type == EOL )
 	    {
 		error ( tokens_missing_from_end_of_line,
-		        "token %s and following tokens"
-			" missing from end of output"
-			" line", token ( test ) );
+		        "test token %s and (any)"
+			" following test tokens missing"
+			" from end of output line",
+			token ( test ) );
 		break;
 	    }
 	    if ( test.type == EOL )
 	    {
 		error ( extra_tokens_at_end_of_line,
-		        "extra token %s and following"
+		        "extra output token %s and"
+			" (any) following extra output"
 			" tokens at end of output line",
 			token ( output ) );
 		break;
@@ -1006,7 +1072,7 @@ int main ( int argc, char ** argv )
 		    compare_numbers();
 		}
 	        else if ( output.type != INTEGER )
-		    error ( token_is_not_an_integer,
+		    error ( token_is_not_a_number,
 		            "output token %s is not"
 			    " a number"
 			    " (should be %s)",
@@ -1031,19 +1097,19 @@ int main ( int argc, char ** argv )
 			( integer_has_high_order_zeros,
 			  "output integer token %s has"
 			  " high order zeros"
-			  " (unlike test token %s)",
+			  " unlike test token %s",
 			  token ( output ),
 			  token ( test ) );
-		    if ( output.has_high_zero
+		    if ( output.has_sign
 		         &&
 			 ! test.has_sign
 			 &&
-			 ! ignore_high_zero )
+			 ! ignore_sign )
 		      error
 			( integer_has_sign,
 			  "output integer token %s has"
 			  " sign"
-			  " (unlike test token %s)",
+			  " unlike test token %s",
 			  token ( output ),
 			  token ( test ) );
 		}
@@ -1069,7 +1135,7 @@ int main ( int argc, char ** argv )
 			    " a word (should be %s)",
 			    token ( output ),
 			    token ( test ) );
-		else if ( test.type == SEPARATOR )
+		else // test.type == SEPARATOR
 		    error ( token_is_not_a_separator,
 		            "output token %s is not"
 			    " a separator"
