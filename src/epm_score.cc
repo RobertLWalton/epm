@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Mar  5 03:06:40 EST 2020
+// Date:	Thu Mar  5 03:33:03 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -88,11 +88,10 @@ char documentation [] =
 "\n"
 "    Non-ASCII characters and ASCII control charac-\n"
 "    ters other than space, horizontal tab, newline,\n"
-"    carriage return, vertical space, and form feed\n"
-"    replaced by ? and then treated as separator\n"
-"    characters.   Vertical space and form feed\n"
-"    characters are treated as within-line space\n"
-"    characters that do not change the column.\n"
+"    and carriage return are illegal characters.\n"
+"    These are replaced by ? and then treated as\n"
+"    separator characters.  The presence of illegal\n"
+"    characters is considered to be an error.\n"
 "\n"
 "    Tokens are scanned left to right with longer\n"
 "    tokens being preferred at each point.  When com-\n"
