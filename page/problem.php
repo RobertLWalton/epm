@@ -995,7 +995,9 @@ EOT;
 		    title='Show Current Working Files'>
 		    <pre id='working_mark'>&darr;</pre>
 		    </button>
-		<h5>Current Working Files (most recent first):</h5>
+		<h5>Working Files of Last Executed
+		    Commands
+		    (most recent first):</h5>
 		<div id='working_body' hidden>
 		<table style='display:block'>
 EOT;
