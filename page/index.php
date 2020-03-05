@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar  1 06:46:35 EST 2020
+// Date:    Thu Mar  5 04:08:40 EST 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -181,6 +181,7 @@ $display_file_type = [
     "gerr" => "utf8",
     "g1err" => "utf8",
     "g2err" => "utf8",
+    "err" => "utf8",
     "serr" => "utf8",
     "ferr" => "utf8",
     "rerr" => "utf8",
