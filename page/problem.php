@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  2 04:23:12 EST 2020
+    // Date:	Thu Mar  5 07:28:31 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -56,6 +56,9 @@
     $deleted_problem = NULL;
         // Set to announce that $deleted_problem has
 	// been deleted.
+    $make_ftest = NULL;
+        // Set to ask if $make_ftest .ftest file should
+	// be made from .fout file.
     if ( isset ( $_POST['new_problem'] ) )
     {
         $problem = trim ( $_POST['new_problem'] );
@@ -381,10 +384,35 @@
 			   ( $probdir ) ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
+	if ( preg_match ( '/\.ftest$/', $des ) )
+	    $make_ftest = $des;
+	else
+	    start_make_file
+		( $src, $des, NULL /* no condition */,
+		  true, "$probdir/+work+",
+		  NULL, NULL /* no upload */,
+		  $errors );
+    }
+    elseif ( isset ( $_POST['make_ftest_yes'] ) )
+    {
+        $m = $_POST['make_ftest_yes'];
+	$base = pathinfo ( $m, PATHINFO_FILENAME );
+	$ext = pathinfo ( $m, PATHINFO_EXTENSION );
+	if ( $ext != 'ftest' )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	$src = "$base.fout";
+	$des = "$base.ftest";
+		 	    
+	if ( ! in_array
+		 ( $src, problem_file_names
+			   ( $probdir ) ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
 	start_make_file
 	    ( $src, $des, NULL /* no condition */,
 	      true, "$probdir/+work+",
-	      NULL, NULL /* no upload, upload_tmp */,
+	      NULL, NULL /* no upload */,
 	      $errors );
     }
     elseif ( isset ( $_POST['upload'] ) )
@@ -639,6 +667,26 @@
 	     " deleted!<br>";
 	echo "</div>" . PHP_EOL;
     }
+    else if ( $make_ftest )
+    {
+	echo "<div style='background-color:#F5F81A'>" .
+	     PHP_EOL;
+	echo "<form method='POST'" .
+	     " style='display:inline'" .
+	     " action=problem.php>";
+	echo "Do you really want to make $make_ftest" .
+	     " (this will force score to be" .
+	     " `Completely Correct')?";
+	echo "&nbsp;&nbsp;<button type='submit'" .
+	     " name='make_ftest_yes'" .
+	     " value='$make_ftest'>" .
+	     "YES</button>";
+	echo "&nbsp;&nbsp;<button type='submit'" .
+	     " name='make_ftest_no'" .
+	     " value='$make_ftest'>" .
+	     "NO</button>";
+	echo "</form></div>" . PHP_EOL;
+    }
     if ( count ( $errors ) > 0 )
     {
 	echo "<div style='background-color:#F5F81A'>" .
@@ -866,6 +914,7 @@ EOT;
 		     " value='$fname:$fbase.score'>" .
 		     "&rArr;.score</button></td>";
 		echo "<td><button type='submit'" .
+		     " style='background-color:red'" .
 		     " name='make'" .
 		     " title='Make $fbase.ftest" .
 		     " from $fname'" .
@@ -911,11 +960,11 @@ EOT;
 		    onclick='TOGGLE_BODY
 			 ("commands",
 			  "Commands Last Executed")'
-		    title='Hide Commands Last Executed'>
-		    <pre id='commands_mark'>&uarr;</pre>
+		    title='Show Commands Last Executed'>
+		    <pre id='commands_mark'>&darr;</pre>
 		    </button>
 	    <h5>Commands Last Executed:</h5>
-	    <div id='commands_body'>
+	    <div id='commands_body' hidden>
 EOT;
 	    echo "<div class='indented'>" . PHP_EOL;
 	    echo $display . PHP_EOL;
@@ -943,11 +992,11 @@ EOT;
 		    onclick='TOGGLE_BODY
 			 ("working",
 			  "Current Working Files")'
-		    title='Hide Current Working Files'>
-		    <pre id='working_mark'>&uarr;</pre>
+		    title='Show Current Working Files'>
+		    <pre id='working_mark'>&darr;</pre>
 		    </button>
 		<h5>Current Working Files (most recent first):</h5>
-		<div id='working_body'>
+		<div id='working_body' hidden>
 		<table style='display:block'>
 EOT;
 
