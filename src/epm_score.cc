@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Mar  4 20:02:19 EST 2020
+// Date:	Thu Mar  5 03:06:40 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -368,7 +368,7 @@ void get_line ( file & f )
 	bool has_illegal = false;
 	while ( ! has_illegal && * p )
 	{
-	    char c = * p;
+	    char c = * p ++;
 	    switch ( c )
 	    {
 	        case ' ':
@@ -499,19 +499,19 @@ error_type missing_blank_line
     ( "Missing Blank Line", "blank" );
 
 error_type token_end_columns_are_not_equal
-    ( "Token End Columns Are Not Equal", "column" );
+    ( "Token End Columns are Not Equal", "column" );
 error_type word_letter_cases_do_not_match
-    ( "Word Letter Cases Do Not Match", "case" );
+    ( "Word Letter Cases do Not Match", "case" );
 error_type number_has_wrong_number_of_places
-    ( "Number Has Wrong Number of Decimal Places",
+    ( "Number has Wrong Number of Decimal Places",
       "places" );
 
 error_type integer_has_sign
-    ( "Integer Has Sign", "sign" );
+    ( "Integer has Sign", "sign" );
 error_type integer_has_high_order_zeros
-    ( "Integer Has High Order Zeros", "zeros" );
+    ( "Integer has High Order Zeros", "zeros" );
 error_type token_is_not_an_integer
-    ( "Token Is Not An Integer", "integer" );
+    ( "Token is Not an Integer", "integer" );
 
 error_type unequal_integers
     ( "Unequal Integers" );
@@ -523,21 +523,21 @@ error_type unequal_words
     ( "Unequal Words" );
 
 error_type token_is_not_a_separator
-    ( "Token Is Not A Separator" );
+    ( "Token is Not a Separator" );
 error_type token_is_not_a_word
-    ( "Token Is Not A Word" );
+    ( "Token is Not a Word" );
 error_type token_is_not_a_number
-    ( "Token Is Not A Number" );
+    ( "Token is Not a Number" );
 
 error_type extra_tokens_at_end_of_line
-    ( "Extra Tokens At End Of Line" );
+    ( "Extra Tokens at End of Line" );
 error_type tokens_missing_from_end_of_line
-    ( "Missing Tokens From End Of Line" );
+    ( "Missing Tokens from End of Line" );
 
 error_type superfluous_lines_at_end_of_output
-    ( "Superfluous Lines At End Of Output" );
+    ( "Superfluous Lines at End of Output" );
 error_type output_ends_too_soon
-    ( "Output Ends To Soon" );
+    ( "Output Ends Too Soon" );
 
 // Stack of error_types.  An error_type is pushed into
 // this stack when first encountered, using error_type_
@@ -780,46 +780,75 @@ bool integers_are_equal ( void )
     return strncmp ( p1, p2, p1 - e1 ) == 0;
 }
 
-// Compare number tokens using IEEE floating point.
-// Also check number of decimal places if necessary.
+// Compare number tokens using IEEE floating point,
+// as per -float.  Also check number of decimal
+// places if not being ignored.
+//
+// Compute statistics on results.
+//
+long long float_comparisons = 0;
+long long A_violations = 0;
+long long R_violations = 0;
+double max_A = -1;
+double max_R = -1;
 //
 void compare_numbers ( void )
 {
     double n1 = number ( output );
     double n2 = number ( test );
 
-    // Note: if n1 and n2 are both infinities of the
-    // same sign, they compare equal.
-    //
-    // Note: no double can be > NAN.
-    //
-    if ( n1 != n2
-	 &&
-	 fabs ( n1 - n2 ) > number_A )
-	error ( unequal_numbers,
-		"output token %s and test token %s"
-		" are unequal numbers,\n    their"
-		" absolute difference %g is > %g",
-		token ( output ),
-		token ( test ),
-		fabs ( n1 - n2 ),
-		number_A );
-    else if ( n1 != n2 )
+    ++ float_comparisons;
+
+    double A = 0;
+    if ( n1 != n2 ) A = fabs ( n1 - n2 );
+	// If n1 and n2 are both infinities of the
+	// same sign, they compare equal.
+
+    if ( ! isnan ( number_A ) )
+    {
+	if ( max_A < A ) max_A = A;
+	if ( A > number_A )
+	{
+	    ++ A_violations;
+	    error ( unequal_numbers,
+		    "output token %s and test token"
+		    " %s\n    are unequal numbers,"
+		    " their absolute difference"
+		    " %g\n    is > the allowed"
+		    " difference %g",
+		    token ( output ),
+		    token ( test ),
+		    A, number_A );
+	}
+    }
+
+    double R = 0;
+    if ( n1 != n2 )
     {
 	double divisor =
 	    max ( fabs ( n1 ), fabs ( n2 ) );
-	double r = fabs ( n1 - n2 )
+	R = fabs ( n1 - n2 )
 		 / divisor;
-	if ( r > number_R )
+    }
+    if ( ! isnan ( number_R ) )
+    {
+	if ( max_R < R ) max_R = R;
+
+	if ( R > number_R )
+	{
+	    ++ R_violations;
 	    error ( unequal_numbers,
 		    "output token %s and test token"
-		    " %s are unequal numbers,\n    "
-		    "their relative difference %g"
-		    " is > %g",
+		    " %s\n    are unequal numbers,"
+		    " their relative difference"
+		    " %g\n    is > the allowed"
+		    " difference %g",
 		    token ( output ),
 		    token ( test ),
-		    r, number_R );
+		    R, number_R );
+	}
     }
+
     if ( output.places != test.places
 	 &&
 	 !  number_has_wrong_number_of_places.ignore )
@@ -928,6 +957,8 @@ int main ( int argc, char ** argv )
 	    while ( ep != NULL )
 	    {
 		error_type & e = * ep;
+		ep = e.previous;
+
 		if ( e.option_name == NULL ) continue;
 	        if (    strcmp ( name, e.option_name )
 		     != 0 )
@@ -1057,18 +1088,20 @@ int main ( int argc, char ** argv )
 	    if ( output.type == EOL )
 	    {
 		error ( tokens_missing_from_end_of_line,
-		        "test token %s and (any)"
-			" following test tokens missing"
-			" from end of output line",
+		        "test token `%s' and (any)"
+			" following test tokens\n"
+			"    missing from end of"
+			" output line",
 			token ( test ) );
 		break;
 	    }
 	    if ( test.type == EOL )
 	    {
 		error ( extra_tokens_at_end_of_line,
-		        "extra output token %s and"
-			" (any) following extra output"
-			" tokens at end of output line",
+		        "output token `%s' and (any)"
+			" following output tokens\n"
+			"    missing from end of"
+			" test line",
 			token ( output ) );
 		break;
 	    }
@@ -1076,9 +1109,9 @@ int main ( int argc, char ** argv )
 	    if (    ! ignore_column
 	         && output.column != test.column )
 		error ( token_end_columns_are_not_equal,
-		        "output token %s does not end"
+		        "output token `%s' does not end"
 			" in the same column as test"
-			" token %s",
+			" token `%s'",
 			token ( output ),
 			token ( test ) );
 
@@ -1089,16 +1122,17 @@ int main ( int argc, char ** argv )
 		    if ( ! ignore_integer )
 			error
 			  ( token_is_not_an_integer,
-			    "output token %s should be"
-			    " an integer because test"
-			    " token %s is an integer",
+			    "output token `%s' should"
+			    " be an integer because"
+			    " test token `%s' is an"
+			    " integer",
 			    token ( output ),
 			    token ( test ) );
 		    compare_numbers();
 		}
 	        else if ( output.type != INTEGER )
 		    error ( token_is_not_a_number,
-		            "output token %s is not"
+		            "output token `%s' is not"
 			    " a number"
 			    " (should be %s)",
 			    token ( output ),
@@ -1121,8 +1155,8 @@ int main ( int argc, char ** argv )
 		      error
 			( integer_has_high_order_zeros,
 			  "output integer token %s has"
-			  " high order zeros"
-			  " unlike test token %s",
+			  " high order zeros\n"
+			  "    unlike test token %s",
 			  token ( output ),
 			  token ( test ) );
 		    if ( output.has_sign
@@ -1133,8 +1167,8 @@ int main ( int argc, char ** argv )
 		      error
 			( integer_has_sign,
 			  "output integer token %s has"
-			  " sign"
-			  " unlike test token %s",
+			  " a sign\n"
+			  "    unlike test token %s",
 			  token ( output ),
 			  token ( test ) );
 		}
@@ -1145,7 +1179,7 @@ int main ( int argc, char ** argv )
 		     &&
 		     output.type != INTEGER )
 		    error ( token_is_not_a_number,
-			    "output token %s is not"
+			    "output token `%s' is not"
 			    " a number (should be %s)",
 			    token ( output ),
 			    token ( test ) );
@@ -1156,15 +1190,15 @@ int main ( int argc, char ** argv )
 	    {
 		if ( test.type == WORD )
 		    error ( token_is_not_a_word,
-		            "output token %s is not"
-			    " a word (should be %s)",
+		            "output token `%s' is not"
+			    " a word (should be `%s')",
 			    token ( output ),
 			    token ( test ) );
 		else // test.type == SEPARATOR
 		    error ( token_is_not_a_separator,
-		            "output token %s is not"
+		            "output token `%s' is not"
 			    " a separator"
-			    " (should be %s)",
+			    " (should be `%s')",
 			    token ( output ),
 			    token ( test ) );
 	    }
@@ -1185,8 +1219,8 @@ int main ( int argc, char ** argv )
 		    error ( test.type == WORD ?
 		                unequal_words :
 		                unequal_separators,
-		            "output token %s and"
-			    " test token %s are"
+		            "output token `%s' and"
+			    " test token `%s' are"
 			    " unequal %ss",
 			    token ( output ),
 			    token ( test ),
@@ -1200,9 +1234,9 @@ int main ( int argc, char ** argv )
 		     strncmp ( p1, p2, test_len ) != 0 )
 		    error
 		      ( word_letter_cases_do_not_match,
-		        "output token %s and test"
-			" token %s do not have matching"
-			" letter cases",
+		        "output token `%s' and test"
+			" token `%s' do not have"
+			" matching letter cases",
 			token ( output ),
 			token ( test ) );
 	    }
@@ -1210,7 +1244,71 @@ int main ( int argc, char ** argv )
 	}
     }
 
-    // TBD
+    if ( error_type_count == 0
+         &&
+	 output.illegal_count == 0
+	 &&
+	 test.illegal_count == 0 )
+    {
+        cout << "Completely Correct" << endl;
+	exit ( 0 );
+    }
+
+    // There are errors, output them.
+
+    for ( int i = 0; i < 2; ++ i )
+    {
+	if ( files[i].illegal_count > 0 )
+	    cout << "The " << files[i].id
+	         << " Contains "
+		 << output.illegal_count
+		 << " Illegal Characters,"
+		 << endl
+		 << "  the first of which is on line "
+		 << files[i].illegal_line_number
+		 << endl;
+    }
+    if ( unequal_numbers.count > 0 )
+    {
+        cout << "There Were " << float_comparisons
+	     << " Float Number Comparisons:"
+	     << endl;
+	if ( ! isnan ( number_A ) )
+	    cout << "  " << A_violations
+	         << " violated the A constraint"
+		 << endl
+		 << "    with maximum A = "
+		 << max_A
+		 << ( max_A < number_A ? " < " :
+		      max_A > number_A ? " > " :
+		                        " == " )
+		 << number_A
+		 << " = allowed A" << endl;
+	if ( ! isnan ( number_R ) )
+	    cout << "  " << R_violations
+	         << " violated the R constraint"
+		 << endl
+		 << "    with maximum R = "
+		 << max_R
+		 << ( max_R < number_R ? " < " :
+		      max_R > number_R ? " > " :
+		                        " == " )
+		 << number_R
+		 << " = allowed R" << endl;
+    }
+    for ( int i = 0; i < error_type_count; ++ i )
+    {
+        error_type & e = * error_type_stack[i];
+	if ( e.count == 1 )
+	    cout << "The One and Only `" << e.title
+	         << "' Error:" << endl;
+	else
+	    cout << "First of " << e.count
+	         << " `" << e.title
+	         << "' Errors:" << endl;
+	cout << e.buffer;
+    }
+
 
     // Return from main function without error.
 

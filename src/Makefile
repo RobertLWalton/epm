@@ -17,15 +17,15 @@ INSTALL_BIN = /usr/bin
 all: epm_score epm_default_generate epm_default_filter
 
 epm_score:	epm_score.cc
-	g++ -o epm_score epm_score.cc
+	g++ -O3 -o epm_score epm_score.cc
 
 epm_default_generate:	epm_cat.cc
-	g++ -o epm_default_generate \
+	g++ -O3 -o epm_default_generate \
 	    -DNAME=epm_default_generate -DFD=0 \
 	    epm_cat.cc
 
 epm_default_filter:	epm_cat.cc
-	g++ -o epm_default_filter \
+	g++ -O3 -o epm_default_filter \
 	    -DNAME=epm_default_filter -DFD=3 \
 	    epm_cat.cc
 
