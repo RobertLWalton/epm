@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Mar  5 03:33:03 EST 2020
+// Date:	Thu Mar  5 06:06:59 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -559,7 +559,9 @@ char * print_file_lines ( char * p )
 	               files[i].id,
 		       files[i].line_number );
 	if ( files[i].at_end )
-	    p += sprintf ( p, "<end-of-file>\n" );
+	    p += sprintf ( p, "[**END-OF-FILE**]\n" );
+	else if ( files[i].is_blank )
+	    p += sprintf ( p, "[**BLANK-LINE**]\n" );
 	else
 	{
 	    int w = files[i].line.size();
@@ -854,7 +856,7 @@ void compare_numbers ( void )
 	error
 	( number_has_wrong_number_of_places,
 	  "    output token %s and test"
-	  " token %s have different numbers"
+	  " token %s\n    have different numbers"
 	  " of decimal places",
 	  token ( output ),
 	  token ( test ) );
@@ -1025,11 +1027,10 @@ int main ( int argc, char ** argv )
 	    char buffer[4096];
 	    print_file_lines ( buffer );
 	    cout << error_type_count
-	         << " Types of Errors Detected"
-		 << endl
-		 << "Giving Up At:"
-		 << endl
-		 << buffer;
+	         << " Types of Errors Detected" << endl
+		 << "Giving Up At:" << endl
+		 << buffer
+		 << "-----" << endl;
 	    break;
 	}
 
@@ -1089,7 +1090,7 @@ int main ( int argc, char ** argv )
 		error ( tokens_missing_from_end_of_line,
 		        "test token `%s' and (any)"
 			" following test tokens\n"
-			"    missing from end of"
+			"    are missing from end of"
 			" output line",
 			token ( test ) );
 		break;
@@ -1099,7 +1100,7 @@ int main ( int argc, char ** argv )
 		error ( extra_tokens_at_end_of_line,
 		        "output token `%s' and (any)"
 			" following output tokens\n"
-			"    missing from end of"
+			"    are missing from end of"
 			" test line",
 			token ( output ) );
 		break;
@@ -1108,9 +1109,9 @@ int main ( int argc, char ** argv )
 	    if (    ! ignore_column
 	         && output.column != test.column )
 		error ( token_end_columns_are_not_equal,
-		        "output token `%s' does not end"
-			" in the same column as test"
-			" token `%s'",
+		        "output token `%s' and test"
+			" token `%s'\n    do not end"
+			" in the same column",
 			token ( output ),
 			token ( test ) );
 
@@ -1122,9 +1123,9 @@ int main ( int argc, char ** argv )
 			error
 			  ( token_is_not_an_integer,
 			    "output token `%s' should"
-			    " be an integer because"
-			    " test token `%s' is an"
-			    " integer",
+			    " be an integer\n    "
+			    " because test token `%s'"
+			    " is an integer",
 			    token ( output ),
 			    token ( test ) );
 		    compare_numbers();
@@ -1132,8 +1133,8 @@ int main ( int argc, char ** argv )
 	        else if ( output.type != INTEGER )
 		    error ( token_is_not_a_number,
 		            "output token `%s' is not"
-			    " a number"
-			    " (should be %s)",
+			    " a number\n"
+			    "    (should be %s)",
 			    token ( output ),
 			    token ( test ) );
 		else
@@ -1142,8 +1143,8 @@ int main ( int argc, char ** argv )
 		      error
 		        ( unequal_integers,
 			  "output integer token %s is"
-			  " not equal to test integer"
-			  " token %s",
+			  " not equal\n    to test"
+			  " integer token %s",
 			  token ( output ),
 			  token ( test ) );
 		    if ( output.has_high_zero
@@ -1179,7 +1180,8 @@ int main ( int argc, char ** argv )
 		     output.type != INTEGER )
 		    error ( token_is_not_a_number,
 			    "output token `%s' is not"
-			    " a number (should be %s)",
+			    " a number\n"
+			    "    (should be %s)",
 			    token ( output ),
 			    token ( test ) );
 		else
@@ -1190,14 +1192,15 @@ int main ( int argc, char ** argv )
 		if ( test.type == WORD )
 		    error ( token_is_not_a_word,
 		            "output token `%s' is not"
-			    " a word (should be `%s')",
+			    " a word\n"
+			    "    (should be `%s')",
 			    token ( output ),
 			    token ( test ) );
 		else // test.type == SEPARATOR
 		    error ( token_is_not_a_separator,
 		            "output token `%s' is not"
-			    " a separator"
-			    " (should be `%s')",
+			    " a separator\n"
+			    "    (should be `%s')",
 			    token ( output ),
 			    token ( test ) );
 	    }
@@ -1219,8 +1222,8 @@ int main ( int argc, char ** argv )
 		                unequal_words :
 		                unequal_separators,
 		            "output token `%s' and"
-			    " test token `%s' are"
-			    " unequal %ss",
+			    " test token `%s'\n"
+			    "    are unequal %ss",
 			    token ( output ),
 			    token ( test ),
 			    token_type_name
@@ -1234,7 +1237,7 @@ int main ( int argc, char ** argv )
 		    error
 		      ( word_letter_cases_do_not_match,
 		        "output token `%s' and test"
-			" token `%s' do not have"
+			" token `%s'\n     do not have"
 			" matching letter cases",
 			token ( output ),
 			token ( test ) );
@@ -1261,11 +1264,12 @@ int main ( int argc, char ** argv )
 	    cout << "The " << files[i].id
 	         << " Contains "
 		 << output.illegal_count
-		 << " Illegal Characters,"
+		 << " Illegal Character(s),"
 		 << endl
 		 << "  the first of which is on line "
 		 << files[i].illegal_line_number
-		 << endl;
+		 << endl
+		 << "-----" << endl;
     }
     if ( unequal_numbers.count > 0 )
     {
@@ -1294,6 +1298,7 @@ int main ( int argc, char ** argv )
 		                        " == " )
 		 << number_R
 		 << " = allowed R" << endl;
+	 cout << "-----" << endl;
     }
     for ( int i = 0; i < error_type_count; ++ i )
     {
@@ -1305,8 +1310,10 @@ int main ( int argc, char ** argv )
 	    cout << "First of " << e.count
 	         << " `" << e.title
 	         << "' Errors:" << endl;
-	cout << e.buffer;
+	cout << e.buffer
+	     << "-----" << endl;
     }
+    cout << "End of Error Descriptions" << endl;
 
 
     // Return from main function without error.
