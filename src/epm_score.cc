@@ -375,7 +375,7 @@ void get_line ( file & f )
 		case '\t':
 		case '\n':
 		case '\r':
-		    break:
+		    break;
 		default:
 		    f.is_blank = false;
 		    has_illegal =
@@ -395,7 +395,7 @@ void get_line ( file & f )
 		    case '\t':
 		    case '\n':
 		    case '\r':
-			break:
+			break;
 		    default:
 			if ( c < ' ' || c > '~' )
 			{
