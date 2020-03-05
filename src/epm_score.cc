@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Mar  4 15:23:16 EST 2020
+// Date:	Wed Mar  4 20:02:19 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -270,6 +270,16 @@ struct file
     bool is_blank;	// True if line is blank and
     			// file is NOT at end.
 
+    // Illegal character information.
+    //
+    long long illegal_count;
+    			// Number of illegal characters
+			// found in the file.
+    int illegal_line_number;
+    			// Line number of first line
+			// with illegal character (or
+			// 0 if no illegal characters).
+
     // Token description.
     //
     token_type type;	// Type of token.
@@ -311,6 +321,8 @@ void open_files ( const char * output_file_name,
         f.at_end = f.is_blank = false;
 	f.line_number = 0;
 	f.type = NO_TOKEN;
+	f.illegal_count = 0;
+	f.illegal_line_number = 0;
 
 	const char * file_name;
 	if ( i == 0 )
@@ -336,9 +348,8 @@ void open_files ( const char * output_file_name,
 // is_blank.  If called when file is at_end, to nothing.
 // If file not at_end, set token type to NO_TOKEN,
 // set is_blank, and initialize start, end, and column
-// to 0.
-//
-// Illegal characters are replaced by ILLEGAL.
+// to 0.  Information about illegal character is also
+// maintained.
 //
 void get_line ( file & f )
 {
@@ -357,31 +368,45 @@ void get_line ( file & f )
 	bool has_illegal = false;
 	while ( ! has_illegal && * p )
 	{
-	    if ( ! isascii ( * p ) )
+	    char c = * p;
+	    switch ( c )
 	    {
-	        has_illegal = true;
-		f.is_blank = false;
-	    }
-	    else if ( isspace ( * p ) )
-	        continue;
-	    else if ( isgraph ( * p ) )
-	        f.is_blank = false;
-	    else
-	    {
-	        has_illegal = true;
-		f.is_blank = false;
+	        case ' ':
+		case '\t':
+		case '\n':
+		case '\r':
+		    break:
+		default:
+		    f.is_blank = false;
+		    has_illegal =
+		        ( c < ' ' || c > '~' );
 	    }
 	}
+
 	if ( has_illegal )
-	  for ( size_t i = 0; i < f.line.size(); ++ i )
 	{
-	    char & c = f.line[i];
-	    if ( ! isascii ( c ) )
-		c = ILLEGAL;
-	    else if ( ! isgraph ( c )
-		      &&
-		      ! isspace ( c ) )
-		c = ILLEGAL;
+	    size_t s = f.line.size();
+	    for ( size_t i = 0; i < s; ++ i )
+	    {
+		char & c = f.line[i];
+		switch ( c )
+		{
+		    case ' ':
+		    case '\t':
+		    case '\n':
+		    case '\r':
+			break:
+		    default:
+			if ( c < ' ' || c > '~' )
+			{
+			    c = ILLEGAL;
+			    if (    ++ f.illegal_count
+			         == 1 )
+				f.illegal_line_number
+				    = f.line_number;
+			}
+		}
+	    }
 	}
 
 	f.type   = NO_TOKEN;
