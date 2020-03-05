@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar  5 07:28:31 EST 2020
+    // Date:	Thu Mar  5 14:47:40 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -1249,9 +1249,16 @@ EOT;
 	xhttp.send ( 'update=update' );
     }
     <?php
-	if ( isset (
-	         $_SESSION['EPM_WORK']['CONTROL'] ) )
-	    echo "REQUEST_UPDATE();" . PHP_EOL;
+	if ( isset ( $_SESSION['EPM_WORK']['RESULT'] ) )
+	{
+	    $r = $_SESSION['EPM_WORK']['RESULT'];
+	    if ( $r === true )
+		echo "REQUEST_UPDATE();" . PHP_EOL;
+	    if ( ! is_array ( $r ) || $r != ['D',0] )
+		echo "TOGGLE_BODY " .
+		     "('commands'," .
+		 " 'Commands Last Executed')";
+	}
     ?>
 
 </script>
