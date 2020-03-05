@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar  5 14:47:40 EST 2020
+    // Date:	Thu Mar  5 15:04:47 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -281,12 +281,15 @@
 	$flines = NULL;
 	$fdisplay = false;
 	if (    $ftype == 'utf8'
-	     && isset ( $fsize )
-	     && $fsize <= 8000 )
+	     && isset ( $fsize ) )
 	{
 	    $fcontents = "$fname contents could"
 		       . " not be read\n";
-	    $fcontents = @file_get_contents ( $f );
+	    $fcontents = @file_get_contents
+	        ( $f, false, NULL, 0, 2000 );
+	    if ( $fsize > 2000 )
+	        $fcontents .=
+		    "\n...[** File Truncated **]...\n";
 	    $flines =
 		count ( explode
 			    ( "\n", $fcontents ) )
@@ -303,14 +306,13 @@
 			  . '}';
 	    elseif ( isset ( $flines ) )
 	    {
-		$fcomment = "($flines Lines)";
-		if ( $flines <= 200 )
-		{
-		    $display_list[] =
-			[$count, $fname,
-			 $fcontents];
-		    $fdisplay = true;
-		}
+		if ( $fsize > 2000 )
+		    $fcomment = "(> $flines Lines)";
+		else
+		    $fcomment = "($flines Lines)";
+		$display_list[] =
+		    [$count, $fname, $fcontents];
+		$fdisplay = true;
 	    }
 	    elseif ( isset ( $fsize ) )
 		$fcomment = "($fsize Bytes)";
