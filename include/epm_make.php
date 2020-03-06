@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Feb 28 20:14:34 EST 2020
+// Date:    Fri Mar  6 02:45:49 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1879,10 +1879,15 @@ function move_keep ( $keep, & $errors )
 }
 
 // Return list of files to be shown in EPM_WORK SHOW.
-// Files that have not been moved are in EPM_WORK DIR,
-// and moved files are in $probdir.  Files that are
-// not readable are ignored; there can be no errors.
-// File and directory names are relative to $epm_data.
+// Files that have not been kept, as per EPM_WORK KEPT,
+// are in $prodir, and other files are in EPM_WORK DIR.
+// Files that are not readable are ignored; there can
+// be no errors.  Directory names are relative to
+// $epm_data.  File names returned are relative to
+// $probdir.
+//
+// It is required that EPM_WORK DIR be a subdirectory of
+// $probdir.
 //
 // This function can be called when there have been
 // previous errors, as long as EPM_WORK is valid.
@@ -1895,16 +1900,24 @@ function compute_show ( $show )
     $workdir = $work['DIR'];
     $moved = $work['KEPT'];
 
+    if ( ! preg_match ( "#^$probdir/(.*)$#",
+                        $workdir, $matches ) )
+	ERROR ( "compute_show: EPM_WORK DIR" .
+	        " $workdir is NOT\n" .
+		"    a subdirectory of PROBDIR" .
+		" $probdir" );
+    $worksubdir = $matches[1];
+
     $work['SHOW'] = [];
     $slist = & $work['SHOW'];
     foreach ( $show as $fname )
     {
-	if (     array_search ( $fname, $moved, true )
-	     !== false )
-	    $sfile = "$probdir/$fname";
+	if ( in_array ( $fname, $moved ) )
+	    $sfile = "$fname";
 	else
-	    $sfile = "$workdir/$fname";
-	if ( is_readable ( "$epm_data/$sfile" ) )
+	    $sfile = "$worksubdir/$fname";
+	if ( is_readable
+	         ( "$epm_data/$probdir/$sfile" ) )
 	    $slist[] = "$sfile";
     }
 }
@@ -2074,21 +2087,21 @@ function start_make_file
 // 
 // Otherwise control CHECKs are run and if they do not
 // append error messages to $errors, the control KEEP
-// files are moved to $probdir.  $kept is returned
-// as the list of KEEP files actually moved, and will
-// will be empty if CHECKs fail or the run has not
-// finish successfully.
+// files are moved to $probdir.  EPM_WORK KEPT is
+// returned as the list of KEEP files actually moved,
+// and will will be empty if CHECKs fail or the run has
+// not finish successfully.
 //
 // File larger than $epm_file_maxsize are deleted and
 // an error message is generated.
 //
-// $show is returned as the list of control SHOW files
-// to show, even if there are errors, but does not
+// EPM_WORK SHOW is returned as the list of control SHOW
+// files to show, even if there are errors, but does not
 // include any non-readable files.
 // 
 // All file and directory names are relative to
 // $epm_data, except that only the last component
-// of a file name is listed in $kept.
+// of a file name is listed in EPM_WORK KEPT.
 //
 function finish_make_file ( & $warnings, & $errors )
 {
@@ -2374,7 +2387,7 @@ function finish_run ( & $errors )
 // standard error by bash, which are lost).  List of
 // KEEP files moved to $probdir is placed in
 // $moved, and list of SHOW files is placed in $show.
-// File names in these are relative to $epm_data.
+// File names in these are relative to $probdir.
 //
 // If the make template cannot be found but there are
 // some templates that would work if some file are

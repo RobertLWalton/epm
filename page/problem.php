@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar  5 15:04:47 EST 2020
+    // Date:	Fri Mar  6 03:50:18 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -829,9 +829,11 @@ EOT;
 
 	    if ( isset ( $display_file_map[$ftype] ) )
 	    {
+	        $show_map[$fname] = $count;
 	        $fpage = $display_file_map[$ftype];
 	        echo <<<EOT
 		    <button type='button'
+		       id='show$count'
 		       title='Show $fname at Right'
 		       onclick='CREATE_IFRAME
 		          ("$fpage","$fname")'>
@@ -1022,13 +1024,14 @@ EOT;
 
 		    if ( $fdisplay )
 		    {
+			$show_map[$fname] = $count;
 			$fpage = $display_file_map[$ftype];
 			echo <<<EOT
 			<button type='button'
+				id='show$count'
 			        title='Show $fname at Right'
 			         onclick='CREATE_IFRAME
-				  ("utf8_show.php",
-				   "+work+/$fname")'>
+				  ("$fpage","+work+/$fname")'>
 			     <pre id='file$count'>$fname</pre>
 			     </button></td>
 EOT;
@@ -1092,14 +1095,6 @@ EOT;
 	    $show_files = $_SESSION['EPM_WORK']['SHOW'];
 	    $files = [];
 
-	    if ( count ( $show_files ) > 1
-	         &&
-		 preg_match ( '/\.pdf$/',
-		              $show_files[0] ) )
-		$files[] = pathinfo
-		    ( array_shift ( $show_files ),
-		      PATHINFO_BASENAME );
-
 	    foreach ( $show_files as $fname )
 	    {
 		$fname = pathinfo
@@ -1109,32 +1104,22 @@ EOT;
 	    }
 	    if ( count ( $files ) > 0 )
 	    {
-		$base = pathinfo ( $files[0], 
-				   PATHINFO_BASENAME );
-		$ext = pathinfo ( $files[0], 
-				  PATHINFO_EXTENSION );
-		$type = $display_file_type[$ext];
-		$page = $display_file_map[$type];
-		if ( $page != NULL ) echo <<<EOT
-                <script>CREATE_IFRAME
-		        ( '$page', '$base' );</script>
-EOT;
+	        $c = $show_map[$files[0]];
+		echo "<script>document" .
+		     ".getElementById('show$c')" .
+		     ".click();" .
+		     "</script>";
 	    }
 	    if ( count ( $files ) > 1 )
 	    {
 	        $c = $show_map[$files[1]];
-		echo <<<EOT
-		<script>TOGGLE_BODY
-			    ("file$count",
-			     "{$files[1]} Below");
-			     </script>
-EOT;
+		echo "<script>document" .
+		     ".getElementById" .
+		     "('file{$c}_button')" .
+		     ".click();" .
+		     "</script>";
 	    }
 	}
-    }
-
-    if ( isset ( $show_file ) )
-    {
     }
 ?>
 
@@ -1257,9 +1242,12 @@ EOT;
 	    if ( $r === true )
 		echo "REQUEST_UPDATE();" . PHP_EOL;
 	    if ( ! is_array ( $r ) || $r != ['D',0] )
-		echo "TOGGLE_BODY " .
-		     "('commands'," .
-		 " 'Commands Last Executed')";
+	    {
+		 echo "document.getElementById" .
+		      "('commands_button').click();";
+		 echo "document.getElementById" .
+		      "('working_button').click();";
+	    }
 	}
     ?>
 
