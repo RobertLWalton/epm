@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Sat Feb 15 13:32:20 EST 2020
+ * Date:	Fri Mar  6 14:21:09 EST 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -689,6 +689,18 @@ int main ( int argc, char ** argv )
 			  &&    USERTIME + SYSTIME
 			     >= cputime )
 		SIGNAL = SIGXCPU;
+	    if ( ! signaled && EXITCODE == 120 )
+	    {
+		// python3 catches SIGXFSZ and tries to
+		// flush write buffers during interpre-
+		// ter termination.  This fails, causing
+		// exit code 120, unclean termination of
+		// interpreter.
+		//
+	        SIGNAL = SIGXFSZ;
+		EXITCODE = 0;
+		signaled = 1;
+	    }
 	    STATE = ( signaled ? 'S' : 'E' );
 	}
 	else if ( r < 0 )

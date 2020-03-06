@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar  6 04:38:10 EST 2020
+    // Date:	Fri Mar  6 14:40:51 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -328,9 +328,12 @@
 	    elseif ( isset ( $flines ) )
 	    {
 		$fcomment = "($flines Lines)";
-		$display_list[] =
-		    [$count, $fname, $fcontents];
-		$fdisplay = true;
+		if ( $flines < 200 )
+		{
+		    $display_list[] =
+			[$count, $fname, $fcontents];
+		    $fdisplay = true;
+		}
 	    }
 	    elseif ( isset ( $fsize ) )
 		$fcomment = "($fsize Bytes)";
@@ -980,7 +983,7 @@ EOT;
 	        $r = 'commands succeeded: ';
 	    else
 	        $r = 'commands failed: ';
-	    if ( count ( $kept ) )
+	    if ( count ( $kept ) == 1 )
 	        $r .= '1 file kept';
 	    else
 		$r .= count ( $kept ) . ' files kept';
@@ -1052,15 +1055,17 @@ EOT;
 			= file_info ( $workdir, $fname, $count,
 				      $display_list );
 
-		    if ( $fdisplay )
+		    if ( isset ( $display_file_map[$ftype] )
+		         &&
+			 $fcomment != '(Empty)' )
 		    {
 			$show_map[$fname] = $count;
 			$fpage = $display_file_map[$ftype];
 			echo <<<EOT
-			<button type='button'
-				id='show$count'
-			        title='Show $fname at Right'
-			         onclick='CREATE_IFRAME
+			    <button type='button'
+			       id='show$count'
+			       title='Show $fname at Right'
+			       onclick='CREATE_IFRAME
 				  ("$fpage","+work+/$fname")'>
 			     <pre id='file$count'>$fname</pre>
 			     </button></td>
@@ -1071,6 +1076,7 @@ EOT;
 			    <pre id='file$count'>$fname</pre>
 			    </td>
 EOT;
+
 		    if ( $fdisplay )
 		    {
 			$show_map[$fname] = $count;
