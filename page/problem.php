@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar  6 04:18:45 EST 2020
+    // Date:	Fri Mar  6 04:38:10 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -973,6 +973,17 @@ EOT;
 	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
 	{
 	    $workdir = $_SESSION['EPM_WORK']['DIR'];
+	    $result = $_SESSION['EPM_WORK']['RESULT'];
+	    $kept = $_SESSION['EPM_WORK']['KEPT'];
+	    if (    is_array ( $result )
+	         && $result == ['D',0] )
+	        $r = 'commands succeeded: ';
+	    else
+	        $r = 'commands failed: ';
+	    if ( count ( $kept ) )
+	        $r .= '1 file kept';
+	    else
+		$r .= count ( $kept ) . ' files kept';
 	    echo "<div class='command_display'>" .
 		 PHP_EOL;
 	    get_commands_display ( $display );
@@ -985,7 +996,8 @@ EOT;
 		    title='Show Commands Last Executed'>
 		    <pre id='commands_mark'>&darr;</pre>
 		    </button>
-	    <h5>Commands Last Executed:</h5>
+	    <h5>Commands Last Executed:</h5>&nbsp;
+	    <pre>($r)</pre>
 	    <div id='commands_body' hidden>
 EOT;
 	    echo "<div class='indented'>" . PHP_EOL;

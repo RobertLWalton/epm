@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Mar  6 02:45:49 EST 2020
+// Date:    Fri Mar  6 04:39:04 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1298,6 +1298,9 @@ function get_exit_message
 {
     if ( $code <= 128 ) switch ( $code )
     {
+	case 120:
+	    return 'interpreter failed while exiting;'
+		 . ' see error output';
 	case 126:
 	    return 'invoked command could not'
 		 . ' execute';
@@ -2149,8 +2152,11 @@ function finish_make_file ( & $warnings, & $errors )
         $errors[] = "SYSTEM_ERROR: $workbase.sh did not"
 	          . " finish in time";
     elseif ( $r != ['D',0] )
+    {
+        $m = get_exit_message ( $r[1] );
         $errors[] = "command line {$r[0]} returned"
-	          . " exit code {$r[1]}";
+	          . " exit code {$r[1]}: $m";
+    }
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
