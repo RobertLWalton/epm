@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar  6 03:50:18 EST 2020
+    // Date:	Fri Mar  6 04:18:45 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -264,11 +264,34 @@
 	return $names;
     }
 
+    // Get information about a file.  Return
+    //
+    // 	    list ( FILE-EXTENSION,
+    //		   FILE-TYPE,
+    //		   FILE-DISPLAY,
+    //		   FILE-COMMENT )
+    //
+    // where FILE-TYPE is the $display_file_type of
+    // the FILE-EXTENSION, FILE-DISPLAY is true iff
+    // the file is UTF-8 and can be displayed in a
+    // <pre>FILE-CONTENTS</pre>, and FILE-COMMENT
+    // is a comment to be printed at the end of the
+    // file line in the file table of contents.
+    //
+    // For example, an empty file has FILE-DISPLAY
+    // false and FILE-COMMENT `(Empty)'.
+    //
+    // If FILE-DISPLAY is set to true, the element
+    //
+    //	  [$count, $fname, FILE-CONTENTS]
+    //
+    // is appended to $display_list.
+    //
     function file_info
             ( $dir, $fname, $count, & $display_list )
     {
         global $epm_data, $display_file_type,
-	       $display_file_map;
+	       $display_file_map, $epm_file_maxsize;
 
 	$fext = pathinfo ( $fname, 
 			   PATHINFO_EXTENSION );
@@ -286,10 +309,8 @@
 	    $fcontents = "$fname contents could"
 		       . " not be read\n";
 	    $fcontents = @file_get_contents
-	        ( $f, false, NULL, 0, 2000 );
-	    if ( $fsize > 2000 )
-	        $fcontents .=
-		    "\n...[** File Truncated **]...\n";
+	        ( $f, false, NULL, 0,
+		  $epm_file_maxsize );
 	    $flines =
 		count ( explode
 			    ( "\n", $fcontents ) )
@@ -306,10 +327,7 @@
 			  . '}';
 	    elseif ( isset ( $flines ) )
 	    {
-		if ( $fsize > 2000 )
-		    $fcomment = "(> $flines Lines)";
-		else
-		    $fcomment = "($flines Lines)";
+		$fcomment = "($flines Lines)";
 		$display_list[] =
 		    [$count, $fname, $fcontents];
 		$fdisplay = true;
