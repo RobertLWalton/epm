@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Mar  6 04:39:04 EST 2020
+// Date:    Sat Mar  7 00:40:41 EST 2020
 
 // Functions used to make files from other files.
 //
@@ -1299,73 +1299,72 @@ function get_exit_message
     if ( $code <= 128 ) switch ( $code )
     {
 	case 120:
-	    return 'interpreter failed while exiting;'
-		 . ' see error output';
+	    return 'Interpreter Failed While Exiting';
 	case 126:
-	    return 'invoked command could not'
-		 . ' execute';
+	    return 'Invoked Command Could Not'
+		 . ' Execute';
 	case 127:
-	    return 'command not found';
+	    return 'Command Not Found';
 	case 128:
-	    return 'invalid argument to exit';
+	    return 'Invalid Argument to Exit';
 	default:
-	    return "command failed with exit code"
+	    return "Command Failed with Exit Code"
 	         . " $code";
     }
     elseif ( $code <= 256 ) switch ( $code - 128 )
     {
 	case 24:
-	    return "CPU time limit"
+	    return "CPU Time Limit"
 	         . ( isset ( $cputime ) ?
 	             " ($cputime sec)" : "" )
-	         . " exceeded";
+	         . " Exceeded";
 	    break;
 	case 25:
-	    return "output file size limit"
+	    return "Output File Size Limit"
 	         . ( isset ( $filesize ) ?
 	             " ($filesize bytes)" : "" )
-		 . " exceeded";
+		 . " Exceeded";
 	    break;
 	case 1:
-	    return 'terminated by hangup signal';
+	    return 'Terminated by Hangup Signal';
 	    break;
 	case 2:
-	    return 'terminated by interrupt signal';
+	    return 'Terminated by Interrupt Signal';
 	    break;
 	case 3:
-	    return 'terminated by quit signal';
+	    return 'Terminated by Quit Signal';
 	    break;
 	case 6:
-	    return 'terminated by abort';
+	    return 'Terminated by Abort';
 	    break;
 	case 8:
-	    return 'terminated by floating point'
-	       . ' exception signal';
+	    return 'Terminated by Floating Point'
+	         . ' Exception';
 	    break;
 	case 9:
-	    return 'terminated by kill signal';
+	    return 'Terminated by Kill Signal';
 	    break;
 	case 7:
 	case 10:
 	case 11:
-	    return 'terminated by invalid memory'
-	       . ' reference';
+	    return 'Terminated by Invalid Memory'
+	         . ' Reference';
 	    break;
 	case 13:
-	    return 'terminated by broken pipe';
+	    return 'Terminated by Broken Pipe';
 	    break;
 	case 14:
-	    return 'terminated by alarm timer';
+	    return 'Terminated by Alarm Timer';
 	    break;
 	case 15:
-	    return 'terminated by termination signal';
+	    return 'Terminated by Termination Signal';
 	    break;
 	default:
-	    return "command failed with signal "
+	    return "Command Failed with Signal "
 	         . ( $code - 128 );
     }
     else
-	return "command failed with exit code"
+	return "Command Failed with Exit Code"
 	     . " $code";
 }
 

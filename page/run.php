@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 29 05:58:07 EST 2020
+    // Date:	Sat Mar  7 01:22:45 EST 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -459,12 +459,13 @@ EOT;
 	    if ( preg_match ( '/\.rout$/', $fname ) )
 		$fcontents =
 		    preg_replace
-			( '/(?m)^(Score|' .
-			  'First-Failed-Test-Case):' .
-			  '.*$/',
-			  '</pre><pre class="red">$0' .
-			  "\n</pre><pre>",
-			  $fcontents );
+		      ( '/(?m)^(Score|' .
+			'First-Failed-Test-Case|' .
+			'Number-of-Warning-Messages):' .
+			'.*$/',
+			'</pre><pre class="red">$0' .
+			"\n</pre><pre>",
+			$fcontents );
 	    echo <<<EOT
 	    <div hidden id='$id' class='file'>
 	    <h5>$fname:</h5><br>

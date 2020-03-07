@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Feb 29 05:30:48 EST 2020
+// Date:	Sat Mar  7 01:16:25 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -239,11 +239,15 @@ if ( count ( $errors ) > 0 )
 }
 
 echo "Run-File: $runfile" . PHP_EOL;
-$time = strftime ( "%FT%T%z" );
-echo "Start-Time: $time" . PHP_EOL;
+$start_time = microtime ( true );
+echo "Start-Time: " .
+     strftime ( "%FT%T%z", $start_time ) .  PHP_EOL;
 
 $lines = [];
 $max_map = ['g' => 0, 's' => 0, 'f' => 0];
+$first_failed = NULL;
+$score = NULL;
+$warnings_count = 0;
 foreach ( $runin as $infile )
 {
     $base = pathinfo ( $infile, PATHINFO_FILENAME );
@@ -258,14 +262,16 @@ foreach ( $runin as $infile )
         echo "epm_run: WARNINGS during $base:" .
 	     PHP_EOL;
 	foreach ( $warnings as $w )
+	{
 	    echo "    $w" . PHP_EOL;
+	    $warnings_count += 1;
+	}
     }
     if ( count ( $errors ) > 0 )
     {
-        echo "epm_run: ERRORS during $base:" . PHP_EOL;
-	foreach ( $errors as $e )
-	    echo "    $e" . PHP_EOL;
-	exit ( 1 );
+	$first_failed = $base;
+	$score = 'EPM System Error';
+	break;
     }
     $map = & $_SESSION['EPM_WORK']['MAP'];
     $lines[] = $base;
@@ -295,12 +301,7 @@ foreach ( $runin as $infile )
 	if ( $r !== true ) break;
 	usleep ( 500000 );
     }
-    if ( $r === false )
-        ERROR ( "$base died" );
-    elseif ( $r[0] == 'F' )
-        ERROR ( "$base failed with exit code" .
-	        " {$r[2]}:" . PHP_EOL .
-	        "    {$r[3]}" );
+
     echo $lines[-1] . PHP_EOL;
     foreach ( $map as $key => $e )
     {
@@ -311,27 +312,67 @@ foreach ( $runin as $infile )
 	if ( $max_map[$t] < $e[2] )
 	    $max_map[$t] = $e[2];
     }
+
+    if ( $r === false )
+    {
+        $errors[] = "$base died";
+	$first_failed = $base;
+	$score = 'Program Crashed';
+	break;
+    }
+    elseif ( $r != ['D',0] )
+    {
+        $score = get_exit_message ( $r[1] );
+        $errors[] = "$base failed with exit code"
+	          . " {$r[1]}:" . PHP_EOL
+	          . "      $score";
+	$first_failed = $base;
+	break;
+    }
+
     $f = "$workdir/$base.score";
     $score = @file_get_contents ( "$epm_data/$f" );
     if ( $score === false )
-        ERROR ( "cannot read $f" );
+    {
+        $errors[] = "cannot read $f";
+	$first_failed = $base;
+	$score = 'EPM System Error';
+	break;
+    }
     if ( trim ( $score ) != 'Completely Correct' )
     {
-	$score = explode ( "\n", $score );
-	$score = trim ( $score[0] );
-	echo "Score: $score" . PHP_EOL;
-	echo "First-Failed-Test-Case: $base" . PHP_EOL;
+        $errors[] = "$base: NOT correct";
+	$first_failed = $base;
+	$score = 'NOT Correct';
 	break;
     }
 }
+if ( count ( $errors ) > 0 )
+{
+    echo "Errors While Processing $first_failed" .
+         PHP_EOL;
+    foreach ( $errors as $e )
+        echo "    $e" . PHP_EOL;
+    echo "First-Failed-Test-Case: $first_failed" .
+         PHP_EOL;
+    echo "Score: $score" . PHP_EOL;
+}
+else
+    echo "Score: Completely Correct" . PHP_EOL;
+
+if ( $warnings_count > 0 )
+    echo "Number-of-Warning-Messages:" .
+         " $warnings_count" . PHP_EOL;
+
 $max_label = ['g' => 'Generate', 's' => 'Solution',
               'f' => 'Filter'];
 foreach ( $max_map as $key => $value )
     echo "Maximum-{$max_label[$key]}-Time: {$value}s" .
          PHP_EOL;
 
-$time = strftime ( "%FT%T%z" );
-echo "Stop-Time: $time" . PHP_EOL;
+$duration = microtime ( true ) - $start_time;
+echo "Run-Real-Time: " . sprintf ( '%.3f', $duration ) .
+     "s" . PHP_EOL;
 
 exit ( 0 );
 
