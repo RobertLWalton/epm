@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Mar  7 01:47:18 EST 2020
+// Date:	Sat Mar  7 05:08:41 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -43,15 +43,23 @@ char documentation [] =
 "    judge's solution output.  In the simplest case\n"
 "    the filter simply removes comments.\n"
 "\n"
-"    This program outputs descriptions of errors\n"
-"    found in the output_file by comparing it to the\n"
-"    test file.  If there are no errors, this program\n"
-"    outputs just the line `Completely Correct'.\n"
+"    This program outputs a summary score line, fol-\n"
+"    lowed by descriptions of any errors found in the\n"
+"    output_file by comparing it to the test_file.\n"
 "\n"
 "    The program exit code is 0 unless there are\n"
 "    errors in the program arguments.  If there are\n"
 "    just errors detected by comparing the output_\n"
-"    file to the test file, the exit code is 0.\n"
+"    file to the test_file, the exit code is 0.\n"
+"\n"
+"    The possible summary scores, output on the\n"
+"    first line, in least severe first order, are:\n"
+"\n"
+"        Completely Correct\n"
+"        Format Error\n"
+"        Incomplete Output\n"
+"        Incorrect Output\n"
+"        No Output\n"
 "\n"
 "    To find errors, file lines are parsed into\n"
 "    tokens, and sucessive tokens of pairs of non-\n"
@@ -59,8 +67,8 @@ char documentation [] =
 "    number, or a separator.   White-space is not\n"
 "    part of any token, but the last column of each\n"
 "    token is recorded and may be used to require the\n"
-"    output file to have the same spacing as the test\n"
-"    file.\n"
+"    output_file to have the same spacing as the\n"
+"    test_file.\n"
 "\n"
 "    A word is just a string of ASCII letters.  A\n"
 "    number is a string with the syntax:\n"
@@ -68,14 +76,14 @@ char documentation [] =
 "        number ::= integer | float\n"
 "\n"
 "        integer ::= sign? digit+\n"
-"\n"
+"\f\n"
 "        float ::= integer fraction exponent?\n"
 "                | sign? fraction exponent?\n"
 "                | integer decimal-point exponent?\n"
 "                | integer exponent\n"
 "\n"
 "        fraction ::= decimal-point digit+\n"
-"\f\n"
+"\n"
 "        exponent ::= 'e' integer\n"
 "                   | 'E' integer\n"
 "\n"
@@ -91,40 +99,45 @@ char documentation [] =
 "    and carriage return are illegal characters.\n"
 "    These are replaced by ? and then treated as\n"
 "    separator characters.  The presence of illegal\n"
-"    characters is considered to be an error.\n"
+"    characters is considered to be a `Format Error'.\n"
 "\n"
 "    Tokens are scanned left to right with longer\n"
 "    tokens being preferred at each point.  When com-\n"
-"    paring tokens, the type of the token in the test\n"
-"    input determines the type of token expected.\n"
+"    paring tokens, the type of the test token\n"
+"    determines the type of output token expected.\n"
 "\n"
-"    The types of errors detected, in (roughly) most-\n"
-"    severe-first order, are:\n"
+"    The types of errors detected are:\n"
 "\n"
-"        output ends too soon\n"
-"        superfluous lines at end of output\n"
-"        tokens missing from end of line\n"
-"        extra tokens at end of line\n"
+"        Incorrect Output Errors:\n"
 "\n"
-"        token is not a number\n"
-"        token is not a word\n"
-"        token is not a separator\n"
-"\n"
-"        unequal words\n"
-"        unequal separators\n"
-"        unequal numbers\n"
-"        unequal integers\n"
+"            Output Ends Too Soon\n"
+"            Superfluous Lines at End of Output\n"
+"            Tokens Missing from End of Line\n"
+"            Extra Tokens at End of Line\n"
 "\f\n"
-"        number is not an integer*\n"
-"        integer has high order zeros*\n"
-"        integer has sign*\n"
+"            Token is Not a Number\n"
+"            Token is Not a Word\n"
+"            Token is Not a Separator\n"
 "\n"
-"        number has wrong number of decimal places*\n"
-"        word letter cases do not match*\n"
-"        token end columns are not equal*\n"
+"            Unequal Words\n"
+"            Unequal Separators\n"
+"            Unequal Numbers\n"
+"            Unequal Integers\n"
 "\n"
-"        superflous blank line*\n"
-"        missing blank line*\n"
+"            Number is Not an Integer*\n"
+"\n"
+"        Format Errors:\n"
+"\n"
+"            Integer has High Order Zeros*\n"
+"            Integer has Sign*\n"
+"\n"
+"            Number has Wrong Number of Decimal"
+					" Places*\n"
+"            Word Letter Cases do Not Match*\n"
+"            Token End Columns are Not Equal*\n"
+"\n"
+"            Superflous Blank Line*\n"
+"            Missing Blank Line*\n"
 "\n"
 "    The error types marked with * are ignored by\n"
 "    default, while all other error types are not\n"
@@ -140,17 +153,17 @@ char documentation [] =
 "\n"
 "    -limit L\n"
 "        Reset the error type limit to L.\n"
-"\n"
+"\f\n"
 "    -blank\n"
-"        Do NOT ignore `superflous blank line' and\n"
-"        `missing blank line' errors.\n"
+"        Do NOT ignore `Superflous Blank Line' and\n"
+"        `Missing Blank Line' errors.\n"
 "\n"
 "    -float A R\n"
 "        When either test or output token is a float,\n"
 "        and both are numbers, the two numbers are\n"
 "        both converted to IEEE floating point and\n"
 "        tested for equality.\n"
-"\f\n"
+"\n"
 "        If the absolute difference is larger than\n"
 "        A, or the relative difference is larger\n"
 "        than R, the two tokens are unequal.  See\n"
@@ -166,43 +179,43 @@ char documentation [] =
 "        the test token is an integer.\n"
 "\n"
 "    -places\n"
-"        Do NOT ignore `number has wrong number of\n"
-"        decimal places' errors.  The number of\n"
+"        Do NOT ignore `Number has Wrong Number of\n"
+"        Decimal Places' errors.  The number of\n"
 "        places expected for the output number is the\n"
 "        the number of places for the test number\n"
 "        token.\n"
 "\n"
 "    -integer\n"
-"        Do NOT ignore `number is not an integer'\n"
+"        Do NOT ignore `Number is Not an Integer'\n"
 "        errors.  This means that if the test token\n"
 "        is an integer, the output token must be an\n"
 "        integer.\n"
-"\n"
+"\f\n"
 "        When both `-integer' and `-float A R' are\n"
 "        given, care must be taken that all test\n"
 "        number tokens that are to be compared using\n"
 "        -float contain a decimal point.\n"
 "\n"
 "    -zeros\n"
-"        Do NOT ignore `integer has high order\n"
-"        zeros' errors.  The output integer token\n"
+"        Do NOT ignore `Integer has High Order\n"
+"        Zeros' errors.  The output integer token\n"
 "        will not be allowed to have a high order\n"
 "        zero unless the test integer token has a\n"
 "        high order zero.\n"
-"\f\n"
+"\n"
 "    -sign\n"
-"        Do NOT ignore `integer has sign' errors.\n"
+"        Do NOT ignore `Integer has Sign' errors.\n"
 "        The output integer token will not be\n"
 "        allowed to have a sign unless the test\n"
 "        integer token has a sign.\n"
 "\n"
 "    -case\n"
-"        Do NOT ignore `word letter cases do not\n"
-"        match' errors.\n"
+"        Do NOT ignore `Word Letter Cases do Not\n"
+"        Match' errors.\n"
 "\n"
 "    -column\n"
-"        Do NOT ignore `token end columns are not\n"
-"        equal' errors.  When computing the column\n"
+"        Do NOT ignore `Token End Columns are Not\n"
+"        Equal' errors.  When computing the column\n"
 "        of a character, tabs are set every 8 col-\n"
 "        umns.\n"
 "\n"
@@ -213,7 +226,7 @@ char documentation [] =
 "    To compare numbers otherwise, they are convert-\n"
 "    ed to IEEE 64 bit numbers.  It is possible that\n"
 "    a converted number will be an infinity.\n"
-"\n"
+"\f\n"
 "    The relative difference between two numbers x\n"
 "    and y is:\n"
 "\n"
@@ -533,8 +546,9 @@ error_type integer_has_sign
 error_type integer_has_high_order_zeros
     ( "Integer has High Order Zeros",
       FORMAT_ERROR, "zeros" );
-error_type token_is_not_an_integer
-    ( "Token is Not an Integer",
+
+error_type number_is_not_an_integer
+    ( "Number is Not an Integer",
       INCORRECT_OUTPUT, "integer" );
 
 error_type unequal_integers
@@ -583,7 +597,7 @@ char * print_file_lines ( char * p )
 {
     for ( int i = 0; i < 2; ++ i )
     {
-        p += sprintf ( p, "  %s line %d: ",
+        p += sprintf ( p, "  %s Line %d: ",
 	               files[i].id,
 		       files[i].line_number );
 	if ( files[i].at_end )
@@ -1035,7 +1049,7 @@ int main ( int argc, char ** argv )
     bool ignore_column =
 	token_end_columns_are_not_equal.ignore;
     bool ignore_integer =
-	token_is_not_an_integer.ignore;
+	number_is_not_an_integer.ignore;
     bool ignore_high_zero =
 	integer_has_high_order_zeros.ignore;
     bool ignore_sign =
@@ -1151,7 +1165,7 @@ int main ( int argc, char ** argv )
 		{
 		    if ( ! ignore_integer )
 			error
-			  ( token_is_not_an_integer,
+			  ( number_is_not_an_integer,
 			    "output token `%s' should"
 			    " be an integer\n    "
 			    " because test token `%s'"
@@ -1272,9 +1286,15 @@ int main ( int argc, char ** argv )
 			token ( output ),
 			token ( test ) );
 	    }
-
 	}
     }
+
+    if ( max_severity < FORMAT_ERROR
+         &&
+	 ( output.illegal_count > 0
+	   ||
+	   test.illegal_count > 0 ) )
+        max_severity = FORMAT_ERROR;
 
     if ( max_severity == INCOMPLETE_OUTPUT
          &&
@@ -1282,10 +1302,12 @@ int main ( int argc, char ** argv )
         max_severity = NO_OUTPUT;
 
     cout << severities[max_severity] << endl;
-    if ( max_severity == 0 ) exit ( 0 );
-    cout << "-----" << endl;
+    if ( max_severity == COMPLETELY_CORRECT )
+        exit ( 0 );
 
     // There are errors, output them.
+
+    cout << "-----" << endl;
 
     for ( int i = 0; i < 2; ++ i )
     {
@@ -1329,6 +1351,7 @@ int main ( int argc, char ** argv )
 		 << " = allowed R" << endl;
 	 cout << "-----" << endl;
     }
+
     for ( int i = 0; i < error_type_count; ++ i )
     {
         error_type & e = * error_type_stack[i];
