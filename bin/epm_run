@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Mar  7 01:16:25 EST 2020
+// Date:	Sat Mar  7 01:56:50 EST 2020
 
 $document = <<<'EOT'
 EPM_HOME=root-directory \
@@ -341,9 +341,10 @@ foreach ( $runin as $infile )
     }
     if ( trim ( $score ) != 'Completely Correct' )
     {
-        $errors[] = "$base: NOT correct";
+        $score = explode ( "\n", $score );
+	$score = trim ( $score[0] );
+        $errors[] = "$base: $score";
 	$first_failed = $base;
-	$score = 'NOT Correct';
 	break;
     }
 }

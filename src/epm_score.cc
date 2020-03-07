@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Mar  5 06:06:59 EST 2020
+// Date:	Sat Mar  7 01:47:18 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -241,6 +241,23 @@ double number_R = NAN;
 long int limit = LIMIT;
     // Limit on error_type_stack length.
 
+// Error serverities:
+//
+const char * severities[] = {
+    "Completely Correct",
+    "Format Error",
+    "Incomplete Output",
+    "Incorrect Output",
+    "No Output",
+};
+enum {
+    COMPLETELY_CORRECT = 0,
+    FORMAT_ERROR = 1,
+    INCOMPLETE_OUTPUT = 2,
+    INCORRECT_OUTPUT = 3,
+    NO_OUTPUT = 4
+};
+
 enum token_type {
     NO_TOKEN = 0,
     WORD, SEPARATOR, INTEGER, FLOAT, EOL };
@@ -263,7 +280,7 @@ struct file
     string line;	// Current line if file not
     			// at_end or at beginning.
     int line_number;	// After end of file this is
-    			// number of lines in file + 1.
+    			// number of lines in file.
 			// 0 if file before first line.
     bool at_end;	// True if file is at end.
     bool is_blank;	// True if line is blank and
@@ -353,11 +370,12 @@ void open_files ( const char * output_file_name,
 void get_line ( file & f )
 {
     if ( f.at_end ) return;
-    ++ f.line_number;
     if ( ! getline ( f.stream, f.line ) )
          f.at_end = true, f.is_blank = false;
     else
     {
+	++ f.line_number;
+
         // We do a fast scan to check for illegal
 	// characters before replacing any, as
 	// replacement may take time.
@@ -462,6 +480,7 @@ struct error_type * last = NULL;
 struct error_type
 {
     const char * title;
+    int severity;
     char buffer[4096];
         // Error output for first error of this kind.
     const char * option_name;
@@ -476,9 +495,11 @@ struct error_type
         // Pointer to previous error_type in chain.
 
     error_type ( const char * title,
+    		 int severity,
                  const char * option_name = NULL )
     {
         this->title = title;
+        this->severity = severity;
         this->option_name = option_name;
 	ignore = ( option_name != NULL );
 	buffer[0] = 0;
@@ -493,50 +514,57 @@ struct error_type
 // order).
 //
 error_type superfluous_blank_line
-    ( "Superfluous Blank Line", "blank" );
+    ( "Superfluous Blank Line", FORMAT_ERROR, "blank" );
 error_type missing_blank_line
-    ( "Missing Blank Line", "blank" );
+    ( "Missing Blank Line", FORMAT_ERROR, "blank" );
 
 error_type token_end_columns_are_not_equal
-    ( "Token End Columns are Not Equal", "column" );
+    ( "Token End Columns are Not Equal",
+      FORMAT_ERROR, "column" );
 error_type word_letter_cases_do_not_match
-    ( "Word Letter Cases do Not Match", "case" );
+    ( "Word Letter Cases do Not Match",
+      FORMAT_ERROR, "case" );
 error_type number_has_wrong_number_of_places
     ( "Number has Wrong Number of Decimal Places",
-      "places" );
+      FORMAT_ERROR, "places" );
 
 error_type integer_has_sign
-    ( "Integer has Sign", "sign" );
+    ( "Integer has Sign", FORMAT_ERROR, "sign" );
 error_type integer_has_high_order_zeros
-    ( "Integer has High Order Zeros", "zeros" );
+    ( "Integer has High Order Zeros",
+      FORMAT_ERROR, "zeros" );
 error_type token_is_not_an_integer
-    ( "Token is Not an Integer", "integer" );
+    ( "Token is Not an Integer",
+      INCORRECT_OUTPUT, "integer" );
 
 error_type unequal_integers
-    ( "Unequal Integers" );
+    ( "Unequal Integers", INCORRECT_OUTPUT );
 error_type unequal_numbers
-    ( "Unequal Numbers" );
+    ( "Unequal Numbers", INCORRECT_OUTPUT );
 error_type unequal_separators
-    ( "Unequal Separators" );
+    ( "Unequal Separators", INCORRECT_OUTPUT );
 error_type unequal_words
-    ( "Unequal Words" );
+    ( "Unequal Words", INCORRECT_OUTPUT );
 
 error_type token_is_not_a_separator
-    ( "Token is Not a Separator" );
+    ( "Token is Not a Separator", INCORRECT_OUTPUT );
 error_type token_is_not_a_word
-    ( "Token is Not a Word" );
+    ( "Token is Not a Word", INCORRECT_OUTPUT );
 error_type token_is_not_a_number
-    ( "Token is Not a Number" );
+    ( "Token is Not a Number", INCORRECT_OUTPUT );
 
 error_type extra_tokens_at_end_of_line
-    ( "Extra Tokens at End of Line" );
+    ( "Extra Tokens at End of Line",
+      INCORRECT_OUTPUT );
 error_type tokens_missing_from_end_of_line
-    ( "Missing Tokens from End of Line" );
+    ( "Missing Tokens from End of Line",
+      INCORRECT_OUTPUT );
 
 error_type superfluous_lines_at_end_of_output
-    ( "Superfluous Lines at End of Output" );
+    ( "Superfluous Lines at End of Output",
+      INCORRECT_OUTPUT );
 error_type output_ends_too_soon
-    ( "Output Ends Too Soon" );
+    ( "Output Ends Too Soon", INCOMPLETE_OUTPUT );
 
 // Stack of error_types.  An error_type is pushed into
 // this stack when first encountered, using error_type_
@@ -591,9 +619,12 @@ char * print_file_lines ( char * p )
 // non-last line must be indicated by '\n    '
 // (including 4 spaces).
 //
+int max_severity = 0;
 void error ( error_type & e, const char * format... )
 {
     if ( ++ e.count > 1 ) return;
+    if ( max_severity < e.severity )
+	max_severity = e.severity;
 
     error_type_stack[error_type_count++] = & e;
 
@@ -866,7 +897,6 @@ void compare_numbers ( void )
 //
 int main ( int argc, char ** argv )
 {
-
     // Process options.
 
     while ( argc >= 2 && argv[1][0] == '-' )
@@ -1246,15 +1276,14 @@ int main ( int argc, char ** argv )
 	}
     }
 
-    if ( error_type_count == 0
+    if ( max_severity == INCOMPLETE_OUTPUT
          &&
-	 output.illegal_count == 0
-	 &&
-	 test.illegal_count == 0 )
-    {
-        cout << "Completely Correct" << endl;
-	exit ( 0 );
-    }
+	 output.line_number == 0 )
+        max_severity = NO_OUTPUT;
+
+    cout << severities[max_severity] << endl;
+    if ( max_severity == 0 ) exit ( 0 );
+    cout << "-----" << endl;
 
     // There are errors, output them.
 
