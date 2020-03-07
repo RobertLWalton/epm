@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar  6 14:40:51 EST 2020
+    // Date:	Sat Mar  7 12:06:40 EST 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -914,6 +914,15 @@ EOT;
 		     " from $fname'" .
 		     " value='$fname:$fbase.score'>" .
 		     "&rArr;.score</button></td>";
+	    }
+	    elseif ( $fext == 'sin' )
+	    {
+		echo "<td><button type='submit'" .
+		     " name='make'" .
+		     " title='Make $fbase.dout" .
+		     " from $fname'" .
+		     " value='$fname:$fbase.dout'>" .
+		     "&rArr;.dout</button></td>";
 	    }
 	    elseif ( $fext == 'sout' )
 	    {
