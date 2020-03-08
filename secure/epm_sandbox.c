@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Fri Mar  6 14:21:09 EST 2020
+ * Date:	Sun Mar  8 01:18:08 EST 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -56,6 +56,25 @@ char documentation [] =
 "    it by 1024 * 1024 * 1024 (`g' is only valid on\n"
 "    64 bit computers).\n"
 "\n"
+"    As an alternative to -cputime there are the\n"
+"    options:\n"
+"\n"
+"      -SIGHUP T\n"
+"      -SIGINT T\n"
+"      -SIGQUIT T\n"
+"      -SIGTERM T\n"
+"\n"
+"    where T is number of CPU seconds, optionally\n"
+"    with a factional part.  These send the designat-\n"
+"    ed signal to the program after the program has\n"
+"    consummed T seconds of CPU time.  This permits\n"
+"    programs that are interpreters or debuggers to\n"
+"    identify the statement they are executing when\n"
+"    interrupted, and allows infinite loops to be\n"
+"    diagnosed.  These options imply `-cputime N'\n"
+"    for T + 1 <= N <= T + 2 unless -cputime is\n"
+"    explicitly given.\n"
+"\f\n"
 "    There are also two other options:\n"
 "\n"
 "      -status STATUS-FILE\n"
@@ -66,7 +85,7 @@ char documentation [] =
 "    STATUS-FILE as a single line containing the\n"
 "    following fields, with fields separated by a\n"
 "    single space character:\n"
-"\f\n"
+"\n"
 "        COUNT      Natural number count of the num-\n"
 "                   ber of times this file has been\n"
 "                   re-written.\n"
@@ -89,7 +108,7 @@ char documentation [] =
 "        SYSTIME    system mode cpu time (sec)\n"
 "        MAXRSS     max resident set size (kilobytes)\n"
 "        COUNT      copy of COUNT.\n"
-"\n"
+"\f\n"
 "    All fields are integer except USERTIME and"
 				" SYSTIME\n"
 "    are floating point and unset limit fields are\n"
@@ -103,7 +122,7 @@ char documentation [] =
 "    can be zero or more `-env ENV-PARAM' options,\n"
 "    each of which adds its ENV-PARAM to the environ-\n"
 "    ment in which `program ...' executes.\n"
-"\f\n"
+"\n"
 "    If `program' is not in the current directory,\n"
 "    it is looked up using epm_sandbox's environment\n"
 "    PATH variable after the manner of the UNIX shell\n"
@@ -125,21 +144,27 @@ char documentation [] =
 "\n"
 "    Normally the `sandbox' user is not allowed to\n"
 "    log in and owns no useful files or directories.\n"
-"\n"
+"\f\n"
 "    The child's resource limits and environment are\n"
 "    set according to the options and defaults, and\n"
 "    the program is executed with the given argu-\n"
 "    ments.\n"
 "\n"
-"    If the child terminates with a SIGKILL signal\n"
+"    If the child terminates with a SIGKILL signal,\n"
+"    or with the signal from a `-SIG... T' option,\n"
 "    and USERTIME + SYSTIME > CPUTIME, the signal\n"
 "    is changed to SIGXCPU.\n"
+"\n"
+"    If the child terminates with a 120 exit code\n"
+"    (meaning unclean termination from intepreter),\n"
+"    this is changed to termination by the SIGXFSZ\n"
+"    signal.\n"
 "\n"
 "    The parent returns the child exit code if the\n"
 "    child does not terminate with a signal, and\n"
 "    returns 128 + the possibly changed signal number\n"
 "    if the child does terminate with a signal.\n"
-"\f\n"
+"\n"
 "    If the child terminates with a signal, and\n"
 "    there is NO STATUS-FILE, the parent prints an\n"
 "    error message using the possibly changed signal\n"
@@ -148,6 +173,12 @@ char documentation [] =
 "    Epm_sandbox will write an error message on the\n"
 "    standard error output and exit with exit code 1\n"
 "    if any system call or option is in error.\n"
+"\n"
+"    When the -status or -SIG... options are given,\n"
+"    epm_sandbox polls the USERTIME and SYSTIME and\n"
+"    writes the status file or sends an interrupt\n"
+"    when it polls.  The polling interval is 0.5\n"
+"    seconds.\n"
 ;
 
 void errno_exit ( char * m )
@@ -162,6 +193,8 @@ uid_t euid, egid;
     /* Effective IDs of epm_sandbox. */
 uid_t ruid;
     /* Real user ID of epm_sandbox. */
+uid_t sandbox_uid, sandbox_gid;
+    /* IDs of `sandbox' POSIX user. */
 
 int debug = 0;
 
@@ -171,7 +204,9 @@ int is_executable ( const char * program )
     if ( stat ( program, & s ) < 0 )
     {
         if ( debug ) fprintf
-	    ( stderr, "could not stat %s\n", program );
+	    ( stderr,
+	      "epm_sandbox: could not stat %s\n",
+	      program );
 	return 0;
     }
     else if ( euid == 0 )
@@ -207,6 +242,9 @@ rlim_t filesize = RLIM_INFINITY;
 rlim_t core = RLIM_INFINITY;
 rlim_t openfiles = RLIM_INFINITY;
 rlim_t processes = RLIM_INFINITY;
+
+int SIG = 0;	// SIG of -SIG... T; 0 if none.
+double T = 0;	// T of -SIG... T.
 
 /* Write status line into status_fd.
  */
@@ -355,6 +393,50 @@ int main ( int argc, char ** argv )
 	    env[env_size++] = argv[index++];
 	    continue;
 	}
+        else if ( strncmp ( argv[index], "-SIG", 4 )
+	     == 0 )
+	{
+	    if ( strcmp ( argv[index], "-SIGHUP" )
+	         == 0 )
+		SIG = SIGHUP;
+	    else if ( strcmp ( argv[index], "-SIGINT" )
+	         == 0 )
+		SIG = SIGINT;
+	    else if ( strcmp ( argv[index], "-SIGQUIT" )
+	         == 0 )
+		SIG = SIGQUIT;
+	    else if ( strcmp ( argv[index], "-SIGTERM" )
+	         == 0 )
+		SIG = SIGTERM;
+	    else
+	    {
+		fprintf ( stderr,
+			  "epm_sandbox: %s not"
+			  " recognized\n",
+			  argv[index] );
+		exit (1);
+	    }
+	    ++ index;
+	    if ( index >= argc )
+	    {
+		fprintf ( stderr,
+			  "epm_sandbox: Too few"
+			  " arguments\n" );
+		exit (1);
+	    }
+	    char * endp;
+	    T = strtod ( argv[index], & endp );
+	    if ( * endp != 0 || ! ( 0 < T ) )
+	        // In case T == NaN
+	    {
+		fprintf ( stderr,
+			  "epm_sandbox: bad T argument"
+			  " %s\n", argv[index] );
+		exit (1);
+	    }
+	    ++ index;
+	    continue;
+	}
 
 	/* Remaining options set `option' and fall
 	 * through.
@@ -483,6 +565,12 @@ int main ( int argc, char ** argv )
 	++ index;
     }
 
+    if ( SIG > 0 && cputime == RLIM_INFINITY )
+    {
+        cputime = (rlim_t) ( T + 2 );
+	if ( cputime > T + 2 ) -- cputime;
+    }
+
     /* If the program name is not left, or if it 
        matches -doc*, print doc. */
 
@@ -497,18 +585,45 @@ int main ( int argc, char ** argv )
 
     if ( debug )
     {
-        fprintf ( stderr,
-	          "epm_sandbox: uid is initially %d\n",
-		  getuid() );
-        fprintf ( stderr,
-	          "epm_sandbox: gid is initially %d\n",
-		  getgid() );
-        fprintf ( stderr,
-	          "epm_sandbox: euid is initially %d\n",
-		  geteuid() );
-        fprintf ( stderr,
-	          "epm_sandbox: egid is initially %d\n",
-		  getegid() );
+	uid_t r, e, s;
+	getresuid ( &r, &e, &s );
+	fprintf
+	    ( stderr,
+	      "epm_sandbox: "
+	      "initial uids are %d, %d, %d\n",
+	       r, e, s );
+	getresgid ( &r, &e, &s );
+	fprintf
+	    ( stderr,
+	      "epm_sandbox: "
+	      "initial gids are %d, %d, %d\n",
+	       r, e, s );
+    }
+
+    /* Find sandbox_{uid,gid}.
+    */
+    while ( 1 )
+    {
+	struct passwd * p;
+
+	p = getpwent ();
+
+	if ( p == NULL )
+	{
+	    fprintf ( stderr, "epm_sandbox: Could"
+			      " not find `sandbox'"
+			      " in /etc/passwd\n" );
+	    exit ( 1 );
+	}
+
+	if ( strcmp ( p->pw_name, "sandbox" )
+	     == 0 )
+	{
+	    sandbox_uid = p->pw_uid;
+	    sandbox_gid = p->pw_gid;
+	    endpwent ();
+	    break;
+	}
     }
 
     /* Look up program in PATH. */
@@ -554,6 +669,12 @@ int main ( int argc, char ** argv )
 		      argv[index] );
 	    exit (1);
 	}
+
+	if ( debug )
+	    fprintf
+	        ( stderr,
+	          "epm_sandbox: found executable %s\n",
+		  program );
     }
 
     child = fork ();
@@ -570,6 +691,23 @@ int main ( int argc, char ** argv )
 	     seteuid ( ruid ) < 0 )
 	    errno_exit ( "set euid to user" );
 
+	if ( debug )
+	{
+	    uid_t r, e, s;
+	    getresuid ( &r, &e, &s );
+	    fprintf
+	        ( stderr,
+	          "epm_sandbox: "
+		  "parent uids are now %d, %d, %d\n",
+		   r, e, s );
+	    getresgid ( &r, &e, &s );
+	    fprintf
+	        ( stderr,
+	          "epm_sandbox: "
+		  "parent gids are now %d, %d, %d\n",
+		   r, e, s );
+	}
+
 	if ( status_file != NULL )
 	{
 	    status_fd =
@@ -582,7 +720,12 @@ int main ( int argc, char ** argv )
 		    ( "opening STATUS-FILE" );
 
 	    write_status ( 'R', 0, 0, 0, 0, 0 );
+	}
+	else
+	    status_fd = -1;
 
+	if ( SIG > 0 || status_file != NULL )
+	{
 	    char fname[100];
 	    sprintf ( fname, "/proc/%d/stat", child );
 	    child_stat_fd = open ( fname, O_RDONLY );
@@ -590,10 +733,7 @@ int main ( int argc, char ** argv )
 	        1.0 / sysconf ( _SC_CLK_TCK );
 	}
 	else
-	{
-	    status_fd = -1;
 	    child_stat_fd = -1;
-	}
 
 	double USERTIME = 0;
 	double SYSTIME = 0;
@@ -605,21 +745,23 @@ int main ( int argc, char ** argv )
 	pid_t r;
 	int status;
 	int saved_errno;
+	int sig_sent = 0;
 
 	if ( child_stat_fd >= 0 ) while ( 1 )
 	{
-	    usleep ( 100000 ); /* 100 milliseconds */
+	    usleep ( 500000 ); /* 0.5 seconds */
 
 	    lseek ( child_stat_fd, 0, SEEK_SET );
 	    ssize_t s = read ( child_stat_fd,
 	                       child_stat,
-			       sizeof ( child_stat ) - 1 );
+			       sizeof ( child_stat )
+			           - 1 );
 	    if ( s >= 0 ) child_stat[s] = 0;
 
-	    /* child_stat_fd may or may not remain open and
-	     * readable after process dies, so we ignore
-	     * errors in reading it and use waitpid to see
-	     * if child has died.
+	    /* child_stat_fd may or may not remain open
+	     * and readable after process dies, so we
+	     * ignore errors in reading it and use
+	     * waitpid to see if child has died.
 	     */
 
 	    r = waitpid ( child, & status, WNOHANG );
@@ -653,8 +795,30 @@ int main ( int argc, char ** argv )
 	            * strtol ( p, & endp, 10 );
 	    if ( ! isspace ( * endp ) ) continue;
 
-	    write_status ( STATE, EXITCODE, SIGNAL,
-			   USERTIME, SYSTIME, MAXRSS );
+	    if ( status_fd >= 0 )
+		write_status ( STATE, EXITCODE, SIGNAL,
+			       USERTIME, SYSTIME,
+			       MAXRSS );
+	    if ( SIG > 0 && USERTIME + SYSTIME > T
+	    		 && ! sig_sent )
+	    {
+		if ( euid == 0
+		     &&
+		     seteuid ( 0 ) < 0 )
+		    errno_exit
+		        ( "set euid to root uid"
+			  " before kill" );
+		if ( kill ( child, SIG ) < 0 )
+		    errno_exit
+			( "kill sending SIG to child" );
+		if ( euid == 0
+		     &&
+		     seteuid ( ruid ) < 0 )
+		    errno_exit
+		        ( "set euid to ruid"
+			  " after kill" );
+	        sig_sent = 0;
+	    }
 	}
 	else
 	    r = waitpid ( child, & status, 0 );
@@ -688,6 +852,10 @@ int main ( int argc, char ** argv )
 	    if ( signaled && SIGNAL == SIGKILL
 			  &&    USERTIME + SYSTIME
 			     >= cputime )
+		SIGNAL = SIGXCPU;
+	    if ( signaled && SIGNAL == SIG
+			  &&    USERTIME + SYSTIME
+			     >= T )
 		SIGNAL = SIGXCPU;
 	    if ( ! signaled && EXITCODE == 120 )
 	    {
@@ -755,59 +923,35 @@ int main ( int argc, char ** argv )
 	    errno_exit ( "root setgroups" );
 
 	/* Set the effective user and group ID to
-	   that of the `sandbox' user.
+	   that of the `sandbox' user.  Set group ID
+	   first so as to not disturb root euid
+	   prematurely.
 	*/
-	while ( 1 )
-	{
-	    struct passwd * p;
-
-            p = getpwent ();
-
-	    if ( p == NULL )
-	    {
-	        fprintf ( stderr, "epm_sandbox: Could"
-				  " not find `sandbox'"
-		                  " in /etc/passwd\n" );
-		exit ( 1 );
-	    }
-
-	    if ( strcmp ( p->pw_name, "sandbox" )
-	         == 0 )
-	    {
-		/* Set group ID first so as not to
-		 * disturb root euid prematurely.
-		 */
-		if ( setregid ( p->pw_gid , p->pw_gid )
-		     < 0 )
-		     errno_exit
-		         ( "set uids to sandbox" );
-		if ( setreuid ( p->pw_uid, p->pw_uid )
-		     < 0 )
-		     errno_exit
-		         ( "set gids to sandbox" );
-
-		endpwent ();
-		break;
-	    }
-	}
+	if ( setregid ( sandbox_gid , sandbox_gid )
+	     < 0 )
+	     errno_exit ( "set uids to sandbox" );
+	if ( setreuid ( sandbox_uid, sandbox_uid )
+	     < 0 )
+	     errno_exit ( "set gids to sandbox" );
 
 	/* End root execution. */
     }
 
     if ( debug )
     {
-        fprintf ( stderr,
-	          "epm_sandbox: uid is now %d\n",
-		  getuid() );
-        fprintf ( stderr,
-	          "epm_sandbox: gid is now %d\n",
-		  getgid() );
-        fprintf ( stderr,
-	          "epm_sandbox: euid is now %d\n",
-		  geteuid() );
-        fprintf ( stderr,
-	          "epm_sandbox: egid is now %d\n",
-		  getegid() );
+	uid_t r, e, s;
+	getresuid ( &r, &e, &s );
+	fprintf
+	    ( stderr,
+	      "epm_sandbox: "
+	      "child uids are now %d, %d, %d\n",
+	       r, e, s );
+	getresgid ( &r, &e, &s );
+	fprintf
+	    ( stderr,
+	      "epm_sandbox: "
+	      "child gids are now %d, %d, %d\n",
+	       r, e, s );
     }
 
     {

@@ -3,10 +3,11 @@
 
     "g++std": { "values": ["-std=gnu++11", ""],
                 "argname": "GPPFLAGS" },
-    "gcc-opt": { "values": ["-Og", "-O3", ""],
-                 "argname": "GCCFLAGS" },
     "gcc-ped": { "values": ["", "-Wpedantic"],
                  "argname": "GCCFLAGS" },
+    "gcc-opt": { "values": ["-O3", "-O2", "-O1",
+                            "-O0", "-Og", ""],
+                 "argname": "GCCOPT" },
     "lgsl": { "values": ["", "-lgsl"],
               "argname": "LIBRARIES" },
     "lcrypto": { "values": ["", "-lcrypto"],
@@ -39,7 +40,11 @@
 		  "default": "3",
 		  "description": "solution allowed CPU time in seconds",
 		  "valname": "STIME" },
-     "stime-arg": { "values": ["-cputime STIME"],
+     "stime-arg": { "values": ["-SIGTERM STIME",
+     				// -SIGINT will not work as
+				// interrupts are disabled
+				// when shell runs commands
+                               "-cputime STIME"],
 		      "argname": "SSARGS" },
      "svmem":  { "type": "natural",
                   "range": ["16", "2048"],
