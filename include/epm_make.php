@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Mar  7 00:40:41 EST 2020
+// Date:    Sun Mar  8 05:47:33 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1253,16 +1253,18 @@ function get_status ( $workdir, $sfile )
 	    return NULL;
 	$c = trim ( $c );
 	$c = explode ( ' ', $c );
-	if ( count ( $c ) != 17 ) continue;
-	if ( $c[0] != $c[16] ) continue;
+	if ( count ( $c ) != 19 ) continue;
+	if ( $c[0] != $c[18] ) continue;
 	$state    = $c[1];
 	$cputime  = $c[3];
 	$space    = $c[4];
 	$filesize = $c[7];
-	$exitcode = $c[11];
-	$signal   = $c[12];
-	$usertime = $c[13];
-	$systime  = $c[14];
+	$sig      = $c[11];
+	$T        = $c[12];
+	$exitcode = $c[13];
+	$signal   = $c[14];
+	$usertime = $c[15];
+	$systime  = $c[16];
 	break;
     }
 
@@ -1270,6 +1272,12 @@ function get_status ( $workdir, $sfile )
          ||
          ! preg_match ( '/^\d*(|\.\d+)$/', $systime ) )
         return NULL;
+
+    if ( $sig != 0 )
+    {
+        if ( $cputime == 'unlimited' || $cputime > $T )
+	    $cputime = $T;
+    }
 
     $time = sprintf ( '%.3f', $usertime + $systime );
 

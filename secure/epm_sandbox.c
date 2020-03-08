@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Sun Mar  8 01:18:08 EST 2020
+ * Date:	Sun Mar  8 05:34:20 EDT 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -102,6 +102,8 @@ char documentation [] =
 "        CORE       -core limit (bytes)\n"
 "        OPENFILES  -openfiles limit\n"
 "        PROCESSES  -processes limit\n"
+"        SIG        -SIG... signal number (0 if none)\n"
+"        T          -SIG... T value (0 if none)\n"
 "        EXITCODE   terminating exit code\n"
 "        SIGNAL     terminating signal code\n"
 "        USERTIME   user mode cpu time (sec)\n"
@@ -109,10 +111,9 @@ char documentation [] =
 "        MAXRSS     max resident set size (kilobytes)\n"
 "        COUNT      copy of COUNT.\n"
 "\f\n"
-"    All fields are integer except USERTIME and"
-				" SYSTIME\n"
-"    are floating point and unset limit fields are\n"
-"    `unlimited'.  EXITCODE and SIGNAL are unused\n"
+"    All fields are integer except USERTIME, SYSTIME,\n"
+"    and T are floating point and unset limit fields\n"
+"    are `unlimited'.  EXITCODE and SIGNAL are unused\n"
 "    and 0 if STATE is R.  If beginning and ending\n"
 "    COUNT do not match, or STATUS-FILE is empty,\n"
 "    re-read the file as a race condition is likely.\n"
@@ -307,11 +308,15 @@ int write_status
         p += sprintf
 	    ( p, " %lu", (unsigned long ) processes );
 
+    p += sprintf ( p, " %d %.6f", SIG, T );
+
     p += sprintf ( p, " %d %d %.6f %.6f %lu %d\n",
                    EXITCODE, SIGNAL, USERTIME, SYSTIME,
 		   MAXRSS, COUNT );
     if ( ftruncate ( status_fd, 0 ) < 0 )
 	errno_exit ( "truncating STATUS-FILE" );
+    if ( lseek ( status_fd, 0, SEEK_SET ) < 0 )
+	errno_exit ( "seeking start of STATUS-FILE" );
     if ( write ( status_fd, status_line,
                             p - status_line ) < 0 )
 	errno_exit ( "writing STATUS-FILE" );
