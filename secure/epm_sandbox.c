@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Sun Mar  8 05:34:20 EDT 2020
+ * Date:	Sun Mar  8 06:32:35 EDT 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -59,12 +59,11 @@ char documentation [] =
 "    As an alternative to -cputime there are the\n"
 "    options:\n"
 "\n"
-"      -SIGHUP T\n"
-"      -SIGINT T\n"
-"      -SIGQUIT T\n"
-"      -SIGTERM T\n"
+"          -SIGHUP T             -SIGINT T\n"
+"          -SIGQUIT T            -SIGILL T\n"
+"          -SIGABRT T            -SIGTERM T\n"
 "\n"
-"    where T is number of CPU seconds, optionally\n"
+"    Here T is number of CPU seconds, optionally\n"
 "    with a factional part.  These send the designat-\n"
 "    ed signal to the program after the program has\n"
 "    consummed T seconds of CPU time.  This permits\n"
@@ -410,6 +409,12 @@ int main ( int argc, char ** argv )
 	    else if ( strcmp ( argv[index], "-SIGQUIT" )
 	         == 0 )
 		SIG = SIGQUIT;
+	    else if ( strcmp ( argv[index], "-SIGILL" )
+	         == 0 )
+		SIG = SIGILL;
+	    else if ( strcmp ( argv[index], "-SIGABRT" )
+	         == 0 )
+		SIG = SIGABRT;
 	    else if ( strcmp ( argv[index], "-SIGTERM" )
 	         == 0 )
 		SIG = SIGTERM;
