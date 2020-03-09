@@ -40,7 +40,7 @@
 		  "default": "3",
 		  "description": "solution allowed CPU time in seconds",
 		  "valname": "STIME" },
-     "stime-arg": { "values": ["-SIGTERM STIME",
+     "stime-arg": { "values": ["-SIGABRT STIME",
      				// -SIGINT will not work as
 				// interrupts are disabled
 				// when shell runs commands

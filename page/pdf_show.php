@@ -2,7 +2,7 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 19 03:05:29 EST 2020
+    // Date:	Mon Mar  9 15:32:02 EDT 2020
 
     // Show the PDF file $_GET['filename'].
     // File may be in current problem directory
@@ -12,7 +12,7 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_USER_ID'];
+    $uid = $_SESSION['EPM_UID'];
     $problem = $_SESSION['EPM_PROBLEM'];
 
     $probdir = "users/user$uid/$problem";

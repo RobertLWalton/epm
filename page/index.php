@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Mar  7 12:06:54 EST 2020
+// Date:    Mon Mar  9 15:31:24 EDT 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -238,7 +238,7 @@ if ( ! isset ( $_SESSION['EPM_BROWSER_ID'] ) )
 	exit;
     }
 }
-else if ( ! isset ( $_SESSION['EPM_USER_ID'] ) )
+else if ( ! isset ( $_SESSION['EPM_UID'] ) )
 {
     if ( $php_self != "/page/user.php" )
     {

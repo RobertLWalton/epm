@@ -5,9 +5,10 @@
 	     "chmod o+xr PPPP",
 	     "chmod o+r XXXX-PPPP.sin PPPP.c",
 	     "epm_sandbox SSARGS SSPACE \\",
-	     "    -status XXXX-PPPP.sstat gdb -ex \\",
-	     "    'run < XXXX-PPPP.sin DARGS' \\",
-	     "    -ex back -batch PPPP \\",
+	     "    -status XXXX-PPPP.sstat gdb -batch \\",
+	     "    -ex 'handle SIGTERM nostop noprint pass' \\",
+	     "    -ex 'run < XXXX-PPPP.sin DARGS' \\",
+	     "    -ex back PPPP \\",
 	     "    > XXXX-PPPP.dout 2> XXXX-PPPP.derr",
 	     "chmod o-r XXXX-PPPP.sin PPPP.c"],
 

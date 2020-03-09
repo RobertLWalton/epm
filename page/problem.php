@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar  7 12:06:40 EST 2020
+    // Date:	Mon Mar  9 15:32:18 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -22,7 +22,7 @@
     // if ( ! isset ( $_POST['update'] ) ) // xhttp
     //     require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_USER_ID'];
+    $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     $user_dir = "users/user$uid";

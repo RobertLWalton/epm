@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 29 07:25:22 EST 2020
+    // Date:	Mon Mar  9 15:32:53 EDT 2020
 
     // Display and edit user information in:
     //
@@ -14,7 +14,7 @@
     //		users/user{$uid}
     //	        admin/user{$uid}.info
     //
-    // if $_SESSION['EPM_USER_ID'] not set (i.e., if the
+    // if $_SESSION['EPM_UID'] not set (i.e., if the
     // user is a new user).
     //
     // Does this by using a form to collect the follow-
@@ -78,13 +78,13 @@
 
     $email = $_SESSION['EPM_EMAIL'];
     $new_user =
-        ( ! isset ( $_SESSION['EPM_USER_ID'] ) );
+        ( ! isset ( $_SESSION['EPM_UID'] ) );
     $edit = false;
 
     if ( $method == 'GET' )
     {
         if ( ! $new_user )
-	    $uid = $_SESSION['EPM_USER_ID'];
+	    $uid = $_SESSION['EPM_UID'];
 
 	// Set $emails to the emails in admin/email
 	// that point at the current $uid and are NOT
@@ -378,7 +378,7 @@
 
 	    umask ( $m );
 
-	    $_SESSION['EPM_USER_ID'] = $uid;
+	    $_SESSION['EPM_UID'] = $uid;
 	    $item = [ $uid,
 	              $_SESSION['EPM_SESSION_TIME'],
 		      1];

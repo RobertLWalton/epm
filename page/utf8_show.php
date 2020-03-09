@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 26 20:16:07 EST 2020
+    // Date:	Mon Mar  9 15:33:21 EDT 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // Filename is relative to problem directory.
@@ -39,7 +39,7 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_USER_ID'];
+    $uid = $_SESSION['EPM_UID'];
     $problem = $_SESSION['EPM_PROBLEM'];
 
     $probdir = "users/user$uid/$problem";
