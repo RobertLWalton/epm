@@ -2,12 +2,12 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 20:48:41 EDT 2020
+    // Date:	Tue Mar 10 03:56:20 EDT 2020
 
     // Display and edit user information in:
     //
     //		admin/email/*
-    //		admin/user{$uid}.info
+    //		admin/users/$uid.info
     //
     // Also assigns $uid and creates
     //
@@ -81,6 +81,7 @@
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
     $edit = false;
+    $STIME = $_SESSION['EPM_SESSION_TIME'];
 
     if ( $method == 'GET' && ! $new_user )
     {
@@ -250,9 +251,8 @@
 	    }
 	    else if ( ! $new_user )
 	    {
-	        $item = [ $uid,
-		          $_SESSION['EPM_SESSION_TIME'],
-			  0 ];
+	        $item = [ $uid, $STIME, 0, 'NONE',
+		                        0, 'NONE' ];
 		file_put_contents
 		    ( "$epm_data/$f",
 		      implode ( ' ', $item ) );
@@ -378,9 +378,8 @@
 	if ( $new_user && $uid != '' )
 	{
 	    $_SESSION['EPM_UID'] = $uid;
-	    $item = [ $uid,
-	              $_SESSION['EPM_SESSION_TIME'],
-		      1];
+	    $item = [ $uid, $STIME, 1, $STIME,
+				    0, 'NONE' ];
 	    foreach ( array_merge ( [$email], $emails )
 	              as $e )
 	    {
@@ -393,6 +392,7 @@
 		{
 		    $c = implode ( ' ', $item );
 		    $item[2] = 0;
+		    $item[3] = 'NONE';
 		        // For emails other than the one
 			// logged in with.
 		    $r = @file_put_contents

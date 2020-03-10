@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 21:15:43 EDT 2020
+    // Date:	Tue Mar 10 03:56:00 EDT 2020
 
     // Handles login for a session.
     //
@@ -74,25 +74,27 @@
     //      FTIME   STIME of first time an email was
     //		    issued a TICKET.
     //
-    //      TTIME   STIME of last time an email was
-    //		    issued a TICKET.
-    //
     //      TCOUNT  Number of times an email has been
     //              issued a TICKET.
     //
-    //      ETIME   STIME of last time an email was
-    //		    issued a TICKET because a previous
-    //		    ticket had expired.
+    //      TTIME   STIME of last time an email was
+    //		    issued a TICKET.  'NONE' if TCOUNT
+    //		    is 0.
     //
     //      ECOUNT  Number of times an email has been
     //              issued a TICKET because a previous
     //		    ticket had expired.
     //
+    //      ETIME   STIME of last time an email was
+    //		    issued a TICKET because a previous
+    //		    ticket had expired.  'NONE' if
+    //		    ECOUNT is 0.
+    //
     //   EMAIL-FILE The file EDIR/EMAIL (where here
     //		    EMAIL is encoded by rawurlencode)
     //              that contains just the line:
     //
-    //		    UID FTIME TTIME TCOUNT ETIME ECOUNT
+    //		    UID FTIME TCOUNT TTIME ECOUNT ETIME
     //
     //		    File is initialized by user.php
     //		    when user first logs in, after
@@ -140,7 +142,7 @@
     // The file format is
     //
     //	 // comment
-    //   UID EMAIL IPADDR BID CTIME STIME ETIME ECOUNT
+    //   UID EMAIL IPADDR BID CTIME STIME ECOUNT ETIME
     //
     // where IPADDR is $_SESSION['EPM_IPADDR'] and for
     // a new user UID is 'NEW', CTIME and FTIME equal
@@ -240,7 +242,8 @@
     // issued and CNUM has been sent.
 
     // Read $epm_data/admin/email/$email(encoded) if it
-    // exists and if read set $data UID, FTIME, TCOUNT.
+    // exists and if read set $data UID, FTIME, TCOUNT,
+    // TTIME, ECOUNT, ETIME.
     //
     function read_email_file ( $email )
     {
@@ -258,19 +261,22 @@
 		    " file $efile" );
 	$c = trim ( $c );
 	$item = explode ( ' ', $c );
-	if ( count ( $item ) != 3 )
-	    ERROR ( "$efile value '$e' badly" .
+	if ( count ( $item ) != 6 )
+	    ERROR ( "$efile value '$c' badly" .
 		    " formatted" );
 	$data['UID'] = $item[0];
 	$data['FTIME'] = $item[1];
 	$data['TCOUNT'] = $item[2];
+	$data['TTIME'] = $item[3];
+	$data['ECOUNT'] = $item[4];
+	$data['ETIME'] = $item[5];
     }
 
     // Output NEW or EXPIRED response, creating CNUM is
     // necessary.  Note: CNUM is set iff a new TICKET
     // has been created, and its bid-file should be
-    // written and EMAIL-FILE TCOUNT incremented upon
-    // successful handshake).
+    // written and EMAIL-FILE TCOUNT and maybe ECOUNT
+    // should be incremented upon successful handshake).
     //
     function new_ticket_reply ( $email, $op )
     {
@@ -398,24 +404,25 @@
 		read_email_file ( $email );
 	    }
 
-	    if ( isset ( $data['TCOUNT'] ) )
+	    // TBD
+	    if ( isset ( $data['ECOUNT'] ) )
 	    {
-		$tcount = $data['TCOUNT'];
+		$ecount = $data['ECOUNT'];
 		$ctime = strtotime ( $item[3] );
 		$now = time();
 
 		$etimes = & $epm_expiration_times;
 		$ecount = count ( $etimes );
-		if ( $tcount > $ecount )
-		    $tcount = $ecount;
-		if ( $tcount == 0
+		if ( $ecount > $ecount )
+		    $ecount = $ecount;
+		if ( $ecount == 0
 		     ||
-		       $ctime + $etimes[$tcount-1]
+		       $ctime + $etimes[$ecount-1]
 		     < $now )
 		{
 		    // Ticket has expired.
 		    //
-		    // tcount == 0 can only happen if
+		    // ecount == 0 can only happen if
 		    // the email was deleted and then
 		    // added back, in which case any
 		    // tickets for the email should
@@ -484,9 +491,13 @@
 			   . rawurlencode
 			       ( $data['EMAIL'] );
 		    $data['TCOUNT'] += 1;
+		    $data['TTIME'] = $data['CTIME'];
 		    $item = [ $data['UID'],
 			      $data['FTIME'],
-			      $data['TCOUNT'] ];
+			      $data['TCOUNT'],
+			      $data['RTIME'],
+			      $data['ECOUNT'],
+			      $data['ETIME']];
 		    file_put_contents
 			( "$epm_data/$efile",
 			  implode ( ' ', $item ) );
@@ -509,25 +520,24 @@
 	    $_SESSION['EPM_BROWSER_ID'] = $data['BID'];
 	    $_SESSION['EPM_EMAIL'] = $data['EMAIL'];
 
-	    $stime = $_SESSION['EPM_SESSION_TIME'];
 	    if ( isset ( $data['UID'] ) )
-		$item = [ $data['BID'],
+		$item = [ $data['UID'],
 			  $data['EMAIL'],
-			  $data['UID'],
 			  $_SESSION['EPM_IPADDR'],
-			  $stime,
+			  $data['BID'],
 			  $data['CTIME'],
-			  $data['FTIME'],
-			  $data['TCOUNT'] ];
+			  $STIME,
+			  $data['ECOUNT'],
+			  $data['ETIME'] ];
 	    else
-		$item = [ $data['BID'],
+		$item = [ 'NEW',
 			  $data['EMAIL'],
-			  'NEW',
 			  $_SESSION['EPM_IPADDR'],
-			  $stime,
-			  $stime,
-			  $stime,
-			  1 ];
+			  $data['BID'],
+			  $data['CTIME'],
+			  $STIME,
+			  0,
+			  'NONE' ];
 	    file_put_contents
 		( "$epm_data/login.log",
 		  implode ( ' ', $item ) . PHP_EOL,
@@ -601,8 +611,11 @@ var LOG = function(message) {};
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;
 var get_email = document.getElementById("get_email");
+var email_in = document.getElementById("email_in");
+var email_out = document.getElementById("email_out");
 var show_email = document.getElementById("show_email");
 var get_cnum = document.getElementById("get_cnum");
+var cnum_in = document.getElementById("cnum_in");
 
 function FAIL ( message )
 {
@@ -982,8 +995,9 @@ function AUTO_RESPONSE ( item )
     else if ( item[0] == 'FAIL' )
     {
 	storage.removeItem ( EMAIL );
-	FAIL ( 'browser/email ticket not known to'
-	       + ' server; re-confirmation required' );
+	ALERT ( 'browser/email ticket not known to'
+	      + ' server; re-confirmation required' );
+	GOT_EMAIL ( EMAIL );
     }
     else if ( item[0] == 'SHAKE'
               &&
