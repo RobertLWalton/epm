@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 10 03:56:00 EDT 2020
+    // Date:	Tue Mar 10 09:01:03 EDT 2020
 
     // Handles login for a session.
     //
@@ -225,7 +225,10 @@
     elseif ( $method != 'POST' )
 	exit ( "UNACCEPTABLE HTTP METHOD $method" );
 
+    if ( ! isset ( $_SESSION['EPM_LOGIN_DATA'] ) )
+	$_SESSION['EPM_LOGIN_DATA'] = [];
     $data = & $_SESSION['EPM_LOGIN_DATA'];
+    $STIME = $_SESSION['EPM_SESSION_TIME'];
 
     // Reply to POST from xhttp.
     //
@@ -280,7 +283,7 @@
     //
     function new_ticket_reply ( $email, $op )
     {
-	global $epm_data, $data;
+	global $epm_data, $data, $STIME;
 
 	if ( ! isset ( $data['EMAIL'] )
 	     ||
@@ -307,7 +310,7 @@
 	$data['BID'] = bin2hex ( random_bytes ( 16 ) );
 	$data['KEYA'] = bin2hex ( random_bytes ( 16 ) );
 	$data['KEYB'] = bin2hex ( random_bytes ( 16 ) );
-	$data['CTIME'] = $_SESSION['EPM_SESSION_TIME'];
+	$data['CTIME'] = $STIME;
 
 	$iv = hex2bin
 	    ( "00000000000000000000000000000000" );
@@ -404,17 +407,16 @@
 		read_email_file ( $email );
 	    }
 
-	    // TBD
 	    if ( isset ( $data['ECOUNT'] ) )
 	    {
 		$ecount = $data['ECOUNT'];
-		$ctime = strtotime ( $item[3] );
+		$etime = strtotime ( $item[5] );
 		$now = time();
 
 		$etimes = & $epm_expiration_times;
-		$ecount = count ( $etimes );
-		if ( $ecount > $ecount )
-		    $ecount = $ecount;
+		$n = count ( $etimes );
+		if ( $ecount > $n )
+		    $ecount = $n;
 		if ( $ecount == 0
 		     ||
 		       $ctime + $etimes[$ecount-1]
@@ -433,6 +435,11 @@
 		    unset ( $data['KEYA'] );
 		    unset ( $data['KEYB'] );
 		    unset ( $data['CTIME'] );
+		    if ( $data['ETIME'] != $STIME )
+		    {
+			$data['ECOUNT'] += 1;
+			$data['ETIME'] = $STIME;
+		    }
 		    new_ticket_reply
 			( $email, 'EXPIRED' );
 		    exit;
