@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar  8 05:47:33 EDT 2020
+// Date:    Mon Mar  9 22:42:32 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -357,7 +357,7 @@ function find_templates
 }
 
 // Get the template.optn file json with overrides from
-// earlier template directories and users/user$uid
+// earlier template directories and users/$uid
 // directory.  Cache result in $template_optn.
 //
 $template_optn = NULL;
@@ -373,7 +373,7 @@ function get_template_optn()
     foreach ( array_reverse ( $template_roots ) as $r )
         $files[] = [$r, "template/template.optn"];
     $files[] = [$epm_data,
-                "/users/user$uid/template.optn"];
+                "/users/$uid/template.optn"];
 
     $template_optn = [];
     foreach ( $files as $e )
@@ -2355,7 +2355,7 @@ function finish_run ( & $errors )
     }
     else
     {
-	$d = "admin/submit/user$uid/$problem";
+	$d = "admin/submit/$uid/$problem";
 	@mkdir ( "$epm_data/$d", 0770, true );
 	if ( ! is_dir ( "$epm_data/$d" ) )
 	    ERROR ( "could not make directory $d" );

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 15:32:18 EDT 2020
+    // Date:	Mon Mar  9 22:39:04 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -25,7 +25,7 @@
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
 
-    $user_dir = "users/user$uid";
+    $user_dir = "users/$uid";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -172,8 +172,7 @@
 
     if ( isset ( $problem ) )
     {
-	$probdir =
-	    "users/user$uid/$problem";
+	$probdir = "users/$uid/$problem";
 	if ( ! is_dir ( "$epm_data/$probdir" ) )
 	{
 	    $errors[] = "problem $problem has been"

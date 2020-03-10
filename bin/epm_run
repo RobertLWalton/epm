@@ -121,7 +121,7 @@ $uid      = getenv ( 'EPM_UID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
 $dir      = getenv ( 'EPM_DIR' );
 
-$probdir = "users/user$uid/$problem";
+$probdir = "users/$uid/$problem";
 $include = "$epm_home/include";
 
 include "$include/epm_make.php";

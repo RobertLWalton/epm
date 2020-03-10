@@ -15,7 +15,7 @@
     $uid = $_SESSION['EPM_UID'];
     $problem = $_SESSION['EPM_PROBLEM'];
 
-    $probdir = "users/user$uid/$problem";
+    $probdir = "users/$uid/$problem";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )

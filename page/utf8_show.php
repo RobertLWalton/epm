@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 15:33:21 EDT 2020
+    // Date:	Mon Mar  9 22:40:03 EDT 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // Filename is relative to problem directory.
@@ -42,7 +42,7 @@
     $uid = $_SESSION['EPM_UID'];
     $problem = $_SESSION['EPM_PROBLEM'];
 
-    $probdir = "users/user$uid/$problem";
+    $probdir = "users/$uid/$problem";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )

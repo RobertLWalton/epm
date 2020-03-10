@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 15:32:34 EDT 2020
+    // Date:	Mon Mar  9 22:39:41 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -24,7 +24,7 @@
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
     $problem = $_SESSION['EPM_PROBLEM'];
-    $probdir = "users/user$uid/$problem";
+    $probdir = "users/$uid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
     {
