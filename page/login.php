@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 15:08:04 EDT 2020
+    // Date:	Mon Mar  9 21:15:43 EDT 2020
 
     // Handles login for a session.
     //
@@ -328,6 +328,7 @@
 	@mkdir ( "$epm_data/admin", 0770 );
 	@mkdir ( "$epm_data/admin/email", 0770 );
 	@mkdir ( "$epm_data/admin/browser", 0770 );
+	@mkdir ( "$epm_data/admin/users", 0770 );
 	@mkdir ( "$epm_data/users", 0771 );
 
 	if ( ! is_dir ( "$epm_data/admin" ) )

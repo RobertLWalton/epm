@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 15:32:53 EDT 2020
+    // Date:	Mon Mar  9 20:48:41 EDT 2020
 
     // Display and edit user information in:
     //
@@ -33,6 +33,8 @@
 
     // require "$epm_home/include/debug_info.php";
 
+    $uid_regexp = '/[A-Za-z][-_A-Za-z0-9]*[A-Za-z]/';
+
     $lock_desc = NULL;
     function shutdown ()
     {
@@ -60,7 +62,7 @@
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method == 'GET' )
 	$_SESSION['EPM_USER_EDIT_DATA'] = [
-	    'uid' => -1,
+	    'uid' => '',
 	    'emails' => [],
 	    'full_name' => '',
 	    'organization' => '',
@@ -77,41 +79,31 @@
     $location = & $data['location'];
 
     $email = $_SESSION['EPM_EMAIL'];
-    $new_user =
-        ( ! isset ( $_SESSION['EPM_UID'] ) );
+    $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
     $edit = false;
 
-    if ( $method == 'GET' )
+    if ( $method == 'GET' && ! $new_user )
     {
-        if ( ! $new_user )
-	    $uid = $_SESSION['EPM_UID'];
+	$uid = $_SESSION['EPM_UID'];
 
-	// Set $emails to the emails in admin/email
-	// that point at the current $uid and are NOT
-	// equal to $email.  Set $max_uid to the maximum
-	// user id seen among admin/email files.
+	// Set $emails to the names of EMAIL-FILEs in
+	// admin/email that point at the current $uid
+	// and are NOT equal to $email.
 	//
-	$max_uid = 0;
 	$d = "admin/email";
 	lock();
-	$desc = opendir ( "$epm_data/$d" );
-	if ( $desc === false )
+	$efiles = @scandir ( "$epm_data/$d" );
+	if ( $efiles === false )
 	    ERROR ( "cannot open $d" );
 
-	while ( true )
+	foreach ( $efiles as $efile )
 	{
-	    $value = readdir ( $desc );
-	    if ( ! $value )
-	    {
-		closedir ( $desc );
-		break;
-	    }
-	    if ( preg_match ( '/^\.\.*$/', $value ) )
+	    if ( preg_match ( '/^\.\.*$/', $efile ) )
 		continue;
-	    if ( $value == '+lock+' )
+	    if ( $efile == '+lock+' )
 	        continue;
-	    $f = "admin/email/$value";
-	    $c = file_get_contents ( "$epm_data/$f" );
+	    $f = "admin/email/$efile";
+	    $c = @file_get_contents ( "$epm_data/$f" );
 	    if ( $c === false )
 	    {
 		WARN ( "cannot read $f" );
@@ -122,48 +114,40 @@
 	    if ( count ( $item ) < 1
 		 ||
 		 ! preg_match
-		       ( '/^[1-9][0-9]*$/', $item[0] ) )
+		       ( $uid_regexp, $item[0] ) )
 	    {
 		WARN ( "bad value $c in $f" );
 		continue;
 	    }
-	    $max_uid = max ( $max_uid, $item[0] );
-	    $vemail = rawurldecode ( $value );
-	    if ( $item[0] == $uid && $vemail != $email )
-		$emails[] = $vemail;
+	    if ( $item[0] == $uid )
+	    {
+		$vemail = rawurldecode ( $efile );
+	        if ( $vemail != $email )
+		    $emails[] = $vemail;
+	    }
 	}
 	unlock();
-	if ( $new_user ) $uid = $max_uid + 1;
-	                 // This is lower bound on new
-			 // user id, and not necessarily
-			 // the actual new user id.
 	sort ( $emails );
 
-	if ( ! $new_user )
+	$f = "admin/users/$uid.info";
+	$c = @file_get_contents ( "$epm_data/$f" );
+	if ( $c === false )
+	    ERROR ( "cannot read $f" );
+	$c = preg_replace
+		 ( '#(\R|^)\h*//.*#', '', $c );
+	    // Get rid of `//...' comments.
+	$user_info = json_decode ( $c, true );
+	if ( $user_info === NULL )
 	{
-	    $f = "admin/user{$uid}.info";
-	    $c = file_get_contents ( "$epm_data/$f" );
-	    if ( $c === false )
-		ERROR ( "cannot read $f" );
-	    $c = preg_replace
-		     ( '#(\R|^)\h*//.*#', '', $c );
-		// Get rid of `//...' comments.
-	    $user_admin = json_decode ( $c, true );
-	    if ( $user_admin === NULL )
-	    {
-		$m = json_last_error_msg();
-		ERROR ( "cannot decode json in $f:" .
-		        PHP_EOL . "    $m" );
-	    }
-	    foreach ( ['full_name',
-		       'organization',
-		       'location'] as $key )
-		$data[$key] = $user_admin[$key];
+	    $m = json_last_error_msg();
+	    ERROR ( "cannot decode json in $f:" .
+		    PHP_EOL . "    $m" );
 	}
+	foreach ( ['full_name',
+		   'organization',
+		   'location'] as $key )
+	    $data[$key] = $user_info[$key];
     }
-    $max_emails = max ( $epm_max_emails,
-                        1 + count ( $emails ) );
-
 
     // Error messages and indicators for POSTs.
     //
@@ -327,6 +311,15 @@
     {
 	// Read and check all the form data.
 	//
+	if ( $new_user )
+	{
+	    sanitize ( $uid, 'uid', 'User ID', 4 );
+	    if ( count ( $errors ) == 0
+	         &&
+		 ! preg_match ( $uid_regexp, $uid ) )
+	        $errors[] = "$uid is not a properly"
+		          . " formatted user id";
+	}
 	sanitize
 	    ( $full_name, 'full_name',
 	                  'Full Name', 5 );
@@ -354,12 +347,12 @@
     {
         // We are done; copy data to files.
 	//
-	$user_admin = [];
-	$user_admin['full_name'] = $full_name;
-	$user_admin['organization'] = $organization;
-	$user_admin['location'] = $location;
+	$user_info = [];
+	$user_info['full_name'] = $full_name;
+	$user_info['organization'] = $organization;
+	$user_info['location'] = $location;
 	$j = json_encode
-	    ( $user_admin, JSON_PRETTY_PRINT );
+	    ( $user_info, JSON_PRETTY_PRINT );
 
 	lock();
 
@@ -371,13 +364,19 @@
 	         ERROR
 		     ( 'cannot open users directory' );
 
-	    while ( ! mkdir ( $epm_data .
-	                      "/users/user$uid",
-	                      0771 ) )
-	        ++ $uid;
+	    if ( ! mkdir ( "$epm_data/users/$uid",
+	                   0771 ) )
+	    {
+	        $errors[] = "user id $uid is already"
+		          . "in use by someone else";
+		$uid = '';
+	    }
 
 	    umask ( $m );
+	}
 
+	if ( $new_user && $uid != '' )
+	{
 	    $_SESSION['EPM_UID'] = $uid;
 	    $item = [ $uid,
 	              $_SESSION['EPM_SESSION_TIME'],
@@ -396,7 +395,7 @@
 		    $item[2] = 0;
 		        // For emails other than the one
 			// logged in with.
-		    $r = file_put_contents
+		    $r = @file_put_contents
 			     ( "$epm_data/$f", $c );
 		    if ( $r === false )
 			ERROR ( "could not write $f" );
@@ -404,13 +403,16 @@
 	    }
 	}
 
-	$f = "admin/user{$uid}.info";
-	$r = file_put_contents ( "$epm_data/$f", $j );
+	$f = "admin/users/$uid.info";
+	$r = @file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	    ERROR ( "count not write $f" );
 	$new_user = false;
 	unlock();
     }
+
+    $max_emails = max ( $epm_max_emails,
+                        1 + count ( $emails ) );
 
 ?>
 
@@ -487,10 +489,24 @@
     $horganization = htmlspecialchars ( $organization );
     $hlocation = htmlspecialchars ( $location );
     if ( $edit )
+    {
 	echo <<<EOT
 	<h3>Edit User Profile:</h3>
 	<form  method='POST' action='user.php'>
 	<table>
+EOT;
+	if ( $new_user ) echo <<<EOT
+	    <tr><td><b>User ID:</b></td>
+		<td> <input type='text' size='10'
+		      name='uid'
+		      title='Your Full Name'
+		      placeholder='User Id'></td></tr>
+EOT;
+	else echo <<<EOT
+	    <tr><td><b>User ID:</b></td>
+		<td>$uid</td></tr>
+EOT;
+	echo <<<EOT
 	<tr><td><b>Full Name:</b></td>
 	    <td> <input type='text' size='40'
 		  name='full_name'
@@ -514,10 +530,13 @@
 		   value='update'></td></tr>
 	</table></form>
 EOT;
+    }
     else
 	echo <<<EOT
 	<h3>User Profile:</h3>
 	<table>
+	<tr><td><b>User UD:</b></td>
+	    <td>$uid</td></tr>
 	<tr><td><b>Full Name:</b></td>
 	    <td>$hfull_name</td></tr>
 	<tr><td><b>Organization:</b></td>
