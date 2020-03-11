@@ -2,17 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Mar 11 06:31:15 EDT 2020
-
-/*  Internet Explorer login.php javascipt is not tested.
-if ( ! preg_match
-    ( '/(chrome|firefox|safari|opera|edge)/i',
-      $_SERVER['HTTP_USER_AGENT'] ) )
-    exit ( 'Unsupported Browser: Use Chrome,' .
-           ' Firefox, Safari, Opera, or Edge' );
-    // Internet Explorer is NOT supported, as it
-    // does not support Promises.
-*/
+// Date:    Wed Mar 11 15:56:58 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -192,12 +182,15 @@ $display_file_type = [
     "score" => "utf8"
     ];
 
-
 $display_file_map = [
     // See display_file_type.
     //
     "utf8" => "utf8_show.php",
     "pdf"  => "pdf_show.php" ];
+
+$epm_supported_browsers = ['Chrome', 'Firefox'];
+    // Add to this list after testing on indicated
+    // browsers.
 
 // The rest of this file is code that is not to be
 // changed.
@@ -230,7 +223,7 @@ else if (    $_SESSION['EPM_IPADDR']
     // disrupt laptops that are moving between wireless
     // cells.
 
-if ( ! isset ( $_SESSION['EPM_BROWSER_ID'] ) )
+if ( ! isset ( $_SESSION['EPM_BID'] ) )
 {
     if ( $php_self != "/page/login.php" )
     {
@@ -256,20 +249,22 @@ if ( $epm_debug != ''
      &&
      preg_match ( $epm_debug, $php_self ) )
 {
-    $epm_debug_log = "$epm_data/debug.log";
+    $epm_debug_desc = fopen
+	( "$epm_data/debug.log", 'a' );
     $epm_debug_base = pathinfo
 	( $php_self, PATHINFO_BASENAME );
-    if ( ! file_exists ( "$epm_debug_log" ) )
-        file_put_contents ( "$epm_debug_log", "" );
-	// FILE_APPEND requires the file to pre-exist.
 
     function DEBUG ( $message )
     {
-	global $epm_debug_log, $epm_debug_base;
-	file_put_contents (
-	    "$epm_debug_log",
-	    "$epm_debug_base: $message" .  PHP_EOL,
-	    FILE_APPEND );
+	global $epm_debug_desc, $epm_debug_base;
+	fwrite ( $epm_debug_desc,
+	         "$epm_debug_base: $message" .
+		 PHP_EOL );
+	// There is NO programmatic way to flush
+	// the write buffer.  Best way is to
+	// open another window on the server,
+	// which tends to flush the buffers for
+	// previously opened windows.
     }
 }
 else

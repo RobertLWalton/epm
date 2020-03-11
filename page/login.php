@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 11 13:17:53 EDT 2020
+    // Date:	Wed Mar 11 15:59:52 EDT 2020
 
     // Handles login for a session.
     //
@@ -123,7 +123,7 @@
     // the following values in $_SESSION:
     //
     //    EPM_EMAIL => EMAIL
-    //    EPM_BROWSER_ID => BID
+    //    EPM_BID => BID
     //    EPM_UID => UID, but not set by this
     //                    program for a new user.
     //
@@ -284,10 +284,12 @@
     }
 
     // Output NEW or EXPIRED response, creating CNUM is
-    // necessary.  Note: CNUM is set iff a new TICKET
-    // has been created, and its bid-file should be
-    // written and EMAIL-FILE TCOUNT and maybe ECOUNT
-    // should be incremented upon successful handshake).
+    // necessary.  $op is NEW or EXPIRED.
+    //
+    // Note: CNUM is set iff a new TICKET is being
+    // created, and its bid-file should be written and
+    // EMAIL-FILE TCOUNT and maybe ECOUNT should be
+    // incremented upon successful handshake.
     //
     function new_ticket_reply ( $email, $op )
     {
@@ -335,6 +337,9 @@
 	        " {$data['CTIME']}" );
     }
 
+    // Create admin and users directories if they do not
+    // exist.
+    //
     if ( ! is_dir ( "$epm_data/admin" ) )
     {
         $m = umask ( 06 );
@@ -442,7 +447,6 @@
 		    }
 		    new_ticket_reply
 			( $email, 'EXPIRED' );
-		    exit;
 		}
 	    }
 	     
@@ -529,7 +533,7 @@
 		    ERROR ( "could not write $bfile" );
 	    }
 
-	    $_SESSION['EPM_BROWSER_ID'] = $data['BID'];
+	    $_SESSION['EPM_BID'] = $data['BID'];
 	    $_SESSION['EPM_EMAIL'] = $data['EMAIL'];
 
 	    if ( isset ( $data['UID'] ) )
@@ -570,9 +574,7 @@
                &&
 	       preg_match ( $epm_debug, $php_self ) );
 	// True to enable javascript logging.
-
 ?>
-
 
 <html>
 
@@ -580,6 +582,29 @@
 <!-- body elements must be BEFORE script so that
      getElementById can be used to set global vars -->
 
+<?php
+
+    $agent = $_SERVER['HTTP_USER_AGENT'];
+    $ok = false;
+    foreach ( $epm_supported_browsers as $b )
+    {
+        if ( preg_match ( "/$b/i", $agent ) )
+	{
+	    $ok = true;
+	    break;
+	}
+    }
+    if ( ! $ok )
+    {
+        $ok_browsers =
+	    implode ( ",", $epm_supported_browsers );
+	echo <<<EOT
+	<mark>$agent is an untested browser type.<br>
+	      If it does not work use one of:
+	         $ok_browsers.</mark><br><br>
+EOT;
+    }
+?>
 
 <div id='get_email' style.display='none'>
 <input type='text' id='email_in'
