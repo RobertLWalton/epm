@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Mar  2 04:31:50 EST 2020
+Date:	Wed Mar 11 07:48:00 EDT 2020
 -->
 <style>
 div.header {
@@ -26,6 +26,12 @@ font-size: 12pt;
 }
 p.inline {
 display: inline;
+}
+p.list {
+margin-left: 20px;
+margin-top: 0;
+font-size: 12pt;
+}
 }
 table.top-align td {
 vertical-align: top;
@@ -55,6 +61,7 @@ vertical-align: top;
 <li><a href="#login-email">User Email Address</a><br>
 <li><a href="#browser-ticket">Browser Ticket</a><br>
 </ul>
+<li><a href="#user-page">User Page
 <li><a href="#problem-page">Problem Page
 <ul>
 <li><a href="#problem-names">Problem Names</a><br>
@@ -120,6 +127,37 @@ login page.
 The `<b>Delete All Tickets</b>' button removes the <u>all</u>
 tickets for the current EPM server from the browser and returns
 to the initial login page.
+
+<a name="user-page"><h1>User Page</h1>
+
+<p>
+To be an EPM user you must supply the following information which
+appears on the user page.
+
+<p class='indented'>
+<mark>WARNING: All this information is PUBLIC.</mark>
+
+<ul style='list-style-type:none'>
+<li><b>User ID</b>:<p class='list'>
+A short name by which you will be known.
+Must consist of letters, digits, underline(_), and dash(-),
+begin and end with a letter, and have at least 4 characters.
+<li><b>Full Name</b>:<p class='list'>
+Your full name, so that you can be looked up on the web.
+<li><b>Organization</b>:<p class='list'>
+The organization you are associated with, so you can be
+looked up in the context of this organization.
+Can be `Self', but only if you really have no organization.
+<li><b>Location</b>:<p class='list'>
+The location of your organization, e.g., town, state, and
+country.
+<li><b>Email Addresses</b>:<p class='list'>
+You must have one or more email addresses associated with
+your account.  You use these to log into the account.
+It is well to have two or more, in case you lose access to
+one of them.
+</ul>
+
 
 <a name="problem-page"><h1>Problem Page</h1>
 
@@ -234,7 +272,7 @@ and purpose:
 		     by filter and scoring programs, or
                      made from XXXX&#8209;PPPP.in
                      and XXXX&#8209;PPPP.ftest files
-		     by genereate, solution, filter
+		     by generate, solution, filter
 		     and scoring programs
 		     </td></tr>
 </table>

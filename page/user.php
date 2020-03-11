@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 11 06:31:38 EDT 2020
+    // Date:	Wed Mar 11 07:18:55 EDT 2020
 
     // Display and edit user information in:
     //
@@ -454,10 +454,15 @@
 	     " email address.</mark><br>" . PHP_EOL;
 
     if ( $edit )
-	echo "<h3>Edit User Email Addresses:</h3>" .
-	     PHP_EOL;
+	$h = "Edit User Email Addresses";
     else
-	echo "<h3>User Email Addresses:</h3>" . PHP_EOL;
+	$h = "User Email Addresses";
+    $help = HELP ( 'user-page' );
+    echo <<<EOT
+    <h3 style='display:inline'>$h</h3>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    $help<br><br>
+EOT;
 
     echo "<div style='margin-left:20px'>" . PHP_EOL;
     $hemail = htmlspecialchars ( $email );
