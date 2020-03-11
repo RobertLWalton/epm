@@ -2,24 +2,25 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 10 03:56:20 EDT 2020
+    // Date:	Wed Mar 11 06:31:38 EDT 2020
 
     // Display and edit user information in:
     //
     //		admin/email/*
     //		admin/users/$uid.info
     //
-    // Also assigns $uid and creates
+    // If $_SESSION['EPM_UID'] not set (i.e., if the
+    // user is a new user), also assigns $uid and
+    // creates:
     //
-    //		users/user{$uid}
-    //	        admin/user{$uid}.info
+    //		users/$uid
+    //	        admin/users/$uid.info
     //
-    // if $_SESSION['EPM_UID'] not set (i.e., if the
-    // user is a new user).
     //
     // Does this by using a form to collect the follow-
     // ing information:
     //
+    //	   uid		Use's ID (short name).
     //	   full_name	Use's full name.
     //	   organization Use's organization.
     //     location     Town, state, country of
@@ -40,15 +41,20 @@
     {
         global $lock_desc;
 	if ( isset ( $lock_desc ) )
+	{
 	    flock ( $lock_desc, LOCK_UN );
+	    fclose ( $lock_desc );
+	}
     }
     register_shutdown_function ( 'shutdown' );
     function lock()
     {
         global $lock_desc, $epm_data;
+	$f = "admin/email/+lock+";
         $lock_desc =
-	    fopen ( "$epm_data/admin/email/+lock+",
-	            "w" );
+	    fopen ( "$epm_data/$f", "w" );
+	if ( $lock_desc === false )
+	    ERROR ( "cannot open $f for writing" );
 	flock ( $lock_desc, LOCK_EX );
     }
     function unlock()
@@ -111,16 +117,16 @@
 		continue;
 	    }
 	    $c = trim ( $c );
-	    $item = explode ( ' ', $c );
-	    if ( count ( $item ) < 1
+	    $items = explode ( ' ', $c );
+	    if ( count ( $items ) < 1
 		 ||
 		 ! preg_match
-		       ( $uid_regexp, $item[0] ) )
+		       ( $uid_regexp, $items[0] ) )
 	    {
 		WARN ( "bad value $c in $f" );
 		continue;
 	    }
-	    if ( $item[0] == $uid )
+	    if ( $items[0] == $uid )
 	    {
 		$vemail = rawurldecode ( $efile );
 	        if ( $vemail != $email )
@@ -234,7 +240,12 @@
              &&
 	     isset ( $_POST['new_email'] ) )
     {
-    	if ( sanitize_email
+	if ( count ( $emails ) + 1 >= 
+	     $epm_max_emails )
+	    $errors[] = "you already have the maximum"
+	              . " limit of $epm_max_emails"
+		      . " email address";
+    	elseif ( sanitize_email
 	         ( $e, $_POST['new_email'] ) )
 	{
 	    lock();
@@ -242,7 +253,9 @@
 	    $f = "admin/email/$re";
 	    if ( is_readable ( "$epm_data/$f" )
 	         ||
-		 in_array ( $e, $emails ) )
+		 in_array ( $e, $emails )
+		 ||
+		 $e == $email )
 	    {
 	        $errors[] =
 		    "email address $e is already" .
@@ -251,11 +264,13 @@
 	    }
 	    else if ( ! $new_user )
 	    {
-	        $item = [ $uid, $STIME, 0, 'NONE',
-		                        0, 'NONE' ];
-		file_put_contents
+	        $items = [ $uid, $STIME, 0, 'NONE',
+		                         0, 'NONE' ];
+		$r = @file_put_contents
 		    ( "$epm_data/$f",
-		      implode ( ' ', $item ) );
+		      implode ( ' ', $items ) );
+	        if ( $r === false )
+		    ERROR ( "could not write $f" );
 	        $emails[] = $e;
 	    }
 	    else
@@ -288,17 +303,17 @@
 		array_splice ( $emails, $k, 1 );
 	    else
 	    {
-	        $c = file_get_contents
+	        $c = @file_get_contents
 		    ( "$epm_data/$f" );
 		if ( $c !== false )
 		{
 		    $c = trim ( $c );
-		    $item = explode ( ' ', $c );
-		    if ( $item[0] != $uid )
+		    $items = explode ( ' ', $c );
+		    if ( $items[0] != $uid )
 			WARN ( "UID $uid trying to" .
 			       " delete $f which" .
 			       " belongs to UID" .
-			       " {$item[0]}" );
+			       " {$items[0]}" );
 		    else
 			unlink ( "$epm_data/$f" );
 		}
@@ -378,8 +393,8 @@
 	if ( $new_user && $uid != '' )
 	{
 	    $_SESSION['EPM_UID'] = $uid;
-	    $item = [ $uid, $STIME, 1, $STIME,
-				    0, 'NONE' ];
+	    $items = [ $uid, $STIME, 1, $STIME,
+				     0, 'NONE' ];
 	    foreach ( array_merge ( [$email], $emails )
 	              as $e )
 	    {
@@ -390,11 +405,12 @@
 		           " not" );
 		else
 		{
-		    $c = implode ( ' ', $item );
-		    $item[2] = 0;
-		    $item[3] = 'NONE';
+		    $items[2] = 0;
+		    $items[3] = 'NONE';
 		        // For emails other than the one
-			// logged in with.
+			// logged in with which is first
+			// in the merged list.
+		    $c = implode ( ' ', $items );
 		    $r = @file_put_contents
 			     ( "$epm_data/$f", $c );
 		    if ( $r === false )
@@ -499,8 +515,9 @@ EOT;
 	    <tr><td><b>User ID:</b></td>
 		<td> <input type='text' size='10'
 		      name='uid'
-		      title='Your Full Name'
-		      placeholder='User Id'></td></tr>
+		      title='Your User ID (Short Name)'
+		      placeholder='User Id (Short Name)'
+		      ></td></tr>
 EOT;
 	else echo <<<EOT
 	    <tr><td><b>User ID:</b></td>
@@ -535,7 +552,7 @@ EOT;
 	echo <<<EOT
 	<h3>User Profile:</h3>
 	<table>
-	<tr><td><b>User UD:</b></td>
+	<tr><td><b>User ID:</b></td>
 	    <td>$uid</td></tr>
 	<tr><td><b>Full Name:</b></td>
 	    <td>$hfull_name</td></tr>

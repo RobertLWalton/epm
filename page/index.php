@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Mar  9 15:31:24 EDT 2020
+// Date:    Wed Mar 11 06:31:15 EDT 2020
 
 /*  Internet Explorer login.php javascipt is not tested.
 if ( ! preg_match
@@ -252,20 +252,29 @@ else if ( $php_self == "/index.php" )
     exit;
 }
 
-function DEBUG ( $message )
+if ( $epm_debug != ''
+     &&
+     preg_match ( $epm_debug, $php_self ) )
 {
-    global $epm_debug, $epm_data, $php_self;
-    if ( $epm_debug != ''
-         &&
-	 preg_match ( $epm_debug, $php_self ) )
+    $epm_debug_log = "$epm_data/debug.log";
+    $epm_debug_base = pathinfo
+	( $php_self, PATHINFO_BASENAME );
+    if ( ! file_exists ( "$epm_debug_log" ) )
+        file_put_contents ( "$epm_debug_log", "" );
+	// FILE_APPEND requires the file to pre-exist.
+
+    function DEBUG ( $message )
     {
-	$base = pathinfo
-	    ( $php_self, PATHINFO_BASENAME );
+	global $epm_debug_log, $epm_debug_base;
 	file_put_contents (
-	    "$epm_data/debug.log",
-	    "$base: $message" .  PHP_EOL,
+	    "$epm_debug_log",
+	    "$epm_debug_base: $message" .  PHP_EOL,
 	    FILE_APPEND );
     }
+}
+else
+{
+    function DEBUG ( $message ) {}
 }
 
 function WARN ( $message )

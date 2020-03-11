@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 10 09:01:03 EDT 2020
+    // Date:	Wed Mar 11 06:31:26 EDT 2020
 
     // Handles login for a session.
     //
@@ -398,6 +398,7 @@
 		ERROR ( "$bfile value '$c' badly" .
 			" formatted" );
 	    $email = $item[0];
+	    $ctime = strtotime ( $item[3] );
 	    if ( ! isset ( $data['EMAIL'] )
 		 ||
 		 $email != $data['EMAIL'] )
@@ -410,25 +411,16 @@
 	    if ( isset ( $data['ECOUNT'] ) )
 	    {
 		$ecount = $data['ECOUNT'];
-		$etime = strtotime ( $item[5] );
 		$now = time();
 
 		$etimes = & $epm_expiration_times;
 		$n = count ( $etimes );
-		if ( $ecount > $n )
-		    $ecount = $n;
-		if ( $ecount == 0
-		     ||
-		       $ctime + $etimes[$ecount-1]
+		if ( $ecount >= $n )
+		    $ecount = $n - 1;
+		if (   $ctime + $etimes[$ecount]
 		     < $now )
 		{
 		    // Ticket has expired.
-		    //
-		    // ecount == 0 can only happen if
-		    // the email was deleted and then
-		    // added back, in which case any
-		    // tickets for the email should
-		    // be treated as expired.
 		    //
 		    @unlink ( "$epm_data/$bfile" );
 		    unset ( $data['BID'] );
@@ -502,7 +494,7 @@
 		    $item = [ $data['UID'],
 			      $data['FTIME'],
 			      $data['TCOUNT'],
-			      $data['RTIME'],
+			      $data['TTIME'],
 			      $data['ECOUNT'],
 			      $data['ETIME']];
 		    file_put_contents
