@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Mar  9 22:42:32 EDT 2020
+// Date:    Thu Mar 12 13:41:25 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -42,10 +42,11 @@ if ( ! isset ( $is_epm_test ) )
 //
 if ( ! isset ( $problem_params ) )
 {
-    $f = "$probdir/problem.params";
-    $problem_params = [];
+    $f = "$probdir/$problem-$uid.params";
     if ( is_readable ( "$epm_data/$f" ) )
 	$problem_params = get_json ( $epm_data, $f );
+    else
+	$problem_params = [];
 }
 if ( isset ( $problem_params['remote_dirs'] ) )
     $remote_dirs = $problem_params['remote_dirs'];
