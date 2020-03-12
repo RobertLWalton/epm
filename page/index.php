@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Mar 11 15:56:58 EDT 2020
+// Date:    Thu Mar 12 03:12:52 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -159,10 +159,10 @@ $display_file_type = [
     // To be listed as a problem file, and thence be
     // `displayable', a file must have extension EEE
     // such that $display_file_type['EEE'] == TTT
-    // exists.  If display_file_map[TTT] = PPPP.php,
-    // then the web page /page/PPPP.php may be used to
-    // display the file.  Otherwise TTT is the file type
-    // and only that is displayed.
+    // exists.  If display_file_map[TTT] = GGGG then the
+    // web page /page/GGGG may be used to display the
+    // file.  Otherwise TTT is the file type and only
+    // that is displayed.
     //
     // WARNING: the UNIX file(1) command CANNOT be
     //          reliably used to determine whether
@@ -176,12 +176,12 @@ $display_file_type = [
     "" => "Compiled Binary Executable",
     "class" => "Compiled JAVA Executable",
     "pyc" => "Compiled PYTHON Executable",
+    "run" => "utf8",
     "pdf" => "pdf",
     "in" => "utf8",
     "sin" => "utf8",
     "test" => "utf8",
     "ftest" => "utf8",
-    "run" => "utf8",
     "cout" => "utf8",
     "sout" => "utf8",
     "dout" => "utf8",
@@ -212,7 +212,8 @@ $epm_supported_browsers = ['Chrome', 'Firefox'];
     // browsers.
 
 // The rest of this file is code that is not to be
-// changed.
+// changed.  This code is effectively included at the
+// start of all EPM PHP pages.
 
 session_start();
 clearstatcache();
@@ -228,7 +229,7 @@ if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
     file_put_contents (
         "$epm_data/error.log",
 	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
-	" {$_SERVER['REMOTE_ADDR']}" .
+	" {$_SESSION['EPM_IPADDR']}" .
 	" {$_SERVER['REMOTE_HOST']}" . PHP_EOL,
 	FILE_APPEND );
 }
@@ -310,6 +311,9 @@ function EPM_ERROR_HANDLER
 
     if ( error_reporting() == 0 )
         return true;
+	// Return if @ operator has suppressed all
+	// error handling.  Returning true suppresses
+	// normal error handling.
 
     if ( $errno & ( E_USER_NOTICE |
                     E_USER_WARNING ) )
@@ -341,12 +345,17 @@ function EPM_ERROR_HANDLER
         exit ( $message );
 
     return true;
+        // Returning true suppresses normal error
+	// handling.
 }
 
 set_error_handler ( 'EPM_ERROR_HANDLER' );
 
 // Returns HTML for a help button that goes to the
-// specified item in the help.html file.
+// specified item in the help.html file.  Within
+// HTML call this with:
+//
+//     <?php echo ( HELP ( '...' ) ); ?>
 //
 function HELP ( $item )
 {
