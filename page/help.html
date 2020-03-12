@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Mar 12 01:40:29 EDT 2020
+Date:	Thu Mar 12 06:06:43 EDT 2020
 -->
 <style>
 div.header {
@@ -31,7 +31,6 @@ p.list {
 margin-left: 20px;
 margin-top: 0;
 font-size: 12pt;
-}
 }
 table.top-align td {
 vertical-align: top;
@@ -243,6 +242,7 @@ and purpose:
 <tr><td>XXXX&#8209;PPPP.in</td><td>Solution Input File</td></tr>
 <tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files</td></tr>
 </table>
+<br>
 <b>Files Made During Upload:</b><br>
 <table class='extension'>
 <tr><td>PPPP</td><td>C/C++ Program Binary File,
@@ -253,10 +253,15 @@ and purpose:
                      made from PPPP.java file</td></tr>
 <tr><td>PPPP.pdf</td><td>Document PDF File,
                      made from PPPP.tex file</td></tr>
+<tr><td>PPPP.tout</td><td>LATEX output file listing errors,
+                     some just informative,
+                     made from PPPP.tex file</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.in file
-		     (and compiled solution and generate program)</td></tr>
+		     by generate program and compiled solution
+		     </td></tr>
 </table>
+<br>
 <b>Files Made From Other Files (Not During Upload):</b><br>
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
@@ -264,11 +269,16 @@ and purpose:
 		     by generate program</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.in file
-		     by generate program and solution
+		     by generate program and compiled solution
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.fout</td><td>Filtered Solution Output File,
                      made from XXXX&#8209;PPPP.sout file
 		     by filter program
+		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
+                     made from XXXX&#8209;PPPP.fout file
+		     by simple copying (WARNING: affects scoring)
+		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.score</td><td>Scoring Output File,
                      made from XXXX&#8209;PPPP.fout
                      and XXXX&#8209;PPPP.ftest files
@@ -282,11 +292,16 @@ and purpose:
 		     and scoring programs
 		     </td></tr>
 </table>
+<br>
 <b>Working Files That Should Be Empty:</b><br>
 <table class='extension'>
 <tr><td>PPPP.cout<br>XXXX&#8209;PPPP.cout</td>
-    <td>Compiler Output File, empty except for .tex</td></tr>
-<tr><td>PPPP.cerr</td><td>Error Output from compilation
+    <td>Compiler Output File, made during upload or
+        debug compilation</td></tr>
+<tr><td>PPPP.cerr<br>XXXX&#8209;PPPP.cerr</td>
+                 <td>Error Output from compilation
+		     during upload or debug compilation</td></tr>
+<tr><td>PPPP.terr</td><td>Error Output from LATEX
 		     during upload</td></tr>
 <tr><td>XXXX&#8209;PPPP.gYerr</td><td>Error Output from
 		     generate program (if generate program
@@ -297,7 +312,22 @@ and purpose:
 <tr><td>XXXX&#8209;PPPP.serr</td><td>Error Output from
 		     solution program</td></tr>
 </table>
+<br>
+<b>Working Files That Are Not Empty:</b><br>
+<table class='extension'>
+<tr><td>PPPP.log</td><td>Log file of a LATEX compilation,
+                         made from PPPP.tex file</td></tr>
+<tr><td>PPPP.fls</td><td>File List that lists all input and
+                         output files in a LATEX compilation,
+                         made from PPPP.tex file</td></tr>
+</table>
+
 </div>
+<br>
+
+Files that are kept on successful uploads or makes will
+remain as (usually non-empty)
+working files on unsuccessful uploads or makes.
 
 </div>
 </body>

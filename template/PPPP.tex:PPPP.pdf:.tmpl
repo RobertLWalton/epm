@@ -1,10 +1,10 @@
 {
 
 "COMMANDS": ["pdflatex -record -no-shell-escape -interaction \\",
-             "    nonstopmode >PPPP.cout 2>PPPP.cerr PPPP.tex"],
+             "    nonstopmode >PPPP.tout 2>PPPP.terr PPPP.tex"],
 "CONDITION": "UPLOAD PPPP.tex",
-"KEEP":    ["PPPP.pdf","PPPP.log","PPPP.fls", "PPPP.tex"],
-"SHOW":    ["PPPP.pdf", "PPPP.cerr", "PPPP.cout"],
-"CHECKS":  ["EMPTY PPPP.cerr"]
+"KEEP":    ["PPPP.pdf","PPPP.tout","PPPP.tex"],
+"SHOW":    ["PPPP.pdf", "PPPP.terr", "PPPP.tout"],
+"CHECKS":  ["EMPTY PPPP.terr"]
 
 }
