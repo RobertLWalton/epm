@@ -21,7 +21,7 @@ if ( $php_self == '/page/index.php' )
     exit;
 }
 
-// To set up a epm instance you need the following
+// To set up an EPM instance you need the following
 // directories:
 //
 //     R	$_SERVER['DOCUMENT_ROOT'].  Directory
@@ -29,9 +29,9 @@ if ( $php_self == '/page/index.php' )
 //		this file.
 //     H	The `epm' home directory containing
 //           	`page', `template', etc subdirectories.
-//           	Must NOT be a subdirectory of R.
+//           	Must NOT be a descendant of R.
 //     D	Directory that will contain data.  This
-//		must NOT be a subdirectory of R.  Also,
+//		must NOT be a descendant of R.  Also,
 //	   	o+x permissions must be set on this dir-
 //		ectory and all its parents, because
 //		running JAVA in epm_sandbox requires
@@ -53,18 +53,18 @@ if ( $php_self == '/page/index.php' )
 // also be in this group and have g+x permission, unless
 // they have a+x permission.
 //
-// We assume only your account, and not the web server,
-// will have write permissions on R and H.
+// Only your account, and not the web server, should
+// have write permissions on R and H.
 //
 // Then to install, after populating H and creating
 // R and D:
 //
 //	chgrp WEB-SERVERS-GROUP \
-//	      R `find H` `find D`
+//	      R `find H` D
 //	chmod g+s \
-//	      R `find H -type d` \
-//              `find D -type d`
+//	      R `find H -type d` D
 //	chmod g-w R `find H`
+//	chmod g+w D
 //
 //	cd R
 //	ln -s H/page .
@@ -76,18 +76,24 @@ if ( $php_self == '/page/index.php' )
 //
 $epm_data = dirname ( $_SERVER['DOCUMENT_ROOT'] )
           . '/epm_658746537635';
-    // WARNING: this is only a test setting;
-    //          reset this to D above.
-    //          Include non-public site-specific
-    //          12 digit random number.
+    // WARNING:
+    //   This is only a test setting; reset this to
+    //   D above (and UNLIKE the test setting, be
+    //   sure D is not a descendant of R).
+    //
+    //   Include a NON-PUBLIC SITE-SPECIFIC 12 digit
+    //   random number as part of the LAST COMPONENT
+    //   of the name of D.
 
 $epm_home = dirname ( $_SERVER['DOCUMENT_ROOT'] );
-    // WARNING: this is only a test setting;
-    //          reset this to E above.
+    // WARNING:
+    //   This is only a test setting; reset this to H
+    //   above (and UNLIKE the test setting, be sure
+    //   sure H is not a descendant of R).
 
 session_name ( "EPM_859036254367" );
-    // Reset 12 digit number to non-public site-
-    // specific 12 digit random number.
+    // Reset 12 digit number to NON-PUBLIC SITE-
+    // SPECIFIC 12 digit random number.
 
 $epm_debug = '';
 $epm_debug = '/(login|user|problem|run)/';
@@ -115,11 +121,22 @@ $epm_shell_timeout = 3;
     // startup and execute initialization commands
     // for a .sh script.
 
-$epm_name =
-    '/^[A-Za-z0-9][-_A-Za-z0-9]*(|\.[A-Za-z0-9]+)$/';
+$epm_name_re =
+    '/^[A-Za-z][-_A-Za-z0-9]*[A-Za-z]$/';
+    // Regular expression matching only legal EPM
+    // names, which have only letters, digits,
+    // underline(_), and dash(-), and begin and end
+    // with a letter.
+
+$epm_filename_re =
+    '/^[A-Za-z][-_A-Za-z0-9]*[A-Za-z]' .
+    '(|\.[A-Za-z0-9]+)$/';
     // Regular expression matching only legal EPM
     // public file names (not matching +XXX+ names
-    // used internally).
+    // used internally).  These names have an EPM
+    // name for their base, and have an optional
+    // extension consisting of one or more letters
+    // and digits.
 
 $upload_target_ext = [
     // If file YYYY.EEE is uploadable, then

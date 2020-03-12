@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 11 07:18:55 EDT 2020
+    // Date:	Wed Mar 11 21:35:43 EDT 2020
 
     // Display and edit user information in:
     //
@@ -33,8 +33,6 @@
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
-
-    $uid_regexp = '/[A-Za-z][-_A-Za-z0-9]*[A-Za-z]/';
 
     $lock_desc = NULL;
     function shutdown ()
@@ -121,7 +119,7 @@
 	    if ( count ( $items ) < 1
 		 ||
 		 ! preg_match
-		       ( $uid_regexp, $items[0] ) )
+		       ( $epm_name_re, $items[0] ) )
 	    {
 		WARN ( "bad value $c in $f" );
 		continue;
@@ -331,7 +329,7 @@
 	    sanitize ( $uid, 'uid', 'User ID', 4 );
 	    if ( count ( $errors ) == 0
 	         &&
-		 ! preg_match ( $uid_regexp, $uid ) )
+		 ! preg_match ( $epm_name_re, $uid ) )
 	        $errors[] = "$uid is not a properly"
 		          . " formatted user id";
 	}

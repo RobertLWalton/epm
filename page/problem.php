@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 22:39:04 EDT 2020
+    // Date:	Wed Mar 11 21:35:17 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -69,16 +69,13 @@
 	    // field.
 	    $problem = NULL;
 	}
-	elseif ( ! preg_match ( '/^[-_A-Za-z0-9]+$/',
-	                        $problem )
-	         ||
-	         ! preg_match ( '/[A-Za-z]/', $problem )
-	       )
+	elseif ( ! preg_match ( $epm_name_re,
+	                        $problem ) )
 	{
 	    $errors[] =
 	        "problem name $problem contains an" .
-		" illegal character or" .
-		" does not contain a letter";
+		" illegal character or does not" .
+		" begin and end with a letter";
 	    $problem = NULL;
 	}
 	else
@@ -104,7 +101,7 @@
     {
         $problem = trim ( $_POST['selected_problem'] );
 	if ( ! preg_match
-	           ( '/^[-_A-Za-z0-9]+$/', $problem ) )
+	           ( $epm_name_re , $problem ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	else
 	if ( ! is_dir
@@ -221,8 +218,7 @@
 	    closedir ( $desc );
 	    break;
 	}
-	if ( preg_match
-	         ( '/^[-_A-Za-z0-9]+$/', $value ) )
+	if ( preg_match ( $epm_name_re, $value ) )
 	    $problems[] = $value;
     }
 
@@ -234,7 +230,8 @@
     //
     function problem_file_names ( $dir )
     {
-        global $epm_data, $display_file_type, $epm_name;
+        global $epm_data, $display_file_type,
+	       $epm_filename_re;
 
 	clearstatcache();
 	$map = [];
@@ -242,9 +239,8 @@
 	foreach ( scandir ( "$epm_data/$dir" )
 	          as $fname )
 	{
-	    if ( preg_match ( '/^\./', $fname ) )
-	        continue;
-	    if ( ! preg_match ( $epm_name, $fname ) )
+	    if ( ! preg_match
+	               ( $epm_filename_re, $fname ) )
 	        continue;
 	    $ext = pathinfo
 	        ( $fname, PATHINFO_EXTENSION );
