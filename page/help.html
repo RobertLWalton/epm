@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Mar 11 07:48:00 EDT 2020
+Date:	Thu Mar 12 01:40:29 EDT 2020
 -->
 <style>
 div.header {
@@ -135,7 +135,13 @@ To be an EPM user you must supply the following information which
 appears on the user page.
 
 <p class='indented'>
-<mark>WARNING: All this information is PUBLIC.</mark>
+<mark>WARNING: All this information is PUBLIC in that it is
+	       available to other users of the same EPM
+	       server,
+               except that email addresses will be abridged
+	       when published by replacing characters
+	       in them by dot(.) to prevent use by
+	       unsophisticated robots.</mark>
 
 <ul style='list-style-type:none'>
 <li><b>User ID</b>:<p class='list'>
@@ -173,7 +179,7 @@ A <a name='problem-name'><b>problem name</b></a>
 can contain only letters, digits, and the
 special characters dash(<pre.inline>-</pre>) and
 underline(<pre.inline>_</pre>).
-In addition, it must begin with a letter.
+In addition, it must begin and end with a letter.
 
 <a name="problem-marks"><h2>Problem Marks</h2>
 <p>
@@ -183,7 +189,7 @@ On the problem page:
 <tr><td>&uarr;</td><td>means `hide'</td></tr>
 <tr><td>&Chi;</td><td>means `mark for deletion';
 deletion does not occur until you `Delete Marked Files'
-or make a new file</td></tr>
+or upload or make a new file</td></tr>
 <tr><td>+</td><td>means `remove deletion mark'</td></tr>
 <tr><td>&rArr;</td><td>means `make a new file with given extension from the file named on the same line'</td></tr>
 </table>

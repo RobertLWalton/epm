@@ -129,14 +129,16 @@ $epm_name_re =
     // with a letter.
 
 $epm_filename_re =
-    '/^[A-Za-z][-_A-Za-z0-9]*[A-Za-z]' .
-    '(|\.[A-Za-z0-9]+)$/';
+    '/^[A-Za-z0-9](|[-_A-Za-z0-9]*[A-Za-z0-9])' .
+    '(|\.[A-Za-z0-9](|[-_A-Za-z0-9]*[A-Za-z0-9]))$/';
     // Regular expression matching only legal EPM
     // public file names (not matching +XXX+ names
-    // used internally).  These names have an EPM
-    // name for their base, and have an optional
-    // extension consisting of one or more letters
-    // and digits.
+    // used internally).  These names can contain
+    // only letters, digits, dash(-), and underline(_),
+    // except for a single dot(.) introducing the
+    // extension, and dash(-) and underline(_) must
+    // not be the first or last character of the file
+    // base name or extension.
 
 $upload_target_ext = [
     // If file YYYY.EEE is uploadable, then

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 11 15:59:52 EDT 2020
+    // Date:	Thu Mar 12 01:30:58 EDT 2020
 
     // Handles login for a session.
     //
@@ -619,7 +619,7 @@ EOT;
 Email:&nbsp;<span id='email_out'></span>
 <br>
 <button onclick="window.location.reload(true)">
-Retry Login
+Change Email Address
 </button>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <button onclick="RESET_EMAIL()">
@@ -964,7 +964,7 @@ function CNUM_NOT_VALID ( error )
     LOG ( 'CNUM_NOT_VALID ERROR: ' . error );
     alert ( CNUM + ' is not valid;'
 	    + ' enter different confirmation number'
-	    + ' or retry login' );
+	    + ' or change email address' );
     EXPIRED();
 }
 
