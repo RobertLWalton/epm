@@ -355,8 +355,6 @@ set_error_handler ( 'EPM_ERROR_HANDLER' );
 // specified item in the help.html file.  Within
 // HTML call this with:
 //
-//     <?php echo ( HELP ( '...' ) ); ?>
-//
 function HELP ( $item )
 {
     return "<button type='button'" .
