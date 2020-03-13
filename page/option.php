@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 22:38:39 EDT 2020
+    // Date:	Thu Mar 12 20:51:43 EDT 2020
 
     // Edits problem option page.
 
@@ -102,43 +102,53 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $post_processed = false;
 
     // Process template option files, with overriding
     // files processed last.
     //
     $optn_files = [];
     $optn_files[] =
-        [$epm_home, "template/template.optn"];
+	[$epm_home, "template/template.optn"];
     $optn_files[] =
-        [$epm_data, "template/template.optn"];
+	[$epm_data, "template/template.optn"];
     $optn_files[] =
-        [$epm_data, "/users/$uid/template.optn"];
+	[$epm_data, "/users/$uid/template.optn"];
 
-    $template_optn = [];
+    $options = [];
     foreach ( $optn_files as $e )
     {
 	$r = $e[0];
 	$f = $e[1];
-        if ( ! is_readable ( "$r/$f" ) ) continue;
+	if ( ! is_readable ( "$r/$f" ) ) continue;
 	$j = get_json ( $r, $f );
 
 	// template.optn values are 2D arrays.
 	//
 	foreach ( $j as $opt => $description )
 	foreach ( $description as $key => $value )
-	    $template_optn[$opt][$key] = $value;
+	    $options[$opt][$key] = $value;
     }
 
-    // Get current values of options.
+    // Set the following:
     //
-    $values = [];
-    foreach ( $template_options as $key => $value )
+    //    $values maps NAME => CURRENT-OPTION-VALUE
+    //    $inherited maps NAME => INHERITED-OPTION-VALUE
+    //    $default maps NAME => DEFAULT-OPTION-VALUE
+    //
+    // where NAME is option name (e.g., "g++std"),
+    // CURRENT-OPTION-VALUE is current value of option,
+    // which is value from template overridden by
+    // any values from $problem.optn files,
+    // INHERITED-OPTION-VALUE is ditto but excludes
+    // values from $probdir/$problem.opt, and $defaults
+    // is initial value of $values.
+    //
+    foreach ( $options as $opt => $value )
     {
         if ( isset ( $value['values'] ) )
-	    $options[$key] = $value['values'][0];
+	    $values[$opt] = $value['values'][0];
 	elseif ( isset ( $value['default'] ) )
-	    $options[$key] = $value['default'];
+	    $values[$opt] = $value['default'];
 	else
 	    $errors[] = "template $key has neither"
 	              . " 'values' or 'default'";
@@ -149,12 +159,12 @@
         if ( ! is_readable ( "$epm_data/$f" ) )
 	    continue;
 	$j = get_json ( $epm_data, $f );
-	foreach ( $j as $key => $value )
+	foreach ( $j as $opt => $value )
 	{
-	    if ( isset ( $values[$key] ) )
-		$values[$key] = $value;
+	    if ( isset ( $values[$opt] ) )
+		$values[$opt] = $value;
 	    else
-	        $errors[] = "option $key in $f is not"
+	        $errors[] = "option $opt in $f is not"
 		          . " in templates";
 	}
     }
@@ -165,12 +175,12 @@
     if ( is_readable ( "$epm_data/$f" ) )
     {
 	$j = get_json ( $epm_data, $f );
-	foreach ( $j as $key => $value )
+	foreach ( $j as $opt => $value )
 	{
-	    if ( isset ( $values[$key] ) )
-		$values[$key] = $value;
+	    if ( isset ( $values[$opt] ) )
+		$values[$opt] = $value;
 	    else
-	        $errors[] = "option $key in $f is not"
+	        $errors[] = "option $opt in $f is not"
 		          . " in templates";
 	}
     }
@@ -313,102 +323,8 @@
     </div>
 EOT;
 
-    if ( isset ( $runbase ) && $runresult !== true )
-        echo "<script>" .
-	     "TOGGLE('s_rout1','rout1')</script>";
 ?>
 
-<form action='run.php' method='POST' id='reload'>
-<input type='hidden' name='reload' value='reload'>
-</form>
-
-<script>
-    var LOG = function(message) {};
-    <?php if ( $debug )
-              echo "LOG = console.log;" . PHP_EOL;
-    ?>
-
-    var xhttp = new XMLHttpRequest();
-
-    function FAIL ( message )
-    {
-	// Alert must be scheduled as separate task.
-	//
-	LOG ( "call to FAIL: " + message );
-    <?php
-	if ( $debug )
-	    echo <<<'EOT'
-		setTimeout ( function () {
-		    alert ( message );
-		    window.location.reload ( true );
-		});
-EOT;
-	else
-	    echo <<<'EOT'
-		throw "CALL TO FAIL: " + message;
-EOT;
-    ?>
-    }
-
-
-    function ALERT ( message )
-    {
-	// Alert must be scheduled as separate task.
-	//
-	setTimeout
-	    ( function () { alert ( message ); } );
-    }
-
-    var reload = document.getElementById("reload");
-
-    function PROCESS_RESPONSE ( response )
-    {
-        if ( response.trim() == 'RELOAD' )
-	{
-	    reload.submit();
-	    return;
-	}
-	let e = document.getElementById('status');
-	e.innerText = response;
-	REQUEST_UPDATE();
-    }
-
-    var REQUEST_IN_PROGRESS = false;
-    function REQUEST_UPDATE()
-    {
-	xhttp.onreadystatechange = function() {
-	    LOG ( 'xhttp state changed to state '
-		  + this.readyState );
-	    if ( this.readyState != XMLHttpRequest.DONE
-		 ||
-		 ! REQUEST_IN_PROGRESS )
-		return;
-
-	    if ( this.status != 200 )
-		FAIL ( 'Bad response status ('
-		       + this.status
-		       + ') from server on'
-		       + ' update request' );
-
-	    REQUEST_IN_PROGRESS = false;
-	    LOG ( 'xhttp response: '
-		  + this.responseText );
-	    PROCESS_RESPONSE ( this.responseText );
-	};
-	xhttp.open ( 'POST', "run.php", true );
-	xhttp.setRequestHeader
-	    ( "Content-Type",
-	      "application/x-www-form-urlencoded" );
-	REQUEST_IN_PROGRESS = true;
-	LOG ( 'xhttp sent: update' );
-	xhttp.send ( 'update=update' );
-    }
-    <?php
-	if ( $runresult === true )
-	    echo "REQUEST_UPDATE();" . PHP_EOL;
-    ?>
-
-</script>
 
 </body>
 </html>
