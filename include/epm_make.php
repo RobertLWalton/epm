@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 12 13:41:25 EDT 2020
+// Date:    Fri Mar 13 04:35:19 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -374,7 +374,7 @@ function get_template_optn()
     foreach ( array_reverse ( $template_roots ) as $r )
         $files[] = [$r, "template/template.optn"];
     $files[] = [$epm_data,
-                "/users/$uid/template.optn"];
+                "admin/users/$uid/template.optn"];
 
     $template_optn = [];
     foreach ( $files as $e )

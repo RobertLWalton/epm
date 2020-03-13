@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 12 20:51:43 EDT 2020
+    // Date:	Fri Mar 13 06:29:48 EDT 2020
 
     // Edits problem option page.
 
@@ -103,8 +103,19 @@
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
 
-    // Process template option files, with overriding
-    // files processed last.
+    // Set options to the json of $epm_home/template/
+    // template.optn with overrides (as a 2D matrix)
+    // from $epm_data/template/template.optn and
+    // $epm_data/admin/users/$uid/template.optn.
+    //
+    // Also set the following:
+    //
+    //    $valnames maps VALNAME => OPT-LIST
+    //    $argnames maps ARGNAME => OPT-LIST
+    //
+    // where the OPT in OPT-LIST have the given
+    // 'valname' or 'argname'.  These maps are sorted
+    // alphabetically by key.
     //
     $optn_files = [];
     $optn_files[] =
@@ -112,9 +123,16 @@
     $optn_files[] =
 	[$epm_data, "template/template.optn"];
     $optn_files[] =
-	[$epm_data, "/users/$uid/template.optn"];
+	[$epm_data, "admin/users/$uid/template.optn"];
 
     $options = [];
+    $argnames = [];
+    $valnames = [];
+    $description_keys =
+        ['argname', 'valname', 'description',
+	 'values','type','range','default'];
+    $description_types =
+        ['natural', 'integer', 'float', 'args'];
     foreach ( $optn_files as $e )
     {
 	$r = $e[0];
@@ -124,10 +142,51 @@
 
 	// template.optn values are 2D arrays.
 	//
+	// Note that template errors are system errors
+	// and must be corrected before system can be
+	// used.
+	//
 	foreach ( $j as $opt => $description )
-	foreach ( $description as $key => $value )
-	    $options[$opt][$key] = $value;
+	{
+	    foreach ( $description as $key => $value )
+	    {
+	        if ( ! in_array
+		           ( $key, $description_keys ) )
+		    ERROR ( "invalid description key" .
+		            " $key for option $opt" .
+			    " in $f" );
+		else
+		    $options[$opt][$key] = $value;
+	    }
+	}
     }
+    foreach ( $options as $opt => $description )
+    {
+	if ( isset ( $description['argname'] ) )
+	    $argnames[$description['argname']][] =
+		$opt;
+	elseif ( isset ( $description['valname'] ) )
+	    $valnames[$description['valname']][] =
+		$opt;
+	else
+	    ERROR ( "option $opt has neither" .
+		    " 'argname' or 'valname'" .
+		    " in option templates" );
+
+	if ( isset ( $description['type'] ) )
+	{
+	    $dt = $description['type'];
+	    if ( ! in_array
+	               ( $dt, $description_types ) )
+		ERROR ( "option $opt has unknown" .
+			" 'type' $dt" );
+	else if ( ! isset ( $description['values'] ) )
+	    ERROR ( "option $opt has neither" .
+		    " 'values' or 'type'" .
+		    " in option templates" );
+    }
+    ksort ( $valnames, SORT_NATURAL );
+    ksort ( $argnames, SORT_NATURAL );
 
     // Set the following:
     //
@@ -186,11 +245,77 @@
     }
 
     $default = $values;
+    $changed = false;
+        // True if $values != $default.
 
-    // TBD
-    //
+    // If editing, $values is update and marked as
+    // which is marked as changed if there is an update.
+    // Then if there are no errors, $values is written
+    // and becomes the new default.
+
     if ( isset ( $_POST['submit'] ) )
     {
+	foreach ( $values as $opt => $value )
+	{
+	    if ( ! isset ( $_POST[$opt] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $v = $_POST[$opt];
+	    if ( $v == $value ) continue;
+		// No need for checking.
+
+	    $d = $options[$opt];
+	    $name = ( isset ( $d['valname' ) ?
+	              $d['valname'] :
+		      $d['argname'] );
+	    if ( isset ( $d['values'] ) )
+	    {
+	        if ( ! in_array ( $v, $d['values'] ) )
+		    $errors[] = "$v is not a valid"
+		              . " value for $name";
+		else
+		{
+		    $values[$opt] = $v;
+		    $changed = true;
+		}
+	    }
+	    elseif ( isset ( $d['type'] ) )
+	    {
+	        $t = $d['type'];
+		if ( $t == 'natural' )
+		{
+		    $re = '/^\d+$/';
+		    $tn = 'a natural number';
+		}
+		elseif ( $t == 'an integer' )
+		{
+		    $re = '/^(|+|-)\d+$/';
+		    $tn = 'integer';
+		}
+		elseif ( $t == 'float' )
+		{
+		    $re = '/^(|+|-)\d+'
+		        . '(|\.\d+)'
+		        . '(|(e|E)(|+|-)\d+)/';
+		    $tn = 'a float';
+		}
+		elseif ( $t == 'args' )
+		{
+		    $re = '/^(\s|\w)*$/';
+		    $tn = 'an argument';
+		}
+		if ( ! preg_match ( $re, $v ) )
+		{
+		    $errors[] = "$v in $name"
+		              . " is not $tn";
+		    continue;
+		}
+		else
+		{
+		    $values[$opt] = $v;
+		    $changed = true;
+		}
+	    }
+	}
     }
 
     if ( $method == 'POST' && ! $post_processed )

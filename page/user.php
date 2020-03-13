@@ -2,19 +2,19 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 11 21:35:43 EDT 2020
+    // Date:	Fri Mar 13 04:32:10 EDT 2020
 
     // Display and edit user information in:
     //
     //		admin/email/*
-    //		admin/users/$uid.info
+    //		admin/users/$uid/$uid.info
     //
     // If $_SESSION['EPM_UID'] not set (i.e., if the
     // user is a new user), also assigns $uid and
     // creates:
     //
     //		users/$uid
-    //	        admin/users/$uid.info
+    //	        admin/users/$uid/$uid.info
     //
     //
     // Does this by using a form to collect the follow-
@@ -134,7 +134,7 @@
 	unlock();
 	sort ( $emails );
 
-	$f = "admin/users/$uid.info";
+	$f = "admin/users/$uid/$uid.info";
 	$c = @file_get_contents ( "$epm_data/$f" );
 	if ( $c === false )
 	    ERROR ( "cannot read $f" );
@@ -417,7 +417,7 @@
 	    }
 	}
 
-	$f = "admin/users/$uid.info";
+	$f = "admin/users/$uid/$uid.info";
 	$r = @file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	    ERROR ( "count not write $f" );
