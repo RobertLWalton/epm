@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 13 06:29:48 EDT 2020
+    // Date:	Fri Mar 13 13:28:30 EDT 2020
 
     // Edits problem option page.
 
@@ -117,6 +117,10 @@
     // 'valname' or 'argname'.  These maps are sorted
     // alphabetically by key.
     //
+    // Lastly, check format of option templates and
+    // report errors by appending to $errors.  Template
+    // errors will result in a call to ERROR below.
+    //
     $optn_files = [];
     $optn_files[] =
 	[$epm_home, "template/template.optn"];
@@ -142,19 +146,15 @@
 
 	// template.optn values are 2D arrays.
 	//
-	// Note that template errors are system errors
-	// and must be corrected before system can be
-	// used.
-	//
 	foreach ( $j as $opt => $description )
 	{
 	    foreach ( $description as $key => $value )
 	    {
 	        if ( ! in_array
 		           ( $key, $description_keys ) )
-		    ERROR ( "invalid description key" .
-		            " $key for option $opt" .
-			    " in $f" );
+		    $errors[] =
+		        "invalid description key $key" .
+			" for option $opt in $f";
 		else
 		    $options[$opt][$key] = $value;
 	    }
@@ -162,28 +162,66 @@
     }
     foreach ( $options as $opt => $description )
     {
-	if ( isset ( $description['argname'] ) )
+	$isarg = isset ( $description['argname'] );
+	$isval = isset ( $description['valname'] );
+	if ( $isarg && $isval )
+	    $errors[] = "option $opt has BOTH"
+	              . " 'argname' AND 'valname'";
+	elseif ( $isarg )
 	    $argnames[$description['argname']][] =
 		$opt;
-	elseif ( isset ( $description['valname'] ) )
+	elseif ( $isval )
 	    $valnames[$description['valname']][] =
 		$opt;
-	else
-	    ERROR ( "option $opt has neither" .
-		    " 'argname' or 'valname'" .
-		    " in option templates" );
+    }
+    foreach ( $options as $opt => $description )
+    {
+	if ( ! isset ( $description['description'] ) )
+	    $errors[] =
+	        "option $opt has NO description";
 
-	if ( isset ( $description['type'] ) )
+	$hasvalues = isset ( $description['values'] );
+	$hastype = isset ( $description['type'] );
+	$hasdefault = isset ( $description['default'] );
+	$hasrange = isset ( $description['range'] );
+	if ( $hasvalues && $hastype )
+	    $errors[] = "option $opt has BOTH"
+	              . " 'values' AND 'type'";
+	elseif ( $hasvalues )
 	{
-	    $dt = $description['type'];
-	    if ( ! in_array
-	               ( $dt, $description_types ) )
-		ERROR ( "option $opt has unknown" .
-			" 'type' $dt" );
-	else if ( ! isset ( $description['values'] ) )
-	    ERROR ( "option $opt has neither" .
-		    " 'values' or 'type'" .
-		    " in option templates" );
+	    if ( ! $hasdefault )
+		$errors[] =
+		    "option $opt has NO default";
+	    else
+	    {
+	        $values = $description['values'];
+	        $default = $description['default'];
+		if ( ! in_array ( $default, $values ) )
+		    $errors[] =
+			"option $opt default $default" .
+			" is not allowed";
+	    }
+	}
+	elseif ( $hastype )
+	{
+	    if ( ! $hasdefault )
+		$errors[] =
+		    "option $opt has NO default";
+	    if ( ! $hasrange )
+		$errors[] =
+		    "option $opt has NO range";
+	    if ( $hasdefault && $hasrange )
+	    {
+	        $range = $description['range'];
+	        $default = $description['default'];
+		if ( $default < $range[0]
+		     ||
+		     $default > $range[1] )
+		    $errors[] =
+			"option $opt default $default" .
+			" is out of range";
+	    }
+	}
     }
     ksort ( $valnames, SORT_NATURAL );
     ksort ( $argnames, SORT_NATURAL );
