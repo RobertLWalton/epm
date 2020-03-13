@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 13 13:28:30 EDT 2020
+    // Date:	Fri Mar 13 16:32:52 EDT 2020
 
     // Edits problem option page.
 
@@ -21,6 +21,7 @@
     // require "$epm_home/include/debug_info.php";
 
     $problem = $_SESSION['EPM_PROBLEM'];
+    $uid = $_SESSION['EPM_UID'];
     $probdir = "users/$uid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
@@ -226,6 +227,14 @@
     ksort ( $valnames, SORT_NATURAL );
     ksort ( $argnames, SORT_NATURAL );
 
+    if ( count ( $errors ) > 0 )
+    {
+        $m = "Errors in option templates:";
+	foreach ( $errors as $e )
+	    $m .= "\n    $e";
+	ERROR ( $m );
+    }
+
     // Set the following:
     //
     //    $values maps NAME => CURRENT-OPTION-VALUE
@@ -302,7 +311,7 @@
 		// No need for checking.
 
 	    $d = $options[$opt];
-	    $name = ( isset ( $d['valname' ) ?
+	    $name = ( isset ( $d['valname'] ) ?
 	              $d['valname'] :
 		      $d['argname'] );
 	    if ( isset ( $d['values'] ) )

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 11 21:35:17 EDT 2020
+    // Date:	Fri Mar 13 16:58:02 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -742,11 +742,11 @@
 		    formmethod='GET'
                     title='click to see user profile'>
     </td>
-    <td style='width:40%'>
+    <td style='width:35%'>
     <h5>Current Problem:</h5>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
     </td>
-    <td style='width:20%'>
+    <td style='width:30%'>
 EOT;
     if ( isset ( $problem ) )
         echo "<button type='submit'" .
@@ -755,7 +755,7 @@ EOT;
 	     "Delete Current Problem</button>";
     echo <<<EOT
     </td>
-    <td style='width:10%;text-align:right'>
+    <td style='width:5%;text-align:right'>
     {$problem_page_help}
     </td>
     </tr>
@@ -774,11 +774,19 @@ EOT;
 	             "$value</option>" . PHP_EOL;
         echo "</select></td>" . PHP_EOL;
 	if ( isset ( $problem ) )
-	    echo "<td><input type='submit' .
-			     formaction='run.php' .
-			     formmethod='GET' .
-			     value='Go to Run Page'></td>" .
-		 PHP_EOL;
+	    echo <<<EOT
+	         <td><h5>Go To:</h5>
+		 <button type='submit'
+			 formaction='run.php'
+			 formmethod='GET'>
+			 Run Page</button>
+		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	         <button type='submit'
+			formaction='option.php'
+			formmethod='GET'>
+			Option Page</button>
+		 </td>
+EOT;
 	echo "</tr>" . PHP_EOL;
     }
     echo <<<EOT

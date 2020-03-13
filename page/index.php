@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 12 03:12:52 EDT 2020
+// Date:    Fri Mar 13 16:51:04 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -344,7 +344,7 @@ function EPM_ERROR_HANDLER
 	PHP_EOL, FILE_APPEND );
 
     if ( $fatal )
-        exit ( $message );
+        exit ( "<pre>$message</pre>" );
 
     return true;
         // Returning true suppresses normal error
