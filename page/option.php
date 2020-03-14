@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 14 13:41:29 EDT 2020
+    // Date:	Sat Mar 14 16:01:50 EDT 2020
 
     // Edits problem option page.
 
@@ -481,17 +481,12 @@ EOT;
 	    $iv = $inherited[$opt];
 	    $v = $values[$opt];
 	    echo "<tr><td>$valname</td><td>";
-	    if ( isset ( $d['values'] ) )
-	    {
-		echo "<table><tr>";
-	        foreach ( $d['values'] as $val )
-		    echo "<td><pre>$val</pre></td>";
-		echo "</tr></table>";
-	    }
-	    elseif ( isset ( $d['type'] ) )
+	    if ( isset ( $d['type'] ) )
 	    {
 	        if ( isset ( $d['range'] ) )
 		{
+		    $t = $d['type'];
+		    $r = $d['range'];
 		    echo "<td style='text-align:" .
 		         "right;padding-left:" .
 			 "5px'><pre>$v</pre></td>";
@@ -500,12 +495,8 @@ EOT;
 		    echo "<td style='padding-left:" .
 		         "10px'><pre>" .
 		         $d['description'] .
+			 ": [{$r[0]},{$r[1]}]" .
 			 "</pre>";
-		    echo "<td style='padding-left:" .
-		         "10px'><pre>" .
-		         "($t number in range" .
-			 " [{$r[0]},{$r[1]}])" .
-			 "</pre></td>";
 		}
 	    }
 	    else
@@ -538,14 +529,13 @@ EOT;
 		$iv = $inherited[$opt];
 		$vs = $d['values'];
 		echo "<tr><td></td><td" .
+		     " title='$description'" .
 	             " style='padding-left:5px'>";
 		foreach ( $vs as $v )
 	             echo "<pre style='border-style:" .
 		          "solid;border-width:1px'>" .
 			  " $v </pre>";
-		echo "</td><td style='padding-left:" .
-		     "5px'><pre>$description</pre>" .
-		     "</td></tr>";
+		echo "</td></tr>";
 	    }
 	}
 	echo "</table></div>";
