@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Mar 13 20:24:34 EDT 2020
+// Date:    Sat Mar 14 03:41:29 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -647,19 +647,6 @@ function load_argument_map
 		continue;
 	    }
 	}
-	else
-	{
-	    $errors[] =
-                "option $opt in template.optn file" .
-		" has neither values" .
-		PHP_EOL .
-		"    nor type members; option ignored";
-	    continue;
-	}
-
-	if ( ! isset ( $value ) )
-	    ERROR ( "option $opt value not set in" .
-	            " by load_argument_map" );
 
 	if ( isset ( $description['argname'] ) )
 	{
@@ -672,13 +659,6 @@ function load_argument_map
 	}
 	else if ( isset ( $description['valname'] ) )
 	    $val_map[$description['valname']] = $value;
-	else
-	    $errors[] =
-	        "option $opt in template.optn file" .
-		" has neither argname" .
-		PHP_EOL .
-		"    nor valname members; option" .
-		" ignored";
     }
 
     $argument_map =
