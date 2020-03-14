@@ -1,65 +1,147 @@
+// Template for command options.
+//
+// File:    template.optn.php
+// Author:  Robert L Walton <walton@acm.org>
+// Date:    Sat Mar 14 03:31:57 EDT 2020
 
 {
+    "GXXFLAGS": { "description":
+                       "options for both gcc and g++" },
 
-    "g++std": { "values": ["-std=gnu++11", ""],
-                "argname": "GPPFLAGS" },
-    "gcc-ped": { "values": ["", "-Wpedantic"],
-                 "argname": "GCCFLAGS" },
     "gcc-opt": { "values": ["-O3", "-O2", "-O1",
-                            "-O0", "-Og", ""],
-                 "argname": "GCCOPT" },
+                            "-O0", ""],
+		           // -Og does not work
+		 "default": "-O3",
+		 "description": "C/C++ optimization"
+		                " level",
+                 "argname": "GXXFLAGS" },
+
+    "gcc-ped": { "values": ["-Wpedantic", ""],
+		"default": "",
+		"description": "allow or disallow GNU"
+		               " extensions of C",
+                 "argname": "GXXFLAGS" },
+
+    "GXXFLAGS": { "description":
+                      "options for just g++" },
+
+    "g++std": { "values": ["-std=gnu++11", "-ansi"],
+		"default": "-std=gnu++11",
+		"description": "C++ dialect",
+                "argname": "GPPFLAGS" },
+
+    "LIBRARIES": { "description":
+                      "libraries for gcc and g++" },
+
     "lgsl": { "values": ["", "-lgsl"],
+	      "default": "",
+	      "description": "GNU Scientific Library",
               "argname": "LIBRARIES" },
     "lcrypto": { "values": ["", "-lcrypto"],
+	         "default": "",
+	         "description":
+		     "OpenSSL Cryptographic Library",
                  "argname": "LIBRARIES" },
 
-     "gtime": { "type": "natural",
-                  "range": ["1", "30"],
-		  "default": "3",
-		  "description": "generate allowed CPU time in seconds",
-		  "valname": "GTIME" },
-     "gtime-arg": { "values": ["-cputime GTIME"],
-		      "argname": "GSARGS" },
-     "gvmem":  { "type": "natural",
-                  "range": ["16", "2048"],
-		  "default": "256",
-		  "description": "generate non-JAVA allowed virtual memory in megabytes",
-		 "valname": "GVMEM" },
-     "gvmem-arg":  { "values": ["-space GVMEMm"],
-		      "argname": "GSPACE" },
-     "gfsize": { "type": "natural",
-                   "range": ["1", "2048"],
-		   "default": "128",
-		   "description": "generate allowed output files size in kilobytes",
-		   "valname": "GFSIZE" },
-     "gfsize-arg": { "values": ["-filesize GFSIZEk"],
-		        "argname": "GSARGS" },
+    "GSARGS": { "description":
+                    "generate sandbox arguments" },
 
-     "stime": { "type": "natural",
-                  "range": ["1", "30"],
-		  "default": "3",
-		  "description": "solution allowed CPU time in seconds",
-		  "valname": "STIME" },
-     "stime-arg": { "values": ["-SIGABRT STIME",
-     				// -SIGINT will not work as
-				// interrupts are disabled
-				// when shell runs commands
+    "gtime": { "type": "natural",
+               "range": ["1", "30"],
+	       "default": "3",
+	       "description":
+	           "generate CPU time limit in seconds",
+	       "valname": "GTIME" },
+    "gtime-arg": { "values": ["-cputime GTIME"],
+	           "default": "-cputime GTIME",
+		   "description":
+		       "limit generate CPU time"
+		       " (required)",
+		   "argname": "GSARGS" },
+
+    "gfsize": { "type": "natural",
+                "range": ["1", "2048"],
+		"default": "128",
+		"description":
+		    "generate allowed output files"
+		    " size in kilobytes",
+		"valname": "GFSIZE" },
+    "gfsize-arg": { "values": ["-filesize GFSIZEk"],
+	            "default": "-filesize GFSIZEk",
+		    "description":
+		        "limit generate output files"
+		        " size (required)",
+		     "argname": "GSARGS" },
+
+    "GSPACE": { "description":
+                    "non-JAVA generate sandbox"
+		    " arguments" },
+
+    "gvmem":  { "type": "natural",
+                "range": ["16", "2048"],
+		"default": "256",
+		"description":
+		    "non-JAVA generate allowed"
+		    " virtual memory in megabytes",
+		"valname": "GVMEM" },
+    "gvmem-arg":  { "values": ["-space GVMEMm"],
+	            "default": "-space GVMEMm",
+		    "description":
+		        "limit non-JAVA generate"
+			" virtual memory (required)",
+		    "argname": "GSPACE" },
+
+    "SSARGS": { "description":
+                    "solution sandbox arguments" },
+
+    "stime": { "type": "natural",
+               "range": ["1", "30"],
+	       "default": "3",
+	       "description":
+	           "solution CPU time limit in seconds",
+	       "valname": "STIME" },
+    "stime-arg": { "values": ["-SIGABRT STIME",
+     			       // -SIGINT will not work
+			       // as interrupts are
+			       // disabled when shell
+			       // runs commands
                                "-cputime STIME"],
-		      "argname": "SSARGS" },
-     "svmem":  { "type": "natural",
-                  "range": ["16", "2048"],
-		  "default": "256",
-		  "description": "solution's allowed virtual memory in megabytes",
-		 "valname": "SVMEM" },
-     "svmem-arg":  { "values": ["-space SVMEMm"],
-		      "argname": "SSPACE" },
-     "sfsize": { "type": "natural",
-                   "range": ["1", "2048"],
-		   "default": "128",
-		   "description": "allowed solution output files size in kilobytes",
-		   "valname": "SFSIZE" },
-     "sfsize-arg": { "values": ["-filesize SFSIZEk"],
-		        "argname": "SSARGS" },
+	           "default": "-SIGABRT STIME",
+		   "description":
+		       "limit solution CPU time"
+		       " (required)",
+		   "argname": "SSARGS" },
+    "svmem-arg":  { "values": ["-space SVMEMm"],
+	            "default": "-space SVMEMm",
+		    "description":
+		        "limit non-JAVA solution"
+			" virtual memory (required)",
+		    "argname": "SSPACE" },
+    "sfsize": { "type": "natural",
+                "range": ["1", "2048"],
+		"default": "128",
+		"description":
+		    "solution output files size limit"
+		    " in kilobytes",
+		"valname": "SFSIZE" },
+    "sfsize-arg": { "values": ["-filesize SFSIZEk"],
+	            "default": "-filesize SFSIZEk",
+		    "description":
+		        "limit solution output files"
+		        " size (required)",
+		    "argname": "SSARGS" },
+
+    "SSPACE": { "description":
+                    "non-JAVA solution sandbox"
+		    " arguments" },
+
+    "svmem":  { "type": "natural",
+                "range": ["16", "2048"],
+		"default": "256",
+		"description":
+		    "non-JAVA solution allowed virtual"
+		    " memory in megabytes",
+		"valname": "SVMEM" },
 
      "ftime": { "type": "natural",
                   "range": ["1", "30"],
