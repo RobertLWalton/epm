@@ -2,7 +2,7 @@
 //
 // File:    template.optn.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Mar 14 04:45:39 EDT 2020
+// Date:    Sat Mar 14 15:18:55 EDT 2020
 
 {
     "GXXFLAGS": { "description":
@@ -22,7 +22,7 @@
 		               " extensions of C",
                  "argname": "GXXFLAGS" },
 
-    "GXXFLAGS": { "description":
+    "GPPFLAGS": { "description":
                       "options for just g++" },
 
     "g++std": { "values": ["-std=gnu++11", "-ansi"],
@@ -240,6 +240,9 @@
 	         "description":
 		     "enable JAVA assert statement",
                   "argname": "JFLAGS" },
+
+    "SCORING-ARGS": { "description":
+                          "options for scoring" },
 
      "scoring-blank": { "values": ["", "-blank"],
 	                "default": "",

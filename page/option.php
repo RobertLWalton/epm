@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 14 10:51:10 EDT 2020
+    // Date:	Sat Mar 14 13:41:29 EDT 2020
 
     // Edits problem option page.
 
@@ -264,10 +264,17 @@
         $edit = true;
     elseif ( isset ( $_POST['update'] ) )
     {
+	// Errors are appended to $errors even if they
+	// indicate the POST is UNACCEPTABLE.
+	//
 	foreach ( $values as $opt => $value )
 	{
 	    if ( ! isset ( $_POST[$opt] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+	    {
+		$errors[] = "option $opt has no value"
+		          . " in POST";
+		continue;
+	    }
 	    $v = $_POST[$opt];
 	    if ( $v == $value ) continue;
 		// No need for checking.
@@ -275,7 +282,15 @@
 	    $d = $options[$opt];
 	    $name = ( isset ( $d['valname'] ) ?
 	              $d['valname'] :
-		      $d['argname'] );
+		      isset ( $d['argname'] ) ?
+		      $d['argname'] :
+		      NULL );
+	    if ( ! isset ( $name ) )
+	    {
+	        $errors[] = "option $opt has neither"
+		          . " 'valname' nor 'argname'";
+		continue;
+	    }
 	    if ( isset ( $d['values'] ) )
 	    {
 	        if ( ! in_array ( $v, $d['values'] ) )
@@ -293,29 +308,30 @@
 		if ( $t == 'natural' )
 		{
 		    $re = '/^\d+$/';
-		    $tn = 'a natural number';
+		    $tn = 'not a natural number';
 		}
 		elseif ( $t == 'an integer' )
 		{
 		    $re = '/^(|+|-)\d+$/';
-		    $tn = 'integer';
+		    $tn = 'not an integer';
 		}
 		elseif ( $t == 'float' )
 		{
 		    $re = '/^(|+|-)\d+'
 		        . '(|\.\d+)'
 		        . '(|(e|E)(|+|-)\d+)/';
-		    $tn = 'a float';
+		    $tn = 'not a float';
 		}
 		elseif ( $t == 'args' )
 		{
-		    $re = '/^(\s|\w)*$/';
-		    $tn = 'an argument';
+		    $re = '/^[-+_@=/.,A-Za-z0-9\h]*$/';
+		    $tn = 'contains special character'
+		        . ' other than - + _ @ = / . ,';
 		}
 		if ( ! preg_match ( $re, $v ) )
 		{
 		    $errors[] = "$v in $name"
-		              . " is not $tn";
+		              . " is $tn";
 		    continue;
 		}
 		else
@@ -324,6 +340,9 @@
 		    $changed = true;
 		}
 	    }
+	    else
+	        $errors[] = "option $opt has neither"
+		          . " 'values' nor 'type'";
 	}
     }
 
@@ -391,25 +410,6 @@
     }
 </style>
 
-<script>
-
-    function TOGGLE ( s, c )
-    {
-	var SWITCH = document.getElementById ( s );
-	var CONTENTS = document.getElementById ( c );
-	if ( CONTENTS.hidden )
-	{
-	    SWITCH.innerHTML = "&uarr;";
-	    CONTENTS.hidden = false;
-	}
-	else
-	{
-	    SWITCH.innerHTML = "&darr;";
-	    CONTENTS.hidden = true;
-	}
-    }
-</script>
-
 </head>
 <body>
 
@@ -456,6 +456,100 @@
     </form>
     </div>
 EOT;
+
+    if ( $edit )
+    {
+    }
+    else // if ! $edit
+    {
+	echo <<<EOT
+        <h5>Values:</h5>
+	<div class='indented'>
+	<table>
+EOT;
+	foreach ( $valnames as $valname => $optlist )
+	{
+	    if ( count ( $optlist ) != 1 )
+	        ERROR ( "\$valnames[$valname] = [" .
+		        implode ( ",", $optlist ) .
+			"] should have single" .
+			" element" );
+	    $opt = $optlist[0];
+	    $d = $options[$opt];
+	    $description = $d['description'];
+	    $default = $d['default'];
+	    $iv = $inherited[$opt];
+	    $v = $values[$opt];
+	    echo "<tr><td>$valname</td><td>";
+	    if ( isset ( $d['values'] ) )
+	    {
+		echo "<table><tr>";
+	        foreach ( $d['values'] as $val )
+		    echo "<td><pre>$val</pre></td>";
+		echo "</tr></table>";
+	    }
+	    elseif ( isset ( $d['type'] ) )
+	    {
+	        if ( isset ( $d['range'] ) )
+		{
+		    echo "<td style='text-align:" .
+		         "right;padding-left:" .
+			 "5px'><pre>$v</pre></td>";
+		    $t = $d['type'];
+		    $r = $d['range'];
+		    echo "<td style='padding-left:" .
+		         "10px'><pre>" .
+		         $d['description'] .
+			 "</pre>";
+		    echo "<td style='padding-left:" .
+		         "10px'><pre>" .
+		         "($t number in range" .
+			 " [{$r[0]},{$r[1]}])" .
+			 "</pre></td>";
+		}
+	    }
+	    else
+	        echo "has neither 'values' or 'type'";
+	    echo "</td></tr>";
+	}
+	echo "</table></div>";
+
+	echo <<<EOT
+        <h5>Command Arguments:</h5>
+	<div class='indented'>
+	<table>
+EOT;
+	foreach ( $argnames as $argname => $optlist )
+	{
+	    if ( count ( $optlist ) == 0 )
+	        ERROR ( "\$argnames[$argname] is" .
+		        " empty" );
+	    echo "<tr><td>$argname</td>";
+	    echo "<td colspan='10' style='" .
+	         "padding-left:5px'><pre>" .
+		 $options[$argname]['description'] .
+		 "</pre></td>";
+	    echo "</tr>";
+	    foreach ( $optlist as $opt )
+	    {
+		$d = $options[$opt];
+		$description = $d['description'];
+		$default = $d['default'];
+		$iv = $inherited[$opt];
+		$vs = $d['values'];
+		echo "<tr><td></td><td" .
+	             " style='padding-left:5px'>";
+		foreach ( $vs as $v )
+	             echo "<pre style='border-style:" .
+		          "solid;border-width:1px'>" .
+			  " $v </pre>";
+		echo "</td><td style='padding-left:" .
+		     "5px'><pre>$description</pre>" .
+		     "</td></tr>";
+	    }
+	}
+	echo "</table></div>";
+    }
 
 ?>
 
