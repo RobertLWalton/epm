@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 13 16:32:52 EDT 2020
+    // Date:	Fri Mar 13 20:17:18 EDT 2020
 
     // Edits problem option page.
 
@@ -33,6 +33,13 @@
 	exit;
     }
 
+    require "$epm_home/include/epm_make.php";
+        // We do not need most of epm_make.php, but
+	// since editing options is not done that
+	// frequently, the extra overhead of loading
+	// a lot of stuff we do not need is not really
+	// harmful.
+
     $lock_desc = NULL;
     function shutdown ()
     {
@@ -44,62 +51,6 @@
     $lock_desc =
 	fopen ( "$epm_data/$probdir/+lock+", "w" );
     flock ( $lock_desc, LOCK_EX );
-
-    // Problem Parameters:
-    //
-    if ( ! isset ( $problem_params ) )
-    {
-	$f = "$probdir/$problem-$uid.params";
-	if ( is_readable ( "$epm_data/$f" ) )
-	    $problem_params = get_json ( $epm_data, $f );
-	else
-	    $problem_params = [];
-    }
-    if ( isset ( $problem_params['remote_dirs'] ) )
-	$remote_dirs = $problem_params['remote_dirs'];
-    else
-	$remote_dirs = [];
-
-    // Function to get and decode json file, which must
-    // be readable.  It is a fatal error if the file
-    // cannot be read or decoded.
-    //
-    // The file name is $r/$file, where $r is either
-    // $epm_home or $epm_data and will NOT appear in any
-    // error message.
-    //
-    function get_json ( $r, $file )
-    {
-	$f = "$r/$file";
-	$c = @file_get_contents ( $f );
-	if ( $c === false )
-	    ERROR ( "cannot read readable $file" );
-	$c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
-	    // Get rid of `//...' comments.
-	$j = json_decode ( $c, true );
-	if ( $j === NULL )
-	{
-	    $m = json_last_error_msg();
-	    ERROR
-		( "cannot decode json in $file:" .
-		  PHP_EOL . "    $m" );
-	}
-	return $j;
-    }
-
-    // Function to pretty print a template.  Changes
-    // XXXX:YYYY:ZZZZ to XXXX => YYYY (ZZZZ).
-    //
-    function pretty_template ( $template )
-    {
-	if ( ! preg_match ( '/^([^:]+):([^:]+):(.*)$/',
-			    $template, $matches ) )
-	    return $template;
-	$r = "{$matches[1]} => {$matches[2]}";
-	if ( $matches[3] != "" )
-	    $r = "$r ({$matches[3]})";
-	return $r;
-    }
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.

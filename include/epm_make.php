@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Mar 13 04:35:19 EDT 2020
+// Date:    Fri Mar 13 20:24:34 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -103,6 +103,9 @@ function get_json ( $r, $file )
 	ERROR ( "cannot read readable $file" );
     $c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
 	// Get rid of `//...' comments.
+    $c = preg_replace ( '#"[\h\r]*\n\s*"#', '', $c );
+        // Allow quoted strings to be split accross
+	// lines, as in "xxx"\n"xxx".
     $j = json_decode ( $c, true );
     if ( $j === NULL )
     {
