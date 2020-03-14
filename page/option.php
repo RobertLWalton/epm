@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 14 04:13:18 EDT 2020
+    // Date:	Sat Mar 14 10:51:10 EDT 2020
 
     // Edits problem option page.
 
@@ -210,9 +210,7 @@
     //
     foreach ( $options as $opt => $value )
     {
-        if ( isset ( $value['values'] ) )
-	    $values[$opt] = $value['values'][0];
-	elseif ( isset ( $value['default'] ) )
+	if ( isset ( $value['default'] ) )
 	    $values[$opt] = $value['default'];
     }
     foreach ( array_reverse ( $remote_dirs ) as $dir )
@@ -250,13 +248,21 @@
     $default = $values;
     $changed = false;
         // True if $values != $default.
+    $edit = false;
+        // False to display options, true to edit them.
 
-    // If editing, $values is update and marked as
-    // which is marked as changed if there is an update.
-    // Then if there are no errors, $values is written
-    // and becomes the new default.
+    // If editing, $values is updated and $changed is
+    // set to true whenever an element of $values is
+    // actually changed (not just set to its old value).
+    // Then if there are no errors, elements of $values
+    // that are != to corresponding elements of
+    // $inherited are written to $probdir/$problem.optn.
+    // If there are errors $values, is discarded and
+    // editing begins from the $defaults.
 
-    if ( isset ( $_POST['submit'] ) )
+    if ( isset ( $_POST['edit'] ) )
+        $edit = true;
+    elseif ( isset ( $_POST['update'] ) )
     {
 	foreach ( $values as $opt => $value )
 	{
