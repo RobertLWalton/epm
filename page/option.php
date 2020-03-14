@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 13 20:17:18 EDT 2020
+    // Date:	Sat Mar 14 04:13:18 EDT 2020
 
     // Edits problem option page.
 
@@ -21,6 +21,7 @@
     // require "$epm_home/include/debug_info.php";
 
     $problem = $_SESSION['EPM_PROBLEM'];
+    $email = $_SESSION['EPM_EMAIL'];
     $uid = $_SESSION['EPM_UID'];
     $probdir = "users/$uid/$problem";
 
@@ -156,12 +157,19 @@
 	}
 	elseif ( $hastype )
 	{
+	    $type = $description['type'];
 	    if ( ! $hasdefault )
 		$errors[] =
 		    "option $opt has NO default";
-	    if ( ! $hasrange )
-		$errors[] =
-		    "option $opt has NO range";
+	    if ( $type == 'args' )
+	    {
+	        if ( $hasrange )
+		    $errors[] =
+		        "option $opt has type 'args'" .
+			" and also has a 'range'";
+	    }
+	    elseif ( ! $hasrange )
+		$errors[] = "option $opt has NO range";
 	    if ( $hasdefault && $hasrange )
 	    {
 	        $range = $description['range'];
@@ -206,9 +214,6 @@
 	    $values[$opt] = $value['values'][0];
 	elseif ( isset ( $value['default'] ) )
 	    $values[$opt] = $value['default'];
-	else
-	    $errors[] = "template $key has neither"
-	              . " 'values' or 'default'";
     }
     foreach ( array_reverse ( $remote_dirs ) as $dir )
     {

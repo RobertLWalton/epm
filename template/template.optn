@@ -2,7 +2,7 @@
 //
 // File:    template.optn.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Mar 14 03:31:57 EDT 2020
+// Date:    Sat Mar 14 04:45:39 EDT 2020
 
 {
     "GXXFLAGS": { "description":
@@ -143,74 +143,168 @@
 		    " memory in megabytes",
 		"valname": "SVMEM" },
 
-     "ftime": { "type": "natural",
-                  "range": ["1", "30"],
-		  "default": "3",
-		  "description": "filter allowed CPU time in seconds",
-		  "valname": "FTIME" },
-     "ftime-arg": { "values": ["-cputime FTIME"],
-		      "argname": "FSARGS" },
-     "fvmem":  { "type": "natural",
-                  "range": ["16", "2048"],
-		  "default": "256",
-		  "description": "filter's allowed virtual memory in megabytes",
-		 "valname": "FVMEM" },
-     "fvmem-arg":  { "values": ["-space FVMEMm"],
-		      "argname": "FSPACE" },
-     "ffsize": { "type": "natural",
-                   "range": ["1", "2048"],
-		   "default": "128",
-		   "description": "allowed filter output files size in kilobytes",
-		   "valname": "FFSIZE" },
-     "ffsize-arg": { "values": ["-filesize FFSIZEk"],
-		        "argname": "FSARGS" },
+    "FSARGS": { "description":
+                    "filter sandbox arguments" },
 
-     "debug": { "type": "args",
-		"argname": "DARGS" },
+    "ftime": { "type": "natural",
+               "range": ["1", "30"],
+	       "default": "3",
+	       "description":
+	           "filter CPU time limit in seconds",
+	       "valname": "FTIME" },
+    "ftime-arg": { "values": ["-cputime FTIME"],
+	           "default": "-cputime FTIME",
+		   "description":
+		       "limit filter CPU time"
+		       " (required)",
+		   "argname": "FSARGS" },
+    "ffsize": { "type": "natural",
+                "range": ["1", "2048"],
+		"default": "128",
+		"description":
+		    "filter output files size limit in"
+		    " kilobytes",
+		"valname": "FFSIZE" },
+    "ffsize-arg": { "values": ["-filesize FFSIZEk"],
+	            "default": "-filesize FFSIZEk",
+		    "description":
+		        "limit filter output files"
+		        " size (required)",
+		    "argname": "FSARGS" },
 
-     "java-gc": { "values": ["-XX:+UseSerialGC"],
-                  "argname": "JFLAGS" },
-     "java-ss": { "type": "natural",
-                  "range": ["4","64"],
-		  "default": "32",
-		  "description": "JAVA stack size in megabytes",
-                  "valname": "STACK-SIZE" },
-     "java-ss-arg": { "values": ["-XssSTACK-SIZEm"],
-                      "argname": "JFLAGS" },
-     "java-ms": { "type": "natural",
-                  "range": ["128","1920"],
-		  "default": "192",
-		  "description": "JAVA heap size in megabytes",
-                  "valname": "HEAP-SIZE" },
-     "java-ms-arg": { "values": ["-XmsHEAP-SIZEm -XmxHEAP-SIZEm"],
-                      "argname": "JFLAGS" },
-     "java-ea": { "values": ["-ea", ""],
+    "FSPACE": { "description":
+                    "non-JAVA filter sandbox"
+		    " arguments" },
+
+    "fvmem":  { "type": "natural",
+                "range": ["16", "2048"],
+		"default": "256",
+		"description":
+		    "non-JAVA filter virtual memory"
+		    " limit in megabytes",
+		"valname": "FVMEM" },
+    "fvmem-arg":  { "values": ["-space FVMEMm"],
+	            "default": "-space FVMEMm",
+		    "description":
+		        "limit non-JAVA filter"
+			" virtual memory (required)",
+		    "argname": "FSPACE" },
+
+    "DARGS": { "description":
+                   "solution program arguments"
+		   " (for debugging only)" },
+
+    "debug": { "type": "args",
+	       "default": "",
+	       "description":
+		   "solution program arguments"
+		   " (for debugging only)",
+	       "argname": "DARGS" },
+
+    "JFLAGS": { "description":
+                     "JAVA interpreter options" },
+
+    "java-gc": { "values": ["-XX:+UseSerialGC"],
+	         "default": "-XX:+UseSerialGC",
+	         "description":
+		     "force JAVA GC to be non-parallel",
+                 "argname": "JFLAGS" },
+    "java-ss": { "type": "natural",
+                 "range": ["4","64"],
+		 "default": "32",
+		 "description":
+		     "JAVA stack size in megabytes",
+                 "valname": "STACK-SIZE" },
+    "java-ss-arg": { "values": ["-XssSTACK-SIZEm"],
+	             "default": "-XssSTACK-SIZEm",
+		     "description":
+		         "limit JAVA stack size"
+			 " (required)",
+                     "argname": "JFLAGS" },
+    "java-ms": { "type": "natural",
+                 "range": ["128","1920"],
+		 "default": "192",
+		 "description":
+		     "JAVA heap size in megabytes",
+                 "valname": "HEAP-SIZE" },
+    "java-ms-arg": { "values": ["-XmsHEAP-SIZEm "
+                                "-XmxHEAP-SIZEm"],
+	             "default": "-XmsHEAP-SIZEm "
+                                "-XmxHEAP-SIZEm",
+		     "description":
+		         "limit JAVA heap size"
+			 " (required)",
+                     "argname": "JFLAGS" },
+    "java-ea": { "values": ["-ea", ""],
+	         "default": "-ea",
+	         "description":
+		     "enable JAVA assert statement",
                   "argname": "JFLAGS" },
 
      "scoring-blank": { "values": ["", "-blank"],
+	                "default": "",
+	                "description":
+		            "do NOT ignore blank lines",
 		        "argname": "SCORING-ARGS" },
      "scoring-places": { "values": ["", "-places"],
+	                 "default": "",
+	                 "description":
+		             "do NOT ignore decimal"
+			     " place number"
+			     " mis-matches",
 		         "argname": "SCORING-ARGS" },
      "scoring-integer": { "values": ["", "-integer"],
-		          "argname": "SCORING-ARGS" },
+	                  "default": "",
+	                  "description":
+		              "do NOT ignore"
+			      " float-integer matches",
+		           "argname": "SCORING-ARGS" },
      "scoring-zeros": { "values": ["", "-zeros"],
+	                "default": "",
+	                "description":
+		            "do NOT ignore high order"
+			    " zeros in integers",
 		        "argname": "SCORING-ARGS" },
      "scoring-sign": { "values": ["", "-sign"],
+	               "default": "",
+	               "description":
+		           "do NOT ignore signs in"
+		           " integers",
 		       "argname": "SCORING-ARGS" },
      "scoring-case": { "values": ["", "-case"],
-		        "argname": "SCORING-ARGS" },
+	               "default": "",
+	               "description":
+		           "do NOT ignore letter case"
+			   " mis-matches",
+		       "argname": "SCORING-ARGS" },
      "scoring-column": { "values": ["", "-column"],
+	                 "default": "",
+	                 "description":
+		             "do NOT ignore column"
+			     " number mis-matches",
 		         "argname": "SCORING-ARGS" },
      "scoring-abs": { "type": "float",
                       "range": [0,1e300],
+	              "default": "0",
+	              "description":
+		          "absolute float error"
+			  " tolerance",
 		      "valname": "SCORING-ABS" },
      "scoring-rel": { "type": "float",
                       "range": [0,2],
+	              "default": "0",
+	              "description":
+		          "relative float error"
+			  " tolerance",
 		      "valname": "SCORING-REL" },
-     "float": { "values":
-                   ["",
+     "scoring-float": {
+         "values": ["",
 		    "-float SCORING-ABS -",
 		    "-float SCORING-ABS SCORING-REL",
-		    "-float - SCORING-REL"],
-		 "argname": "SCORING-ARGS" }
+		    "-float - SCORING-REL",
+		    "-float - -"],
+	 "default": "",
+	 "description":
+	     "floating point error tolerances",
+	 "argname": "SCORING-ARGS" }
 }
