@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 15 16:22:48 EDT 2020
+    // Date:	Sun Mar 15 17:26:25 EDT 2020
 
     // Edits problem option page.
 
@@ -56,6 +56,20 @@
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
 
+    // If $errors is not empty, call ERROR with $errors
+    // in error message.
+    //
+    function check_errors ()
+    {
+        global $errors;
+	if ( count ( $errors ) == 0 ) return;
+
+        $m = "Errors in option templates:";
+	foreach ( $errors as $e )
+	    $m .= "\n    $e";
+	ERROR ( $m );
+    }
+
     // Set options to the json of $epm_home/template/
     // template.optn with overrides (as a 2D matrix)
     // from $epm_data/template/template.optn and
@@ -88,8 +102,11 @@
     $description_keys =
         ['argname', 'valname', 'description',
 	 'values','type','range','default'];
-    $description_types =
-        ['natural', 'integer', 'float'];
+    $type_re =
+        ['natural' => '/^\d+$/',
+	 'integer' => '/^(|\+|-)\d+$/',
+	 'float' => '/^(|\+|-)\d+(|\.\d+)'
+	          . '(|(e|E)(|\+|-)\d+)$/'];
     foreach ( $optn_files as $e )
     {
 	$r = $e[0];
@@ -152,14 +169,22 @@
 		          . " and also has 'values'";
 	    if ( $hasdefault && $hasrange )
 	    {
-	        $range = $description['range'];
 	        $default = $description['default'];
+	        $range = $description['range'];
 		if ( $default < $range[0]
 		     ||
 		     $default > $range[1] )
 		    $errors[] =
 			"option $opt 'default' is out" .
 			" of 'range'";
+	    }
+	    if ( $hastype )
+	    {
+	        $type = $description['type'];
+	        if ( ! isset ( $type_re[$type] ) )
+		    $errors[] =
+			"option $opt has illegal" .
+			" 'type'";
 	    }
 	}
 	elseif ( $isarg )
@@ -173,15 +198,9 @@
 	    if ( $hasrange )
 		$errors[] = "option $opt has 'valname'"
 		          . " and also has 'range'";
-	    if ( $hasvalues )
-	    {
-	        $values = $description['values'];
-	        $default = $description['default'];
-		if ( ! in_array ( $default, $values ) )
-		    $errors[] = "option $opt 'default'"
-		              . " is not in `values'";
-	    }
-	} else {
+	}
+	else
+	{
 	    if ( $hasvalues )
 		$errors[] = "option $opt has 'values'"
 		          . " but has neither"
@@ -200,37 +219,62 @@
 			  . " 'argname' or 'valname'";
 	}
     }
+    check_errors();
     ksort ( $valnames, SORT_NATURAL );
     ksort ( $argnames, SORT_NATURAL );
 
-    if ( count ( $errors ) > 0 )
+    // Add to $errors any errors found in the
+    // $optmap of $opt => $value.  Assumes templates
+    // have already been checked.  Error messages
+    // complain about `$name values'.
+    //
+    function check_optmap ( & $optmap, $name )
     {
-        $m = "Errors in option templates:";
-	foreach ( $errors as $e )
-	    $m .= "\n    $e";
-	ERROR ( $m );
+	global $type_re, $errors;
+
+        foreach ( $optmap as $opt => $value )
+	{
+	    $d = & $options[$opt];
+	    if ( isset ( $d['values'] ) )
+	    {
+	        $values = $d['values'];
+		if ( ! in_array ( $value, $values ) )
+		    $errors[] = "option $opt $name"
+		              . " value '$value' is not"
+			      . " in option `values'";
+	    }
+	    elseif ( isset ( $d['type'] ) )
+	    {
+	        $type = $d['type'];
+		$re = $type_re[$type];
+		if ( ! preg_match ( $re, $value ) )
+		    $errors[] =
+			"option $opt $name value" .
+			" '$value' has illegal" .
+			" format for its type $type";
+	    }
+	    else
+	    {
+		$re = '/^[-\+_@=\/:\.,A-Za-z0-9\h]*$/';
+		if ( ! preg_match ( $re, $value ) )
+		    $errors[] =
+			"option $opt $name value" .
+			" '$value' contains a" .
+			" special character other" .
+		        " than - + _ @ = / : . ,";
+	    }
+	}
     }
 
-    // Set the following:
-    //
-    //    $values maps NAME => CURRENT-OPTION-VALUE
-    //    $inherited maps NAME => INHERITED-OPTION-VALUE
-    //    $default maps NAME => DEFAULT-OPTION-VALUE
-    //
-    // where NAME is option name (e.g., "g++std"),
-    // CURRENT-OPTION-VALUE is current value of option,
-    // which is value from template overridden by
-    // any values from $problem.optn files,
-    // INHERITED-OPTION-VALUE is ditto but excludes
-    // values from $probdir/$problem.opt, and $defaults
-    // is initial value of $values.
-    //
-    $values = [];
+    $optmap = [];
     foreach ( $options as $opt => $value )
     {
 	if ( isset ( $value['default'] ) )
-	    $values[$opt] = $value['default'];
+	    $optmap[$opt] = $value['default'];
     }
+    check_optmap ( $optmap, 'template default' );
+    check_errors();
+
     foreach ( array_reverse ( $remote_dirs ) as $dir )
     {
 	$f = "$dir/$problem.optn";
@@ -239,15 +283,17 @@
 	$j = get_json ( $epm_data, $f );
 	foreach ( $j as $opt => $value )
 	{
-	    if ( isset ( $values[$opt] ) )
-		$values[$opt] = $value;
+	    if ( isset ( $optmap[$opt] ) )
+		$optmap[$opt] = $value;
 	    else
 	        $errors[] = "option $opt in $f is not"
 		          . " in templates";
 	}
     }
+    check_optmap ( $optmap, 'inherited' );
+    check_errors();
 
-    $inherited = $values;
+    $inherited = $optmap;
 
     $f = "$probdir/$problem.optn";
     if ( is_readable ( "$epm_data/$f" ) )
@@ -255,28 +301,29 @@
 	$j = get_json ( $epm_data, $f );
 	foreach ( $j as $opt => $value )
 	{
-	    if ( isset ( $values[$opt] ) )
-		$values[$opt] = $value;
+	    if ( isset ( $optmap[$opt] ) )
+		$optmap[$opt] = $value;
 	    else
 	        $errors[] = "option $opt in $f is not"
 		          . " in templates";
 	}
     }
+    check_optmap ( $optmap, 'local' );
 
-    $default = $values;
+    $defaults = $optmap;
     $changed = false;
-        // True if $values != $default.
+        // True if $optmap != $defaults.
     $edit = false;
         // False to display options, true to edit them.
 
-    // If editing, $values is updated and $changed is
-    // set to true whenever an element of $values is
+    // If editing, $optmap is updated and $changed is
+    // set to true whenever an element of $optmap is
     // actually changed (not just set to its old value).
-    // Then if there are no errors, elements of $values
-    // that are != to corresponding elements of
-    // $inherited are written to $probdir/$problem.optn.
-    // If there are errors $values, is discarded and
-    // editing begins from the $defaults.
+    // Then errors are checked.  If there are no errors,
+    // elements of $optmap that are != to corresponding
+    // elements of $inherited are written to $probdir/
+    // $problem.optn.  If there are errors $optmap, is
+    // reset to $defaults and editing begins anew.
 
     if ( isset ( $_POST['edit'] ) )
         $edit = true;
@@ -285,85 +332,25 @@
 	// Errors are appended to $errors even if they
 	// indicate the POST is UNACCEPTABLE.
 	//
-	foreach ( $values as $opt => $value )
+	foreach ( $optmap as $opt => $value )
 	{
-	    if ( ! isset ( $_POST[$opt] ) )
+	    if ( isset ( $_POST[$opt] ) )
 	    {
-		$errors[] = "option $opt has no value"
-		          . " in POST";
-		continue;
+	        $optmap[$opt] = $_POST[$opt];
+		$changed = true;
 	    }
-	    $v = $_POST[$opt];
-	    if ( $v == $value ) continue;
-		// No need for checking.
-
-	    $d = $options[$opt];
-	    $name = ( isset ( $d['valname'] ) ?
-	              $d['valname'] :
-		      isset ( $d['argname'] ) ?
-		      $d['argname'] :
-		      NULL );
-	    if ( ! isset ( $name ) )
-	    {
-	        $errors[] = "option $opt has neither"
-		          . " 'valname' nor 'argname'";
-		continue;
-	    }
-	    if ( isset ( $d['values'] ) )
-	    {
-	        if ( ! in_array ( $v, $d['values'] ) )
-		    $errors[] = "$v is not a valid"
-		              . " value for $name";
-		else
-		{
-		    $values[$opt] = $v;
-		    $changed = true;
-		}
-	    }
-	    elseif ( isset ( $d['type'] ) )
-	    {
-	        $t = $d['type'];
-		if ( $t == 'natural' )
-		{
-		    $re = '/^\d+$/';
-		    $tn = 'not a natural number';
-		}
-		elseif ( $t == 'an integer' )
-		{
-		    $re = '/^(|+|-)\d+$/';
-		    $tn = 'not an integer';
-		}
-		elseif ( $t == 'float' )
-		{
-		    $re = '/^(|+|-)\d+'
-		        . '(|\.\d+)'
-		        . '(|(e|E)(|+|-)\d+)/';
-		    $tn = 'not a float';
-		}
-		elseif ( $t == 'args' )
-		{
-		    $re = '/^[-+_@=/.,A-Za-z0-9\h]*$/';
-		    $tn = 'contains special character'
-		        . ' other than - + _ @ = / . ,';
-		}
-		if ( ! preg_match ( $re, $v ) )
-		{
-		    $errors[] = "$v in $name"
-		              . " is $tn";
-		    continue;
-		}
-		else
-		{
-		    $values[$opt] = $v;
-		    $changed = true;
-		}
-	    }
-	    else
-	        $errors[] = "option $opt has neither"
-		          . " 'values' nor 'type'";
+	}
+	check_optmap ( $optmap, 'update' );
+	if ( count ( $errors ) > 0 )
+	{
+	    $optmap = $defaults;
+	    $edit = true;
+	}
+	else
+	{
+	    // TBD
 	}
     }
-
 
     $debug = ( $epm_debug != ''
                &&
@@ -568,7 +555,7 @@ EOT;
 	$description = $d['description'];
 	$default = $d['default'];
 	$iv = $inherited[$opt];
-	$v = $values[$opt];
+	$v = $optmap[$opt];
 	$t = $d['type'];
 	$r = $d['range'];
 	$des = $d['description'];
@@ -625,7 +612,7 @@ EOT;
 	    $d = $options[$opt];
 	    $des = $d['description'];
 	    $iv = $inherited[$opt];
-	    $vv = $values[$opt];
+	    $vv = $optmap[$opt];
 	    if ( isset ( $d['values'] ) )
 		$vs = $d['values'];
 	    else
