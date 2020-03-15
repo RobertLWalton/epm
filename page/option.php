@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 14 22:38:15 EDT 2020
+    // Date:	Sat Mar 14 22:43:29 EDT 2020
 
     // Edits problem option page.
 
@@ -369,8 +369,20 @@
     pre {
 	font-family: "Courier New", Courier, monospace;
     }
-    pre.red {
-        color: #BB0000;
+    pre.unused {
+        background-color: #FFFFFF;
+	border-style: solid;
+	border-width: 1px;
+    }
+    pre.inherited {
+        background-color: #FFBF80;
+	border-style: solid;
+	border-width: 1px;
+    }
+    pre.local {
+        background-color: #99FF99;
+	border-style: solid;
+	border-width: 1px;
     }
     div.errors {
 	background-color: #F5F81A;
@@ -497,13 +509,17 @@ EOT;
 		$des = $d['description'];
 		$default = $d['default'];
 		$iv = $inherited[$opt];
+		$vv = $values[$opt];
 		$vs = $d['values'];
 		echo "<tr><td></td>" .
 		     "<td style='padding-left:5px'>";
 		foreach ( $vs as $v )
-	             echo "<pre style='border-style:" .
-		          "solid;border-width:1px'>" .
-			  " $v </pre>";
+		{
+		    $c = 'unused';
+		    if ( $v == $vv ) $c = 'local';
+		    if ( $v == $iv ) $c = 'inherited';
+	            echo "<pre class='$c'> $v </pre>";
+		}
 		echo "<pre> $des </pre>";
 		echo "</td></tr>";
 	    }
