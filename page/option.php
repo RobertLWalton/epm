@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 14 16:01:50 EDT 2020
+    // Date:	Sat Mar 14 22:38:15 EDT 2020
 
     // Edits problem option page.
 
@@ -161,14 +161,7 @@
 	    if ( ! $hasdefault )
 		$errors[] =
 		    "option $opt has NO default";
-	    if ( $type == 'args' )
-	    {
-	        if ( $hasrange )
-		    $errors[] =
-		        "option $opt has type 'args'" .
-			" and also has a 'range'";
-	    }
-	    elseif ( ! $hasrange )
+	    if ( ! $hasrange )
 		$errors[] = "option $opt has NO range";
 	    if ( $hasdefault && $hasrange )
 	    {
@@ -393,18 +386,6 @@
         color: #CC00FF;
         font-size: 14pt;
     }
-    div.run_list {
-	background-color: #F2D9D9;
-	clear: both;
-    }
-    div.run {
-	background-color: #C0FFC0;
-	clear: both;
-    }
-    div.file {
-	background-color: #C0FFC0;
-	clear: both;
-    }
     div.indented {
 	margin-left: 20px;
     }
@@ -480,28 +461,17 @@ EOT;
 	    $default = $d['default'];
 	    $iv = $inherited[$opt];
 	    $v = $values[$opt];
-	    echo "<tr><td>$valname</td><td>";
-	    if ( isset ( $d['type'] ) )
-	    {
-	        if ( isset ( $d['range'] ) )
-		{
-		    $t = $d['type'];
-		    $r = $d['range'];
-		    echo "<td style='text-align:" .
-		         "right;padding-left:" .
-			 "5px'><pre>$v</pre></td>";
-		    $t = $d['type'];
-		    $r = $d['range'];
-		    echo "<td style='padding-left:" .
-		         "10px'><pre>" .
-		         $d['description'] .
-			 ": [{$r[0]},{$r[1]}]" .
-			 "</pre>";
-		}
-	    }
-	    else
-	        echo "has neither 'values' or 'type'";
-	    echo "</td></tr>";
+	    $t = $d['type'];
+	    $r = $d['range'];
+	    $des = $d['description'];
+	    echo <<<EOT
+	    <tr><td>$valname</td><td>
+	    <td style='text-align:right;
+	        padding-left:5px'><pre>$v</pre></td>
+	    <td style='padding-left:10px'>
+	    <pre>$des; $t in [{$r[0]},{$r[1]}]</pre>
+	    </td></tr>
+EOT;
 	}
 	echo "</table></div>";
 
@@ -515,26 +485,26 @@ EOT;
 	    if ( count ( $optlist ) == 0 )
 	        ERROR ( "\$argnames[$argname] is" .
 		        " empty" );
-	    echo "<tr><td>$argname</td>";
-	    echo "<td colspan='10' style='" .
-	         "padding-left:5px'><pre>" .
-		 $options[$argname]['description'] .
-		 "</pre></td>";
-	    echo "</tr>";
+	    $des = $options[$argname]['description'];
+	    echo <<<EOT
+	    <tr><td>$argname</td>
+	    <td colspan='10' style='padding-left:5px'>
+	    <pre>$des</pre></td></tr>
+EOT;
 	    foreach ( $optlist as $opt )
 	    {
 		$d = $options[$opt];
-		$description = $d['description'];
+		$des = $d['description'];
 		$default = $d['default'];
 		$iv = $inherited[$opt];
 		$vs = $d['values'];
-		echo "<tr><td></td><td" .
-		     " title='$description'" .
-	             " style='padding-left:5px'>";
+		echo "<tr><td></td>" .
+		     "<td style='padding-left:5px'>";
 		foreach ( $vs as $v )
 	             echo "<pre style='border-style:" .
 		          "solid;border-width:1px'>" .
 			  " $v </pre>";
+		echo "<pre> $des </pre>";
 		echo "</td></tr>";
 	    }
 	}

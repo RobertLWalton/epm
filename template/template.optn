@@ -2,7 +2,7 @@
 //
 // File:    template.optn.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Mar 14 15:18:55 EDT 2020
+// Date:    Sat Mar 14 21:51:22 EDT 2020
 
 {
     "GXXFLAGS": { "description":
@@ -18,8 +18,8 @@
 
     "gcc-ped": { "values": ["-Wpedantic", ""],
 		"default": "",
-		"description": "allow or disallow GNU"
-		               " extensions of C",
+		"description": "disallow or allow GNU"
+		               " extensions of C/C++",
                  "argname": "GXXFLAGS" },
 
     "GPPFLAGS": { "description":
@@ -35,12 +35,14 @@
 
     "lgsl": { "values": ["", "-lgsl"],
 	      "default": "",
-	      "description": "GNU Scientific Library",
+	      "description":
+	          "ex/include GNU Scientific Library",
               "argname": "LIBRARIES" },
     "lcrypto": { "values": ["", "-lcrypto"],
 	         "default": "",
 	         "description":
-		     "OpenSSL Cryptographic Library",
+		     "ex/include OpenSSL Cryptographic"
+		     " Library",
                  "argname": "LIBRARIES" },
 
     "GSARGS": { "description":
@@ -63,8 +65,8 @@
                 "range": ["1", "2048"],
 		"default": "128",
 		"description":
-		    "generate allowed output files"
-		    " size in kilobytes",
+		    "generate output files size"
+		    " limit in kilobytes",
 		"valname": "GFSIZE" },
     "gfsize-arg": { "values": ["-filesize GFSIZEk"],
 	            "default": "-filesize GFSIZEk",
@@ -111,12 +113,6 @@
 		       "limit solution CPU time"
 		       " (required)",
 		   "argname": "SSARGS" },
-    "svmem-arg":  { "values": ["-space SVMEMm"],
-	            "default": "-space SVMEMm",
-		    "description":
-		        "limit non-JAVA solution"
-			" virtual memory (required)",
-		    "argname": "SSPACE" },
     "sfsize": { "type": "natural",
                 "range": ["1", "2048"],
 		"default": "128",
@@ -142,6 +138,12 @@
 		    "non-JAVA solution allowed virtual"
 		    " memory in megabytes",
 		"valname": "SVMEM" },
+    "svmem-arg":  { "values": ["-space SVMEMm"],
+	            "default": "-space SVMEMm",
+		    "description":
+		        "limit non-JAVA solution"
+			" virtual memory (required)",
+		    "argname": "SSPACE" },
 
     "FSARGS": { "description":
                     "filter sandbox arguments" },
@@ -194,8 +196,7 @@
                    "solution program arguments"
 		   " (for debugging only)" },
 
-    "debug": { "type": "args",
-	       "default": "",
+    "debug": { "default": "",
 	       "description":
 		   "solution program arguments"
 		   " (for debugging only)",
