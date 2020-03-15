@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 14 22:43:29 EDT 2020
+    // Date:	Sat Mar 14 23:12:50 EDT 2020
 
     // Edits problem option page.
 
@@ -507,19 +507,35 @@ EOT;
 	    {
 		$d = $options[$opt];
 		$des = $d['description'];
-		$default = $d['default'];
 		$iv = $inherited[$opt];
 		$vv = $values[$opt];
-		$vs = $d['values'];
+		if ( isset ( $d['values'] ) )
+		    $vs = $d['values'];
+		else
+		    $vs = NULL;
 		echo "<tr><td></td>" .
 		     "<td style='padding-left:5px'>";
-		foreach ( $vs as $v )
-		{
-		    $c = 'unused';
-		    if ( $v == $vv ) $c = 'local';
-		    if ( $v == $iv ) $c = 'inherited';
-	            echo "<pre class='$c'> $v </pre>";
-		}
+		if ( isset ( $vs ) )
+		    foreach ( $vs as $v )
+		    {
+			$c = 'unused';
+			if ( $v == $vv )
+			    $c = 'local';
+			if ( $v == $iv )
+			    $c = 'inherited';
+			echo "<pre class='$c'>" .
+			     " $v </pre>";
+		    }
+		elseif ( $vv == $iv )
+		    echo "<pre class='inherited'>" .
+		         " $iv </pre>";
+		elseif ( $vv == "" )
+		    echo "<pre class='unused'>" .
+		         "   </pre>";
+		else
+		    echo "<pre class='local'>" .
+		         " $vv </pre>";
+		    
 		echo "<pre> $des </pre>";
 		echo "</td></tr>";
 	    }
