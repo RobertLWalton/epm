@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 15 03:42:20 EDT 2020
+    // Date:	Sun Mar 15 04:07:54 EDT 2020
 
     // Edits problem option page.
 
@@ -417,6 +417,30 @@
     }
 </style>
 
+<script>
+    function TOGGLE_BODY ( name, thing )
+    {
+	var BUTTON = document.getElementById
+		( name + '_button' );
+	var MARK = document.getElementById
+		( name + '_mark' );
+	var BODY = document.getElementById
+		( name + '_body' );
+	if ( BODY.hidden )
+	{
+	    MARK.innerHTML = "&uarr;";
+	    BUTTON.title = "Hide " + thing;
+	    BODY.hidden = false;
+	}
+	else
+	{
+	    MARK.innerHTML = "&darr;";
+	    BUTTON.title = "Show " + thing;
+	    BODY.hidden = true;
+	}
+    }
+</script>
+
 </head>
 <body>
 
@@ -470,8 +494,17 @@ EOT;
     else // if ! $edit
     {
 	echo <<<EOT
+	<button type='button'
+		id='values_button'
+		onclick='TOGGLE_BODY
+		     ("values",
+		      "Values")'
+		title='Show Values'>
+		<pre id='values_mark'>&darr;</pre>
+		</button>
+	&nbsp;
         <h5>Values:</h5>
-	<div class='indented'>
+	<div class='indented' id='values_body'>
 	<table>
 EOT;
 	foreach ( $valnames as $valname => $optlist )
@@ -503,8 +536,18 @@ EOT;
 	echo "</table></div>";
 
 	echo <<<EOT
+	<br>
+	<button type='button'
+		id='arguments_button'
+		onclick='TOGGLE_BODY
+		     ("arguments",
+		      "Command Arguments")'
+		title='Show Command Arguments'>
+		<pre id='arguments_mark'>&darr;</pre>
+		</button>
+	&nbsp;
         <h5>Command Arguments:</h5>
-	<div class='indented'>
+	<div class='indented' id='arguments_body'>
 	<table>
 EOT;
 	foreach ( $argnames as $argname => $optlist )
