@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 15 05:34:39 EDT 2020
+    // Date:	Sun Mar 15 13:54:06 EDT 2020
 
     // Edits problem option page.
 
@@ -201,6 +201,7 @@
     // values from $probdir/$problem.opt, and $defaults
     // is initial value of $values.
     //
+    $values = [];
     foreach ( $options as $opt => $value )
     {
 	if ( isset ( $value['default'] ) )
@@ -339,9 +340,6 @@
 	}
     }
 
-    if ( $method == 'POST' && ! $post_processed )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-
 
     $debug = ( $epm_debug != ''
                &&
@@ -398,12 +396,12 @@
     td.argument {
 	padding-left: 5px;
     }
-    label.argument input {
+    input.argument {
         position: absolute;
 	opacity: 0;
 	cursor: pointer;
     }
-    label.argument:checked {
+    input.argument:checked ~ pre {
         background-color: #99FF99;
     }
     pre.unused {
@@ -508,8 +506,18 @@
     </td>
     </table>
     </form>
-    </div>
+    <br>
+    <form action='option.php' method='POST'>
+    <!-- This form lasts till the end of the
+         document -->
 EOT;
+    if ( $edit )
+        echo "<button type='submit' name='update'" .
+	     " value='update'>Update</button>";
+    else
+        echo "<button type='submit' name='edit'" .
+	     " value='edit'>Edit</button>";
+    echo "</div>";
 
     echo <<<EOT
     <button type='button'
@@ -604,20 +612,21 @@ EOT;
 		foreach ( $vs as $v )
 		{
 		    $c = 'unused';
-		    if ( $v == $vv )
-			$c = 'local';
+		    $chk = '';
 		    if ( $v == $iv )
 			$c = 'inherited';
+		    elseif ( $v == $vv )
+			$chk = 'checked';
 		    if ( $v == '' )
 			$v = '     ';
-		    if ( $edit )
-			echo "<label class='argument'>" .
-			     "<pre class='$c'>" .
-			     " $v </pre>" .
-			     "<input" .
+		    if ( true )
+			echo "<label>" .
+			     "<input class='argument'" .
 			     " name='$opt'" .
 			     " value='$v'" .
-			     " type='radio'>" .
+			     " type='radio' $chk>" .
+			     "<pre class='$c'>" .
+			     " $v </pre>" .
 			     "</label>";
 		    else
 			echo "<pre class='$c'>" .
@@ -645,7 +654,7 @@ EOT;
 	    echo "</td></tr>";
 	}
     }
-    echo "</table></div>";
+    echo "</table></div></form>";
 
 ?>
 
