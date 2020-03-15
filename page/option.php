@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 15 04:07:54 EDT 2020
+    // Date:	Sun Mar 15 05:34:39 EDT 2020
 
     // Edits problem option page.
 
@@ -383,6 +383,29 @@
 	text-align:right;
 	padding-left:5px;
     }
+    input.inherited {
+        background-color: #FFBF80;
+	border-style: solid;
+	border-width: 1px;
+	margin-left:5px;
+    }
+    input.local {
+        background-color: #99FF99;
+	border-style: solid;
+	border-width: 1px;
+	margin-left:5px;
+    }
+    td.argument {
+	padding-left: 5px;
+    }
+    label.argument input {
+        position: absolute;
+	opacity: 0;
+	cursor: pointer;
+    }
+    label.argument:checked {
+        background-color: #99FF99;
+    }
     pre.unused {
         background-color: #FFFFFF;
 	border-style: solid;
@@ -488,121 +511,141 @@
     </div>
 EOT;
 
-    if ( $edit )
+    echo <<<EOT
+    <button type='button'
+	    id='values_button'
+	    onclick='TOGGLE_BODY
+		 ("values", "Values")'
+	    title='Show Values'>
+	    <pre id='values_mark'>&darr;</pre>
+	    </button>
+    &nbsp;
+    <h5>Values:</h5>
+    <div class='indented' id='values_body'>
+    <table>
+EOT;
+    foreach ( $valnames as $valname => $optlist )
     {
-    }
-    else // if ! $edit
-    {
+	if ( count ( $optlist ) != 1 )
+	    ERROR ( "\$valnames[$valname] = [" .
+		    implode ( ",", $optlist ) .
+		    "] should have single" .
+		    " element" );
+	$opt = $optlist[0];
+	$d = $options[$opt];
+	$description = $d['description'];
+	$default = $d['default'];
+	$iv = $inherited[$opt];
+	$v = $values[$opt];
+	$t = $d['type'];
+	$r = $d['range'];
+	$des = $d['description'];
+	$c = 'local';
+	if ( $v == $iv ) $c = 'inherited';
 	echo <<<EOT
-	<button type='button'
-		id='values_button'
-		onclick='TOGGLE_BODY
-		     ("values",
-		      "Values")'
-		title='Show Values'>
-		<pre id='values_mark'>&darr;</pre>
-		</button>
-	&nbsp;
-        <h5>Values:</h5>
-	<div class='indented' id='values_body'>
-	<table>
+	<tr><td>$valname</td><td>
 EOT;
-	foreach ( $valnames as $valname => $optlist )
+	if ( $edit )
 	{
-	    if ( count ( $optlist ) != 1 )
-	        ERROR ( "\$valnames[$valname] = [" .
-		        implode ( ",", $optlist ) .
-			"] should have single" .
-			" element" );
-	    $opt = $optlist[0];
-	    $d = $options[$opt];
-	    $description = $d['description'];
-	    $default = $d['default'];
-	    $iv = $inherited[$opt];
-	    $v = $values[$opt];
-	    $t = $d['type'];
-	    $r = $d['range'];
-	    $des = $d['description'];
-	    $c = 'local';
-	    if ( $v == $iv ) $c = 'inherited';
-	    echo <<<EOT
-	    <tr><td>$valname</td><td>
-	    <td class='$c'><pre>$v</pre></td>
-	    <td style='padding-left:10px'>
-	    <pre>$des; $t in [{$r[0]},{$r[1]}]</pre>
-	    </td></tr>
-EOT;
+	    echo "<input name='$opt' value='$v'" .
+	         " type='text' size='10'" .
+		 " class='$c'>";
 	}
-	echo "</table></div>";
-
+	else
+	    echo "<td class='$c'>" .
+	         "<pre>$v</pre></td>";
 	echo <<<EOT
-	<br>
-	<button type='button'
-		id='arguments_button'
-		onclick='TOGGLE_BODY
-		     ("arguments",
-		      "Command Arguments")'
-		title='Show Command Arguments'>
-		<pre id='arguments_mark'>&darr;</pre>
-		</button>
-	&nbsp;
-        <h5>Command Arguments:</h5>
-	<div class='indented' id='arguments_body'>
-	<table>
+	<td style='padding-left:10px'>
+	<pre>$des; $t in [{$r[0]},{$r[1]}]</pre>
+	</td></tr>
 EOT;
-	foreach ( $argnames as $argname => $optlist )
+    }
+    echo "</table></div>";
+
+    echo <<<EOT
+    <br>
+    <button type='button'
+	    id='arguments_button'
+	    onclick='TOGGLE_BODY
+		 ("arguments",
+		  "Command Arguments")'
+	    title='Show Command Arguments'>
+	    <pre id='arguments_mark'>&darr;</pre>
+	    </button>
+    &nbsp;
+    <h5>Command Arguments:</h5>
+    <div class='indented' id='arguments_body'>
+    <table>
+EOT;
+    foreach ( $argnames as $argname => $optlist )
+    {
+	if ( count ( $optlist ) == 0 )
+	    ERROR ( "\$argnames[$argname] is" .
+		    " empty" );
+	$des = $options[$argname]['description'];
+	echo <<<EOT
+	<tr><td>$argname</td>
+	<td colspan='10' style='padding-left:5px'>
+	<pre>$des</pre></td></tr>
+EOT;
+	foreach ( $optlist as $opt )
 	{
-	    if ( count ( $optlist ) == 0 )
-	        ERROR ( "\$argnames[$argname] is" .
-		        " empty" );
-	    $des = $options[$argname]['description'];
-	    echo <<<EOT
-	    <tr><td>$argname</td>
-	    <td colspan='10' style='padding-left:5px'>
-	    <pre>$des</pre></td></tr>
-EOT;
-	    foreach ( $optlist as $opt )
-	    {
-		$d = $options[$opt];
-		$des = $d['description'];
-		$iv = $inherited[$opt];
-		$vv = $values[$opt];
-		if ( isset ( $d['values'] ) )
-		    $vs = $d['values'];
-		else
-		    $vs = NULL;
-		echo "<tr><td></td>" .
-		     "<td style='padding-left:5px'>";
-		if ( isset ( $vs ) )
-		    foreach ( $vs as $v )
-		    {
-			$c = 'unused';
-			if ( $v == $vv )
-			    $c = 'local';
-			if ( $v == $iv )
-			    $c = 'inherited';
-			if ( $v == '' )
-			    $v = '     ';
+	    $d = $options[$opt];
+	    $des = $d['description'];
+	    $iv = $inherited[$opt];
+	    $vv = $values[$opt];
+	    if ( isset ( $d['values'] ) )
+		$vs = $d['values'];
+	    else
+		$vs = NULL;
+	    echo "<tr><td></td>" .
+		 "<td class='argument'>";
+	    if ( isset ( $vs ) )
+		foreach ( $vs as $v )
+		{
+		    $c = 'unused';
+		    if ( $v == $vv )
+			$c = 'local';
+		    if ( $v == $iv )
+			$c = 'inherited';
+		    if ( $v == '' )
+			$v = '     ';
+		    if ( $edit )
+			echo "<label class='argument'>" .
+			     "<pre class='$c'>" .
+			     " $v </pre>" .
+			     "<input" .
+			     " name='$opt'" .
+			     " value='$v'" .
+			     " type='radio'>" .
+			     "</label>";
+		    else
 			echo "<pre class='$c'>" .
 			     " $v </pre>";
-		    }
+		}
+	    else
+	    {
+		$c = 'local';
+		if ( $vv == $iv )
+		    $c = 'inherited';
+		if ( $vv == '' )
+		    $vv = '     ';
+		if ( $edit )
+		    echo "<input class='$c'" .
+		         " name='$opt'" .
+			 " value='$vv'" .
+			 " type='text'" .
+			 " size='40'>";
 		else
-		{
-		    $c = 'local';
-		    if ( $vv == $iv )
-			$c = 'inherited';
-		    if ( $vv == '' )
-			$vv = '     ';
 		    echo "<pre class='$c'>" .
 			 " $vv </pre>";
-		}
-
-		echo "<pre> $des </pre>";
-		echo "</td></tr>";
 	    }
+
+	    echo "<pre> $des </pre>";
+	    echo "</td></tr>";
 	}
-	echo "</table></div>";
     }
+    echo "</table></div>";
 
 ?>
 
