@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 14 23:12:50 EDT 2020
+    // Date:	Sun Mar 15 03:42:20 EDT 2020
 
     // Edits problem option page.
 
@@ -369,6 +369,20 @@
     pre {
 	font-family: "Courier New", Courier, monospace;
     }
+    td.inherited {
+        background-color: #FFBF80;
+	border-style: solid;
+	border-width: 1px;
+	text-align:right;
+	padding-left:5px;
+    }
+    td.local {
+        background-color: #99FF99;
+	border-style: solid;
+	border-width: 1px;
+	text-align:right;
+	padding-left:5px;
+    }
     pre.unused {
         background-color: #FFFFFF;
 	border-style: solid;
@@ -476,10 +490,11 @@ EOT;
 	    $t = $d['type'];
 	    $r = $d['range'];
 	    $des = $d['description'];
+	    $c = 'local';
+	    if ( $v == $iv ) $c = 'inherited';
 	    echo <<<EOT
 	    <tr><td>$valname</td><td>
-	    <td style='text-align:right;
-	        padding-left:5px'><pre>$v</pre></td>
+	    <td class='$c'><pre>$v</pre></td>
 	    <td style='padding-left:10px'>
 	    <pre>$des; $t in [{$r[0]},{$r[1]}]</pre>
 	    </td></tr>
@@ -523,19 +538,22 @@ EOT;
 			    $c = 'local';
 			if ( $v == $iv )
 			    $c = 'inherited';
+			if ( $v == '' )
+			    $v = '     ';
 			echo "<pre class='$c'>" .
 			     " $v </pre>";
 		    }
-		elseif ( $vv == $iv )
-		    echo "<pre class='inherited'>" .
-		         " $iv </pre>";
-		elseif ( $vv == "" )
-		    echo "<pre class='unused'>" .
-		         "   </pre>";
 		else
-		    echo "<pre class='local'>" .
-		         " $vv </pre>";
-		    
+		{
+		    $c = 'local';
+		    if ( $vv == $iv )
+			$c = 'inherited';
+		    if ( $vv == '' )
+			$vv = '     ';
+		    echo "<pre class='$c'>" .
+			 " $vv </pre>";
+		}
+
 		echo "<pre> $des </pre>";
 		echo "</td></tr>";
 	    }

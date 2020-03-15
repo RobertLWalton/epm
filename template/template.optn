@@ -2,7 +2,7 @@
 //
 // File:    template.optn.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Mar 14 21:51:22 EDT 2020
+// Date:    Sun Mar 15 03:41:17 EDT 2020
 
 {
     "GXXFLAGS": { "description":
@@ -16,9 +16,9 @@
 		                " level",
                  "argname": "GXXFLAGS" },
 
-    "gcc-ped": { "values": ["-Wpedantic", ""],
+    "gcc-ped": { "values": ["", "-Wpedantic"],
 		"default": "",
-		"description": "disallow or allow GNU"
+		"description": "allow or disallow GNU"
 		               " extensions of C/C++",
                  "argname": "GXXFLAGS" },
 
