@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 15 13:54:06 EDT 2020
+    // Date:	Sun Mar 15 16:22:48 EDT 2020
 
     // Edits problem option page.
 
@@ -89,7 +89,7 @@
         ['argname', 'valname', 'description',
 	 'values','type','range','default'];
     $description_types =
-        ['natural', 'integer', 'float', 'args'];
+        ['natural', 'integer', 'float'];
     foreach ( $optn_files as $e )
     {
 	$r = $e[0];
@@ -115,6 +115,10 @@
     }
     foreach ( $options as $opt => $description )
     {
+	if ( ! isset ( $description['description'] ) )
+	    $errors[] =
+	        "option $opt has NO description";
+
 	$isarg = isset ( $description['argname'] );
 	$isval = isset ( $description['valname'] );
 	if ( $isarg && $isval )
@@ -126,43 +130,26 @@
 	elseif ( $isval )
 	    $valnames[$description['valname']][] =
 		$opt;
-    }
-    foreach ( $options as $opt => $description )
-    {
-	if ( ! isset ( $description['description'] ) )
-	    $errors[] =
-	        "option $opt has NO description";
 
 	$hasvalues = isset ( $description['values'] );
 	$hastype = isset ( $description['type'] );
 	$hasdefault = isset ( $description['default'] );
 	$hasrange = isset ( $description['range'] );
-	if ( $hasvalues && $hastype )
-	    $errors[] = "option $opt has BOTH"
-	              . " 'values' AND 'type'";
-	elseif ( $hasvalues )
+
+	if ( $isval )
 	{
 	    if ( ! $hasdefault )
-		$errors[] =
-		    "option $opt has NO default";
-	    else
-	    {
-	        $values = $description['values'];
-	        $default = $description['default'];
-		if ( ! in_array ( $default, $values ) )
-		    $errors[] =
-			"option $opt default $default" .
-			" is not allowed";
-	    }
-	}
-	elseif ( $hastype )
-	{
-	    $type = $description['type'];
-	    if ( ! $hasdefault )
-		$errors[] =
-		    "option $opt has NO default";
+		$errors[] = "option $opt has 'valname'"
+		          . " but no 'default'";
 	    if ( ! $hasrange )
-		$errors[] = "option $opt has NO range";
+		$errors[] = "option $opt has 'valname'"
+		          . " but no 'range'";
+	    if ( ! $hastype )
+		$errors[] = "option $opt has 'valname'"
+		          . " but no 'type'";
+	    if ( $hasvalues )
+		$errors[] = "option $opt has 'valname'"
+		          . " and also has 'values'";
 	    if ( $hasdefault && $hasrange )
 	    {
 	        $range = $description['range'];
@@ -171,9 +158,46 @@
 		     ||
 		     $default > $range[1] )
 		    $errors[] =
-			"option $opt default $default" .
-			" is out of range";
+			"option $opt 'default' is out" .
+			" of 'range'";
 	    }
+	}
+	elseif ( $isarg )
+	{
+	    if ( ! $hasdefault )
+		$errors[] = "option $opt has 'argname'"
+		          . " but no 'default'";
+	    if ( $hastype )
+		$errors[] = "option $opt has 'valname'"
+		          . " and also has 'type'";
+	    if ( $hasrange )
+		$errors[] = "option $opt has 'valname'"
+		          . " and also has 'range'";
+	    if ( $hasvalues )
+	    {
+	        $values = $description['values'];
+	        $default = $description['default'];
+		if ( ! in_array ( $default, $values ) )
+		    $errors[] = "option $opt 'default'"
+		              . " is not in `values'";
+	    }
+	} else {
+	    if ( $hasvalues )
+		$errors[] = "option $opt has 'values'"
+		          . " but has neither"
+			  . " 'argname' or 'valname'";
+	    if ( $hastype )
+		$errors[] = "option $opt has 'type'"
+		          . " but has neither"
+			  . " 'argname' or 'valname'";
+	    if ( $hasrange )
+		$errors[] = "option $opt has 'range'"
+		          . " but has neither"
+			  . " 'argname' or 'valname'";
+	    if ( $hasdefault )
+		$errors[] = "option $opt has 'default'"
+		          . " but has neither"
+			  . " 'argname' or 'valname'";
 	}
     }
     ksort ( $valnames, SORT_NATURAL );
