@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 15 22:00:41 EDT 2020
+    // Date:	Mon Mar 16 03:15:02 EDT 2020
 
     // Edits problem option page.
 
@@ -167,25 +167,6 @@
 	    if ( $hasvalues )
 		$errors[] = "option $opt has 'valname'"
 		          . " and also has 'values'";
-	    if ( $hasdefault && $hasrange )
-	    {
-	        $default = $description['default'];
-	        $range = $description['range'];
-		if ( $default < $range[0]
-		     ||
-		     $default > $range[1] )
-		    $errors[] =
-			"option $opt 'default' is out" .
-			" of 'range'";
-	    }
-	    if ( $hastype )
-	    {
-	        $type = $description['type'];
-	        if ( ! isset ( $type_re[$type] ) )
-		    $errors[] =
-			"option $opt has illegal" .
-			" 'type'";
-	    }
 	}
 	elseif ( $isarg )
 	{
@@ -230,7 +211,7 @@
     //
     function check_optmap ( & $optmap, $name )
     {
-	global $type_re, $errors;
+	global $type_re, $errors, $options;
 
         foreach ( $optmap as $opt => $value )
 	{
@@ -252,6 +233,18 @@
 			"option $opt $name value" .
 			" '$value' has illegal" .
 			" format for its type $type";
+		else
+		{
+		    $r = $d['range'];
+		    if ( $value < $r[0] )
+			$errors[] =
+			    "option $opt $name value" .
+			    " '$value' is too small";
+		    elseif ( $value > $r[1] )
+			$errors[] =
+			    "option $opt $name value" .
+			    " '$value' is too large";
+		}
 	    }
 	    else
 	    {
@@ -311,17 +304,13 @@
     check_optmap ( $optmap, 'local' );
 
     $defaults = $optmap;
-    $changed = false;
-        // True if $optmap != $defaults.
     $edit = false;
         // False to display options, true to edit them.
 
-    // If editing, $optmap is updated and $changed is
-    // set to true whenever an element of $optmap is
-    // actually changed (not just set to its old value).
-    // Then errors are checked.  If there are no errors,
-    // elements of $optmap that are != to corresponding
-    // elements of $inherited are written to $probdir/
+    // If editing, $optmap is updated and errors are
+    // checked.  If there are no errors, elements of
+    // $optmap that are != to corresponding elements
+    // of $inherited are written to $probdir/
     // $problem.optn.  If there are errors $optmap, is
     // reset to $defaults and editing begins anew.
 
@@ -335,11 +324,10 @@
 	foreach ( $optmap as $opt => $value )
 	{
 	    if ( isset ( $_POST[$opt] ) )
-	    {
 	        $optmap[$opt] = trim ( $_POST[$opt] );
-		$changed = true;
-	    }
 	}
+	$errors = [];
+	    // Clear previous $optmap errors.
 	check_optmap ( $optmap, 'update' );
 	if ( count ( $errors ) > 0 )
 	{
@@ -354,13 +342,18 @@
 	        if ( $value != $inherited[$opt] )
 		    $new_opts[$opt] = $value;
 	    }
-	    $j = json_encode
-		( $new_opts, JSON_PRETTY_PRINT );
 	    $f = "$probdir/$problem.optn";
-	    $r = @file_put_contents
-	              ( "$epm_data/$f", $j );
-	    if ( $r === false )
-	        ERROR ( "cannot write $f" );
+	    if ( count ( $new_opts ) == 0 )
+	        unlink ( "$epm_data/$f" );
+	    else
+	    {
+		$j = json_encode
+		    ( $new_opts, JSON_PRETTY_PRINT );
+		$r = @file_put_contents
+			  ( "$epm_data/$f", $j );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
+	    }
 	}
     }
 
@@ -392,6 +385,10 @@
     }
     .right-adjust {
 	text-align:right;
+    }
+    .center {
+	margin-left: auto;
+	margin-right: auto;
     }
     td.inherited {
         background-color: #FFBF80;
@@ -453,7 +450,7 @@
     }
     div.manage {
 	background-color: #96F9F3;
-	padding-bottom: 20px;
+	padding-bottom: 5px;
     }
     pre.problem {
         color: #CC00FF;
@@ -512,30 +509,38 @@
 	echo "<br></div></div>" . PHP_EOL;
     }
 
+    $option_help = HELP ( 'option-page' );
     echo <<<EOT
     <div class='manage'>
-    <form method='GET'>
-    <table>
+    <form method='GET' style='margin-bottom:0'>
+    <table style='width:100%'>
     <td>
     <h5>User:</h5> <input type='submit' value='$email'
                     formaction='user.php'
                     title='click to see user profile'>
     </td>
-    <td style='padding-left:50px'>
+    <td style='padding-left:20px'>
+    <h5>Go To:</h5>
     <button type='submit'
-            formaction='problem.php'>Go To Problem Page
+            formaction='problem.php'>Problem Page
+    </button>
+    &nbsp;&nbsp;
+    <button type='submit'
+            formaction='run.php'>Run Page
     </button>
     </td>
-    <td style='padding-left:50px'>
+    <td style='padding-left:20px'>
     <h5>Current Problem:</h5>&nbsp;
     <pre class='problem'>$problem</pre></b>
-    </td>
+    </td><td style='text-align:right'>
+    $option_help</td>
     </table>
     </form>
     <br>
     <form action='option.php' method='POST'>
     <!-- This form lasts till the end of the
          document -->
+    <div class='center' style='width:100px'>
 EOT;
     if ( $edit )
         echo "<button type='submit' name='update'" .
@@ -543,9 +548,12 @@ EOT;
     else
         echo "<button type='submit' name='edit'" .
 	     " value='edit'>Edit</button>";
-    echo "</div>";
 
+    $values_help = HELP ( 'option-values' );
     echo <<<EOT
+    </div></div>
+    <table style='width:100%'><tr>
+    <td>
     <button type='button'
 	    id='values_button'
 	    onclick='TOGGLE_BODY
@@ -555,6 +563,9 @@ EOT;
 	    </button>
     &nbsp;
     <h5>Values:</h5>
+    </td><td style='text-align:right'>
+    $values_help</td>
+    </tr></table>
     <div class='indented' id='values_body'>
     <table>
 EOT;
@@ -596,8 +607,11 @@ EOT;
     }
     echo "</table></div>";
 
+    $arguments_help = HELP ( 'option-arguments' );
     echo <<<EOT
     <br>
+    <table style='width:100%'><tr>
+    <td>
     <button type='button'
 	    id='arguments_button'
 	    onclick='TOGGLE_BODY
@@ -608,6 +622,9 @@ EOT;
 	    </button>
     &nbsp;
     <h5>Command Arguments:</h5>
+    </td><td style='text-align:right'>
+    $arguments_help</td>
+    </tr></table>
     <div class='indented' id='arguments_body'>
     <table>
 EOT;
