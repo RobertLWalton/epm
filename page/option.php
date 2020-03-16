@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 16 04:32:35 EDT 2020
+    // Date:	Mon Mar 16 06:23:16 EDT 2020
 
     // Edits problem option page.
 
@@ -59,12 +59,12 @@
     // If $errors is not empty, call ERROR with $errors
     // in error message.
     //
-    function check_errors ()
+    function check_errors ( $name )
     {
         global $errors;
 	if ( count ( $errors ) == 0 ) return;
 
-        $m = "Errors in option templates:";
+        $m = "Errors in $name:";
 	foreach ( $errors as $e )
 	    $m .= "\n    $e";
 	ERROR ( $m );
@@ -88,13 +88,13 @@
     // report errors by appending to $errors.  Template
     // errors will result in a call to ERROR below.
     //
-    $optn_files = [];
-    $optn_files[] =
-	[$epm_home, "template/template.optn"];
-    $optn_files[] =
-	[$epm_data, "template/template.optn"];
-    $optn_files[] =
-	[$epm_data, "admin/users/$uid/template.optn"];
+    $template_dirs = [];
+    $template_dirs[] =
+	[$epm_home, "template"];
+    $template_dirs[] =
+	[$epm_data, "template"];
+    $template_dirs[] =
+	[$epm_data, "admin/users/$uid/template"];
 
     $options = [];
     $argnames = [];
@@ -107,10 +107,10 @@
 	 'integer' => '/^(|\+|-)\d+$/',
 	 'float' => '/^(|\+|-)\d+(|\.\d+)'
 	          . '(|(e|E)(|\+|-)\d+)$/'];
-    foreach ( $optn_files as $e )
+    foreach ( $template_dirs as $dir )
     {
-	$r = $e[0];
-	$f = $e[1];
+	$r = $dir[0];
+	$f = "$dir[1]/template.optn";
 	if ( ! is_readable ( "$r/$f" ) ) continue;
 	$j = get_json ( $r, $f );
 
@@ -130,6 +130,7 @@
 	    }
 	}
     }
+
     foreach ( $options as $opt => $description )
     {
 	if ( ! isset ( $description['description'] ) )
@@ -200,7 +201,7 @@
 			  . " 'argname' or 'valname'";
 	}
     }
-    check_errors();
+    check_errors ( 'option_templates' );
     ksort ( $valnames, SORT_NATURAL );
     ksort ( $argnames, SORT_NATURAL );
 
@@ -266,7 +267,7 @@
 	    $optmap[$opt] = $value['default'];
     }
     check_optmap ( $optmap, 'template default' );
-    check_errors();
+    check_errors ( 'template default values' );
 
     foreach ( array_reverse ( $remote_dirs ) as $dir )
     {
@@ -284,7 +285,7 @@
 	}
     }
     check_optmap ( $optmap, 'inherited' );
-    check_errors();
+    check_errors ( 'template inhertied values' );
 
     $inherited = $optmap;
 
@@ -711,6 +712,27 @@ EOT;
 	}
     }
     echo "</table></div></form>";
+
+    $templates_help = HELP ( 'option-templates' );
+    echo <<<EOT
+    <br>
+    <table style='width:100%'><tr>
+    <td>
+    <button type='button'
+	    id='templates_button'
+	    onclick='TOGGLE_BODY
+		 ("templates", "Templates")'
+	    title='Show Templates'>
+	    <pre id='templates_mark'>&darr;</pre>
+	    </button>
+    &nbsp;
+    <h5>Templates:</h5>
+    </td><td style='text-align:right'>
+    $arguments_help</td>
+    </tr></table>
+    <div class='indented' id='templates_body'>
+    </div>
+EOT;
 
 ?>
 
