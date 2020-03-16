@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 16 03:15:02 EDT 2020
+    // Date:	Mon Mar 16 04:32:35 EDT 2020
 
     // Edits problem option page.
 
@@ -383,6 +383,11 @@
     pre {
 	font-family: "Courier New", Courier, monospace;
     }
+    .mono {
+	display:inline;
+	font-family: "Courier New", Courier, monospace;
+        font-size: 12pt;
+    }
     .right-adjust {
 	text-align:right;
     }
@@ -601,7 +606,7 @@ EOT;
 	         "<pre>$v</pre></td>";
 	echo <<<EOT
 	<td style='padding-left:10px'>
-	<pre>$des; $t in [{$r[0]},{$r[1]}]</pre>
+	<div class='mono'>$des; $t in [{$r[0]},{$r[1]}]</div>
 	</td></tr>
 EOT;
     }
@@ -636,8 +641,9 @@ EOT;
 	$des = $options[$argname]['description'];
 	echo <<<EOT
 	<tr><td>$argname</td>
-	<td colspan='10' style='padding-left:5px'>
-	<pre>$des</pre></td></tr>
+	<td style='padding-left:5px'>
+	<div class='mono'>$des</div>
+	</td></tr>
 EOT;
 	foreach ( $optlist as $opt )
 	{
@@ -698,7 +704,9 @@ EOT;
 			 " $vv </pre>";
 	    }
 
-	    echo "<pre> $des </pre>";
+	    echo "<div class='mono'" .
+	         " style='padding-left:5px'>" .
+		 "$des</div>";
 	    echo "</td></tr>";
 	}
     }
