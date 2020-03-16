@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 15 17:26:25 EDT 2020
+    // Date:	Sun Mar 15 22:00:41 EDT 2020
 
     // Edits problem option page.
 
@@ -336,7 +336,7 @@
 	{
 	    if ( isset ( $_POST[$opt] ) )
 	    {
-	        $optmap[$opt] = $_POST[$opt];
+	        $optmap[$opt] = trim ( $_POST[$opt] );
 		$changed = true;
 	    }
 	}
@@ -348,7 +348,19 @@
 	}
 	else
 	{
-	    // TBD
+	    $new_opts = [];
+	    foreach ( $optmap as $opt => $value )
+	    {
+	        if ( $value != $inherited[$opt] )
+		    $new_opts[$opt] = $value;
+	    }
+	    $j = json_encode
+		( $new_opts, JSON_PRETTY_PRINT );
+	    $f = "$probdir/$problem.optn";
+	    $r = @file_put_contents
+	              ( "$epm_data/$f", $j );
+	    if ( $r === false )
+	        ERROR ( "cannot write $f" );
 	}
     }
 
@@ -377,6 +389,9 @@
     }
     pre {
 	font-family: "Courier New", Courier, monospace;
+    }
+    .right-adjust {
+	text-align:right;
     }
     td.inherited {
         background-color: #FFBF80;
@@ -568,7 +583,7 @@ EOT;
 	{
 	    echo "<input name='$opt' value='$v'" .
 	         " type='text' size='10'" .
-		 " class='$c'>";
+		 " class='$c right-adjust'>";
 	}
 	else
 	    echo "<td class='$c'>" .
@@ -627,10 +642,15 @@ EOT;
 		    if ( $v == $iv )
 			$c = 'inherited';
 		    elseif ( $v == $vv )
-			$chk = 'checked';
+		    {
+		        if ( $edit )
+			    $chk = 'checked';
+			else
+			    $c = 'local';
+		    }
 		    if ( $v == '' )
 			$v = '     ';
-		    if ( true )
+		    if ( $edit )
 			echo "<label>" .
 			     "<input class='argument'" .
 			     " name='$opt'" .
