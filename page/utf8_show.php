@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 22:40:03 EDT 2020
+    // Date:	Mon Mar 16 04:45:53 EDT 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // Filename is relative to problem directory.
@@ -22,7 +22,7 @@
 	background-color: #D0FBD1;
     }
     table.filecontents {
-        font-size: 1.6vw;
+        font-size: 16px;
     }
     td.linenumber {
 	background-color:#b3e6ff;

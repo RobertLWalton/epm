@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 13 16:58:02 EDT 2020
+    // Date:	Mon Mar 16 05:10:52 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -524,13 +524,13 @@
 	margin: 0 0 0 0;
     }
     h5 {
-        font-size: 1vw;
+        font-size: 20px;
 	margin: 0 0 0 0;
 	display:inline;
     }
     pre, b, button, input, select, u {
 	display:inline;
-        font-size: 0.8vw;
+        font-size: 16px;
     }
     pre {
 	font-family: "Courier New", Courier, monospace;
@@ -538,19 +538,12 @@
     pre.red {
         color: #BB0000;
     }
-    div.left {
-	width: 50%;
-	float: left;
-        font-size: 0.8vw;
-	height: 99%;
-	overflow: scroll;
-    }
     div.manage {
 	background-color: #96F9F3;
     }
     pre.problem {
         color: #CC00FF;
-        font-size: 1vw;
+        font-size: 20px;
     }
     div.problem_display {
 	background-color: #F2D9D9;
@@ -574,10 +567,29 @@
 	color: #99003D;
 	text-align: right;
     }
-    iframe.right {
-	width: 48%;
-	float: right;
-	height: 99%;
+    @media screen and ( min-width: 1600px )
+    {
+	div.left {
+	    width: 50%;
+	    float: left;
+	    font-size: 16px;
+	    height: 99%;
+	    overflow: scroll;
+	}
+	iframe.right {
+	    width: 48%;
+	    float: right;
+	    height: 99%;
+	}
+    }
+    @media screen and not ( min-width: 1600px )
+    {
+	div.left {
+	    font-size: 16px;
+	    width: 100%;
+	    height: 99%;
+	    overflow: scroll;
+	}
     }
 
 </style>
