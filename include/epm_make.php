@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Mar 14 03:41:29 EDT 2020
+// Date:    Tue Mar 17 01:58:31 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -53,12 +53,15 @@ if ( isset ( $problem_params['remote_dirs'] ) )
 else
     $remote_dirs = [];
 
-// Template root directories:
+// Readable template directories, in order:
 //
-$template_roots = [];
+$template_dirs = [];
+$template_dirs[] = [$epm_home, "template"];
 if ( is_dir ( "$epm_data/template" ) )
-    $template_roots[] = $epm_data;
-$template_roots[] = $epm_home;
+    $template_dirs[] = [$epm_data, "template"];
+if ( is_dir ( "$epm_data/admin/users/$uid/template" ) )
+    $template_dirs[] =
+        [$epm_data, "admin/users/$uid/template"];
 
 // Return true if process with $pid is still running,
 // and false otherwise.
@@ -235,32 +238,30 @@ function substitute_match ( $item, $match )
 
 // Build a cache of templates.  This is a map of the
 // form:
-//		template => [root, json]
+//	    template => [root, directory, json]
 //
-// where "{$root}/template/{$template}.tmpl is a
+// where "{$root}/${directory}/{$template}.tmpl is a
 // template file, root is either $epm_home or $epm_data,
 // and json is NULL, but will be set to the decoded json
 // read when the template file is read as per the
 // get_template function below.  If two files with the
 // same template are found, only the one appearing
-// with the first root in $template_roots is recorded.
-// The cache is stored in $template_cache.  No value
-// is returned.
+// with the later directory in $template_dirs is
+// recorded.  The cache is stored in $template_cache.
+// No value is returned.
 //
 $template_cache = NULL;
 function load_template_cache()
 {
-    global $template_roots, $template_cache;
+    global $template_dirs, $template_cache;
 
     if ( isset ( $template_cache) ) return;
-    foreach ( $template_roots as $r )
+    foreach ( $template_dirs as $e )
     {
-	$dircontents = @scandir ( "$r/template" );
+        list ( $r, $d ) = $e;
+	$dircontents = @scandir ( "$r/$d" );
 	if ( $dircontents === false )
-	    ERROR ( "cannot read " .
-	            ( $r == $epm_data ? "DATA" :
-		                        "HOME" ) .
-		    "/template" );
+	    ERROR ( "cannot read $d" );
 
 	foreach ( $dircontents as $fname )
 	{
@@ -268,10 +269,8 @@ function load_template_cache()
 	                        $fname, $matches ) )
 	        continue;
 	    $template = $matches[1];
-	    if ( isset ( $template_cache[$template] ) )
-	        continue;
 	    $template_cache[$template] =
-	        [ $r, NULL ];
+	        [ $r, $d, NULL ];
 	}
     }
     if ( ! isset ( $template_cache ) )
@@ -289,12 +288,13 @@ function get_template_json ( $template )
     if ( ! isset ( $template_cache[$template] ) )
         ERROR ( "get_template called with $template" .
 	        " which is not cache key" );
-    $pair = & $template_cache[$template];
-    $result = & $pair[1];
+    $triple = & $template_cache[$template];
+    $result = & $triple[2];
     if ( ! isset ( $result ) )
     {
-	$r = $pair[0];
-	$f = "template/{$template}.tmpl";
+	$r = $triple[0];
+	$d = $triple[1];
+	$f = "$d/{$template}.tmpl";
 	if ( ! is_readable ( "$r/$f" ) )
 	    ERROR ( "cannot read $f" );
 	$result = get_json ( $r, $f );
@@ -327,7 +327,7 @@ function find_templates
     load_template_cache();
 
     $templates = [];
-    foreach ( $template_cache as $template => $pair )
+    foreach ( $template_cache as $template => $triple )
     {
 	if ( ! preg_match
 	       ( '/^([^:]+):([^:]+):/',
@@ -361,29 +361,23 @@ function find_templates
 }
 
 // Get the template.optn file json with overrides from
-// earlier template directories and users/$uid
-// directory.  Cache result in $template_optn.
+// later template directories in $template_dirs.  Cache
+// result in $template_optn.
 //
 $template_optn = NULL;
 function get_template_optn()
 {
-    global $template_roots, $epm_data, $uid,
+    global $template_dirs, $epm_data, $uid,
            $template_optn;
 
     if ( isset ( $template_optn ) )
         return $template_optn;
 
-    $files = [];
-    foreach ( array_reverse ( $template_roots ) as $r )
-        $files[] = [$r, "template/template.optn"];
-    $files[] = [$epm_data,
-                "admin/users/$uid/template.optn"];
-
     $template_optn = [];
-    foreach ( $files as $e )
+    foreach ( $template_dirs as $e )
     {
-	$r = $e[0];
-	$f = $e[1];
+        list ( $r, $d ) = $e;
+	$f = "$d/template.optn";
         if ( ! is_readable ( "$r/$f" ) ) continue;
 	$j = get_json ( $r, $f );
 
