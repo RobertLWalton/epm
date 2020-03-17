@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 16 06:23:16 EDT 2020
+    // Date:	Tue Mar 17 12:39:18 EDT 2020
 
     // Edits problem option page.
 
@@ -87,14 +87,8 @@
     // Lastly, check format of option templates and
     // report errors by appending to $errors.  Template
     // errors will result in a call to ERROR below.
-    //
-    $template_dirs = [];
-    $template_dirs[] =
-	[$epm_home, "template"];
-    $template_dirs[] =
-	[$epm_data, "template"];
-    $template_dirs[] =
-	[$epm_data, "admin/users/$uid/template"];
+
+    // See epm_make.php for $template_dirs.
 
     $options = [];
     $argnames = [];
@@ -304,10 +298,16 @@
     }
     check_optmap ( $optmap, 'local' );
 
+    // Compute data for Template Commands in $template_
+    // cache.
+    //
+    load_template_cache();
+    ksort ( $template_cache, SORT_NATURAL );
+
     $defaults = $optmap;
     $edit = false;
         // False to display options, true to edit them.
-
+    
     // If editing, $optmap is updated and errors are
     // checked.  If there are no errors, elements of
     // $optmap that are != to corresponding elements
@@ -565,7 +565,7 @@ EOT;
 	    onclick='TOGGLE_BODY
 		 ("values", "Values")'
 	    title='Show Values'>
-	    <pre id='values_mark'>&darr;</pre>
+	    <pre id='values_mark'>&uarr;</pre>
 	    </button>
     &nbsp;
     <h5>Values:</h5>
@@ -631,7 +631,7 @@ EOT;
     </td><td style='text-align:right'>
     $arguments_help</td>
     </tr></table>
-    <div class='indented' id='arguments_body'>
+    <div class='indented' id='arguments_body' hidden>
     <table>
 EOT;
     foreach ( $argnames as $argname => $optlist )
@@ -723,17 +723,44 @@ EOT;
 	    onclick='TOGGLE_BODY
 		 ("templates", "Templates")'
 	    title='Show Templates'>
-	    <pre id='templates_mark'>&darr;</pre>
+	    <pre id='templates_mark'>&uarr;</pre>
 	    </button>
     &nbsp;
-    <h5>Templates:</h5>
+    <h5>Template Commands:</h5>
     </td><td style='text-align:right'>
     $arguments_help</td>
     </tr></table>
     <div class='indented' id='templates_body'>
-    </div>
 EOT;
-
+    $tcount = 0;
+    foreach ( $template_cache as $template => $e )
+    {
+        $j = get_template_json ( $template );
+	if ( ! isset ( $j['COMMANDS'] ) ) continue;
+	$tpretty = pretty_template ( $template );
+	$tcommands = $j['COMMANDS'];
+	$tcount += 1;
+	echo <<<EOT
+	     <button type='button'
+	             id='template{$tcount}_button'
+		     onclick='TOGGLE_BODY
+		         ( "template$tcount",
+			   "$tpretty Commands" )'
+		     title='Show $tpretty Commands'>
+	     <pre id='template{$tcount}_mark'
+	          >&darr;</pre>
+	     </button>
+	     &nbsp;&nbsp;
+	     <h5>$tpretty:</h5>
+	     <br>
+	     <div id='template{$tcount}_body'
+	          class='indented' hidden>
+EOT;
+         foreach ( $tcommands as $c )
+	     echo "<pre>$c</pre><br>";
+	 echo "</div>";
+    }
+    echo "</div>";
 ?>
 
 
