@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 17 12:39:18 EDT 2020
+    // Date:	Wed Mar 18 06:01:17 EDT 2020
 
     // Edits problem option page.
 
@@ -369,6 +369,13 @@
 <html>
 <head>
 <style>
+    @media screen and ( min-width: 1280px )
+    {
+        div.root {
+	    width: 1280px;
+	}
+    }
+	    
     .no-margin {
 	margin: 0 0 0 0;
     }
@@ -493,6 +500,7 @@
 
 </head>
 <body>
+<div class='root'>
 
 <?php 
 
@@ -721,16 +729,16 @@ EOT;
     <button type='button'
 	    id='templates_button'
 	    onclick='TOGGLE_BODY
-		 ("templates", "Templates")'
-	    title='Show Templates'>
-	    <pre id='templates_mark'>&uarr;</pre>
+		 ("templates", "Template Commands")'
+	    title='Show Template Commands'>
+	    <pre id='templates_mark'>&darr;</pre>
 	    </button>
     &nbsp;
     <h5>Template Commands:</h5>
     </td><td style='text-align:right'>
     $arguments_help</td>
     </tr></table>
-    <div class='indented' id='templates_body'>
+    <div class='indented' id='templates_body' hidden>
 EOT;
     $tcount = 0;
     foreach ( $template_cache as $template => $e )
@@ -764,5 +772,6 @@ EOT;
 ?>
 
 
+</div>
 </body>
 </html>
