@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 18 06:01:17 EDT 2020
+    // Date:	Wed Mar 18 15:58:42 EDT 2020
 
     // Edits problem option page.
 
@@ -496,6 +496,21 @@
 	    BODY.hidden = true;
 	}
     }
+
+    function CHANGE_BACKGROUND ( count )
+    {
+        var ITEM = document.getElementById
+	    ( 'value' + count );
+	ITEM.style.backgroundColor = '#99FF99';
+    }
+    function SET_INHERITED ( count, inherited )
+    {
+        var ITEM = document.getElementById
+	    ( 'value' + count );
+	ITEM.value = inherited;
+	ITEM.style.backgroundColor = '#FFBF80';
+    }
+
 </script>
 
 </head>
@@ -551,7 +566,10 @@
     </table>
     </form>
     <br>
-    <form action='option.php' method='POST'>
+    <form action='option.php' method='POST'
+          onkeydown='return event.key != "Enter"'>
+	  <!-- onkeydown keeps text area enter key
+	       from triggering submit -->
     <!-- This form lasts till the end of the
          document -->
     <div class='center' style='width:100px'>
@@ -583,6 +601,7 @@ EOT;
     <div class='indented' id='values_body'>
     <table>
 EOT;
+    $count = 0;
     foreach ( $valnames as $valname => $optlist )
     {
 	if ( count ( $optlist ) != 1 )
@@ -590,6 +609,7 @@ EOT;
 		    implode ( ",", $optlist ) .
 		    "] should have single" .
 		    " element" );
+	$count += 1;
 	$opt = $optlist[0];
 	$d = $options[$opt];
 	$description = $d['description'];
@@ -608,7 +628,12 @@ EOT;
 	{
 	    echo "<input name='$opt' value='$v'" .
 	         " type='text' size='10'" .
-		 " class='$c right-adjust'>";
+		 " class='$c right-adjust'" .
+		 " id='value$count' onkeydown=" .
+		 "'(CHANGE_BACKGROUND($count))'>" .
+		 "<button type='button'" .
+		 " onclick='SET_INHERITED" .
+		 "($count,\"$iv\")'>&#8635;</button>";
 	}
 	else
 	    echo "<td class='$c'>" .
