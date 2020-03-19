@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 19 03:41:35 EDT 2020
+    // Date:	Thu Mar 19 03:56:04 EDT 2020
 
     // Edits problem option page.
 
@@ -345,7 +345,7 @@
 	    }
 	    $f = "$probdir/$problem.optn";
 	    if ( count ( $new_opts ) == 0 )
-	        unlink ( "$epm_data/$f" );
+	        @unlink ( "$epm_data/$f" );
 	    else
 	    {
 		$j = json_encode
@@ -357,6 +357,15 @@
 	    }
 	}
     }
+    elseif ( isset ( $_POST['cancel'] ) )
+        /* Do Nothing */;
+    elseif ( isset ( $_POST['revert'] ) )
+    {
+	$f = "$probdir/$problem.optn";
+	@unlink ( "$epm_data/$f" );
+	$optmap = $inherited;
+    }
+
 
     $debug = ( $epm_debug != ''
                &&
@@ -400,8 +409,7 @@
 	text-align:right;
     }
     .center {
-	margin-left: auto;
-	margin-right: auto;
+	text-align: center;
     }
     td.inherited {
         background-color: #FFBF80;
@@ -579,11 +587,20 @@
 	       from triggering submit -->
     <!-- This form lasts till the end of the
          document -->
-    <div class='center' style='width:100px'>
+    <div class='center'>
 EOT;
     if ( $edit )
-        echo "<button type='submit' name='update'" .
-	     " value='update'>Update</button>";
+        echo "<button type='submit'" .
+	     " name='update' value='update'>" .
+	     "Update</button>" .
+	     "<pre>    </pre>" .
+             "<button type='submit'" .
+	     " name='cancel' value='cancel'>" .
+	     "Cancel Edit</button>" .
+	     "<pre>    </pre>" .
+             "<button type='submit'" .
+	     " name='revert' value='revert'>" .
+	     "Revert to Inherited Values</button>";
     else
         echo "<button type='submit' name='edit'" .
 	     " value='edit'>Edit</button>";
@@ -664,14 +681,14 @@ EOT;
 		 ("arguments",
 		  "Command Arguments")'
 	    title='Show Command Arguments'>
-	    <pre id='arguments_mark'>&darr;</pre>
+	    <pre id='arguments_mark'>&uarr;</pre>
 	    </button>
     &nbsp;
     <h5>Command Arguments:</h5>
     </td><td style='text-align:right'>
     $arguments_help</td>
     </tr></table>
-    <div class='indented' id='arguments_body' hidden>
+    <div class='indented' id='arguments_body'>
     <table>
 EOT;
     foreach ( $argnames as $argname => $optlist )
