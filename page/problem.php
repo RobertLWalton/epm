@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 16 05:10:52 EDT 2020
+    // Date:	Thu Mar 19 11:53:45 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -34,16 +34,21 @@
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
 
-    // The only $_SESSION state particular to this page
-    // is $_SESSION['EPM_PROBLEM'].  The rest of the
-    // state is in the file system.
+    // The $_SESSION state particular to this page is:
+    //
+    //     $_SESSION['EPM_PROBLEM'] current problem name
+    //		or unset if none
+    //     $_SESSION['EPM_WORK'] information on last
+    //		group of commands run in +work+ sub-
+    //		directory
 
     // Set $problem to current problem, or NULL if none.
     // Also set $probdir to the problem directory if
     // $problem not NULL and the problem directory
     // exists.  If $problem is not NULL but the problem
     // directory does not exist, the problem has been
-    // deleted by another session.
+    // deleted by another session (so set $problem and
+    // $probdir to NULL).
     //
     // Also lock the problem directory for the duration
     // of the execution of this page.
@@ -56,9 +61,6 @@
     $deleted_problem = NULL;
         // Set to announce that $deleted_problem has
 	// been deleted.
-    $make_ftest = NULL;
-        // Set to ask if $make_ftest .ftest file should
-	// be made from .fout file.
     if ( isset ( $_POST['new_problem'] ) )
     {
         $problem = trim ( $_POST['new_problem'] );
@@ -89,9 +91,13 @@
 	else
 	{
 	    $m = umask ( 06 );
-	    if ( ! mkdir ( "$d", 0771 ) )
-		ERROR ( "cannot make" .
-		        " $user_dir/$problem" );
+	    if ( ! @mkdir ( "$d", 0771 ) )
+	    {
+		$errors[] =
+		    "trying to create $problem which" .
+		    " already exists";
+		$problem = NULL;
+	    }
 	    umask ( $m );
 	}
     }
@@ -108,8 +114,8 @@
 	         ( "$epm_data/$user_dir/$problem" ) )
 	{
 	    $errors[] =
-	        "trying to select non-existant" .
-		" problem: $problem";
+	        "trying to select problem that no" .
+		" longer exists: $problem";
 	    $problem = NULL;
 	}
     }
@@ -163,7 +169,11 @@
     {
         global $lock_desc;
 	if ( isset ( $lock_desc ) )
+	{
 	    flock ( $lock_desc, LOCK_UN );
+	    fclose ( $lock_desc );
+	    $lock_desc = NULL;
+	}
     }
     register_shutdown_function ( 'shutdown' );
 
@@ -197,29 +207,17 @@
         // Do this after setting $problem and $probdir,
 	// unless this is a GET and not a POST.
 
-    // Data Set by GET and POST Requests:
-    //
-    $uploaded_file = NULL;
-        // 'name' of uploaded file, if any file was
-	// uploaded.
-
     // Set $problems to list of available problems.
     //
     $problems = [];
 
-    $desc = opendir ( "$epm_data/$user_dir" );
-    if ( $desc === false )
+    $subdirs = @scandir ( "$epm_data/$user_dir" );
+    if ( $subdirs === false )
          ERROR ( "cannot open $user_dir" );
-    while ( true )
+    foreach ( $subdirs as $subdir )
     {
-	$value = readdir ( $desc );
-	if ( ! $value )
-	{
-	    closedir ( $desc );
-	    break;
-	}
-	if ( preg_match ( $epm_name_re, $value ) )
-	    $problems[] = $value;
+	if ( preg_match ( $epm_name_re, $subdir ) )
+	    $problems[] = $subdir;
     }
 
     // Return DISPLAYABLE problem file names, sorted
@@ -353,6 +351,15 @@
 
 	return [$fext, $ftype, $fdisplay, $fcomment];
     }
+
+    // Data Set by GET and POST Requests:
+    //
+    $uploaded_file = NULL;
+        // 'name' of uploaded file, if any file was
+	// uploaded.
+    $make_ftest = NULL;
+        // Set to ask if $make_ftest .ftest file should
+	// be made from .fout file.
 
     // Remaining POSTs require $problem and $probdir
     // to be non-NULL.

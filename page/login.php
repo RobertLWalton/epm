@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 12 01:30:58 EDT 2020
+    // Date:	Thu Mar 19 11:53:20 EDT 2020
 
     // Handles login for a session.
     //
@@ -225,6 +225,10 @@
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
+    // if ( ! isset ( $_POST['op'] )
+    //      &&				// xhttp
+    //      ! isset ( $_POST['value'] ) )
+    //     require "$epm_home/include/debug_info.php";
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET'
