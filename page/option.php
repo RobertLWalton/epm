@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 18 15:58:42 EDT 2020
+    // Date:	Thu Mar 19 03:41:35 EDT 2020
 
     // Edits problem option page.
 
@@ -483,15 +483,22 @@
 		( name + '_mark' );
 	var BODY = document.getElementById
 		( name + '_body' );
+	var show = "&darr;";
+	var hide = "&uarr;";
+	if ( arguments.length == 4 )
+	{
+	    show = arguments[2];
+	    hide = arguments[3];
+	}
 	if ( BODY.hidden )
 	{
-	    MARK.innerHTML = "&uarr;";
+	    MARK.innerHTML = hide;
 	    BUTTON.title = "Hide " + thing;
 	    BODY.hidden = false;
 	}
 	else
 	{
-	    MARK.innerHTML = "&darr;";
+	    MARK.innerHTML = show;
 	    BUTTON.title = "Show " + thing;
 	    BODY.hidden = true;
 	}
@@ -766,6 +773,9 @@ EOT;
     <div class='indented' id='templates_body' hidden>
 EOT;
     $tcount = 0;
+    $showmark = "&#9734;";
+    $hidemark = "&#9733;";
+    $table = "";
     foreach ( $template_cache as $template => $e )
     {
         $j = get_template_json ( $template );
@@ -773,27 +783,40 @@ EOT;
 	$tpretty = pretty_template ( $template );
 	$tcommands = $j['COMMANDS'];
 	$tcount += 1;
-	echo <<<EOT
+	$table .= <<<EOT
+	     <div style='display:inline-block;
+	                 padding-left:5px'>
 	     <button type='button'
 	             id='template{$tcount}_button'
 		     onclick='TOGGLE_BODY
 		         ( "template$tcount",
-			   "$tpretty Commands" )'
+			   "$tpretty Commands",
+			   "$showmark", "$hidemark" )'
 		     title='Show $tpretty Commands'>
 	     <pre id='template{$tcount}_mark'
-	          >&darr;</pre>
+	          >$showmark</pre>
 	     </button>
 	     &nbsp;&nbsp;
+	     <pre>$tpretty:</pre>
+	     </div>
+EOT;
+	echo <<<EOT
+	     <div id='template{$tcount}_body' hidden
+	          style='padding-bottom:5px'>
 	     <h5>$tpretty:</h5>
 	     <br>
-	     <div id='template{$tcount}_body'
-	          class='indented' hidden>
+	     <div class='indented'>
 EOT;
          foreach ( $tcommands as $c )
 	     echo "<pre>$c</pre><br>";
-	 echo "</div>";
+	 echo "</div></div>";
     }
-    echo "</div>";
+    echo <<<EOT
+         <div class='indented'>
+	 $table
+	 </div>
+	 </div>
+EOT;
 ?>
 
 
