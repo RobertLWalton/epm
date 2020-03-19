@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 19 11:53:45 EDT 2020
+    // Date:	Thu Mar 19 12:57:17 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -278,7 +278,12 @@
     //
     //	  [$count, $fname, FILE-CONTENTS]
     //
-    // is appended to $display_list.
+    // is appended to $display_list.  Note that
+    // here FILE-CONTENTS is truncated if necessary
+    // to a maximum of $epm_file_maxsize bytes.
+    //
+    // FILE-DISPLAY is set false if the file is a UTF8
+    // file with more than 200 lines.
     //
     function file_info
             ( $dir, $fname, $count, & $display_list )
@@ -316,7 +321,7 @@
 	    if (    $flines == 1
 		 && strlen ( $fcontents ) <= 31 )
 		$fcomment = '{'
-			  . trim ( $fcontents )
+			  . rtrim ( $fcontents )
 			  . '}';
 	    elseif ( isset ( $flines ) )
 	    {
@@ -349,7 +354,7 @@
 		$fcomment = $ftype;
 	}
 
-	return [$fext, $ftype, $fdisplay, $fcomment];
+	return [ $fext, $ftype, $fdisplay, $fcomment ];
     }
 
     // Data Set by GET and POST Requests:
