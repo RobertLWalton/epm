@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 19 03:56:04 EDT 2020
+    // Date:	Thu Mar 19 04:40:16 EDT 2020
 
     // Edits problem option page.
 
@@ -592,7 +592,7 @@ EOT;
     if ( $edit )
         echo "<button type='submit'" .
 	     " name='update' value='update'>" .
-	     "Update</button>" .
+	     "Update Options</button>" .
 	     "<pre>    </pre>" .
              "<button type='submit'" .
 	     " name='cancel' value='cancel'>" .
@@ -603,7 +603,7 @@ EOT;
 	     "Revert to Inherited Values</button>";
     else
         echo "<button type='submit' name='edit'" .
-	     " value='edit'>Edit</button>";
+	     " value='edit'>Edit Options</button>";
 
     $values_help = HELP ( 'option-values' );
     echo <<<EOT
