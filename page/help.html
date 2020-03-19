@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Mar 19 04:49:36 EDT 2020
+Date:	Thu Mar 19 06:26:17 EDT 2020
 -->
 <style>
 div.header {
@@ -68,12 +68,15 @@ vertical-align: top;
 <li><a href="#problem-names">Problem Names</a><br>
 <li><a href="#problem-marks">Problem Marks</a><br>
 <li><a href="#current-problem-files">Current Problem Files</a><br>
+</ul>
 
 <li><a href="#option-page">Option Page
 <ul>
 <li><a href="#option-values">Option Values</a><br>
-<li><a href="#option-argument">Option Command Arguments</a><br>
+<li><a href="#option-arguments">Option Command Arguments</a><br>
 <li><a href="#option-templates">Template Commands</a><br>
+</ul>
+
 </ul>
 
 </div>
@@ -342,16 +345,80 @@ working files on unsuccessful uploads or makes.
 <p>The <b>option page</b> shows the options given to
 commands that perform compilations and computations,
 and allows you to edit these within limits.
-
+<p>
 For example, the allowed maximum size of the virtual memory
 when a problem solution program is executing is an
 option, as is the allowed maximum size of any file output
 by the solution.
+<p>
+The commands used to make one file from another are specified
+by <a href='#templates'><b>templates</b></a>.
+The template selected for a particular
+task is controled by the extensions of the input and output
+files and by what other files are available (for example,
+if a .class file is available a template invoking JAVA will
+be used, whereas if a .pyc file is available, a template invoking
+PYTHON will be used).
+<p>
+There are two values for each option: an <b>inherited value</b>
+and a <b>local value</b>.  The inherited value is set by
+the <a href='#ancestors'><b>ancestors</b></a> of the current problem,
+and cannot be changed (without changing the options files in the
+ancestors).  The local value, when given, replaces the inherited value.
+In displays, local values are colored green and inherited values
+are colored tan.
+<p>
+As with other pages, clicking on a &uarr; will hide a section
+of the page and clicking on a &darr; will display the section.
 
 <a name="option-values"><h2>Option Values</h2>
 <p>
 <b>Option values</b> are numbers included in command
-options.
+options.  If you edit an inherited option, its value will
+turn green, even if you input the same value as the inherited
+value.  Clicking the &#8635; symbol after the value will restore
+the value to the inherited value (and restore the color to tan).
+
+For example, the STIME option value is the maximum number of
+CPU seconds allowed a problem solution program.
+
+<a name="option-arguments"><h2>Option Command Arguments</h2>
+<p>
+<b>Option command arguments</b> are the actual arguments that
+are inserted into template commands.  For each such option there
+are discrete choices.
+<p>
+<a href='#option-values'>Option values</a>
+are inserted into option command arguments.  For example,
+the STIME option value argument is inserted into the
+`-cputime STIME' option command argument which can then
+be inserted into the command that runs the solution program,
+so that the options work together with the command to determine
+the maximum number of CPU seconds
+allowed the solution program.
+<p>
+The absence of a value for an option command argument is represented by
+an empty box.
+If there are two colored boxes, the
+one colored green is the current value and is local, and the one
+colored tan is inherited.
+If only one box is colored,
+the option value is inherited, even if the box is colored green
+(which just means that you have clicked on the inherited value).
+
+<a name="option-templates"><h2>Template Commands</h2>
+<p>
+<b>Template commands</b> are available on this page so that
+you may see how option command arguments are inserted into
+commands.
+<p>
+Clicking on &#9734; will display the commands of a template and
+clicking on &#9733; will hide them.  The commands are standard
+POSIX commands into which substitutions have been made.  In
+addition to option command argument substitutions, the problem
+name is substituted for PPPP, and the reminder of the file names
+is substituted for other sequences of 4 consecutive capital
+letters, such as XXXX or YYYY.
 
 </div>
 </body>

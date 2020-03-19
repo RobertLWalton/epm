@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 19 04:40:16 EDT 2020
+    // Date:	Thu Mar 19 07:23:14 EDT 2020
 
     // Edits problem option page.
 
@@ -785,7 +785,7 @@ EOT;
     &nbsp;
     <h5>Template Commands:</h5>
     </td><td style='text-align:right'>
-    $arguments_help</td>
+    $templates_help</td>
     </tr></table>
     <div class='indented' id='templates_body' hidden>
 EOT;
@@ -814,7 +814,7 @@ EOT;
 	          >$showmark</pre>
 	     </button>
 	     &nbsp;&nbsp;
-	     <pre>$tpretty:</pre>
+	     <pre>$tpretty</pre>
 	     </div>
 EOT;
 	echo <<<EOT
