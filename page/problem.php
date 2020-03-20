@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 20 04:48:26 EDT 2020
+    // Date:	Fri Mar 20 05:37:55 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -539,6 +539,16 @@
 
 <html>
 <style>
+    @media screen and ( max-width: 1439px ) {
+	:root {
+	    --font-size: 15px;
+	}
+    }
+    @media screen and ( min-width: 1440px ) {
+	:root {
+	    --font-size: 16px;
+	}
+    }
     .indented {
 	margin-left: 20px;
     }
@@ -552,7 +562,7 @@
     }
     pre, b, button, input, select, u {
 	display:inline;
-        font-size: 16px;
+        font-size: var(--font-size);
     }
     pre {
 	font-family: "Courier New", Courier, monospace;
@@ -591,7 +601,7 @@
 	div.left {
 	    width: 50%;
 	    float: left;
-	    font-size: 16px;
+	    font-size: var(--font-size);
 	    height: 99%;
 	    overflow: scroll;
 	}
@@ -604,7 +614,7 @@
     @media screen and not ( min-width: 1600px )
     {
 	div.left {
-	    font-size: 16px;
+	    font-size: var(--font-size);
 	    width: 100%;
 	    height: 99%;
 	    overflow: scroll;
@@ -619,13 +629,21 @@
     function CREATE_IFRAME ( page, filename ) {
 	if ( iframe != undefined ) iframe.remove();
 
-	iframe = document.createElement("IFRAME");
-	iframe.className = 'right';
-	iframe.name = filename;
-	iframe.src =
-	    '/page/' + page + '?filename='
-	             + encodeURIComponent ( filename );
-	document.body.appendChild ( iframe );
+	var w = window.outerWidth;
+	var src = '/page/' + page + '?filename='
+		+ encodeURIComponent ( filename );
+	if ( w >= 1920 )
+	{
+	    iframe = document.createElement("IFRAME");
+	    iframe.className = 'right';
+	    iframe.name = filename;
+	    iframe.src = src;
+	    document.body.appendChild ( iframe );
+	}
+	else
+	    window.open
+	        ( src, filename,
+		  'height=800px,width=1280px' );
     }
 
     function TOGGLE_BODY ( name, thing )
