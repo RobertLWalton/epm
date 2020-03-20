@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 19 20:40:43 EDT 2020
+    // Date:	Fri Mar 20 04:48:26 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -505,6 +505,7 @@
 	{
 	    $r = update_work_results ( 0 );
 	    if ( $r !== true || $count == 50 )
+	    			// 5 seconds
 	    {
 	        echo 'RELOAD';
 		exit;
@@ -521,7 +522,7 @@
 		}
 		exit;
 	    }
-	    usleep ( 100000 );
+	    usleep ( 100000 ); // 0.1 second
 	    $count += 1;
 	}
     }
@@ -534,15 +535,13 @@
 	 update_work_results() !== true )
         finish_make_file ( $warnings, $errors );
 
-    $debug = ( $epm_debug != ''
-               &&
-	       preg_match ( $epm_debug, $php_self ) );
-	// True to enable javascript logging.
-
 ?>
 
 <html>
 <style>
+    .indented {
+	margin-left: 20px;
+    }
     .no-margin {
 	margin: 0 0 0 0;
     }
@@ -582,9 +581,6 @@
     }
     div.file-contents {
 	background-color: #C0FFC0;
-    }
-    .indented {
-	margin-left: 20px;
     }
     td.time {
 	color: #99003D;
@@ -1214,7 +1210,7 @@ EOT;
 
 <script>
     var LOG = function(message) {};
-    <?php if ( $debug )
+    <?php if ( $epm_debug )
               echo "LOG = console.log;" . PHP_EOL;
     ?>
 
@@ -1226,7 +1222,7 @@ EOT;
 	//
 	LOG ( "call to FAIL: " + message );
     <?php
-	if ( $debug )
+	if ( $epm_debug )
 	    echo <<<'EOT'
 		setTimeout ( function () {
 		    alert ( message );

@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 19 07:23:14 EDT 2020
+    // Date:	Fri Mar 20 04:55:12 EDT 2020
 
     // Edits problem option page.
 
@@ -365,14 +365,6 @@
 	@unlink ( "$epm_data/$f" );
 	$optmap = $inherited;
     }
-
-
-    $debug = ( $epm_debug != ''
-               &&
-	       preg_match ( $epm_debug, $php_self ) );
-	// True to enable javascript logging.
-
-
 ?>
 
 <html>

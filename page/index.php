@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Mar 13 16:51:04 EDT 2020
+// Date:    Fri Mar 20 04:53:49 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -95,12 +95,9 @@ session_name ( "EPM_859036254367" );
     // Reset 12 digit number to NON-PUBLIC SITE-
     // SPECIFIC 12 digit random number.
 
-$epm_debug = '';
-$epm_debug = '/(login|user|problem|run)/';
-    // If not '', this must be a regular expression
-    // which when matched to $php_self enables the
-    // DEBUG function to write to $epm_data/debug.log.
-    // Set to '' to disable DEBUG function.
+$epm_debug = preg_match
+    ( '/(login|user|problem|run)/', $php_self );
+    // True to turn debugging on; false for off.
 
 $epm_max_emails = 3;
     // Max number of email addresses a user may have.
@@ -267,9 +264,7 @@ else if ( $php_self == "/index.php" )
     exit;
 }
 
-if ( $epm_debug != ''
-     &&
-     preg_match ( $epm_debug, $php_self ) )
+if ( $epm_debug )
 {
     $epm_debug_desc = fopen
 	( "$epm_data/debug.log", 'a' );

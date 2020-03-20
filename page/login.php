@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 19 11:53:20 EDT 2020
+    // Date:	Fri Mar 20 04:53:04 EDT 2020
 
     // Handles login for a session.
     //
@@ -574,10 +574,6 @@
 
     // Else load html and script.
 
-    $debug = ( $epm_debug != ''
-               &&
-	       preg_match ( $epm_debug, $php_self ) );
-	// True to enable javascript logging.
 ?>
 
 <html>
@@ -648,7 +644,7 @@ Please <input type='text' size='40' id='cnum_in'
 <script>
 
 var LOG = function(message) {};
-<?php if ( $debug )
+<?php if ( $epm_debug )
           echo "LOG = console.log;" . PHP_EOL ?>
 
 var xhttp = new XMLHttpRequest();
@@ -666,7 +662,7 @@ function FAIL ( message )
     //
     LOG ( "call to FAIL: " + message );
 <?php
-    if ( $debug )
+    if ( $epm_debug )
         echo <<<'EOT'
 	    setTimeout ( function () {
 		alert ( message );

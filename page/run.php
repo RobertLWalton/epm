@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 22:39:41 EDT 2020
+    // Date:	Fri Mar 20 04:56:55 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -136,11 +136,6 @@
     if ( $method == 'POST' && ! $post_processed )
         exit ( 'UNACCEPTABLE HTTP POST' );
 
-
-    $debug = ( $epm_debug != ''
-               &&
-	       preg_match ( $epm_debug, $php_self ) );
-	// True to enable javascript logging.
 
     // Compute $map[$base][$ext] => [$fname,$fdir]
     // where $fname is $base.$ext, $ext is one $exts,
@@ -486,7 +481,7 @@ EOT;
 
 <script>
     var LOG = function(message) {};
-    <?php if ( $debug )
+    <?php if ( $epm_debug )
               echo "LOG = console.log;" . PHP_EOL;
     ?>
 
@@ -498,7 +493,7 @@ EOT;
 	//
 	LOG ( "call to FAIL: " + message );
     <?php
-	if ( $debug )
+	if ( $epm_debug )
 	    echo <<<'EOT'
 		setTimeout ( function () {
 		    alert ( message );
