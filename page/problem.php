@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 19 12:57:17 EDT 2020
+    // Date:	Thu Mar 19 20:40:43 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -33,6 +33,8 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $post_processed = false;
+    		     // Set true when POST recognized.
 
     // The $_SESSION state particular to this page is:
     //
@@ -63,6 +65,7 @@
 	// been deleted.
     if ( isset ( $_POST['new_problem'] ) )
     {
+        $post_processed = true;
         $problem = trim ( $_POST['new_problem'] );
 	$d = "$epm_data/$user_dir/$problem";
 	if ( $problem == '' )
@@ -105,6 +108,7 @@
              &&
              isset ( $_POST['selected_problem'] ) )
     {
+        $post_processed = true;
         $problem = trim ( $_POST['selected_problem'] );
 	if ( ! preg_match
 	           ( $epm_name_re , $problem ) )
@@ -121,6 +125,7 @@
     }
     elseif ( isset ( $_POST['delete_problem'] ) )
     {
+        $post_processed = true;
 	$prob = $_POST['delete_problem'];
 	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
 	     ||
@@ -131,6 +136,7 @@
     }
     elseif ( isset ( $_POST['delete_problem_yes'] ) )
     {
+        $post_processed = true;
 	$prob = $_POST['delete_problem_yes'];
 	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
 	     ||
@@ -146,6 +152,7 @@
     }
     else if ( isset ( $_POST['delete_problem_no'] ) )
     {
+        $post_processed = true;
 	$prob = $_POST['delete_problem_no'];
 	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
 	     ||
@@ -359,9 +366,6 @@
 
     // Data Set by GET and POST Requests:
     //
-    $uploaded_file = NULL;
-        // 'name' of uploaded file, if any file was
-	// uploaded.
     $make_ftest = NULL;
         // Set to ask if $make_ftest .ftest file should
 	// be made from .fout file.
@@ -374,16 +378,17 @@
 	/* Do Nothing */;
     elseif ( isset ( $_POST['delete_files'] ) )
     {
+        $post_processed = true;
+
         // Process file deletions for other posts.
 	//
 	$files = $_POST['delete_files'];
 	$files = explode ( ',', $files );
+	$fnames = problem_file_names ( $probdir );
 	foreach ( $files as $f )
 	{
 	    if ( $f == '' ) continue;
-	    if ( ! in_array
-		     ( $f, problem_file_names
-		     	       ( $probdir ) ) )
+	    if ( ! in_array ( $f, $fnames ) )
 		exit ( "ACCESS: illegal POST to" .
 		       " problem.php" );
 	}
@@ -401,6 +406,7 @@
 	/* Do Nothing */;
     elseif ( isset ( $_POST['make'] ) )
     {
+        $post_processed = true;
         $m = $_POST['make'];
 	if ( ! preg_match ( '/^([^:]+):([^:]+)$/', $m,
 	                    $matches ) )
@@ -425,6 +431,7 @@
     }
     elseif ( isset ( $_POST['make_ftest_yes'] ) )
     {
+        $post_processed = true;
         $m = $_POST['make_ftest_yes'];
 	$base = pathinfo ( $m, PATHINFO_FILENAME );
 	$ext = pathinfo ( $m, PATHINFO_EXTENSION );
@@ -447,24 +454,22 @@
     }
     elseif ( isset ( $_POST['upload'] ) )
     {
+        $post_processed = true;
 	if ( isset ( $_FILES['uploaded_file']
 	                     ['name'] ) )
 	{
 	    $upload_info = $_FILES['uploaded_file'];
-	    $uploaded_file = $upload_info['name'];
-	}
-	else
-	    $uploaded_file = '';
 
-	if ( $uploaded_file != '' )
 	    process_upload
 		( $upload_info, "$probdir/+work+",
 		  $warnings, $errors );
+	}
 	else
 	    $errors[] = "no file selected for upload";
     }
     elseif ( isset ( $_POST['run'] ) )
     {
+        $post_processed = true;
         $f = $_POST['run'];
 	if ( ! preg_match ( '/\.run$/', $f ) )
 	    exit ( "ACCESS: illegal POST to" .
@@ -488,10 +493,13 @@
              &&
 	     isset ( $_SESSION['EPM_WORK']['BASE'] ) )
     {
+        $post_processed = true;
+
 	/* Do Nothing */
     }
     elseif ( isset ( $_POST['update'] ) )
     {
+        $post_processed = true;
 	$count = 0;
 	while ( true )
 	{
@@ -517,6 +525,9 @@
 	    $count += 1;
 	}
     }
+
+    if ( ! $post_processed && $method == 'POST' )
+	exit ( 'UNACCEPTABLE HTTP POST' );
 
     if ( isset ( $_SESSION['EPM_WORK']['CONTROL'] )
          &&
