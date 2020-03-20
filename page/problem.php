@@ -539,14 +539,21 @@
 
 <html>
 <style>
-    @media screen and ( max-width: 1439px ) {
+    @media screen and ( max-width: 1281px ) {
 	:root {
-	    --font-size: 15px;
+	    --font-size: 1.1vw;
+	    --large-font-size: 1.3vw;
 	}
     }
-    @media screen and ( min-width: 1440px ) {
+    @media screen and ( min-width: 1280px ) {
 	:root {
 	    --font-size: 16px;
+	    --large-font-size: 20px;
+	}
+	div.left {
+	    width: 1280px;
+	    font-size: var(--font-size);
+	    overflow: scroll;
 	}
     }
     .indented {
@@ -556,7 +563,7 @@
 	margin: 0 0 0 0;
     }
     h5 {
-        font-size: 20px;
+        font-size: var(--large-font-size);
 	margin: 0 0 0 0;
 	display:inline;
     }
@@ -596,54 +603,20 @@
 	color: #99003D;
 	text-align: right;
     }
-    @media screen and ( min-width: 1600px )
-    {
-	div.left {
-	    width: 50%;
-	    float: left;
-	    font-size: var(--font-size);
-	    height: 99%;
-	    overflow: scroll;
-	}
-	iframe.right {
-	    width: 48%;
-	    float: right;
-	    height: 99%;
-	}
-    }
-    @media screen and not ( min-width: 1600px )
-    {
-	div.left {
-	    font-size: var(--font-size);
-	    width: 100%;
-	    height: 99%;
-	    overflow: scroll;
-	}
-    }
 
 </style>
 
 <script>
-    var iframe;
-
-    function CREATE_IFRAME ( page, filename ) {
-	if ( iframe != undefined ) iframe.remove();
-
-	var w = window.outerWidth;
+    function NEW_WINDOW ( page, filename ) {
 	var src = '/page/' + page + '?filename='
 		+ encodeURIComponent ( filename );
-	if ( w >= 1920 )
-	{
-	    iframe = document.createElement("IFRAME");
-	    iframe.className = 'right';
-	    iframe.name = filename;
-	    iframe.src = src;
-	    document.body.appendChild ( iframe );
-	}
-	else
-	    window.open
-	        ( src, filename,
-		  'height=800px,width=1280px' );
+	var x = screen.width - 1280;
+	var y = screen.height - 800;
+	window.open
+	    ( src, filename,
+	      'height=800px,width=1280px,' +
+	      'screenX=' + x + 'px,' +
+	      'screenY=' + y + 'px' );
     }
 
     function TOGGLE_BODY ( name, thing )
@@ -908,7 +881,7 @@ EOT;
 		    <button type='button'
 		       id='show$count'
 		       title='Show $fname at Right'
-		       onclick='CREATE_IFRAME
+		       onclick='NEW_WINDOW
 		          ("$fpage","$fname")'>
 		     <pre id='file$count'>$fname</pre>
 		     </button></td>
@@ -1126,7 +1099,7 @@ EOT;
 			    <button type='button'
 			       id='show$count'
 			       title='Show $fname at Right'
-			       onclick='CREATE_IFRAME
+			       onclick='NEW_WINDOW
 				  ("$fpage","+work+/$fname")'>
 			     <pre id='file$count'>$fname</pre>
 			     </button></td>
