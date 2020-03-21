@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 09:53:56 EDT 2020
+    // Date:	Sat Mar 21 10:23:41 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -615,17 +615,35 @@
 </style>
 
 <script>
+    var show_window = null;
+
     function NEW_WINDOW ( page, filename ) {
 	var src = '/page/' + page + '?filename='
 		+ encodeURIComponent ( filename );
-	var x = screen.width - 1280;
-	var y = screen.height - 800;
-	window.open
-	    ( src, filename,
-	      'height=800px,width=1280px,' +
-	      'screenX=' + x + 'px,' +
-	      'screenY=' + y + 'px' );
+	if ( show_window == null || show_window.closed )
+	{
+	    var x = screen.width - 1280;
+	    var y = screen.height - 800;
+	    w = window.open
+		( src, 'show_window',
+		  'height=800px,width=1280px,' +
+		  'screenX=' + x + 'px,' +
+		  'screenY=' + y + 'px' );
+	}
+	else
+	{
+	    show_window.location.href = src;
+	    show_window.location.reload();
+	}
     }
+
+    function UNLOAD () {
+	if ( show_window != null
+	     &&
+	     ! show_window.closed )
+	    show_window.close()
+    }
+	    
 
     function TOGGLE_BODY ( name, thing )
     {
@@ -683,7 +701,7 @@
 	DELETE_FILES.value = DELETE_LIST.toString();
     }
 </script>
-<body>
+<body onunload='UNLOAD()'>
 
 <?php 
 
