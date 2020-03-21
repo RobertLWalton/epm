@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 10:23:41 EDT 2020
+    // Date:	Sat Mar 21 14:31:26 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -825,7 +825,7 @@ EOT;
 			 formaction='run.php'
 			 formmethod='GET'>
 			 Run Page</button>
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		 <pre>     </pre>
 	         <button type='submit'
 			formaction='option.php'
 			formmethod='GET'>
@@ -868,7 +868,8 @@ EOT;
 		title='Hide Current Problem Files'>
 		<pre id='problems_mark'>&uarr;</pre>
 		</button>
-	<h5>Current Problem Files (most recent first):</h5>
+	<h5>Current Problem Files
+	    (most recent first):</h5>
 	</td>
 	<td style='width:10%;text-align:right'>
 	{$current_problem_files_help}
@@ -985,7 +986,7 @@ EOT;
 		     " value='$fname'>" .
 		     "Run</button></td>";
 	    }
-	    echo "<td colspan='10'>" .
+	    echo "<td colspan='100'>" .
 		 "<pre>$fcomment</pre></td>";
 	    echo "</tr>";
 	}
@@ -1003,7 +1004,8 @@ EOT;
 	</label>
 	<pre>          </pre>
 	<input type="submit" name="execute_deletes"
-	       value="Delete Marked (Over-Struck) Files">
+	       value=
+	         "Delete Marked (Over-Struck) Files">
 	</form></div></div>
 EOT;
 
@@ -1015,9 +1017,15 @@ EOT;
 	    if (    is_array ( $result )
 	         && $result == ['D',0] )
 	        $r = 'commands succeeded: ';
+	    elseif ( $result === true )
+	        $r = 'commands still running';
+		    // Should never happen as 'update'
+		    // POST exits above.
 	    else
 	        $r = 'commands failed: ';
-	    if ( count ( $kept ) == 1 )
+	    if ( $result === true )
+	        /* Do Nothing */;
+	    elseif ( count ( $kept ) == 1 )
 	        $r .= '1 file kept';
 	    else
 		$r .= count ( $kept ) . ' files kept';
@@ -1039,7 +1047,6 @@ EOT;
 	    echo "<div class='indented'>";
 	    echo $display;
 	    echo "</div>";
-	    $kept = $_SESSION['EPM_WORK']['KEPT'];
 	    if ( count ( $kept ) > 0 )
 	    {
 		echo "<h5>Kept:</h5>";
@@ -1072,10 +1079,7 @@ EOT;
 		<table style='display:block'>
 EOT;
 
-		$workdir = $_SESSION['EPM_WORK']['DIR'];
-		$count_first = $count + 1;
-		foreach ( problem_file_names( $workdir )
-			  as $fname )
+		foreach ( $working_files as $fname )
 		{
 		    $f = "$epm_data/$workdir/$fname";
 		    if ( is_link ( $f ) )
@@ -1083,30 +1087,39 @@ EOT;
 
 		    ++ $count;
 		    echo "<tr>";
-		    echo "<td style='text-align:right'>";
-		    list ( $fext, $ftype, $fdisplay, $fcomment )
-			= file_info ( $workdir, $fname, $count,
+		    echo "<td" .
+		         " style='text-align:right'>";
+		    list ( $fext, $ftype, $fdisplay,
+		           $fcomment )
+			= file_info ( $workdir, $fname,
+			              $count,
 				      $display_list );
 
-		    if ( isset ( $display_file_map[$ftype] )
+		    if ( isset ( $display_file_map
+		                      [$ftype] )
 		         &&
 			 $fcomment != '(Empty)' )
 		    {
 			$show_map[$fname] = $count;
-			$fpage = $display_file_map[$ftype];
+			$fpage =
+			    $display_file_map[$ftype];
 			echo <<<EOT
 			    <button type='button'
 			       id='show$count'
-			       title='Show $fname at Right'
+			       title=
+			         'Show $fname at Right'
 			       onclick='NEW_WINDOW
-				  ("$fpage","+work+/$fname")'>
-			     <pre id='file$count'>$fname</pre>
+				  ("$fpage",
+				   "+work+/$fname")'>
+			     <pre id='file$count'
+			         >$fname</pre>
 			     </button></td>
 EOT;
 		    }
 		    else
 			echo <<<EOT
-			    <pre id='file$count'>$fname</pre>
+			    <pre id='file$count'
+			        >$fname</pre>
 			    </td>
 EOT;
 
@@ -1115,11 +1128,13 @@ EOT;
 			$show_map[$fname] = $count;
 			echo <<<EOT
 			    <td><button type='button'
-			         id='file{$count}_button'
+			         id=
+				   'file{$count}_button'
 				 onclick='TOGGLE_BODY
 				     ("file$count",
 				      "$fname Below")'
-				 title='Show $fname Below'>
+				 title=
+				   'Show $fname Below'>
 			    <pre id='file{$count}_mark'
 			        >&darr;</pre>
 			    </button></td>
@@ -1128,7 +1143,7 @@ EOT;
 		    else
 			echo "<td></td>";
 
-		    echo "<td colspan='10'>" .
+		    echo "<td colspan='100'>" .
 			 "<pre>$fcomment</pre></td>";
 		    echo "</tr>";
 		}
