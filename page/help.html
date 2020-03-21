@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Mar 19 06:26:17 EDT 2020
+Date:	Sat Mar 21 04:04:08 EDT 2020
 -->
 <style>
 div.header {
@@ -14,15 +14,22 @@ right: 0;
 div.text {
 }
 h1 {
-font-size: 16pt;
+font-size: 20pt;
 text-decoration: underline;
 }
 h2 {
-font-size: 14pt;
+font-size: 18pt;
+}
+h5 {
+font-size: 16pt;
+display: inline;
+}
+table, td, a {
+font-size: 16pt;
 }
 p {
 margin-left: 10px;
-font-size: 12pt;
+font-size: 16pt;
 }
 p.inline {
 display: inline;
@@ -30,7 +37,7 @@ display: inline;
 p.list {
 margin-left: 20px;
 margin-top: 0;
-font-size: 12pt;
+font-size: 16pt;
 }
 table.top-align td {
 vertical-align: top;
@@ -154,20 +161,20 @@ appears on the user page.
 	       unsophisticated robots.</mark>
 
 <ul style='list-style-type:none'>
-<li><b>User ID</b>:<p class='list'>
+<li><h5>User ID</h5>:<p class='list'>
 A short name by which you will be known.
 Must consist of letters, digits, underline(_), and dash(-),
 begin and end with a letter, and have at least 4 characters.
-<li><b>Full Name</b>:<p class='list'>
+<li><h5>Full Name</h5>:<p class='list'>
 Your full name, so that you can be looked up on the web.
-<li><b>Organization</b>:<p class='list'>
+<li><h5>Organization</h5>:<p class='list'>
 The organization you are associated with, so you can be
 looked up in the context of this organization.
 Can be `Self', but only if you really have no organization.
-<li><b>Location</b>:<p class='list'>
+<li><h5>Location</h5>:<p class='list'>
 The location of your organization, e.g., town, state, and
 country.
-<li><b>Email Addresses</b>:<p class='list'>
+<li><h5>Email Addresses</h5>:<p class='list'>
 You must have one or more email addresses associated with
 your account.  You use these to log into the account.
 It is well to have two or more, in case you lose access to
@@ -243,7 +250,7 @@ EPM files have <b>extensions</b> that indicate their format
 and purpose:
 <!-- &#8209; is no-breaking hyphen -->
 <div class='indented'>
-<b>Files That Are Uploaded:</b><br>
+<h5>Files That Are Uploaded:</h5><br>
 <table class='extension'>
 <tr><td>PPPP.c</td><td>C Program Source File</td></tr>
 <tr><td>PPPP.cc</td><td>C++ Program Source File</td></tr>
@@ -254,7 +261,7 @@ and purpose:
 <tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files</td></tr>
 </table>
 <br>
-<b>Files Made During Upload:</b><br>
+<h5>Files Made During Upload:</h5><br>
 <table class='extension'>
 <tr><td>PPPP</td><td>C/C++ Program Binary File,
                      made from PPPP.c or PPPP.cc file</td></tr>
@@ -273,7 +280,7 @@ and purpose:
 		     </td></tr>
 </table>
 <br>
-<b>Files Made From Other Files (Not During Upload):</b><br>
+<h5>Files Made From Other Files (Not During Upload):</h5><br>
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
                      made from XXXX&#8209;PPPP.in file
@@ -304,7 +311,7 @@ and purpose:
 		     </td></tr>
 </table>
 <br>
-<b>Working Files That Should Be Empty:</b><br>
+<h5>Working Files That Should Be Empty:</h5><br>
 <table class='extension'>
 <tr><td>PPPP.cout<br>XXXX&#8209;PPPP.cout</td>
     <td>Compiler Output File, made during upload or
@@ -324,7 +331,7 @@ and purpose:
 		     solution program</td></tr>
 </table>
 <br>
-<b>Working Files That Are Not Empty:</b><br>
+<h5>Working Files That Are Not Empty:</h5><br>
 <table class='extension'>
 <tr><td>PPPP.log</td><td>Log file of a LATEX compilation,
                          made from PPPP.tex file</td></tr>
@@ -335,7 +342,7 @@ and purpose:
 
 </div>
 <br>
-
+<p>
 Files that are kept on successful uploads or makes will
 remain as (usually non-empty)
 working files on unsuccessful uploads or makes.
