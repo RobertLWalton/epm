@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 04:25:47 EDT 2020
+    // Date:	Sat Mar 21 06:41:33 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -579,6 +579,12 @@
     pre.red {
         color: #BB0000;
     }
+    div.errors, div.notices {
+	background-color: #F5F81A;
+    }
+    div.warnings {
+	background-color: #FFC0FF;
+    }
     div.manage {
 	background-color: #96F9F3;
     }
@@ -683,7 +689,7 @@
 
     if ( $delete_problem )
     {
-	echo "<div style='background-color:#F5F81A'>";
+	echo "<div class='notices'>";
 	echo "<form method='POST'" .
 	     " style='display:inline'" .
 	     " action=problem.php>";
@@ -701,14 +707,14 @@
     }
     else if ( isset ( $deleted_problem ) )
     {
-	echo "<div style='background-color:#F5F81A'>";
+	echo "<div class='notices'>";
 	echo "Problem $deleted_problem has been" .
 	     " deleted!<br>";
 	echo "</div>";
     }
     else if ( $make_ftest )
     {
-	echo "<div style='background-color:#F5F81A'>";
+	echo "<div class='notices'>";
 	echo "<form method='POST'" .
 	     " style='display:inline'" .
 	     " action=problem.php>";
@@ -727,7 +733,7 @@
     }
     if ( count ( $errors ) > 0 )
     {
-	echo "<div style='background-color:#F5F81A'>";
+	echo "<div class='errors'>";
 	echo "<h5>Errors:</h5>";
 	echo "<div class='indented'>";
 	foreach ( $errors as $e )
@@ -736,7 +742,7 @@
     }
     if ( count ( $warnings ) > 0 )
     {
-	echo "<div style='background-color:#ffc0ff'>";
+	echo "<div class='warnings'>";
 	echo "<h5>Warnings:</h5>";
 	echo "<div class='indented'>";
 	foreach ( $warnings as $e )
@@ -755,10 +761,12 @@
     <table style='width:100%'>
     <tr>
     <td style='width:30%'>
+    <label>
     <h5>User:</h5> <input type='submit' value='$email'
 		    formaction='user.php'
 		    formmethod='GET'
                     title='click to see user profile'>
+    </label>
     </td>
     <td style='width:35%'>
     <h5>Current Problem:</h5>&nbsp;
@@ -782,7 +790,8 @@ EOT;
     if ( count ( $problems ) > 0 )
     {
 	echo "<tr><td></td><td>";
-	echo "<input type='submit'" .
+	echo "<label>" .
+	     "<input type='submit'" .
 	     " name='goto_problem'" .
 	     " value='Go To Problem:'>";
         echo "<select name='selected_problem'" .
@@ -790,7 +799,7 @@ EOT;
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
 	             "$value</option>";
-        echo "</select></td>";
+        echo "</select></label></td>";
 	if ( isset ( $problem ) )
 	    echo <<<EOT
 	         <td><h5>Go To:</h5>
@@ -824,6 +833,10 @@ EOT;
 	$current_problem_files_help =
 	    HELP ( 'current-problem-files' );
 	$show_map = [];
+	    // $show_map[$fname] => $count
+	    // maps file name last components to the
+	    // $count value that identifies buttons
+	    // etc associated with the file.
         echo <<<EOT
 	<div class='problem_display'>
 	<table style='width:100%'>
@@ -848,7 +861,6 @@ EOT;
 	<form action='problem.php'
 	      enctype='multipart/form-data'
 	      method='POST'
-	      id='execute_form'
 	      class='no-margin'>
 	<input id='delete_files'
 	       name='delete_files' value=''
@@ -991,12 +1003,14 @@ EOT;
 
         echo <<<EOT
 
+	<label>
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$epm_upload_maxsize">
 	<input type="submit" name="upload"
 	       value="Upload File:">
 	<input type="file" name="uploaded_file"
 	       title="file to upload">
+	</label>
 	<pre>          </pre>
 	<input type="submit" name="execute_deletes"
 	       value="Delete Marked (Over-Struck) Files">
