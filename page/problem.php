@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 07:17:28 EDT 2020
+    // Date:	Sat Mar 21 09:53:56 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -866,6 +866,15 @@ EOT;
 	       name='delete_files' value=''
 	       type='hidden'>
 EOT;
+	function MAKE ( $fbase, $sext, $dext )
+	{
+	    echo "<td><button type='submit'" .
+		 " name='make'" .
+		 " title='Make $fbase.$dext" .
+		 " from $fbase.$sext'" .
+		 " value='$fbase.$sext:$fbase.$dext'>" .
+		 "&rArr;.$dext</button></td>";
+	}
         $count = 0;
 	$display_list = [];
 	echo "<table style='display:block'>";
@@ -929,57 +938,20 @@ EOT;
 EOT;
 	    if ( $fext == 'in' )
 	    {
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " title='Make $fbase.sin" .
-		     " from $fname'" .
-		     " value='$fname:$fbase.sin'>" .
-		     "&rArr;.sin</button></td>";
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " title='Make $fbase.sout" .
-		     " from $fname'" .
-		     " value='$fname:$fbase.sout'>" .
-		     "&rArr;.sout</button></td>";
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " title='Make $fbase.score" .
-		     " from $fname'" .
-		     " value='$fname:$fbase.score'>" .
-		     "&rArr;.score</button></td>";
+	        MAKE ( $fbase, 'in', 'sin' );
+	        MAKE ( $fbase, 'in', 'sout' );
+	        MAKE ( $fbase, 'in', 'score' );
 	    }
 	    elseif ( $fext == 'sin' )
-	    {
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " title='Make $fbase.dout" .
-		     " from $fname'" .
-		     " value='$fname:$fbase.dout'>" .
-		     "&rArr;.dout</button></td>";
-	    }
+	        MAKE ( $fbase, 'sin', 'dout' );
 	    elseif ( $fext == 'sout' )
 	    {
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " title='Make $fbase.fout" .
-		     " from $fname'" .
-		     " value='$fname:$fbase.fout'>" .
-		     "&rArr;.fout</button></td>";
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " title='Make $fbase.score" .
-		     " from $fname'" .
-		     " value='$fname:$fbase.score'>" .
-		     "&rArr;.score</button></td>";
+	        MAKE ( $fbase, 'sout', 'fout' );
+	        MAKE ( $fbase, 'sout', 'score' );
 	    }
 	    elseif ( $fext == 'fout' )
 	    {
-		echo "<td><button type='submit'" .
-		     " name='make'" .
-		     " title='Make $fbase.score" .
-		     " from $fname'" .
-		     " value='$fname:$fbase.score'>" .
-		     "&rArr;.score</button></td>";
+	        MAKE ( $fbase, 'fout', 'score' );
 		echo "<td><button type='submit'" .
 		     " style='background-color:red'" .
 		     " name='make'" .
