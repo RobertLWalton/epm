@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 20 04:53:04 EDT 2020
+    // Date:	Sat Mar 21 00:29:12 EDT 2020
 
     // Handles login for a session.
     //
@@ -577,6 +577,32 @@
 ?>
 
 <html>
+<head>
+<style>
+    @media screen and ( max-width: 1281px ) {
+	:root {
+	    --font-size: 1.1vw;
+	    --large-font-size: 1.3vw;
+	}
+    }
+    @media screen and ( min-width: 1280px ) {
+	:root {
+	    --font-size: 16px;
+	    --large-font-size: 20px;
+	    width: 1280px;
+	    font-size: var(--font-size);
+	    overflow: scroll;
+	}
+    }
+    button, input, mark, span {
+	display:inline;
+        font-size: var(--font-size);
+    }
+    pre {
+	font-family: "Courier New", Courier, monospace;
+    }
+</style>
+</head>
 
 <body>
 <!-- body elements must be BEFORE script so that

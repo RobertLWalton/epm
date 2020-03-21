@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 20 23:31:50 EDT 2020
+    // Date:	Sat Mar 21 00:38:56 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -452,6 +452,10 @@
 	      NULL, NULL /* no upload */,
 	      $errors );
     }
+    elseif ( isset ( $_POST['make_ftest_no'] ) )
+    {
+        $post_processed = true;
+    }
     elseif ( isset ( $_POST['upload'] ) )
     {
         $post_processed = true;
@@ -565,7 +569,7 @@
 	margin: 0 0 0 0;
 	display:inline;
     }
-    pre, button, input, select {
+    pre, button, input, select, form {
 	display:inline;
         font-size: var(--font-size);
     }

@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 20 04:56:55 EDT 2020
+    // Date:	Sat Mar 21 00:43:47 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -220,17 +220,36 @@
 <html>
 <head>
 <style>
+    @media screen and ( max-width: 1281px ) {
+	:root {
+	    --font-size: 1.1vw;
+	    --large-font-size: 1.3vw;
+	    font-size: var(--font-size);
+	}
+    }
+    @media screen and ( min-width: 1280px ) {
+	:root {
+	    --font-size: 16px;
+	    --large-font-size: 20px;
+	    width: 1280px;
+	    font-size: var(--font-size);
+	    overflow: scroll;
+	}
+    }
+    .indented {
+	margin-left: 20px;
+    }
     .no-margin {
 	margin: 0 0 0 0;
     }
     h5 {
-        font-size: 14pt;
+        font-size: var(--large-font-size);
 	margin: 0 0 0 0;
 	display:inline;
     }
-    pre, b, button, input, select, u {
+    pre, button, input, select {
 	display:inline;
-        font-size: 12pt;
+        font-size: var(--font-size);
     }
     pre {
 	font-family: "Courier New", Courier, monospace;
