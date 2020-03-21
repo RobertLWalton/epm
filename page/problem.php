@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 00:38:56 EDT 2020
+    // Date:	Sat Mar 21 04:25:47 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -683,8 +683,7 @@
 
     if ( $delete_problem )
     {
-	echo "<div style='background-color:#F5F81A'>" .
-	     PHP_EOL;
+	echo "<div style='background-color:#F5F81A'>";
 	echo "<form method='POST'" .
 	     " style='display:inline'" .
 	     " action=problem.php>";
@@ -698,20 +697,18 @@
 	     " name='delete_problem_no'" .
 	     " value='$problem'>" .
 	     "NO</button>";
-	echo "</form></div>" . PHP_EOL;
+	echo "</form></div>";
     }
     else if ( isset ( $deleted_problem ) )
     {
-	echo "<div style='background-color:#F5F81A'>" .
-	     PHP_EOL;
+	echo "<div style='background-color:#F5F81A'>";
 	echo "Problem $deleted_problem has been" .
 	     " deleted!<br>";
-	echo "</div>" . PHP_EOL;
+	echo "</div>";
     }
     else if ( $make_ftest )
     {
-	echo "<div style='background-color:#F5F81A'>" .
-	     PHP_EOL;
+	echo "<div style='background-color:#F5F81A'>";
 	echo "<form method='POST'" .
 	     " style='display:inline'" .
 	     " action=problem.php>";
@@ -726,27 +723,25 @@
 	     " name='make_ftest_no'" .
 	     " value='$make_ftest'>" .
 	     "NO</button>";
-	echo "</form></div>" . PHP_EOL;
+	echo "</form></div>";
     }
     if ( count ( $errors ) > 0 )
     {
-	echo "<div style='background-color:#F5F81A'>" .
-	     PHP_EOL;
-	echo "<h5>Errors:</h5>" . PHP_EOL;
-	echo "<div class='indented'>" . PHP_EOL;
+	echo "<div style='background-color:#F5F81A'>";
+	echo "<h5>Errors:</h5>";
+	echo "<div class='indented'>";
 	foreach ( $errors as $e )
-	    echo "<pre>$e</pre><br>" . PHP_EOL;
-	echo "<br></div></div>" . PHP_EOL;
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
     }
     if ( count ( $warnings ) > 0 )
     {
-	echo "<div style='background-color:#ffc0ff'>" .
-	     PHP_EOL;
-	echo "<h5>Warnings:</h5>" . PHP_EOL;
-	echo "<div class='indented'>" . PHP_EOL;
+	echo "<div style='background-color:#ffc0ff'>";
+	echo "<h5>Warnings:</h5>";
+	echo "<div class='indented'>";
 	foreach ( $warnings as $e )
-	    echo "<pre>$e</pre><br>" . PHP_EOL;
-	echo "<br></div></div>" . PHP_EOL;
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
     }
 
     $current_problem = ( isset ( $problem ) ?
@@ -786,16 +781,16 @@ EOT;
 
     if ( count ( $problems ) > 0 )
     {
-	echo "<tr><td></td><td>" . PHP_EOL;
+	echo "<tr><td></td><td>";
 	echo "<input type='submit'" .
 	     " name='goto_problem'" .
-	     " value='Go To Problem:'>" . PHP_EOL;
+	     " value='Go To Problem:'>";
         echo "<select name='selected_problem'" .
-	     " title='problem to go to'>" .  PHP_EOL;
+	     " title='problem to go to'>";
 	foreach ( $problems as $value )
 	    echo "    <option value='$value'>" .
-	             "$value</option>" . PHP_EOL;
-        echo "</select></td>" . PHP_EOL;
+	             "$value</option>";
+        echo "</select></td>";
 	if ( isset ( $problem ) )
 	    echo <<<EOT
 	         <td><h5>Go To:</h5>
@@ -810,7 +805,7 @@ EOT;
 			Option Page</button>
 		 </td>
 EOT;
-	echo "</tr>" . PHP_EOL;
+	echo "</tr>";
     }
     echo <<<EOT
     </table></form>
@@ -1022,8 +1017,7 @@ EOT;
 	        $r .= '1 file kept';
 	    else
 		$r .= count ( $kept ) . ' files kept';
-	    echo "<div class='command_display'>" .
-		 PHP_EOL;
+	    echo "<div class='command_display'>";
 	    get_commands_display ( $display );
 	    echo <<<EOT
 	    <button type='button'
@@ -1038,19 +1032,19 @@ EOT;
 	    <pre>($r)</pre>
 	    <div id='commands_body' hidden>
 EOT;
-	    echo "<div class='indented'>" . PHP_EOL;
-	    echo $display . PHP_EOL;
-	    echo "</div>" . PHP_EOL;
+	    echo "<div class='indented'>";
+	    echo $display;
+	    echo "</div>";
 	    $kept = $_SESSION['EPM_WORK']['KEPT'];
 	    if ( count ( $kept ) > 0 )
 	    {
-		echo "<h5>Kept:</h5>" . PHP_EOL;
-		echo "<div class='indented'>" . PHP_EOL;
+		echo "<h5>Kept:</h5>";
+		echo "<div class='indented'>";
 		foreach ( $kept as $e )
-		    echo "<pre>$e</pre><br>" . PHP_EOL;
-		echo "<br></div>" . PHP_EOL;
+		    echo "<pre>$e</pre><br>";
+		echo "<br></div>";
 	    }
-	    echo "</div>" . PHP_EOL;
+	    echo "</div>";
 
 	    $working_files =
 	        problem_file_names( $workdir );
@@ -1201,7 +1195,7 @@ EOT;
 <script>
     var LOG = function(message) {};
     <?php if ( $epm_debug )
-              echo "LOG = console.log;" . PHP_EOL;
+              echo "LOG = console.log;";
     ?>
 
     var xhttp = new XMLHttpRequest();
@@ -1309,7 +1303,7 @@ EOT;
 	{
 	    $r = $_SESSION['EPM_WORK']['RESULT'];
 	    if ( $r === true )
-		echo "REQUEST_UPDATE();" . PHP_EOL;
+		echo "REQUEST_UPDATE();";
 	    if ( ! is_array ( $r ) || $r != ['D',0] )
 	    {
 		 echo "document.getElementById" .

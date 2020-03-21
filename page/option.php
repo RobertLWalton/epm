@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 20 23:36:24 EDT 2020
+    // Date:	Sat Mar 21 04:28:21 EDT 2020
 
     // Edits problem option page.
 
@@ -539,21 +539,21 @@
 
     if ( count ( $errors ) > 0 )
     {
-	echo "<div class='errors'>" .  PHP_EOL;
-	echo "<h5>Errors:</h5>" . PHP_EOL;
-	echo "<div class='indented'>" . PHP_EOL;
+	echo "<div class='errors'>";
+	echo "<h5>Errors:</h5>";
+	echo "<div class='indented'>";
 	foreach ( $errors as $e )
-	    echo "<pre>$e</pre><br>" . PHP_EOL;
-	echo "<br></div></div>" . PHP_EOL;
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
     }
     if ( count ( $warnings ) > 0 )
     {
-	echo "<div class='warnings'>" .  PHP_EOL;
-	echo "<h5>Warnings:</h5>" . PHP_EOL;
-	echo "<div class='indented'>" . PHP_EOL;
+	echo "<div class='warnings'>";
+	echo "<h5>Warnings:</h5>";
+	echo "<div class='indented'>";
 	foreach ( $warnings as $e )
-	    echo "<pre>$e</pre><br>" . PHP_EOL;
-	echo "<br></div></div>" . PHP_EOL;
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
     }
 
     $option_help = HELP ( 'option-page' );
