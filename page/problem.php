@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 06:41:33 EDT 2020
+    // Date:	Sat Mar 21 07:17:28 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -868,11 +868,11 @@ EOT;
 EOT;
         $count = 0;
 	$display_list = [];
+	echo "<table style='display:block'>";
 	foreach ( problem_file_names( $probdir )
 	          as $fname )
 	{
-	    if ( ++ $count == 1 )
-	        echo "<table style='display:block'>";
+	    $count += 1;
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>";
 	    list ( $fext, $ftype, $fdisplay, $fcomment )
@@ -999,7 +999,7 @@ EOT;
 		 "<pre>$fcomment</pre></td>";
 	    echo "</tr>";
 	}
-	if ( $count > 0 ) echo "</table>";
+	echo "</table>";
 
         echo <<<EOT
 
