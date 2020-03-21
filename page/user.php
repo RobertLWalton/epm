@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 13 04:32:10 EDT 2020
+    // Date:	Sat Mar 21 00:12:30 EDT 2020
 
     // Display and edit user information in:
     //
@@ -431,25 +431,71 @@
 ?>
 
 <html>
+<head>
+<style>
+    @media screen and ( max-width: 1281px ) {
+	:root {
+	    --font-size: 1.1vw;
+	    --large-font-size: 1.3vw;
+	}
+    }
+    @media screen and ( min-width: 1280px ) {
+	:root {
+	    --font-size: 16px;
+	    --large-font-size: 20px;
+	    width: 1280px;
+	    font-size: var(--font-size);
+	    overflow: scroll;
+	}
+    }
+    .indented {
+	margin-left: 20px;
+    }
+    .inline {
+	display: inline;
+    }
+    .no-margin {
+	margin: 0 0 0 0;
+    }
+    h5 {
+        font-size: var(--large-font-size);
+	margin: 0 0 0 0;
+	display:inline;
+    }
+    pre, button, input {
+	display:inline;
+        font-size: var(--font-size);
+    }
+    th, td {
+        font-size: var(--font-size);
+	text-align: left;
+	padding: 3px;
+    }
+    pre, td {
+	font-family: "Courier New", Courier, monospace;
+    }
+
+</style>
+</head>
 <body>
 
 <?php 
 
     if ( count ( $errors ) > 0 )
     {
-        echo '<h3>Errors:</h3>' . PHP_EOL;
-	echo "<div style='margin-left:20px'>" . PHP_EOL;
+        echo '<h5>Errors:</h5>';
+	echo "<div class='indented'>";
 	foreach ( $errors as $value )
 	{
 	    $hvalue = htmlspecialchars ( $value );
-	    echo "<mark>$hvalue</mark><br>" . PHP_EOL;
+	    echo "<mark>$hvalue</mark><br>";
 	}
-	echo '</div>' . PHP_EOL;
+	echo '</div>';
     }
 
     if ( count ( $emails ) == 0 )
         echo "<mark>Its a good idea to add a second" .
-	     " email address.</mark><br>" . PHP_EOL;
+	     " email address.</mark><br>";
 
     if ( $edit )
 	$h = "Edit User Email Addresses";
@@ -457,50 +503,49 @@
 	$h = "User Email Addresses";
     $help = HELP ( 'user-page' );
     echo <<<EOT
-    <h3 style='display:inline'>$h</h3>
+    <h5>$h</h5>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     $help<br><br>
 EOT;
 
-    echo "<div style='margin-left:20px'>" . PHP_EOL;
+    echo "<div class='indented'>";
     $hemail = htmlspecialchars ( $email );
-    echo "$hemail&nbsp;&nbsp;&nbsp;&nbsp;" .
-         "(used for this login)<br>" . PHP_EOL;
+    echo "<pre>$hemail   " .
+         "(used for this login)</pre><br>";
     foreach ( $emails as $e )
     {
 	$he = htmlspecialchars ( $e );
 	if ( $edit )
 	    echo "<form style='display:inline'".
 		 " method='POST'" .
-		 " action='user.php'>" . PHP_EOL .
-		 "$he" .
+		 " action='user.php'>" .
+		 "<pre>$he</pre>" .
 		 "&nbsp;&nbsp;&nbsp;&nbsp;" .
 		 "<button type='submit'" .
 		 " name='delete_email'" .
 		 " value='$he'>Delete</button><br>" .
 		 PHP_EOL .
-		 "</form>" . PHP_EOL;
+		 "</form>";
 	else
-	    echo "$he<br>" . PHP_EOL;
+	    echo "<pre>$he</pre><br>";
     }
     if ( $edit
          &&
 	 count ( $emails ) + 1 < $max_emails )
 	echo "<form style='display:inline'".
 	     " method='POST'" .
-	     " action='user.php'>" . PHP_EOL .
+	     " action='user.php'>" .
 	     "<input type='email' name='new_email'" .
 	     " value='' size='40' placeholder=" .
 	     "'Another Email Address'" .
 	     " title='Add another email address" .
-	     " to the account'>" . PHP_EOL .
-	     "&nbsp;&nbsp;&nbsp;&nbsp;" . PHP_EOL .
+	     " to the account'>" .
+	     "&nbsp;&nbsp;&nbsp;&nbsp;" .
 	     "<input type='submit'" .
-	     " name='add_email' value='Add'>" .
-	     PHP_EOL;
-	     "</form>" . PHP_EOL;
+	     " name='add_email' value='Add'>";
+	     "</form>";
 
-    echo "</div>" . PHP_EOL;
+    echo "</div><br>";
 
     $location_placeholder =
 	 "Town, State (and Country) of Organization";
@@ -510,7 +555,7 @@ EOT;
     if ( $edit )
     {
 	echo <<<EOT
-	<h3>Edit User Profile:</h3>
+	<h5>Edit User Profile:</h5><br>
 	<form  method='POST' action='user.php'>
 	<table>
 EOT;
@@ -523,29 +568,29 @@ EOT;
 		      ></td></tr>
 EOT;
 	else echo <<<EOT
-	    <tr><td><b>User ID:</b></td>
+	    <tr><th>User ID:</th>
 		<td>$uid</td></tr>
 EOT;
 	echo <<<EOT
-	<tr><td><b>Full Name:</b></td>
+	<tr><th>Full Name:</th>
 	    <td> <input type='text' size='40'
 		  name='full_name'
 		  value='$hfull_name'
 		  title='Your Full Name'
 		  placeholder='John Doe'></td></tr>
-	<tr><td><b>Organization:</b></td><td>
+	<tr><th>Organization:</th><td>
 	    <input type='text' size='40'
 	     name='organization' value='$horganization'
 	     title='University, Company, or Self'
 	     placeholder='University, Company, or Self'>
 	     </td></tr>
-	<tr><td><b>Location:</b></td><td>
+	<tr><th>Location:</th><td>
 	    <input type='text' size='40'
 	     name='location' value='$hlocation'
 	     title='$location_placeholder'
 	     placeholder='$location_placeholder'>
 	     </td></tr>
-	<tr><td></td><td style='text-align:right'>
+	<tr><th></th><td style='text-align:right'>
 	    <input type='submit' name='update'
 		   value='update'></td></tr>
 	</table></form>
@@ -553,15 +598,15 @@ EOT;
     }
     else
 	echo <<<EOT
-	<h3>User Profile:</h3>
+	<h5>User Profile:</h5>
 	<table>
-	<tr><td><b>User ID:</b></td>
+	<tr><th>User ID:</th>
 	    <td>$uid</td></tr>
-	<tr><td><b>Full Name:</b></td>
+	<tr><th>Full Name:</th>
 	    <td>$hfull_name</td></tr>
-	<tr><td><b>Organization:</b></td>
+	<tr><th>Organization:</th>
 	    <td>$horganization</td></tr>
-	<tr><td><b>Location:</b></td>
+	<tr><th>Location:</th>
 	    <td>$hlocation</td></tr>
 	</table><br>
 	<form>

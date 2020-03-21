@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 20 05:37:55 EDT 2020
+    // Date:	Fri Mar 20 23:31:50 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -549,8 +549,6 @@
 	:root {
 	    --font-size: 16px;
 	    --large-font-size: 20px;
-	}
-	div.left {
 	    width: 1280px;
 	    font-size: var(--font-size);
 	    overflow: scroll;
@@ -567,7 +565,7 @@
 	margin: 0 0 0 0;
 	display:inline;
     }
-    pre, b, button, input, select, u {
+    pre, button, input, select {
 	display:inline;
         font-size: var(--font-size);
     }
@@ -677,7 +675,6 @@
 </script>
 <body>
 
-<div class='left'>
 <?php 
 
     if ( $delete_problem )
@@ -1192,8 +1189,6 @@ EOT;
 	}
     }
 ?>
-
-</div>
 
 <form action='problem.php' method='POST' id='reload'>
 <input type='hidden' name='reload' value='reload'>

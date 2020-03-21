@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 20 04:55:12 EDT 2020
+    // Date:	Fri Mar 20 23:36:24 EDT 2020
 
     // Edits problem option page.
 
@@ -370,24 +370,35 @@
 <html>
 <head>
 <style>
-    @media screen and ( min-width: 1280px )
-    {
-        div.root {
-	    width: 1280px;
+    @media screen and ( max-width: 1281px ) {
+	:root {
+	    --font-size: 1.1vw;
+	    --large-font-size: 1.3vw;
 	}
     }
-	    
+    @media screen and ( min-width: 1280px ) {
+	:root {
+	    --font-size: 16px;
+	    --large-font-size: 20px;
+	    width: 1280px;
+	    font-size: var(--font-size);
+	    overflow: scroll;
+	}
+    }
+    .indented {
+	margin-left: 20px;
+    }
     .no-margin {
 	margin: 0 0 0 0;
     }
     h5 {
-        font-size: 14pt;
+        font-size: var(--large-font-size);
 	margin: 0 0 0 0;
 	display:inline;
     }
-    pre, b, button, input, select, u {
+    pre, button, input, select {
 	display:inline;
-        font-size: 12pt;
+        font-size: var(--font-size);
     }
     pre {
 	font-family: "Courier New", Courier, monospace;
@@ -395,7 +406,7 @@
     .mono {
 	display:inline;
 	font-family: "Courier New", Courier, monospace;
-        font-size: 12pt;
+        font-size: var(--font-size);
     }
     .right-adjust {
 	text-align:right;
@@ -467,7 +478,7 @@
     }
     pre.problem {
         color: #CC00FF;
-        font-size: 14pt;
+        font-size: var(--large-font-size);
     }
     div.indented {
 	margin-left: 20px;
