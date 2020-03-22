@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar 22 05:00:19 EDT 2020
+// Date:    Sun Mar 22 09:01:57 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -80,9 +80,9 @@ function is_running ( $pid )
     return ( $kill_status == 0 );
 }
 
-// Do what PHP symlink should do, but symlink is known
-// to fail sometimes for no good reason (see comments
-// on PHP documentation site - and this behavior has
+// Do what PHP symlink should do, but PHP symlink is
+// known to fail sometimes for no good reason (see
+// comments on PHP documentation site; this behavior has
 // also been observed in EPM testing).
 //
 function symbolic_link ( $target, $link )
@@ -130,7 +130,7 @@ function pretty_template ( $template )
         return $template;
     $r = "{$matches[1]} => {$matches[2]}";
     if ( $matches[3] != "" )
-        $r = "$r ({$matches[3]})";
+        $r .= " ({$matches[3]})";
     return $r;
 }
 
@@ -148,7 +148,7 @@ function pretty_template ( $template )
 // Either $filenames is a single name and $template
 // is just the source or just the destination part of
 // a .tmpl file name, or $filenames has the form
-// $srcfile:$desfile an $template is the part of the
+// $srcfile:$desfile and $template is the part of the
 // .tmpl file name before the second :.
 //
 function template_match ( $filenames, $template )
@@ -278,7 +278,7 @@ function load_template_cache()
 }
 
 // Read the decoded json from a template file as stored
-// in the template cache.  Sysfail on errors.
+// in the template cache.  Errors are fatal.
 //
 function get_template_json ( $template )
 {
@@ -364,11 +364,13 @@ function find_templates
 // later template directories in $template_dirs.  Cache
 // result in $template_optn.
 //
+// Checking of template option contents for validity is
+// done in option.php, and is not done here.
+//
 $template_optn = NULL;
 function get_template_optn()
 {
-    global $template_dirs, $epm_data, $uid,
-           $template_optn;
+    global $template_dirs, $template_optn;
 
     if ( isset ( $template_optn ) )
         return $template_optn;
@@ -390,22 +392,88 @@ function get_template_optn()
     return $template_optn;
 }
 
-// Get the PPPP.optn file for $problem PPPP from
-// $remote_file_cache, if it exists.  Then if
-// $allow_local_optn is true, get PPPP.optn from $local_
-// file_cache and use it to any override options gotten
-// from $remote_file_cache.  Cache the result in
-// $problem_optn.
+// Add to $errors any errors found in the $optmap of
+// $opt => $value.  Template options are in $options
+// and must be valid.  Error messages complain about
+// `$name values'.
 //
-// This function calls load_file_caches.
+$epm_type_re =
+    ['natural' => '/^\d+$/',
+     'integer' => '/^(|\+|-)\d+$/',
+     'float' => '/^(|\+|-)\d+(|\.\d+)'
+	      . '(|(e|E)(|\+|-)\d+)$/'];
+//
+function check_optmap
+    ( & $optmap, $options, $name, & $errors )
+{
+    global $epm_type_re;
+
+    foreach ( $optmap as $opt => $value )
+    {
+	$d = & $options[$opt];
+	if ( isset ( $d['values'] ) )
+	{
+	    $values = $d['values'];
+	    if ( ! in_array ( $value, $values ) )
+		$errors[] = "option $opt $name"
+			  . " value '$value' is not"
+			  . " in option `values'";
+	}
+	elseif ( isset ( $d['type'] ) )
+	{
+	    $type = $d['type'];
+	    $re = $epm_type_re[$type];
+	    if ( ! preg_match ( $re, $value ) )
+		$errors[] =
+		    "option $opt $name value" .
+		    " '$value' has illegal" .
+		    " format for its type $type";
+	    else
+	    {
+		$r = $d['range'];
+		if ( $value < $r[0] )
+		    $errors[] =
+			"option $opt $name value" .
+			" '$value' is too small";
+		elseif ( $value > $r[1] )
+		    $errors[] =
+			"option $opt $name value" .
+			" '$value' is too large";
+	    }
+	}
+	else
+	{
+	    $re = '/^[-\+_@=\/:\.,A-Za-z0-9\h]*$/';
+	    if ( ! preg_match ( $re, $value ) )
+		$errors[] =
+		    "option $opt $name value" .
+		    " '$value' contains a" .
+		    " special character other" .
+		    " than - + _ @ = / : . ,";
+	}
+    }
+}
+
+// Get the PPPP.optn files from the following in order,
+// using later values to override previous values:
+//
+//	Defaults from (get_)template_optn.
+//	$problem.optn files in $remote_dirs.
+//      $problem.optn file in $probdir iff
+//          $allow_local_optn is true.
+//
+// Check options and list errors in $errors.  Ignore
+// options with no 'default' in template_optn.  Cache
+// the result in $problem_optn and $problem_optn_allow_
+// local.
 //
 $problem_optn = NULL;
 $problem_optn_allow_local = NULL;
-function get_problem_optn ( $allow_local_optn )
+function get_problem_optn
+	( $allow_local_optn, & $errors )
 {
-    global $epm_data, $problem,
-           $problem_optn, $problem_optn_allow_local,
-           $local_file_cache, $remote_file_cache;
+    global $epm_data, $problem, $probdir, $remote_dirs,
+           $problem_optn, $problem_optn_allow_local;
 
     if ( isset ( $problem_optn )
 	 &&     $problem_optn_allow_local
@@ -415,41 +483,49 @@ function get_problem_optn ( $allow_local_optn )
     $problem_optn = [];
     $problem_optn_allow_local = $allow_local_optn;
 
-    load_file_caches();
-    $f = "$problem.optn";
-    $files = [];
-    if ( isset ( $remote_file_cache[$f] ) )
-        $files[] = "{$remote_file_cache[$f]}/$f";
-    if (    $allow_local_optn
-         && isset ( $local_file_cache[$f] ) )
-        $files[] = "{$local_file_cache[$f]}/$f";
-
-    foreach ( $files as $f )
+    $template_optn = get_template_optn();
+    foreach ( $template_optn as $opt => $desc )
     {
-        if ( ! is_readable ( "$epm_data/$f" ) )
+        if ( isset ( $desc['default'] ) )
+	    $problem_optn[$opt] = $desc['default'];
+    }
+
+    $f = "$problem.optn";
+    $dirs = $remote_dirs;
+    if ( $allow_local_optn )
+        $dirs[] = $probdir;
+
+    foreach ( $dirs as $d )
+    {
+        if ( ! is_readable ( "$epm_data/$d/$f" ) )
 	    continue;
-	$j = get_json ( $epm_data, $f );
+	$j = get_json ( $epm_data, "$d/$f" );
 
 	// PPPP.optn values are 1D arrays.
 	//
 	foreach ( $j as $opt => $value )
-	    $problem_optn[$opt] = $value;
+	{
+	    if ( isset ( $problem_optn[$opt] ) )
+		$problem_optn[$opt] = $value;
+	}
 
     }
+    check_optmap ( $problem_optn, $template_optn,
+                   'option', $errors );
     return $problem_optn;
 }
 
 // Load the argument map that is to be applied to
 // template COMMANDS.  The argument map is computed from
 // results of get_template_optn and get_problem_optn.
-// Append warnings to $warnings for options that must be
-// modified or ignored, and append errors to $errors for
-// options that cannot be given any value.
+// Append errors to $errors: if there are errors then
+// nothing is done.  There is no return value in any
+// case.
 //
 $argument_map = NULL;
 $argument_map_allow_local = NULL;
 function load_argument_map
-	( $allow_local_optn, & $warnings, & $errors )
+	( $allow_local_optn, & $errors )
 {
     global $argument_map, $argument_map_allow_local,
            $problem;
@@ -458,203 +534,39 @@ function load_argument_map
 	    $allow_local_optn
 	 == $argument_map_allow_local )
         return;
-    $argument_map_allow_local = $allow_local_optn;
 
+    $errors_size = count ( $errors );
     $template_optn = get_template_optn();
     $problem_optn =
-        get_problem_optn ( $allow_local_optn );
+        get_problem_optn ( $allow_local_optn, $errors );
+    if ( count ( $errors ) > $errors_size )
+        return;
 
+    $argument_map = [];
+        
     $arg_map = [];
     $val_map = [];
-    foreach ( $problem_optn as $opt => $value )
-    {
-        if ( ! isset ( $template_optn[$opt] ) )
-	    $warnings[] =
-	        "$opt option from $problem.optn" .
-		" file is not in template.optn file" .
-		PHP_EOL .
-	        "    and therefore it is illegal and" .
-		" its value $value is ignored";
-    }
+
     foreach ( $template_optn as $opt => $description )
     {
-	$default = NULL;
-        if ( isset ( $description['default'] ) )
-            $default = $description['default'];
-	$ovalue = NULL;
-        if ( isset ( $problem_optn[$opt] ) )
-            $ovalue = $problem_optn[$opt];
-
-	$value = NULL;
-        if ( isset ( $description['values'] ) )
+	if ( isset ( $description['valname'] ) )
 	{
-	    $values = $description['values'];
-	    if ( ! is_array ( $values )
-	         ||
-		 count ( $values ) == 0 )
-	    {
-	        $errors[] =
-		    "badly formatted values member of" .
-		    " option $opt in template.optn" .
-		    " file; option $opt ignored";
-		continue;
-	    }
-
-	    if ( isset ( $default ) )
-		$value = $default;
-	    else
-	        $value = $values[0];
-
-	    if ( isset ( $ovalue ) )
-	    {
-	        if (    array_search
-		          ( $ovalue, $values, true )
-		     !== false )
-		    $value = $ovalue;
-		else
-		    $warnings[] =
-		        "$opt option value $ovalue" .
-		        " from $problem.optn file" .
-			PHP_EOL .
-			"    is not legal, using" .
-			" default $value instead";
-	    }
+	    $valname = $description['valname'];
+	    $val_map[$valname] = $problem_optn[$opt];
 	}
-        else if ( isset ( $description['type'] ) )
-	{
-	    $type = $description['type'];
-	    if ( isset ( $description['range'] ) )
-	        $range = $description['range'];
-	    else
-	        $range = NULL;
-
-	    // In the following, if all error checks
-	    // are passed, either $ovalue or $default
-	    // must be set, unless default member is
-	    // improperly missing.
-
-	    if ( array_search
-	             ( $type,
-		       ['args', 'natural', 'float'],
-		        true ) === false )
-	    {
-	        $errors[] =
-		    "unknown type $type for option" .
-		    " $opt in template.optn file;" .
-		    " option ignored";
-		continue;
-	    }
-	    else if ( $type == 'args' )
-	    {
-	        if ( ! isset ( $default ) )
-		    $default = "";
-	    }
-	    else if ( ! isset ( $range ) )
-	    {
-		$errors[] =
-		    "no range member for option $opt" .
-		    " of type $type" . PHP_EOL .
-		    " in template.optn file; option" .
-		    " ignored";
-		continue;
-	    }
-	    else if ( ! is_array ( $range )
-	              ||
-		      count ( $range ) != 2 )
-	    {
-		$errors[] =
-		    "badly formatted range member" .
-		    " for option $opt of type $type" .
-		    PHP_EOL .
-		    " in template.optn file; option" .
-		    " ignored";
-		continue;
-	    }
-	    else if ( isset ( $ovalue )
-	              &&
-		      ! is_numeric ( $ovalue ) )
-	    {
-		$warnings[] =
-		    "option $opt value $ovalue from" .
-		    " $problem.optn file" .
-		    PHP_EOL .
-		    " is not numeric; $ovalue ignored";
-		$ovalue = NULL;
-	    }
-	    else if ( isset ( $ovalue )
-	              &&
-		      $type == 'natural'
-		      &&
-		      ! preg_match
-		            ( '/^\d+$/', $ovalue ) )
-	    {
-		$warnings[] =
-		    "option $opt value $ovalue from" .
-		    " $problem.optn file" .
-		    PHP_EOL .
-		    " is not natural number;" .
-		    " $ovalue ignored";
-		$ovalue = NULL;
-	    }
-	    else if ( isset ( $ovalue )
-	              &&
-		      $ovalue < $range[0] )
-	    {
-		$warnings[] =
-		    "option $opt value $ovalue" .
-		    " from $problem.optn file" .
-		    " is too small" .
-		    PHP_EOL .
-		    "    (less than {$range[0]});" .
-		    " {$range[0]} used instead";
-		$ovalue = $range[0];
-	    }
-	    else if ( isset ( $ovalue )
-	              &&
-		      $ovalue > $range[1] )
-	    {
-		$warnings[] =
-		    "option $opt value $ovalue" .
-		    " from $problem.optn file" .
-		    " is too large" .
-		    PHP_EOL .
-		    "    (greater than {$range[1]});" .
-		    " {$range[1]} used instead";
-		$ovalue = $range[1];
-	    }
-
-	    if ( isset ( $ovalue ) )
-	        $value = $ovalue;
-	    else if ( isset ( $default ) )
-	        $value = $default;
-	    else if ( isset ( $range ) )
-	        $value = $range[1];
-	    else
-	    {
-		$errors[] =
-		    "no default member for option" .
-		    " $opt of type $type in" .
-		    PHP_EOL .
-		    " template.optn file, and no" .
-		    " valid $problem.optn value;" .
-		    " option ignored";
-		continue;
-	    }
-	}
-
-	if ( isset ( $description['argname'] ) )
+	elseif ( isset ( $description['argname'] ) )
 	{
 	    $argname = $description['argname'];
 	    if ( isset ( $arg_map[$argname] ) )
 	        $arg_map[$argname] .=
-		    ' ' . $value;
+		    " $problem_optn[$opt]";
 	    else
-	        $arg_map[$argname] = $value;
+		$arg_map[$argname] =
+		    $problem_optn[$opt];
 	}
-	else if ( isset ( $description['valname'] ) )
-	    $val_map[$description['valname']] = $value;
     }
 
+    $argument_map_allow_local = $allow_local_optn;
     $argument_map =
         substitute_match ( $arg_map, $val_map );
 }
@@ -1972,7 +1884,7 @@ function start_make_file
     $errors_size = count ( $errors );
 
     load_argument_map
-	( $allow_local_optn, $warnings, $errors );
+	( $allow_local_optn, $errors );
     if ( count ( $errors ) > $errors_size ) return;
 
     find_templates

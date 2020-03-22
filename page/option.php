@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 04:28:21 EDT 2020
+    // Date:	Sun Mar 22 09:07:18 EDT 2020
 
     // Edits problem option page.
 
@@ -199,68 +199,14 @@
     ksort ( $valnames, SORT_NATURAL );
     ksort ( $argnames, SORT_NATURAL );
 
-    // Add to $errors any errors found in the
-    // $optmap of $opt => $value.  Assumes templates
-    // have already been checked.  Error messages
-    // complain about `$name values'.
-    //
-    function check_optmap ( & $optmap, $name )
-    {
-	global $type_re, $errors, $options;
-
-        foreach ( $optmap as $opt => $value )
-	{
-	    $d = & $options[$opt];
-	    if ( isset ( $d['values'] ) )
-	    {
-	        $values = $d['values'];
-		if ( ! in_array ( $value, $values ) )
-		    $errors[] = "option $opt $name"
-		              . " value '$value' is not"
-			      . " in option `values'";
-	    }
-	    elseif ( isset ( $d['type'] ) )
-	    {
-	        $type = $d['type'];
-		$re = $type_re[$type];
-		if ( ! preg_match ( $re, $value ) )
-		    $errors[] =
-			"option $opt $name value" .
-			" '$value' has illegal" .
-			" format for its type $type";
-		else
-		{
-		    $r = $d['range'];
-		    if ( $value < $r[0] )
-			$errors[] =
-			    "option $opt $name value" .
-			    " '$value' is too small";
-		    elseif ( $value > $r[1] )
-			$errors[] =
-			    "option $opt $name value" .
-			    " '$value' is too large";
-		}
-	    }
-	    else
-	    {
-		$re = '/^[-\+_@=\/:\.,A-Za-z0-9\h]*$/';
-		if ( ! preg_match ( $re, $value ) )
-		    $errors[] =
-			"option $opt $name value" .
-			" '$value' contains a" .
-			" special character other" .
-		        " than - + _ @ = / : . ,";
-	    }
-	}
-    }
-
     $optmap = [];
     foreach ( $options as $opt => $value )
     {
 	if ( isset ( $value['default'] ) )
 	    $optmap[$opt] = $value['default'];
     }
-    check_optmap ( $optmap, 'template default' );
+    check_optmap ( $optmap, $options,
+                   'template default', $errors );
     check_errors ( 'template default values' );
 
     foreach ( array_reverse ( $remote_dirs ) as $dir )
@@ -278,7 +224,8 @@
 		          . " in templates";
 	}
     }
-    check_optmap ( $optmap, 'inherited' );
+    check_optmap ( $optmap, $options,
+                   'inherited', $errors );
     check_errors ( 'template inhertied values' );
 
     $inherited = $optmap;
@@ -296,7 +243,8 @@
 		          . " in templates";
 	}
     }
-    check_optmap ( $optmap, 'local' );
+    check_optmap ( $optmap, $options,
+                   'local', $errors );
 
     // Compute data for Template Commands in $template_
     // cache.
@@ -329,7 +277,8 @@
 	}
 	$errors = [];
 	    // Clear previous $optmap errors.
-	check_optmap ( $optmap, 'update' );
+	check_optmap ( $optmap, $options,
+	               'update', $errors );
 	if ( count ( $errors ) > 0 )
 	{
 	    $optmap = $defaults;
