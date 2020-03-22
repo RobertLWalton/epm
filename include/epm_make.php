@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Mar 17 01:58:31 EDT 2020
+// Date:    Sun Mar 22 05:00:19 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -310,11 +310,11 @@ function get_template_json ( $template )
 // For each template found, list in $templates elements
 // of the form:
 //
-//   [template, root, json]
+//   [template, directory, json]
 // 
 // containing the information copied from the
 //
-//	template => [root, json]
+//	template => [root, directory, json]
 //
 // but with wildcards in json replaced by their matches
 // found from matching the source and destination file
@@ -356,7 +356,7 @@ function find_templates
 	if ( $cond != $condition ) continue;
 
 	$templates[] =
-	    [ $template, $pair[0], $json ];
+	    [ $template, $triple[1], $json ];
     }
 }
 

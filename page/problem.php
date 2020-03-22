@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 21:14:17 EDT 2020
+    // Date:	Sun Mar 22 04:13:53 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -1120,11 +1120,19 @@ EOT;
 EOT;
 		    }
 		    else
+		    {
+			unset ( $show_map[$fname] );
+			    // $fname is a working file
+			    // so if an older version
+			    // is a current file we
+			    // do not want to show the
+			    // older version.
 			echo <<<EOT
 			    <pre id='file$count'
 			        >$fname</pre>
 			    </td>
 EOT;
+		    }
 
 		    if ( $fdisplay )
 		    {

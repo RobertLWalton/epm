@@ -3,7 +3,7 @@
 
 // File:	emp_make_test
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Feb 10 00:31:37 EST 2020
+// Date:	Sun Mar 22 04:45:18 EDT 2020
 
 $is_epm_test = true;
 
@@ -12,8 +12,8 @@ $epm_home = dirname ( getcwd() );
 $uid = 1;
 $problem = 'prob';
 
-$prob_dir = 'users/user1/prob';
-$proj_dir = 'projects/proj1/prob';
+$probdir = 'users/user1/prob';
+$projdir = 'projects/proj1/prob';
 
 $epm_upload_maxsize = 256 * 1024;
 $upload_target_ext = [
@@ -22,10 +22,10 @@ $upload_target_ext = [
 
 function setup_test_dirs ()
 {
-    global $epm_data, $prob_dir, $proj_dir;
+    global $epm_data, $probdir, $projdir;
     exec ( "rm -rf $epm_data" );
-    mkdir ( "$epm_data/$prob_dir", 0750, true );
-    mkdir ( "$epm_data/$proj_dir", 0750, true );
+    mkdir ( "$epm_data/$probdir", 0750, true );
+    mkdir ( "$epm_data/$projdir", 0750, true );
     mkdir ( "$epm_data/tmp", 0750, true );
         // Used for simulated upload.
 }
@@ -72,18 +72,17 @@ function check ( $expression, $value )
 
 check ( '["A" => 0, "B" => 1]', ["B" => 1, "A" => 0] );
 
+check ( 'template_match ( "prob.cc", "PPPP.cc" )',
+	 ["PPPP" => "prob"] );
 check ( 'template_match
-              ( "tv", "tv.cc", "PPPP.cc" )',
-	 ["PPPP" => "tv"] );
-check ( 'template_match
-              ( "tv", "00-001-tv.in",
+              ( "00-001-prob.in",
 	        "XXXX-YYYY-PPPP.in" )',
 	 ["XXXX" => "00","YYYY" => "001",
-	                 "PPPP" => "tv"] );
-check ( 'template_match // tvxin, NOT tv.in
-              ( "tv", "00-001-tvxin",
+	                 "PPPP" => "prob"] );
+check ( 'template_match
+              ( "00-001-probX",
 	        "XXXX-YYYY-PPPP.in" )',
-	 false );
+	 NULL );
 
 check ( 'substitute_match ( "XXXX-YYYY-PPPP.in",
            ["PPPP" => "tv", "XXXX" => "00",
@@ -109,10 +108,9 @@ check ( '$GLOBALS["template_cache"]
 		 [0]', $epm_home );
 
 $errors = [];
-find_templates ( $problem,
-                 "$problem.c", $problem,
+find_templates ( "$problem.c", $problem,
                  "UPLOAD $problem.c",
-                 $templates, $errors );
+                 $templates );
 
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["templates"][0][0]',
@@ -120,7 +118,8 @@ check ( '$GLOBALS["templates"][0][0]',
 check ( '$GLOBALS["templates"][0][2]' .
         '["KEEP"][0]', "prob" );
 check ( '$GLOBALS["templates"][0][2]' .
-        '["SHOW"]', ["prob.err", "prob.out"] );
+        '["SHOW"]', ["prob.cerr","prob.cout","prob.c"]
+      );
 
 $errors = [];
 get_template_optn ( $errors );
@@ -130,11 +129,11 @@ check ( '$GLOBALS["template_optn"]["gcc-ped"]
         ["","-Wpedantic"] );
 check ( '$GLOBALS["template_optn"]["scoring-rel"]
                                   ["range"]',
-        [-1,2] );
+        [0,2] );
 
 file_put_contents
-    ( "$epm_data/$prob_dir/prob.optn", $prob_optn );
-load_file_caches ( $prob_dir );
+    ( "$epm_data/$probdir/prob.optn", $prob_optn );
+load_file_caches ( $probdir );
 
 $errors = [];
 get_problem_optn ( $problem, true );
@@ -149,7 +148,7 @@ check ( '$GLOBALS["problem_optn"]["scoring-abs"]',
 $errors = [];
 $warnings = [];
 $optn_map = load_argument_map
-    ( $problem, true, $warnings, $errors );
+    ( true, $warnings, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["warnings"]', [] );
 check ( '$GLOBALS["argument_map"]["GCCFLAGS"]',
@@ -165,9 +164,10 @@ check ( '$GLOBALS["local_required"]', [] );
 check ( '$GLOBALS["control"][2]["KEEP"]',
         ["prob", "prob.c"] );
 
-$errors = [];
-$work = "$prob_dir/+work+";
-cleanup_working ( $work );
+$warnings = [];
+$work = "$probdir/+work+";
+cleanup_dir ( $work, $warnings );
+check ( '$GLOBALS["warnings"]', [] );
 
 $errors = [];
 link_required ( $local_required, $remote_required,
@@ -221,13 +221,13 @@ check ( "file_get_contents
              ( '$epm_data/$work/prob.sherr' )", '' );
 
 $errors = [];
-move_keep ( $control, $work, $prob_dir,
+move_keep ( $control, $work, $probdir,
             $moved, $errors );
 check ( '$GLOBALS["errors"]', [] );
 check ( '$GLOBALS["moved"]', ["prob", "prob.c"] );
 
 $show = compute_show
-    ( $control, $work, $prob_dir, $moved );
+    ( $control, $work, $probdir, $moved );
 check ( '$GLOBALS["show"]',
         ["users/user1/prob/+work+/prob.err",
 	 "users/user1/prob/+work+/prob.out"] );
@@ -247,7 +247,7 @@ $_FILES['uploaded_file'] =
      'size' => '1000',
      'tmp_name' => "$epm_data/tmp/prob.c"];
 process_upload ( $_FILES['uploaded_file'],
-		 'prob', $work, $prob_dir, 100,
+		 'prob', $work, $probdir, 100,
 		 $runfile, $moved, $show,
 		 $warnings, $errors );
 check ( '$GLOBALS["errors"]', [] );
@@ -294,10 +294,10 @@ print_r ( $requires );
 
 exit;
 
-exec ( "rm -r $epm_data/$prob_dir/*" );
+exec ( "rm -r $epm_data/$probdir/*" );
 
 
 file_put_contents
-    ( "$epm_data/$prob_dir/prob.java", $prob_java );
+    ( "$epm_data/$probdir/prob.java", $prob_java );
 
 ?>
