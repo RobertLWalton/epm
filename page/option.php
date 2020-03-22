@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 22 09:07:18 EDT 2020
+    // Date:	Sun Mar 22 14:22:59 EDT 2020
 
     // Edits problem option page.
 
@@ -319,7 +319,7 @@
 <html>
 <head>
 <style>
-    @media screen and ( max-width: 1281px ) {
+    @media screen and ( max-width: 1279px ) {
 	:root {
 	    --font-size: 1.1vw;
 	    --large-font-size: 1.3vw;
@@ -443,22 +443,15 @@
 		( name + '_mark' );
 	var BODY = document.getElementById
 		( name + '_body' );
-	var show = "&darr;";
-	var hide = "&uarr;";
-	if ( arguments.length == 4 )
-	{
-	    show = arguments[2];
-	    hide = arguments[3];
-	}
 	if ( BODY.hidden )
 	{
-	    MARK.innerHTML = hide;
+	    MARK.innerHTML = "&uarr;";
 	    BUTTON.title = "Hide " + thing;
 	    BODY.hidden = false;
 	}
 	else
 	{
-	    MARK.innerHTML = show;
+	    MARK.innerHTML = "&darr;";
 	    BUTTON.title = "Show " + thing;
 	    BODY.hidden = true;
 	}
@@ -476,6 +469,34 @@
 	    ( 'value' + count );
 	ITEM.value = inherited;
 	ITEM.style.backgroundColor = '#FFBF80';
+    }
+
+    var template_window = null;
+
+    function TEMPLATE_WINDOW ( ) {
+	var src = '/page/template.php';
+	if ( template_window == null || template_window.closed )
+	{
+	    var x = screen.width - 1024;
+	    var y = screen.height - 800;
+	    w = window.open
+		( src, 'template_window',
+		  'height=800px,width=1024px,' +
+		  'screenX=' + x + 'px,' +
+		  'screenY=' + y + 'px' );
+	}
+	else
+	{
+	    template_window.location.href = src;
+	    template_window.location.reload();
+	}
+    }
+
+    function UNLOAD () {
+	if ( template_window != null
+	     &&
+	     ! template_window.closed )
+	    template_window.close()
     }
 
 </script>
@@ -523,6 +544,10 @@
     &nbsp;&nbsp;
     <button type='submit'
             formaction='run.php'>Run Page
+    </button>
+    &nbsp;&nbsp;
+    <button type='button' onclick='TEMPLATE_WINDOW()'>
+        Show Templates
     </button>
     </td>
     <td style='padding-left:20px'>
@@ -721,71 +746,6 @@ EOT;
 	}
     }
     echo "</table></div></form>";
-
-    $templates_help = HELP ( 'option-templates' );
-    echo <<<EOT
-    <br>
-    <table style='width:100%'><tr>
-    <td>
-    <button type='button'
-	    id='templates_button'
-	    onclick='TOGGLE_BODY
-		 ("templates", "Template Commands")'
-	    title='Show Template Commands'>
-	    <pre id='templates_mark'>&darr;</pre>
-	    </button>
-    &nbsp;
-    <h5>Template Commands:</h5>
-    </td><td style='text-align:right'>
-    $templates_help</td>
-    </tr></table>
-    <div class='indented' id='templates_body' hidden>
-EOT;
-    $tcount = 0;
-    $showmark = "&#9734;";
-    $hidemark = "&#9733;";
-    $table = "";
-    foreach ( $template_cache as $template => $e )
-    {
-        $j = get_template_json ( $template );
-	if ( ! isset ( $j['COMMANDS'] ) ) continue;
-	$tpretty = pretty_template ( $template );
-	$tcommands = $j['COMMANDS'];
-	$tcount += 1;
-	$table .= <<<EOT
-	     <div style='display:inline-block;
-	                 padding-left:5px'>
-	     <button type='button'
-	             id='template{$tcount}_button'
-		     onclick='TOGGLE_BODY
-		         ( "template$tcount",
-			   "$tpretty Commands",
-			   "$showmark", "$hidemark" )'
-		     title='Show $tpretty Commands'>
-	     <pre id='template{$tcount}_mark'
-	          >$showmark</pre>
-	     </button>
-	     &nbsp;&nbsp;
-	     <pre>$tpretty</pre>
-	     </div>
-EOT;
-	echo <<<EOT
-	     <div id='template{$tcount}_body' hidden
-	          style='padding-bottom:5px'>
-	     <h5>$tpretty:</h5>
-	     <br>
-	     <div class='indented'>
-EOT;
-         foreach ( $tcommands as $c )
-	     echo "<pre>$c</pre><br>";
-	 echo "</div></div>";
-    }
-    echo <<<EOT
-         <div class='indented'>
-	 $table
-	 </div>
-	 </div>
-EOT;
 ?>
 
 

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar 22 09:01:57 EDT 2020
+// Date:    Sun Mar 22 13:26:10 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -53,15 +53,15 @@ if ( isset ( $problem_params['remote_dirs'] ) )
 else
     $remote_dirs = [];
 
-// Readable template directories, in order:
+// Readable template directories, in use-first order:
 //
 $template_dirs = [];
-$template_dirs[] = [$epm_home, "template"];
-if ( is_dir ( "$epm_data/template" ) )
-    $template_dirs[] = [$epm_data, "template"];
 if ( is_dir ( "$epm_data/admin/users/$uid/template" ) )
     $template_dirs[] =
         [$epm_data, "admin/users/$uid/template"];
+if ( is_dir ( "$epm_data/template" ) )
+    $template_dirs[] = [$epm_data, "template"];
+$template_dirs[] = [$epm_home, "template"];
 
 // Return true if process with $pid is still running,
 // and false otherwise.
@@ -246,7 +246,7 @@ function substitute_match ( $item, $match )
 // read when the template file is read as per the
 // get_template function below.  If two files with the
 // same template are found, only the one appearing
-// with the later directory in $template_dirs is
+// with the earlier directory in $template_dirs is
 // recorded.  The cache is stored in $template_cache.
 // No value is returned.
 //
@@ -269,8 +269,10 @@ function load_template_cache()
 	                        $fname, $matches ) )
 	        continue;
 	    $template = $matches[1];
-	    $template_cache[$template] =
-	        [ $r, $d, NULL ];
+	    if ( ! isset
+	               ( $template_cache[$template] ) )
+		$template_cache[$template] =
+		    [ $r, $d, NULL ];
 	}
     }
     if ( ! isset ( $template_cache ) )
@@ -361,7 +363,7 @@ function find_templates
 }
 
 // Get the template.optn file json with overrides from
-// later template directories in $template_dirs.  Cache
+// earlier template directories in $template_dirs.  Cache
 // result in $template_optn.
 //
 // Checking of template option contents for validity is
@@ -387,7 +389,11 @@ function get_template_optn()
 	//
 	foreach ( $j as $opt => $description )
 	foreach ( $description as $key => $value )
-	    $template_optn[$opt][$key] = $value;
+	{
+	    if ( ! isset
+	               ( $template_optn[$opt][$key] ) )
+		$template_optn[$opt][$key] = $value;
+	}
     }
     return $template_optn;
 }
@@ -491,7 +497,7 @@ function get_problem_optn
     }
 
     $f = "$problem.optn";
-    $dirs = $remote_dirs;
+    $dirs = array_reverse ( $remote_dirs );
     if ( $allow_local_optn )
         $dirs[] = $probdir;
 
@@ -501,7 +507,11 @@ function get_problem_optn
 	    continue;
 	$j = get_json ( $epm_data, "$d/$f" );
 
-	// PPPP.optn values are 1D arrays.
+	// PPPP.optn values are 1D arrays.  We process
+	// directories in use-last order.  If an option
+	// has no value when we encounter it, the
+	// option has no template default value, and
+	// we ignore the option.
 	//
 	foreach ( $j as $opt => $value )
 	{
