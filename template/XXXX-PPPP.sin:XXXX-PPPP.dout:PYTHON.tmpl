@@ -1,0 +1,16 @@
+{
+
+"COMMANDS": ["chmod o+r PPPP.pyc",
+	     "  epm_sandbox SSARGS SSPACE \\",
+	     "    -status XXXX-PPPP.sstat python3 \\",
+	     "    PPPP.pyc DARGS  \\",
+	     "    < XXXX-PPPP.sin \\",
+	     "    > XXXX-PPPP.dout 2> XXXX-PPPP.derr",
+	     "chmod o-r PPPP.pyc"],
+
+"LOCAL-REQUIRES": ["XXXX-PPPP.sin", "PPPP.pyc"],
+"KEEP":    ["XXXX-PPPP.dout"],
+"SHOW":    ["XXXX-PPPP.derr","XXXX-PPPP.dout"],
+"CHECKS":  ["EMPTY XXXX-PPPP.derr"]
+
+}
