@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 14:31:26 EDT 2020
+    // Date:	Sat Mar 21 21:14:17 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -854,7 +854,10 @@ EOT;
 	    // $show_map[$fname] => $count
 	    // maps file name last components to the
 	    // $count value that identifies buttons
-	    // etc associated with the file.
+	    // etc associated with the file.  In this
+	    // case show$count is always defined and
+	    // file$count_button may be defined.
+
         echo <<<EOT
 	<div class='problem_display'>
 	<table style='width:100%'>
@@ -1154,11 +1157,10 @@ EOT;
 
 	if ( count ( $display_list ) > 0 )
 	{
-	    foreach ( $display_list as $pair )
+	    foreach ( $display_list as $triple )
 	    {
-		$count = $pair[0];
-	        $fname = $pair[1];
-		$fcontents = $pair[2];
+		list ( $count, $fname, $fcontents ) =
+		    $triple;
 		$fcontents = htmlspecialchars
 		    ( $fcontents );
 		echo <<<EOT
@@ -1166,10 +1168,9 @@ EOT;
 		     id='file{$count}_body'
 		     class='file-name'>
 		<h5>$fname:</h5><br>
-		<div class='file-contents'>
-		<div class='indented'>
+		<div class='file-contents indented'>
 		<pre>$fcontents</pre>
-		</div></div></div>
+		</div></div>
 EOT;
 	    }
 	}
