@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 23 07:40:02 EDT 2020
+    // Date:	Mon Mar 23 09:41:11 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -269,34 +269,48 @@
     // 	    list ( FILE-EXTENSION,
     //		   FILE-TYPE,
     //		   FILE-DISPLAY,
+    //		   FILE-SHOW,
     //		   FILE-COMMENT )
     //
     // where FILE-TYPE is the $display_file_type of
-    // the FILE-EXTENSION, FILE-DISPLAY is true iff
-    // the file is UTF-8 and can be displayed in a
-    // <pre>FILE-CONTENTS</pre>, and FILE-COMMENT
-    // is a comment to be printed at the end of the
-    // file line in the file table of contents.
+    // the FILE-EXTENSION, FILE-DISPLAY if true iff
     //
-    // For example, an empty file has FILE-DISPLAY
-    // false and FILE-COMMENT `(Empty)'.
+    // 	  the file is UTF8
+    //	  the file has <= $max_display_lines lines
+    //	  the file is not displayed in FILE-COMMENT
+    //
+    // FILE-SHOW is true iff
+    //
+    //	  the file is UTF8 or PDF
+    //    the file has >= $min_display_lines
+    //	  the file is not displayed in FILE-COMMENT
+    //
+    // and FILE-COMMENT is:
+    //
+    //	   (Empty) iff the file is empty
+    //     {FILE-CONTENTS} iff the file has 1 line
+    //         that after being right trimmed has
+    //	       <= 32 characters
+    //	   (Lines ###) iff the above do not apply and
+    //         the file is UTF8 with ### lines
     //
     // If FILE-DISPLAY is set to true, the element
     //
     //	  [$count, $fname, FILE-CONTENTS]
     //
-    // is appended to $display_list.  Note that
-    // here FILE-CONTENTS is truncated if necessary
-    // to a maximum of $epm_file_maxsize bytes.
+    // is appended to $display_list.
     //
-    // FILE-DISPLAY is set false if the file is a UTF8
-    // file with more than 200 lines.
+    // Note that here FILE-CONTENTS is truncated to a
+    // maximum of $epm_file_maxsize bytes.
     //
+    $max_display_lines = 40;
+    $min_display_lines = 10;
     function file_info
             ( $dir, $fname, $count, & $display_list )
     {
         global $epm_data, $display_file_type,
-	       $display_file_map, $epm_file_maxsize;
+	       $display_file_map, $epm_file_maxsize,
+	       $max_display_lines, $min_display_lines;
 
 	$fext = pathinfo ( $fname, 
 			   PATHINFO_EXTENSION );
@@ -308,6 +322,7 @@
 	$fcontents = NULL;
 	$flines = NULL;
 	$fdisplay = false;
+	$fshow = false;
 	if (    $ftype == 'utf8'
 	     && isset ( $fsize ) )
 	{
@@ -326,24 +341,27 @@
 	elseif ( $ftype == 'utf8' )
 	{
 	    if (    $flines == 1
-		 && strlen ( $fcontents ) <= 31 )
+		 &&    strlen ( rtrim ( $fcontents ) )
+		    <= 32 )
 		$fcomment = '{'
 			  . rtrim ( $fcontents )
 			  . '}';
 	    elseif ( isset ( $flines ) )
 	    {
 		$fcomment = "($flines Lines)";
-		if ( $flines < 200 )
+		if ( $flines <= $max_display_lines )
 		{
 		    $display_list[] =
 			[$count, $fname, $fcontents];
 		    $fdisplay = true;
 		}
+		if ( $flines >= $min_display_lines )
+		    $fshow = true;
 	    }
 	    elseif ( isset ( $fsize ) )
 		$fcomment = "($fsize Bytes)";
 	    else
-		$fcomment = "";
+		$fcomment = "(Has Undetermined Size)";
 	}
 	elseif ( isset ( $display_file_map
 			       [$ftype] ) )
@@ -351,7 +369,7 @@
 	    if ( isset ( $fsize ) )
 		$fcomment = "($fsize Bytes)";
 	    else
-		$fcomment = "";
+		$fcomment = "(Has Undetermined Size)";
 	}
 	else
 	{
@@ -361,7 +379,8 @@
 		$fcomment = $ftype;
 	}
 
-	return [ $fext, $ftype, $fdisplay, $fcomment ];
+	return [ $fext, $ftype,
+	         $fdisplay, $fshow, $fcomment ];
     }
 
     // Data Set by GET and POST Requests:
@@ -890,18 +909,14 @@ EOT;
 	    $count += 1;
 	    echo "<tr>";
 	    echo "<td style='text-align:right'>";
-	    list ( $fext, $ftype, $fdisplay, $fcomment )
+	    list ( $fext, $ftype,
+	           $fdisplay, $fshow, $fcomment )
 	        = file_info ( $probdir, $fname, $count,
 		              $display_list );
 	    $fbase = pathinfo ( $fname, 
 			        PATHINFO_FILENAME );
 
-	    if ( isset ( $display_file_map [$ftype] )
-		 &&
-		 ( $fdisplay
-		   ||
-		   $display_file_map [$ftype] == 'pdf' )
-	       )
+	    if ( $fshow )
 	    {
 	        $show_map[$fname] = "show$count";
 	        $fpage = $display_file_map[$ftype];
@@ -1083,19 +1098,12 @@ EOT;
 		    echo "<td" .
 		         " style='text-align:right'>";
 		    list ( $fext, $ftype, $fdisplay,
-		           $fcomment )
+		           $fshow, $fcomment )
 			= file_info ( $workdir, $fname,
 			              $count,
 				      $display_list );
 
-		    if ( isset ( $display_file_map
-		                      [$ftype] )
-		         &&
-			 ( $fdisplay
-			   ||
-			       $display_file_map
-			              [$ftype]
-			   == 'pdf' ) )
+		    if ( $fshow )
 		    {
 			$show_map[$fname] =
 			    "show$count";
