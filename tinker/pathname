@@ -1,0 +1,9 @@
+#! /bin/php
+<?php
+
+echo ( pathinfo ( 'foo.fum', PATHINFO_DIRNAME ) ) . PHP_EOL;
+echo ( pathinfo ( './foo.fum', PATHINFO_DIRNAME ) ) . PHP_EOL;
+
+
+?>
+

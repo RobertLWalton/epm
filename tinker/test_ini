@@ -1,0 +1,9 @@
+#! /bin/php
+<?php
+
+// $contents = parse_ini_file ( "test.ini", INI_SCANNER_TYPED );
+// INI_SCANNER_TYPED does NOT work.
+$contents = parse_ini_file ( "test.ini" );
+var_dump ( $contents );
+
+?>

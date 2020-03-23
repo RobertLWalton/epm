@@ -1,0 +1,18 @@
+{
+
+"COMMANDS": ["chmod o+r . PPPP.class",
+	     "  epm_sandbox SSARGS SSJDTIME \\",
+	     "    -status XXXX-PPPP.sstat java \\",
+	     "    JFLAGS PPPP DARGS \\",
+	     "    < XXXX-PPPP.sin \\",
+	     "    > XXXX-PPPP.dout 2> XXXX-PPPP.derr",
+	     "chmod o-r . PPPP.class"],
+
+"LOCAL-REQUIRES": ["XXXX-PPPP.sin", "PPPP.class"],
+"KEEP":    ["XXXX-PPPP.dout"],
+"SHOW":    ["XXXX-PPPP.derr", "XXXX-PPPP.dout"],
+"CHECKS":  ["EMPTY XXXX-PPPP.derr"]
+
+}
+
+

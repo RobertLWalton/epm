@@ -95,24 +95,6 @@
 
     "SSARGS": { "description":
                     "solution sandbox arguments" },
-
-    "stime": { "type": "natural",
-               "range": ["1", "30"],
-	       "default": "3",
-	       "description":
-	           "solution CPU time limit in seconds",
-	       "valname": "STIME" },
-    "stime-arg": { "values": ["-SIGABRT STIME",
-     			       // -SIGINT will not work
-			       // as interrupts are
-			       // disabled when shell
-			       // runs commands
-                               "-cputime STIME"],
-	           "default": "-SIGABRT STIME",
-		   "description":
-		       "limit solution CPU time"
-		       " (required)",
-		   "argname": "SSARGS" },
     "sfsize": { "type": "natural",
                 "range": ["1", "2048"],
 		"default": "128",
@@ -126,6 +108,53 @@
 		        "limit solution output files"
 		        " size (required)",
 		    "argname": "SSARGS" },
+
+    "SSTIME": { "description":
+                    "non-debugging solution sandbox"
+		    " argument" },
+
+    "stime": { "type": "natural",
+               "range": ["1", "30"],
+	       "default": "3",
+	       "description":
+	           "solution CPU time limit in seconds",
+	       "valname": "STIME" },
+    "stime-arg": { "values": ["-cputime STIME"],
+	           "default": "-cputime STIME",
+		   "description":
+		       "limit solution CPU time"
+		       " (required)",
+		   "argname": "SSTIME" },
+
+    "SSDTIME": { "description":
+                    "debugging solution sandbox"
+		    " argument for C/C++" },
+    "dstime-arg": { "values": ["-cputime STIME"],
+	            "default": "-cputime STIME",
+		    "description":
+		       "limit solution CPU time"
+		       " (required)",
+		    "argname": "SSDTIME" },
+
+    "SSJDTIME": { "description":
+                    "debugging solution sandbox"
+		    " argument for JAVA" },
+    "jdstime-arg": { "values": ["-SIGQUIT STIME"],
+	             "default": "-SIGQUIT STIME",
+		     "description":
+		        "limit solution CPU time"
+		        " (required)",
+		     "argname": "SSJDTIME" },
+
+    "SSPDTIME": { "description":
+                    "debugging solution sandbox"
+		    " argument for PYTHON" },
+    "pdstime-arg": { "values": ["-SIGABRT STIME"],
+	             "default": "-SIGABRT STIME",
+		     "description":
+		        "limit solution CPU time"
+		        " (required)",
+		     "argname": "SSPDTIME" },
 
     "SSPACE": { "description":
                     "non-JAVA solution sandbox"

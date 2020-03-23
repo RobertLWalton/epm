@@ -1,0 +1,20 @@
+#! /bin/php
+<?php
+
+// For standalone php, $_SESSION behaves like a
+// superglobal that is initially unset.
+
+$_SESSION['TEST'] = 'test';
+var_dump ( $_SESSION );
+function foo()
+{
+    $_SESSION['TEST'] = 'foo';
+}
+foo();
+var_dump ( $_SESSION );
+
+$x = '\d';
+echo ( "X $x" . PHP_EOL );
+
+
+?>
