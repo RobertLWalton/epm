@@ -5,12 +5,12 @@
 	     "    -status XXXX-PPPP.sstat python3 \\",
 	     "    PPPP.pyc DARGS  \\",
 	     "    < XXXX-PPPP.sin \\",
-	     "    > XXXX-PPPP.dout 2> XXXX-PPPP.derr",
+	     "    > XXXX-PPPP.dout 2>&1",
 	     "chmod o-r PPPP.pyc"],
 
 "LOCAL-REQUIRES": ["XXXX-PPPP.sin", "PPPP.pyc"],
 "KEEP":    ["XXXX-PPPP.dout"],
-"SHOW":    ["XXXX-PPPP.derr","XXXX-PPPP.dout"],
-"CHECKS":  ["EMPTY XXXX-PPPP.derr"]
+"SHOW":    ["XXXX-PPPP.dout"],
+"KEEP-ON-ERROR": true
 
 }

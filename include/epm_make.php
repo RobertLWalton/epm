@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar 22 13:26:10 EDT 2020
+// Date:    Mon Mar 23 05:47:47 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2064,6 +2064,9 @@ function finish_make_file ( & $warnings, & $errors )
         $errors[] = "command line {$r[0]} returned"
 	          . " exit code {$r[1]}: $m";
     }
+    if ( isset ( $control[2]['KEEP-ON-ERROR'] ) )
+	$errors_size = count ( $errors );
+
     if ( count ( $errors ) > $errors_size )
         goto SHOW;
 
