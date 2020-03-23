@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 22 04:13:53 EDT 2020
+    // Date:	Mon Mar 23 07:40:02 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -620,30 +620,16 @@
     function NEW_WINDOW ( page, filename ) {
 	var src = '/page/' + page + '?filename='
 		+ encodeURIComponent ( filename );
-	if ( show_window == null || show_window.closed )
-	{
-	    var x = screen.width - 1280;
-	    var y = screen.height - 800;
-	    w = window.open
-		( src, 'show_window',
-		  'height=800px,width=1280px,' +
-		  'screenX=' + x + 'px,' +
-		  'screenY=' + y + 'px' );
-	}
-	else
-	{
-	    show_window.location.href = src;
-	    show_window.location.reload();
-	}
+	if ( show_window ) show_window.close();
+	var x = screen.width - 1280;
+	var y = screen.height - 800;
+	show_window = window.open
+	    ( src, 'show_window',
+	      'height=800px,width=1280px,' +
+	      'screenX=' + x + 'px,' +
+	      'screenY=' + y + 'px' );
+	// show_window.focus() does not work.
     }
-
-    function UNLOAD () {
-	if ( show_window != null
-	     &&
-	     ! show_window.closed )
-	    show_window.close()
-    }
-	    
 
     function TOGGLE_BODY ( name, thing )
     {
@@ -851,12 +837,10 @@ EOT;
 	$current_problem_files_help =
 	    HELP ( 'current-problem-files' );
 	$show_map = [];
-	    // $show_map[$fname] => $count
-	    // maps file name last components to the
-	    // $count value that identifies buttons
-	    // etc associated with the file.  In this
-	    // case show$count is always defined and
-	    // file$count_button may be defined.
+	    // $show_map[$fname] => id
+	    // maps file name last component to the
+	    // button id that identifies the button
+	    // to click to show the file.
 
         echo <<<EOT
 	<div class='problem_display'>
@@ -912,9 +896,14 @@ EOT;
 	    $fbase = pathinfo ( $fname, 
 			        PATHINFO_FILENAME );
 
-	    if ( isset ( $display_file_map[$ftype] ) )
+	    if ( isset ( $display_file_map [$ftype] )
+		 &&
+		 ( $fdisplay
+		   ||
+		   $display_file_map [$ftype] == 'pdf' )
+	       )
 	    {
-	        $show_map[$fname] = $count;
+	        $show_map[$fname] = "show$count";
 	        $fpage = $display_file_map[$ftype];
 	        echo <<<EOT
 		    <button type='button'
@@ -933,7 +922,8 @@ EOT;
 EOT;
 	    if ( $fdisplay )
 	    {
-	        $show_map[$fname] = $count;
+	        $show_map[$fname] =
+		    "file{$count}_button";
 		echo <<<EOT
 		    <td><button type='button'
 		         id='file{$count}_button'
@@ -1101,9 +1091,14 @@ EOT;
 		    if ( isset ( $display_file_map
 		                      [$ftype] )
 		         &&
-			 $fcomment != '(Empty)' )
+			 ( $fdisplay
+			   ||
+			       $display_file_map
+			              [$ftype]
+			   == 'pdf' ) )
 		    {
-			$show_map[$fname] = $count;
+			$show_map[$fname] =
+			    "show$count";
 			$fpage =
 			    $display_file_map[$ftype];
 			echo <<<EOT
@@ -1136,7 +1131,8 @@ EOT;
 
 		    if ( $fdisplay )
 		    {
-			$show_map[$fname] = $count;
+			$show_map[$fname] =
+			    "file{$count}_button";
 			echo <<<EOT
 			    <td><button type='button'
 			         id=
@@ -1197,18 +1193,17 @@ EOT;
 	    }
 	    if ( count ( $files ) > 0 )
 	    {
-	        $c = $show_map[$files[0]];
+	        $id = $show_map[$files[0]];
 		echo "<script>document" .
-		     ".getElementById('show$c')" .
+		     ".getElementById('$id')" .
 		     ".click();" .
 		     "</script>";
 	    }
 	    if ( count ( $files ) > 1 )
 	    {
-	        $c = $show_map[$files[1]];
+	        $id = $show_map[$files[1]];
 		echo "<script>document" .
-		     ".getElementById" .
-		     "('file{$c}_button')" .
+		     ".getElementById('$id')" .
 		     ".click();" .
 		     "</script>";
 	    }

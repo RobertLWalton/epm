@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Mar 23 05:47:47 EDT 2020
+// Date:    Mon Mar 23 06:39:35 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1013,6 +1013,10 @@ function link_required
 // not used.  Load_argument_map must be called before
 // this function is called.
 //
+// In order to be recognized as an argument in a
+// command, the argument must be preceeded by $, which
+// will be removed when the argument is replaced.
+//
 function get_commands ( $control )
 {
     global $argument_map;
@@ -1020,8 +1024,11 @@ function get_commands ( $control )
     if ( ! isset ( $control[2]['COMMANDS'] ) )
         return [];
     $commands = $control[2]['COMMANDS'];
+    $map = [];
+    foreach ( $argument_map as $key => $value )
+        $map['\$' . $key] = $value;
     return substitute_match
-               ( $commands, $argument_map );
+               ( $commands, $map );
 }
 
 // Compile $commands into the file:

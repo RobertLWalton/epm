@@ -1,9 +1,9 @@
 {
 
-"COMMANDS": ["epm_sandbox GSARGS GSPACE \\",
+"COMMANDS": ["epm_sandbox $GSARGS $GSPACE \\",
              "    -status XXXX-PPPP.gstat generate_PPPP \\",
              "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
-	     "  epm_sandbox FSARGS FSPACE \\",
+	     "  epm_sandbox $FSARGS $FSPACE \\",
              "    -status XXXX-PPPP.fstat filter_PPPP \\",
 	     "    3< XXXX-PPPP.sout > XXXX-PPPP.fout \\",
 	     "    2> XXXX-PPPP.ferr"],

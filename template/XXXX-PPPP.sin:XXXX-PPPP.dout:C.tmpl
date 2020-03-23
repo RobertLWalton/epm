@@ -1,12 +1,12 @@
 {
 
-"COMMANDS": ["gcc -g -o PPPP PPPP.c LIBRARIES \\",
+"COMMANDS": ["gcc -g -o PPPP PPPP.c $LIBRARIES \\",
              "    > PPPP.cout 2> PPPP.cerr",
 	     "chmod o+xr PPPP",
 	     "chmod o+r XXXX-PPPP.sin PPPP.c",
-	     "epm_sandbox SSARGS SSDTIME SSPACE \\",
+	     "epm_sandbox $SSARGS $SSDTIME $SSPACE \\",
 	     "    -status XXXX-PPPP.sstat gdb -batch \\",
-	     "    -ex 'run < XXXX-PPPP.sin DARGS' \\",
+	     "    -ex 'run < XXXX-PPPP.sin $DARGS' \\",
 	     "    -ex back PPPP \\",
 	     "    > XXXX-PPPP.dout 2> XXXX-PPPP.derr",
 	     "chmod o-r XXXX-PPPP.sin PPPP.c"],
