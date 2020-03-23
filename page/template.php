@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 22 13:18:55 EDT 2020
+    // Date:	Mon Mar 23 03:03:22 EDT 2020
 
     // Edits problem option page.
 
@@ -99,6 +99,21 @@
 	background-color: #96F9F3;
 	padding-bottom: 5px;
     }
+    div.toc {
+	background-color: #F2D9D9;
+	padding-bottom: 5px;
+    }
+    div.description {
+	background-color: #B3E6FF;
+    }
+    div.commands {
+	background-color: #F5F81A;
+	margin-left: 20px;
+    }
+    div.requires {
+	background-color: #C0FFC0;
+	margin-left: 20px;
+    }
 </style>
 
 <script>
@@ -112,13 +127,13 @@
 		( name + '_body' );
 	if ( BODY.hidden )
 	{
-	    MARK.innerHTML = "&uarr;";
+	    BUTTON.style.backgroundColor = 'black';
 	    BUTTON.title = "Hide " + thing;
 	    BODY.hidden = false;
 	}
 	else
 	{
-	    MARK.innerHTML = "&darr;";
+	    BUTTON.style.backgroundColor = 'white';
 	    BUTTON.title = "Show " + thing;
 	    BODY.hidden = true;
 	}
@@ -161,7 +176,7 @@
     </table>
     </form>
     </div>
-    <br>
+    <div class='toc'>
 EOT;
     $tcount = 0;
     $description = "";
@@ -180,10 +195,11 @@ EOT;
 		     onclick='TOGGLE_BODY
 		         ( "template$tcount",
 			   "$tpretty Commands" )'
-		     title='Show $tpretty Commands'>
-	     <pre id='template{$tcount}_mark'
-	          >&darr;</pre>
-	     </button>
+		     title='Show $tpretty Commands'
+		     style='background-color:white;
+		            border-style:none;
+			    margin:2px'>
+	     &nbsp;</button>
 	     &nbsp;&nbsp;
 	     <pre>$tpretty</pre>
 	     </div>
@@ -193,14 +209,29 @@ EOT;
 	          style='padding-bottom:5px'>
 	     <h5>$tpretty:</h5>
 	     <br>
-	     <div class='indented'>
+	     <div class='commands'>
 EOT;
-         foreach ( $tcommands as $c )
-	     $description .= "<pre>$c</pre><br>";
-	 $description .= "</div></div>";
+        foreach ( $tcommands as $c )
+	    $description .= "<pre>$c</pre><br>";
+	$description .= "</div><div class='requires'>";
+	foreach ( ['REQUIRES','LOCAL-REQUIRES',
+	                      'REMOTE-REQUIRES']
+			      as $key )
+	{
+	    if ( ! isset ( $j[$key] ) ) continue;
+	    $description .= "$key: <pre>"
+	                  . implode ( ", ", $j[$key] )
+			  . "</pre><br>";
+	}
+	if ( isset ( $j['CONDITION'] ) )
+	    $description .= "CONDITION: <pre>"
+	                  . $j['CONDITION']
+			  . "</pre><br>";
+	$description .= "</div></div>";
     }
     echo <<<EOT
-         <div>
+	 </div>
+         <div class='description'>
 	 $description
 	 </div>
 EOT;
