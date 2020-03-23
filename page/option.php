@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 22 14:22:59 EDT 2020
+    // Date:	Sun Mar 22 21:41:41 EDT 2020
 
     // Edits problem option page.
 
@@ -425,6 +425,12 @@
 	background-color: #96F9F3;
 	padding-bottom: 5px;
     }
+    div.values {
+	background-color: #FFE6F0;
+    }
+    div.arguments {
+	background-color: #ECFFE6;
+    }
     pre.problem {
         color: #CC00FF;
         font-size: var(--large-font-size);
@@ -585,6 +591,7 @@ EOT;
     $values_help = HELP ( 'option-values' );
     echo <<<EOT
     </div></div>
+    <div class='values'>
     <table style='width:100%'><tr>
     <td>
     <button type='button'
@@ -645,11 +652,12 @@ EOT;
 	</td></tr>
 EOT;
     }
-    echo "</table></div>";
+    echo "</table></div></div>";
 
     $arguments_help = HELP ( 'option-arguments' );
     echo <<<EOT
     <br>
+    <div class='arguments'>
     <table style='width:100%'><tr>
     <td>
     <button type='button'
@@ -745,7 +753,7 @@ EOT;
 	    echo "</td></tr>";
 	}
     }
-    echo "</table></div></form>";
+    echo "</table></div></div></form>";
 ?>
 
 
