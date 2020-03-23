@@ -433,7 +433,7 @@
 <html>
 <head>
 <style>
-    @media screen and ( max-width: 1281px ) {
+    @media screen and ( max-width: 1279px ) {
 	:root {
 	    --font-size: 1.1vw;
 	    --large-font-size: 1.3vw;

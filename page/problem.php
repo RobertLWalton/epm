@@ -543,13 +543,13 @@
 
 <html>
 <style>
-    @media screen and ( max-width: 1281px ) {
+    @media screen and ( max-width: 1365px ) {
 	:root {
 	    --font-size: 1.1vw;
 	    --large-font-size: 1.3vw;
 	}
     }
-    @media screen and ( min-width: 1280px ) {
+    @media screen and ( min-width: 1366px ) {
 	:root {
 	    --font-size: 16px;
 	    --large-font-size: 20px;
