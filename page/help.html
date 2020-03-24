@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Mar 21 04:04:08 EDT 2020
+Date:	Tue Mar 24 03:01:32 EDT 2020
 -->
 <style>
 div.header {
@@ -59,7 +59,7 @@ vertical-align: top;
 </div>
 <div class='text'>
 
-<a name="TOC"><h1>Table of Contents</h1>
+<a name="TOC"><h1>Table of Contents</h1></a>
 <p>
 <ul>
 
@@ -75,6 +75,9 @@ vertical-align: top;
 <li><a href="#problem-names">Problem Names</a><br>
 <li><a href="#problem-marks">Problem Marks</a><br>
 <li><a href="#current-problem-files">Current Problem Files</a><br>
+<li><a href="#file-extensions">File Extensions</a><br>
+<li><a href="#problem-commands">Commands Last Executed</a><br>
+<li><a href="#problem-working">Working Files of Last Executed Commands</a><br>
 </ul>
 
 <li><a href="#option-page">Option Page
@@ -89,13 +92,13 @@ vertical-align: top;
 </div>
 <div class='text'>
 
-<a name="login-page"><h1>Login Page</h1>
+<a name="login-page"><h1>Login Page</h1></a>
 
 <p>The <b>login page</b> manages login using email addresses to
 identify a user and confirmation numbers to create tickets for
 the user in the user's browser.
 
-<a name="login-email"><h2>User Email Address</h2>
+<a name="login-email"><h2>User Email Address</h2></a>
 <p>
 Your <b>email address</b> serves as your account name,
 and also as the place to which confirmation numbers
@@ -114,7 +117,7 @@ by the document root URL used to access them, and EPM servers with
 different names are independent of each other (even
 if they are running on the same computer).
 
-<a name="browser-ticket"><h2>Browser Ticket</h2>
+<a name="browser-ticket"><h2>Browser Ticket</h2></a>
 <p>
 A browser <b>ticket</b> is stored in the browser local memory
 and enables a user to log in by giving only the email
@@ -145,7 +148,7 @@ The `<b>Delete All Tickets</b>' button removes the <u>all</u>
 tickets for the current EPM server from the browser and returns
 to the initial login page.
 
-<a name="user-page"><h1>User Page</h1>
+<a name="user-page"><h1>User Page</h1></a>
 
 <p>
 To be an EPM user you must supply the following information which
@@ -182,7 +185,7 @@ one of them.
 </ul>
 
 
-<a name="problem-page"><h1>Problem Page</h1>
+<a name="problem-page"><h1>Problem Page</h1></a>
 
 <p>
 At any given time you need to have a <b>current problem</b> you are working on.
@@ -190,7 +193,7 @@ The <b>problem page</b> allows you to create problems, select an
 existing problem, and manage the current problem.
 
 
-<a name="problem-names"><h2>Problem Names</h2>
+<a name="problem-names"><h2>Problem Names</h2></a>
 <p>
 A <a name='problem-name'><b>problem name</b></a>
 can contain only letters, digits, and the
@@ -198,7 +201,7 @@ special characters dash(<pre.inline>-</pre>) and
 underline(<pre.inline>_</pre>).
 In addition, it must begin and end with a letter.
 
-<a name="problem-marks"><h2>Problem Marks</h2>
+<a name="problem-marks"><h2>Problem Marks</h2></a>
 <p>
 On the problem page:
 <table style='margin-left:20px' class='top-align'>
@@ -211,7 +214,7 @@ or upload or make a new file</td></tr>
 <tr><td>&rArr;</td><td>means `make a new file with given extension from the file named on the same line'</td></tr>
 </table>
 
-<a name="current-problem-files"><h2>Current Problem Files</h2>
+<a name="current-problem-files"><h2>Current Problem Files</h2></a>
 <p>
 The <b>current problem files</b> are the files that you have uploaded
 or created for the problem.  These files are stored in the problem
@@ -223,12 +226,13 @@ Current problem <a name='file-names'><b>file names</b></a> must have particular
 the problem.  The rest of a file name can contain
 only letters, digits, and the special characters dash(<pre.inline>-</pre>) and
 underline(<pre.inline>_</pre>), must begin with a letter, and must
-end with a dash(<pre.inline>-</pre>) followed by the 
-<a href='#problem-name'>problem name</a>.
+end with the <a href='#problem-name'>problem name</a>, which if it is
+preceded by anything must be preceded by a
+dash(<pre.inline>-</pre>).
 <p>
-Clicking on a file name will show the file with line numbers
-to the right, unless
-the page is too narrow in which case it will show the file below.
+Clicking on a file name, if it is a button,
+will show the file with line numbers
+in a separate window.
 <p>
 Clicking on &darr; will show the file below.
 <p>
@@ -243,11 +247,18 @@ Displayable files must be encoded in UTF-8 or PDF.
 PDF files can only be displayed by clicking on the file name.
 A UTF-8 file that is displayable has its number of lines indicated
 at the end of the file's line.
+Only if this number of lines is small enough does the file have
+a &darr; that permits the file to be displayed below.
 
-<a name="file-extensions"><h2>File Extensions</h2>
+<a name="file-extensions"><h2>File Extensions</h2></a>
 <p>
 EPM files have <b>extensions</b> that indicate their format
-and purpose:
+and purpose.  In the following PPPP denotes the problem name
+and XXXX denotes some other part of the name: for example,
+the name XXXX-PPPP.in matches the name `00-001-reverser.in'
+if XXXX is 00-001 and PPPP is `reverser'.
+
+
 <!-- &#8209; is no-breaking hyphen -->
 <div class='indented'>
 <h5>Files That Are Uploaded:</h5><br>
@@ -289,6 +300,13 @@ and purpose:
                      made from XXXX&#8209;PPPP.in file
 		     by generate program and compiled solution
 		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.dout</td><td>Debugging Output File,
+                     made from XXXX&#8209;PPPP.sin file
+		     by the compiled solution; designed to
+		     identify the line number of the statement where
+		     a CPU time limit signal or program fault
+		     occurred
+		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.fout</td><td>Filtered Solution Output File,
                      made from XXXX&#8209;PPPP.sout file
 		     by filter program
@@ -309,14 +327,21 @@ and purpose:
 		     by generate, solution, filter
 		     and scoring programs
 		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.rout</td><td>Run output file,
+                     made from XXXX&#8209;PPPP.run
+		     and other files by the scoring and other
+		     programs,
+		     that summarizes .score files made from
+		     .in files listed in the .run file
+		     </td></tr>
 </table>
 <br>
 <h5>Working Files That Should Be Empty:</h5><br>
 <table class='extension'>
-<tr><td>PPPP.cout<br>XXXX&#8209;PPPP.cout</td>
+<tr><td>PPPP.cout</td>
     <td>Compiler Output File, made during upload or
         debug compilation</td></tr>
-<tr><td>PPPP.cerr<br>XXXX&#8209;PPPP.cerr</td>
+<tr><td>PPPP.cerr</td>
                  <td>Error Output from compilation
 		     during upload or debug compilation</td></tr>
 <tr><td>PPPP.terr</td><td>Error Output from LATEX
@@ -329,25 +354,34 @@ and purpose:
 		     filter program</td></tr>
 <tr><td>XXXX&#8209;PPPP.serr</td><td>Error Output from
 		     solution program</td></tr>
+<tr><td>XXXX&#8209;PPPP.scerr</td><td>Error Output from
+		     epm_score scoring program</td></tr>
+<tr><td>XXXX&#8209;PPPP.rerr</td><td>Error Output from
+		     a run</td></tr>
 </table>
 <br>
 <h5>Working Files That Are Not Empty:</h5><br>
 <table class='extension'>
 <tr><td>PPPP.log</td><td>Log file of a LATEX compilation,
-                         made from PPPP.tex file</td></tr>
+                         made from PPPP.tex file; like .tout
+			 file but with extra information</td></tr>
 <tr><td>PPPP.fls</td><td>File List that lists all input and
                          output files in a LATEX compilation,
                          made from PPPP.tex file</td></tr>
 </table>
 
 </div>
+<a name="problem-commands"><h2>Commands Last Executed</h2></a>
+<p>
 <br>
+<a name="problem-working"><h2>Working Files of Last Executed Commands</h2></a>
+<p>
 <p>
 Files that are kept on successful uploads or makes will
 remain as (usually non-empty)
 working files on unsuccessful uploads or makes.
 
-<a name="option-page"><h1>Option Page</h1>
+<a name="option-page"><h1>Option Page</h1></a>
 
 <p>The <b>option page</b> shows the options given to
 commands that perform compilations and computations,
@@ -378,7 +412,7 @@ are colored tan.
 As with other pages, clicking on a &uarr; will hide a section
 of the page and clicking on a &darr; will display the section.
 
-<a name="option-values"><h2>Option Values</h2>
+<a name="option-values"><h2>Option Values</h2></a>
 <p>
 <b>Option values</b> are numbers included in command
 options.  If you edit an inherited option, its value will
@@ -389,7 +423,7 @@ the value to the inherited value (and restore the color to tan).
 For example, the STIME option value is the maximum number of
 CPU seconds allowed a problem solution program.
 
-<a name="option-arguments"><h2>Option Command Arguments</h2>
+<a name="option-arguments"><h2>Option Command Arguments</h2></a>
 <p>
 <b>Option command arguments</b> are the actual arguments that
 are inserted into template commands.  For each such option there
@@ -413,7 +447,7 @@ If only one box is colored,
 the option value is inherited, even if the box is colored green
 (which just means that you have clicked on the inherited value).
 
-<a name="option-templates"><h2>Template Commands</h2>
+<a name="option-templates"><h2>Template Commands</h2></a>
 <p>
 <b>Template commands</b> are available on this page so that
 you may see how option command arguments are inserted into

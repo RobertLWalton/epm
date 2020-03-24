@@ -18,18 +18,19 @@
 	     "    2> XXXX-PPPP.ferr",
              "epm_score $SCORING-ARGS \\",
 	     "    XXXX-PPPP.fout XXXX-PPPP.ftest \\",
-	     "    > XXXX-PPPP.score 2> XXXX-PPPP.err"],
+	     "    > XXXX-PPPP.score 2> XXXX-PPPP.scerr"],
 
 "LOCAL-REQUIRES":
 	["PPPP.pyc","XXXX-PPPP.in", "XXXX-PPPP.ftest"],
 "REQUIRES":["generate_PPPP", "filter_PPPP"],
 "CREATABLE":["generate_PPPP", "filter_PPPP"],
-"CHECKS":  ["EMPTY XXXX-PPPP.g1err", "EMPTY XXXX-PPPP.serr",
-            "EMPTY XXXX-PPPP.g2err", "EMPTY XXXX-PPPP.ferr"],
+"CHECKS":  ["EMPTY XXXX-PPPP.g1err", "EMPTY XXXX-PPPP.scerr",
+            "EMPTY XXXX-PPPP.g2err", "EMPTY XXXX-PPPP.ferr",
+            "EMPTY XXXX-PPPP.scerr"],
 "KEEP":    ["XXXX-PPPP.score"],
 "SHOW":    ["XXXX-PPPP.g1err","XXXX-PPPP.serr",
             "XXXX-PPPP.g2err", "XXXX-PPPP.ferr",
-            "XXXX-PPPP.score"]
+            "XXXX-PPPP.scerr", "XXXX-PPPP.score"]
 
 }
 

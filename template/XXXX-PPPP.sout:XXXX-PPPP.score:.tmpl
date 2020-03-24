@@ -11,12 +11,15 @@
 	     "    XXXX-PPPP.fout XXXX-PPPP.ftest \\",
 	     "    > XXXX-PPPP.score 2> XXXX-PPPP.scerr"],
 
-"LOCAL-REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.sout", "XXXX-PPPP.ftest"],
+"LOCAL-REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.sout",
+                  "XXXX-PPPP.ftest"],
 "REQUIRES":["generate_PPPP", "filter_PPPP"],
 "CREATABLE": ["generate_PPPP", "filter_PPPP"],
+"CHECKS":  ["EMPTY XXXX-PPPP.gerr", "EMPTY XXXX-PPPP.ferr",
+            "EMPTY XXXX-PPPP.scerr"],
 "KEEP":    ["XXXX-PPPP.score"],
-"SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.ferr", "XXXX-PPPP.scerr",
-            "XXXX-PPPP.score"]
+"SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.ferr",
+            "XXXX-PPPP.scerr", "XXXX-PPPP.score"]
 
 }
 
