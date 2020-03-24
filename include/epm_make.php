@@ -1095,7 +1095,7 @@ function compile_commands
 //       if statfile does not exist yet
 //     [statfile, 'R', time]
 //       if statfile subprocess is still running
-//     [statfile, 'D', time]
+//     [statfile, 'S', time]
 //       if statfile subprocess is completed with exit
 //       code 0
 //     [statfile, 'F', time, exitcode, message]
@@ -1119,7 +1119,7 @@ function update_workmap ()
     $r = [];
     foreach ( $map as $key => $e )
     {
-	if ( $e[1] == 'D' || $e[1] == 'F' )
+	if ( $e[1] == 'S' || $e[1] == 'F' )
 	    continue;
 	$stat = get_status ( $workdir, $e[0] );
 	if ( $stat != NULL )

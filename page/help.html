@@ -2,7 +2,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Mar 24 03:01:32 EDT 2020
+Date:	See Date Below
 -->
 <style>
 div.header {
@@ -12,6 +12,9 @@ top: 0;
 right: 0;
 }
 div.text {
+}
+div.center {
+text-align: center;
 }
 h1 {
 font-size: 20pt;
@@ -57,9 +60,13 @@ vertical-align: top;
 <div class='header'>
 <a href="#TOC" title='Go to Table of Contents'>TOC</a>
 </div>
-<div class='text'>
-
+<div class='center'>
+<h1>Educational Problem Manager<br>(EPM)<h1>
+<h2>March 24, 2020</h2>
+<br>
 <a name="TOC"><h1>Table of Contents</h1></a>
+</div>
+<div class='text'>
 <p>
 <ul>
 
@@ -80,6 +87,8 @@ vertical-align: top;
 <li><a href="#problem-working">Working Files of Last Executed Commands</a><br>
 </ul>
 
+<li><a href="#run-page">Run Page
+
 <li><a href="#option-page">Option Page
 <ul>
 <li><a href="#option-values">Option Values</a><br>
@@ -97,6 +106,7 @@ vertical-align: top;
 <p>The <b>login page</b> manages login using email addresses to
 identify a user and confirmation numbers to create tickets for
 the user in the user's browser.
+</p>
 
 <a name="login-email"><h2>User Email Address</h2></a>
 <p>
@@ -116,6 +126,7 @@ EPM servers are named
 by the document root URL used to access them, and EPM servers with
 different names are independent of each other (even
 if they are running on the same computer).
+</p>
 
 <a name="browser-ticket"><h2>Browser Ticket</h2></a>
 <p>
@@ -147,6 +158,7 @@ login page.
 The `<b>Delete All Tickets</b>' button removes the <u>all</u>
 tickets for the current EPM server from the browser and returns
 to the initial login page.
+</p>
 
 <a name="user-page"><h1>User Page</h1></a>
 
@@ -183,6 +195,7 @@ your account.  You use these to log into the account.
 It is well to have two or more, in case you lose access to
 one of them.
 </ul>
+</p>
 
 
 <a name="problem-page"><h1>Problem Page</h1></a>
@@ -191,6 +204,7 @@ one of them.
 At any given time you need to have a <b>current problem</b> you are working on.
 The <b>problem page</b> allows you to create problems, select an
 existing problem, and manage the current problem.
+</p>
 
 
 <a name="problem-names"><h2>Problem Names</h2></a>
@@ -200,6 +214,7 @@ can contain only letters, digits, and the
 special characters dash(<pre.inline>-</pre>) and
 underline(<pre.inline>_</pre>).
 In addition, it must begin and end with a letter.
+</p>
 
 <a name="problem-marks"><h2>Problem Marks</h2></a>
 <p>
@@ -213,6 +228,7 @@ or upload or make a new file</td></tr>
 <tr><td>+</td><td>means `remove deletion mark'</td></tr>
 <tr><td>&rArr;</td><td>means `make a new file with given extension from the file named on the same line'</td></tr>
 </table>
+</p>
 
 <a name="current-problem-files"><h2>Current Problem Files</h2></a>
 <p>
@@ -249,6 +265,7 @@ A UTF-8 file that is displayable has its number of lines indicated
 at the end of the file's line.
 Only if this number of lines is small enough does the file have
 a &darr; that permits the file to be displayed below.
+</p>
 
 <a name="file-extensions"><h2>File Extensions</h2></a>
 <p>
@@ -371,15 +388,38 @@ if XXXX is 00-001 and PPPP is `reverser'.
 </table>
 
 </div>
+</p>
 <a name="problem-commands"><h2>Commands Last Executed</h2></a>
 <p>
-<br>
+This section displays the UNIX/POSIX/LINUX commands last executed
+to make a file, and if any files output by these commands are
+kept in the problem directory, a list of kept files is also displayed.
+<p>
+Included is the CPU execution time in 0.001 second units of some of the
+command lines.
+<p>
+If a command line fails, this is indicated along with a failure
+message (but not for debugging runs that make .dout files which
+contain their own failure messages, if any).
+</p>
+
 <a name="problem-working"><h2>Working Files of Last Executed Commands</h2></a>
 <p>
+This section lists the files made by the last executed commands
+which were <u>not</u> kept.  These files can be displayed in the
+same manner as the files in the files in the
+<a href="#current-problem-files">Current Problem Files</a>
+section.
 <p>
 Files that are kept on successful uploads or makes will
 remain as (usually non-empty)
 working files on unsuccessful uploads or makes.
+<p>
+Working files are deleted when a new set of commands is executed
+or when a .run file is run.
+</p>
+
+<a name="run-page"><h1>Run Page</h1></a>
 
 <a name="option-page"><h1>Option Page</h1></a>
 
@@ -411,6 +451,7 @@ are colored tan.
 <p>
 As with other pages, clicking on a &uarr; will hide a section
 of the page and clicking on a &darr; will display the section.
+</p>
 
 <a name="option-values"><h2>Option Values</h2></a>
 <p>
@@ -422,6 +463,7 @@ the value to the inherited value (and restore the color to tan).
 
 For example, the STIME option value is the maximum number of
 CPU seconds allowed a problem solution program.
+</p>
 
 <a name="option-arguments"><h2>Option Command Arguments</h2></a>
 <p>
@@ -446,6 +488,7 @@ colored tan is inherited.
 If only one box is colored,
 the option value is inherited, even if the box is colored green
 (which just means that you have clicked on the inherited value).
+</p>
 
 <a name="option-templates"><h2>Template Commands</h2></a>
 <p>
@@ -460,6 +503,7 @@ addition to option command argument substitutions, the problem
 name is substituted for PPPP, and the reminder of the file names
 is substituted for other sequences of 4 consecutive capital
 letters, such as XXXX or YYYY.
+</p>
 
 </div>
 </body>
