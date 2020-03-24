@@ -1,0 +1,24 @@
+// Prototype User Permission File
+//
+// Capitalized words stand for regular expressions that
+// must match the ENTIRE name (/^ and $/ are added).
+//
+// The permissions granted in this file are appropriate
+// for the system administrator.
+[
+// ["push-new", SUBDIR, PROBLEM]
+//    Allows creation of $epm_data/SUBDIR/PROBLEM
+//    if that does not already exist, and pushing
+//    user PROBLEM into it.
+//
+  ["push-new", "projects", ".*"],
+  ["push-new", "public", ".*"],
+
+// ["change-owner", SUBDIR, PROBLEM]
+//    Allows the owner of $epm_data/SUBDIR/PROBLEM
+//    to be changed.  Only the owner can push updates
+//    to this directory.
+//
+  ["change-owner", "projects", ".*"],
+  ["change-owner", "public", ".*"],
+
