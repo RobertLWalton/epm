@@ -431,7 +431,7 @@ the associated run output, or .rout file,
 and if non-empty the run error, or .rerr
 file, are also listed and can be displayed with the &darr; button.
 <p>
-A .rout file gives the `Score' for the run, and if not
+A .rout run output file gives the `Score' for the run, and if not
 `Completely Correct', gives the name of the first failed test case.
 Also given are the CPU execution times for the various input files: here
 the `s:' time is the solution time, the `g1:' and `g2:' times are the
@@ -442,7 +442,7 @@ times over all input files is given at the end of the .rout file.
 
 <a name="option-page"><h1>Option Page</h1></a>
 
-<p>The <b>option page</b> shows the options given to
+<p>The <b>Option Page</b> shows the options given to
 commands that perform compilations and computations,
 and allows you to edit these within limits.
 <p>
@@ -451,14 +451,13 @@ when a problem solution program is executing is an
 option, as is the allowed maximum size of any file output
 by the solution.
 <p>
-The commands used to make one file from another are specified
-by <a href='#templates'><b>templates</b></a>.
-The template selected for a particular
-task is controled by the extensions of the input and output
-files and by what other files are available (for example,
-if a .class file is available a template invoking JAVA will
-be used, whereas if a .pyc file is available, a template invoking
-PYTHON will be used).
+There are two kinds of options: <a href='#option-numbers'>numbers</a>
+and <a href='#option-arguments'>arguments</a>.  Numbers are substituted
+into arguments, and arguments are substituted into the commands
+used to make one file from another file.
+These commands are specified by templates, which  can be
+displayed by clicking the `Show Templates' button to display
+the <a href='#template-page'>Template Page</a> in a separate window.
 <p>
 There are two values for each option: an <b>inherited value</b>
 and a <b>local value</b>.  The inherited value is set by
@@ -470,58 +469,102 @@ are colored tan.
 <p>
 As with other pages, clicking on a &uarr; will hide a section
 of the page and clicking on a &darr; will display the section.
+<p>
+You can switch back and forth between just viewing options and
+editing them by clicking buttons at the top of the Option Page.
+When editing you can also reset all options to their inherited
+values.
 </p>
 
-<a name="option-values"><h2>Option Values</h2></a>
+<a name="option-numbers"><h2>Number Options</h2></a>
 <p>
-<b>Option values</b> are numbers included in command
-options.  If you edit an inherited option, its value will
+<b>Number options</b> are numbers included in argument
+options.  For example, the STIME option value is the maximum number of
+CPU seconds allowed a problem solution program.
+<p>
+If you edit an inherited number option, its value will
 turn green, even if you input the same value as the inherited
 value.  Clicking the &#8635; symbol after the value will restore
 the value to the inherited value (and restore the color to tan).
-
-For example, the STIME option value is the maximum number of
-CPU seconds allowed a problem solution program.
 </p>
 
-<a name="option-arguments"><h2>Option Command Arguments</h2></a>
+<a name="option-arguments"><h2>Argument Options</h2></a>
 <p>
-<b>Option command arguments</b> are the actual arguments that
-are inserted into template commands.  For each such option there
-are discrete choices.
+<b>Argument options</b> are the arguments that
+are inserted into <a href='#template-page'>template commands</a>.
+For each such option there
+are discrete choices (for some argument options there is no
+choice and the single value is `required').
 <p>
-<a href='#option-values'>Option values</a>
-are inserted into option command arguments.  For example,
-the STIME option value argument is inserted into the
-`-cputime STIME' option command argument which can then
-be inserted into the command that runs the solution program,
+<a href='#option-numbers'>Option numbers</a>
+are inserted into argument options.  For example,
+the STIME number option is inserted into the
+`-cputime STIME' value of the SSTIME argument option.
+The SSTIME argument in turn is
+inserted into the template command that runs the solution program,
 so that the options work together with the command to determine
 the maximum number of CPU seconds
 allowed the solution program.
 <p>
-The absence of a value for an option command argument is represented by
+The absence of any value for an option command argument is represented by
 an empty box.
 If there are two colored boxes, the
 one colored green is the current value and is local, and the one
 colored tan is inherited.
 If only one box is colored,
 the option value is inherited, even if the box is colored green
-(which just means that you have clicked on the inherited value).
+(it is green because you have clicked on the inherited value).
 </p>
 
-<a name="option-templates"><h2>Template Commands</h2></a>
+<a name="template-page"><h1>Template Page</h1></a>
 <p>
-<b>Template commands</b> are available on this page so that
-you may see how option command arguments are inserted into
-commands.
+A <b>Template</b> supplied the commands used to make one
+file from another file.
+Templates can be displayed in a separate
+window by clicking the `Show Templates' button on
+the <a href='#option-page'>Option Page</a>.
 <p>
-Clicking on &#9734; will display the commands of a template and
-clicking on &#9733; will hide them.  The commands are standard
-POSIX commands into which substitutions have been made.  In
-addition to option command argument substitutions, the problem
+An index of all the available templates is displayed at the top
+of the page.  Clicking on the button next to a template name
+displays or hides the relevant contents of the template.
+<p>
+The commands displayed for a template are executed when the
+template is used.  There contain argument names substituted 
+from the <a href='#option-arguments'>argument options</a>.
+In addition to argument option substitutions, the problem
 name is substituted for PPPP, and the reminder of the file names
 is substituted for other sequences of 4 consecutive capital
 letters, such as XXXX or YYYY.
+<p>
+The template selected for a particular
+task is controlled by the extensions of the input and output
+files, but also by what other files are available.  For example,
+several tempates are available to make a .score file with
+a score from a .in file with solution input.  One of these
+is selected if there is a binary file with no extension
+(for C or C++);
+another is selected if there is a binary file with the .class
+extension (for JAVA); and a third is selected if there is a binary
+file with the .py extension (for PYTHON).
+The various binary files which required to use the various
+templates, and are call <b>required files</b> of the template.
+<p>
+Some required files may be <b>creatable</b>.  There are automatically
+created from defaults if they do not exist.  For example, the
+generate_PPPP program will be created from a default that does
+nothing but strip comments from a .in file to make a .sin file.
+<p>
+Some required files are required to be <b>local</b>, that is, not
+in an ancestor of the current problem.  Others are required to be
+<b>remote</b>, that is, they <u>must</u> be in an ancestor of the
+current problem.  Lastly may required files can be either local or
+remote.  When a creatable file is created, it is always created
+locally, so it must not be a remote required file.
+<p>
+In addition the template selected is controlled by <b>conditions</b>.
+For example, to be used during the upload of a PPPP.cc file, a
+template must have the `UPLOAD PPPP.cc' condition.
+Most of the time only templates with no conditions are selected.
 </p>
 
 </div>

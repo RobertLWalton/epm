@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 23 03:03:22 EDT 2020
+    // Date:	Tue Mar 24 16:27:02 EDT 2020
 
     // Edits problem option page.
 
@@ -214,9 +214,9 @@ EOT;
         foreach ( $tcommands as $c )
 	    $description .= "<pre>$c</pre><br>";
 	$description .= "</div><div class='requires'>";
-	foreach ( ['REQUIRES','LOCAL-REQUIRES',
-	                      'REMOTE-REQUIRES']
-			      as $key )
+	foreach ( ['REQUIRES', 'CREATABLE',
+	           'LOCAL-REQUIRES', 'REMOTE-REQUIRES']
+			  as $key )
 	{
 	    if ( ! isset ( $j[$key] ) ) continue;
 	    $description .= "$key: <pre>"

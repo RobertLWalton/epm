@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 22 21:41:41 EDT 2020
+    // Date:	Tue Mar 24 15:55:06 EDT 2020
 
     // Edits problem option page.
 
@@ -308,7 +308,7 @@
     }
     elseif ( isset ( $_POST['cancel'] ) )
         /* Do Nothing */;
-    elseif ( isset ( $_POST['revert'] ) )
+    elseif ( isset ( $_POST['reset-all'] ) )
     {
 	$f = "$probdir/$problem.optn";
 	@unlink ( "$epm_data/$f" );
@@ -582,13 +582,13 @@ EOT;
 	     "Cancel Edit</button>" .
 	     "<pre>    </pre>" .
              "<button type='submit'" .
-	     " name='revert' value='revert'>" .
-	     "Revert to Inherited Values</button>";
+	     " name='reset-all' value='reset-all'>" .
+	     "Reset All to Inherited Values</button>";
     else
         echo "<button type='submit' name='edit'" .
 	     " value='edit'>Edit Options</button>";
 
-    $values_help = HELP ( 'option-values' );
+    $values_help = HELP ( 'option-numbers' );
     echo <<<EOT
     </div></div>
     <div class='values'>
@@ -597,12 +597,12 @@ EOT;
     <button type='button'
 	    id='values_button'
 	    onclick='TOGGLE_BODY
-		 ("values", "Values")'
-	    title='Show Values'>
+		 ("values", "Number Options")'
+	    title='Show Number Options'>
 	    <pre id='values_mark'>&uarr;</pre>
 	    </button>
     &nbsp;
-    <h5>Values:</h5>
+    <h5>Number Options:</h5>
     </td><td style='text-align:right'>
     $values_help</td>
     </tr></table>
@@ -664,12 +664,12 @@ EOT;
 	    id='arguments_button'
 	    onclick='TOGGLE_BODY
 		 ("arguments",
-		  "Command Arguments")'
-	    title='Show Command Arguments'>
+		  "Argument Options")'
+	    title='Show Argument Options'>
 	    <pre id='arguments_mark'>&uarr;</pre>
 	    </button>
     &nbsp;
-    <h5>Command Arguments:</h5>
+    <h5>Argument Options:</h5>
     </td><td style='text-align:right'>
     $arguments_help</td>
     </tr></table>
