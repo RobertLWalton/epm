@@ -420,6 +420,25 @@ or when a .run file is run.
 </p>
 
 <a name="run-page"><h1>Run Page</h1></a>
+<p>
+If you click a <b>Run</b> button on the problem page, the associated
+.run file will be run and the page will switch to the Run Page where
+the results will be displayed.
+<p>
+The Run Page lists all the .run files in a table, one file per line.
+For the last run of a particular .run file,
+the associated run output, or .rout file,
+and if non-empty the run error, or .rerr
+file, are also listed and can be displayed with the &darr; button.
+<p>
+A .rout file gives the `Score' for the run, and if not
+`Completely Correct', gives the name of the first failed test case.
+Also given are the CPU execution times for the various input files: here
+the `s:' time is the solution time, the `g1:' and `g2:' times are the
+times for the two generate program executions, and the `f:' time is
+the time for the filter program execution.  The maximum of these
+times over all input files is given at the end of the .rout file.
+</p>
 
 <a name="option-page"><h1>Option Page</h1></a>
 

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 23 09:41:11 EDT 2020
+    // Date:	Tue Mar 24 06:20:39 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -606,6 +606,7 @@
     }
     div.manage {
 	background-color: #96F9F3;
+	padding-bottom: 5px;
     }
     pre.problem {
         color: #CC00FF;
@@ -783,7 +784,7 @@
           style='margin:0 0 1vh 0'>
     <table style='width:100%'>
     <tr>
-    <td style='width:30%'>
+    <td>
     <label>
     <h5>User:</h5> <input type='submit' value='$email'
 		    formaction='user.php'
@@ -791,11 +792,11 @@
                     title='click to see user profile'>
     </label>
     </td>
-    <td style='width:35%'>
+    <td>
     <h5>Current Problem:</h5>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
     </td>
-    <td style='width:30%'>
+    <td>
 EOT;
     if ( isset ( $problem ) )
         echo "<button type='submit'" .
@@ -803,10 +804,8 @@ EOT;
 	     " value='$problem'>" .
 	     "Delete Current Problem</button>";
     echo <<<EOT
-    </td>
-    <td style='width:5%;text-align:right'>
-    {$problem_page_help}
-    </td>
+    </td><td style='text-align:right'>
+    $problem_page_help</td>
     </tr>
 EOT;
 
@@ -830,7 +829,7 @@ EOT;
 			 formaction='run.php'
 			 formmethod='GET'>
 			 Run Page</button>
-		 <pre>     </pre>
+		 <pre>  </pre>
 	         <button type='submit'
 			formaction='option.php'
 			formmethod='GET'>
@@ -840,14 +839,14 @@ EOT;
 	echo "</tr>";
     }
     echo <<<EOT
-    </table></form>
+    </form>
     <form action='problem.php' method='POST'
           class='no-margin'>
-    <h5>or Create New Problem:<h5>
+    <tr><td colspan='2'><h5>or Create New Problem:<h5>
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name" id="create">
     </form>
-    <br><pre style='font-size:1vh'>   </pre>
+    </td></tr></table>
     </div>
 EOT;
 
@@ -865,7 +864,7 @@ EOT;
 	<div class='problem_display'>
 	<table style='width:100%'>
 	<tr>
-	<td style='width:90%'>
+	<td>
 	<button type='button'
 		id='problems_button'
 		onclick='TOGGLE_BODY
@@ -876,10 +875,8 @@ EOT;
 		</button>
 	<h5>Current Problem Files
 	    (most recent first):</h5>
-	</td>
-	<td style='width:10%;text-align:right'>
-	{$current_problem_files_help}
-	</td>
+	</td><td style='text-align:right'>
+	$current_problem_files_help</td>
 	</tr>
 	</table>
 	<div id='problems_body'>
@@ -1039,7 +1036,11 @@ EOT;
 		$r .= count ( $kept ) . ' files kept';
 	    echo "<div class='command_display'>";
 	    get_commands_display ( $display );
+	    $commands_help =
+	        HELP ( 'problem-commands' );
 	    echo <<<EOT
+	    <table style='width:100%'><tr>
+	    <td>
 	    <button type='button'
 	    	    id='commands_button'
 		    onclick='TOGGLE_BODY
@@ -1050,6 +1051,9 @@ EOT;
 		    </button>
 	    <h5>Commands Last Executed:</h5>&nbsp;
 	    <pre>($r)</pre>
+	    </td><td style='text-align:right'>
+	    $commands_help</td>
+	    </tr></table>
 	    <div id='commands_body' hidden>
 EOT;
 	    echo "<div class='indented'>";
@@ -1070,8 +1074,11 @@ EOT;
 
 	    if ( count ( $working_files ) > 0 )
 	    {
+		$working_help = HELP ( 'problem-working' );
 		echo <<<EOT
 		<div class='work_display'>
+		<table style='width:100%'><tr>
+		<td>
 		<button type='button'
 		    id='working_button'
 		    onclick='TOGGLE_BODY
@@ -1083,6 +1090,9 @@ EOT;
 		<h5>Working Files of Last Executed
 		    Commands
 		    (most recent first):</h5>
+	        </td><td style='text-align:right'>
+		$working_help</td>
+		</tr></table>
 		<div id='working_body' hidden>
 		<table style='display:block'>
 EOT;
