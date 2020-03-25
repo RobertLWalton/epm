@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Mar 25 14:29:15 EDT 2020
+// Date:    Wed Mar 25 15:04:07 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -827,8 +827,10 @@ function cleanup_dir ( $dir, & $warnings )
 //
 // Errors cause error messages to be appended to errors.
 //
-// WARNING: $workdir must not contain . or .. component
-//          names.
+// WARNING: $workdir must not contain `.'.  Its
+//          components are each replaced by `..' to
+//          make the name of $epm_data relative to
+//          $workdir.
 //
 function link_required
 	( $local_required, $remote_required, $workdir,
@@ -837,12 +839,14 @@ function link_required
     global $epm_data,
            $local_file_cache, $remote_file_cache;
 
+    if ( preg_match ( '/\./', $workdir ) )
+        ERROR ( "\$workdir $workdir contains a '.'" );
+
     $reldir = preg_replace
         ( '#[^/]+#', '..', $workdir );
-	// Name of $epm_data relative to
-	// $epm_data/$workdir, used so that symbolic
-	// link can be printed without printing
-	// name of $epm_data.
+	// Name of $epm_data relative to $epm_data/
+	// $workdir, used so that symbolic link can be
+	// printed without printing name of $epm_data.
 
     // Make list of elements of form [file,target,link]
     // where target is to become the value of the
@@ -871,9 +875,7 @@ function link_required
 
     foreach ( $list as $e )
     {
-	$f = $e[0];
-	$t = $e[1];
-	$l = $e[2];
+	list ( $f, $t, $l ) = $e;
 	$g = "$epm_data/$f";
 
 	if ( preg_match ( '/\./', $l ) )
@@ -1188,8 +1190,8 @@ function get_exit_message
 //
 function execute_commands ( $base, $dir, $errors )
 {
-    global $epm_data, $epm_home, $uid, $problem,
-	   $epm_shell_timeout;
+    global $epm_data, $epm_home,
+           $uid, $problem, $epm_shell_timeout;
 
     $r = '';
     $r .= "cd $epm_data/$dir" . PHP_EOL;
