@@ -1,4 +1,4 @@
-// Prototype User Permission File
+// Default Administrative User Permission File
 //
 // Capitalized words stand for regular expressions that
 // must match the ENTIRE name (/^ and $/ are added).
