@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Mar 25 10:34:08 EDT 2020
+// Date:    Wed Mar 25 14:29:15 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -542,9 +542,9 @@ function load_file_caches()
 //
 // If multiple templates satisfy required file con-
 // straints, ones with the largest total number of files
-// that are required or be created are selected.  It is
-// an error if more than one is selected by this rule,
-// or if no template meets the constraints.
+// that are either required or to be created are select-
+// ed.  It is an error if more than one is selected by
+// this rule, or if no template meets the constraints.
 //
 // Any errors cause error messages to be appended to
 // the $errors list and NULL to be returned.
@@ -569,23 +569,24 @@ function find_control
 	// of $best_found.
     $best_found = [];
         // List of elements of the form [template,
-	// lfiles,rfiles,cfiles] where lfiles is the
-	// value for $local_required, $rfiles is the
-	// value for $remote_required, $cfiles is the
+	// flfiles,frfiles,cfiles] where flfiles is the
+	// value for $local_required, frfiles is the
+	// value for $remote_required, cfiles is the
 	// value for $creatable, and only templates with
-	// NO not found files or creatable and the most
-	// total number of found or creatable files are
-	// listed.
+	// NO files that are needed but neither found
+	// nor creatable and with the most total number
+	// of files that are either found or creatable
+	// are listed.
     $best_found_count = -1;
         // Number of files listed in each element
 	// of $best_found.
     $best_not_found = [];
         // List of elements of the form [template,
-	// lfiles,rfiles] where lfiles is the list
+	// nflfiles,nfrfiles] where nflfiles is the list
 	// of REQUIRED and LOCAL-REQUIRED files that
-	// were not found or CREATABLE, and rfiles
+	// were not found or CREATABLE, and nfrfiles
 	// is the list of REMOTE-REQUIRED files that
-	// were not found, only templates with at least
+	// were not found.  Only templates with at least
 	// 1 such file are included, and only those with
 	// the least total number of such files.
     $best_not_found_count = 1000000000;
@@ -606,19 +607,19 @@ function find_control
 	    foreach ( $cs as $c )
 	        $creatables[$c] = true;
 	}
-	$fllist = [];
+	$flfiles = [];
 	    // Local required files found.
-	$frlist = [];
+	$frfiles = [];
 	    // Remote required files found.
-	$clist = [];
+	$cfiles = [];
 	    // Files not found but CREATABLE that can
 	    // be local.
-	$nfllist = [];
+	$nflfiles = [];
 	    // Required files not found and not
 	    // creatable that can be local.
-	$nfrlist = [];
-	    // Required files not found and not
-	    // creatable that must be remote.
+	$nfrfiles = [];
+	    // Required files not found that must be
+	    // remote.
 
 	if ( isset ( $json['LOCAL-REQUIRES'] ) )
 	{
@@ -630,12 +631,12 @@ function find_control
 	    foreach ( $json['LOCAL-REQUIRES'] as $f )
 	    {
 		if ( isset ( $local_file_cache[$f] ) )
-		    $fllist[] = $f;
+		    $flfiles[] = $f;
 		else
 		if ( isset ( $creatables[$f] ) )
-		    $clist[] = $f;
+		    $cfiles[] = $f;
 		else
-		    $nfllist[] = $f;
+		    $nflfiles[] = $f;
 	    }
 	}
 
@@ -648,15 +649,15 @@ function find_control
 	    foreach ( $json['REQUIRES'] as $f )
 	    {
 		if ( isset ( $local_file_cache[$f] ) )
-		    $fllist[] = $f;
+		    $flfiles[] = $f;
 		else
 		if ( isset ( $remote_file_cache[$f] ) )
-		    $frlist[] = $f;
+		    $frfiles[] = $f;
 		else
 		if ( isset ( $creatables[$f] ) )
-		    $clist[] = $f;
+		    $cfiles[] = $f;
 		else
-		    $nfllist[] = $f;
+		    $nflfiles[] = $f;
 	    }
 	}
 
@@ -671,17 +672,17 @@ function find_control
 	    foreach ( $json['REMOTE-REQUIRES'] as $f )
 	    {
 		if ( isset ( $remote_file_cache[$f] ) )
-		    $frlist[] = $f;
+		    $frfiles[] = $f;
 		else
-		    $nfrlist[] = $f;
+		    $nfrfiles[] = $f;
 	    }
 	}
 
-	$nfcount = count ( $nfllist )
-	         + count ( $nfrlist );
+	$nfcount = count ( $nflfiles )
+	         + count ( $nfrfiles );
 	if ( $nfcount > 0 )
 	{
-	    $element = [$template[0],$nfllist,$nfrlist];
+	    $element = [$template[0],$nflfiles,$nfrfiles];
 	    if ( $nfcount == $best_not_found_count )
 		$best_not_found[] = $element;
 	    else if ( $nfcount < $best_not_found_count )
@@ -692,11 +693,11 @@ function find_control
 	    continue;
 	}
 
-	$fcount = count ( $fllist )
-	        + count ( $frlist )
-		+ count ( $clist );
+	$fcount = count ( $flfiles )
+	        + count ( $frfiles )
+		+ count ( $cfiles );
 	$element =
-	    [$template[0],$fllist,$frlist,$clist];
+	    [$template[0],$flfiles,$frfiles,$cfiles];
 	if ( $fcount == $best_found_count )
 	    $best_found[] = $element;
 	else if ( $fcount > $best_found_count )
@@ -704,9 +705,9 @@ function find_control
 	    $best_found_count = $fcount;
 	    $best_found = [$element];
 	    $best_template = $template;
-	    $local_required = $fllist;
-	    $remote_required = $frlist;
-	    $creatable = $clist;
+	    $local_required = $flfiles;
+	    $remote_required = $frfiles;
+	    $creatable = $cfiles;
 	}
     }
 
@@ -716,7 +717,8 @@ function find_control
     {
 	$errors[] =
 	    "too many templates found with the same" .
-	    " number of existing required files:";
+	    " number of existing or creatable" .
+	    " required files:";
 	foreach ( $best_found as $e )
 	{
 	    $errors[] = pretty_template ( $e[0] )
@@ -736,7 +738,8 @@ function find_control
     {
 	$errors[] =
 	    "no template found whose required" .
-	    " files exist; closest are:";
+	    " files all exist or are creatable;" .
+	    " closest are:";
 	foreach ( $best_not_found as $e )
 	{
 	    $errors[] = pretty_template ( $e[0] )
