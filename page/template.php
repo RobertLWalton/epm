@@ -2,17 +2,11 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 24 16:27:02 EDT 2020
+    // Date:	Wed Mar 25 02:40:43 EDT 2020
 
     // Edits problem option page.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
-
-    if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
-    {
-	header ( 'Location: /page/problem.php' );
-	exit;
-    }
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' )
@@ -20,27 +14,11 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $problem = $_SESSION['EPM_PROBLEM'];
     $email = $_SESSION['EPM_EMAIL'];
     $uid = $_SESSION['EPM_UID'];
-    $probdir = "users/$uid/$problem";
-        // These are needed to require epm_make.php.
+        // These are needed to require epm_template.php.
 
-    if ( ! is_dir ( "$epm_data/$probdir" ) )
-    {
-	// Some other session deleted the problem;
-	// let problem.php deal with it.
-	//
-	header ( 'Location: /page/problem.php' );
-	exit;
-    }
-
-    require "$epm_home/include/epm_make.php";
-        // We do not need most of epm_make.php, but
-	// since looking at templates is not done that
-	// frequently, the extra overhead of loading
-	// a lot of stuff we do not need is not really
-	// harmful.
+    require "$epm_home/include/epm_template.php";
 
     $lock_desc = NULL;
     function shutdown ()
@@ -88,7 +66,7 @@
 	margin: 0 0 0 0;
 	display:inline;
     }
-    pre, button {
+    pre, button, input {
 	display:inline;
         font-size: var(--font-size);
     }
@@ -98,6 +76,13 @@
     div.manage {
 	background-color: #96F9F3;
 	padding-bottom: 5px;
+    }
+    div.title {
+	background-color: #F2D9D9;
+	padding-bottom: 5px;
+        font-size: var(--large-font-size);
+	width: 100%;
+	text-align: center;
     }
     div.toc {
 	background-color: #F2D9D9;
@@ -147,36 +132,46 @@
 
 <?php 
 
+    if ( ! isset ( $_GET['subwindow'] ) )
+	echo <<<EOT
+	<div class='manage'>
+	<form method='GET' style='margin-bottom:0'>
+	<table style='width:100%'><tr>
+	<td>
+	<h5>User:</h5> <input type='submit'
+	                value='$email'
+			formaction='user.php'
+			title='click to see user
+			       profile'>
+	</td>
+	<td style='padding-left:20px'>
+	<h5>Go To:</h5>
+	<button type='submit'
+		formaction='problem.php'>Problem Page
+	</button>
+	&nbsp;&nbsp;
+	<button type='submit'
+		formaction='run.php'>Run Page
+	</button>
+	&nbsp;&nbsp;
+	<button type='submit'
+		formaction='option.php'>Option Page
+	</button>
+	</td>
+	</tr></table>
+	</form>
+	</div>
+EOT;
     $template_help = HELP ( 'template-page' );
     echo <<<EOT
-    <div class='manage'>
-    <form method='GET' style='margin-bottom:0'>
-    <table style='width:100%'>
-    <td>
-    <h5>User:</h5> <input type='submit' value='$email'
-                    formaction='user.php'
-                    title='click to see user profile'>
-    </td>
-    <td style='padding-left:20px'>
-    <h5>Go To:</h5>
-    <button type='submit'
-            formaction='problem.php'>Problem Page
-    </button>
-    &nbsp;&nbsp;
-    <button type='submit'
-            formaction='run.php'>Run Page
-    </button>
-    &nbsp;&nbsp;
-    <button type='submit'
-            formaction='option.php'>Option Page
-    </button>
-    </td>
-    <td style='text-align:right'>
-    $template_help</td>
-    </table>
-    </form>
-    </div>
     <div class='toc'>
+    <table style='width:100%'><tr>
+    <td style='width:10%'></td>
+    <td style='width:80%;text-align:center'>
+    <h2>Template Viewer</h2></td>
+    <td style='width:10%;text-align:right'>
+    $template_help</td>
+    </tr></table>
 EOT;
     $tcount = 0;
     $description = "";

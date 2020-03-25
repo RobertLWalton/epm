@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 24 15:55:06 EDT 2020
+    // Date:	Wed Mar 25 02:59:46 EDT 2020
 
     // Edits problem option page.
 
@@ -480,7 +480,7 @@
     var template_window = null;
 
     function TEMPLATE_WINDOW ( ) {
-	var src = '/page/template.php';
+	var src = '/page/template.php?subwindow';
 	if ( template_window == null || template_window.closed )
 	{
 	    var x = screen.width - 1024;
