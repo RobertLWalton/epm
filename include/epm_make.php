@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Mar 25 02:31:43 EDT 2020
+// Date:    Wed Mar 25 10:34:08 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -39,20 +39,28 @@ if ( ! isset ( $is_epm_test ) )
     // notably move_uploaded_file, will not work
     // in this test script environment.
 
-// Problem Parameters:
+// Compute $remote_dirs, the list of ancestor problem
+// directories in closest ancestor first order.  The
+// ancestor of $probdir is connected to the link
+// $probdir/+parent+, and so forth.  The link values
+// all begin with '../../../' to get to $epm_data
+// without including the value of $epm_data.
 //
-if ( ! isset ( $problem_params ) )
+$remote_dirs = [];
+$d = $probdir;
+while ( is_link ( "$epm_data/$d/+parent+" ) )
 {
-    $f = "$probdir/$problem-$uid.params";
-    if ( is_readable ( "$epm_data/$f" ) )
-	$problem_params = get_json ( $epm_data, $f );
-    else
-	$problem_params = [];
+    $s = @readline ( "$epm_data/$d/+parent+" );
+    if ( @s === false )
+        ERROR ( "cannot read link $d/+parent+" );
+    if ( ! preg_match
+               ( '/^\.\.\/\.\.\/\.\.\/([^\.]+)$/',
+	         $s, $matches ) )
+        ERROR ( "link $d/+parent+ value $s is" .
+	        " malformed" );
+    $d = $matches[1];
+    $remote_dirs[] = $d;
 }
-if ( isset ( $problem_params['remote_dirs'] ) )
-    $remote_dirs = $problem_params['remote_dirs'];
-else
-    $remote_dirs = [];
 
 // Return true if process with $pid is still running,
 // and false otherwise.
@@ -466,22 +474,26 @@ function load_argument_map
 //	filename => directory
 //
 // where filename is the last component of the file
-// name and directory is the first directory in which
-// the file can be found under the full name:
+// name and directory is the first directory in the
+// list $remote_dirs in which the file can be found
+// under the full name:
 //
 //	$epm_data/directory/filename
 //
 // $remote_file_cache is for the directories listed in
 // $remote_dirs.   $local_file_cache is for the files
-// listed in the single directory $probdir.  All
-// directories names are relative to $epm_data.  This
-// function does NOT return a value.
+// listed in the single directory $probdir.
+//
+// All directories names are relative to $epm_data.  Any
+// filename that does not match epm_filename_re is
+// ignored.  This function does NOT return a value.
 //
 $local_file_cache = NULL;
 $remote_file_cache = NULL;
 function load_file_caches()
 {
     global $epm_data, $remote_dirs, $probdir,
+	   $epm_filename_re,
            $remote_file_cache, $local_file_cache;
 
     if ( isset ( $local_file_cache )
@@ -499,7 +511,8 @@ function load_file_caches()
 
 	foreach ( $c as $fname )
 	{
-	    if ( preg_match  ( '/^\.+$/', $fname ) )
+	    if ( ! preg_match
+	               ( $epm_filename_re, $fname ) )
 	        continue;
 	    if ( isset ( $remote_file_cache[$fname] ) )
 	        continue;
@@ -512,7 +525,7 @@ function load_file_caches()
 	ERROR ( "cannot read $probdir" );
     foreach ( $c as $fname )
     {
-	if ( preg_match  ( '/^\.+$/', $fname ) )
+	if ( ! preg_match ( $epm_filename_re, $fname ) )
 	    continue;
 	$local_file_cache[$fname] = $probdir;
     }
