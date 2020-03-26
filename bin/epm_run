@@ -3,11 +3,10 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Mar  7 01:56:50 EST 2020
+// Date:	Thu Mar 26 01:23:53 EDT 2020
 
 $document = <<<'EOT'
-EPM_HOME=root-directory \
-EPM_DATA=data-directory \
+EPM_WEB=document-root-directory \
 EPM_UID=uid \
 EPM_PROBLEM=problem \
 EPM_DIR=run-subdirectory \
@@ -115,16 +114,16 @@ switch ( $argc )
 // Note: $_ENV does NOT work here because $ is not in
 // ini variables_order.  But getenv does work.
 //
-$epm_home = getenv ( 'EPM_HOME' );
-$epm_data = getenv ( 'EPM_DATA' );
+$epm_web = getenv ( 'EPM_WEB' );
 $uid      = getenv ( 'EPM_UID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
 $dir      = getenv ( 'EPM_DIR' );
 
-$probdir = "users/$uid/$problem";
-$include = "$epm_home/include";
+$epm_self = "/bin/epm_run";
+require "$epm_web/parameters.php";
 
-include "$include/epm_make.php";
+$probdir = "users/$uid/$problem";
+require "$epm_home/include/epm_make.php";
 
 load_file_caches();
 

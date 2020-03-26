@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Mar 25 15:04:07 EDT 2020
+// Date:    Thu Mar 26 01:26:37 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -19,6 +19,8 @@
 // To include this program, be sure the following are
 // defined.
 
+if ( ! isset ( $epm_web ) )
+    exit ( 'ACCESS ERROR: $epm_web not set' );
 if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
 if ( ! isset ( $epm_home ) )
@@ -1190,11 +1192,12 @@ function get_exit_message
 //
 function execute_commands ( $base, $dir, $errors )
 {
-    global $epm_data, $epm_home,
+    global $epm_data, $epm_home, $epm_web,
            $uid, $problem, $epm_shell_timeout;
 
     $r = '';
     $r .= "cd $epm_data/$dir" . PHP_EOL;
+    $r .= "export EPM_WEB=$epm_web" . PHP_EOL;
     $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
     $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
     $r .= "export EPM_UID=$uid" . PHP_EOL;
@@ -1906,7 +1909,7 @@ function start_make_file
 // and will will be empty if CHECKs fail or the run has
 // not finish successfully.
 //
-// File larger than $epm_file_maxsize are deleted and
+// Files larger than $epm_file_maxsize are deleted and
 // an error message is generated.
 //
 // EPM_WORK SHOW is returned as the list of control SHOW
