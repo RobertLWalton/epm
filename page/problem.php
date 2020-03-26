@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 24 06:20:39 EDT 2020
+    // Date:	Thu Mar 26 02:40:43 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -738,13 +738,16 @@
     }
     else if ( $make_ftest )
     {
+        $fout = pathinfo ( $make_ftest,
+	                   PATHINFO_FILENAME )
+	      . ".fout";
 	echo "<div class='notices'>";
 	echo "<form method='POST'" .
 	     " style='display:inline'" .
 	     " action=problem.php>";
-	echo "Do you really want to make $make_ftest" .
-	     " (this will force score to be" .
-	     " `Completely Correct')?";
+	echo "Do you really want to copy $fout to" .
+	     " $make_ftest (this will force score" .
+	     " to be `Completely Correct')?";
 	echo "&nbsp;&nbsp;<button type='submit'" .
 	     " name='make_ftest_yes'" .
 	     " value='$make_ftest'>" .
@@ -920,7 +923,8 @@ EOT;
 	        echo <<<EOT
 		    <button type='button'
 		       id='show$count'
-		       title='Show $fname at Right'
+		       title='Show $fname in Window at
+		              Right'
 		       onclick='NEW_WINDOW
 		          ("$fpage","$fname")'>
 		     <pre id='file$count'>$fname</pre>
@@ -977,7 +981,8 @@ EOT;
 	    {
 	        MAKE ( $fbase, 'fout', 'score' );
 		echo "<td><button type='submit'" .
-		     " style='background-color:red'" .
+		     " style='background-color:" .
+		             "#FF6666'" .
 		     " name='make'" .
 		     " title='Make $fbase.ftest" .
 		     " from $fname'" .
