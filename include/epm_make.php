@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 26 03:38:27 EDT 2020
+// Date:    Thu Mar 26 12:08:20 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1673,9 +1673,10 @@ function execute_checks ( $checks, & $errors )
 }
 
 // Move $keep files, if any, from EPM_WORK DIR to
-// $probdir.  List of last component names of files
-// moved is placed in EPM_WORK KEPT.  Error messages
-// are appended to $errors.
+// $probdir.  A list of the files moved is placed in
+// EPM_WORK KEPT.  All file names consist of just the
+// last component, with no directory part names.  Error
+// messages are appended to $errors.
 //
 function move_keep ( $keep, & $errors )
 {
@@ -1698,56 +1699,11 @@ function move_keep ( $keep, & $errors )
 	if ( ! rename ( "$epm_data/$wfile",
 	                "$epm_data/$lfile" ) )
 	{
-	    $e = "could not rename $wfile to $lfile";
-	    WARN ( $e );
-	    $errors[] = "EPM SYSTEM ERROR: $e";
+	    $errors[] = "could not rename $wfile to"
+	              . " $lfile";
 	    continue;
 	}
 	$moved[] = $fname;
-    }
-}
-
-// Return list of files to be shown in EPM_WORK SHOW.
-// Files that have not been kept, as per EPM_WORK KEPT,
-// are in $prodir, and other files are in EPM_WORK DIR.
-// Files that are not readable are ignored; there can
-// be no errors.  Directory names are relative to
-// $epm_data.  File names returned are relative to
-// $probdir.
-//
-// It is required that EPM_WORK DIR be a subdirectory of
-// $probdir.
-//
-// This function can be called when there have been
-// previous errors, as long as EPM_WORK is valid.
-//
-function compute_show ( $show )
-{
-    global $epm_data, $probdir, $_SESSION;
-
-    $work = & $_SESSION['EPM_WORK'];
-    $workdir = $work['DIR'];
-    $moved = $work['KEPT'];
-
-    if ( ! preg_match ( "#^$probdir/(.*)$#",
-                        $workdir, $matches ) )
-	ERROR ( "compute_show: EPM_WORK DIR" .
-	        " $workdir is NOT\n" .
-		"    a subdirectory of PROBDIR" .
-		" $probdir" );
-    $worksubdir = $matches[1];
-
-    $work['SHOW'] = [];
-    $slist = & $work['SHOW'];
-    foreach ( $show as $fname )
-    {
-	if ( in_array ( $fname, $moved ) )
-	    $sfile = "$fname";
-	else
-	    $sfile = "$worksubdir/$fname";
-	if ( is_readable
-	         ( "$epm_data/$probdir/$sfile" ) )
-	    $slist[] = "$sfile";
     }
 }
 
@@ -1986,22 +1942,22 @@ function finish_make_file ( & $warnings, & $errors )
     if ( isset ( $control[2]['KEEP-ON-ERROR'] ) )
 	$errors_size = count ( $errors );
 
+    if ( isset ( $control[2]['SHOW'] ) )
+        $work['SHOW'] = $control[2]['SHOW'];
+    else
+        $work['SHOW'] = [];
+
     if ( count ( $errors ) > $errors_size )
-        goto SHOW;
+        return;
 
     if ( isset ( $control[2]['CHECKS'] ) )
         execute_checks ( $control[2]['CHECKS'],
 	                 $errors );
     if ( count ( $errors ) > $errors_size )
-        goto SHOW;
+        return;
 
     if ( isset ( $control[2]['KEEP'] ) )
         move_keep ( $control[2]['KEEP'], $errors );
- 
-SHOW:
-
-    if ( isset ( $control[2]['SHOW'] ) )
-        compute_show ( $control[2]['SHOW'] );
 }
 
 // Create new $rundir, link $epm_data/$d/$runfile to

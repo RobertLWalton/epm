@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 26 03:51:05 EDT 2020
+    // Date:	Thu Mar 26 12:05:39 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -1210,8 +1210,6 @@ EOT;
 
 	    foreach ( $show_files as $fname )
 	    {
-		$fname = pathinfo
-		    ( $fname, PATHINFO_BASENAME );
 	        if ( isset ( $show_map[$fname] ) )
 		    $files[] = $fname;
 	    }
