@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 26 12:08:20 EDT 2020
+// Date:    Thu Mar 26 15:20:25 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1864,29 +1864,29 @@ function start_make_file
 // is not set.  Otherwise it unsets this last global
 // after getting its value.
 //
-// This function begins by calling update_work_result
-// with zero wait.
+// This function begins by deleting files larger than
+// $epm_file_maxsize and generating error messages for
+// each file so deleted.
 //
-// If the run has died or has an error, an error message
-// is appended to $errors.
+// Then this function calls update_work_result with zero
+// wait.  If the run has died, has an error, or is still
+// running, an error message is appended to $errors.
+//
+// Then EPM_WORK SHOW is set to the list of control SHOW
+// files that are readable in EPM_WORK DIR.
+//
+// Then if there have been errors and KEEP-ON-ERROR is
+// not set, this function exits.
 // 
 // Otherwise control CHECKs are run and if they do not
 // append error messages to $errors, the control KEEP
 // files are moved to $probdir.  EPM_WORK KEPT is
-// returned as the list of KEEP files actually moved,
-// and will will be empty if CHECKs fail or the run has
-// not finish successfully.
-//
-// Files larger than $epm_file_maxsize are deleted and
-// an error message is generated.
-//
-// EPM_WORK SHOW is returned as the list of control SHOW
-// files to show, even if there are errors, but does not
-// include any non-readable files.
+// returned as the list of KEEP files actually moved.
 // 
 // All file and directory names are relative to
 // $epm_data, except that only the last component
-// of a file name is listed in EPM_WORK KEPT.
+// of a file name is listed in EPM_WORK SHOW and
+// EPM_WORK KEPT.
 //
 function finish_make_file ( & $warnings, & $errors )
 {
@@ -1898,8 +1898,12 @@ function finish_make_file ( & $warnings, & $errors )
     $warnings = array_merge
         ( $warnings, $work['WARNINGS'] );
     $control = $work['CONTROL'];
+    unset ( $work['CONTROL'] );
     $workbase = $work['BASE'];
     $workdir = $work['DIR'];
+    $work['KEPT'] = [];
+    $work['SHOW'] = [];
+    $errors_size = count ( $errors );
 
     $fnames = [];
     $fnames = @ scandir ( "$epm_data/$workdir" );
@@ -1920,19 +1924,14 @@ function finish_make_file ( & $warnings, & $errors )
 	              . " to delete $f";
     }
 
-    unset ( $work['CONTROL'] );
-    $kept = [];
-    $show = [];
-    $errors_size = count ( $errors );
-
     $r = update_work_results();
 
     if ( $r === false )
-        $errors[] = "SYSTEM_ERROR: $workbase.sh died;"
-	          . " try again";
+        $errors[] = "EPM SYSTEM_ERROR: $workbase.sh"
+	          . " died; try again";
     elseif ( $r === true )
-        $errors[] = "SYSTEM_ERROR: $workbase.sh did not"
-	          . " finish in time";
+        $errors[] = "EPM SYSTEM_ERROR: $workbase.sh"
+	          . " did not finish in time";
     elseif ( $r != ['D',0] )
     {
         $m = get_exit_message ( $r[1] );
@@ -1943,9 +1942,15 @@ function finish_make_file ( & $warnings, & $errors )
 	$errors_size = count ( $errors );
 
     if ( isset ( $control[2]['SHOW'] ) )
-        $work['SHOW'] = $control[2]['SHOW'];
-    else
-        $work['SHOW'] = [];
+    {
+        $show = & $work['SHOW'];
+	$d = "$epm_data/$workdir";
+        foreach ( $control[2]['SHOW'] as $fname )
+	{
+	    if ( is_readable ( "$d/$fname" ) )
+	        $show[] = $fname;
+	}
+    }
 
     if ( count ( $errors ) > $errors_size )
         return;
