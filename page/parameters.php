@@ -1,6 +1,79 @@
 <?php
 
-// Parameters that you need to edit in R/index.php:
+// File:    parameters.php
+// Author:  Robert L Walton <walton@acm.org>
+// Date:    Thu Mar 26 02:00:17 EDT 2020
+
+// Per web site EPM parameters.  An edited version of
+// this file located in the $_SERVER['DOCUMENT_ROOT']
+// directory is included at the beginning of all pages
+// via:
+//
+//    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+//
+// Index.php contains `require "parameters.php';'.
+
+// This file is also included by bin/epm_run and similar
+// programs via:
+//
+//    $epm_self='bin/PROGRAM-NAME';
+//    $epm_web='DOCUMENT-ROOT';
+//    require "$epm_web/parameters.php";
+
+// To set up an EPM instance you need the following
+// directories:
+//
+//     R	$_SERVER['DOCUMENT_ROOT'].  Directory
+//		in which you place an edited copy of
+//		this file.
+//     H	The `epm' home directory containing
+//           	`page', `template', etc subdirectories.
+//           	Must NOT be a descendant of R.
+//     D	Directory that will contain data.  This
+//		must NOT be a descendant of R.  Also,
+//	   	o+x permissions must be set on this dir-
+//		ectory and all its parents, because
+//		running JAVA in epm_sandbox requires
+//		that the path to the JAVA .class file
+//		be traversable by `others'.  Because of
+//		this, the last component of the name D
+//		should have a 12 digit random number in
+//		it that is unique to your installation,
+//		and the parent of this last component
+//		should have o-r permissions so the name
+//		D acts like an impenatrable password.
+//
+// You also need to put the UNIX account you are using
+// in the web server's UNIX group, denoted below by
+// `WEB-SERVERS-GROUP'.  All the files and directories
+// will be in this group, and will be shared between
+// your current account and the web server.  Ancestor
+// directories for these files and directories must
+// also be in this group and have g+x permission, unless
+// they have a+x permission.
+//
+// Only your account, and not the web server, should
+// have write permissions on R and H.
+//
+// Then to install, after populating H and creating
+// R and D:
+//
+//	chgrp WEB-SERVERS-GROUP \
+//	      R `find H` D
+//	chmod g+s \
+//	      R `find H -type d` D
+//	chmod g-w R `find H`
+//	chmod g+w D
+//
+//	cd R
+//	ln -s H/page .
+//	ln -s H/page/index.php .
+//	cp -p H/page/parameters.php .
+//	chmod u+w parameters.php
+//	<edit R/parameters.php>
+
+
+// Parameters that you NEED to edit:
 //
 $epm_data = dirname ( $epm_web ) . '/epm_658746537635';
     // WARNING:
@@ -8,7 +81,7 @@ $epm_data = dirname ( $epm_web ) . '/epm_658746537635';
     //   D above (and UNLIKE the test setting, be
     //   sure D is not a descendant of R).
     //
-    //   Include a NON-PUBLIC SITE-SPECIFIC 12 digit
+    //   Include a NON-PUBLIC, SITE-SPECIFIC 12 digit
     //   random number as part of the LAST COMPONENT
     //   of the name of D.
 
@@ -19,12 +92,15 @@ $epm_home = dirname ( $epm_web );
     //   sure H is not a descendant of R).
 
 $epm_session_name = "EPM_859036254367";
-    // Reset 12 digit number to NON-PUBLIC SITE-
+    // Reset 12 digit number to NON-PUBLIC, SITE-
     // SPECIFIC 12 digit random number.
 
 $epm_debug = preg_match
     ( '/(login|user|problem|run)/', $epm_self );
     // True to turn debugging on; false for off.
+
+
+// Parameters you may like to edit:
 
 $epm_max_emails = 3;
     // Max number of email addresses a user may have.
@@ -39,6 +115,15 @@ $epm_file_maxsize = 16*1024*1024;  // 16 megabytes.
 
 $epm_upload_maxsize = 256*1024;  // 256 kilobytes.
     // Maximum size of uploaded file.
+
+
+// Parameters you probably do NOT want to edit.
+// Be aware that changing these may conflict with
+// EPM code.
+
+$epm_supported_browsers = ['Chrome', 'Firefox'];
+    // Add to this list after testing on indicated
+    // browsers.
 
 $epm_shell_timeout = 3;
     // Number of seconds to wait for the shell to
@@ -132,9 +217,5 @@ $display_file_map = [
     //
     "utf8" => "utf8_show.php",
     "pdf"  => "pdf_show.php" ];
-
-$epm_supported_browsers = ['Chrome', 'Firefox'];
-    // Add to this list after testing on indicated
-    // browsers.
 
 ?>

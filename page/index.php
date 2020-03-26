@@ -2,65 +2,20 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 26 01:22:17 EDT 2020
+// Date:    Thu Mar 26 01:44:01 EDT 2020
 
-// Per web site EPM parameters.  An edited version of
-// this file located in the $_SERVER['DOCUMENT_ROOT']
-// directory is `required' at the beginning of all EPM
-// pages via:
-//
-//    require "{$_SERVER['DOCUMENT_ROOT']}/index.html"
+// See page/parameters.php for EPM server setup
+// instructions.
 
-// To set up an EPM instance you need the following
-// directories:
+// The following is included by all pages using:
 //
-//     R	$_SERVER['DOCUMENT_ROOT'].  Directory
-//		in which you place an edited copy of
-//		this file.
-//     H	The `epm' home directory containing
-//           	`page', `template', etc subdirectories.
-//           	Must NOT be a descendant of R.
-//     D	Directory that will contain data.  This
-//		must NOT be a descendant of R.  Also,
-//	   	o+x permissions must be set on this dir-
-//		ectory and all its parents, because
-//		running JAVA in epm_sandbox requires
-//		that the path to the JAVA .class file
-//		be traversable by `others'.  Because of
-//		this, the last component of the name D
-//		should have a 12 digit random number in
-//		it that is unique to your installation,
-//		and the parent of this last component
-//		should have o-r permissions so the name
-//		D acts like an impenatrable password.
+//    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 //
-// You also need to put the UNIX account you are using
-// in the web server's UNIX group, denoted below by
-// `WEB-SERVERS-GROUP'.  All the files and directories
-// will be in this group, and will be shared between
-// your current account and the web server.  Ancestor
-// directories for these files and directories must
-// also be in this group and have g+x permission, unless
-// they have a+x permission.
+// DO NOT edit his page.  Edit
 //
-// Only your account, and not the web server, should
-// have write permissions on R and H.
+//    {$_SERVER['DOCUMENT_ROOT']}/parameters.php
 //
-// Then to install, after populating H and creating
-// R and D:
-//
-//	chgrp WEB-SERVERS-GROUP \
-//	      R `find H` D
-//	chmod g+s \
-//	      R `find H -type d` D
-//	chmod g-w R `find H`
-//	chmod g+w D
-//
-//	cd R
-//	ln -s H/page .
-//	cp -p H/page/index.php .
-//	chmod u+w index.php
-//	<edit parameters in R/index.php>
+// instead, which is included by this page.
 
 $epm_web = $_SERVER['DOCUMENT_ROOT'];
 
