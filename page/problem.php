@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Mar 26 02:40:43 EDT 2020
+    // Date:	Thu Mar 26 03:51:05 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -630,6 +630,7 @@
     td.time {
 	color: #99003D;
 	text-align: right;
+	padding-left:20px;
     }
 
 </style>

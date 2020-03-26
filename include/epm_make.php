@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 26 01:26:37 EDT 2020
+// Date:    Thu Mar 26 03:38:27 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1067,6 +1067,7 @@ function get_status ( $workdir, $sfile )
 	$filesize = $c[7];
 	$sig      = $c[11];
 	$T        = $c[12];
+	    // T is as in '-SIGXXX T'.
 	$exitcode = $c[13];
 	$signal   = $c[14];
 	$usertime = $c[15];
@@ -1112,6 +1113,8 @@ function get_exit_message
 {
     if ( $code <= 128 ) switch ( $code )
     {
+	case 1:
+	    return 'Command Failed: see Error Output';
 	case 120:
 	    return 'Interpreter Failed While Exiting';
 	case 126:
@@ -1249,7 +1252,7 @@ function execute_commands ( $base, $dir, $errors )
     }
 }
 // This _2 version is just used to prove that FDs
-// 3, 4, 5, 6 need to be closed evern for proc_open.
+// 3, 4, 5, 6 need to be closed even for proc_open.
 // However, as proc_close cannot be used, it is
 // not completely correct.
 //
@@ -1282,19 +1285,28 @@ function execute_commands_2 ( $base, $dir )
     $cmd = "bash $base.sh";
     $process = proc_open
         ( $cmd, $desc, $pipes, $cwd, $env );
+	// $process cannot cross to the page
+	// invocation that would close it.
 }
 
 // First update_work_results is called, and then
-// update_workmap.  Then return an HTML listing
-// displaying the commands started by start_make_file
+// update_workmap.  Then return an HTML listing that
+// displays the commands started by start_make_file
 // and their results.
+//
+// The listing begins with
+//
+//	<table id='command_table'>
+//
+// and ends with '</table>' followed by error messages,
+// if any.
 //
 // Each command line gets a row in a table, and if that
 // command line number has 'X' or 'R' state in the
 // runmap, the second column for the row is given the
 // HTML:
 //
-//    <td><pre id='stat_time$n'><pre></td>
+//    <td class='time'><pre id='stat_time$n'><pre></td>
 //
 function get_commands_display ( & $display )
 {
@@ -1342,7 +1354,7 @@ function get_commands_display ( & $display )
 	           . " reason, try again";
     }
 
-    $display = "<table id='command_table'>" . PHP_EOL;
+    $display = "<table id='command_table'>";
     $c = @file_get_contents 
 	    ( "$epm_data/$workdir/$workbase.sh" );
     if ( $c === false )
@@ -1412,10 +1424,10 @@ function get_commands_display ( & $display )
 	    }
 	    $display .= "</td>";
 	}
-	$display .= "</tr>" . PHP_EOL;
+	$display .= "</tr>";
         $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
     }
-    $display .= '</table>' . PHP_EOL;
+    $display .= '</table>';
     if ( count ( $messages ) > 0 )
     {
         foreach ( $messages as $m )
@@ -1437,7 +1449,7 @@ function get_commands_display ( & $display )
 // If the run is finished, the result is [n,code] where
 // n is the value of the variable $n in the shell script
 // and code is the exit code.  For a normal completion,
-// n is 'D'.  For an abnormal completing, n is the line
+// n is 'D'.  For an abnormal completion, n is the line
 // number of the first line of the terminating command
 // from get_commands.  If n is 'B', a startup command
 // terminated, which is an EPM system error.
@@ -1447,7 +1459,7 @@ function get_commands_display ( & $display )
 // died.
 //
 // If the run is not finished, and $wait is > 0, poll
-// every 0.1 seconds until the run finished or dies or
+// every 0.1 seconds until the run finishes or dies or
 // $wait/10 seconds have elapsed.  If the run finishes
 // or dies, the result is as above.  Otherwise the
 // result is true to indicate the run is still running.
