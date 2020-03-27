@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 25 07:51:14 EDT 2020
+    // Date:	Fri Mar 27 16:06:08 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -25,12 +25,12 @@
     // To change the owner of a PROJECT to yourself you
     // must have
     //
-    //		['owner','PROJECT','']
+    //		owner PROJECT
     //
     // permission.  To change the owner of a PROBLEM in
     // the PROJECT you must have
     //
-    //		['owner','PROJECT','PROBLEM']
+    //		owner PROJECT PROBLEM
     //
     // permission.
     //
@@ -54,16 +54,19 @@
     //
     //	    projects/PROJECT
     //
-    // An NAME.index file is a file containing lines of
-    // the form `PROBLEM PROJECT' where PROJECT is
-    // omitted if the PROBLEM is not in a project.
-    // Virtual indices may NOT omit the PROJECT.
+    // An NAME.index file is a file containing a descrip-
+    // tion of the index followed by lines of the form
+    // `PROBLEM PROJECT' where PROJECT is omitted if the
+    // PROBLEM is not in a project.  Virtual indices may
+    // NOT omit the PROJECT.  The description is any
+    // sequence of non-blank lines not containing '<' or
+    // '>'.
     //
     // Project virtual indices can only be created by
     // the UID user of the target file and then only
     // if that user has the
     //
-    //      ['index','PROJECT']
+    //      index PROJECT
     //
     // permission.  A PROJECT virtual index can be
     // deleted by its UID user or by the owner of the
@@ -82,10 +85,40 @@
     // solved the PROBLEM, or if the user is the owner
     // of the PROBLEM, or if the user has the
     //
-    //      ['review','PROJECT','PROBLEM']
+    //      review PROJECT PROBLEM
     //
     // permission.  Users that can create the review can
     // delete it.
+    //
+    // In addition to the permissions described above,
+    // the permission
+    //
+    //      push PROJECT PROBLEM
+    //
+    // is needed to push a PROBLEM into a PROJECT that
+    // did not previously exist in the PROJECT, and the
+    // permission
+    //
+    //      pull PROJECT PROBLEM
+    //
+    // is needed to pull a problem from a project.  Also
+    // push and pull permission is implied for the
+    // PROJECT owner and pull permission is implied for
+    // the PROBLEM owner.
+    //
+    // Permission to change the owner of a PROJECT or
+    // PROBLEM implies permission to do anything the
+    // owner can do.
+    //
+    // Permissions themselves are lines in files named
+    //
+    //	    admin/users/UID/UID.perm
+    //
+    // In them PROJECT and PROBLEM are PHP regular
+    // expressions which may not contain '/' or space
+    // characters.  Lines beginning with optional
+    // horizontal space followed by '//' are comment
+    // lines in these files.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -109,6 +142,47 @@
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
+
+    // Read permissions into $perm, where the permission
+    // line
+    //		PERM PROJECT PROBLEM
+    //
+    // becomes  'PERM' => [['PROJECT','PROBLEM']] and
+    // several lines with the same 'PERM' concatenate
+    // values.
+    //
+    $legal_permissions =
+        ['owner','push','pull','index','review'];
+    $perm = [];
+    $f = "admin/users/$uid/$uid.perm";
+    $c = $file_get_contents ( "$epm_data/$f" );
+    if ( $c !=== false )
+    { 
+	$c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
+	    // Get rid of `//...' comments.
+	$c = explode ( "\n", $c );
+	foreach ( $c as $line )
+	{
+	    $line = trim ( $line );
+	    if ( $line == '' ) continue;
+	    if ( preg_match ( '#/#', $line ) )
+	        ERROR ( "permission '$line' in $f has" .
+		        " illegal '/'" );
+	    $items = explode
+	        ( preg_replace
+		      ( '#\h+#', ' ', $line ) );
+	    $items = explode ( ' ', $line );
+	    $type = $items[0];
+	    if ( ! in_array
+	               ( $type, $legal_permissions) )
+	        ERROR ( "permission '$line' in $f has" .
+		        " illegal permission type" );
+	    if ( count ( $items ) > 3 )
+	        ERROR ( "permission '$line' in $f has" .
+		        " too many items or illegal" .
+			" horizontal space" );
+	    $perm[$type][] = array_slice ( $items, 1 );
+    }
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
