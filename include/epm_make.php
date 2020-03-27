@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 26 15:20:25 EDT 2020
+// Date:    Fri Mar 27 01:21:07 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1713,27 +1713,43 @@ function move_keep ( $keep, & $errors )
 // will be moved into the working directory (but will
 // not be checked for size and other errors).
 //
-// This function begins by calling load_argument_map
-// with $allow_local_optn.
+// This function begins by creating an empty EPM_WORK.
+// Then it calls load_argument_map with $allow_local_
+// optn, followed by find_templates with $src, $des,
+// and $condition, followed by find_control.  This
+// last computes the control template along with
+// lists of files that need to be created and linked
+// into the working directory.
 //
-// Find_control is used to find the template and lists
-// of required and creatable files needed.  The template
-// is returned in $control.  Any files that need to be
-// created are created by calling create_file and a mes-
-// sage indicating the creation is appended to
-// $warnings.
+// Then this function creates the working directory
+// creates CREATABLE files that need to be created,
+// and symbolically links files into the working
+// directory.  If $uploaded is not NULL, the uploaded
+// file is moved to the working directory.
 //
-// Errors append to $errors.  If there are errors, the
-// run is NOT started.
-//
-// This function does NOT wait for the run to complete.
+// Lastly this function obtains the COMMANDS from the
+// control, compiles them, and executes them.  This
+// function does NOT wait for execution to complete.
 // See finish_make_file below.
 //
-// This function begins by unsetting
+// If there are errors at any stage, error messages are
+// appended to $errors and this function immediately
+// returns.
+//
+// This function begins by setting
 //
 //      $_SESSION['EPM_WORK'] = []
 //
-// If there are no errors, this function sets:
+// and puts all warning messages in
+//
+//     $_SESSION['EPM_WORK']['WARNINGS']
+//
+// Normally these warning messages are ignored if there
+// are errors, and returned by finish_make_file
+// otherwise.
+//
+// If there are no errors, this function finishes by
+// setting:
 //
 //     $_SESSION['EPM_WORK']['DIR'] to $dir
 //     $_SESSION['EPM_WORK']['BASE'] to $base
@@ -1748,7 +1764,6 @@ function move_keep ( $keep, & $errors )
 //	    messages).
 //     $_SESSION['EPM_WORK']['KEPT'] to []
 //     $_SESSION['EPM_WORK']['SHOW'] to []
-//     $_SESSION['EPM_WORK']['WARNINGS'] to warnings
 //
 function start_make_file
 	( $src, $des, $condition,
@@ -1786,7 +1801,9 @@ function start_make_file
 	( $templates, $local_required, $remote_required,
 	  $creatable, $errors );
     if ( count ( $errors ) > $errors_size ) return;
-    if ( is_null ( $control ) ) return false;
+    if ( is_null ( $control ) )
+        ERROR ( "find_control returned NULL with no" .
+	        " errors" );
 
     cleanup_dir ( $workdir, $warnings );
 
@@ -1864,24 +1881,27 @@ function start_make_file
 // is not set.  Otherwise it unsets this last global
 // after getting its value.
 //
-// This function begins by deleting files larger than
-// $epm_file_maxsize and generating error messages for
+// This function begins appending EPM_WORK WARNINGS to
+// $warnings, and then deletes files larger than
+// $epm_file_maxsize and generates error messages for
 // each file so deleted.
 //
 // Then this function calls update_work_result with zero
 // wait.  If the run has died, has an error, or is still
 // running, an error message is appended to $errors.
 //
-// Then EPM_WORK SHOW is set to the list of control SHOW
-// files that are readable in EPM_WORK DIR.
+// Next files in control SHOW that are readable in
+// EPM_WORK DIR are appended to the file list in
+// EPM_WORK SHOW.  Note that readability is checked
+// before any files are moved to $probdir.
 //
 // Then if there have been errors and KEEP-ON-ERROR is
 // not set, this function exits.
 // 
 // Otherwise control CHECKs are run and if they do not
-// append error messages to $errors, the control KEEP
-// files are moved to $probdir.  EPM_WORK KEPT is
-// returned as the list of KEEP files actually moved.
+// append error messages to $errors, the files in
+// control KEEP are moved to $probdir and appended to
+// the file list in EPM_WORK KEPT.
 // 
 // All file and directory names are relative to
 // $epm_data, except that only the last component
@@ -1895,14 +1915,13 @@ function finish_make_file ( & $warnings, & $errors )
     $work = & $_SESSION['EPM_WORK'];
     if ( ! isset ( $work['CONTROL'] ) )
         return;
+
     $warnings = array_merge
         ( $warnings, $work['WARNINGS'] );
     $control = $work['CONTROL'];
     unset ( $work['CONTROL'] );
     $workbase = $work['BASE'];
     $workdir = $work['DIR'];
-    $work['KEPT'] = [];
-    $work['SHOW'] = [];
     $errors_size = count ( $errors );
 
     $fnames = [];
@@ -1910,9 +1929,9 @@ function finish_make_file ( & $warnings, & $errors )
     clearstatcache();
     foreach ( $fnames as $fname )
     {
-        if ( preg_match ( '/^\.+$/', $fname ) )
-	    continue;
 	$f = "$workdir/$fname";
+        if ( is_dir ( "$epm_data/$f" ) )
+	    continue;
         $fsize = 0;
 	$fsize = @filesize ( "$epm_data/$f" );
 	if ( $fsize <= $epm_file_maxsize )
