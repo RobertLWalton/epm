@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Mar 27 01:21:07 EDT 2020
+// Date:    Fri Mar 27 01:56:58 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1997,8 +1997,10 @@ function finish_make_file ( & $warnings, & $errors )
 // the directory in which $runfile is found by load_
 // file_caches, and is local if no -s or remote if -s.
 //
-// WARNING: $rundir must not contain . or .. component
-//          names.
+// WARNING: $rundir must not contain `.'.  Its
+//          components are each replaced by `..' to
+//          make the name of $epm_data relative to
+//          $rundir.
 //
 // This function begins by setting
 //
@@ -2029,12 +2031,14 @@ function start_run
 
     load_file_caches();
 
+    if ( preg_match ( '/\./', $rundir ) )
+        ERROR ( "\$rundir $rundir contains a '.'" );
+
     $reldir = preg_replace
         ( '#[^/]+#', '..', $rundir );
-	// Name of $epm_data relative to
-	// $epm_data/$rundir, used so that symbolic
-	// link can be printed without printing
-	// name of $epm_data.
+	// Name of $epm_data relative to $epm_data/
+	// $rundir, used so that symbolic link can be
+	// printed without printing name of $epm_data.
 
     cleanup_dir ( $rundir, $warnings );
 
