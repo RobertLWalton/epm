@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Mar 27 01:56:58 EDT 2020
+// Date:    Fri Mar 27 06:24:59 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1996,6 +1996,7 @@ function finish_make_file ( & $warnings, & $errors )
 // expressed iff $submit is true.  The $d directory is
 // the directory in which $runfile is found by load_
 // file_caches, and is local if no -s or remote if -s.
+// load_file_caches is executed by this function.
 //
 // WARNING: $rundir must not contain `.'.  Its
 //          components are each replaced by `..' to
@@ -2020,7 +2021,7 @@ function start_run
 	( $workdir, $runfile, $rundir, $submit,
 	            & $errors )
 {
-    global $epm_data,
+    global $epm_data, $_SESSION,
            $local_file_cache, $remote_file_cache;
 
     $_SESSION['EPM_RUN'] = [];
@@ -2099,8 +2100,20 @@ function start_run
     $run['SUBMIT'] = $submit;
     $run['RESULT'] = true;
 }
-    
-
+ 
+// Finish run started by start_run.  Before calling
+// this, update_run_results must return a value other
+// that true.
+//
+// Checks for errors, including non-empty .rerr file.
+// Then if there are no errors, moves the .rout file
+// into $probdir is $submit is false, or to"
+//
+//	admin/submit/$uid/$problem/$runbase-C.rout
+//
+// if $submit is true.  Here C is the smallest integer
+// >= 1 such that the file named does not pre-exist.
+//
 function finish_run ( & $errors )
 {
     global $epm_data, $probdir, $uid, $problem,
@@ -2123,8 +2136,9 @@ function finish_run ( & $errors )
     }
     if ( $result != ['D',0] )
     {
+        $m = get_exit_message ( $result[1] );
         $errors[] = "$rundir/$runbase.sh terminated"
-	          . " with error code {$result[1]}";
+	          . " with error code {$result[1]}: $m";
 	return;
     }
 
@@ -2189,7 +2203,7 @@ function finish_run ( & $errors )
 		break;
 	    }
 	    $c += 1;
-	    if ( $c > 10000 )
+	    if ( $c > 1000 )
 	        ERROR ( "too many .rout files in $d" );
 	}
     }
