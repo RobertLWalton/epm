@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Mar 27 16:06:08 EDT 2020
+    // Date:	Sat Mar 28 04:43:14 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -143,6 +143,11 @@
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
+    $errors = [];    // Error messages to be shown.
+    $warnings = [];  // Warning messages to be shown.
+    $post_processed = false;
+    		     // Set true when POST recognized.
+
     // Read permissions into $perm, where the permission
     // line
     //		PERM PROJECT PROBLEM
@@ -151,9 +156,15 @@
     // several lines with the same 'PERM' concatenate
     // values.
     //
+    // In addition compute:
+    //
+    //	    $perm_projects	List of user's PROJECT
+    //			 	re's without duplicates.
+    //
     $legal_permissions =
         ['owner','push','pull','index','review'];
     $perm = [];
+    $perm_projects = [];
     $f = "admin/users/$uid/$uid.perm";
     $c = $file_get_contents ( "$epm_data/$f" );
     if ( $c !=== false )
@@ -166,8 +177,13 @@
 	    $line = trim ( $line );
 	    if ( $line == '' ) continue;
 	    if ( preg_match ( '#/#', $line ) )
-	        ERROR ( "permission '$line' in $f has" .
-		        " illegal '/'" );
+	    {
+	        $m = "permission '$line' in $f has"
+		   . " illegal '/'" );
+		WARN ( $m );
+		$errors[] = $m;
+		continue;
+	    }
 	    $items = explode
 	        ( preg_replace
 		      ( '#\h+#', ' ', $line ) );
@@ -175,19 +191,69 @@
 	    $type = $items[0];
 	    if ( ! in_array
 	               ( $type, $legal_permissions) )
-	        ERROR ( "permission '$line' in $f has" .
-		        " illegal permission type" );
+	    {
+	        $m = "permission '$line' in $f has"
+		   . " illegal permission type";
+		WARN ( $m );
+		$errors[] = $m;
+		continue;
+	    }
 	    if ( count ( $items ) > 3 )
-	        ERROR ( "permission '$line' in $f has" .
-		        " too many items or illegal" .
-			" horizontal space" );
-	    $perm[$type][] = array_slice ( $items, 1 );
-    }
+	    {
+	        $m = "permission '$line' in $f has"
+		   . " too many items or illegal"
+		   . " horizontal space";
+		WARN ( $m );
+		$errors[] = $m;
+		continue;
+	    }
+	    $p = array_slice ( $items, 1 );
+	    $bad_re = false;
+	    foreach ( $p as $re )
+	    {
+	        if (     @preg_match ( "/$re/", 'XXXX' )
+		     === false )
+		{
+		    // false means error in $re and NOT
+		    // that there is no match
+		    //
+		    $m = "permission '$line' in $f has"
+		       . " bad regular expression"
+		       . " '$re'";
+		    WARN ( $m );
+		    $errors[] = $m;
+		    $bad_re = true;
+		}
+	    }
+	    if ( $bad_re ) continue;
 
-    $errors = [];    // Error messages to be shown.
-    $warnings = [];  // Warning messages to be shown.
-    $post_processed = false;
-    		     // Set true when POST recognized.
+	    $perm[$type][] = $p;
+	    if ( count ( $p ) >= 1 )
+	        $perm_projects[] = $p;
+	}
+    }
+    $perm_projects = array_unique ( $perm_projects );
+
+    // Compute in $projects the list of projects the
+    // $uid user is allowed to look at.  Sort naturally.
+    //
+    $projects = [];
+    $ps = @scandir ( "$epm_data/projects" );
+    if ( $ps == false )
+        ERROR ( "cannot read 'projects' directory" );
+    foreach ( $ps as $project )
+    {
+        foreach ( $perm_projects as $re )
+	{
+	    if ( preg_match ( "/$re/", $project ) )
+	    {
+	        $projects[] = $project;
+		break;
+	    }
+	}
+    }
+    natsort ( $projects );
+
 
 
 ?>
