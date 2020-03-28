@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 28 04:43:14 EDT 2020
+    // Date:	Sat Mar 28 15:39:17 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -54,7 +54,7 @@
     //
     //	    projects/PROJECT
     //
-    // An NAME.index file is a file containing a descrip-
+    // A NAME.index file is a file containing a descrip-
     // tion of the index followed by lines of the form
     // `PROBLEM PROJECT' where PROJECT is omitted if the
     // PROBLEM is not in a project.  Virtual indices may
@@ -119,6 +119,56 @@
     // characters.  Lines beginning with optional
     // horizontal space followed by '//' are comment
     // lines in these files.
+    //
+    // There are the following file usage log files:
+    //
+    //	    users/UID/+indices+/usage.log
+    //	    projects/PROJECT/+indices+/usage.log
+    //	    projects/PROJECT/PROBLEM/+review+/usage.log
+    //	    projects/PROJECT/usage.log
+    //
+    // with a line, written whenever a file or subdirec-
+    // tory in the log-containing directory is `used'.
+    // For indices, using means opening the index proper
+    // for viewing, and not just reading the index des-
+    // cription.  For reviews usage means opening the
+    // review file for viewing, and for PROJECT direct-
+    // ories, usage means pulling a problem.  The log
+    // files contain lines with the format:
+    //
+    //		TIME UID FILENAME
+    //
+    // where TIME is in %FT%T%z format, UID is the ID of
+    // the using user, and FILENAME is the name of the
+    // file or directory used.  These logs may be purged
+    // when they get large of older entries that have
+    // the same UID and FILENAME as more recent entries.
+    //
+    // If an index file with symbolic link name
+    // UID-NAME.index is opened, a log entry will be
+    // written in both the directory containing the
+    // symbolic link to the file and in the directory
+    // containing the index file itself.
+    //
+    // Lastly, there is for the UID user the file:
+    //
+    //	    users/UID/+indices+/current
+    //
+    // that lists the indices which the user is current-
+    // ly interested in.  Its contents are lines of
+    // the forms:
+    //
+    //	    TIME PROJECT FILENAME
+    //
+    // indicating that the index file with the given
+    // FILENAME and PROJECT was viewed at the given
+    // TIME.  PROJECT may be '-' to indicate the index
+    // of the user's current problems, and FILENAME
+    // may be '-' to indicate the index of either the
+    // user's current problems or the PROJECT's current
+    // problems.  This file is sorted most recent entry
+    // first, with at most one entry for each PROJECT-
+    // FILENAME pair.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
