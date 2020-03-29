@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar 29 04:13:55 EDT 2020
+// Date:    Sun Mar 29 04:27:52 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2347,52 +2347,6 @@ function create_file
 	return false;
     }
 
-}
-
-// Find a file in $show_files that is pdf or is the
-// largest UTF-8 file with size above 5 lines, delete
-// it from show_files and return it.  If there is no
-// such file, leave $show_files untouched and return
-// NULL.  The file names in $show_files are relative
-// to $epm_data.
-//
-function find_show_file ( & $show_files )
-{
-    global $epm_data, $display_file_type;
-
-    $index = -1;
-    $lines = 5;
-    $i = -1;
-    foreach ( $show_files as $fname )
-    {
-        ++ $i;
-	if ( preg_match ( '/\.([^.]+)$/',
-	                  $fname, $matches ) )
-    	    $ext = $matches[1];
-	else
-	    $ext = '';
-
-	if ( ! isset ( $display_file_type[$ext] ) )
-	    continue;
-	$t = $display_file_type[$ext];
-	if ( $t == 'pdf' )
-	{
-	    $index = $i;
-	    break;
-	}
-	else if ( $t == 'utf8' )
-	{
-	    $f = "$epm_data/$fname";
-	    $c = exec ( "grep -c '$' $f" );
-	    if ( $c > $lines )
-	    {
-	        $index = $i;
-		$lines = $c;
-	    }
-	}
-    }
-    if ( $index == -1 ) return NULL;
-    return array_splice ( $show_files, $index, 1 )[0];
 }
 
 ?>
