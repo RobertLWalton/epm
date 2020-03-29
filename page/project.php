@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 29 02:57:08 EDT 2020
+    // Date:	Sun Mar 29 07:26:39 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -218,8 +218,8 @@
     $perm = [];
     $perm_projects = [];
     $f = "admin/users/$uid/$uid.perm";
-    $c = $file_get_contents ( "$epm_data/$f" );
-    if ( $c !=== false )
+    $c = @file_get_contents ( "$epm_data/$f" );
+    if ( $c !== false )
     { 
 	$c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
 	    // Get rid of `//...' comments.
@@ -231,7 +231,7 @@
 	    if ( preg_match ( '#/#', $line ) )
 	    {
 	        $m = "permission '$line' in $f has"
-		   . " illegal '/'" );
+		   . " illegal '/'";
 		WARN ( $m );
 		$errors[] = $m;
 		continue;
@@ -427,42 +427,28 @@
     </tr>
 EOT;
 
-    if ( count ( $problems ) > 0 )
+    if ( count ( $projects ) > 0 )
     {
 	echo "<tr><td></td><td>";
 	echo "<label>" .
 	     "<input type='submit'" .
-	     " name='goto_problem'" .
-	     " value='Go To Problem:'>";
-        echo "<select name='selected_problem'" .
-	     " title='problem to go to'>";
-	foreach ( $problems as $value )
+	     " name='goto_project'" .
+	     " value='Go To Projectm:'>";
+        echo "<select name='selected_project'" .
+	     " title='project to go to'>";
+	foreach ( $project as $value )
 	    echo "    <option value='$value'>" .
 	             "$value</option>";
         echo "</select></label></td>";
-	if ( isset ( $problem ) )
-	    echo <<<EOT
-	         <td><h5>Go To:</h5>
-		 <button type='submit'
-			 formaction='run.php'
-			 formmethod='GET'>
-			 Run Page</button>
-		 <pre>  </pre>
-	         <button type='submit'
-			formaction='option.php'
-			formmethod='GET'>
-			Option Page</button>
-		 </td>
-EOT;
 	echo "</tr>";
     }
     echo <<<EOT
     </form>
     <form action='problem.php' method='POST'
           class='no-margin'>
-    <tr><td colspan='2'><h5>or Create New Problem:<h5>
-    <input type="text" size="32" name="new_problem"
-           placeholder="New Problem Name" id="create">
+    <tr><td colspan='2'><h5>or Create New Project:<h5>
+    <input type="text" size="32" name="new_project"
+           placeholder="New Project Name" id="create">
     </form>
     </td></tr></table>
     </div>

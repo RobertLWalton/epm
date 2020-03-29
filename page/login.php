@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 00:29:12 EDT 2020
+    // Date:	Sun Mar 29 07:29:50 EDT 2020
 
     // Handles login for a session.
     //
@@ -356,6 +356,7 @@
 	@mkdir ( "$epm_data/admin/browser", 0770 );
 	@mkdir ( "$epm_data/admin/users", 0770 );
 	@mkdir ( "$epm_data/users", 0771 );
+	@mkdir ( "$epm_data/projects", 0770 );
 
 	if ( ! is_dir ( "$epm_data/admin" ) )
 	     ERROR
@@ -364,6 +365,10 @@
 	if ( ! is_dir ( "$epm_data/users" ) )
 	     ERROR
 		 ( 'cannot make users directory' );
+
+	if ( ! is_dir ( "$epm_data/projects" ) )
+	     ERROR
+		 ( 'cannot make projects directory' );
 
 	umask ( $m );
     }
