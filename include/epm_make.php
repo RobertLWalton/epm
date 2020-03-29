@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar 29 04:27:52 EDT 2020
+// Date:    Sun Mar 29 04:34:40 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -252,8 +252,8 @@ function find_templates
 }
 
 // Get the template.optn file json with overrides from
-// earlier template directories in $template_dirs.  Cache
-// result in $template_optn.
+// earlier template directories in $template_dirs.
+// Cache result in $template_optn.
 //
 // Checking of template option contents for validity is
 // done in option.php, and is not done here.
@@ -684,7 +684,8 @@ function find_control
 	         + count ( $nfrfiles );
 	if ( $nfcount > 0 )
 	{
-	    $element = [$template[0],$nflfiles,$nfrfiles];
+	    $element =
+	        [$template[0],$nflfiles,$nfrfiles];
 	    if ( $nfcount == $best_not_found_count )
 		$best_not_found[] = $element;
 	    else if ( $nfcount < $best_not_found_count )
@@ -2317,7 +2318,7 @@ function process_upload
 function create_file
 	( $filename, & $warnings, & $errors )
 {
-    global $epm_data, $probdir;
+    global $epm_data, $problem, $probdir;
 
     $f = "$epm_data/$probdir/$filename";
     if ( @lstat ( $f ) !== false )
@@ -2326,8 +2327,8 @@ function create_file
 	return true;
     }
 
-    if ( preg_match ( '/^(generate|filter)_.+$/',
-                           $filename, $matches ) )
+    if ( preg_match ( "/^(generate|filter)_$problem\$/",
+                      $filename, $matches ) )
     {
 	$b = $matches[1];
 	if ( ! symbolic_link
