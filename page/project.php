@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 28 22:07:27 EDT 2020
+    // Date:	Sun Mar 29 02:57:08 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -85,65 +85,51 @@
     // done by copying entries from one index to
     // another.
     //
-    TBD
+    // The directory:
     //
-    // Files with names of the form:
+    //	    projects/PROJECT/PROBLEM/+review+
     //
-    //	    projects/PROJECT/PROBLEM/+review+/UID.review
+    // holds files named UID.review which are reviews of
+    // the problem by the UID user.  There can be at
+    // most one review for each PROJECT, PROBLEM, UID
+    // triple.  A review file is just text that may NOT
+    // contain '<' or '>', but may contain &xxx; HTML
+    // symbols.  Each blank line introduces a new para-
+    // graph.  Review files will be displayed by adding
+    // <p> before each paragraph.
     //
-    // are reviews.  There can be at most one review for
-    // each PROJECT, PROBLEM, UID triple.  A review file
-    // is just text that may NOT contain '<' or '>' but
-    // may contain &xxx; HTML symbols.  Each blank line
-    // introduces a new paragraph.  A review file may be
-    // created by its UID user only after the user has
-    // solved the PROBLEM, or if the user is the owner
-    // of the PROBLEM, or if the user has the
+    // A review file may be created by its UID user
+    // after the user has solved the PROBLEM, if the
+    // user is the owner of the PROBLEM, or if the user
+    // has `review' permission for the project.  Users
+    // who can create the review can delete it.
     //
-    //      review PROJECT PROBLEM
+    // A problem may be pulled by any user with `pull'
+    // permission for the problem's project.  A problem
+    // may be created in a project by any user with
+    // `push' permission for the project.  When a
+    // problem is created, the user that pushed it
+    // becomes the owner of the problem.  Only an owner
+    // of a problem may make subsequent pushes after the
+    // problem has been created.
     //
-    // permission.  Users that can create the review can
-    // delete it.
+    // Each project problem has its own .git repository
+    // using the directory
     //
-    // In addition to the permissions described above,
-    // the permission
+    //	    projects/PROJECT/PROBLEM/.git
     //
-    //      push PROJECT PROBLEM
+    // Only uploaded files and .ftest files are included
+    // in the repository.
     //
-    // is needed to push a PROBLEM into a PROJECT that
-    // did not previously exist in the PROJECT, and the
-    // permission
-    //
-    //      pull PROJECT PROBLEM
-    //
-    // is needed to pull a problem from a project.  Also
-    // push and pull permission is implied for the
-    // PROJECT owner and pull permission is implied for
-    // the PROBLEM owner.
-    //
-    // Permission to change the owner of a PROJECT or
-    // PROBLEM implies permission to do anything the
-    // owner can do.
-    //
-    // Permissions themselves are lines in files named
-    //
-    //	    admin/users/UID/UID.perm
-    //
-    // In them PROJECT and PROBLEM are PHP regular
-    // expressions which may not contain '/' or space
-    // characters.  Lines beginning with optional
-    // horizontal space followed by '//' are comment
-    // lines in these files.
-    //
-    // There are the following file usage log files:
+    // The following file usage log files are written
+    // whenever a file or immediate subdirectory of the
+    // log containing directory is `used':
     //
     //	    users/UID/+indices+/usage.log
     //	    projects/PROJECT/+indices+/usage.log
     //	    projects/PROJECT/PROBLEM/+review+/usage.log
     //	    projects/PROJECT/usage.log
     //
-    // with a line, written whenever a file or subdirec-
-    // tory in the log-containing directory is `used'.
     // For indices, using means opening the index proper
     // for viewing, and not just reading the index des-
     // cription.  For reviews usage means opening the
@@ -155,9 +141,10 @@
     //
     // where TIME is in %FT%T%z format, UID is the ID of
     // the using user, and FILENAME is the name of the
-    // file or directory used.  These logs may be purged
-    // when they get large of older entries that have
-    // the same UID and FILENAME as more recent entries.
+    // file or subdirectory used.  These logs may be
+    // purged when they get large of older entries that
+    // have the same UID and FILENAME as more recent
+    // entries.
     //
     // If an index file with symbolic link name
     // UID-NAME.index is opened, a log entry will be
