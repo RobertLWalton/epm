@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Mar 27 06:24:59 EDT 2020
+// Date:    Sun Mar 29 04:13:55 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2210,29 +2210,27 @@ function finish_run ( & $errors )
 }
 
 // Process an uploaded file whose $_FILES[...] value
-// is given by the $upload argument.  LOCAL-REQUIRES
-// and REMOTE-REQUIRES are treated as REQUIRES.
+// is given by the $upload argument.  Selects a template
+// with the `UPLOAD uploaded-file-name' condition.
 //
-// Errors append error messages to $errors and warning
-// messages to $warnings.  Commands are computed using
-// get_commands.  Output from commands executed is
-// appended to $output (this does not include writes to
-// standard error by bash, which are lost).  List of
-// KEEP files moved to $probdir is placed in
-// $moved, and list of SHOW files is placed in $show.
-// File names in these are relative to $probdir.
+// First calls load_file_caches.  Then checks the
+// upload and uploaded file for errors.  If there are
+// any, appends error messages to $errors and returns.
+// Treats uploaded file as the source file and computes
+// the destination file name by changing the uploaded
+// file name extension to the $upload_target_ext desig-
+// nated extension.  Then calls start_make_file.
 //
-// If the make template cannot be found but there are
-// some templates that would work if some file are
-// created, $creatables is set to list these files as
-// per find_control, and error messages are appended to
-// $errors listing these files.
+// Uploaded file name must match $epm_filename_re and
+// have an extension.  Uploaded file must not be larger
+// than $epm_upload_maxsize.
 //
 function process_upload
-	( $upload, $workdir, & $warnings, & $errors )
+	( $upload, $workdir, & $errors )
 {
     global $epm_data, $is_epm_test,
-           $upload_target_ext, $epm_upload_maxsize;
+           $upload_target_ext, $epm_upload_maxsize,
+	   $epm_filename_re;
 
     load_file_caches();
 
@@ -2243,12 +2241,10 @@ function process_upload
 	        ' an array' );
 
     $fname = $upload['name'];
-    if ( ! preg_match ( '/^[-_.a-zA-Z0-9]*$/',
-                        $fname ) )
+    if ( ! preg_match ( $epm_filename_re, $fname ) )
     {
-        $errors[] =
-	    "uploaded file $fname has character" .
-	    " other than letter, digit, ., -, or _";
+        $errors[] = "uploaded file $fname has is not"
+	          . " legal EPM file name";
 	return;
     }
     if ( ! preg_match ( '/^([^.]+)\.([^.]+)$/',
