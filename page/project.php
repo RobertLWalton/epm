@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 29 07:26:39 EDT 2020
+    // Date:	Sun Mar 29 11:16:10 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -197,94 +197,74 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $post_processed = false;
-    		     // Set true when POST recognized.
 
-    // Read permissions into $perm, where the permission
-    // line
-    //		PERM PROJECT PROBLEM
+    // Permission maps.  These map:
     //
-    // becomes  'PERM' => [['PROJECT','PROBLEM']] and
-    // several lines with the same 'PERM' concatenate
-    // values.
+    //		permission => {true,false}
     //
-    // In addition compute:
+    // according to whether or not the current $uid is
+    // granted or not granted the permission.
     //
-    //	    $perm_projects	List of user's PROJECT
-    //			 	re's without duplicates.
+    $all_permissions =
+        [ 'owner'  => true, 'push'  => true,
+	  'pull'   => true, 'index' => true,
+	  'review' => true ];
+    $no_permissions =
+        [ 'owner'  => false, 'push'  => false,
+	  'pull'   => false, 'index' => false,
+	  'review' => false ];
+
+    // Add permissions from $pfile into permission map
+    // $pmap.  Erroneous lines in the file generate
+    // $errors messages and WARN messages and are
+    // ignored.  $pfile is a file name relative to
+    // $epm_data.  If $pfile is not readable, $pmap is
+    // not changed (and it is NOT an error).  If a
+    // permission TYPE is not set in the initial $pmap,
+    // it is not legal.
     //
-    $legal_permissions =
-        ['owner','push','pull','index','review'];
-    $perm = [];
-    $perm_projects = [];
-    $f = "admin/users/$uid/$uid.perm";
-    $c = @file_get_contents ( "$epm_data/$f" );
-    if ( $c !== false )
-    { 
+    function add_permissions ( & $pmap, $pfile )
+    {
+        global $uid, $epm_data, $errors;
+
+	$c = @file_get_contents ( "$epm_data/$pfile" );
+	if ( $c === false ) return;
+
 	$c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
 	    // Get rid of `//...' comments.
 	$c = explode ( "\n", $c );
 	foreach ( $c as $line )
 	{
-	    $line = trim ( $line );
-	    if ( $line == '' ) continue;
-	    if ( preg_match ( '#/#', $line ) )
-	    {
+	    $m = NULL;
+	    if ( ! preg_match
+	               ( '/^\s*(\S+)\s+(\S+)\s*$/',
+		         $line, $matches ) )
+	        $m = "badly formatted permission"
+		   . " '$line' in $f";
+	    elseif ( preg_match ( '#/#', $line ) )
 	        $m = "permission '$line' in $f has"
 		   . " illegal '/'";
-		WARN ( $m );
-		$errors[] = $m;
-		continue;
-	    }
-	    $items = explode
-	        ( preg_replace
-		      ( '#\h+#', ' ', $line ) );
-	    $items = explode ( ' ', $line );
-	    $type = $items[0];
-	    if ( ! in_array
-	               ( $type, $legal_permissions) )
+	    elseif ( ! isset ( $pmap[$matches[1]] ) )
+	        $m = "bad permission type"
+		   . " '{$matches[1]}' in $f";
+	    else
 	    {
-	        $m = "permission '$line' in $f has"
-		   . " illegal permission type";
-		WARN ( $m );
-		$errors[] = $m;
-		continue;
+	        $r = preg_match
+		    ( "/({$matches[2]})/", $iid );
+		if ( $r === false )
+		    $m = "bad permission regular"
+		       . " expression '{$matches[2]}'"
+		       . " in $f";
+		elseif ( $r )
+		    $pmap[$matches[1]] = true;
 	    }
-	    if ( count ( $items ) > 3 )
+	    if ( isset ( $m ) )
 	    {
-	        $m = "permission '$line' in $f has"
-		   . " too many items or illegal"
-		   . " horizontal space";
+	        $errors[] = $m;
 		WARN ( $m );
-		$errors[] = $m;
-		continue;
 	    }
-	    $p = array_slice ( $items, 1 );
-	    $bad_re = false;
-	    foreach ( $p as $re )
-	    {
-	        if (     @preg_match ( "/$re/", 'XXXX' )
-		     === false )
-		{
-		    // false means error in $re and NOT
-		    // that there is no match
-		    //
-		    $m = "permission '$line' in $f has"
-		       . " bad regular expression"
-		       . " '$re'";
-		    WARN ( $m );
-		    $errors[] = $m;
-		    $bad_re = true;
-		}
-	    }
-	    if ( $bad_re ) continue;
-
-	    $perm[$type][] = $p;
-	    if ( count ( $p ) >= 1 )
-	        $perm_projects[] = $p;
 	}
     }
-    $perm_projects = array_unique ( $perm_projects );
 
     // Compute in $projects the list of projects the
     // $uid user is allowed to look at.  Sort naturally.
@@ -293,17 +273,6 @@
     $ps = @scandir ( "$epm_data/projects" );
     if ( $ps == false )
         ERROR ( "cannot read 'projects' directory" );
-    foreach ( $ps as $project )
-    {
-        foreach ( $perm_projects as $re )
-	{
-	    if ( preg_match ( "/$re/", $project ) )
-	    {
-	        $projects[] = $project;
-		break;
-	    }
-	}
-    }
     natsort ( $projects );
 
 
