@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 29 11:16:10 EDT 2020
+    // Date:	Sun Mar 29 14:31:07 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -266,14 +266,53 @@
 	}
     }
 
-    // Compute in $projects the list of projects the
-    // $uid user is allowed to look at.  Sort naturally.
+    // Return the permission map for a project.
     //
-    $projects = [];
-    $ps = @scandir ( "$epm_data/projects" );
-    if ( $ps == false )
-        ERROR ( "cannot read 'projects' directory" );
-    natsort ( $projects );
+    function project_permissions ( $project )
+    {
+        global $all_permissions, $no_permissions;
+        $pmap = ['owner' => false];
+	add_permissions ( $pmap, 'projects/+perm+' );
+	if ( $pmap['owner'] ) return $all_permissions;
+	$pmap = $no_permissions;
+	add_permissions
+	    ( $pmap, "projects/$project/+perm+" );
+	return $pmap;
+    }
+
+    // Return the permission map for a problem in a
+    // project.  If the $uid has owner permission in
+    // in projects/$project/$problem/+perm+, then
+    // $all_permissions is returned, else the permis-
+    // sions of the project is returned.
+    //
+    function problem_permissions ( $project, $problem )
+    {
+        global $all_permissions;
+        $pmap = ['owner' => false];
+	add_permissions
+	    ( $pmap, "projects/$project/$problem/+perm+" );
+	if ( $pmap['owner'] ) return $all_permissions;
+	return project_permissions ( $project );
+    }
+
+    // Return the list of projects that have a given
+    // type of permission, in natural order.
+    //
+    function get_projects ( $type )
+    {
+	$projects = [];
+	$ps = @scandir ( "$epm_data/projects" );
+	if ( $ps == false )
+	    ERROR ( "cannot read 'projects' directory" );
+	foreach ( $project as $project )
+	{
+	    $pmap = project_permissions ( $project );
+	    if ( $pmap[$type] )
+	        $projects[] = $project;
+	}
+	natsort ( $projects );
+    }
 
 
 
