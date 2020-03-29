@@ -2,50 +2,77 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 28 15:39:17 EDT 2020
+    // Date:	Sat Mar 28 22:07:27 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
 
-    // The owner of a project is the user whose UID is
-    // the sole item in the file:
+    // Each project has a directory:
     //
-    //		projects/PROJECT/+owner+
+    //		projects/PROJECT
     //
-    // The creator of PROJECT is its initial owner.
+    // and a permission file:
     //
-    // Similarly the owner of a project problem is the
-    // user whose UID is the sole item in the file:
+    //		projects/PROJECT/+perm+
     //
-    //		projects/PROJECT/PROBLEM/+owner+
+    // The permission file in turn has lines of the
+    // form
     //
-    // The user who initially pushed the PROBLEM is its
-    // initial owner.
+    //		TYPE UID-RE
     //
-    // To change the owner of a PROJECT to yourself you
-    // must have
+    // where TYPE is one of:
     //
-    //		owner PROJECT
+    //	   owner	Specify PROJECT owners.
+    //	   index	Allow attaching indices.
+    //	   review	Allow attaching problem reviews.
+    //	   push		Allow pushing new problems.
+    //	   pull		Allow pulling problems.
     //
-    // permission.  To change the owner of a PROBLEM in
-    // the PROJECT you must have
+    // and UID-RE is a regular expression that is
+    // matched to a user's UID to determine if the
+    // user has the permissions specified by TYPE.
     //
-    //		owner PROJECT PROBLEM
+    // The single `projects' directory, and each
+    // projects/PROJECT/PROBLEM directory, also con-
+    // tains a +perm+ file all of whose lines have the
+    // `owner' type.
     //
-    // permission.
+    // A user with `owner' permissions for a directory
+    // can perform all operations on the directory and
+    // it descendents, including changing the +perm+
+    // files.
     //
-    // The following files hold user indices that can be
-    // edited:
+    // An index is a NAME.index file in a directory:
     //
-    //	    users/UID/+indices+/NAME.index
+    //	    users/UID/+indices+
     //
-    // The following are symbolic links to indices, and
-    // are therefore virtual indices that are read-only:
+    // Such a file belongs to the UID user and can be
+    // edited by the user.  The file begins with a
+    // description of the index followed by a blank line
+    // followed by lines of the form `PROJECT PROBLEM'
+    // that specify a problem in a project.  Thus an
+    // index is a list of problems.  If a problem is not
+    // in a project, but is in the user's users/UID
+    // directory, PROJECT is `-'.  The description is
+    // any sequence of non-blank lines not containing
+    // '<' or '>', but which may contain HTML symbol
+    // names of the form '&...;'.  The description will
+    // be displayed in an HTML <p> paragraph.
     //
-    //	    projects/PROJECT/+indices+/UID-NAME.index
-    //	        links to users/UID/+indices+/NAME.index
+    // For each project the directory:
     //
-    // These indices are associated with their PROJECT.
+    //	    projects/PROJECT/+index+
+    //
+    // contains symbolic links of the form:
+    //
+    //	    UID-NAME.index =>
+    //		users/UID/+indices+/NAME.index
+    //
+    // which make particular indices visible to users
+    // who have `index' permission for the project.  To
+    // these users these indices are read-only.  These
+    // users may add symbolic links to their own
+    // indices, and delete such links.
     //
     // In addition there are read-only indices containing
     // the problems in the directories:
@@ -54,23 +81,11 @@
     //
     //	    projects/PROJECT
     //
-    // A NAME.index file is a file containing a descrip-
-    // tion of the index followed by lines of the form
-    // `PROBLEM PROJECT' where PROJECT is omitted if the
-    // PROBLEM is not in a project.  Virtual indices may
-    // NOT omit the PROJECT.  The description is any
-    // sequence of non-blank lines not containing '<' or
-    // '>'.
+    // These are used to edit other indices, which is
+    // done by copying entries from one index to
+    // another.
     //
-    // Project virtual indices can only be created by
-    // the UID user of the target file and then only
-    // if that user has the
-    //
-    //      index PROJECT
-    //
-    // permission.  A PROJECT virtual index can be
-    // deleted by its UID user or by the owner of the
-    // PROJECT.
+    TBD
     //
     // Files with names of the form:
     //
