@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 29 14:31:07 EDT 2020
+    // Date:	Mon Mar 30 00:59:22 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -301,12 +301,16 @@
     //
     function get_projects ( $type )
     {
+	global $epm_data;
 	$projects = [];
 	$ps = @scandir ( "$epm_data/projects" );
 	if ( $ps == false )
 	    ERROR ( "cannot read 'projects' directory" );
-	foreach ( $project as $project )
+	foreach ( $ps as $project )
 	{
+	    if ( ! preg_match
+	               ( $epm_name_re, $project ) )
+	        continue;
 	    $pmap = project_permissions ( $project );
 	    if ( $pmap[$type] )
 	        $projects[] = $project;
@@ -314,7 +318,45 @@
 	natsort ( $projects );
     }
 
+    // Return a map from a user's own problems to the
+    // projects each is descended from, or '' if a
+    // problem is not descended from a project.  Sort
+    // the map by problems (keys) in natural order.
+    //
+    function get_problems ()
+    {
+	global $epm_data, $uid;
 
+	$pmap = [];
+	$f = "users/$uid";
+	$ps = @scandir ( "$epm_data/$f" );
+	if ( $ps == false )
+	    ERROR ( "cannot read $f directory" );
+	$re =
+	    "/\/\.\.\/projects\/([^\/]+)\/$problem\$/";
+	foreach ( $ps as $problem )
+	{
+	    if ( ! preg_match
+	               ( $epm_name_re, $problem ) )
+	        continue;
+	    $g = "$f/$problem/+parent+";
+	    if ( is_link ( "$epm_data/$g" ) )
+	    {
+	        $s = @readlink ( "$epm_data/$g" );
+		if ( $s === false )
+		    ERROR ( "cannot read link $g" );
+		if ( ! preg_match
+		           ( $re, $s, $matches ) )
+		    ERROR ( "link $g value $s is" .
+		            " mal-formed" );
+		$pmap[$problem] = $matches[1];
+	    }
+	    else
+		$pmap[$problem] = '';
+	}
+	ksort ( $pmap, SORT_NATURAL );
+	return $pmap;
+    }
 
 ?>
 

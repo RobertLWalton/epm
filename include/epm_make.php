@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar 29 04:34:40 EDT 2020
+// Date:    Mon Mar 30 01:46:53 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -52,8 +52,8 @@ $remote_dirs = [];
 $d = $probdir;
 while ( is_link ( "$epm_data/$d/+parent+" ) )
 {
-    $s = @readline ( "$epm_data/$d/+parent+" );
-    if ( @s === false )
+    $s = @readlink ( "$epm_data/$d/+parent+" );
+    if ( $s === false )
         ERROR ( "cannot read link $d/+parent+" );
     if ( ! preg_match
                ( '/^\.\.\/\.\.\/\.\.\/([^\.]+)$/',
@@ -2214,13 +2214,14 @@ function finish_run ( & $errors )
 // is given by the $upload argument.  Selects a template
 // with the `UPLOAD uploaded-file-name' condition.
 //
-// First calls load_file_caches.  Then checks the
-// upload and uploaded file for errors.  If there are
-// any, appends error messages to $errors and returns.
-// Treats uploaded file as the source file and computes
-// the destination file name by changing the uploaded
-// file name extension to the $upload_target_ext desig-
-// nated extension.  Then calls start_make_file.
+// First checks the upload and the uploaded file for
+// errors.  If there are any, appends error messages to
+// $errors and returns.
+//
+// Then calls start_make_file treating the uploaded file
+// name as the source file and computing the destination
+// file name by changing the uploaded file name exten-
+// sion to that designated by $upload_target_ext.
 //
 // Uploaded file name must match $epm_filename_re and
 // have an extension.  Uploaded file must not be larger
@@ -2232,8 +2233,6 @@ function process_upload
     global $epm_data, $is_epm_test,
            $upload_target_ext, $epm_upload_maxsize,
 	   $epm_filename_re;
-
-    load_file_caches();
 
     $errors_size = count ( $errors );
 
@@ -2267,7 +2266,7 @@ function process_upload
     }
     $text = $upload_target_ext[$ext];
     $tname = $base;
-    if ( $text != "" ) $tname = "$tname.$text";
+    if ( $text != "" ) $tname .= ".$text";
 
     $ferror = $upload['error'];
     if ( $ferror != 0 )
