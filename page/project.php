@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 30 00:59:22 EDT 2020
+    // Date:	Tue Mar 31 03:02:17 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -154,23 +154,23 @@
     //
     // Lastly, there is for the UID user the file:
     //
-    //	    users/UID/+indices+/current
+    //	    users/UID/+indices+/recent
     //
-    // that lists the indices which the user is current-
-    // ly interested in.  Its contents are lines of
-    // the forms:
+    // that lists the indices which the user is recently
+    // viewed.  Its contents are lines of the forms:
     //
-    //	    TIME PROJECT FILENAME
+    //	    TIME PROJECT BASENAME
     //
-    // indicating that the index file with the given
-    // FILENAME and PROJECT was viewed at the given
-    // TIME.  PROJECT may be '-' to indicate the index
-    // of the user's current problems, and FILENAME
-    // may be '-' to indicate the index of either the
-    // user's current problems or the PROJECT's current
-    // problems.  This file is sorted most recent entry
+    // indicating that the index file with the name
+    // BASENAME.index in PROJECT was viewed at the given
+    // TIME.  TIME is in %FT%T%z format, PROJECT may be
+    // '-' to indicate an index of the current user and
+    // NOT of a project, and BASENAME may be '-' to
+    // indicate the index is a list of all the problems
+    // in the PROJECT or of all the current user's prob-
+    // lems.  This file is sorted most recent entry
     // first, with at most one entry for each PROJECT-
-    // FILENAME pair.
+    // BASENAME pair.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -358,6 +358,76 @@
 	return $pmap;
     }
 
+    // Return the lines from:
+    //
+    //	    users/UID/+indices+/recent
+    //
+    // in the form of a list whose elements are
+    //
+    // 	    [TIME PROJECT BASENAME]
+    //
+    // The map is sorted most recent TIMEs first.
+    // PROJECT and/or BASENAME may be '-' as in
+    // the file.
+    //
+    function read_recent ()
+    {
+        global $epm_data;
+	$f = "users/$uid/+indices+/recent";
+	$c = @file_get_contents ( "$epm_data/$f" );
+	if ( $c === false ) return [];
+	$c = explode ( "\n", $c );
+	$map = [];
+	foreach ( $c as $line )
+	{
+	    $line = $trim ( $line );
+	    $line = preg_replace
+	        ( '/\h+/', ' ', $line );
+	    $items = explode ( ' ', $line );
+	    if ( count ( $items ) != 3 )
+	        ERROR ( "badly formatted line" .
+		        " '$line' in $f" );
+	    $key = "{$items[1]}:{$items[2]}";
+	    if ( isset ( $map[$key] ) )
+	        ERROR ( "line '$line' duplicates" .
+		        " $key in $f" );
+	    $map[$key] = $items[0];
+	}
+	arsort ( $map, SORT_STRING );
+	$list = [];
+	foreach ( $map as $key => $time )
+	{
+	    list ( $project, $basename ) =
+	        $explode ( ':', $key );
+	    $list[] = [$time, $project, $basename];
+	}
+	return $list;
+    }
+
+    // Given the result of read_recent, return an HTML
+    // option list.  In this the values are
+    // 'PROJECT:BASENAME'.
+    // 
+    function option_list ( $recents )
+    {
+	$r = '';
+        foreach ( $recents as $e )
+	{
+	    list ( $time, $project, $basename ) = $e;
+	    $value = "$project:$basename";
+	    if ( $project == '-' ) $project = 'Your';
+	    if ( $basename == '-' )
+	        $basename = 'Problems';
+	    else
+	        $basename = preg_replace
+		    ( '-', ' ', $basename );
+	    $r .= "<option value='$value'>"
+	        . "$project $basename $time"
+		. "</option>";
+	}
+	return $r;
+    }
+
 ?>
 
 <html>
@@ -475,6 +545,20 @@
     </td><td style='text-align:right'>
     $project_help</td>
     </tr>
+    </table>
+    <label>
+    <input type='radio' name='op' value='push'>
+    <h5>Push</h5>
+    </label>
+    <label>
+    <input type='radio' name='op' value='pull'>
+    <h5>Pull</h5>
+    </label>
+    <label>
+    <input type='radio' name='op' value='edit'>
+    <h5>Edit List</h5>
+    </label>
+    <br>
 EOT;
 
     if ( count ( $projects ) > 0 )
