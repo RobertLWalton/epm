@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 31 03:02:17 EDT 2020
+    // Date:	Tue Mar 31 16:08:38 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -558,33 +558,19 @@
     <input type='radio' name='op' value='edit'>
     <h5>Edit List</h5>
     </label>
+    <label>
+    <input type='radio' name='op' value='edit'>
+    <h5>Select List Elements</h5>
+    </label>
+    <label>
+    <input type='radio' name='op' value='edit'>
+    <h5>Edit Favorites</h5>
+    </label>
+    <label>
+    <input type='radio' name='op' value='edit'>
+    <h5>Select Favorites</h5>
+    </label>
     <br>
-EOT;
-
-    if ( count ( $projects ) > 0 )
-    {
-	echo "<tr><td></td><td>";
-	echo "<label>" .
-	     "<input type='submit'" .
-	     " name='goto_project'" .
-	     " value='Go To Projectm:'>";
-        echo "<select name='selected_project'" .
-	     " title='project to go to'>";
-	foreach ( $project as $value )
-	    echo "    <option value='$value'>" .
-	             "$value</option>";
-        echo "</select></label></td>";
-	echo "</tr>";
-    }
-    echo <<<EOT
-    </form>
-    <form action='problem.php' method='POST'
-          class='no-margin'>
-    <tr><td colspan='2'><h5>or Create New Project:<h5>
-    <input type="text" size="32" name="new_project"
-           placeholder="New Project Name" id="create">
-    </form>
-    </td></tr></table>
     </div>
 EOT;
 
