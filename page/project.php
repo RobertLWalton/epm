@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 31 16:08:38 EDT 2020
+    // Date:	Wed Apr  1 10:48:23 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -42,6 +42,14 @@
     // it descendents, including changing the +perm+
     // files.
     //
+    // In the following all TIMEs are in the %FT%T%z
+    // format, and all descriptions are any sequence
+    // of non-blank lines followed by a blank line or
+    // end of file.  Descriptions may NOT contain '<' or
+    // '>', but may may contain HTML symbol names of the
+    // form '&...;'.  The description are meant to be
+    // displayed in an HTML <p> paragraph.
+    //
     // An index is a NAME.index file in a directory:
     //
     //	    users/UID/+indices+
@@ -49,15 +57,17 @@
     // Such a file belongs to the UID user and can be
     // edited by the user.  The file begins with a
     // description of the index followed by a blank line
-    // followed by lines of the form `PROJECT PROBLEM'
+    // followed by lines of the form:
+    //
+    //	    TIME PROJECT PROBLEM
+    //
     // that specify a problem in a project.  Thus an
     // index is a list of problems.  If a problem is not
     // in a project, but is in the user's users/UID
-    // directory, PROJECT is `-'.  The description is
-    // any sequence of non-blank lines not containing
-    // '<' or '>', but which may contain HTML symbol
-    // names of the form '&...;'.  The description will
-    // be displayed in an HTML <p> paragraph.
+    // directory, PROJECT is `-'.  The TIME is the last
+    // time the index entry was used to push or pull
+    // the problem or perform a maintenance operation
+    // on the problem (e.g., change owner).
     //
     // For each project the directory:
     //
@@ -82,8 +92,8 @@
     //	    projects/PROJECT
     //
     // These are used to edit other indices, which is
-    // done by copying entries from one index to
-    // another.
+    // done by copying entries from one index to another
+    // (via an intermediary called the stack).
     //
     // The directory:
     //
@@ -92,11 +102,16 @@
     // holds files named UID.review which are reviews of
     // the problem by the UID user.  There can be at
     // most one review for each PROJECT, PROBLEM, UID
-    // triple.  A review file is just text that may NOT
-    // contain '<' or '>', but may contain &xxx; HTML
-    // symbols.  Each blank line introduces a new para-
-    // graph.  Review files will be displayed by adding
-    // <p> before each paragraph.
+    // triple.  A review file is just a sequence of
+    // paragraphs separated by blank lines.  There are
+    // two kinds of paragraphs.  Non-indented paragraphs
+    // are just like descriptions and are displayed as
+    // <p> paragraphs.  Indented paragraphs are display-
+    // ed inside <pre></pre> so they are displayed
+    // literally in monospace font.  In addition, before
+    // display any tabs are replaced by exactly 8
+    // spaces (so tabs should only be used in a sequence
+    // of tabs at the very beginning of a line).
     //
     // A review file may be created by its UID user
     // after the user has solved the PROBLEM, if the
@@ -109,17 +124,24 @@
     // may be created in a project by any user with
     // `push' permission for the project.  When a
     // problem is created, the user that pushed it
-    // becomes the owner of the problem.  Only an owner
-    // of a problem may make subsequent pushes after the
-    // problem has been created.
+    // becomes the sole owner of the problem.  Only an
+    // owner of a problem (or of the containing project
+    // or of all projects) may make subsequent pushes
+    // after the problem has been created.
+    //
+    // When a problem is pushed, only uploaded files
+    // and a few made files, such as .ftest and .pdf
+    // files, are copied to the problem's project
+    // subdirectory.
     //
     // Each project problem has its own .git repository
     // using the directory
     //
     //	    projects/PROJECT/PROBLEM/.git
     //
-    // Only uploaded files and .ftest files are included
-    // in the repository.
+    // When the problem is pushed, this directory is
+    // updated.  Versions in the directory may be tagged
+    // by the problem owner.
     //
     // The following file usage log files are written
     // whenever a file or immediate subdirectory of the
@@ -139,7 +161,7 @@
     //
     //		TIME UID FILENAME
     //
-    // where TIME is in %FT%T%z format, UID is the ID of
+    // where TIME is the time of usage, UID is the ID of
     // the using user, and FILENAME is the name of the
     // file or subdirectory used.  These logs may be
     // purged when they get large of older entries that
@@ -152,25 +174,34 @@
     // symbolic link to the file and in the directory
     // containing the index file itself.
     //
-    // Lastly, there is for the UID user the file:
+    // For each user with given UID there is the file:
     //
-    //	    users/UID/+indices+/recent
+    //	    users/UID/+indices+/favorites
     //
-    // that lists the indices which the user is recently
-    // viewed.  Its contents are lines of the forms:
-    //
+    // that lists the user's favorite indices.  Its contents
+    // are lines of the forms:
+    /
     //	    TIME PROJECT BASENAME
     //
     // indicating that the index file with the name
     // BASENAME.index in PROJECT was viewed at the given
-    // TIME.  TIME is in %FT%T%z format, PROJECT may be
-    // '-' to indicate an index of the current user and
-    // NOT of a project, and BASENAME may be '-' to
-    // indicate the index is a list of all the problems
-    // in the PROJECT or of all the current user's prob-
-    // lems.  This file is sorted most recent entry
-    // first, with at most one entry for each PROJECT-
-    // BASENAME pair.
+    // TIME.  PROJECT may be '-' to indicate an index of
+    // the current user and NOT of a project, and BASENAME
+    // may be '-' to indicate the index is a list of all
+    // the problems in the PROJECT or of all the UID
+    // user's problems.  The user may edit this in the
+    // same manner as the user edits lists.
+    //
+    // Lastly there are two stacks used in editing:
+    //
+    //	    users/UID/+indices+/fstack
+    //	    users/UID/+indices+/istack
+    //
+    // Fstack is the favorites stack and contains lines
+    // copied from or to be copied to the favorites
+    // file.  Istack is the index stack and contains
+    // non-description lines copied from or to be copied
+    // to indices.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -431,6 +462,7 @@
 ?>
 
 <html>
+<head>
 <style>
     @media screen and ( max-width: 1365px ) {
 	:root {
@@ -504,6 +536,23 @@
 
 </style>
 
+<script>
+
+    // The following is reset by the page loaded into
+    // the iframe by its executing
+    //
+    //		Window.parent.op_callback = ...
+    //
+    var op_callback =
+	function ( page )
+	{
+	    var iframe = getElementById ( 'iframe' );
+	    iframe.src = page;
+	};
+
+</script>
+</head>
+
 <?php 
     if ( count ( $errors ) > 0 )
     {
@@ -555,23 +604,29 @@
     <h5>Pull</h5>
     </label>
     <label>
-    <input type='radio' name='op' value='edit'>
+    <input type='radio' name='op' value='edit-list'>
     <h5>Edit List</h5>
     </label>
     <label>
-    <input type='radio' name='op' value='edit'>
+    <input type='radio' name='op'
+           value='select-list-elements'>
     <h5>Select List Elements</h5>
     </label>
     <label>
-    <input type='radio' name='op' value='edit'>
+    <input type='radio' name='op'
+           value='edit-favorites'>
     <h5>Edit Favorites</h5>
     </label>
     <label>
-    <input type='radio' name='op' value='edit'>
+    <input type='radio' name='op'
+           value='select-favorites'>
     <h5>Select Favorites</h5>
     </label>
     <br>
     </div>
+
+    <iframe hidden id='iframe'>
+    </iframe>
 EOT;
 
 ?>
