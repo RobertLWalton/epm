@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Mar 24 06:19:41 EDT 2020
+    // Date:	Wed Apr  1 15:01:02 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -279,11 +279,11 @@
 	background-color: #C0FFC0;
 	clear: both;
     }
-    div.file {
-	background-color: #C0FFC0;
-	clear: both;
+    div.file-name {
+	background-color: #B3E6FF;
     }
-    div.indented {
+    div.file-contents {
+	background-color: #C0FFC0;
 	margin-left: 20px;
     }
 </style>
@@ -485,9 +485,9 @@ EOT;
 			"\n</pre><pre>",
 			$fcontents );
 	    echo <<<EOT
-	    <div hidden id='$id' class='file'>
+	    <div hidden id='$id' class='file-name'>
 	    <h5>$fname:</h5><br>
-	    <div class='indented'>
+	    <div class='file-contents'>
 	    <pre>$fcontents</pre>
 	    </div></div>
 EOT;

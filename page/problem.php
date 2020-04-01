@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  1 14:37:38 EDT 2020
+    // Date:	Wed Apr  1 15:04:09 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -1034,6 +1034,10 @@ EOT;
 
         echo <<<EOT
 	<div class='problem_display'>
+	<form action='problem.php'
+	      enctype='multipart/form-data'
+	      method='POST'
+	      class='no-margin'>
 	<table style='width:100%'>
 	<tr>
 	<td>
@@ -1047,15 +1051,23 @@ EOT;
 		</button>
 	<h5>Current Problem Files
 	    (most recent first):</h5>
+	</td><td><label>
+	<input type="hidden" name="MAX_FILE_SIZE"
+	       value="$epm_upload_maxsize">
+	<input type="submit" name="upload"
+	       value="Upload File:">
+	<input type="file" name="uploaded_file"
+	       title="file to upload">
+	</label>
+	<pre>    </pre>
+	<input type="submit" name="execute_deletes"
+	       value=
+	         "Delete Marked (Over-Struck) Files">
 	</td><td style='text-align:right'>
 	$current_problem_files_help</td>
 	</tr>
 	</table>
 	<div id='problems_body'>
-	<form action='problem.php'
-	      enctype='multipart/form-data'
-	      method='POST'
-	      class='no-margin'>
 	<input id='delete_files'
 	       name='delete_files' value=''
 	       type='hidden'>
@@ -1169,24 +1181,7 @@ EOT;
 		 "<pre>$fcomment</pre></td>";
 	    echo "</tr>";
 	}
-	echo "</table>";
-
-        echo <<<EOT
-
-	<label>
-	<input type="hidden" name="MAX_FILE_SIZE"
-	       value="$epm_upload_maxsize">
-	<input type="submit" name="upload"
-	       value="Upload File:">
-	<input type="file" name="uploaded_file"
-	       title="file to upload">
-	</label>
-	<pre>          </pre>
-	<input type="submit" name="execute_deletes"
-	       value=
-	         "Delete Marked (Over-Struck) Files">
-	</form></div></div>
-EOT;
+	echo "</table></form></div></div>";
 
 	if ( count ( $display_list ) > 0 )
 	{
