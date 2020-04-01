@@ -2,10 +2,13 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  1 10:48:23 EDT 2020
+    // Date:	Wed Apr  1 16:42:05 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
+
+    // Directories and Files
+    // ----------- --- -----
 
     // Each project has a directory:
     //
@@ -180,7 +183,7 @@
     //
     // that lists the user's favorite indices.  Its contents
     // are lines of the forms:
-    /
+    //
     //	    TIME PROJECT BASENAME
     //
     // indicating that the index file with the name
@@ -202,6 +205,70 @@
     // file.  Istack is the index stack and contains
     // non-description lines copied from or to be copied
     // to indices.
+
+    // Session Data
+    // ------- ----
+
+    // Session data is in EPM_PROJECT as follows:
+    //
+    //     EPM_PROJECT ID
+    //	   	32 hex digit random number used to
+    //		verify POSTs to this page.
+    //
+    //     EPM_PROJECT OP
+    //		One of:
+    //		    'push'
+    //		    'pull'
+    //		    'edit-list'
+    //		    'edit-favorites'
+    //
+    //	   EPM_PROJECT LIST
+    //		['PROJECT', 'LIST']
+    //		Names current list for operations that
+    //		need it.
+
+    // XHTTP Operations
+    // ----- ----------
+    //
+    //     These are operations on the current list or
+    //     favorites and the current stack.  They are
+    //     performed in the page by javascript and
+    //     performed by the server when xhttp posts
+    //     giving these operations are received.  The
+    //     post data is a sequence of lines each con-
+    //     taining one of these operations.
+    //
+    //	   In the following # is a row number, or row
+    //	   index, where 0 is the first (topmost) row.
+    //
+    //		LSM #	Move row # from list to top of
+    //			stack.
+    //		LSC #	Copy row # from list to top of
+    //			stack.
+    //		SLM #	Move top of stack to list row #.
+    //		SLC #	Copy top of stack to list row #.
+    //		MU #	Move list row # to top of list.
+    //		MD #	Move list row # to bottom of
+    //			list.
+    //
+    //	    The data POSTed by an xhttp request consist
+    //	    of the following name/value pairs:
+    //
+    //		Name	Value
+    //
+    //		id	EPM_PROJECT ID value.
+    //		count	Number of first operation.
+    //		ops	Operations, one per line, in a
+    //			string.
+    //
+    //	    The operations are numbered 0, 1, ... from
+    //	    the time of the last page reload.  The xhttp
+    //	    response is `done #' where # is the number of
+    //	    the last operation received and processed.
+    //	    The xhttp code can buffer operations not yet
+    //	    processed and will wait for the last opera-
+    //	    tion to be processed before the page is un-
+    //	    loaded or hidden.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
