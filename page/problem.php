@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 29 07:24:26 EDT 2020
+    // Date:	Wed Apr  1 14:37:38 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -619,7 +619,7 @@
 	background-color: #C0FFC0;
     }
     div.work_display {
-	background-color: #F2D9D9;
+	background-color: #FFCCFF;
     }
     div.file-name {
 	background-color: #B3E6FF;
@@ -861,6 +861,169 @@ EOT;
 
     if ( isset ( $probdir ) )
     {
+	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
+	{
+	    $workdir = $_SESSION['EPM_WORK']['DIR'];
+	    $result = $_SESSION['EPM_WORK']['RESULT'];
+	    $kept = $_SESSION['EPM_WORK']['KEPT'];
+	    if (    is_array ( $result )
+	         && $result == ['D',0] )
+	        $r = 'commands succeeded: ';
+	    elseif ( $result === true )
+	        $r = 'commands still running';
+		    // Should never happen as 'update'
+		    // POST exits above.
+	    else
+	        $r = 'commands failed: ';
+	    if ( $result === true )
+	        /* Do Nothing */;
+	    elseif ( count ( $kept ) == 1 )
+	        $r .= '1 file kept';
+	    else
+		$r .= count ( $kept ) . ' files kept';
+	    echo "<div class='command_display'>";
+	    get_commands_display ( $display );
+	    $commands_help =
+	        HELP ( 'problem-commands' );
+	    echo <<<EOT
+	    <table style='width:100%'><tr>
+	    <td>
+	    <button type='button'
+	    	    id='commands_button'
+		    onclick='TOGGLE_BODY
+			 ("commands",
+			  "Commands Last Executed")'
+		    title='Show Commands Last Executed'>
+		    <pre id='commands_mark'>&darr;</pre>
+		    </button>
+	    <h5>Commands Last Executed:</h5>&nbsp;
+	    <pre>($r)</pre>
+	    </td><td style='text-align:right'>
+	    $commands_help</td>
+	    </tr></table>
+	    <div id='commands_body' hidden>
+EOT;
+	    echo "<div class='indented'>";
+	    echo $display;
+	    echo "</div>";
+	    if ( count ( $kept ) > 0 )
+	    {
+		echo "<h5>Kept:</h5>";
+		echo "<div class='indented'>";
+		foreach ( $kept as $e )
+		    echo "<pre>$e</pre><br>";
+		echo "<br></div>";
+	    }
+	    echo "</div>";
+
+	    $working_files =
+	        problem_file_names( $workdir );
+
+	    if ( count ( $working_files ) > 0 )
+	    {
+		$working_help = HELP ( 'problem-working' );
+		echo <<<EOT
+		<div class='work_display'>
+		<table style='width:100%'><tr>
+		<td>
+		<button type='button'
+		    id='working_button'
+		    onclick='TOGGLE_BODY
+			 ("working",
+			  "Current Working Files")'
+		    title='Show Current Working Files'>
+		    <pre id='working_mark'>&darr;</pre>
+		    </button>
+		<h5>Working Files of Last Executed
+		    Commands
+		    (most recent first):</h5>
+	        </td><td style='text-align:right'>
+		$working_help</td>
+		</tr></table>
+		<div id='working_body' hidden>
+		<table style='display:block'>
+EOT;
+
+		foreach ( $working_files as $fname )
+		{
+		    $f = "$epm_data/$workdir/$fname";
+		    if ( is_link ( $f ) )
+			continue;
+
+		    ++ $count;
+		    echo "<tr>";
+		    echo "<td" .
+		         " style='text-align:right'>";
+		    list ( $fext, $ftype, $fdisplay,
+		           $fshow, $fcomment )
+			= file_info ( $workdir, $fname,
+			              $count,
+				      $display_list );
+
+		    if ( $fshow )
+		    {
+			$show_map[$fname] =
+			    "show$count";
+			$fpage =
+			    $display_file_map[$ftype];
+			echo <<<EOT
+			    <button type='button'
+			       id='show$count'
+			       title=
+			         'Show $fname at Right'
+			       onclick='NEW_WINDOW
+				  ("$fpage",
+				   "+work+/$fname")'>
+			     <pre id='file$count'
+			         >$fname</pre>
+			     </button></td>
+EOT;
+		    }
+		    else
+		    {
+			unset ( $show_map[$fname] );
+			    // $fname is a working file
+			    // so if an older version
+			    // is a current file we
+			    // do not want to show the
+			    // older version.
+			echo <<<EOT
+			    <pre id='file$count'
+			        >$fname</pre>
+			    </td>
+EOT;
+		    }
+
+		    if ( $fdisplay )
+		    {
+			$show_map[$fname] =
+			    "file{$count}_button";
+			echo <<<EOT
+			    <td><button type='button'
+			         id=
+				   'file{$count}_button'
+				 onclick='TOGGLE_BODY
+				     ("file$count",
+				      "$fname Below")'
+				 title=
+				   'Show $fname Below'>
+			    <pre id='file{$count}_mark'
+			        >&darr;</pre>
+			    </button></td>
+EOT;
+		    }
+		    else
+			echo "<td></td>";
+
+		    echo "<td colspan='100'>" .
+			 "<pre>$fcomment</pre></td>";
+		    echo "</tr>";
+		}
+		echo "</table></div>";
+		echo "</div>";
+	    }
+	}
+
 	$current_problem_files_help =
 	    HELP ( 'current-problem-files' );
 	$show_map = [];
@@ -1024,169 +1187,6 @@ EOT;
 	         "Delete Marked (Over-Struck) Files">
 	</form></div></div>
 EOT;
-
-	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
-	{
-	    $workdir = $_SESSION['EPM_WORK']['DIR'];
-	    $result = $_SESSION['EPM_WORK']['RESULT'];
-	    $kept = $_SESSION['EPM_WORK']['KEPT'];
-	    if (    is_array ( $result )
-	         && $result == ['D',0] )
-	        $r = 'commands succeeded: ';
-	    elseif ( $result === true )
-	        $r = 'commands still running';
-		    // Should never happen as 'update'
-		    // POST exits above.
-	    else
-	        $r = 'commands failed: ';
-	    if ( $result === true )
-	        /* Do Nothing */;
-	    elseif ( count ( $kept ) == 1 )
-	        $r .= '1 file kept';
-	    else
-		$r .= count ( $kept ) . ' files kept';
-	    echo "<div class='command_display'>";
-	    get_commands_display ( $display );
-	    $commands_help =
-	        HELP ( 'problem-commands' );
-	    echo <<<EOT
-	    <table style='width:100%'><tr>
-	    <td>
-	    <button type='button'
-	    	    id='commands_button'
-		    onclick='TOGGLE_BODY
-			 ("commands",
-			  "Commands Last Executed")'
-		    title='Show Commands Last Executed'>
-		    <pre id='commands_mark'>&darr;</pre>
-		    </button>
-	    <h5>Commands Last Executed:</h5>&nbsp;
-	    <pre>($r)</pre>
-	    </td><td style='text-align:right'>
-	    $commands_help</td>
-	    </tr></table>
-	    <div id='commands_body' hidden>
-EOT;
-	    echo "<div class='indented'>";
-	    echo $display;
-	    echo "</div>";
-	    if ( count ( $kept ) > 0 )
-	    {
-		echo "<h5>Kept:</h5>";
-		echo "<div class='indented'>";
-		foreach ( $kept as $e )
-		    echo "<pre>$e</pre><br>";
-		echo "<br></div>";
-	    }
-	    echo "</div>";
-
-	    $working_files =
-	        problem_file_names( $workdir );
-
-	    if ( count ( $working_files ) > 0 )
-	    {
-		$working_help = HELP ( 'problem-working' );
-		echo <<<EOT
-		<div class='work_display'>
-		<table style='width:100%'><tr>
-		<td>
-		<button type='button'
-		    id='working_button'
-		    onclick='TOGGLE_BODY
-			 ("working",
-			  "Current Working Files")'
-		    title='Show Current Working Files'>
-		    <pre id='working_mark'>&darr;</pre>
-		    </button>
-		<h5>Working Files of Last Executed
-		    Commands
-		    (most recent first):</h5>
-	        </td><td style='text-align:right'>
-		$working_help</td>
-		</tr></table>
-		<div id='working_body' hidden>
-		<table style='display:block'>
-EOT;
-
-		foreach ( $working_files as $fname )
-		{
-		    $f = "$epm_data/$workdir/$fname";
-		    if ( is_link ( $f ) )
-			continue;
-
-		    ++ $count;
-		    echo "<tr>";
-		    echo "<td" .
-		         " style='text-align:right'>";
-		    list ( $fext, $ftype, $fdisplay,
-		           $fshow, $fcomment )
-			= file_info ( $workdir, $fname,
-			              $count,
-				      $display_list );
-
-		    if ( $fshow )
-		    {
-			$show_map[$fname] =
-			    "show$count";
-			$fpage =
-			    $display_file_map[$ftype];
-			echo <<<EOT
-			    <button type='button'
-			       id='show$count'
-			       title=
-			         'Show $fname at Right'
-			       onclick='NEW_WINDOW
-				  ("$fpage",
-				   "+work+/$fname")'>
-			     <pre id='file$count'
-			         >$fname</pre>
-			     </button></td>
-EOT;
-		    }
-		    else
-		    {
-			unset ( $show_map[$fname] );
-			    // $fname is a working file
-			    // so if an older version
-			    // is a current file we
-			    // do not want to show the
-			    // older version.
-			echo <<<EOT
-			    <pre id='file$count'
-			        >$fname</pre>
-			    </td>
-EOT;
-		    }
-
-		    if ( $fdisplay )
-		    {
-			$show_map[$fname] =
-			    "file{$count}_button";
-			echo <<<EOT
-			    <td><button type='button'
-			         id=
-				   'file{$count}_button'
-				 onclick='TOGGLE_BODY
-				     ("file$count",
-				      "$fname Below")'
-				 title=
-				   'Show $fname Below'>
-			    <pre id='file{$count}_mark'
-			        >&darr;</pre>
-			    </button></td>
-EOT;
-		    }
-		    else
-			echo "<td></td>";
-
-		    echo "<td colspan='100'>" .
-			 "<pre>$fcomment</pre></td>";
-		    echo "</tr>";
-		}
-		echo "</table></div>";
-		echo "</div>";
-	    }
-	}
 
 	if ( count ( $display_list ) > 0 )
 	{
