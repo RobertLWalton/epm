@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  1 16:42:05 EDT 2020
+    // Date:	Wed Apr  1 22:12:11 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -282,7 +282,7 @@
 	exit;
     }
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -458,17 +458,16 @@
 
     // Return the lines from:
     //
-    //	    users/UID/+indices+/recent
+    //	    users/UID/+indices+/favorits
     //
     // in the form of a list whose elements are
     //
     // 	    [TIME PROJECT BASENAME]
     //
-    // The map is sorted most recent TIMEs first.
     // PROJECT and/or BASENAME may be '-' as in
     // the file.
     //
-    function read_recent ()
+    function read_favorites ()
     {
         global $epm_data;
 	$f = "users/$uid/+indices+/recent";
@@ -476,6 +475,7 @@
 	if ( $c === false ) return [];
 	$c = explode ( "\n", $c );
 	$map = [];
+	$list = [];
 	foreach ( $c as $line )
 	{
 	    $line = $trim ( $line );
@@ -489,33 +489,32 @@
 	    if ( isset ( $map[$key] ) )
 	        ERROR ( "line '$line' duplicates" .
 		        " $key in $f" );
-	    $map[$key] = $items[0];
-	}
-	arsort ( $map, SORT_STRING );
-	$list = [];
-	foreach ( $map as $key => $time )
-	{
-	    list ( $project, $basename ) =
-	        $explode ( ':', $key );
-	    $list[] = [$time, $project, $basename];
+	    $map[$key] = true;
+	    $list[] = $items;
 	}
 	return $list;
     }
 
-    // Given the result of read_recent, return an HTML
-    // option list.  In this the values are
-    // 'PROJECT:BASENAME'.
+    // Given the result of read_favorites, return an
+    // HTML option list.  In this the values are
+    // 'PROJECT:BASENAME', with PROJECT and BASENAME
+    // taken from the file lines (they may be '-').
+    // If no option has the value '-:-', add an option
+    // with that value to the beginning of the list.
     // 
-    function option_list ( $recents )
+    function option_list ( $favorites )
     {
 	$r = '';
-        foreach ( $recents as $e )
+	$found = false;
+        foreach ( $favorites as $e )
 	{
 	    list ( $time, $project, $basename ) = $e;
 	    $value = "$project:$basename";
-	    if ( $project == '-' ) $project = 'Your';
+	    if ( $value == '-:-' ) $found = true;
+	    if ( $project == '-' )
+	        $project = '<i>Your</i>';
 	    if ( $basename == '-' )
-	        $basename = 'Problems';
+	        $basename = '<i>Problems</i>';
 	    else
 	        $basename = preg_replace
 		    ( '-', ' ', $basename );
@@ -523,6 +522,10 @@
 	        . "$project $basename $time"
 		. "</option>";
 	}
+	if ( ! $found )
+	    $r = "<option value='-:-'>"
+	       . "<i>Your</i> <i>Problems</i>"
+	       . "</option>". $r;
 	return $r;
     }
 
@@ -641,6 +644,9 @@
     }
 
     $project_help = HELP ( 'project-page' );
+    $options = "<option value='FAVORITES'>"
+             . "<i>Favorites</i></option>"
+	     . option_list ( read_favorites() );
     echo <<<EOT
     <div class='manage'>
     <form method='POST'
@@ -663,37 +669,27 @@
     </tr>
     </table>
     <label>
-    <input type='radio' name='op' value='push'>
+    <input type='submit' name='op' value='push'>
     <h5>Push</h5>
     </label>
+    <pre>   </pre>
     <label>
-    <input type='radio' name='op' value='pull'>
+    <input type='submit' name='op' value='pull'>
     <h5>Pull</h5>
     </label>
+    <pre>   </pre>
     <label>
-    <input type='radio' name='op' value='edit-list'>
+    <input type='submit' name='op' value='edit-list'>
     <h5>Edit List</h5>
     </label>
+    <pre>   </pre>
     <label>
-    <input type='radio' name='op'
-           value='select-list-elements'>
-    <h5>Select List Elements</h5>
+    <h5>Selected List</h5>
+    <select name='selected-list'>
+    $options
+    </select>
     </label>
-    <label>
-    <input type='radio' name='op'
-           value='edit-favorites'>
-    <h5>Edit Favorites</h5>
-    </label>
-    <label>
-    <input type='radio' name='op'
-           value='select-favorites'>
-    <h5>Select Favorites</h5>
-    </label>
-    <br>
     </div>
-
-    <iframe hidden id='iframe'>
-    </iframe>
 EOT;
 
 ?>
