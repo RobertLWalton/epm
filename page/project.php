@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  2 03:18:09 EDT 2020
+    // Date:	Thu Apr  2 10:06:38 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -477,74 +477,70 @@
 
     // Return the lines from:
     //
-    //	    users/UID/+indices+/favorits
+    //	    users/UID/+indices+/favorites
     //
-    // in the form of a list whose elements are
+    // in the form of a string whose lines have the form
     //
-    // 	    [TIME PROJECT BASENAME]
+    //	    <option value='PROJECT:BASENAME'>
+    //      $project $basename TIME
+    //      </option>
     //
-    // PROJECT and/or BASENAME may be '-' as in
-    // the file.
+    // If PROJECT in the file is '-' then `$project' is
+    // `<i>Your</i>'.  If BASENAME in the file is `-'
+    // $basename is `<i>Problems</i>'.  If there is
+    // no file line `- - TIME', then such an entry is
+    // added to the beginning with the current time as
+    // TIME.
     //
     function read_favorites ()
     {
         global $epm_data;
-	$f = "users/$uid/+indices+/recent";
-	$c = @file_get_contents ( "$epm_data/$f" );
-	if ( $c === false ) return [];
-	$c = explode ( "\n", $c );
-	$map = [];
-	$list = [];
-	foreach ( $c as $line )
-	{
-	    $line = $trim ( $line );
-	    $line = preg_replace
-	        ( '/\h+/', ' ', $line );
-	    $items = explode ( ' ', $line );
-	    if ( count ( $items ) != 3 )
-	        ERROR ( "badly formatted line" .
-		        " '$line' in $f" );
-	    $key = "{$items[1]}:{$items[2]}";
-	    if ( isset ( $map[$key] ) )
-	        ERROR ( "line '$line' duplicates" .
-		        " $key in $f" );
-	    $map[$key] = true;
-	    $list[] = $items;
-	}
-	return $list;
-    }
-
-    // Given the result of read_favorites, return an
-    // HTML option list.  In this the values are
-    // 'PROJECT:BASENAME', with PROJECT and BASENAME
-    // taken from the file lines (they may be '-').
-    // If no option has the value '-:-', add an option
-    // with that value to the beginning of the list.
-    // 
-    function option_list ( $favorites )
-    {
 	$r = '';
-	$found = false;
-        foreach ( $favorites as $e )
+	$f = "users/$uid/+indices+/faviorites";
+	$c = @file_get_contents ( "$epm_data/$f" );
+	if ( $c !== false )
 	{
-	    list ( $time, $project, $basename ) = $e;
-	    $value = "$project:$basename";
-	    if ( $value == '-:-' ) $found = true;
-	    if ( $project == '-' )
-	        $project = '<i>Your</i>';
-	    if ( $basename == '-' )
-	        $basename = '<i>Problems</i>';
-	    else
-	        $basename = preg_replace
-		    ( '-', ' ', $basename );
-	    $r .= "<option value='$value'>"
-	        . "$project $basename $time"
-		. "</option>";
+	    $c = explode ( "\n", $c );
+	    $map = [];
+	    $list = [];
+	    foreach ( $c as $line )
+	    {
+		$line = $trim ( $line );
+		$line = preg_replace
+		    ( '/\h+/', ' ', $line );
+		$items = explode ( ' ', $line );
+		if ( count ( $items ) != 3 )
+		    ERROR ( "badly formatted line" .
+			    " '$line' in $f" );
+		list ( $time, $project, $basename ) =
+		    $items;
+		$key = "$project:$basename";
+		if ( isset ( $map[$key] ) )
+		    ERROR ( "line '$line' duplicates" .
+			    " line '{$map[$key]}' in" .
+			    " $f" );
+		$map[$key] = $line;
+		if ( $project == '-' )
+		    $project = '<i>Your</i>';
+		if ( $basename == '-' )
+		    $basename = '<i>Problems</i>';
+		else
+		    $basename = preg_replace
+			( '-', ' ', $basename );
+		$time = substr ( $time, 0, 10 );
+		$r .= "<option value='$value'>"
+		    . "$project $basename $time"
+		    . "</option>";
+
+	    }
 	}
-	if ( ! $found )
+	if ( ! isset ( $map['-:-'] ) )
+	{
+	    $time = strftime ( '%F' );
 	    $r = "<option value='-:-'>"
-	       . "<i>Your</i> <i>Problems</i>"
+	       . "<i>Your</i> <i>Problems</i> $time"
 	       . "</option>". $r;
+	}
 	return $r;
     }
 
@@ -665,7 +661,7 @@
     $project_help = HELP ( 'project-page' );
     $options = "<option value='FAVORITES'>"
              . "<i>Favorites</i></option>"
-	     . option_list ( read_favorites() );
+	     . read_favorites();
     echo <<<EOT
     <div class='manage'>
     <form>
