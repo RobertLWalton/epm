@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  1 15:04:09 EDT 2020
+    // Date:	Thu Apr  2 04:52:45 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -784,78 +784,74 @@
     $problem_page_help = HELP ( 'problem-page' );
     echo <<<EOT
     <div class='manage'>
-    <form action='problem.php' method='POST'
-          style='margin:0 0 1vh 0'>
+    <form method='GET'>
     <table style='width:100%'>
     <tr>
     <td>
     <label>
     <h5>User:</h5> <input type='submit' value='$email'
 		    formaction='user.php'
-		    formmethod='GET'
                     title='click to see user profile'>
     </label>
     </td>
     <td>
-    <h5>Current Problem:</h5>&nbsp;
-    <pre class='problem'>$current_problem</pre></b>
-    </td>
-    <td>
+    <h5>Go To:</h5>
 EOT;
     if ( isset ( $problem ) )
-        echo "<button type='submit'" .
-	     " name='delete_problem'" .
-	     " value='$problem'>" .
-	     "Delete Current Problem</button>";
+        echo <<<EOT
+	<button type='submit'
+		formaction='run.php'>
+		Run Page</button>
+	<pre>  </pre>
+	<button type='submit'
+		formaction='option.php'>
+		Option Page</button>
+	<pre>  </pre>
+EOT;
     echo <<<EOT
+    <button type='submit'
+	    formaction='project.php'>
+	    Project Page</button>
     </td><td style='text-align:right'>
     $problem_page_help</td>
-    </tr>
+    </tr></table></form>
+    <form action='problem.php' method='POST'>
+    <h5>Current Problem:</h5>&nbsp;
+    <pre class='problem'>$current_problem</pre></b>
+EOT;
+    if ( isset ( $problem ) )
+        echo <<<EOT
+	<button type='submit'
+	        name='delete_problem'
+	        value='$problem'>
+	Delete</button>
 EOT;
 
     if ( count ( $problems ) > 0 )
     {
-	echo "<tr><td></td><td>";
-	echo "<label>" .
-	     "<input type='submit'" .
-	     " name='goto_problem'" .
-	     " value='Go To Problem:'>";
-        echo "<select name='selected_problem'" .
-	     " title='problem to go to'>";
+	$options = '';
 	foreach ( $problems as $value )
-	    echo "    <option value='$value'>" .
-	             "$value</option>";
-        echo "</select></label></td>";
-	if ( isset ( $problem ) )
-	    echo <<<EOT
-	         <td><h5>Go To:</h5>
-		 <button type='submit'
-			 formaction='run.php'
-			 formmethod='GET'>
-			 Run Page</button>
-		 <pre>  </pre>
-	         <button type='submit'
-			formaction='option.php'
-			formmethod='GET'>
-			Option Page</button>
-		 <pre>  </pre>
-	         <button type='submit'
-			formaction='project.php'
-			formmethod='GET'>
-			Project Page</button>
-		 </td>
+	    $options .= "<option value='$value'>" .
+		        "$value</option>";
+	echo <<<EOT
+	<pre>   </pre>
+	<label>
+	<input type='submit'
+	       name='goto_problem'
+	       value='Go To Problem:'>
+        <select name='selected_problem'
+	        title='problem to go to'>
+	$options
+        </select></label>
 EOT;
-	echo "</tr>";
     }
     echo <<<EOT
     </form>
-    <form action='problem.php' method='POST'
-          class='no-margin'>
-    <tr><td colspan='2'><h5>or Create New Problem:<h5>
+    <form action='problem.php' method='POST'>
+    <pre>    </pre><h5>or Create New Problem:<h5>
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name" id="create">
     </form>
-    </td></tr></table>
     </div>
 EOT;
 
