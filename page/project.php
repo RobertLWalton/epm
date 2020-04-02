@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  2 12:54:09 EDT 2020
+    // Date:	Thu Apr  2 16:07:23 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -440,9 +440,9 @@
     // problem is not descended from a project.  Sort
     // the map by problems (keys) in natural order.
     //
-    function get_problems ()
+    function read_problems ()
     {
-	global $epm_data, $uid;
+	global $epm_data, $uid, $epm_name_re;
 
 	$pmap = [];
 	$f = "users/$uid";
@@ -473,6 +473,59 @@
 	}
 	ksort ( $pmap, SORT_NATURAL );
 	return $pmap;
+    }
+
+    // Given the map produced by read_problems, return
+    // the rows of a table for pushing problems as a
+    // string.  The string has one segment for each
+    //
+    //		PROBLEM => PROJECT
+    //
+    // mapping element, in the same order as these
+    // elements are in the map.  If PROJECT is ''
+    // the parent is unknown and the segment form is
+    //
+    //	   <tr><td><input type='checkbox'
+    //			  name='check$c'
+    //			  value='PROBLEM'
+    //			  onclick='PUSH(this)'>
+    //         </td><td>PROBLEM</td></tr>
+    //
+    // and if PROJECT is NOT '' the segment form is
+    //
+    //	   <tr><td><input type='checkbox'
+    //			  name='check$c'
+    //			  value='PROBLEM'>
+    //         </td><td>PROBLEM &rAarr; PROJECT
+    //         </td></tr>
+    //
+    // $c is a counter that counts the rows output.
+    //
+    function problems_to_push_rows ( $map )
+    {
+	$r = '';
+	$c = -1;
+        foreach ( $map as $problem => $project )
+	{
+	    $c += 1;
+	    if ( $project == '' )
+	        $r .= <<<EOT
+		<tr><td><input type='checkbox'
+		               name='check$c'
+			       value='$problem'
+			       onclick='PUSH(this)'>
+		    </td><td>$problem</td></tr>
+EOT;
+	    else
+	        $r .= <<<EOT
+		<tr><td><input type='checkbox'
+		               name='check$c'
+			       value='$problem'>
+		    </td><td>$problem &rArr;
+		             $probject</td></tr>
+EOT;
+	}
+	return $r;
     }
 
     // Return the lines from:
@@ -530,7 +583,7 @@
     //
     //	    [TIME PROJECT BASENAME]
     //
-    // return a string whose lines have the form
+    // return a string whose segments have the form
     //
     //	    <option value='PROJECT:BASENAME'>
     //      $project $basename $time
@@ -542,7 +595,7 @@
     // the first 10 characters of TIME (i.e., the day,
     // excluding the time of day).
     //
-    function list_to_options ( $list )
+    function favorites_to_options ( $list )
     {
 	$r = '';
 	foreach ( $list as $e )
@@ -562,6 +615,25 @@
 		. "</option>";
 	}
 	return $r;
+    }
+
+    if ( $method == 'POST' )
+    {
+        if ( isset ( $_POST['cancel'] ) )
+	{
+	    $op = NULL;
+	    $data['OP'] = $op;
+	}
+        elseif ( isset ( $_POST['op'] ) )
+	{
+	    $op = $_POST['op'];
+	    $data['OP'] = $op;
+	    if ( isset ( $_POST['selected-list'] ) )
+	    {
+		$list = $_POST['selected-list'];
+		$data['LIST'] = $list;
+	    }
+	}
     }
 
 ?>
@@ -641,21 +713,6 @@
 
 </style>
 
-<script>
-
-    // The following is reset by the page loaded into
-    // the iframe by its executing
-    //
-    //		Window.parent.op_callback = ...
-    //
-    var op_callback =
-	function ( page )
-	{
-	    var iframe = getElementById ( 'iframe' );
-	    iframe.src = page;
-	};
-
-</script>
 </head>
 
 <?php 
@@ -681,7 +738,8 @@
     $project_help = HELP ( 'project-page' );
     $options = "<option value='FAVORITES'>"
              . "<i>Favorites</i></option>"
-	     . list_to_options ( read_favorites() );
+	     . favorites_to_options
+	           ( read_favorites() );
     echo <<<EOT
     <div class='manage'>
     <form>
@@ -712,34 +770,97 @@
     </tr>
     </table>
     </form>
-    <form method='POST'>
-    <input type='hidden' name='ID' value='$id'>
-    <label>
-    <input type='submit' name='op' value='push'>
-    <h5>Push</h5>
-    </label>
-    <pre>   </pre>
-    <label>
-    <input type='submit' name='op' value='pull'>
-    <h5>Pull</h5>
-    </label>
-    <pre>   </pre>
-    <label>
-    <input type='submit' name='op' value='edit-list'>
-    <h5>Edit List</h5>
-    </label>
-    <pre>   </pre>
-    <label>
-    <h5>Selected List</h5>
-    <select name='selected-list'>
-    $options
-    </select>
-    </label>
+EOT;
+    if ( $op == NULL )
+        echo <<<EOT
+	<form method='POST'>
+	<input type='hidden' name='ID' value='$id'>
+	<label>
+	<input type='submit' name='op' value='push'>
+	<h5>Push</h5>
+	</label>
+	<pre>   </pre>
+	<label>
+	<input type='submit' name='op' value='pull'>
+	<h5>Pull</h5>
+	</label>
+	<pre>   </pre>
+	<label>
+	<input type='submit' name='op' value='edit-list'>
+	<h5>Edit List</h5>
+	</label>
+	<pre>   </pre>
+	<label>
+	<h5>Selected List</h5>
+	<select name='selected-list'>
+	$options
+	</select>
+	</label>
+EOT;
+    echo <<<EOT
     </div>
 EOT;
+
+    if ( $op == 'push' )
+    {
+	$push_help = HELP ( 'project-push' );
+        $rows = problems_to_push_rows
+	    ( read_problems() );
+    	echo <<<EOT
+	<div class='op'>
+	<form method='POST'>
+	<input type='hidden' name='ID' value='$id'>
+	<table width='100%'>
+	<tr><td></td>
+	    <th><h5>Problems (check to push)</h5></th>
+	    <td><input type='submit'
+	               name='cancel'
+		       value='Cancel'></td>
+	    <td id='project-selector' hidden>
+	    PROJECT SELECTOR</td>
+            <td style='text-align:right'>
+            $push_help</td>
+	</tr>
+	$rows
+	</table>
+	</form>
+	</div>
+	<script>
+
+	// The following is called when a push checkbox
+	// is clicked for a problem that has no project
+	// (i.e., it has not previously been pulled).
+	// This function keeps a counter of the number
+	// of these boxes that are checked and makes
+	// project-selector visible if the counter is
+	// not zero.
+	//
+	var push_counter = 0;
+	var project_selector = document.getElementById
+	    ( 'project-selector' );
+	function PUSH ( checkbox )
+	{
+	    if ( checkbox.checked )
+	    {
+		// Click has turned box on.
+		//
+		if ( ++ push_counter == 1 )
+		    project_selector.hidden = false;
+	    }
+	    else
+	    {
+		// Click has turned box off.
+		//
+		if ( -- push_counter == 0 )
+		    project_selector.hidden = true;
+	    }
+	    console.log ( 'COUNTER ' + push_counter );
+	}
+	</script>
+EOT;
+    }
 
 ?>
 
 </body>
 </html>
-
