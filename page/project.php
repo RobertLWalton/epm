@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  1 22:12:11 EDT 2020
+    // Date:	Thu Apr  2 03:18:09 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -217,6 +217,7 @@
     //
     //     EPM_PROJECT OP
     //		One of:
+    //		    NULL
     //		    'push'
     //		    'pull'
     //		    'edit-list'
@@ -225,7 +226,7 @@
     //	   EPM_PROJECT LIST
     //		['PROJECT', 'LIST']
     //		Names current list for operations that
-    //		need it.
+    //		need it, or is NULL.
 
     // XHTTP Operations
     // ----- ----------
@@ -292,6 +293,24 @@
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
+
+    if ( $method == 'GET' )
+        $_SESSION['EPM_PROJECT'] = [
+	    'ID' => bin2hex ( random_bytes ( 16 ) ),
+	    'OP' => NULL,
+	    'LIST' => NULL ];
+
+    $data = & $_SESSION['EPM_PROJECT'];
+    $id = $data['ID'];
+    $op = $data['OP'];
+    $list = $data['LIST'];
+
+    if ( $method == 'POST'
+         &&
+	 ( ! isset ( $_POST['ID'] )
+	   ||
+	   $_POST['ID'] != $id ) )
+        exit ( 'UNACCEPTABLE HTTP POST' );
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -649,8 +668,7 @@
 	     . option_list ( read_favorites() );
     echo <<<EOT
     <div class='manage'>
-    <form method='POST'
-          style='margin:0 0 1vh 0'>
+    <form>
     <table style='width:100%'>
     <tr>
     <td>
@@ -661,13 +679,25 @@
                     title='click to see user profile'>
     </label>
     </td>
-    <td>
+    <td><h5>Go To:</h5>
+    <button type='submit'
+	    formaction='problem.php'
+	    formmethod='GET'>
+	    Problem Page</button>
+    <pre>  </pre>
+    <button type='submit'
+	    formaction='run.php'
+	    formmethod='GET'>
+	    Run Page</button>
     </td>
     <td>
     </td><td style='text-align:right'>
     $project_help</td>
     </tr>
     </table>
+    </form>
+    <form method='POST'>
+    <input type='hidden' name='ID' value='$id'>
     <label>
     <input type='submit' name='op' value='push'>
     <h5>Push</h5>
