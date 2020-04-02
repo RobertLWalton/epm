@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  2 10:06:38 EDT 2020
+    // Date:	Thu Apr  2 12:54:09 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -479,33 +479,28 @@
     //
     //	    users/UID/+indices+/favorites
     //
-    // in the form of a string whose lines have the form
+    // in the form of a list of elements of the form
     //
-    //	    <option value='PROJECT:BASENAME'>
-    //      $project $basename TIME
-    //      </option>
+    //	    [TIME PROJECT BASENAME]
     //
-    // If PROJECT in the file is '-' then `$project' is
-    // `<i>Your</i>'.  If BASENAME in the file is `-'
-    // $basename is `<i>Problems</i>'.  If there is
-    // no file line `- - TIME', then such an entry is
-    // added to the beginning with the current time as
-    // TIME.
+    // If there is no file line `- - TIME', then such
+    // an element is added to the beginning of the list
+    // with the current time as TIME.
     //
     function read_favorites ()
     {
-        global $epm_data;
-	$r = '';
-	$f = "users/$uid/+indices+/faviorites";
+        global $epm_data, $uid;
+	$list = [];
+	$map = [];
+	$f = "users/$uid/+indices+/favorites";
 	$c = @file_get_contents ( "$epm_data/$f" );
 	if ( $c !== false )
 	{
 	    $c = explode ( "\n", $c );
-	    $map = [];
-	    $list = [];
 	    foreach ( $c as $line )
 	    {
 		$line = $trim ( $line );
+		if ( $line == '' ) continue;
 		$line = preg_replace
 		    ( '/\h+/', ' ', $line );
 		$items = explode ( ' ', $line );
@@ -520,26 +515,51 @@
 			    " line '{$map[$key]}' in" .
 			    " $f" );
 		$map[$key] = $line;
-		if ( $project == '-' )
-		    $project = '<i>Your</i>';
-		if ( $basename == '-' )
-		    $basename = '<i>Problems</i>';
-		else
-		    $basename = preg_replace
-			( '-', ' ', $basename );
-		$time = substr ( $time, 0, 10 );
-		$r .= "<option value='$value'>"
-		    . "$project $basename $time"
-		    . "</option>";
-
+		$list[] = $items;
 	    }
 	}
 	if ( ! isset ( $map['-:-'] ) )
 	{
-	    $time = strftime ( '%F' );
-	    $r = "<option value='-:-'>"
-	       . "<i>Your</i> <i>Problems</i> $time"
-	       . "</option>". $r;
+	    $time = strftime ( '%FT%T%z' );
+	    array_unshift ( $list, [$time, '-', '-'] );
+	}
+	return $list;
+    }
+
+    // Given a list of elements each of the form:
+    //
+    //	    [TIME PROJECT BASENAME]
+    //
+    // return a string whose lines have the form
+    //
+    //	    <option value='PROJECT:BASENAME'>
+    //      $project $basename $time
+    //      </option>
+    //
+    // If PROJECT in the file is '-' then `$project' is
+    // `<i>Your</i>'.  If BASENAME in the file is `-'
+    // $basename is `<i>Problems</i>'.  Here $time is
+    // the first 10 characters of TIME (i.e., the day,
+    // excluding the time of day).
+    //
+    function list_to_options ( $list )
+    {
+	$r = '';
+	foreach ( $list as $e )
+	{
+	    list ( $time, $project, $basename ) = $e;
+	    $value = "$project:$basename";
+	    if ( $project == '-' )
+		$project = '<i>Your</i>';
+	    if ( $basename == '-' )
+		$basename = '<i>Problems</i>';
+	    else
+		$basename = preg_replace
+		    ( '-', ' ', $basename );
+	    $time = substr ( $time, 0, 10 );
+	    $r .= "<option value='$value'>"
+		. "$project $basename $time"
+		. "</option>";
 	}
 	return $r;
     }
@@ -661,7 +681,7 @@
     $project_help = HELP ( 'project-page' );
     $options = "<option value='FAVORITES'>"
              . "<i>Favorites</i></option>"
-	     . read_favorites();
+	     . list_to_options ( read_favorites() );
     echo <<<EOT
     <div class='manage'>
     <form>
