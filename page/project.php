@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  2 22:29:56 EDT 2020
+    // Date:	Fri Apr  3 09:06:09 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -440,7 +440,11 @@
     // problem is not descended from a project.  Sort
     // the map by problems (keys) in natural order.
     //
-    function read_problems ()
+    // If $enabling_map is NOT NULL, any PROBLEM such
+    // that $enabling_map['PROBLEM'] is NOT set is
+    // ignored.
+    //
+    function read_problems ( $enabling_map = NULL )
     {
 	global $epm_data, $uid, $epm_name_re;
 
@@ -456,6 +460,11 @@
 	    if ( ! preg_match
 	               ( $epm_name_re, $problem ) )
 	        continue;
+	    if ( isset ( $enabling_map )
+	         &&
+		 ! isset ( $enabling_map[$problem] ) )
+	        continue;
+
 	    $g = "$f/$problem/+parent+";
 	    if ( is_link ( "$epm_data/$g" ) )
 	    {
@@ -531,6 +540,77 @@ EOT;
 	return $r;
     }
 
+    // Return the lines from list file $filename in the
+    // form of a list of elements each of the form
+    //
+    //	    [TIME PROJECT PROBLEM]
+    //
+    // where PROJECT may be `-'.  The description at the
+    // beginning of the file is skipped (the list proper
+    // must follow a blank line).  If the file does
+    // not exist, [] is returned.  File list line for-
+    // matting errors are fatal.
+    //
+    function read_list ( $filename )
+    {
+        global $epm_data;
+	$list = [];
+	$map = [];
+	$c = @file_get_contents ( "$epm_data/$filename" );
+	if ( $c !== false )
+	{
+	    $c = explode ( "\n", $c );
+	    $in_description = true;
+	    foreach ( $c as $line )
+	    {
+		$line = $trim ( $line );
+		if ( $line == '' )
+		{
+		    $in_description = false;
+		    continue;
+		}
+		elseif ( $in_description )
+		    continue;
+
+		$line = preg_replace
+		    ( '/\h+/', ' ', $line );
+		$items = explode ( ' ', $line );
+		if ( count ( $items ) != 3 )
+		    ERROR ( "badly formatted line" .
+			    " '$line' in $filename" );
+		list ( $time, $project, $basename ) =
+		    $items;
+		$key = "$project:$basename";
+		if ( isset ( $map[$key] ) )
+		    ERROR ( "line '$line' duplicates" .
+			    " line '{$map[$key]}' in" .
+			    " $filename" );
+		$map[$key] = $line;
+		$list[] = $items;
+	    }
+	}
+	return $list;
+    }
+
+    // Given a list produced by read_list, make an
+    // $enabling_map from it listing the user's problem
+    // in the list (from lines with PROJECT `-'), and
+    // then call read_problems and problems_to_push_rows
+    // to return a list as per the latter function.
+    //
+    function list_to_push_rows ( $list )
+    {
+        $enabling_map = [];
+	foreach ( $list as $items )
+	{
+	    list ( $time, $project, $problem ) = $items;
+	    if ( $project != '-' ) continue;
+	    $enabling_map[$problem] = true;
+	}
+	return problems_to_push_rows
+	    ( read_problems ( $enabling_list ) );
+    }
+
     // Return the lines from:
     //
     //	    users/UID/+indices+/favorites
@@ -542,6 +622,10 @@ EOT;
     // If there is no file line `- - TIME', then such
     // an element is added to the beginning of the list
     // with the current time as TIME.
+    //
+    // A non-existant favorites file is treated as a
+    // file of zero length.  File line formatting errors
+    // are fatal.
     //
     function read_favorites ()
     {
@@ -815,8 +899,8 @@ EOT;
 	    <td><input type='submit'
 	               name='cancel'
 		       value='Cancel'></td>
-	    <pre>    </pre>
-	    <td id='project-selector' style='display:none'>
+	    <td id='project-selector'
+	        style='visibility:hidden'>
 	    PROJECT SELECTOR</td>
 	    <td>
 	    <pre>    </pre>
@@ -847,14 +931,16 @@ EOT;
 		// Click has turned box on.
 		//
 		if ( ++ push_counter == 1 )
-		    project_selector.style.display = 'inline';
+		    project_selector.style.visibility =
+		        'visible';
 	    }
 	    else
 	    {
 		// Click has turned box off.
 		//
 		if ( -- push_counter == 0 )
-		    project_selector.style.display = 'none';
+		    project_selector.style.visibility =
+		        'hidden';
 	    }
 	}
 	</script>
