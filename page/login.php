@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Mar 29 07:29:50 EDT 2020
+    // Date:	Thu Apr  2 22:24:35 EDT 2020
 
     // Handles login for a session.
     //
@@ -195,6 +195,7 @@
     //     * Send 'op=AUTO&value=BID'
     //	   * Receive one of:
     //           'EXPIRED BID EKEYA EKEYB CTIME':
+    //		     MANUAL = yes
     //               go to EXPIRED
     //           'FAIL':  (means BID not recognized)
     //               go to AUTO_ID
@@ -1059,6 +1060,7 @@ function AUTO_RESPONSE ( item )
 	EKEYA = item[2];
 	EKEYB = item[3];
 	CTIME = item[4];
+	MANUAL = true;
 	EXPIRED();
 	return;
     }
