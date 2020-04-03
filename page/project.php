@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  2 16:07:23 EDT 2020
+    // Date:	Thu Apr  2 22:29:56 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -671,11 +671,17 @@ EOT;
 	display:inline;
         font-size: var(--font-size);
     }
-    pre {
+    div.op th {
+        font-size: var(--large-font-size);
+	text-align: left;
+    }
+    div.op td {
+	display:inline;
+        font-size: var(--font-size);
 	font-family: "Courier New", Courier, monospace;
     }
-    pre.red {
-        color: #BB0000;
+    pre {
+	font-family: "Courier New", Courier, monospace;
     }
     div.errors, div.notices {
 	background-color: #F5F81A;
@@ -687,28 +693,8 @@ EOT;
 	background-color: #96F9F3;
 	padding-bottom: 5px;
     }
-    pre.problem {
-        color: #CC00FF;
-        font-size: 20px;
-    }
-    div.problem_display {
+    div.op {
 	background-color: #F2D9D9;
-    }
-    div.command_display {
-	background-color: #C0FFC0;
-    }
-    div.work_display {
-	background-color: #F2D9D9;
-    }
-    div.file-name {
-	background-color: #B3E6FF;
-    }
-    div.file-contents {
-	background-color: #C0FFC0;
-    }
-    td.time {
-	color: #99003D;
-	text-align: right;
     }
 
 </style>
@@ -812,12 +798,16 @@ EOT;
 	<input type='hidden' name='ID' value='$id'>
 	<table width='100%'>
 	<tr><td></td>
-	    <th><h5>Problems (check to push)</h5></th>
+	    <th style='text-align:left'>
+	        <h5>Problems (check to push)</h5></th>
+	    <pre>    </pre>
 	    <td><input type='submit'
 	               name='cancel'
 		       value='Cancel'></td>
+	    <pre>    </pre>
 	    <td id='project-selector' hidden>
 	    PROJECT SELECTOR</td>
+	    <pre>    </pre>
             <td style='text-align:right'>
             $push_help</td>
 	</tr>
