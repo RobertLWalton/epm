@@ -294,15 +294,15 @@
     {
 	var SWITCH = document.getElementById ( s );
 	var CONTENTS = document.getElementById ( c );
-	if ( CONTENTS.hidden )
+	if ( CONTENTS.style.display == 'none' )
 	{
 	    SWITCH.innerHTML = "&uarr;";
-	    CONTENTS.hidden = false;
+	    CONTENTS.style.display = 'block';
 	}
 	else
 	{
 	    SWITCH.innerHTML = "&darr;";
-	    CONTENTS.hidden = true;
+	    CONTENTS.style.display = 'none';
 	}
     }
 </script>
@@ -485,7 +485,8 @@ EOT;
 			"\n</pre><pre>",
 			$fcontents );
 	    echo <<<EOT
-	    <div hidden id='$id' class='file-name'>
+	    <div style='display:none' id='$id'
+	         class='file-name'>
 	    <h5>$fname:</h5><br>
 	    <div class='file-contents'>
 	    <pre>$fcontents</pre>

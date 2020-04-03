@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 25 02:40:43 EDT 2020
+    // Date:	Fri Apr  3 04:18:36 EDT 2020
 
     // Edits problem option page.
 
@@ -110,17 +110,17 @@
 		( name + '_mark' );
 	var BODY = document.getElementById
 		( name + '_body' );
-	if ( BODY.hidden )
+	if ( BODY.style.display == 'none' )
 	{
 	    BUTTON.style.backgroundColor = 'black';
 	    BUTTON.title = "Hide " + thing;
-	    BODY.hidden = false;
+	    BODY.style.display = 'block';
 	}
 	else
 	{
 	    BUTTON.style.backgroundColor = 'white';
 	    BUTTON.title = "Show " + thing;
-	    BODY.hidden = true;
+	    BODY.style.display = 'none';
 	}
     }
 
@@ -200,7 +200,8 @@ EOT;
 	     </div>
 EOT;
 	$description .= <<<EOT
-	     <div id='template{$tcount}_body' hidden
+	     <div id='template{$tcount}_body'
+	          style='display:none'
 	          style='padding-bottom:5px'>
 	     <h5>$tpretty:</h5>
 	     <br>

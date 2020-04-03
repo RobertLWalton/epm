@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 25 02:59:46 EDT 2020
+    // Date:	Fri Apr  3 04:08:18 EDT 2020
 
     // Edits problem option page.
 
@@ -449,17 +449,17 @@
 		( name + '_mark' );
 	var BODY = document.getElementById
 		( name + '_body' );
-	if ( BODY.hidden )
+	if ( BODY.style.display == 'none' )
 	{
 	    MARK.innerHTML = "&uarr;";
 	    BUTTON.title = "Hide " + thing;
-	    BODY.hidden = false;
+	    BODY.style.display = 'block';
 	}
 	else
 	{
 	    MARK.innerHTML = "&darr;";
 	    BUTTON.title = "Show " + thing;
-	    BODY.hidden = true;
+	    BODY.style.display = 'none';
 	}
     }
 
