@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  2 04:52:45 EDT 2020
+    // Date:	Fri Apr  3 03:39:03 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -660,17 +660,17 @@
 		( name + '_mark' );
 	var BODY = document.getElementById
 		( name + '_body' );
-	if ( BODY.hidden )
+	if ( BODY.style.display == 'none' )
 	{
 	    MARK.innerHTML = "&uarr;";
 	    BUTTON.title = "Hide " + thing;
-	    BODY.hidden = false;
+	    BODY.style.display = 'block';
 	}
 	else
 	{
 	    MARK.innerHTML = "&darr;";
 	    BUTTON.title = "Show " + thing;
-	    BODY.hidden = true;
+	    BODY.style.display = 'none';
 	}
     }
 
@@ -897,7 +897,8 @@ EOT;
 	    </td><td style='text-align:right'>
 	    $commands_help</td>
 	    </tr></table>
-	    <div id='commands_body' hidden>
+	    <div id='commands_body'
+	         style='display:none'>
 EOT;
 	    echo "<div class='indented'>";
 	    echo $display;
@@ -936,7 +937,8 @@ EOT;
 	        </td><td style='text-align:right'>
 		$working_help</td>
 		</tr></table>
-		<div id='working_body' hidden>
+		<div id='working_body'
+		     style='display:none'>
 		<table style='display:block'>
 EOT;
 
@@ -1188,7 +1190,7 @@ EOT;
 		$fcontents = htmlspecialchars
 		    ( $fcontents );
 		echo <<<EOT
-		<div hidden
+		<div style='display:none'
 		     id='file{$count}_body'
 		     class='file-name'>
 		<h5>$fname:</h5><br>
