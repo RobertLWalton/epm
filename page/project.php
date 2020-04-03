@@ -485,18 +485,20 @@
     // elements are in the map.  If PROJECT is ''
     // the parent is unknown and the segment form is
     //
-    //	   <tr><td><input type='checkbox'
-    //			  name='check$c'
-    //			  value='PROBLEM'
-    //			  onclick='PUSH(this)'>
-    //         </td><td>PROBLEM</td></tr>
+    //	   <tr><td class='problem'>
+    //	       <input type='checkbox'
+    //		      name='check$c'
+    //		      value='PROBLEM'
+    //		      onclick='PUSH(this)'>
+    //	       PROBLEM</td></tr>
     //
     // and if PROJECT is NOT '' the segment form is
     //
-    //	   <tr><td><input type='checkbox'
-    //			  name='check$c'
-    //			  value='PROBLEM'>
-    //         </td><td>PROBLEM &rAarr; PROJECT
+    //	   <tr><td class='problem'>
+    //	       <input type='checkbox'
+    //		      name='check$c'
+    //		      value='PROBLEM'>
+    //         PROBLEM &rAarr; PROJECT
     //         </td></tr>
     //
     // $c is a counter that counts the rows output.
@@ -510,19 +512,20 @@
 	    $c += 1;
 	    if ( $project == '' )
 	        $r .= <<<EOT
-		<tr><td><input type='checkbox'
-		               name='check$c'
-			       value='$problem'
-			       onclick='PUSH(this)'>
-		    </td><td>$problem</td></tr>
+		<tr><td class='problem'>
+		    <input type='checkbox'
+		           name='check$c'
+			   value='$problem'
+			   onclick='PUSH(this)'>
+		    $problem</td></tr>
 EOT;
 	    else
 	        $r .= <<<EOT
-		<tr><td><input type='checkbox'
-		               name='check$c'
-			       value='$problem'>
-		    </td><td>$problem &rArr;
-		             $probject</td></tr>
+		<tr><td class='problem'>
+		    <input type='checkbox'
+		           name='check$c'
+			   value='$problem'>
+		    $problem &rArr; $project</td></tr>
 EOT;
 	}
 	return $r;
@@ -659,6 +662,9 @@ EOT;
     .indented {
 	margin-left: 20px;
     }
+    .inline {
+	display:inline;
+    }
     .no-margin {
 	margin: 0 0 0 0;
     }
@@ -675,9 +681,9 @@ EOT;
         font-size: var(--large-font-size);
 	text-align: left;
     }
-    div.op td {
+    td.problem {
 	display:inline;
-        font-size: var(--font-size);
+        font-size: var(--large-font-size);
 	font-family: "Courier New", Courier, monospace;
     }
     pre {
@@ -698,6 +704,12 @@ EOT;
     }
 
 </style>
+
+<script>
+var LOG = function(message) {};
+<?php if ( $epm_debug )
+          echo "LOG = console.log;" . PHP_EOL ?>
+</script>
 
 </head>
 
@@ -797,16 +809,16 @@ EOT;
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
 	<table width='100%'>
-	<tr><td></td>
-	    <th style='text-align:left'>
+	<tr><th style='text-align:left'>
 	        <h5>Problems (check to push)</h5></th>
 	    <pre>    </pre>
 	    <td><input type='submit'
 	               name='cancel'
 		       value='Cancel'></td>
 	    <pre>    </pre>
-	    <td id='project-selector' hidden>
+	    <td id='project-selector' style='display:none'>
 	    PROJECT SELECTOR</td>
+	    <td>
 	    <pre>    </pre>
             <td style='text-align:right'>
             $push_help</td>
@@ -835,16 +847,15 @@ EOT;
 		// Click has turned box on.
 		//
 		if ( ++ push_counter == 1 )
-		    project_selector.hidden = false;
+		    project_selector.style.display = 'inline';
 	    }
 	    else
 	    {
 		// Click has turned box off.
 		//
 		if ( -- push_counter == 0 )
-		    project_selector.hidden = true;
+		    project_selector.style.display = 'none';
 	    }
-	    console.log ( 'COUNTER ' + push_counter );
 	}
 	</script>
 EOT;

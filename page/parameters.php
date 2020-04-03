@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 26 02:00:17 EDT 2020
+// Date:    Fri Apr  3 02:56:17 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -96,7 +96,7 @@ $epm_session_name = "EPM_859036254367";
     // SPECIFIC 12 digit random number.
 
 $epm_debug = preg_match
-    ( '/(login|user|problem|run)/', $epm_self );
+    ( '/(login|user|problem|run|project)/', $epm_self );
     // True to turn debugging on; false for off.
 
 
