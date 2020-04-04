@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr  4 06:16:36 EDT 2020
+    // Date:	Sat Apr  4 15:49:01 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -414,11 +414,13 @@
     }
 
     // Return the list of projects that have a given
-    // type of permission, in natural order.
+    // type of permission that matches the $type_re
+    // regular expression.  The list is sorted in
+    // natural order.
     //
-    function get_projects ( $type )
+    function read_projects ( $type_re )
     {
-	global $epm_data;
+	global $epm_data, $epm_name_re;
 	$projects = [];
 	$ps = @scandir ( "$epm_data/projects" );
 	if ( $ps == false )
@@ -429,10 +431,36 @@
 	               ( $epm_name_re, $project ) )
 	        continue;
 	    $pmap = project_permissions ( $project );
-	    if ( $pmap[$type] )
+	    foreach ( $pmap as $type => $value )
+	    {
+	        if ( ! $value ) continue;
+		if ( ! preg_match
+		         ( "/^($type_re)\$/", $type ) )
+		    continue;
 	        $projects[] = $project;
+		break;
+	    }
 	}
 	natsort ( $projects );
+	return $projects;
+    }
+
+    // Given a list of PROJECTs return a string whose
+    // segments have the form
+    //
+    //	    <option value='PROJECT'>
+    //      $project
+    //      </option>
+    //
+    function projects_to_options ( $list )
+    {
+	$r = '';
+	foreach ( $list as $project )
+	{
+	    $r .= "<option value='$project'>"
+		. "$project</option>";
+	}
+	return $r;
     }
 
     // Return a map from a user's own problems to the
@@ -453,8 +481,6 @@
 	$ps = @scandir ( "$epm_data/$f" );
 	if ( $ps == false )
 	    ERROR ( "cannot read $f directory" );
-	$re =
-	    "/\/\.\.\/projects\/([^\/]+)\/$problem\$/";
 	foreach ( $ps as $problem )
 	{
 	    if ( ! preg_match
@@ -466,6 +492,8 @@
 	        continue;
 
 	    $g = "$f/$problem/+parent+";
+	    $re = "/\/\.\.\/projects\/([^\/]+)\/"
+	        . "$problem\$/";
 	    if ( is_link ( "$epm_data/$g" ) )
 	    {
 	        $s = @readlink ( "$epm_data/$g" );
@@ -933,6 +961,9 @@ EOT;
 	    $rows = list_to_push_rows
 		( read_list ( $list ) );
 
+	$project_options = projects_to_options
+	    ( read_projects ( 'push' ) );
+
 	echo <<<EOT
 	<div class='op'>
 	<form method='POST'>
@@ -946,7 +977,12 @@ EOT;
 		       value='Cancel'></td>
 	    <td id='project-selector'
 	        style='visibility:hidden'>
-	    PROJECT SELECTOR</td>
+	    <label>
+	    <h5>Select Project</h5>:
+	    <select name='selected-project'>
+	    $project_options
+	    </select></label>
+	    </td>
 	    <td>
 	    <pre>    </pre>
             <td style='text-align:right'>
