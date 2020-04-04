@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr  3 09:06:09 EDT 2020
+    // Date:	Sat Apr  4 06:16:36 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -74,7 +74,7 @@
     //
     // For each project the directory:
     //
-    //	    projects/PROJECT/+index+
+    //	    projects/PROJECT/+indices+
     //
     // contains symbolic links of the form:
     //
@@ -540,7 +540,28 @@ EOT;
 	return $r;
     }
 
-    // Return the lines from list file $filename in the
+    // Given a list name of the form 'PROJECT:BASENAME'
+    // return the file name of the list relative to
+    // $epm_data.
+    //
+    function listname_to_filename ( $listname )
+    {
+        global $uid;
+
+	if ( $listname == '*FAVORITES*' )
+	    ERROR ( "listname_to_filename was given" .
+	            " '$listname' as a listname" );
+
+        list ( $project, $basename ) =
+	    explode ( ':', $listname );
+	if ( $project == '-' )
+	    $d = "users/$uid/";
+	else
+	    $d = "projects/$project";
+	return "$d/+indices+/$listname";
+    }
+
+    // Return the lines from list $listame in the
     // form of a list of elements each of the form
     //
     //	    [TIME PROJECT PROBLEM]
@@ -551,12 +572,17 @@ EOT;
     // not exist, [] is returned.  File list line for-
     // matting errors are fatal.
     //
-    function read_list ( $filename )
+    // $listname has the form PROJECT:BASENAME as per
+    // listname_to_filename.
+    //
+    function read_list ( $listname )
     {
         global $epm_data;
+	$filename = listname_to_filename ( $listname );
 	$list = [];
 	$map = [];
-	$c = @file_get_contents ( "$epm_data/$filename" );
+	$c = @file_get_contents
+	    ( "$epm_data/$filename" );
 	if ( $c !== false )
 	{
 	    $c = explode ( "\n", $c );
@@ -608,7 +634,7 @@ EOT;
 	    $enabling_map[$problem] = true;
 	}
 	return problems_to_push_rows
-	    ( read_problems ( $enabling_list ) );
+	    ( read_problems ( $enabling_map ) );
     }
 
     // Return the lines from:
@@ -713,11 +739,24 @@ EOT;
 	}
         elseif ( isset ( $_POST['op'] ) )
 	{
+	    if ( ! isset ( $_POST['selected-list'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $op = $_POST['op'];
-	    $data['OP'] = $op;
-	    if ( isset ( $_POST['selected-list'] ) )
+	    $list = $_POST['selected-list'];
+
+	    if ( $list == '*FAVORITES*'
+		 &&
+		 $op != 'edit-list' )
 	    {
-		$list = $_POST['selected-list'];
+		$errors[] = "Favorites is not allowed"
+			  . " as a list of problems to"
+			  . " $op";
+		$op = NULL;
+		$data['OP'] = $op;
+	    }
+	    else
+	    {
+		$data['OP'] = $op;
 		$data['LIST'] = $list;
 	    }
 	}
@@ -818,7 +857,7 @@ var LOG = function(message) {};
     }
 
     $project_help = HELP ( 'project-page' );
-    $options = "<option value='FAVORITES'>"
+    $options = "<option value='*FAVORITES*'>"
              . "<i>Favorites</i></option>"
 	     . favorites_to_options
 	           ( read_favorites() );
@@ -886,9 +925,15 @@ EOT;
     if ( $op == 'push' )
     {
 	$push_help = HELP ( 'project-push' );
-        $rows = problems_to_push_rows
-	    ( read_problems() );
-    	echo <<<EOT
+
+	if ( $list == '-:-' )
+	    $rows = problems_to_push_rows
+		( read_problems() );
+	else
+	    $rows = list_to_push_rows
+		( read_list ( $list ) );
+
+	echo <<<EOT
 	<div class='op'>
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
