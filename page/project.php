@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  5 00:50:24 EDT 2020
+    // Date:	Sun Apr  5 03:20:55 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -783,6 +783,9 @@ EOT;
 
 	$changes = '';
 	$commands = [];
+	    // Commands are to be executed with
+	    // $epm_data being the current directory
+	    // and 0770 the current mask.
 	if ( $new_push )
 	{
 	    $changes .= "make directory for $problem in"
@@ -797,6 +800,41 @@ EOT;
 	    if ( ! preg_match
 	               ( $epm_filename_re, $file ) )
 	        continue;
+	    $ext = pathinfo
+	        ( $file, PATHINFO_EXTENSION );
+	    if ( ! isset ( $push_file_map[$ext] ) )
+	        continue;
+	    $amap = $push_file_map[$ext];
+	    if ( is_array ( $amap ) )
+	    {
+		$base = pathinfo
+		    ( $file, PATHINFO_FILENAME );
+	        $action = NULL;
+		foreach ( $amap as $re => $act )
+		{
+		    if ( ! preg_match
+		               ( "/^($re)\$/", $base ) )
+		        continue;
+		    $action = $act;
+		    break;
+		}
+		if ( ! isset ( $action ) )
+		    continue;
+	    }
+	    else
+	        $action = $amap;
+
+	    $changes .= "move $file to project $problem"
+	              . PHP_EOL;
+	    $commands[] = "mv -f $srcdir/$file $desdir";
+
+	    if ( $action == 'R' ) continue;
+
+	    $changes .= "link $file from project"
+	              . " $problem to local $problem"
+	              . PHP_EOL;
+	    $commands[] = "ln -s ../../../$desdir/$file"
+	                . " $srcdir/$file";
 	}
     }
 

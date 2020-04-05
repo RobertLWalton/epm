@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Apr  3 02:56:17 EDT 2020
+// Date:    Sun Apr  5 03:30:23 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -217,5 +217,31 @@ $display_file_map = [
     //
     "utf8" => "utf8_show.php",
     "pdf"  => "pdf_show.php" ];
+
+$push_file_map = [
+    // If file YYYY.EEE is to be pushed then
+    // $push_file_map['EEE'] must be set.  If it is
+    // 'R' then the file should exist in the remote
+    // (push destination) directory.  If it is 'L',
+    // the file should exist in the remost direcoty
+    // and be linked into the local directory.  If
+    // it is a (sub)map RE => V, then each RE is a
+    // regular expression such that if YYYY matches
+    // RE then V is to be used: it will be 'R' or 'L'.
+    // In the RE, `PPPP' is replaced by the problem
+    // name before the RE is used.
+    //
+    "c" => "R",
+    "cc" => "R",
+    "java" => "R",
+    "py" => "R",
+    "tex" => "R",
+    "in" => "R",
+    "ftest" => "R",
+    "run" => "R",
+    "pdf" => [ "PPPP" => "L" ],
+    "" => [ "generate_PPPP" => "R",
+            "filter_PPPP" => "R" ]
+]
 
 ?>
