@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr  4 15:49:01 EDT 2020
+    // Date:	Sun Apr  5 00:50:24 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -758,6 +758,48 @@ EOT;
 	return $r;
     }
 
+    function push_problem ( $problem, $project )
+    {
+	global $epm_data, $uid, $epm_filename_re;
+
+        $srcdir = "users/$uid/$problem";
+	$g = "$srcdir/+parent+";
+	$new_push = true;
+	if ( is_link ( "$epm_data/$g" ) )
+	{
+	    $re = "/\/\.\.\/projects\/([^\/]+)\/"
+		. "$problem\$/";
+	    $s = @readlink ( "$epm_data/$g" );
+	    if ( $s === false )
+		ERROR ( "cannot read link $g" );
+	    if ( ! preg_match
+		       ( $re, $s, $matches ) )
+		ERROR ( "link $g value $s is" .
+			" mal-formed" );
+	    $project = $matches[1];
+	    $new_push = false;
+	}
+	$desdir = "projects/$project/$problem";
+
+	$changes = '';
+	$commands = [];
+	if ( $new_push )
+	{
+	    $changes .= "make directory for $problem in"
+	              . " project $project" . PHP_EOL;
+	    $commands[] = "mkdir $desdir";
+	}
+	$files = @scandir ( "$epm_data/$srcdir" );
+	if ( $files === false )
+	    ERROR ( "cannot read $srcdir" );
+	foreach ( $files as $file )
+	{
+	    if ( ! preg_match
+	               ( $epm_filename_re, $file ) )
+	        continue;
+	}
+    }
+
     if ( $method == 'POST' )
     {
         if ( isset ( $_POST['cancel'] ) )
@@ -788,6 +830,9 @@ EOT;
 		$data['LIST'] = $list;
 	    }
 	}
+
+	$id = bin2hex ( random_bytes ( 16 ) );
+	$data['ID'] = $id;
     }
 
 ?>
