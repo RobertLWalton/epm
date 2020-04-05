@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Apr  5 03:30:23 EDT 2020
+// Date:    Sun Apr  5 14:21:22 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -129,6 +129,9 @@ $epm_shell_timeout = 3;
     // Number of seconds to wait for the shell to
     // startup and execute initialization commands
     // for a .sh script.
+
+$epm_time_format = "%FT%T%z";
+    // Format for times, as per strftime.
 
 $epm_name_re =
     '/^[A-Za-z][-_A-Za-z0-9]*[A-Za-z]$/';

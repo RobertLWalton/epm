@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  5 03:20:55 EDT 2020
+    // Date:	Sun Apr  5 14:11:22 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -45,7 +45,7 @@
     // it descendents, including changing the +perm+
     // files.
     //
-    // In the following all TIMEs are in the %FT%T%z
+    // In the following all TIMEs are in the $epm_time_
     // format, and all descriptions are any sequence
     // of non-blank lines followed by a blank line or
     // end of file.  Descriptions may NOT contain '<' or
@@ -683,7 +683,7 @@ EOT;
     //
     function read_favorites ()
     {
-        global $epm_data, $uid;
+        global $epm_data, $uid, $epm_time_format;
 	$list = [];
 	$map = [];
 	$f = "users/$uid/+indices+/favorites";
@@ -714,7 +714,7 @@ EOT;
 	}
 	if ( ! isset ( $map['-:-'] ) )
 	{
-	    $time = strftime ( '%FT%T%z' );
+	    $time = strftime ( $epm_time_format );
 	    array_unshift ( $list, [$time, '-', '-'] );
 	}
 	return $list;
@@ -760,7 +760,8 @@ EOT;
 
     function push_problem ( $problem, $project )
     {
-	global $epm_data, $uid, $epm_filename_re;
+	global $epm_data, $uid, $epm_filename_re,
+	       $epm_time_format;
 
         $srcdir = "users/$uid/$problem";
 	$g = "$srcdir/+parent+";
@@ -777,15 +778,21 @@ EOT;
 		ERROR ( "link $g value $s is" .
 			" mal-formed" );
 	    $project = $matches[1];
+	    $desdir = "projects/$project/$problem";
+	    if ( ! is_dir ( "$epm_data/$desdir" ) )
+		ERROR ( "$desdir is not a directory" );
 	    $new_push = false;
 	}
-	$desdir = "projects/$project/$problem";
+	else
+	    $desdir = "projects/$project/$problem";
 
-	$changes = '';
+	$changes = "Changes "
+	         . strftime ( $epm_time_format )
+	         . ":" . PHL_EOL;
 	$commands = [];
 	    // Commands are to be executed with
 	    // $epm_data being the current directory
-	    // and 0770 the current mask.
+	    // and 07 the current mask.
 	if ( $new_push )
 	{
 	    $changes .= "make directory for $problem in"

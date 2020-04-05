@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  2 22:24:35 EDT 2020
+    // Date:	Sun Apr  5 14:23:39 EDT 2020
 
     // Handles login for a session.
     //
@@ -49,8 +49,8 @@
     //     STIME    Session Time.  The time of the
     //		    request that created the current
     //		    session, as stored in $_SESSION
-    //		    ['EPM_SESSION_TIME'] in '%FT%T%z'
-    //		    (ISO 8601) format.
+    //		    ['EPM_SESSION_TIME'] in $epm_time_
+    //		    format.
     //
     //     CTIME    TICKET confirmation Time.  STIME for
     //		    the session that created the TICKET.

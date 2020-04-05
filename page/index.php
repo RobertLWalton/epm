@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Mar 26 01:44:01 EDT 2020
+// Date:    Sun Apr  5 14:22:20 EDT 2020
 
 // See page/parameters.php for EPM server setup
 // instructions.
@@ -44,7 +44,7 @@ if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
 {
     $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];
     $_SESSION['EPM_SESSION_TIME'] =
-        strftime ( "%FT%T%z",
+        strftime ( $epm_time_format,
 	           $_SERVER['REQUEST_TIME'] );
     file_put_contents (
         "$epm_data/error.log",
