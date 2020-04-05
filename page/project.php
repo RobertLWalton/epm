@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  5 14:11:22 EDT 2020
+    // Date:	Sun Apr  5 14:31:21 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -758,10 +758,16 @@ EOT;
 	return $r;
     }
 
+    // Compute EPM_PROJECT CHANGES and EPM_PROJECT
+    // COMMANDS to be used to push $problem to $project.
+    // If $problem has been pulled, $project is ignored
+    // and the problem's parent is used instead.
+    //
     function push_problem ( $problem, $project )
     {
 	global $epm_data, $uid, $epm_filename_re,
-	       $epm_time_format;
+	       $epm_time_format, $data,
+	       $push_file_map;
 
         $srcdir = "users/$uid/$problem";
 	$g = "$srcdir/+parent+";
@@ -786,9 +792,9 @@ EOT;
 	else
 	    $desdir = "projects/$project/$problem";
 
-	$changes = "Changes "
+	$changes = "Changes to Push $problem ("
 	         . strftime ( $epm_time_format )
-	         . ":" . PHL_EOL;
+	         . "):" . PHL_EOL;
 	$commands = [];
 	    // Commands are to be executed with
 	    // $epm_data being the current directory
@@ -802,20 +808,20 @@ EOT;
 	$files = @scandir ( "$epm_data/$srcdir" );
 	if ( $files === false )
 	    ERROR ( "cannot read $srcdir" );
-	foreach ( $files as $file )
+	foreach ( $files as $fname )
 	{
 	    if ( ! preg_match
-	               ( $epm_filename_re, $file ) )
+	               ( $epm_filename_re, $fname ) )
 	        continue;
 	    $ext = pathinfo
-	        ( $file, PATHINFO_EXTENSION );
+	        ( $fname, PATHINFO_EXTENSION );
 	    if ( ! isset ( $push_file_map[$ext] ) )
 	        continue;
 	    $amap = $push_file_map[$ext];
 	    if ( is_array ( $amap ) )
 	    {
 		$base = pathinfo
-		    ( $file, PATHINFO_FILENAME );
+		    ( $fname, PATHINFO_FILENAME );
 	        $action = NULL;
 		foreach ( $amap as $re => $act )
 		{
@@ -831,18 +837,24 @@ EOT;
 	    else
 	        $action = $amap;
 
-	    $changes .= "move $file to project $problem"
+	    $changes .= "move $fname to project $problem"
 	              . PHP_EOL;
-	    $commands[] = "mv -f $srcdir/$file $desdir";
+	    $commands[] = "mv -f $srcdir/$fname $desdir";
+	        // This will also move a link.
 
 	    if ( $action == 'R' ) continue;
+	    if ( $action != 'L' )
+	        ERROR ( "bad value for" .
+		        " \$push_file_map['$ext']" );
 
-	    $changes .= "link $file from project"
+	    $changes .= "link $fname from project"
 	              . " $problem to local $problem"
 	              . PHP_EOL;
-	    $commands[] = "ln -s ../../../$desdir/$file"
-	                . " $srcdir/$file";
+	    $commands[] = "ln -s ../../../$desdir/$fname"
+	                . " $srcdir/$fname";
 	}
+	$data['CHANGES'] = $changes;
+	$data['COMMANDS'] = $commands;
     }
 
     if ( $method == 'POST' )
