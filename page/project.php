@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  5 14:31:21 EDT 2020
+    // Date:	Sun Apr  5 15:41:11 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -855,6 +855,35 @@ EOT;
 	}
 	$data['CHANGES'] = $changes;
 	$data['COMMANDS'] = $commands;
+    }
+
+    // Execute EPM_PROJECT COMMANDS.  Errors cause abort
+    // and append to $errors.  A command is in error
+    // if it produces any standard output or standard
+    // error output.
+    //
+    function execute_commands ( $errors )
+    {
+        global $epm_data, $data;
+	foreach ( $data['COMMANDS'] as $command )
+	{
+	    $output = [];
+	    exec ( "umask 07; cd $epm_data;" .
+	           " $command 2>&1", $output );
+	    $err = '';
+	    foreach ( $output as $line )
+	    {
+	        if ( preg_match ( '/^\s*$/', $line ) )
+		    continue;
+		if ( $err != '' ) $err .= PHP_EOL;
+		$err .= $line;
+	    }
+	    if ( $err != '' )
+	    {
+	        $errors[] = $err;
+		break;
+	    }
+	}
     }
 
     if ( $method == 'POST' )
