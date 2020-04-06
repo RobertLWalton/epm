@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  5 15:41:11 EDT 2020
+    // Date:	Mon Apr  6 04:07:28 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -227,6 +227,34 @@
     //		['PROJECT', 'LIST']
     //		Names current list for operations that
     //		need it, or is NULL.
+    //
+    // During a push:
+    //
+    //     EPM_PROJECT SELECTED-PROJECT
+    //		Selected project for newly pushed
+    //		problems.  Ignored for pushed problems
+    //		with parents.
+    //
+    //     EPM_PROJECT CHECKED-PROBLEMS
+    //		List of checked problems that have not
+    //		yet been processed.  The first of these
+    //		is the one currently being processed.
+    //
+    //     EPM_PROJECT COMMANDS
+    //		List of commands to be executed by
+    //		execute_commands to accomplish the
+    //		current push/pull operation.
+    //
+    //     EPM_PROJECT CHANGES
+    //		String to be appended to +changes+ file
+    //		after commands are executed.  Also
+    //		displayed to user when change-approval
+    //		is required.
+    //
+    //     EPM_PROJECT APPROVAL
+    //		True if change-approval is required, and
+    //		false otherwise.
+
 
     // XHTTP Operations
     // ----- ----------
@@ -763,7 +791,7 @@ EOT;
     // If $problem has been pulled, $project is ignored
     // and the problem's parent is used instead.
     //
-    function push_problem ( $problem, $project )
+    function compile_push_problem ( $problem, $project )
     {
 	global $epm_data, $uid, $epm_filename_re,
 	       $epm_time_format, $data,
