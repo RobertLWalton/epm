@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr  6 04:07:28 EDT 2020
+    // Date:	Mon Apr  6 15:06:08 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -221,24 +221,26 @@
     //		    'push'
     //		    'pull'
     //		    'edit-list'
-    //		    'edit-favorites'
     //
     //	   EPM_PROJECT LIST
     //		['PROJECT', 'LIST']
     //		Names current list for operations that
     //		need it, or is NULL.
     //
-    // During a push:
+    // During a push or pull:
     //
     //     EPM_PROJECT SELECTED-PROJECT
     //		Selected project for newly pushed
     //		problems.  Ignored for pushed problems
-    //		with parents.
+    //		with parents and for pulls.
     //
     //     EPM_PROJECT CHECKED-PROBLEMS
     //		List of checked problems that have not
     //		yet been processed.  The first of these
     //		is the one currently being processed.
+    //		This is NULL if $op is not push or pull
+    //		or list of checked problems has not yet
+    //		been received.
     //
     //     EPM_PROJECT COMMANDS
     //		List of commands to be executed by
@@ -326,12 +328,14 @@
         $_SESSION['EPM_PROJECT'] = [
 	    'ID' => bin2hex ( random_bytes ( 16 ) ),
 	    'OP' => NULL,
-	    'LIST' => NULL ];
+	    'LIST' => NULL ,
+	    'CHECKED-PROBLEMS' => NULL];
 
     $data = & $_SESSION['EPM_PROJECT'];
     $id = $data['ID'];
     $op = $data['OP'];
     $list = $data['LIST'];
+    $checked_problems = $data['CHECKED-PROBLEMS'];
 
     if ( $method == 'POST'
          &&
@@ -944,6 +948,35 @@ EOT;
 		$data['LIST'] = $list;
 	    }
 	}
+	elseif ( ! isset ( $op ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	elseif ( $op == 'edit-list' )
+	{
+	    // TBD
+	}
+	else
+	{
+	    // op must be push or pull.
+	    //
+	    if ( ! isset 
+	               ( $_POST['selected-project'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $data['SELECTED-PROJECT'] =
+	        $_POST['selected-project'];
+	    $data['CHECKED-PROBLEMS'] = [];
+	    $data['COMMANDS'] = NULL;
+	    $data['CHANGES'] = NULL;
+	    $data['APPROVAL'] = true;
+	    $checked_problems =
+	        & $data['CHECKED-PROBLEMS'];
+
+	    foreach ( $_POST as $key => $value )
+	    {
+	        if ( preg_match
+		         ( '/^check\d+$/', $key ) )
+		    $checked_problems[] = $value;
+	    }
+	}
 
 	$id = bin2hex ( random_bytes ( 16 ) );
 	$data['ID'] = $id;
@@ -1109,7 +1142,7 @@ EOT;
     </div>
 EOT;
 
-    if ( $op == 'push' )
+    if ( $op == 'push' && $checked_problems == NULL )
     {
 	$push_help = HELP ( 'project-push' );
 
