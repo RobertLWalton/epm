@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  7 05:59:14 EDT 2020
+    // Date:	Tue Apr  7 07:53:46 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -227,6 +227,12 @@
     //		Names current list for operations that
     //		need it, or is NULL.
     //
+    //     EPM_PROJECT PROGRESS
+    //		List of progress messages to be printed
+    //		like error messages after errors and
+    //		warnings.  If OP is NULL, the list is
+    //		cleared after being output.
+    //
     // During a push or pull:
     //
     //     EPM_PROJECT SELECTED-PROJECT
@@ -238,7 +244,7 @@
     //		List of checked problems that have not
     //		yet been processed.  The first of these
     //		is the one currently being processed.
-    //		This is NULL if $op is not push or pull
+    //		This is [] if $op is not push or pull
     //		or list of checked problems has not yet
     //		been received.
     //
@@ -261,11 +267,6 @@
     //     EPM_PROJECT APPROVAL
     //		True if change-approval is required, and
     //		false otherwise.
-    //
-    //     EPM_PROJECT PROGRESS
-    //		List of progress messages to be printed
-    //		like error messages after errors and
-    //		warnings.
 
 
     // XHTTP Operations
@@ -339,13 +340,15 @@
 	    'ID' => bin2hex ( random_bytes ( 16 ) ),
 	    'OP' => NULL,
 	    'LIST' => NULL ,
-	    'CHECKED-PROBLEMS' => NULL];
+	    'CHECKED-PROBLEMS' => [],
+	    'PROGRESS' => [] ];
 
     $data = & $_SESSION['EPM_PROJECT'];
     $id = $data['ID'];
     $op = $data['OP'];
     $list = $data['LIST'];
-    $checked_problems = $data['CHECKED-PROBLEMS'];
+    $checked_problems = & $data['CHECKED-PROBLEMS'];
+    $progress = & $data['PROGRESS'];
 
     if ( $method == 'POST'
          &&
@@ -979,12 +982,10 @@ EOT;
 	    $data['SELECTED-PROJECT'] =
 	        $_POST['selected-project'];
 	    $data['CHECKED-PROBLEMS'] = [];
+	    $data['PROGRESS'] = [];
 	    $data['COMMANDS'] = NULL;
 	    $data['CHANGES'] = NULL;
 	    $data['APPROVAL'] = true;
-	    $data['PROGRESS'] = [];
-	    $checked_problems =
-	        & $data['CHECKED-PROBLEMS'];
 
 	    foreach ( $_POST as $key => $value )
 	    {
@@ -1068,6 +1069,9 @@ EOT;
     div.warnings {
 	background-color: #FFC0FF;
     }
+    div.progress {
+	background-color: #00FF00;
+    }
     div.manage {
 	background-color: #96F9F3;
 	padding-bottom: 5px;
@@ -1104,6 +1108,25 @@ var LOG = function(message) {};
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>";
 	echo "<br></div></div>";
+    }
+    if ( count ( $warnings ) > 0 )
+    {
+	echo "<div class='warnings'>";
+	echo "<h5>Warnings:</h5>";
+	echo "<div class='indented'>";
+	foreach ( $warnings as $e )
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
+    }
+    if ( count ( $progress ) > 0 )
+    {
+	echo "<div class='progress'>";
+	echo "<h5>Progress:</h5>";
+	echo "<div class='indented'>";
+	foreach ( $progress as $e )
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
+	if ( $op == NULL ) $progress = [];
     }
 
     $project_help = HELP ( 'project-page' );
@@ -1172,7 +1195,8 @@ EOT;
     </div>
 EOT;
 
-    if ( $op == 'push' && $checked_problems == NULL )
+    if (    $op == 'push'
+         && count ( $checked_problems ) == 0 )
     {
 	$push_help = HELP ( 'project-push' );
 
