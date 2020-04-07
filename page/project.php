@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  7 11:37:40 EDT 2020
+    // Date:	Tue Apr  7 15:25:09 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -227,11 +227,6 @@
     //		Names current list for operations that
     //		need it, or is NULL.
     //
-    //     EPM_PROJECT PROGRESS
-    //		List of progress messages to be printed
-    //		like error messages after errors and
-    //		warnings.  If OP is NULL, the list is
-    //		cleared after being output.
     //
     // During a push or pull:
     //
@@ -270,48 +265,42 @@
     //		false otherwise.
 
 
-    // XHTTP Operations
-    // ----- ----------
+    // XHTTP general
+    // ----- -------
     //
-    //     These are operations on the current list or
-    //     favorites and the current stack.  They are
-    //     performed in the page by javascript and
-    //     performed by the server when xhttp posts
-    //     giving these operations are received.  The
-    //     post data is a sequence of lines each con-
-    //     taining one of these operations.
+    //	   Call XHTTP POSTS include ID=value-of-ID
+
+    // XHTTP Push/Pull Operations
+    // ----- --------- ----------
     //
-    //	   In the following # is a row number, or row
-    //	   index, where 0 is the first (topmost) row.
+    //	   Operations that execute push/pull.
     //
-    //		LSM #	Move row # from list to top of
-    //			stack.
-    //		LSC #	Copy row # from list to top of
-    //			stack.
-    //		SLM #	Move top of stack to list row #.
-    //		SLC #	Copy top of stack to list row #.
-    //		MU #	Move list row # to top of list.
-    //		MD #	Move list row # to bottom of
-    //			list.
+    //		PUSH=project:problem
+    //		    Push problem to project.
     //
-    //	    The data POSTed by an xhttp request consist
-    //	    of the following name/value pairs:
+    //		PULL=project:problem
+    //		    Pull problem from project.
     //
-    //		Name	Value
+    //		COMPILE-PULL=project:problem
+    //		    Compile pull of problem from project.
     //
-    //		id	EPM_PROJECT ID value.
-    //		count	Number of first operation.
-    //		ops	Operations, one per line, in a
-    //			string.
+    //		COMPILE-PUSH=project:problem
+    //		    Compile push of problem to project.
     //
-    //	    The operations are numbered 0, 1, ... from
-    //	    the time of the last page reload.  The xhttp
-    //	    response is `done #' where # is the number of
-    //	    the last operation received and processed.
-    //	    The xhttp code can buffer operations not yet
-    //	    processed and will wait for the last opera-
-    //	    tion to be processed before the page is un-
-    //	    loaded or hidden.
+    //		EXECUTE
+    //		    Execute compiled push or pull.
+    //
+    //
+    //	    Responses:
+    //
+    //
+    //		ERROR
+    //		error-messages
+    //
+    //		COMPILED
+    //		compiled-changes
+    //
+    //		DONE
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -1014,9 +1003,21 @@ EOT;
 	    }
 	    else
 	    {
+		$project = $data['PROJECT'];
+		$f = "projects/$project/$problem/"
+		   . "+changes+";
+		$changes = $data['CHANGES'];
+		$r = @file_put_contents
+		    ( "$epm_data/$f", FILE_APPEND );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
 	        $progress[] = "{$op}ed $problem";
-
-		// TBD
+		array_shift ( $checked_problems );
+		if ( count ( $checked_problems ) == 0 )
+		{
+		    $op = NULL;
+		    $data['OP'] = $op;
+		}
 	    }
 	}
 	elseif ( isset ( $_POST['execute_no'] ) )
