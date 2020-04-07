@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  7 07:53:46 EDT 2020
+    // Date:	Tue Apr  7 11:37:40 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -259,10 +259,11 @@
     //		displayed to user when change-approval
     //		is required.
     //
-    //     EPM_PROJECT CHANGE-FILE
-    //		Name of file to which CHANGES are to be
-    //		appended upon success, relative to $epm_
-    //		data.
+    //     EPM_PROJECT PROJECT
+    //		Name of project to or from which the
+    //		problem which is the first element of
+    //		CHECKED-PROBLEMS is being pushed or
+    //	        pulled.
     //
     //     EPM_PROJECT APPROVAL
     //		True if change-approval is required, and
@@ -902,7 +903,7 @@ EOT;
 	                . " $srcdir/$fname";
 	}
 	$data['CHANGES'] = $changes;
-	$data['CHANGE-FILE'] = "$desdir/+changes+";
+	$data['PROJECT'] = $project;
 	$data['COMMANDS'] = $commands;
     }
 
@@ -1001,8 +1002,22 @@ EOT;
 	        ERROR ( "\$errors not empty at" .
 		        " execute_yes" );
 	    execute_commands ( $errors );
-	    // TBD
+	    $problem = $checked_problems[0];
+	    if ( count ( $errors ) > 0 )
+	    {
+	        $progress[] = "fatal errors while"
+		            . " {$op}ing $problem";
+		foreach ( $checked_problems as $p )
+		    $progress[] = "cancelled $op of $p";
+	        $op = NULL;
+		$data['OP'] = $op;
+	    }
+	    else
+	    {
+	        $progress[] = "{$op}ed $problem";
 
+		// TBD
+	    }
 	}
 	elseif ( isset ( $_POST['execute_no'] ) )
 	    $compile_next = true;
