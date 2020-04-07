@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr  6 15:06:08 EDT 2020
+    // Date:	Tue Apr  7 05:59:14 EDT 2020
 
     // Maintains indices and projects.  Pushes and pulls
     // problems from projects and changes project owners.
@@ -253,9 +253,19 @@
     //		displayed to user when change-approval
     //		is required.
     //
+    //     EPM_PROJECT CHANGE-FILE
+    //		Name of file to which CHANGES are to be
+    //		appended upon success, relative to $epm_
+    //		data.
+    //
     //     EPM_PROJECT APPROVAL
     //		True if change-approval is required, and
     //		false otherwise.
+    //
+    //     EPM_PROJECT PROGRESS
+    //		List of progress messages to be printed
+    //		like error messages after errors and
+    //		warnings.
 
 
     // XHTTP Operations
@@ -346,6 +356,9 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $compile_next = false;
+    	// Set to cause first element of EPM_PROJECT
+	// CHECKED-PROBLEMS to be compiled.
 
     // Permission maps.  These map:
     //
@@ -790,7 +803,7 @@ EOT;
 	return $r;
     }
 
-    // Compute EPM_PROJECT CHANGES and EPM_PROJECT
+    // Compute EPM_PROJECT CHANGES, CHANGE-FILE, and
     // COMMANDS to be used to push $problem to $project.
     // If $problem has been pulled, $project is ignored
     // and the problem's parent is used instead.
@@ -886,6 +899,7 @@ EOT;
 	                . " $srcdir/$fname";
 	}
 	$data['CHANGES'] = $changes;
+	$data['CHANGE-FILE'] = "$desdir/+changes+";
 	$data['COMMANDS'] = $commands;
     }
 
@@ -954,19 +968,21 @@ EOT;
 	{
 	    // TBD
 	}
-	else
+	elseif ( ! isset 
+	            ( $_POST['selected-project'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	elseif ( $op != 'push' && $op != 'pull' )
+	    ERROR ( "\$op = '$op' is not push or" .
+	            " pull" );
+	elseif ( isset ( $_POST['submit'] ) )
 	{
-	    // op must be push or pull.
-	    //
-	    if ( ! isset 
-	               ( $_POST['selected-project'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $data['SELECTED-PROJECT'] =
 	        $_POST['selected-project'];
 	    $data['CHECKED-PROBLEMS'] = [];
 	    $data['COMMANDS'] = NULL;
 	    $data['CHANGES'] = NULL;
 	    $data['APPROVAL'] = true;
+	    $data['PROGRESS'] = [];
 	    $checked_problems =
 	        & $data['CHECKED-PROBLEMS'];
 
@@ -976,7 +992,21 @@ EOT;
 		         ( '/^check\d+$/', $key ) )
 		    $checked_problems[] = $value;
 	    }
+	    $compile_next = true;
 	}
+	elseif ( isset ( $_POST['execute_yes'] ) )
+	{
+	    if ( count ( $errors ) > 0 )
+	        ERROR ( "\$errors not empty at" .
+		        " execute_yes" );
+	    execute_commands ( $errors );
+	    // TBD
+
+	}
+	elseif ( isset ( $_POST['execute_no'] ) )
+	    $compile_next = true;
+	else
+	    exit ( 'UNACCEPTABLE HTTP POST' );
 
 	$id = bin2hex ( random_bytes ( 16 ) );
 	$data['ID'] = $id;
