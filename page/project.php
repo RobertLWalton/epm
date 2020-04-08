@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  8 02:14:57 EDT 2020
+    // Date:	Wed Apr  8 05:49:33 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -373,6 +373,10 @@
     //		compiled-changes
     //
     //		DONE new-ID-value
+    //
+    //		Here error-messages is a string
+    //		consisting of lines each with an EOL,
+    //		and compiled-changes is similar.
 
     
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
@@ -402,16 +406,12 @@
         $_SESSION['EPM_PROJECT'] = [
 	    'ID' => bin2hex ( random_bytes ( 16 ) ),
 	    'OP' => NULL,
-	    'LIST' => NULL ,
-	    'CHECKED-PROBLEMS' => [],
-	    'PROGRESS' => [] ];
+	    'LIST' => NULL ];
 
     $data = & $_SESSION['EPM_PROJECT'];
     $id = $data['ID'];
     $op = $data['OP'];
     $list = $data['LIST'];
-    $checked_problems = & $data['CHECKED-PROBLEMS'];
-    $progress = & $data['PROGRESS'];
 
     if ( $method == 'POST'
          &&
@@ -419,6 +419,9 @@
 	   ||
 	   $_POST['ID'] != $id ) )
         exit ( 'UNACCEPTABLE HTTP POST' );
+
+    $id = bin2hex ( random_bytes ( 16 ) );
+    $data['ID'] = $id;
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -876,34 +879,37 @@ EOT;
     // If $problem has been pulled, $project is ignored
     // and the problem's parent is used instead.
     //
-    function compile_push_problem ( $problem, $project )
+    function compile_push_problem
+	( $project, $problem, $errors )
     {
 	global $epm_data, $uid, $epm_filename_re,
 	       $epm_time_format, $data,
 	       $push_file_map;
 
         $srcdir = "users/$uid/$problem";
+	$desdir = "projects/$project/$problem";
 	$g = "$srcdir/+parent+";
 	$new_push = true;
 	if ( is_link ( "$epm_data/$g" ) )
 	{
-	    $re = "/\/\.\.\/projects\/([^\/]+)\/"
-		. "$problem\$/";
+	    $new_push = false;
 	    $s = @readlink ( "$epm_data/$g" );
 	    if ( $s === false )
 		ERROR ( "cannot read link $g" );
-	    if ( ! preg_match
-		       ( $re, $s, $matches ) )
-		ERROR ( "link $g value $s is" .
-			" mal-formed" );
-	    $project = $matches[1];
-	    $desdir = "projects/$project/$problem";
+	    $sok = "../../../$desdir";
+	    if ( $s != $sok )
+	    {
+	        $errors[] = "$g links to $s but should"
+		          . " link to $sok";
+		return;
+	    }
 	    if ( ! is_dir ( "$epm_data/$desdir" ) )
-		ERROR ( "$desdir is not a directory" );
-	    $new_push = false;
+	    {
+		$errors[] = "$desdir is not a"
+		          . " directory";
+		return;
+	    }
 	}
-	else
-	    $desdir = "projects/$project/$problem";
 
 	$changes = "Changes to Push $problem ("
 	         . strftime ( $epm_time_format )
@@ -968,8 +974,9 @@ EOT;
 	                . " ../../../$desdir/$fname"
 	                . " $srcdir/$fname";
 	}
-	$data['CHANGES'] = $changes;
 	$data['PROJECT'] = $project;
+	$data['PROBLEM'] = $problem;
+	$data['CHANGES'] = $changes;
 	$data['COMMANDS'] = $commands;
     }
 
@@ -981,6 +988,7 @@ EOT;
     function execute_commands ( $errors )
     {
         global $epm_data, $data;
+
 	foreach ( $data['COMMANDS'] as $command )
 	{
 	    $output = [];
@@ -997,24 +1005,33 @@ EOT;
 	    if ( $err != '' )
 	    {
 	        $errors[] = $err;
-		break;
+		return;
 	    }
 	}
+
+	$project = $data['PROJECT'];
+	$problem = $data['PROBLEM'];
+	$f = "projects/$project/$problem/"
+	   . "+changes+";
+	$changes = $data['CHANGES'];
+	$r = @file_put_contents
+	    ( "$epm_data/$f", FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
     }
 
     if ( $method == 'POST' )
     {
-        if ( isset ( $_POST['cancel'] ) )
-	{
-	    $op = NULL;
-	    $data['OP'] = $op;
-	}
-        elseif ( isset ( $_POST['op'] ) )
+        if ( isset ( $_POST['op'] ) )
 	{
 	    if ( ! isset ( $_POST['selected-list'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $op = $_POST['op'];
 	    $list = $_POST['selected-list'];
+
+	    if ( ! in_array ( $op, ['push', 'pull',
+	                            'edit'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 
 	    if ( $list == '*FAVORITES*'
 		 &&
@@ -1034,76 +1051,93 @@ EOT;
 	}
 	elseif ( ! isset ( $op ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	elseif ( $op == 'edit' )
+        elseif ( isset ( $_POST['cancel'] ) )
+	{
+	    if ( $op != 'edit' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $op = NULL;
+	    $data['OP'] = $op;
+	}
+        elseif ( isset ( $_POST['done'] ) )
+	{
+	    if ( $op == 'edit' )
+	        execute_edit ( $errors );
+	    $op = NULL;
+	    $data['OP'] = $op;
+	}
+        elseif ( isset ( $_POST['new-list'] ) )
+	{
+	    if ( $op != 'edit' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    execute_edit ( $errors );
+	    if ( count ( $errors ) == 0 )
+	    {
+	        $list = $_POST['new-list'];
+		$data['LIST'] = $list;
+	    }
+	}
+        elseif ( isset ( $_POST['execute'] ) )
+	{
+	    if ( $op == 'edit' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    execute_commands ( $errors );
+	    if ( count ( $errors ) > 0 )
+	    {
+		echo "ERROR $id\n";
+		foreach ( $errors as $e )
+		    echo "$e\n";
+		exit;
+	    }
+	    echo "DONE $id\n";
+	    exit;
+	}
+        elseif ( $op == 'push' )
+	{
+	    $value = NULL;
+	    $just_compile = false;
+	    if ( isset ( $_POST['push'] ) )
+		$value = $_POST['push'];
+	    elseif ( isset ( $_POST['compile-push'] ) )
+	    {
+		$value = $_POST['compile-push'];
+		$just_compile = true;
+	    }
+	    if ( ! isset ( $value ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $items = explode ( ':', $value );
+	    if ( count ( $items ) != 2 )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    list ( $project, $problem ) = $items;
+	    compile_push_problem
+		( $project, $problem, $errors );
+	    if ( count ( $errors ) > 0 )
+	    {
+		echo "ERROR $id\n";
+		foreach ( $errors as $e )
+		    echo "$e\n";
+		exit;
+	    }
+	    if ( $just_compile )
+	    {
+		echo "COMPILED $id\n";
+		echo $data['CHANGES'];
+		exit;
+	    }
+	    execute_commands ( $errors );
+	    if ( count ( $errors ) > 0 )
+	    {
+		echo "ERROR $id\n";
+		foreach ( $errors as $e )
+		    echo "$e\n";
+		exit;
+	    }
+	    echo "DONE $id\n";
+	    exit;
+	}
+	elseif ( $op == 'pull' )
 	{
 	    // TBD
 	}
-	elseif ( ! isset 
-	            ( $_POST['selected-project'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	elseif ( $op != 'push' && $op != 'pull' )
-	    ERROR ( "\$op = '$op' is not push or" .
-	            " pull" );
-	elseif ( isset ( $_POST['submit'] ) )
-	{
-	    $data['SELECTED-PROJECT'] =
-	        $_POST['selected-project'];
-	    $data['CHECKED-PROBLEMS'] = [];
-	    $data['PROGRESS'] = [];
-	    $data['COMMANDS'] = NULL;
-	    $data['CHANGES'] = NULL;
-	    $data['APPROVAL'] = true;
-
-	    foreach ( $_POST as $key => $value )
-	    {
-	        if ( preg_match
-		         ( '/^check\d+$/', $key ) )
-		    $checked_problems[] = $value;
-	    }
-	    $compile_next = true;
-	}
-	elseif ( isset ( $_POST['execute_yes'] ) )
-	{
-	    if ( count ( $errors ) > 0 )
-	        ERROR ( "\$errors not empty at" .
-		        " execute_yes" );
-	    execute_commands ( $errors );
-	    $problem = $checked_problems[0];
-	    if ( count ( $errors ) > 0 )
-	    {
-	        $progress[] = "fatal errors while"
-		            . " {$op}ing $problem";
-		foreach ( $checked_problems as $p )
-		    $progress[] = "cancelled $op of $p";
-	        $op = NULL;
-		$data['OP'] = $op;
-	    }
-	    else
-	    {
-		$project = $data['PROJECT'];
-		$f = "projects/$project/$problem/"
-		   . "+changes+";
-		$changes = $data['CHANGES'];
-		$r = @file_put_contents
-		    ( "$epm_data/$f", FILE_APPEND );
-		if ( $r === false )
-		    ERROR ( "cannot write $f" );
-	        $progress[] = "{$op}ed $problem";
-		array_shift ( $checked_problems );
-		if ( count ( $checked_problems ) == 0 )
-		{
-		    $op = NULL;
-		    $data['OP'] = $op;
-		}
-	    }
-	}
-	elseif ( isset ( $_POST['execute_no'] ) )
-	    $compile_next = true;
-	else
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-
-	$id = bin2hex ( random_bytes ( 16 ) );
-	$data['ID'] = $id;
     }
 
 ?>
