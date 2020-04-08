@@ -2,8 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  8 05:49:33 EDT 2020
-
+    // Date:	Wed Apr  8 13:17:33 EDT 2020 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
     // problems or maintain permissions: see
@@ -242,7 +241,10 @@
     //     EPM_PROJECT COMMANDS
     //		List of commands to be executed by
     //		execute_commands to accomplish the
-    //		current push/pull operation.
+    //		current push/pull operation.  Commands
+    //		are to be executed with $epm_data being
+    //		the current directory and 07 the current
+    //		mask.
     //
     //     EPM_PROJECT CHANGES
     //		String to be appended to +changes+ file
@@ -638,21 +640,28 @@
     // elements are in the map.  If PROJECT is ''
     // the parent is unknown and the segment form is
     //
-    //	   <tr><td class='problem'>
-    //	       <input type='checkbox'
+    //	   <tr><td>
+    //	       <input class='push-new'
+    //                type='checkbox'
     //		      name='check$c'
     //		      value='PROBLEM'
     //		      onclick='PUSH(this)'>
-    //	       PROBLEM</td></tr>
+    //	       <span class='problem' id='id$c'>
+    //	       PROBLEM
+    //	       </span>
+    //     </td></tr>
     //
     // and if PROJECT is NOT '' the segment form is
     //
-    //	   <tr><td class='problem'>
-    //	       <input type='checkbox'
+    //	   <tr><td>
+    //	       <input class='push-parent'
+    //                type='checkbox'
     //		      name='check$c'
-    //		      value='PROBLEM'>
+    //		      value='PROJECT:PROBLEM'>
+    //	       <span class='problem' id='id$c'>
     //         PROBLEM &rAarr; PROJECT
-    //         </td></tr>
+    //	       </span>
+    //     </td></tr>
     //
     // $c is a counter that counts the rows output.
     //
@@ -665,20 +674,28 @@
 	    $c += 1;
 	    if ( $project == '' )
 	        $r .= <<<EOT
-		<tr><td class='problem'>
-		    <input type='checkbox'
+		<tr><td>
+		    <input class='push-new'
+		           type='checkbox'
 		           name='check$c'
 			   value='$problem'
 			   onclick='PUSH(this)'>
-		    $problem</td></tr>
+		    <span class='problem' id='id$c'>
+		    $problem
+		    </span>
+		</td></tr>
 EOT;
 	    else
 	        $r .= <<<EOT
-		<tr><td class='problem'>
-		    <input type='checkbox'
+		<tr><td>
+		    <input class='push-parent'
+		           type='checkbox'
 		           name='check$c'
 			   value='$problem'>
-		    $problem &rArr; $project</td></tr>
+		    <span class='problem' id='id$c'>
+		    $problem &rArr; $project
+		    </span>
+		</td></tr>
 EOT;
 	}
 	return $r;
@@ -874,10 +891,12 @@ EOT;
 	return $r;
     }
 
-    // Compute EPM_PROJECT CHANGES, CHANGE-FILE, and
-    // COMMANDS to be used to push $problem to $project.
-    // If $problem has been pulled, $project is ignored
-    // and the problem's parent is used instead.
+    // Compute EPM_PROJECT CHANGES, COMMANDS, PROJECT,
+    // and PROBLEM to be used to push $problem to
+    // $project.  If $problem has been pulled, it is
+    // and error if it has not been pulled from
+    // $project.  It is an error if $project does not
+    // exist.
     //
     function compile_push_problem
 	( $project, $problem, $errors )
@@ -887,7 +906,13 @@ EOT;
 	       $push_file_map;
 
         $srcdir = "users/$uid/$problem";
-	$desdir = "projects/$project/$problem";
+	$d = "projects/$project";
+	if ( ! is_dir ( $d ) )
+	{
+	    $errors[] = "$project is not a project";
+	    return;
+	}
+	$desdir = "$d/$problem";
 	$g = "$srcdir/+parent+";
 	$new_push = true;
 	if ( is_link ( "$epm_data/$g" ) )
@@ -910,14 +935,17 @@ EOT;
 		return;
 	    }
 	}
+	elseif ( is_dir ( "$epm_data/$desdir" ) )
+	{
+	    $errors[] = "$project already has a problem"
+	              . " named $problem";
+	    return;
+	}
 
-	$changes = "Changes to Push $problem ("
+	$changes = "Changes to Push $problem by $uid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHL_EOL;
 	$commands = [];
-	    // Commands are to be executed with
-	    // $epm_data being the current directory
-	    // and 07 the current mask.
 	if ( $new_push )
 	{
 	    $changes .= "make directory for $problem in"
@@ -1000,11 +1028,14 @@ EOT;
 	        if ( preg_match ( '/^\s*$/', $line ) )
 		    continue;
 		if ( $err != '' ) $err .= PHP_EOL;
-		$err .= $line;
+		$err .= "    $line";
 	    }
 	    if ( $err != '' )
 	    {
-	        $errors[] = $err;
+	        $err = "Error in $command:" . PHP_EOL
+		     . $err;
+		WARN ( $err );
+		$errors[] = $err;
 		return;
 	    }
 	}
@@ -1182,7 +1213,7 @@ EOT;
         font-size: var(--large-font-size);
 	text-align: left;
     }
-    td.problem {
+    span.problem {
 	display:inline;
         font-size: var(--large-font-size);
 	font-family: "Courier New", Courier, monospace;
@@ -1296,21 +1327,18 @@ EOT;
         echo <<<EOT
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
-	<label>
-	<input type='submit' name='op' value='push'>
-	<h5>Push</h5>
-	</label>
+	<button type='submit' name='op' value='push'>
+	Push
+	</button>
 	<pre>   </pre>
-	<label>
-	<input type='submit' name='op' value='pull'>
-	<h5>Pull</h5>
-	</label>
+	<button type='submit' name='op' value='pull'>
+	Pull
+	</button>
 	<pre>   </pre>
-	<label>
-	<input type='submit'
+	<button type='submit'
 	       name='op' value='edit'>
-	<h5>Edit List</h5>
-	</label>
+	Edit List
+	</button>
 	<pre>   </pre>
 	<label>
 	<h5>Selected List</h5>
@@ -1347,7 +1375,7 @@ EOT;
 	        <h5>Problems (check to push)</h5></th>
 	    <pre>    </pre>
 	    <td><input type='submit'
-	               name='cancel'
+	               name='done'
 		       value='Cancel'></td>
 	    <td id='project-selector'
 	        style='visibility:hidden'>
