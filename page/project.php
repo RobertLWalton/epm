@@ -2,10 +2,12 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  7 15:25:09 EDT 2020
+    // Date:	Wed Apr  8 02:14:57 EDT 2020
 
-    // Maintains indices and projects.  Pushes and pulls
-    // problems from projects and changes project owners.
+    // Pushes and pulls problem and maintains problem
+    // lists.  Does NOT delete projects or project
+    // problems or maintain permissions: see
+    // manage.php.
 
     // Directories and Files
     // ----------- --- -----
@@ -87,8 +89,8 @@
     // users may add symbolic links to their own
     // indices, and delete such links.
     //
-    // In addition there are read-only indices containing
-    // the problems in the directories:
+    // In addition there are read-only indices contain-
+    // ing the problems in the directories:
     //
     //	    users/UID
     //
@@ -181,19 +183,19 @@
     //
     //	    users/UID/+indices+/favorites
     //
-    // that lists the user's favorite indices.  Its contents
-    // are lines of the forms:
+    // that lists the user's favorite indices.  Its
+    // contents are lines of the forms:
     //
     //	    TIME PROJECT BASENAME
     //
     // indicating that the index file with the name
     // BASENAME.index in PROJECT was viewed at the given
     // TIME.  PROJECT may be '-' to indicate an index of
-    // the current user and NOT of a project, and BASENAME
-    // may be '-' to indicate the index is a list of all
-    // the problems in the PROJECT or of all the UID
-    // user's problems.  The user may edit this in the
-    // same manner as the user edits lists.
+    // the current user and NOT of a project, and
+    // BASENAME may be '-' to indicate the index is a
+    // list of all the problems in the PROJECT or of all
+    // the UID user's problems.  The user may edit this
+    // in the same manner as the user edits lists.
     //
     // Lastly there are two stacks used in editing:
     //
@@ -220,28 +222,22 @@
     //		    NULL
     //		    'push'
     //		    'pull'
-    //		    'edit-list'
+    //		    'edit'
     //
     //	   EPM_PROJECT LIST
     //		['PROJECT', 'LIST']
     //		Names current list for operations that
     //		need it, or is NULL.
     //
+    // During a push or pull operation:
     //
-    // During a push or pull:
+    //     EPM_PROJECT PROBLEM
+    //		Name of problem being pushed or pulled.
     //
-    //     EPM_PROJECT SELECTED-PROJECT
-    //		Selected project for newly pushed
-    //		problems.  Ignored for pushed problems
-    //		with parents and for pulls.
-    //
-    //     EPM_PROJECT CHECKED-PROBLEMS
-    //		List of checked problems that have not
-    //		yet been processed.  The first of these
-    //		is the one currently being processed.
-    //		This is [] if $op is not push or pull
-    //		or list of checked problems has not yet
-    //		been received.
+    //     EPM_PROJECT PROJECT
+    //		Name of project into which problem is
+    //		being pushed or from which it is being
+    //		pulled.
     //
     //     EPM_PROJECT COMMANDS
     //		List of commands to be executed by
@@ -254,54 +250,131 @@
     //		displayed to user when change-approval
     //		is required.
     //
-    //     EPM_PROJECT PROJECT
-    //		Name of project to or from which the
-    //		problem which is the first element of
-    //		CHECKED-PROBLEMS is being pushed or
-    //	        pulled.
+    // During an edit operation;
     //
-    //     EPM_PROJECT APPROVAL
-    //		True if change-approval is required, and
-    //		false otherwise.
+    //     EPM_PROJECT LIST-CONTENTS
+    //     EPM_PROJECT STACK-CONTENTS 
+    //		Each is a list of the lines in the LIST
+    //		or STACK, exclusive of description and
+    //		blank lines.  The lines are assigned
+    //		natural number IDs as follows.  If
+    //		there are S stack lines and L LIST
+    //		lines, the stack lines have IDs 1, ...,
+    //		S and the LIST lines IDs S+2, ...,
+    //		S+1+L.  IDs S+1 and S+2+L are reserved
+    //		for empty entries at the ends of lists.
 
 
-    // XHTTP general
+    // Non-XHTTP POSTs:
+    // --------- -----
+    //
+    // Non-XHTTP POSTs include id=value-of-ID derived
+    // from including in each form:
+    //
+    //	    <input type='hidden' id='id' name='id'
+    //             value='ID-value'>
+    //
+    // Initially there is a project page used to select
+    // the operation to be performed: push/pull/edit.
+    //
+    // Project Page POST:
+    // ------- ---- ----
+    //
+    //	    op='OPERATION' selected-list='SELECTED-LIST'
+    //		where OPERATION is 'push', 'pull, or
+    //		'edit' and SELECTED-LIST is selected
+    //		from <selection>... in the project page.
+    //
+    //	    Response is one of 3 page layouts according
+    //      to the operation.
+    //
+    // Push/Pull POST:
+    // --------- ----
+    //
+    //	    done='yes'
+    //		Return to project page.  Actions are
+    //		performed using XHTTP (cancel simply
+    //		sends done POST).
+    //
+    //
+    // Edit POSTs:
+    // ---- -----
+    // 
+    // The edit page presents a LIST and a stack, each
+    // a list of entries, each with a natural number id.
+    // Editing just rearranges these entries, possibly
+    // duplication some, possibly deleting some.  NO
+    // entries are created.  Rearrangement is done
+    // strictly by javascript.
+    //
+    //	    cancel='yes'
+    //		Return to project page and do NOT update
+    //		list or stack.
+    //
+    //	    done='yes' list='...' stack='...'
+    //		Update list and stack and return to
+    //		project page.
+    //
+    //	    new-list='LIST' list='...' stack='...'
+    //		Update list and stack and load a new
+    //		edit page with the new LIST.
+    //
+    // In list='...' the '...' is just a list of entry
+    // ids in the order that they appear in the edited
+    // LIST, separated by `:'s.  Stack='...' is similar
+    // but for the stack.  XHTTP is NOT used.
+
+
+    // XHTTP POSTS
     // ----- -------
     //
-    //	   Call XHTTP POSTS include ID=value-of-ID
+    // XHTTP POSTs include id=value-of-ID
+    //
+    // XHTTP POSTs are used for push and pull
+    // operations.
 
     // XHTTP Push/Pull Operations
     // ----- --------- ----------
     //
+    // The push or pull pages present the user with a
+    // LIST of candidate problems to be pushed or
+    // pulled.  Javascript is used to select problems
+    // and then submit these.  Submission causes
+    // XHTTP operations that execute push or pull.
+    // The server POSTs just execute pushes and pulls,
+    // while javascript maintains a view of the results
+    // on the page.
+    //
     //	   Operations that execute push/pull.
     //
-    //		PUSH=project:problem
+    //		push=project:problem
     //		    Push problem to project.
     //
-    //		PULL=project:problem
+    //		pull=project:problem
     //		    Pull problem from project.
     //
-    //		COMPILE-PULL=project:problem
-    //		    Compile pull of problem from project.
+    //		compile-pull=project:problem
+    //		    Compile pull of problem from
+    //		    project.
     //
-    //		COMPILE-PUSH=project:problem
+    //		compile-push=project:problem
     //		    Compile push of problem to project.
     //
-    //		EXECUTE
+    //		execute
     //		    Execute compiled push or pull.
     //
     //
     //	    Responses:
     //
-    //
-    //		ERROR
+    //		ERROR new-ID-value
     //		error-messages
     //
-    //		COMPILED
+    //		COMPILED new-ID-value
     //		compiled-changes
     //
-    //		DONE
+    //		DONE new-ID-value
 
+    
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
@@ -446,7 +519,8 @@
         global $all_permissions;
         $pmap = ['owner' => false];
 	add_permissions
-	    ( $pmap, "projects/$project/$problem/+perm+" );
+	    ( $pmap,
+	      "projects/$project/$problem/+perm+" );
 	if ( $pmap['owner'] ) return $all_permissions;
 	return project_permissions ( $project );
     }
@@ -462,7 +536,8 @@
 	$projects = [];
 	$ps = @scandir ( "$epm_data/projects" );
 	if ( $ps == false )
-	    ERROR ( "cannot read 'projects' directory" );
+	    ERROR ( "cannot read 'projects'" .
+	            " directory" );
 	foreach ( $ps as $project )
 	{
 	    if ( ! preg_match
@@ -875,10 +950,11 @@ EOT;
 	    else
 	        $action = $amap;
 
-	    $changes .= "move $fname to project $problem"
-	              . PHP_EOL;
-	    $commands[] = "mv -f $srcdir/$fname $desdir";
-	        // This will also move a link.
+	    $changes .= "move $fname to project"
+	    	      . " $problem" . PHP_EOL;
+	    $commands[] =
+	        "mv -f $srcdir/$fname $desdir";
+		    // This will also move a link.
 
 	    if ( $action == 'R' ) continue;
 	    if ( $action != 'L' )
@@ -888,7 +964,8 @@ EOT;
 	    $changes .= "link $fname from project"
 	              . " $problem to local $problem"
 	              . PHP_EOL;
-	    $commands[] = "ln -s ../../../$desdir/$fname"
+	    $commands[] = "ln -s"
+	                . " ../../../$desdir/$fname"
 	                . " $srcdir/$fname";
 	}
 	$data['CHANGES'] = $changes;
@@ -941,7 +1018,7 @@ EOT;
 
 	    if ( $list == '*FAVORITES*'
 		 &&
-		 $op != 'edit-list' )
+		 $op != 'edit' )
 	    {
 		$errors[] = "Favorites is not allowed"
 			  . " as a list of problems to"
@@ -957,7 +1034,7 @@ EOT;
 	}
 	elseif ( ! isset ( $op ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	elseif ( $op == 'edit-list' )
+	elseif ( $op == 'edit' )
 	{
 	    // TBD
 	}
@@ -1196,7 +1273,8 @@ EOT;
 	</label>
 	<pre>   </pre>
 	<label>
-	<input type='submit' name='op' value='edit-list'>
+	<input type='submit'
+	       name='op' value='edit'>
 	<h5>Edit List</h5>
 	</label>
 	<pre>   </pre>
