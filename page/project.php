@@ -2,7 +2,8 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  8 13:17:33 EDT 2020 
+    // Date:	Thu Apr  9 05:41:13 EDT 2020
+
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
     // problems or maintain permissions: see
@@ -1388,11 +1389,13 @@ EOT;
 	<div class='push-list'>
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
-	<table width='100%'>
+	<table width='100%' id='push-table'>
 	<tr><th style='text-align:left'>
 	        <h5>Problems (select to push)</h5></th>
-	    <pre>    </pre>
-	    <td><input type='submit'
+	    <td><input type='button'
+	               onclick='RESET_PUSH()'
+		       value='Reset'>
+		<input type='submit'
 	               name='done'
 		       value='Cancel'></td>
 	    <td id='project-selector'
@@ -1416,6 +1419,8 @@ EOT;
 
 	var off = 'transparent';
 	var on = 'black';
+	var push_rows =
+	    document.getElementById('push-table').rows;
 
 	// The following is called when a push checkbox
 	// is clicked for a problem that has no project
@@ -1430,13 +1435,17 @@ EOT;
 	    ( 'project-selector' );
 	function PUSH ( checkbox )
 	{
+	    var row = checkbox.parentElement
+	                      .parentElement;
 	    if ( checkbox.style.backgroundColor != on )
 	        // Initial color may be anything but on.
 	    {
 		// Click must turn box on.
 		//
 		checkbox.style.backgroundColor = on;
-		if ( ++ push_counter == 1 )
+		if ( row.dataset.project == ''
+		     &&
+		     ++ push_counter == 1 )
 		    project_selector.style.visibility =
 		        'visible';
 	    }
@@ -1445,10 +1454,34 @@ EOT;
 		// Click must turn box off.
 		//
 		checkbox.style.backgroundColor = off;
-		if ( -- push_counter == 0 )
+		if ( row.dataset.project == ''
+		     &&
+		     -- push_counter == 0 )
 		    project_selector.style.visibility =
 		        'hidden';
 	    }
+	} 
+
+	function RESET_PUSH ()
+	{
+	    for ( var i = 0; i < push_rows.length; ++ i )
+	    {
+		var row = push_rows[i];
+	        var problem = row.dataset.problem;
+		if ( problem === undefined ) continue;
+		var td = row.children[0];
+		var checkbox = td.children[0];
+		if ( checkbox.style
+		             .backgroundColor != on )
+		    continue;
+		checkbox.style.backgroundColor = off;
+		if ( row.dataset.project == ''
+		     &&
+		     -- push_counter == 0 )
+		    project_selector.style.visibility =
+		        'hidden';
+	    }
+
 	}
 	</script>
 EOT;
