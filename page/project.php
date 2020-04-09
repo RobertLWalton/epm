@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  9 13:16:07 EDT 2020
+    // Date:	Thu Apr  9 14:03:27 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1564,6 +1564,11 @@ EOT;
 
 	var xhttp = new XMLHttpRequest();
 	var message_sent = null;
+	var response_re = /^(\S+) (\S+)\S([^]+)$/;
+	    // Backslash n is turned into a newline
+	    // during initial character scanning
+	    // before identifiers, comments, etc are
+	    // parsed.
 	function SEND ( message, callback )
 	{
 	    xhttp.onreadystatechange = function() {
@@ -1584,7 +1589,11 @@ EOT;
 		message_sent = null;
 		LOG ( 'xhttp response: '
 		      + this.responseText );
-		callback ( this.responseText );
+		let matches =
+		    this.responseText.match
+			( response_re );
+		ID.value = matches[2];
+		callback ( matches[1], matches[3] );
 	    };
 	    xhttp.open ( 'POST', "project.php", true );
 	    xhttp.setRequestHeader
