@@ -638,32 +638,28 @@
     //
     // mapping element, in the same order as these
     // elements are in the map.  If PROJECT is ''
-    // the parent is unknown and the segment form is
+    // the parent is unknown.
     //
-    //	   <tr><td>
-    //	       <input class='push-new'
-    //                type='checkbox'
-    //		      name='check$c'
-    //		      value='PROBLEM'
-    //		      onclick='PUSH(this)'>
-    //	       <span class='problem' id='id$c'>
-    //	       PROBLEM
-    //	       </span>
-    //     </td></tr>
+    // The segment for one problem is:
     //
-    // and if PROJECT is NOT '' the segment form is
+    //     <tr data-project='PROJECT'
+    //         data-problem='PROBLEM'>
+    //         <td>
+    //         <span class='problem-checkbox'
+    //               onclick='PUSH(this)'>&nbsp;</span>
+    //         <span class='CLASS'>
+    //         PROBLEM &rArr; DESTINATION
+    //         </span>
+    //         </td>
+    //         </tr>
     //
-    //	   <tr><td>
-    //	       <input class='push-parent'
-    //                type='checkbox'
-    //		      name='check$c'
-    //		      value='PROJECT:PROBLEM'>
-    //	       <span class='problem' id='id$c'>
-    //         PROBLEM &rAarr; PROJECT
-    //	       </span>
-    //     </td></tr>
+    // where CLASS is 'push-new' if PROJECT == '' and
+    // 'push-parent' otherwise, and DESTINATION is
     //
-    // $c is a counter that counts the rows output.
+    //     <span class='selected-project'>
+    //     Selected Project</span>
+    //
+    // if PROJECT == '' and PROJECT otherwise.
     //
     function problems_to_push_rows ( $map )
     {
@@ -672,30 +668,25 @@
         foreach ( $map as $problem => $project )
 	{
 	    $c += 1;
-	    if ( $project == '' )
-	        $r .= <<<EOT
-		<tr><td>
-		    <input class='push-new'
-		           type='checkbox'
-		           name='check$c'
-			   value='$problem'
-			   onclick='PUSH(this)'>
-		    <span class='problem' id='id$c'>
-		    $problem
-		    </span>
-		</td></tr>
-EOT;
-	    else
-	        $r .= <<<EOT
-		<tr><td>
-		    <input class='push-parent'
-		           type='checkbox'
-		           name='check$c'
-			   value='$problem'>
-		    <span class='problem' id='id$c'>
-		    $problem &rArr; $project
-		    </span>
-		</td></tr>
+	    $class = ( $project == '' ?
+	               'push-new' :
+		       'push-parent' );
+	    $destination =
+	        ( $project == '' ?
+		  "<span class='selected-project'>" .
+		  "Selected Project</span>" :
+		  $project );
+	    $r .= <<<EOT
+	    <tr data-project='$project'
+	        data-problem='$problem'>
+	    <td>
+	    <span class='problem-checkbox'
+	        onclick='PUSH(this)'>&nbsp;</span>
+	    <span class='$class'>
+	    $problem &rArr; $destination
+	    </span>
+	    </td>
+	    </tr>
 EOT;
 	}
 	return $r;
@@ -1234,8 +1225,35 @@ EOT;
 	background-color: #96F9F3;
 	padding-bottom: 5px;
     }
-    div.op {
+    div.push-list {
 	background-color: #F2D9D9;
+    }
+    span.problem-checkbox {
+        height: 15px;
+        width: 30px;
+	display: inline-block;
+	margin-right: 3px;
+	border: 1px solid;
+	border-radius: 7.5px;
+    }
+    span.push-new {
+	background-color: #F2D9D9;
+	display:inline-block;
+        font-size: var(--large-font-size);
+    }
+    span.push-parent {
+	background-color: #F2D9D9;
+	display:inline-block;
+        font-size: var(--large-font-size);
+    }
+    span.selected-project {
+	color: red;
+	display:inline-block;
+	font-weight: bold;
+    }
+    label.select-project {
+	color: red;
+	display:inline-block;
     }
 
 </style>
@@ -1367,19 +1385,19 @@ EOT;
 	    ( read_projects ( 'push' ) );
 
 	echo <<<EOT
-	<div class='op'>
+	<div class='push-list'>
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
 	<table width='100%'>
 	<tr><th style='text-align:left'>
-	        <h5>Problems (check to push)</h5></th>
+	        <h5>Problems (select to push)</h5></th>
 	    <pre>    </pre>
 	    <td><input type='submit'
 	               name='done'
 		       value='Cancel'></td>
 	    <td id='project-selector'
 	        style='visibility:hidden'>
-	    <label>
+	    <label class='select-project'>
 	    <h5>Select Project</h5>:
 	    <select name='selected-project'>
 	    $project_options
@@ -1396,6 +1414,9 @@ EOT;
 	</div>
 	<script>
 
+	var off = 'transparent';
+	var on = 'black';
+
 	// The following is called when a push checkbox
 	// is clicked for a problem that has no project
 	// (i.e., it has not previously been pulled).
@@ -1409,18 +1430,21 @@ EOT;
 	    ( 'project-selector' );
 	function PUSH ( checkbox )
 	{
-	    if ( checkbox.checked )
+	    if ( checkbox.style.backgroundColor != on )
+	        // Initial color may be anything but on.
 	    {
-		// Click has turned box on.
+		// Click must turn box on.
 		//
+		checkbox.style.backgroundColor = on;
 		if ( ++ push_counter == 1 )
 		    project_selector.style.visibility =
 		        'visible';
 	    }
 	    else
 	    {
-		// Click has turned box off.
+		// Click must turn box off.
 		//
+		checkbox.style.backgroundColor = off;
 		if ( -- push_counter == 0 )
 		    project_selector.style.visibility =
 		        'hidden';
