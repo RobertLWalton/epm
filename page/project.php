@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  9 05:41:13 EDT 2020
+    // Date:	Thu Apr  9 08:40:07 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1390,9 +1390,13 @@ EOT;
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
 	<table width='100%' id='push-table'>
-	<tr><th style='text-align:left'>
+	<tr id='pre-submit'>
+	    <th style='text-align:left'>
 	        <h5>Problems (select to push)</h5></th>
 	    <td><input type='button'
+	               onclick='SUBMIT_PUSH()'
+		       value='Submit'>
+	        <input type='button'
 	               onclick='RESET_PUSH()'
 		       value='Reset'>
 		<input type='submit'
@@ -1402,12 +1406,34 @@ EOT;
 	        style='visibility:hidden'>
 	    <label class='select-project'>
 	    <h5>Select Project</h5>:
-	    <select name='selected-project'>
+	    <select id='selected-project-selector'>
 	    $project_options
 	    </select></label>
 	    </td>
 	    <td>
-	    <pre>    </pre>
+            <td style='text-align:right'>
+            $push_help</td>
+	</tr>
+	<tr id='post-submit' style='display:none'>
+	    <th id='post-submit'
+	        style='text-align:left'>
+	        <h5>Problems (selected are being push)
+		    </h5></th>
+	    <td><input type='button'
+	               onclick='STOP_PUSH()'
+		       value='Stop'>
+		<input type='button'
+	               onclick='RESTART_PUSH()'
+		       value='Restart Push'>
+		<input type='submit'
+	               name='done'
+		       value='Cancel Push'></td>
+	    <td id='selected-project-column'>
+	    <h5>Selected Project:
+	    <span id='selected-project-value'
+	          class='selected-project'>
+	    </span></h5></td>
+	    <td>
             <td style='text-align:right'>
             $push_help</td>
 	</tr>
@@ -1421,6 +1447,26 @@ EOT;
 	var on = 'black';
 	var push_rows =
 	    document.getElementById('push-table').rows;
+	var pre_submit =
+	    document.getElementById('pre-submit');
+	var post_submit =
+	    document.getElementById('post-submit');
+	var project_selector = document.getElementById
+	    ( 'project-selector' );
+	var selected_project_selector =
+	    document.getElementById
+	        ('selected-project-selector');
+	var selected_project_column =
+	    document.getElementById
+	        ('selected-project-column');
+	var selected_project_value =
+	    document.getElementById
+	        ('selected-project-value');
+
+	var push_counter = 0;
+	var submit = false;
+	var current_row = -1;
+	var selected_project = null;
 
 	// The following is called when a push checkbox
 	// is clicked for a problem that has no project
@@ -1430,11 +1476,9 @@ EOT;
 	// project-selector visible if the counter is
 	// not zero.
 	//
-	var push_counter = 0;
-	var project_selector = document.getElementById
-	    ( 'project-selector' );
 	function PUSH ( checkbox )
 	{
+	    if ( submit ) return;
 	    var row = checkbox.parentElement
 	                      .parentElement;
 	    if ( checkbox.style.backgroundColor != on )
@@ -1464,7 +1508,9 @@ EOT;
 
 	function RESET_PUSH ()
 	{
-	    for ( var i = 0; i < push_rows.length; ++ i )
+	    if ( submit ) return;
+	    for ( var i = 0; i < push_rows.length;
+	                     ++ i )
 	    {
 		var row = push_rows[i];
 	        var problem = row.dataset.problem;
@@ -1482,6 +1528,19 @@ EOT;
 		        'hidden';
 	    }
 
+	}
+
+	function SUBMIT_PUSH ()
+	{
+	    selected_project =
+	        selected_project_selector.value;
+	    selected_project_value.innerText =
+	        selected_project;
+	    selected_project_column.style.visibility =
+		project_selector.style.visibility;
+	    pre_submit.style.display = 'none';
+	    post_submit.style.display = 'table-row';
+	    submit = true;
 	}
 	</script>
 EOT;
