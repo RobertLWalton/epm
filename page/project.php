@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  9 08:40:07 EDT 2020
+    // Date:	Thu Apr  9 13:16:07 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -976,6 +976,17 @@ EOT;
 	    else
 	        $action = $amap;
 
+	    $g = "$srcdir/$fname";
+	    $h = "$desdir/$fname";
+	    if ( is_link ( "$epm_data/$g" ) )
+	    {
+	        $link = @readlink ( "$epm_data/$g" );
+		if ( $link === false )
+		    ERROR ( "cannot read link $g" );
+		if ( $link == "../../../$h" )
+		    continue;
+	    }
+
 	    $changes .= "move $fname to project"
 	    	      . " $problem" . PHP_EOL;
 	    $commands[] =
@@ -1388,7 +1399,8 @@ EOT;
 	echo <<<EOT
 	<div class='push-list'>
 	<form method='POST'>
-	<input type='hidden' name='ID' value='$id'>
+	<input type='hidden' id='ID'
+	       name='ID' value='$id'>
 	<table width='100%' id='push-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
@@ -1445,6 +1457,12 @@ EOT;
 
 	var off = 'transparent';
 	var on = 'black';
+	var running = 'red';
+	var succeeded = 'green';
+	var failed = 'yellow';
+
+	var ID =
+	    document.getElementById('ID');
 	var push_rows =
 	    document.getElementById('push-table').rows;
 	var pre_submit =
@@ -1467,6 +1485,7 @@ EOT;
 	var submit = false;
 	var current_row = -1;
 	var selected_project = null;
+	var check_compile = true;
 
 	// The following is called when a push checkbox
 	// is clicked for a problem that has no project
@@ -1542,6 +1561,40 @@ EOT;
 	    post_submit.style.display = 'table-row';
 	    submit = true;
 	}
+
+	var xhttp = new XMLHttpRequest();
+	var message_sent = null;
+	function SEND ( message, callback )
+	{
+	    xhttp.onreadystatechange = function() {
+		LOG ( 'xhttp state changed to state '
+		      + this.readyState );
+		if (     this.readyState
+		     !== XMLHttpRequest.DONE
+		     ||
+		     message_sent == null )
+		    return;
+
+		if ( this.status != 200 )
+		    FAIL ( 'Bad response status ('
+			   + this.status
+			   + ') from server replying '
+			   + 'to ' + message_sent );
+
+		message_sent = null;
+		LOG ( 'xhttp response: '
+		      + this.responseText );
+		callback ( this.responseText );
+	    };
+	    xhttp.open ( 'POST', "project.php", true );
+	    xhttp.setRequestHeader
+		( "Content-Type",
+		  "application/x-www-form-urlencoded" );
+	    message_send = message;
+	    LOG ( 'xhttp sent: ' + message );
+	    xhttp.send ( message + '&ID=' + ID.value );
+	}
+
 	</script>
 EOT;
     }
