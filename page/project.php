@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  9 14:03:27 EDT 2020
+    // Date:	Fri Apr 10 11:22:02 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -350,20 +350,20 @@
     //
     //	   Operations that execute push/pull.
     //
-    //		push=project:problem
-    //		    Push problem to project.
+    //		push=PROBLEM project=PROJECT
+    //		    Push PROBLEM to PROJECT.
     //
-    //		pull=project:problem
-    //		    Pull problem from project.
+    //		pull=PROBLEM project=PROJECT
+    //		    Pull PROBLEM from PROJECT.
     //
-    //		compile-pull=project:problem
-    //		    Compile pull of problem from
-    //		    project.
+    //		compile-pull=PROBLEM project=PROJECT
+    //		    Compile pull of PROBLEM from
+    //		    PROJECT.
     //
-    //		compile-push=project:problem
-    //		    Compile push of problem to project.
+    //		compile-push=PROBLEM project=PROJECT
+    //		    Compile push of PROBLEM to PROJECT.
     //
-    //		execute
+    //		execute=yes
     //		    Execute compiled push or pull.
     //
     //
@@ -1560,6 +1560,33 @@ EOT;
 	    pre_submit.style.display = 'none';
 	    post_submit.style.display = 'table-row';
 	    submit = true;
+	    START_NEXT();
+	}
+
+	function START_NEXT ()
+	{
+	    while ( true )
+	    {
+		++ current_row;
+		let row = push_rows[current_row];
+	        var problem = row.dataset.problem;
+		if ( problem === undefined ) continue;
+	        var project = row.dataset.project;
+		var td = row.children[0];
+		var checkbox = td.children[0];
+		if ( checkbox.style
+		             .backgroundColor != on )
+		    continue;
+		break;
+	    }
+	    checkbox.style.backgroundColor =
+		running;
+	    op = ( check_compiled ? 
+		   'compile-push' : 'push' );
+	    SEND ( op + '=' + problem
+		      + '&project=' + project,
+		   check_compiled ?
+		       CHECK_COMPILED : FINISH_NEXT );
 	}
 
 	var xhttp = new XMLHttpRequest();
