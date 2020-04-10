@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 10 11:22:02 EDT 2020
+    // Date:	Fri Apr 10 14:25:28 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1297,25 +1297,6 @@ var LOG = function(message) {};
 	    echo "<pre>$e</pre><br>";
 	echo "<br></div></div>";
     }
-    if ( count ( $warnings ) > 0 )
-    {
-	echo "<div class='warnings'>";
-	echo "<h5>Warnings:</h5>";
-	echo "<div class='indented'>";
-	foreach ( $warnings as $e )
-	    echo "<pre>$e</pre><br>";
-	echo "<br></div></div>";
-    }
-    if ( count ( $progress ) > 0 )
-    {
-	echo "<div class='progress'>";
-	echo "<h5>Progress:</h5>";
-	echo "<div class='indented'>";
-	foreach ( $progress as $e )
-	    echo "<pre>$e</pre><br>";
-	echo "<br></div></div>";
-	if ( $op == NULL ) $progress = [];
-    }
 
     $project_help = HELP ( 'project-page' );
     $options = "<option value='*FAVORITES*'>"
@@ -1323,6 +1304,44 @@ var LOG = function(message) {};
 	     . favorites_to_options
 	           ( read_favorites() );
     echo <<<EOT
+    <div id='error-response' style='display:none'>
+    <h5>Errors:</h5>
+    <pre>    </pre>
+    <button type='button' onclick='START_NEXT()'>
+    Skip to Next</button>
+    <pre>    </pre>
+    <form class='inline' action='project.php'
+          method='POST'>
+    <button type='submit' name='done' value='yes'>
+    Abort Further Pushes</button></form>
+    <div id='error-messages' class='indented'>
+    </div></div>
+
+    <div id='compile-response' style='display:none'>
+    <h5>Proposed Actions:</h5>
+    <pre>    </pre>
+    <button type='button' onclick='EXECUTE()'>
+    EXECUTE</button>
+    <pre>    </pre>
+    <button type='button' onclick='START_NEXT()'>
+    Skip to Next</button>
+    <pre>    </pre>
+    <form class='inline' action='project.php'
+          method='POST'>
+    <button type='submit' name='done' value='yes'>
+    Abort This and Further Pushes</button></form>
+    <div id='compile-messages' class='indented'>
+    </div></div>
+
+    <div id='done-response' style='display:none'>
+    <h5>Done!</h5>
+    <pre>    </pre>
+    <form class='inline' action='project.php'
+          method='POST'>
+    <button type='submit' name='done' value='yes'>
+    Continue</button></form>
+    </div>
+
     <div class='manage'>
     <form>
     <table style='width:100%'>
@@ -1480,6 +1499,21 @@ EOT;
 	var selected_project_value =
 	    document.getElementById
 	        ('selected-project-value');
+	var compile_response =
+	    document.getElementById
+	        ('compile-response');
+	var compile_messages =
+	    document.getElementById
+	        ('compile-messages');
+	var error_response =
+	    document.getElementById
+	        ('error-response');
+	var error_messages =
+	    document.getElementById
+	        ('error-messages');
+	var done_check =
+	    document.getElementById
+	        ('done-check');
 
 	var push_counter = 0;
 	var submit = false;
@@ -1565,7 +1599,9 @@ EOT;
 
 	function START_NEXT ()
 	{
-	    while ( true )
+	    error_response.style.display = 'none';
+	    compile_response.style.display = 'none';
+	    while ( current_row < push_rows.length )
 	    {
 		++ current_row;
 		let row = push_rows[current_row];
@@ -1579,14 +1615,58 @@ EOT;
 		    continue;
 		break;
 	    }
+	    if ( current_row >= push_rows.length )
+	    {
+	        done_check.style.display = 'block';
+		return;
+	    }
 	    checkbox.style.backgroundColor =
 		running;
-	    op = ( check_compiled ? 
+	    op = ( check_compile ? 
 		   'compile-push' : 'push' );
 	    SEND ( op + '=' + problem
 		      + '&project=' + project,
-		   check_compiled ?
-		       CHECK_COMPILED : FINISH_NEXT );
+		   check_compile ?
+		       COMPILE_RESPONSE :
+		       PUSH_RESPONSE );
+	}
+
+	function COMPILE_RESPONSE ( op, text )
+	{
+	    if ( op == 'ERROR' )
+	        ERROR_RESPONSE ( text );
+	    compile_messages.testContent = text;
+	    compile_response.style.display = 'block';
+	}
+
+	function DONE_RESPONSE ( op, text )
+	{
+	    if ( op == 'ERROR' )
+	        ERROR_RESPONSE ( text );
+	    let row = push_rows[current_row];
+	    let td = row.children[0];
+	    let checkbox = td.children[0];
+	    checkbox.style.backgroundColor = success;
+	    START_NEXT();
+	}
+
+	function ERROR_RESPONSE ( text )
+	{
+	    let row = push_rows[current_row];
+	    let td = row.children[0];
+	    let checkbox = td.children[0];
+	    checkbox.style.backgroundColor = failed;
+
+	    error_messages.testContent = text;
+	    error_response.style.display = 'block';
+	}
+
+	function EXECUTE ()
+	{
+	    compile_response.style.display = 'none';
+	    // Fake push
+	    sleep ( 2 );
+	    DONE_RESPONSE ( 'done', '' );
 	}
 
 	var xhttp = new XMLHttpRequest();
