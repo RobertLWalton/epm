@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 12:44:52 EDT 2020
+    // Date:	Sat Apr 11 13:21:18 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -251,8 +251,6 @@
 	        ( $fname, PATHINFO_EXTENSION );
 	    if ( ! isset ( $display_file_type[$ext] ) )
 		continue;
-	    if ( is_link ( "$epm_data/$dir/$fname" ) )
-	        continue;
 	    $map[$fname] =
 	        filemtime ( "$epm_data/$dir/$fname" );
 	}
