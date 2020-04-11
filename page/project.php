@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 10:12:32 EDT 2020
+    // Date:	Sat Apr 11 10:29:01 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -948,8 +948,8 @@ EOT;
 	$commands = [];
 	if ( $new_push )
 	{
-	    $changes .= "make directory for $problem in"
-	              . " project $project" . PHP_EOL;
+	    $changes .= "make $project/$problem"
+	              . " directory" . PHP_EOL;
 	    $commands[] = "mkdir $desdir";
 	}
 	$files = @scandir ( "$epm_data/$srcdir" );
@@ -972,6 +972,8 @@ EOT;
 	        $action = NULL;
 		foreach ( $amap as $re => $act )
 		{
+		    $re = preg_replace
+		        ( '/PPPP/', $problem, $re );
 		    if ( ! preg_match
 		               ( "/^($re)\$/", $base ) )
 		        continue;
@@ -995,8 +997,9 @@ EOT;
 		    continue;
 	    }
 
-	    $changes .= "move $fname to project"
-	    	      . " $project" . PHP_EOL;
+	    $changes .= "move $fname to"
+	    	      . " $project/$problem/$fname"
+		      . PHP_EOL;
 	    $commands[] =
 	        "mv -f $srcdir/$fname $desdir";
 		    // This will also move a link.
@@ -1006,8 +1009,8 @@ EOT;
 	        ERROR ( "bad value for" .
 		        " \$push_file_map['$ext']" );
 
-	    $changes .= "link $fname from project"
-	              . " $problem to local $problem"
+	    $changes .= "link $fname to"
+	              . " $project/$problem/$fname"
 	              . PHP_EOL;
 	    $commands[] = "ln -s"
 	                . " ../../../$desdir/$fname"
@@ -1292,10 +1295,11 @@ EOT;
 	margin-left: 20px;
     }
     #compile-response {
-        background-color: yellow;
+        background-color: pink;
+	margin-bottom: 0px;
     }
     #compile-messages {
-        background-color: #FFFF99;
+        background-color: #FFCCCC;
         font-size: var(--large-font-size);
 	display: block;
 	margin-top: 3px;
