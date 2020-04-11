@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 06:23:51 EDT 2020
+    // Date:	Sat Apr 11 09:57:15 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -893,7 +893,7 @@ EOT;
     // exist.
     //
     function compile_push_problem
-	( $project, $problem, $errors )
+	( $project, $problem, & $errors )
     {
 	global $epm_data, $uid, $epm_filename_re,
 	       $epm_time_format, $data,
@@ -940,6 +940,7 @@ EOT;
 	              . " named $problem";
 	    return;
 	}
+	DEBUG ( 'changes' );
 
 	$changes = "Changes to Push $problem by $uid ("
 	         . strftime ( $epm_time_format )
@@ -1016,6 +1017,7 @@ EOT;
 	$data['PROBLEM'] = $problem;
 	$data['CHANGES'] = $changes;
 	$data['COMMANDS'] = $commands;
+	DEBUG ( 'data ' . json_encode ( $data ) );
     }
 
     // Execute EPM_PROJECT COMMANDS.  Errors cause abort
@@ -1023,7 +1025,7 @@ EOT;
     // if it produces any standard output or standard
     // error output.
     //
-    function execute_commands ( $errors )
+    function execute_commands ( & $errors )
     {
         global $epm_data, $data;
 
@@ -1279,6 +1281,15 @@ EOT;
 	color: red;
 	display:inline-block;
     }
+    #error-response {
+        background-color: yellow;
+    }
+    #error-messages {
+        background-color: #FFFF99;
+        font-size: var(--large-font-size);
+	display: block;
+	margin-top: 3px;
+    }
 
 </style>
 
@@ -1345,9 +1356,9 @@ EOT;
     <form class='inline' action='project.php'
           method='GET'>
     <button type='submit' name='done' value='yes'>
-    Abort Further Pushes</button></form>
-    <div id='error-messages' class='indented'>
-    </div></div>
+    Cancel Pushing</button></form>
+    <pre id='error-messages' class='indented'>
+    </pre></div>
 
     <div id='compile-response' style='display:none'>
     <h5>Proposed Actions:</h5>
@@ -1666,7 +1677,10 @@ EOT;
 	function COMPILE_RESPONSE ( op, text )
 	{
 	    if ( op == 'ERROR' )
+	    {
 	        ERROR_RESPONSE ( text );
+		return;
+	    }
 	    compile_messages.testContent = text;
 	    compile_response.style.display = 'block';
 	}
@@ -1674,7 +1688,10 @@ EOT;
 	function DONE_RESPONSE ( op, text )
 	{
 	    if ( op == 'ERROR' )
+	    {
 	        ERROR_RESPONSE ( text );
+		return;
+	    }
 	    let row = push_rows[current_row];
 	    let td = row.children[0];
 	    let checkbox = td.children[0];
@@ -1689,7 +1706,7 @@ EOT;
 	    let checkbox = td.children[0];
 	    checkbox.style.backgroundColor = failed;
 
-	    error_messages.testContent = text;
+	    error_messages.textContent = text;
 	    error_response.style.display = 'block';
 	}
 
@@ -1703,7 +1720,7 @@ EOT;
 
 	var xhttp = new XMLHttpRequest();
 	var message_sent = null;
-	var response_re = /^(\S+) (\S+)\S([^]+)$/;
+	var response_re = /^(\S+) (\S+)\s([^]+)$/;
 	    // Backslash n is turned into a newline
 	    // during initial character scanning
 	    // before identifiers, comments, etc are
