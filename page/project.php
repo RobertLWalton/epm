@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 10 21:53:32 EDT 2020
+    // Date:	Sat Apr 11 06:23:51 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -901,6 +901,11 @@ EOT;
 
         $srcdir = "users/$uid/$problem";
 	$d = "projects/$project";
+	if ( ! is_dir ( $srcdir ) )
+	{
+	    $errors[] = "$problem is not a problem";
+	    return;
+	}
 	if ( ! is_dir ( $d ) )
 	{
 	    $errors[] = "$project is not a project";
@@ -1129,21 +1134,26 @@ EOT;
 	}
         elseif ( $op == 'push' )
 	{
-	    $value = NULL;
+	    $problem = NULL;
 	    $just_compile = false;
 	    if ( isset ( $_POST['push'] ) )
-		$value = $_POST['push'];
+		$problem = $_POST['push'];
 	    elseif ( isset ( $_POST['compile-push'] ) )
 	    {
-		$value = $_POST['compile-push'];
+		$problem = $_POST['compile-push'];
 		$just_compile = true;
 	    }
-	    if ( ! isset ( $value ) )
+	    if ( ! isset ( $problem ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $items = explode ( ':', $value );
-	    if ( count ( $items ) != 2 )
+	    if ( ! isset ( $_POST['project'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    list ( $project, $problem ) = $items;
+	    $project = $_POST['project'];
+	    if ( ! preg_match
+	               ( $epm_name_re, $problem ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! preg_match
+	               ( $epm_name_re, $project ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    compile_push_problem
 		( $project, $problem, $errors );
 	    if ( count ( $errors ) > 0 )
@@ -1532,9 +1542,9 @@ EOT;
 	var error_messages =
 	    document.getElementById
 	        ('error-messages');
-	var done_check =
+	var done_response =
 	    document.getElementById
-	        ('done-check');
+	        ('done-response');
 
 	var push_counter = 0;
 	var submit = false;
@@ -1622,9 +1632,8 @@ EOT;
 	{
 	    error_response.style.display = 'none';
 	    compile_response.style.display = 'none';
-	    while ( current_row < push_rows.length )
+	    while ( ++ current_row < push_rows.length )
 	    {
-		++ current_row;
 		let row = push_rows[current_row];
 	        var problem = row.dataset.problem;
 		if ( problem === undefined ) continue;
@@ -1638,13 +1647,15 @@ EOT;
 	    }
 	    if ( current_row >= push_rows.length )
 	    {
-	        done_check.style.display = 'block';
+	        done_response.style.display = 'block';
 		return;
 	    }
 	    checkbox.style.backgroundColor =
 		running;
 	    op = ( check_compile ? 
 		   'compile-push' : 'push' );
+	    if ( project == '' )
+	        project = selected_project;
 	    SEND ( op + '=' + problem
 		      + '&project=' + project,
 		   check_compile ?
@@ -1719,7 +1730,10 @@ EOT;
 		let matches =
 		    this.responseText.match
 			( response_re );
-		if ( matches == null )
+		if ( matches == null
+		     ||
+		     ! ['DONE','COMPILED','ERROR']
+		           .includes ( matches[1] ) )
 		    FAIL ( 'bad response to ' +
 		           message_sent +
 			   ':\\n    ' +
