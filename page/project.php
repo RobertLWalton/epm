@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 16:08:42 EDT 2020
+    // Date:	Sat Apr 11 16:17:40 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1265,6 +1265,7 @@ EOT;
     div.manage {
 	background-color: #96F9F3;
 	padding-bottom: 5px;
+	padding-top: 5px;
     }
     div.push-list {
 	background-color: #F2D9D9;
@@ -1298,6 +1299,7 @@ EOT;
     }
     #error-response {
         background-color: yellow;
+	margin-bottom: 0px;
     }
     #error-messages {
         background-color: #FFFF99;
@@ -1305,6 +1307,7 @@ EOT;
 	display: block;
 	margin-top: 3px;
 	margin-left: 20px;
+	margin-bottom: 0px;
     }
     #compile-response {
         background-color: pink;
@@ -1316,6 +1319,7 @@ EOT;
 	display: block;
 	margin-top: 3px;
 	margin-left: 20px;
+	margin-bottom: 0px;
     }
 
 </style>
