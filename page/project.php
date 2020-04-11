@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 10 14:25:28 EDT 2020
+    // Date:	Fri Apr 10 21:24:11 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -394,7 +394,7 @@
 	exit;
     }
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -470,13 +470,15 @@
 	foreach ( $c as $line )
 	{
 	    $m = NULL;
+	    $line = trim ( $line );
+	    if ( $line == '' ) continue;
 	    if ( ! preg_match
-	               ( '/^\s*(\S+)\s+(\S+)\s*$/',
+	               ( '/^(\S+)\s+(\S+)$/',
 		         $line, $matches ) )
 	        $m = "badly formatted permission"
 		   . " '$line' in $f";
 	    elseif ( preg_match ( '#/#', $line ) )
-	        $m = "permission '$line' in $f has"
+	        $m = "permission '$line' in $pfile has"
 		   . " illegal '/'";
 	    elseif ( ! isset ( $pmap[$matches[1]] ) )
 	        $m = "bad permission type"
@@ -484,7 +486,7 @@
 	    else
 	    {
 	        $r = preg_match
-		    ( "/({$matches[2]})/", $iid );
+		    ( "/({$matches[2]})/", $uid );
 		if ( $r === false )
 		    $m = "bad permission regular"
 		       . " expression '{$matches[2]}'"
@@ -1400,8 +1402,7 @@ EOT;
     </div>
 EOT;
 
-    if (    $op == 'push'
-         && count ( $checked_problems ) == 0 )
+    if ( $op == 'push' )
     {
 	$push_help = HELP ( 'project-push' );
 
@@ -1706,7 +1707,7 @@ EOT;
 	    xhttp.setRequestHeader
 		( "Content-Type",
 		  "application/x-www-form-urlencoded" );
-	    message_send = message;
+	    message_sent = message;
 	    LOG ( 'xhttp sent: ' + message );
 	    xhttp.send ( message + '&ID=' + ID.value );
 	}
