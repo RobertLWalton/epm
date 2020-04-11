@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 10:29:01 EDT 2020
+    // Date:	Sat Apr 11 12:10:22 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1381,7 +1381,7 @@ EOT;
     <button type='button' onclick='EXECUTE()'>
     EXECUTE</button>
     <pre>    </pre>
-    <button type='button' onclick='START_NEXT()'>
+    <button type='button' onclick='SKIP_TO_NEXT()'>
     Skip to Next</button>
     <pre>    </pre>
     <form class='inline' action='project.php'
@@ -1689,6 +1689,15 @@ EOT;
 		       PUSH_RESPONSE );
 	}
 
+	function SKIP_TO_NEXT ()
+	{
+	    let row = push_rows[current_row];
+	    let td = row.children[0];
+	    let checkbox = td.children[0];
+	    checkbox.style.backgroundColor = off;
+	    START_NEXT();
+	}
+
 	function COMPILE_RESPONSE ( op, text )
 	{
 	    if ( op == 'ERROR' )
@@ -1710,7 +1719,7 @@ EOT;
 	    let row = push_rows[current_row];
 	    let td = row.children[0];
 	    let checkbox = td.children[0];
-	    checkbox.style.backgroundColor = success;
+	    checkbox.style.backgroundColor = succeeded;
 	    START_NEXT();
 	}
 
@@ -1728,14 +1737,12 @@ EOT;
 	function EXECUTE ()
 	{
 	    compile_response.style.display = 'none';
-	    // Fake push
-	    sleep ( 2 );
-	    DONE_RESPONSE ( 'done', '' );
+	    SEND ( 'execute', DONE_RESPONSE );
 	}
 
 	var xhttp = new XMLHttpRequest();
 	var message_sent = null;
-	var response_re = /^(\S+) (\S+)\s([^]+)$/;
+	var response_re = /^(\S+) (\S+)\s([^]*)$/;
 	    // Backslash n is turned into a newline
 	    // during initial character scanning
 	    // before identifiers, comments, etc are

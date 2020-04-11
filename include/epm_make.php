@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Mar 30 01:46:53 EDT 2020
+// Date:    Sat Apr 11 12:13:59 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2241,9 +2241,20 @@ function process_upload
 	        ' an array' );
 
     $fname = $upload['name'];
+    if ( $fname == '' )
+    {
+        $errors[] = "missing upload file";
+	return;
+    }
     if ( ! preg_match ( $epm_filename_re, $fname ) )
     {
-        $errors[] = "uploaded file $fname has is not"
+        $errors[] = "uploaded file $fname is not"
+	          . " legal EPM file name";
+	return;
+    }
+    if ( ! preg_match ( $epm_filename_re, $fname ) )
+    {
+        $errors[] = "uploaded file $fname is not"
 	          . " legal EPM file name";
 	return;
     }
