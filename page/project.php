@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 10 21:24:11 EDT 2020
+    // Date:	Fri Apr 10 21:53:32 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1276,6 +1276,26 @@ EOT;
 var LOG = function(message) {};
 <?php if ( $epm_debug )
           echo "LOG = console.log;" . PHP_EOL ?>
+
+function FAIL ( message )
+{
+    // Alert must be scheduled as separate task.
+    //
+    LOG ( "call to FAIL: " + message );
+<?php
+    if ( $epm_debug )
+        echo <<<'EOT'
+	    setTimeout ( function () {
+		alert ( message );
+		window.location.reload ( true );
+	    });
+EOT;
+    else
+        echo <<<'EOT'
+	    throw "CALL TO FAIL: " + message;
+EOT;
+?>
+}
 </script>
 
 </head>
@@ -1313,7 +1333,7 @@ var LOG = function(message) {};
     Skip to Next</button>
     <pre>    </pre>
     <form class='inline' action='project.php'
-          method='POST'>
+          method='GET'>
     <button type='submit' name='done' value='yes'>
     Abort Further Pushes</button></form>
     <div id='error-messages' class='indented'>
@@ -1329,7 +1349,7 @@ var LOG = function(message) {};
     Skip to Next</button>
     <pre>    </pre>
     <form class='inline' action='project.php'
-          method='POST'>
+          method='GET'>
     <button type='submit' name='done' value='yes'>
     Abort This and Further Pushes</button></form>
     <div id='compile-messages' class='indented'>
@@ -1339,7 +1359,7 @@ var LOG = function(message) {};
     <h5>Done!</h5>
     <pre>    </pre>
     <form class='inline' action='project.php'
-          method='POST'>
+          method='GET'>
     <button type='submit' name='done' value='yes'>
     Continue</button></form>
     </div>
@@ -1694,12 +1714,17 @@ EOT;
 			   + ') from server replying '
 			   + 'to ' + message_sent );
 
-		message_sent = null;
 		LOG ( 'xhttp response: '
 		      + this.responseText );
 		let matches =
 		    this.responseText.match
 			( response_re );
+		if ( matches == null )
+		    FAIL ( 'bad response to ' +
+		           message_sent +
+			   ':\\n    ' +
+			   this.responseText );
+		message_sent = null;
 		ID.value = matches[2];
 		callback ( matches[1], matches[3] );
 	    };
