@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr  3 03:39:03 EDT 2020
+    // Date:	Sat Apr 11 12:44:52 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -251,6 +251,8 @@
 	        ( $fname, PATHINFO_EXTENSION );
 	    if ( ! isset ( $display_file_type[$ext] ) )
 		continue;
+	    if ( is_link ( "$epm_data/$dir/$fname" ) )
+	        continue;
 	    $map[$fname] =
 	        filemtime ( "$epm_data/$dir/$fname" );
 	}
@@ -857,6 +859,14 @@ EOT;
 
     if ( isset ( $probdir ) )
     {
+        $count = 0;
+	$show_map = [];
+	    // $show_map[$fname] => id
+	    // maps file name last component to the
+	    // button id that identifies the button
+	    // to click to show the file.
+	$display_list = [];
+
 	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
 	{
 	    $workdir = $_SESSION['EPM_WORK']['DIR'];
@@ -1024,11 +1034,6 @@ EOT;
 
 	$current_problem_files_help =
 	    HELP ( 'current-problem-files' );
-	$show_map = [];
-	    // $show_map[$fname] => id
-	    // maps file name last component to the
-	    // button id that identifies the button
-	    // to click to show the file.
 
         echo <<<EOT
 	<div class='problem_display'>
@@ -1079,8 +1084,6 @@ EOT;
 		 " value='$fbase.$sext:$fbase.$dext'>" .
 		 "&rArr;.$dext</button></td>";
 	}
-        $count = 0;
-	$display_list = [];
 	echo "<table style='display:block'>";
 	foreach ( problem_file_names( $probdir )
 	          as $fname )

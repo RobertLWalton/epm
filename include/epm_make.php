@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Apr 11 12:13:59 EDT 2020
+// Date:    Sat Apr 11 13:05:57 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1115,7 +1115,8 @@ function get_exit_message
     if ( $code <= 128 ) switch ( $code )
     {
 	case 1:
-	    return 'Command Failed: see Error Output';
+	    return 'Command Failed: see Error Output'
+	         . ' (*.*err) File(s)';
 	case 120:
 	    return 'Interpreter Failed While Exiting';
 	case 126:

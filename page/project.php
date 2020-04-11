@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 12:10:22 EDT 2020
+    // Date:	Sat Apr 11 12:28:40 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -244,7 +244,7 @@
     //		execute_commands to accomplish the
     //		current push/pull operation.  Commands
     //		are to be executed with $epm_data being
-    //		the current directory and 07 the current
+    //		the current directory and 06 the current
     //		mask.
     //
     //     EPM_PROJECT CHANGES
@@ -1016,6 +1016,15 @@ EOT;
 	                . " ../../../$desdir/$fname"
 	                . " $srcdir/$fname";
 	}
+	if ( $new_push )
+	{
+	    $changes .= "link +parent+ to"
+	              . " $project/$problem"
+	              . PHP_EOL;
+	    $commands[] = "ln -s"
+	                . " ../../../$desdir"
+	                . " $srcdir/+parent+";
+	}
 	$data['PROJECT'] = $project;
 	$data['PROBLEM'] = $problem;
 	$data['CHANGES'] = $changes;
@@ -1035,7 +1044,7 @@ EOT;
 	foreach ( $data['COMMANDS'] as $command )
 	{
 	    $output = [];
-	    exec ( "umask 07; cd $epm_data;" .
+	    exec ( "umask 06; cd $epm_data;" .
 	           " $command 2>&1", $output );
 	    $err = '';
 	    foreach ( $output as $line )
@@ -1061,7 +1070,7 @@ EOT;
 	   . "+changes+";
 	$changes = $data['CHANGES'];
 	$r = @file_put_contents
-	    ( "$epm_data/$f", FILE_APPEND );
+	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
     }
