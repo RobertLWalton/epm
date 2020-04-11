@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 09:57:15 EDT 2020
+    // Date:	Sat Apr 11 10:12:32 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -901,12 +901,12 @@ EOT;
 
         $srcdir = "users/$uid/$problem";
 	$d = "projects/$project";
-	if ( ! is_dir ( $srcdir ) )
+	if ( ! is_dir ( "$epm_data/$srcdir" ) )
 	{
 	    $errors[] = "$problem is not a problem";
 	    return;
 	}
-	if ( ! is_dir ( $d ) )
+	if ( ! is_dir ( "$epm_data/$d" ) )
 	{
 	    $errors[] = "$project is not a project";
 	    return;
@@ -944,7 +944,7 @@ EOT;
 
 	$changes = "Changes to Push $problem by $uid ("
 	         . strftime ( $epm_time_format )
-	         . "):" . PHL_EOL;
+	         . "):" . PHP_EOL;
 	$commands = [];
 	if ( $new_push )
 	{
@@ -996,7 +996,7 @@ EOT;
 	    }
 
 	    $changes .= "move $fname to project"
-	    	      . " $problem" . PHP_EOL;
+	    	      . " $project" . PHP_EOL;
 	    $commands[] =
 	        "mv -f $srcdir/$fname $desdir";
 		    // This will also move a link.
@@ -1289,6 +1289,17 @@ EOT;
         font-size: var(--large-font-size);
 	display: block;
 	margin-top: 3px;
+	margin-left: 20px;
+    }
+    #compile-response {
+        background-color: yellow;
+    }
+    #compile-messages {
+        background-color: #FFFF99;
+        font-size: var(--large-font-size);
+	display: block;
+	margin-top: 3px;
+	margin-left: 20px;
     }
 
 </style>
@@ -1357,7 +1368,7 @@ EOT;
           method='GET'>
     <button type='submit' name='done' value='yes'>
     Cancel Pushing</button></form>
-    <pre id='error-messages' class='indented'>
+    <pre id='error-messages'>
     </pre></div>
 
     <div id='compile-response' style='display:none'>
@@ -1373,8 +1384,8 @@ EOT;
           method='GET'>
     <button type='submit' name='done' value='yes'>
     Abort This and Further Pushes</button></form>
-    <div id='compile-messages' class='indented'>
-    </div></div>
+    <pre id='compile-messages'>
+    </pre></div>
 
     <div id='done-response' style='display:none'>
     <h5>Done!</h5>
@@ -1681,7 +1692,7 @@ EOT;
 	        ERROR_RESPONSE ( text );
 		return;
 	    }
-	    compile_messages.testContent = text;
+	    compile_messages.textContent = text;
 	    compile_response.style.display = 'block';
 	}
 
