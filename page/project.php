@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 12:28:40 EDT 2020
+    // Date:	Sat Apr 11 16:08:42 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -940,7 +940,6 @@ EOT;
 	              . " named $problem";
 	    return;
 	}
-	DEBUG ( 'changes' );
 
 	$changes = "Changes to Push $problem by $uid ("
 	         . strftime ( $epm_time_format )
@@ -1025,11 +1024,12 @@ EOT;
 	                . " ../../../$desdir"
 	                . " $srcdir/+parent+";
 	}
+	if ( count ( $commands ) == 0 )
+	    $changes = '';
 	$data['PROJECT'] = $project;
 	$data['PROBLEM'] = $problem;
 	$data['CHANGES'] = $changes;
 	$data['COMMANDS'] = $commands;
-	DEBUG ( 'data ' . json_encode ( $data ) );
     }
 
     // Execute EPM_PROJECT COMMANDS.  Errors cause abort
@@ -1041,7 +1041,10 @@ EOT;
     {
         global $epm_data, $data;
 
-	foreach ( $data['COMMANDS'] as $command )
+	$commands = $data['COMMANDS'];
+	if ( count ( $commands ) == 0 ) return;
+
+	foreach ( $commands as $command )
 	{
 	    $output = [];
 	    exec ( "umask 06; cd $epm_data;" .
@@ -1400,15 +1403,6 @@ EOT;
     <pre id='compile-messages'>
     </pre></div>
 
-    <div id='done-response' style='display:none'>
-    <h5>Done!</h5>
-    <pre>    </pre>
-    <form class='inline' action='project.php'
-          method='GET'>
-    <button type='submit' name='done' value='yes'>
-    Continue</button></form>
-    </div>
-
     <div class='manage'>
     <form>
     <table style='width:100%'>
@@ -1421,7 +1415,16 @@ EOT;
                     title='click to see user profile'>
     </label>
     </td>
-    <td><h5>Go To:</h5>
+    <td>
+    <div id='done-response' style='display:none'>
+    <h5>Done!</h5>
+    <button type='submit'
+	    formaction='project.php'
+	    formmethod='GET'>
+	    Continue</button>
+    <pre>  </pre>
+    </div>
+    <h5>Go To:</h5>
     <button type='submit'
 	    formaction='problem.php'
 	    formmethod='GET'>
@@ -1682,7 +1685,7 @@ EOT;
 	    }
 	    if ( current_row >= push_rows.length )
 	    {
-	        done_response.style.display = 'block';
+	        done_response.style.display = 'inline';
 		return;
 	    }
 	    checkbox.style.backgroundColor =
@@ -1712,6 +1715,11 @@ EOT;
 	    if ( op == 'ERROR' )
 	    {
 	        ERROR_RESPONSE ( text );
+		return;
+	    }
+	    if ( text == '' )
+	    {
+	        DONE_RESPONSE ( 'DONE', text );
 		return;
 	    }
 	    compile_messages.textContent = text;
