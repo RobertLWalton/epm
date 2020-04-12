@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 16:17:40 EDT 2020
+    // Date:	Sun Apr 12 14:08:42 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -667,10 +667,8 @@
     function problems_to_push_rows ( $map )
     {
 	$r = '';
-	$c = -1;
         foreach ( $map as $problem => $project )
 	{
-	    $c += 1;
 	    $class = ( $project == '' ?
 	               'push-new' :
 		       'push-parent' );
@@ -687,6 +685,53 @@
 	        onclick='PUSH(this)'>&nbsp;</span>
 	    <span class='$class'>
 	    $problem &rArr; $destination
+	    </span>
+	    </td>
+	    </tr>
+EOT;
+	}
+	return $r;
+    }
+
+    // Given the list of elements of the form
+    //
+    //	   [TIME PROJECT PROBLEM]
+    //
+    // where PROJECT is '-' if the PROBLEM is in
+    // users/$uid, then return the rows of a table for
+    // pulling problems as a string.  The string has
+    // one segment for each element in which PROJECT
+    // is NOT '-', in the same order as the elements
+    // in the list.
+    //
+    // The segment for one list element is:
+    //
+    //     <tr data-project='PROJECT'
+    //         data-problem='PROBLEM'>
+    //         <td>
+    //         <span class='problem-checkbox'
+    //               onclick='PULL(this)'>&nbsp;</span>
+    //         <span class='pull-problem'>
+    //         PROBLEM &lArr; PROJECT
+    //         </span>
+    //         </td>
+    //         </tr>
+    //
+    function list_to_pull_rows ( $list )
+    {
+	$r = '';
+        foreach ( $list as $items )
+	{
+	    list ( $time, $project, $problem ) = $items;
+	    if ( $project == '-' ) continue;
+	    $r .= <<<EOT
+	    <tr data-project='$project'
+	        data-problem='$problem'>
+	    <td>
+	    <span class='problem-checkbox'
+	        onclick='PULL(this)'>&nbsp;</span>
+	    <span class='pull-problem'>
+	    $problem &lArr; $project
 	    </span>
 	    </td>
 	    </tr>
