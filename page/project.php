@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 12 14:08:42 EDT 2020
+    // Date:	Sun Apr 12 14:13:16 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -815,6 +815,52 @@ EOT;
 		$list[] = $items;
 	    }
 	}
+	return $list;
+    }
+
+    // Return the problems in $project in the form
+    // of a list of elements each of the form
+    //
+    //	    [TIME PROJECT PROBLEM]
+    //
+    // where TIME is the modification time of the
+    // PROBLEM's +changes+ file.  List elements
+    // are sorted most recent TIME first.
+    //
+    function project_to_list ( $project )
+    {
+        global $epm_data, $epm_name_re,
+	       $epm_time_format;
+
+	// First build map from PROBLEM to TIME
+	// and sort on TIME.
+	//
+	$map = [];
+	$d = "projects/$project";
+	$problems = @scandir ( "$epm_data/$d" );
+	if ( $problems === false )
+	    ERROR ( "cannot read $d" );
+	foreach ( $problems as $problem )
+	{
+	    if ( ! preg_match ( $epm_name_re,
+	                        $problem ) )
+	        continue;
+	    $f = "$d/$problem/+changes+";
+	    $time = @filemtime ( "$epm_data/$f" );
+	    if ( $time === false )
+	    {
+	        WARN ( "cannot stat $f" );
+		continue;
+	    }
+	    $map[$problem] = $time;
+	}
+	rsort ( $map, SORT_NUMERIC );
+
+	$list = [];
+	foreach ( $map as $problem => $time )
+	    $list[] = [strftime ( $epm_time_format,
+	                          $time ),
+		       $project, $problem];
 	return $list;
     }
 
