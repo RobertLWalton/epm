@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 13 11:08:06 EDT 2020
+    // Date:	Mon Apr 13 13:55:46 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1123,7 +1123,7 @@ EOT;
 	    	      . " $project/$problem/$fname"
 		      . PHP_EOL;
 	    $commands[] =
-	        "mv -f $srcdir/$fname $desdir";
+	        "mvx -f $srcdir/$fname $desdir";
 		    // This will also move a link.
 
 	    if ( $action == 'R' ) continue;
@@ -1495,40 +1495,65 @@ EOT;
 	echo "<br></div></div>";
     }
 
+    if ( $op == 'push' || $op == 'pull' )
+    {
+	$cancel = ( $op == 'push' ?
+		    'Cancel Pushing' :
+		    'Cancel Pulling' );
+	$errors_help = HELP ( 'project-errors' );
+	$proposed_help = HELP ( 'project-execute' );
+	echo <<<EOT
+	<div id='error-response' style='display:none'>
+	<form>
+	<table style='width:100%'>
+	<tr>
+	<td><h5>Errors:</h5></td>
+	<td>
+	<button type='button' onclick='START_NEXT()'>
+	Skip to Next</button>
+	<pre>    </pre>
+	<button type='submit' name='done' value='yes'
+	        formaction='project.php'
+		formmethod='GET'>
+	$cancel</button>
+	</td>
+	</td><td style='text-align:right'>
+	$errors_help</td>
+	</tr>
+	</table>
+	</form>
+	<pre id='error-messages'></pre>
+	</div>
+
+	<div id='compile-response' style='display:none'>
+	<form>
+	<table style='width:100%'>
+	<tr>
+	<td><h5>Proposed Actions:</h5></td>
+	<td>
+	<button type='button' onclick='EXECUTE()'>
+	EXECUTE</button>
+	<pre>    </pre>
+	<button type='button' onclick='SKIP_TO_NEXT()'>
+	Skip to Next</button>
+	<pre>    </pre>
+	<button type='submit' name='done' value='yes'
+	        formaction='project.php'
+		formmethod='GET'>
+	$cancel</button>
+	</td>
+	</td><td style='text-align:right'>
+	$proposed_help</td>
+	</tr>
+	</table>
+	</form>
+	<pre id='compile-messages'></pre>
+	</div>
+EOT;
+    }
+
     $project_help = HELP ( 'project-page' );
-    $options = "<option value='*FAVORITES*'>"
-             . "<i>Favorites</i></option>"
-	     . favorites_to_options ( 'pull' );
     echo <<<EOT
-    <div id='error-response' style='display:none'>
-    <h5>Errors:</h5>
-    <pre>    </pre>
-    <button type='button' onclick='START_NEXT()'>
-    Skip to Next</button>
-    <pre>    </pre>
-    <form class='inline' action='project.php'
-          method='GET'>
-    <button type='submit' name='done' value='yes'>
-    Cancel Pushing</button></form>
-    <pre id='error-messages'>
-    </pre></div>
-
-    <div id='compile-response' style='display:none'>
-    <h5>Proposed Actions:</h5>
-    <pre>    </pre>
-    <button type='button' onclick='EXECUTE()'>
-    EXECUTE</button>
-    <pre>    </pre>
-    <button type='button' onclick='SKIP_TO_NEXT()'>
-    Skip to Next</button>
-    <pre>    </pre>
-    <form class='inline' action='project.php'
-          method='GET'>
-    <button type='submit' name='done' value='yes'>
-    Abort This and Further Pushes</button></form>
-    <pre id='compile-messages'>
-    </pre></div>
-
     <div class='manage'>
     <form>
     <table style='width:100%'>
@@ -1569,6 +1594,10 @@ EOT;
     </form>
 EOT;
     if ( $op == NULL )
+    {
+	$options = "<option value='*FAVORITES*'>"
+		 . "<i>Favorites</i></option>"
+		 . favorites_to_options ( 'pull' );
         echo <<<EOT
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
@@ -1592,6 +1621,7 @@ EOT;
 	</select>
 	</label>
 EOT;
+    }
     echo <<<EOT
     </div>
 EOT;
@@ -1644,15 +1674,11 @@ EOT;
 	        style='text-align:left'>
 	        <h5>Problems (selected are being push)
 		    </h5></th>
-	    <td><input type='button'
-	               onclick='STOP_PUSH()'
-		       value='Stop'>
-		<input type='button'
-	               onclick='RESTART_PUSH()'
-		       value='Restart Push'>
-		<input type='submit'
-	               name='done'
-		       value='Cancel Push'></td>
+	    <td><span class='problem-checkbox'
+	              id='check-proposed'
+	              onclick='CHECK(this)'>
+		      &nbsp;</span>
+		Check Proposed Actions</td>
 	    <td id='selected-project-column'>
 	    <h5>Selected Project:
 	    <span id='selected-project-value'
@@ -1746,6 +1772,17 @@ EOT;
 
 	}
 
+	function CHECK ()
+	{
+	    if ( check_proposed.style.backgroundColor
+	         != on )
+		check_proposed.style.backgroundColor =
+		    on;
+	    else
+		check_proposed.style.backgroundColor =
+		    off;
+	}
+
 	function SUBMIT_PUSH ()
 	{
 	    selected_project =
@@ -1785,6 +1822,10 @@ EOT;
 	    }
 	    checkbox.style.backgroundColor =
 		running;
+	    var check_compile =
+	        (    check_proposed.style
+		                .backgroundColor
+		  == on );
 	    op = ( check_compile ? 
 		   'compile-push' : 'push' );
 	    if ( project == '' )
@@ -1818,6 +1859,9 @@ EOT;
 	    document.getElementById('pre-submit');
 	var post_submit =
 	    document.getElementById('post-submit');
+	var check_proposed =
+	    document.getElementById('check-proposed');
+	check_proposed.style.backgroundColor = on;
 
 	var compile_response =
 	    document.getElementById
@@ -1837,7 +1881,6 @@ EOT;
 
 	var submit = false;
 	var current_row = -1;
-	var check_compile = true;
 
 	function SKIP_TO_NEXT ()
 	{
