@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 13 03:48:57 EDT 2020
+    // Date:	Mon Apr 13 11:08:06 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1595,7 +1595,6 @@ EOT;
     echo <<<EOT
     </div>
 EOT;
-
     if ( $op == 'push' )
     {
 	$push_help = HELP ( 'project-push' );
@@ -1615,7 +1614,7 @@ EOT;
 	<form method='POST'>
 	<input type='hidden' id='ID'
 	       name='ID' value='$id'>
-	<table width='100%' id='push-table'>
+	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
 	        <h5>Problems (select to push)</h5></th>
@@ -1667,22 +1666,9 @@ EOT;
 	</table>
 	</form>
 	</div>
+
 	<script>
 
-	var off = 'transparent';
-	var on = 'black';
-	var running = 'red';
-	var succeeded = 'green';
-	var failed = 'yellow';
-
-	var ID =
-	    document.getElementById('ID');
-	var push_rows =
-	    document.getElementById('push-table').rows;
-	var pre_submit =
-	    document.getElementById('pre-submit');
-	var post_submit =
-	    document.getElementById('post-submit');
 	var project_selector = document.getElementById
 	    ( 'project-selector' );
 	var selected_project_selector =
@@ -1694,27 +1680,9 @@ EOT;
 	var selected_project_value =
 	    document.getElementById
 	        ('selected-project-value');
-	var compile_response =
-	    document.getElementById
-	        ('compile-response');
-	var compile_messages =
-	    document.getElementById
-	        ('compile-messages');
-	var error_response =
-	    document.getElementById
-	        ('error-response');
-	var error_messages =
-	    document.getElementById
-	        ('error-messages');
-	var done_response =
-	    document.getElementById
-	        ('done-response');
 
 	var push_counter = 0;
-	var submit = false;
-	var current_row = -1;
 	var selected_project = null;
-	var check_compile = true;
 
 	// The following is called when a push checkbox
 	// is clicked for a problem that has no project
@@ -1757,10 +1725,10 @@ EOT;
 	function RESET_PUSH ()
 	{
 	    if ( submit ) return;
-	    for ( var i = 0; i < push_rows.length;
+	    for ( var i = 0; i < problem_rows.length;
 	                     ++ i )
 	    {
-		var row = push_rows[i];
+		var row = problem_rows[i];
 	        var problem = row.dataset.problem;
 		if ( problem === undefined ) continue;
 		var td = row.children[0];
@@ -1796,9 +1764,10 @@ EOT;
 	{
 	    error_response.style.display = 'none';
 	    compile_response.style.display = 'none';
-	    while ( ++ current_row < push_rows.length )
+	    while (   ++ current_row
+	            < problem_rows.length )
 	    {
-		let row = push_rows[current_row];
+		let row = problem_rows[current_row];
 	        var problem = row.dataset.problem;
 		if ( problem === undefined ) continue;
 	        var project = row.dataset.project;
@@ -1809,7 +1778,7 @@ EOT;
 		    continue;
 		break;
 	    }
-	    if ( current_row >= push_rows.length )
+	    if ( current_row >= problem_rows.length )
 	    {
 	        done_response.style.display = 'inline';
 		return;
@@ -1827,9 +1796,52 @@ EOT;
 		       PUSH_RESPONSE );
 	}
 
+	</script>
+EOT;
+
+    if ( $op == 'push' || $op == 'pull' )
+        echo <<<EOT
+	<script>
+
+	var off = 'transparent';
+	var on = 'black';
+	var running = 'red';
+	var succeeded = 'green';
+	var failed = 'yellow';
+
+	var ID =
+	    document.getElementById('ID');
+	var problem_rows =
+	    document.getElementById('problem-table')
+	            .rows;
+	var pre_submit =
+	    document.getElementById('pre-submit');
+	var post_submit =
+	    document.getElementById('post-submit');
+
+	var compile_response =
+	    document.getElementById
+	        ('compile-response');
+	var compile_messages =
+	    document.getElementById
+	        ('compile-messages');
+	var error_response =
+	    document.getElementById
+	        ('error-response');
+	var error_messages =
+	    document.getElementById
+	        ('error-messages');
+	var done_response =
+	    document.getElementById
+	        ('done-response');
+
+	var submit = false;
+	var current_row = -1;
+	var check_compile = true;
+
 	function SKIP_TO_NEXT ()
 	{
-	    let row = push_rows[current_row];
+	    let row = problem_rows[current_row];
 	    let td = row.children[0];
 	    let checkbox = td.children[0];
 	    checkbox.style.backgroundColor = off;
@@ -1859,7 +1871,7 @@ EOT;
 	        ERROR_RESPONSE ( text );
 		return;
 	    }
-	    let row = push_rows[current_row];
+	    let row = problem_rows[current_row];
 	    let td = row.children[0];
 	    let checkbox = td.children[0];
 	    checkbox.style.backgroundColor = succeeded;
@@ -1868,7 +1880,7 @@ EOT;
 
 	function ERROR_RESPONSE ( text )
 	{
-	    let row = push_rows[current_row];
+	    let row = problem_rows[current_row];
 	    let td = row.children[0];
 	    let checkbox = td.children[0];
 	    checkbox.style.backgroundColor = failed;
@@ -1935,6 +1947,7 @@ EOT;
 
 	</script>
 EOT;
+
     }
 
 ?>

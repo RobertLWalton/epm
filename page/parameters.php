@@ -226,7 +226,7 @@ $push_file_map = [
     // $push_file_map['EEE'] must be set.  If it is
     // 'R' then the file should exist in the remote
     // (push destination) directory.  If it is 'L',
-    // the file should exist in the remost direcoty
+    // the file should exist in the remote directory
     // and be linked into the local directory.  If
     // it is a (sub)map RE => V, then each RE is a
     // regular expression such that if YYYY matches
