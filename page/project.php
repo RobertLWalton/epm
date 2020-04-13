@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 12 14:13:16 EDT 2020
+    // Date:	Mon Apr 13 03:48:57 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -181,7 +181,7 @@
     //
     // For each user with given UID there is the file:
     //
-    //	    users/UID/+indices+/favorites
+    //	    users/UID/+indices+/+favorites+
     //
     // that lists the user's favorite indices.  Its
     // contents are lines of the forms:
@@ -199,14 +199,14 @@
     //
     // Lastly there are two stacks used in editing:
     //
-    //	    users/UID/+indices+/fstack
-    //	    users/UID/+indices+/istack
+    //	    users/UID/+indices+/+fstack+
+    //	    users/UID/+indices+/+istack+
     //
-    // Fstack is the favorites stack and contains lines
-    // copied from or to be copied to the favorites
-    // file.  Istack is the index stack and contains
-    // non-description lines copied from or to be copied
-    // to indices.
+    // +fstack+ is the favorites stack and contains
+    // lines copied from or to be copied to the
+    // +favorites+ file.  +istack+ is the index stack
+    // and contains non-description lines copied from
+    // or to be copied to indices.
 
     // Session Data
     // ------- ----
@@ -885,26 +885,37 @@ EOT;
 
     // Return the lines from:
     //
-    //	    users/UID/+indices+/favorites
+    //	    users/UID/+indices+/+favorites+
     //
-    // in the form of a list of elements of the form
+    // in the form of an ordered map of elements of the
+    // form
     //
-    //	    [TIME PROJECT BASENAME]
+    //	    PROJECT:BASENAME => TIME
     //
-    // If there is no file line `- - TIME', then such
-    // an element is added to the beginning of the list
-    // with the current time as TIME.
+    // For each PROJECT:BASENAME pair, if the pair is
+    // not in the +favorites+ file, but is a key in
+    // $inmap, then the $inmap element is added to the
+    // end of the output map, preserving the order of
+    // $inmap.
     //
-    // A non-existant favorites file is treated as a
+    // A non-existant +favorites+ file is treated as a
     // file of zero length.  File line formatting errors
     // are fatal.
     //
-    function read_favorites ()
+    // Note that PROBLEM == '-' denotes the list of
+    // problems in PROJECT, or if PROJECT is also '-',
+    // the list of the UID user's problems is denotes.
+    //
+    function read_favorites ( $inmap = [] )
     {
-        global $epm_data, $uid, $epm_time_format;
-	$list = [];
-	$map = [];
-	$f = "users/$uid/+indices+/favorites";
+        global $epm_data, $uid;
+
+	// First build a map PROJECT:BASENAME => TIME
+	// from the +favorites+ file.  Then add to it.
+	//
+	$outmap = [];
+	$f = "users/$uid/+indices+/+favorites+";
+	$linemap = [];
 	$c = @file_get_contents ( "$epm_data/$f" );
 	if ( $c !== false )
 	{
@@ -922,45 +933,66 @@ EOT;
 		list ( $time, $project, $basename ) =
 		    $items;
 		$key = "$project:$basename";
-		if ( isset ( $map[$key] ) )
+		if ( isset ( $map[$linekey] ) )
 		    ERROR ( "line '$line' duplicates" .
-			    " line '{$map[$key]}' in" .
-			    " $f" );
-		$map[$key] = $line;
-		$list[] = $items;
+			    " line '{$linemap[$key]}'" .
+			    " in $f" );
+		$linemap[$key] = $line;
+		$outmap[$key] = $time;
 	    }
 	}
-	if ( ! isset ( $map['-:-'] ) )
+	foreach ( $inmap as $key => $time )
 	{
-	    $time = strftime ( $epm_time_format );
-	    array_unshift ( $list, [$time, '-', '-'] );
+	    if ( ! isset ( $outmap[$key] ) )
+	        $outmap[$key] = $time;
 	}
-	return $list;
+
+	return $outmap;
     }
 
-    // Given a list of elements each of the form:
+    // Given a $type_re to pass to read_projects,
+    // build an $inmap containing first the user's
+    // own problems and then all the projects returned
+    // by read_projects.  Use the current time for
+    // $inmap elements.  Then call read_favorites with
+    // $inmap to get a map of favorites whose elements
+    // have the form:
     //
-    //	    [TIME PROJECT BASENAME]
+    //		PROJECT:PROBLEM => TIME
     //
-    // return a string whose segments have the form
+    // From this list return a a string whose segments
+    // have the form
     //
     //	    <option value='PROJECT:BASENAME'>
     //      $project $basename $time
     //      </option>
     //
-    // If PROJECT in the file is '-' then `$project' is
-    // `<i>Your</i>'.  If BASENAME in the file is `-'
-    // $basename is `<i>Problems</i>'.  Here $time is
-    // the first 10 characters of TIME (i.e., the day,
-    // excluding the time of day).
+    // where $project is PROJECT unless that is `-', in
+    // which case it is `<i>Your</i>', $basename is
+    // BASENAME unless that is `-', in which case it is
+    // `<i>Problems</i>', and $time is the first 10
+    // characters of TIME (i.e., the day, excluding the
+    // time of day).
     //
-    function favorites_to_options ( $list )
+    function favorites_to_options ( $type_re )
     {
-	$r = '';
-	foreach ( $list as $e )
+	global $epm_time_format;
+	$time = strftime ( $epm_time_format );
+	$inmap = [ '-:-' => $time ];
+	foreach ( read_projects ( $type_re )
+	          as $project )
 	{
-	    list ( $time, $project, $basename ) = $e;
-	    $value = "$project:$basename";
+	    $key = "$project:-";
+	    $inmap[$key] = $time;
+	}
+
+	$fmap = read_favorites ( $inmap );
+
+	$r = '';
+	foreach ( $fmap as $key => $time )
+	{
+	    list ( $project, $basename ) =
+	        explode ( ':', $key );
 	    if ( $project == '-' )
 		$project = '<i>Your</i>';
 	    if ( $basename == '-' )
@@ -969,7 +1001,7 @@ EOT;
 		$basename = preg_replace
 		    ( '-', ' ', $basename );
 	    $time = substr ( $time, 0, 10 );
-	    $r .= "<option value='$value'>"
+	    $r .= "<option value='$key'>"
 		. "$project $basename $time"
 		. "</option>";
 	}
@@ -1466,8 +1498,7 @@ EOT;
     $project_help = HELP ( 'project-page' );
     $options = "<option value='*FAVORITES*'>"
              . "<i>Favorites</i></option>"
-	     . favorites_to_options
-	           ( read_favorites() );
+	     . favorites_to_options ( 'pull' );
     echo <<<EOT
     <div id='error-response' style='display:none'>
     <h5>Errors:</h5>
