@@ -1575,6 +1575,14 @@ EOT;
 	    Continue</button>
     <pre>  </pre>
     </div>
+    <div id='check-proposed-display'
+         style='display:none'>
+    <span class='problem-checkbox'
+	  id='check-proposed'
+	  onclick='CHECK(this)'>&nbsp;</span>
+    <h5>Check Proposed Actions</h5>
+    <pre>  </pre>
+    </div>
     <h5>Go To:</h5>
     <button type='submit'
 	    formaction='problem.php'
@@ -1674,11 +1682,6 @@ EOT;
 	        style='text-align:left'>
 	        <h5>Problems (selected are being push)
 		    </h5></th>
-	    <td><span class='problem-checkbox'
-	              id='check-proposed'
-	              onclick='CHECK(this)'>
-		      &nbsp;</span>
-		Check Proposed Actions</td>
 	    <td id='selected-project-column'>
 	    <h5>Selected Project:
 	    <span id='selected-project-value'
@@ -1817,6 +1820,8 @@ EOT;
 	    }
 	    if ( current_row >= problem_rows.length )
 	    {
+	        check_proposed_display.style.display =
+		    'none';
 	        done_response.style.display = 'inline';
 		return;
 	    }
@@ -1859,9 +1864,13 @@ EOT;
 	    document.getElementById('pre-submit');
 	var post_submit =
 	    document.getElementById('post-submit');
+	var check_proposed_display =
+	    document.getElementById
+	        ('check-proposed-display');
 	var check_proposed =
 	    document.getElementById('check-proposed');
 	check_proposed.style.backgroundColor = on;
+	check_proposed_display.style.display = 'inline';
 
 	var compile_response =
 	    document.getElementById
