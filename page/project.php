@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 13 22:05:59 EDT 2020
+    // Date:	Tue Apr 14 14:05:29 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -719,18 +719,76 @@ EOT;
     //         <span class='problem-checkbox'
     //               onclick='PULL(this)'>&nbsp;</span>
     //         <span class='pull-problem'>
-    //         PROBLEM &lArr; PROJECT
+    //         PROBLEM &lArr; PROJECT NOTE TIME
     //         </span>
     //         </td>
     //         </tr>
     //
-    function list_to_pull_rows ( $list )
+    // Here NOTE is one of:
+    //
+    //	   (new)	if PROBLEM does not exist for
+    //			user
+    //     (re-pull)	if PROBLEM exists and has
+    //			PROJECT as its current parent
+    //
+    // If a list element refers to a PROBLEM that exists
+    // but has no parent, or has a parent other than
+    // the PROJECT associated in the list element, the
+    // a message is appended to $warnings and NO string
+    // segment is generated for the list element.
+    //
+    function list_to_pull_rows ( $list, & $warnings )
     {
+        global $epm_data, $uid;
+
 	$r = '';
+	$re = '#^\.\./\.\./\.\./projects/(.+)$#';
         foreach ( $list as $items )
 	{
 	    list ( $time, $project, $problem ) = $items;
-	    if ( $project == '-' ) continue;
+	    $f = "users/$uid/$problem";
+	    if ( is_dir ( "$epm_data/$f" ) )
+	    {
+		$g = "$f/+parent+";
+		if ( is_link ( "$epm_data/$g" ) )
+		{
+		    $parent = @readlink
+		        ( "$epm_data/$g" );
+		    if ( $parent === false )
+		        ERROR ( "cannot read link $g" );
+		    if ( ! preg_match ( $re, $parent ) )
+		        ERROR ( "link $g has" .
+			        " malformed value" .
+				" $parent" );
+		    $parent = $matches[1];
+		    if (    "$project/$problem"
+		         != $parent )
+		    {
+		        $warnings[] =
+			    "$problem already has" .
+			    " parent $parent that" .
+			    " conflicts with request" .
+			    " to pull from" .
+			    " $project/$problem";
+			continue;
+		    }
+		    else
+		        $note = '(re-pull)';
+		}
+		else
+		{
+		    $warnings[] =
+			"$problem already exists and" .
+			" has no parent and so cannot" .
+			" be pulled from" .
+			" $project/$problem";
+		    continue;
+		}
+	    }
+	    else
+	        $note = '(new)';
+
+	    $time = substr ( $time, 0, 10 );
 	    $r .= <<<EOT
 	    <tr data-project='$project'
 	        data-problem='$problem'>
@@ -738,13 +796,53 @@ EOT;
 	    <span class='problem-checkbox'
 	        onclick='PULL(this)'>&nbsp;</span>
 	    <span class='pull-problem'>
-	    $problem &lArr; $project
+	    $problem &lArr; $project $note $time
 	    </span>
 	    </td>
 	    </tr>
 EOT;
 	}
 	return $r;
+    }
+
+    // Return a list containing the user's problems that
+    // have a parent.  List elements are of the form
+    //
+    //	    [TIME PROJECT PROBLEM]
+    //
+    // and the TIME is the modification time of the
+    // parents +changes+ file.  The list is sorted by
+    // TIME.
+    //
+    function problems_to_push_list ()
+    {
+        global $epm_data, $uid, $epm_time_format;
+	$map[] = [];
+	foreach ( read_problems()
+	          as $problem => $project )
+	{
+	    if ( $project == '' ) continue;
+	    $f = "users/$uid/$problem/"
+	       . "+parent+/+changes+";
+	    $time = @filemtime ( "$epm_data/$f" );
+	    if ( $time === false )
+	    {
+	        WARN ( "cannot stat $f" );
+		continue;
+	    }
+	    $map["$project:$problem"] = $time;
+	}
+	arsort ( $map, SORT_NUMERIC );
+	$list = [];
+	foreach ( $map as $key => $time )
+	{
+	    list ( $project, $problem ) =
+	        explode ( ':', $key );
+	    $list[] = [strftime ( $epm_format_time,
+	                          $time ),
+		       $project, $problem];
+	}
+	return $list;
     }
 
     // Given a list name of the form 'PROJECT:BASENAME'
