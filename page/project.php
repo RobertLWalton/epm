@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 13 20:24:26 EDT 2020
+    // Date:	Mon Apr 13 22:05:59 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -590,8 +590,9 @@
     // the map by problems (keys) in natural order.
     //
     // If $enabling_map is NOT NULL, any PROBLEM such
-    // that $enabling_map['PROBLEM'] is NOT set is
-    // ignored.
+    // that $enabling_map['PROBLEM'] is NOT set, or
+    // is set to a value that is neither '' not the
+    // project PROBLEM is descended from, is ignored.
     //
     function read_problems ( $enabling_map = NULL )
     {
@@ -607,10 +608,14 @@
 	    if ( ! preg_match
 	               ( $epm_name_re, $problem ) )
 	        continue;
-	    if ( isset ( $enabling_map )
-	         &&
-		 ! isset ( $enabling_map[$problem] ) )
-	        continue;
+	    $eproject = '';
+	    if ( isset ( $enabling_map ) )
+	    {
+	        if ( ! isset
+		          ( $enabling_map[$problem] ) )
+		    continue;
+		$eproject = $enabling_map[$problem];
+	    }
 
 	    $g = "$f/$problem/+parent+";
 	    $re = "/\/\.\.\/projects\/([^\/]+)\/"
@@ -624,9 +629,11 @@
 		           ( $re, $s, $matches ) )
 		    ERROR ( "link $g value $s is" .
 		            " mal-formed" );
-		$pmap[$problem] = $matches[1];
+		if (    $eproject == ''
+		     || $eproject == $matches[1] )
+		    $pmap[$problem] = $matches[1];
 	    }
-	    else
+	    elseif ( $eproject == '' )
 		$pmap[$problem] = '';
 	}
 	ksort ( $pmap, SORT_NATURAL );
@@ -761,8 +768,9 @@ EOT;
 	return "$d/+indices+/$listname";
     }
 
-    // Return the lines from list $listame in the
-    // form of a list of elements each of the form
+    // Return the lines from the list with the given
+    // $filename in the form of a list of elements each
+    // of the form
     //
     //	    [TIME PROJECT PROBLEM]
     //
@@ -772,13 +780,9 @@ EOT;
     // not exist, [] is returned.  File list line for-
     // matting errors are fatal.
     //
-    // $listname has the form PROJECT:BASENAME as per
-    // listname_to_filename.
-    //
-    function read_list ( $listname )
+    function read_file_list ( $filename )
     {
         global $epm_data;
-	$filename = listname_to_filename ( $listname );
 	$list = [];
 	$map = [];
 	$c = @file_get_contents
@@ -804,9 +808,9 @@ EOT;
 		if ( count ( $items ) != 3 )
 		    ERROR ( "badly formatted line" .
 			    " '$line' in $filename" );
-		list ( $time, $project, $basename ) =
+		list ( $time, $project, $problem ) =
 		    $items;
-		$key = "$project:$basename";
+		$key = "$project:$problem";
 		if ( isset ( $map[$key] ) )
 		    ERROR ( "line '$line' duplicates" .
 			    " line '{$map[$key]}' in" .
@@ -827,7 +831,7 @@ EOT;
     // PROBLEM's +changes+ file.  List elements
     // are sorted most recent TIME first.
     //
-    function project_to_list ( $project )
+    function read_project_list ( $project )
     {
         global $epm_data, $epm_name_re,
 	       $epm_time_format;
@@ -854,7 +858,7 @@ EOT;
 	    }
 	    $map[$problem] = $time;
 	}
-	rsort ( $map, SORT_NUMERIC );
+	arsort ( $map, SORT_NUMERIC );
 
 	$list = [];
 	foreach ( $map as $problem => $time )
@@ -864,21 +868,47 @@ EOT;
 	return $list;
     }
 
-    // Given a list produced by read_list, make an
-    // $enabling_map from it listing the user's problem
-    // in the list (from lines with PROJECT `-'), and
-    // then call read_problems and problems_to_push_rows
-    // to return a list as per the latter function.
+    // Given a $listname in the form 'PROJECT:BASENAME',
+    // where 'PROJECT:-' and '-:-' are allowed, make an
+    // $enabling_map from the named list, and then call
+    // read_problems and problems_to_push_rows to return
+    // a string or rows as per the latter function.
     //
-    function list_to_push_rows ( $list )
+    // If a PROBLEM appears in a list with more than one
+    // PROJECT, it will be given the project *AMBIGUOUS*
+    // in the $enabling_map, which effectively causes
+    // the problem to be ignored.  It is assumed that
+    // a PROBLEM will not appear twice in the same list
+    // with the same PROJECT.
+    //
+    function list_to_push_rows ( $listname )
     {
-        $enabling_map = [];
-	foreach ( $list as $items )
+	list ( $project, $basename ) =
+	    explode ( ':', $listname );
+	if ( $project != '-' )
 	{
-	    list ( $time, $project, $problem ) = $items;
-	    if ( $project != '-' ) continue;
-	    $enabling_map[$problem] = true;
+	    $enabling_map = [];
+	    if ( $basename != '-' )
+	        $list = read_file_list
+		    ( listname_to_filename
+		          ( $listname ) );
+	    else
+	        $list = read_project_list ( $project );
+
+	    foreach ( $list as $items )
+	    {
+		list ( $time, $project, $problem ) =
+		    $items;
+		if ( isset ( $enabling_map[$problem] ) )
+		    $enabling_map[$problem] =
+		        '*AMBIGUOUS*';
+		else
+		    $enabling_map[$problem] = $project;
+	    }
 	}
+	else
+	    $enabling_map = NULL;
+
 	return problems_to_push_rows
 	    ( read_problems ( $enabling_map ) );
     }
@@ -1637,12 +1667,7 @@ EOT;
     {
 	$push_help = HELP ( 'project-push' );
 
-	if ( $list == '-:-' )
-	    $rows = problems_to_push_rows
-		( read_problems() );
-	else
-	    $rows = list_to_push_rows
-		( read_list ( $list ) );
+	$rows = list_to_push_rows ( $list );
 
 	$project_options = projects_to_options
 	    ( read_projects ( 'push' ) );
