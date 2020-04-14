@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 13 13:55:46 EDT 2020
+    // Date:	Mon Apr 13 20:24:26 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1123,7 +1123,7 @@ EOT;
 	    	      . " $project/$problem/$fname"
 		      . PHP_EOL;
 	    $commands[] =
-	        "mvx -f $srcdir/$fname $desdir";
+	        "mv -f $srcdir/$fname $desdir";
 		    // This will also move a link.
 
 	    if ( $action == 'R' ) continue;
@@ -1839,7 +1839,7 @@ EOT;
 		      + '&project=' + project,
 		   check_compile ?
 		       COMPILE_RESPONSE :
-		       PUSH_RESPONSE );
+		       DONE_RESPONSE );
 	}
 
 	</script>
