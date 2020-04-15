@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 15 02:34:35 EDT 2020
+    // Date:	Wed Apr 15 03:44:58 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1421,30 +1421,38 @@ EOT;
 	    echo "DONE $id\n";
 	    exit;
 	}
-        elseif ( $op == 'push' )
+        elseif ( $op == 'push' || $op == 'pull' )
 	{
-	    $problem = NULL;
-	    $just_compile = false;
-	    if ( isset ( $_POST['push'] ) )
-		$problem = $_POST['push'];
-	    elseif ( isset ( $_POST['compile-push'] ) )
-	    {
-		$problem = $_POST['compile-push'];
-		$just_compile = true;
-	    }
-	    if ( ! isset ( $problem ) )
+	    $just_compile = isset ( $_POST['compile'] );
+	    if ( $just_compile )
+	        $oper = $_POST['compile'];
+	    elseif ( ! isset ( $_POST['finish'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( ! isset ( $_POST['project'] ) )
+	    else
+	        $oper = $_POST['finish'];
+	    if ( $oper != $op )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+	    elseif ( ! isset ( $_POST['problem'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    elseif ( ! isset ( $_POST['project'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $problem = $_POST['problem'];
 	    $project = $_POST['project'];
+
 	    if ( ! preg_match
 	               ( $epm_name_re, $problem ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( ! preg_match
 	               ( $epm_name_re, $project ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    compile_push_problem
-		( $project, $problem, $errors );
+
+	    if ( $op == 'push' )
+		compile_push_problem
+		    ( $project, $problem, $errors );
+	    else
+		compile_pull_problem
+		    ( $project, $problem, $errors );
+
 	    if ( count ( $errors ) > 0 )
 	    {
 		echo "ERROR $id\n";
@@ -1468,10 +1476,6 @@ EOT;
 	    }
 	    echo "DONE $id\n";
 	    exit;
-	}
-	elseif ( $op == 'pull' )
-	{
-	    // TBD
 	}
     }
 
@@ -1960,10 +1964,10 @@ EOT;
 		                .backgroundColor
 		  == on );
 	    op = ( check_compile ? 
-		   'compile-push' : 'push' );
+		   'compile' : 'finish' );
 	    if ( project == '' )
 	        project = selected_project;
-	    SEND ( op + '=' + problem
+	    SEND ( op + '=push&problem=' + problem
 		      + '&project=' + project,
 		   check_compile ?
 		       COMPILE_RESPONSE :
@@ -2097,11 +2101,11 @@ EOT;
 		                .backgroundColor
 		  == on );
 	    op = ( check_compile ? 
-		   'compile-pull' : 'pull' );
+		   'compile' : 'finish' );
 	    if ( project == '' )
 	        FAIL ( 'project for ' + problem +
 		       ' is \'\'' );
-	    SEND ( op + '=' + problem
+	    SEND ( op + '=pull&problem=' + problem
 		      + '&project=' + project,
 		   check_compile ?
 		       COMPILE_RESPONSE :
