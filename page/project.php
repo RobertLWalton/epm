@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 15 03:44:58 EDT 2020
+    // Date:	Wed Apr 15 09:56:14 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1161,8 +1161,8 @@ EOT;
     // and PROBLEM to be used to push $problem to
     // $project.  If $problem has been pulled, it is
     // and error if it has not been pulled from
-    // $project.  It is an error if $project does not
-    // exist.
+    // $project.  It is an error if $problem or $project
+    // do not exist.
     //
     function compile_push_problem
 	( $project, $problem, & $errors )
@@ -1295,6 +1295,152 @@ EOT;
 	    $commands[] = "ln -s"
 	                . " ../../../$desdir"
 	                . " $srcdir/+parent+";
+	}
+	if ( count ( $commands ) == 0 )
+	    $changes = '';
+	$data['PROJECT'] = $project;
+	$data['PROBLEM'] = $problem;
+	$data['CHANGES'] = $changes;
+	$data['COMMANDS'] = $commands;
+    }
+
+    // Compute EPM_PROJECT CHANGES, COMMANDS, PROJECT,
+    // and PROBLEM to be used to pull $problem from
+    // $project.  If $problem has been pulled, it is
+    // and error if it has not been pulled from
+    // $project.  It is an error if $problem in $project
+    // does not exist.
+    //
+    function compile_pull_problem
+	( $project, $problem, & $warnings, & $errors )
+    {
+	global $epm_data, $uid, $epm_filename_re,
+	       $epm_time_format, $data,
+	       $push_file_map;
+
+        $desdir = "users/$uid/$problem";
+	$d = "projects/$project";
+	if ( ! is_dir ( "$epm_data/$d" ) )
+	{
+	    $errors[] = "$project is not a project";
+	    return;
+	}
+	$srcdir = "$d/$problem";
+	if ( ! is_dir ( "$epm_data/$srcdir" ) )
+	{
+	    $errors[] = "project $project does not have"
+	              . " a problem named $problem";
+	    return;
+	}
+	$new_pull = true;
+	if ( is_dir ( "$epm_data/$desdir" ) )
+	{
+	    $g = "$desdir/+parent+";
+	    if ( ! is_link ( "$epm_data/$g" ) )
+	    {
+		$errors[] = "$uid already has a problem"
+		          . " named $problem that was"
+			  . " not pulled from any"
+			  . " project";
+		return;
+	    }
+	    $s = @readlink ( "$epm_data/$g" );
+	    if ( $s === false )
+		ERROR ( "cannot read link $g" );
+	    $sok = "../../../$srcdir";
+	    if ( $s != $sok )
+	    {
+	        $errors[] = "$g links to $s but should"
+		          . " link to $sok";
+		return;
+	    }
+	    $new_pull = false;
+	}
+
+	$changes = "Changes to Pull From $project ("
+	         . strftime ( $epm_time_format )
+	         . "):" . PHP_EOL;
+	$commands = [];
+	if ( $new_pull )
+	{
+	    $changes .= "make $uid/$problem"
+	              . " directory" . PHP_EOL;
+	    $commands[] = "mkdir $desdir";
+	}
+
+	$files = @scandir ( "$epm_data/$srcdir" );
+	if ( $files === false )
+	    ERROR ( "cannot read $srcdir" );
+	foreach ( $files as $fname )
+	{
+	    if ( ! preg_match
+	               ( $epm_filename_re, $fname ) )
+	        continue;
+	    $ext = pathinfo
+	        ( $fname, PATHINFO_EXTENSION );
+	    if ( ! isset ( $push_file_map[$ext] ) )
+	        continue;
+	    $amap = $push_file_map[$ext];
+	    if ( is_array ( $amap ) )
+	    {
+		$base = pathinfo
+		    ( $fname, PATHINFO_FILENAME );
+	        $action = NULL;
+		foreach ( $amap as $re => $act )
+		{
+		    $re = preg_replace
+		        ( '/PPPP/', $problem, $re );
+		    if ( ! preg_match
+		               ( "/^($re)\$/", $base ) )
+		        continue;
+		    $action = $act;
+		    break;
+		}
+		if ( ! isset ( $action ) )
+		    continue;
+	    }
+	    else
+	        $action = $amap;
+
+	    if ( $action != 'L' ) continue;
+
+	    $g = "$srcdir/$fname";
+	    $h = "$desdir/$fname";
+	    if ( is_link ( "$epm_data/$h" ) )
+	    {
+	        $link = @readlink ( "$epm_data/$h" );
+		if ( $link === false )
+		    ERROR ( "cannot read link $h" );
+		if ( $link != "../../../$g" )
+		    $warnings[] =
+		        "existing $h not altered;" .
+			" delete and re-run if" .
+			" desired";
+		continue;
+	    }
+	    elseif ( file_exists ( "$epm_data/$h" ) )
+	    {
+		$warnings[] =
+		    "existing $h not altered; delete" .
+		    " and re-run if desired";
+		continue;
+	    }
+
+	    $changes .= "link $project/$problem/$fname"
+	              . " to $fname"
+	              . PHP_EOL;
+	    $commands[] = "ln -s"
+	                . " ../../../$srcdir/$fname"
+	                . " $desdir/$fname";
+	}
+	if ( $new_pull )
+	{
+	    $changes .= "link +parent+ to"
+	              . " $project/$problem"
+	              . PHP_EOL;
+	    $commands[] = "ln -s"
+	                . " ../../../$srcdir"
+	                . " $desdir/+parent+";
 	}
 	if ( count ( $commands ) == 0 )
 	    $changes = '';
