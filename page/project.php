@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 15 14:18:13 EDT 2020
+    // Date:	Wed Apr 15 14:22:48 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1419,16 +1419,16 @@ EOT;
 		    ERROR ( "cannot read link $h" );
 		if ( $link != "../../../$g" )
 		    $warnings[] =
-		        "existing $h not altered;" .
-			" delete and re-run if" .
-			" desired";
+		        "existing $h will not be" .
+			" altered; delete and re-run" .
+			" if desired";
 		continue;
 	    }
 	    elseif ( file_exists ( "$epm_data/$h" ) )
 	    {
 		$warnings[] =
-		    "existing $h not altered; delete" .
-		    " and re-run if desired";
+		    "existing $h will not be altered;" .
+		    " delete and re-run if desired";
 		continue;
 	    }
 
