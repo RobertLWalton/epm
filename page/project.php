@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 14 15:47:08 EDT 2020
+    // Date:	Wed Apr 15 02:34:35 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -657,14 +657,13 @@
     //         <td>
     //         <span class='problem-checkbox'
     //               onclick='PUSH(this)'>&nbsp;</span>
-    //         <span class='CLASS'>
+    //         <span class='problem'>
     //         PROBLEM &rArr; DESTINATION
     //         </span>
     //         </td>
     //         </tr>
     //
-    // where CLASS is 'push-new' if PROJECT == '' and
-    // 'push-parent' otherwise, and DESTINATION is
+    // where DESTINATION is
     //
     //     <span class='selected-project'>
     //     Selected Project</span>
@@ -676,9 +675,6 @@
 	$r = '';
         foreach ( $map as $problem => $project )
 	{
-	    $class = ( $project == '' ?
-	               'push-new' :
-		       'push-parent' );
 	    $destination =
 	        ( $project == '' ?
 		  "<span class='selected-project'>" .
@@ -690,7 +686,7 @@
 	    <td>
 	    <span class='problem-checkbox'
 	        onclick='PUSH(this)'>&nbsp;</span>
-	    <span class='$class'>
+	    <span class='problem'>
 	    $problem &rArr; $destination
 	    </span>
 	    </td>
@@ -709,10 +705,10 @@ EOT;
     // parents +changes+ file.  The list is sorted by
     // TIME.
     //
-    function problems_to_push_list ()
+    function problems_to_pull_list ()
     {
         global $epm_data, $uid, $epm_time_format;
-	$map[] = [];
+	$map = [];
 	foreach ( read_problems()
 	          as $problem => $project )
 	{
@@ -733,7 +729,7 @@ EOT;
 	{
 	    list ( $project, $problem ) =
 	        explode ( ':', $key );
-	    $list[] = [strftime ( $epm_format_time,
+	    $list[] = [strftime ( $epm_time_format,
 	                          $time ),
 		       $project, $problem];
 	}
@@ -924,7 +920,7 @@ EOT;
     //         <td>
     //         <span class='problem-checkbox'
     //               onclick='PULL(this)'>&nbsp;</span>
-    //         <span class='pull-problem'>
+    //         <span class='problem'>
     //         PROBLEM &lArr; PROJECT NOTE TIME
     //         </span>
     //         </td>
@@ -953,7 +949,7 @@ EOT;
 	list ( $project, $basename ) =
 	    explode ( ':', $listname );
 	if ( $project == '-' )
-	    $list = problems_to_push_list();
+	    $list = problems_to_pull_list();
 	elseif ( $basename == '-' )
 	    $list = read_project_list ( $project );
 	else
@@ -975,7 +971,8 @@ EOT;
 		        ( "$epm_data/$g" );
 		    if ( $parent === false )
 		        ERROR ( "cannot read link $g" );
-		    if ( ! preg_match ( $re, $parent ) )
+		    if ( ! preg_match ( $re, $parent,
+		                        $matches ) )
 		        ERROR ( "link $g has" .
 			        " malformed value" .
 				" $parent" );
@@ -1025,7 +1022,7 @@ EOT;
 	    <td>
 	    <span class='problem-checkbox'
 	        onclick='PULL(this)'>&nbsp;</span>
-	    <span class='pull-problem'>
+	    <span class='problem'>
 	    $problem &lArr; $project $note $time
 	    </span>
 	    </td>
@@ -1523,7 +1520,6 @@ EOT;
     span.problem {
 	display:inline;
         font-size: var(--large-font-size);
-	font-family: "Courier New", Courier, monospace;
     }
     pre {
 	font-family: "Courier New", Courier, monospace;
@@ -1542,7 +1538,7 @@ EOT;
 	padding-bottom: 5px;
 	padding-top: 5px;
     }
-    div.push-list {
+    div.push-pull-list {
 	background-color: #F2D9D9;
     }
     span.problem-checkbox {
@@ -1552,16 +1548,6 @@ EOT;
 	margin-right: 3px;
 	border: 1px solid;
 	border-radius: 7.5px;
-    }
-    span.push-new {
-	background-color: #F2D9D9;
-	display:inline-block;
-        font-size: var(--large-font-size);
-    }
-    span.push-parent {
-	background-color: #F2D9D9;
-	display:inline-block;
-        font-size: var(--large-font-size);
     }
     span.selected-project {
 	color: red;
@@ -1628,6 +1614,12 @@ EOT;
 </head>
 
 <?php 
+
+    if ( $op == 'pull' )
+	$pull_rows = list_to_pull_rows
+	    ( $list, $warnings );
+	// Must execute before $warnings is used.
+
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
@@ -1795,7 +1787,7 @@ EOT;
 	    ( read_projects ( 'push' ) );
 
 	echo <<<EOT
-	<div class='push-list'>
+	<div class='push-pull-list'>
 	<form method='POST'>
 	<input type='hidden' id='ID'
 	       name='ID' value='$id'>
@@ -1827,7 +1819,7 @@ EOT;
 	<tr id='post-submit' style='display:none'>
 	    <th id='post-submit'
 	        style='text-align:left'>
-	        <h5>Problems (selected are being push)
+	        <h5>Problems (selected are being pushed)
 		    </h5></th>
 	    <td id='selected-project-column'>
 	    <h5>Selected Project:
@@ -1861,12 +1853,12 @@ EOT;
 	var selected_project = null;
 
 	// The following is called when a push checkbox
-	// is clicked for a problem that has no project
-	// (i.e., it has not previously been pulled).
+	// is clicked for a problem.
+	//
 	// This function keeps a counter of the number
-	// of these boxes that are checked and makes
-	// project-selector visible if the counter is
-	// not zero.
+	// of boxes with no project that are checked and
+	// makes project-selector visible if the counter
+	// is not zero.
 	//
 	function PUSH ( checkbox )
 	{
@@ -1920,17 +1912,6 @@ EOT;
 		        'hidden';
 	    }
 
-	}
-
-	function CHECK ()
-	{
-	    if ( check_proposed.style.backgroundColor
-	         != on )
-		check_proposed.style.backgroundColor =
-		    on;
-	    else
-		check_proposed.style.backgroundColor =
-		    off;
 	}
 
 	function SUBMIT_PUSH ()
@@ -1991,6 +1972,145 @@ EOT;
 
 	</script>
 EOT;
+    }
+
+    if ( $op == 'pull' )
+    {
+	$pull_help = HELP ( 'project-pull' );
+
+	echo <<<EOT
+	<div class='push-pull-list'>
+	<form method='POST'>
+	<input type='hidden' id='ID'
+	       name='ID' value='$id'>
+	<table width='100%' id='problem-table'>
+	<tr id='pre-submit'>
+	    <th style='text-align:left'>
+	        <h5>Problems (select to pull)</h5></th>
+	    <td><input type='button'
+	               onclick='SUBMIT_PULL()'
+		       value='Submit'>
+	        <input type='button'
+	               onclick='RESET_PULL()'
+		       value='Reset'>
+		<input type='submit'
+	               name='done'
+		       value='Cancel'></td>
+	    <td>
+            <td style='text-align:right'>
+            $pull_help</td>
+	</tr>
+	<tr id='post-submit' style='display:none'>
+	    <th id='post-submit'
+	        style='text-align:left'>
+	        <h5>Problems (selected are being pulled)
+		    </h5></th>
+            <td style='text-align:right'>
+            $pull_help</td>
+	</tr>
+	$pull_rows
+	</table>
+	</form>
+	</div>
+
+	<script>
+
+	// The following is called when a push checkbox
+	// is clicked for a problem.
+	//
+	function PULL ( checkbox )
+	{
+	    if ( submit ) return;
+	    var row = checkbox.parentElement
+	                      .parentElement;
+	    if ( checkbox.style.backgroundColor != on )
+	        // Initial color may be anything but on.
+	    {
+		// Click must turn box on.
+		//
+		checkbox.style.backgroundColor = on;
+	    }
+	    else
+	    {
+		// Click must turn box off.
+		//
+		checkbox.style.backgroundColor = off;
+	    }
+	} 
+
+	function RESET_PULL ()
+	{
+	    if ( submit ) return;
+	    for ( var i = 0; i < problem_rows.length;
+	                     ++ i )
+	    {
+		var row = problem_rows[i];
+	        var problem = row.dataset.problem;
+		if ( problem === undefined ) continue;
+		var td = row.children[0];
+		var checkbox = td.children[0];
+		if ( checkbox.style
+		             .backgroundColor != on )
+		    continue;
+		checkbox.style.backgroundColor = off;
+	    }
+
+	}
+
+	function SUBMIT_PULL ()
+	{
+	    pre_submit.style.display = 'none';
+	    post_submit.style.display = 'table-row';
+	    submit = true;
+	    START_NEXT();
+	}
+
+	function START_NEXT ()
+	{
+	    error_response.style.display = 'none';
+	    compile_response.style.display = 'none';
+	    while (   ++ current_row
+	            < problem_rows.length )
+	    {
+		let row = problem_rows[current_row];
+	        var problem = row.dataset.problem;
+		if ( problem === undefined ) continue;
+	        var project = row.dataset.project;
+		var td = row.children[0];
+		var checkbox = td.children[0];
+		if ( checkbox.style
+		             .backgroundColor != on )
+		    continue;
+		break;
+	    }
+	    if ( current_row >= problem_rows.length )
+	    {
+	        check_proposed_display.style.display =
+		    'none';
+	        done_response.style.display = 'inline';
+		return;
+	    }
+	    checkbox.style.backgroundColor =
+		running;
+	    var check_compile =
+	        (    check_proposed.style
+		                .backgroundColor
+		  == on );
+	    op = ( check_compile ? 
+		   'compile-pull' : 'pull' );
+	    if ( project == '' )
+	        FAIL ( 'project for ' + problem +
+		       ' is \'\'' );
+	    SEND ( op + '=' + problem
+		      + '&project=' + project,
+		   check_compile ?
+		       COMPILE_RESPONSE :
+		       DONE_RESPONSE );
+	}
+
+	</script>
+EOT;
+    }
 
     if ( $op == 'push' || $op == 'pull' )
         echo <<<EOT
@@ -2037,6 +2157,17 @@ EOT;
 
 	var submit = false;
 	var current_row = -1;
+
+	function CHECK ()
+	{
+	    if ( check_proposed.style.backgroundColor
+	         != on )
+		check_proposed.style.backgroundColor =
+		    on;
+	    else
+		check_proposed.style.backgroundColor =
+		    off;
+	}
 
 	function SKIP_TO_NEXT ()
 	{
@@ -2146,8 +2277,6 @@ EOT;
 
 	</script>
 EOT;
-
-    }
 
 ?>
 
