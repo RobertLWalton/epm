@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 15 12:17:32 EDT 2020
+    // Date:	Wed Apr 15 13:18:54 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -348,26 +348,31 @@
     // while javascript maintains a view of the results
     // on the page.
     //
-    //	   Operations that execute push/pull.
+    //	 Operations that execute push/pull.
     //
-    //		push=PROBLEM project=PROJECT
-    //		    Push PROBLEM to PROJECT.
+    //     finish=push problem=PROBLEM project=PROJECT
+    //	       Push PROBLEM to PROJECT.
     //
-    //		pull=PROBLEM project=PROJECT
-    //		    Pull PROBLEM from PROJECT.
+    //     finish=pull problem=PROBLEM project=PROJECT
+    //	       Pull PROBLEM from PROJECT.
     //
-    //		compile-pull=PROBLEM project=PROJECT
-    //		    Compile pull of PROBLEM from
-    //		    PROJECT.
+    //     compile=push problem=PROBLEM project=PROJECT
+    //	       Compile push of PROBLEM to PROJECT.
     //
-    //		compile-push=PROBLEM project=PROJECT
-    //		    Compile push of PROBLEM to PROJECT.
+    //     compile=pull problem=PROBLEM project=PROJECT
+    //	       Compile pull of PROBLEM from PROJECT.
     //
-    //		execute=yes
-    //		    Execute compiled push or pull.
+    //     send-changes=yes
+    //	       Send changes from previous compile (this
+    //         can happen after WARN response).  What
     //
+    //     execute=yes
+    //	       Execute compiled push or pull.
     //
     //	    Responses:
+    //
+    //		WARN new-ID-value
+    //		warning-messages
     //
     //		ERROR new-ID-value
     //		error-messages
@@ -377,9 +382,10 @@
     //
     //		DONE new-ID-value
     //
-    //		Here error-messages is a string
+    //		Here warning-messages is a string
     //		consisting of lines each with an EOL,
-    //		and compiled-changes is similar.
+    //		and error-messages and compiled-changes
+    //		are similar.
 
     
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
@@ -1582,6 +1588,14 @@ EOT;
 		$data['LIST'] = $list;
 	    }
 	}
+        elseif ( isset ( $_POST['send-changes'] ) )
+	{
+	    if ( $op == 'edit' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    echo "COMPILED $id\n";
+	    echo $data['CHANGES'];
+	    exit;
+	}
         elseif ( isset ( $_POST['execute'] ) )
 	{
 	    if ( $op == 'edit' )
@@ -1631,12 +1645,20 @@ EOT;
 		    ( $project, $problem, $errors );
 	    else
 		compile_pull_problem
-		    ( $project, $problem, $errors );
+		    ( $project, $problem,
+		      $errors, $warnings );
 
 	    if ( count ( $errors ) > 0 )
 	    {
 		echo "ERROR $id\n";
 		foreach ( $errors as $e )
+		    echo "$e\n";
+		exit;
+	    }
+	    if ( count ( $warnings ) > 0 )
+	    {
+		echo "WARN $id\n";
+		foreach ( $warnings as $e )
 		    echo "$e\n";
 		exit;
 	    }
@@ -1746,6 +1768,10 @@ EOT;
 	color: red;
 	display:inline-block;
     }
+    #warn-response {
+        background-color: purple;
+	margin-bottom: 0px;
+    }
     #error-response {
         background-color: yellow;
 	margin-bottom: 0px;
@@ -1832,9 +1858,37 @@ EOT;
 	$cancel = ( $op == 'push' ?
 		    'Cancel Pushing' :
 		    'Cancel Pulling' );
+	$warnings_help = HELP ( 'project-warnings' );
 	$errors_help = HELP ( 'project-errors' );
 	$proposed_help = HELP ( 'project-execute' );
 	echo <<<EOT
+
+	<div id='warn-response' style='display:none'>
+	<form>
+	<table style='width:100%'>
+	<tr>
+	<td><h5>WARNINGS:</h5></td>
+	<td>
+	<button type='button'
+	        onclick='IGNORE_WARNINGS()'>
+	IGNORE</button>
+	<pre>    </pre>
+	<button type='button' onclick='START_NEXT()'>
+	Skip to Next</button>
+	<pre>    </pre>
+	<button type='submit' name='done' value='yes'
+	        formaction='project.php'
+		formmethod='GET'>
+	$cancel</button>
+	</td>
+	</td><td style='text-align:right'>
+	$warnings_help</td>
+	</tr>
+	</table>
+	</form>
+	<pre id='error-messages'></pre>
+	</div>
+
 	<div id='error-response' style='display:none'>
 	<form>
 	<table style='width:100%'>
@@ -2118,6 +2172,7 @@ EOT;
 
 	function START_NEXT ()
 	{
+	    warn_response.style.display = 'none';
 	    error_response.style.display = 'none';
 	    compile_response.style.display = 'none';
 	    while (   ++ current_row
@@ -2255,6 +2310,7 @@ EOT;
 
 	function START_NEXT ()
 	{
+	    warn_response.style.display = 'none';
 	    error_response.style.display = 'none';
 	    compile_response.style.display = 'none';
 	    while (   ++ current_row
@@ -2333,6 +2389,12 @@ EOT;
 	var compile_messages =
 	    document.getElementById
 	        ('compile-messages');
+	var warn_response =
+	    document.getElementById
+	        ('warn-response');
+	var warn_messages =
+	    document.getElementById
+	        ('warn-messages');
 	var error_response =
 	    document.getElementById
 	        ('error-response');
@@ -2373,6 +2435,11 @@ EOT;
 	        ERROR_RESPONSE ( text );
 		return;
 	    }
+	    else if ( op == 'WARN' )
+	    {
+	        WARN_RESPONSE ( text );
+		return;
+	    }
 	    if ( text == '' )
 	    {
 	        DONE_RESPONSE ( 'DONE', text );
@@ -2405,6 +2472,23 @@ EOT;
 
 	    error_messages.textContent = text;
 	    error_response.style.display = 'block';
+	}
+
+	function WARN_RESPONSE ( text )
+	{
+	    warn_messages.textContent = text;
+	    warn_response.style.display = 'block';
+	}
+
+	function IGNORE_WARNINGS()
+	{
+	    warn_response.style.display = 'none';
+	    if ( check_proposed.style.backgroundColor
+	         != on )
+		SEND ( 'execute', DONE_RESPONSE );
+	    else
+		SEND ( 'send-changes',
+		       COMPILE_RESPONSE );
 	}
 
 	function EXECUTE ()
