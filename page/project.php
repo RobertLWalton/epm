@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 15 13:18:54 EDT 2020
+    // Date:	Wed Apr 15 14:18:13 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1646,7 +1646,7 @@ EOT;
 	    else
 		compile_pull_problem
 		    ( $project, $problem,
-		      $errors, $warnings );
+		      $warnings, $errors );
 
 	    if ( count ( $errors ) > 0 )
 	    {
@@ -1769,7 +1769,15 @@ EOT;
 	display:inline-block;
     }
     #warn-response {
-        background-color: purple;
+        background-color: #FF99FF;
+	margin-bottom: 0px;
+    }
+    #warn-messages {
+        background-color: #FFCCFF;
+        font-size: var(--large-font-size);
+	display: block;
+	margin-top: 3px;
+	margin-left: 20px;
 	margin-bottom: 0px;
     }
     #error-response {
@@ -1873,7 +1881,7 @@ EOT;
 	        onclick='IGNORE_WARNINGS()'>
 	IGNORE</button>
 	<pre>    </pre>
-	<button type='button' onclick='START_NEXT()'>
+	<button type='button' onclick='WARNINGS_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
 	<button type='submit' name='done' value='yes'
@@ -1886,7 +1894,7 @@ EOT;
 	</tr>
 	</table>
 	</form>
-	<pre id='error-messages'></pre>
+	<pre id='warn-messages'></pre>
 	</div>
 
 	<div id='error-response' style='display:none'>
@@ -2491,6 +2499,15 @@ EOT;
 		       COMPILE_RESPONSE );
 	}
 
+	function WARNINGS_NEXT()
+	{
+	    let row = problem_rows[current_row];
+	    let td = row.children[0];
+	    let checkbox = td.children[0];
+	    checkbox.style.backgroundColor = off;
+	    START_NEXT();
+	}
+
 	function EXECUTE ()
 	{
 	    compile_response.style.display = 'none';
@@ -2528,7 +2545,8 @@ EOT;
 			( response_re );
 		if ( matches == null
 		     ||
-		     ! ['DONE','COMPILED','ERROR']
+		     ! ['DONE','COMPILED',
+		        'WARN', 'ERROR']
 		           .includes ( matches[1] ) )
 		    FAIL ( 'bad response to ' +
 		           message_sent +
