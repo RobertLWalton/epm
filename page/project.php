@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 15 09:56:14 EDT 2020
+    // Date:	Wed Apr 15 12:17:32 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1484,6 +1484,14 @@ EOT;
 		return;
 	    }
 	}
+    }
+
+    // Write EPM_PROJECT CHANGES to destination
+    // +changes+ file.
+    //
+    function record_push_execution ()
+    {
+	global $epm_data, $data;
 
 	$project = $data['PROJECT'];
 	$problem = $data['PROBLEM'];
@@ -1494,6 +1502,28 @@ EOT;
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
+    }
+
+    // Write EPM_PROJECT CHANGES to destination
+    // +changes+ and source +pulls+ files.
+    //
+    function record_pull_execution ()
+    {
+	global $epm_data, $data, $uid, $epm_time_format;
+
+	$project = $data['PROJECT'];
+	$problem = $data['PROBLEM'];
+	$f = "users/$uid/$problem/+changes+";
+	$changes = $data['CHANGES'];
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $changes, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+	$g = "projects/$project/$problem/+pulls+";
+	$r = @file_put_contents
+	    ( "$epm_data/$g", $changes, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $g" );
     }
 
     if ( $method == 'POST' )
@@ -1564,6 +1594,10 @@ EOT;
 		    echo "$e\n";
 		exit;
 	    }
+	    if ( $op == 'push' )
+	        record_push_execution();
+	    else
+	        record_pull_execution();
 	    echo "DONE $id\n";
 	    exit;
 	}
@@ -1620,6 +1654,10 @@ EOT;
 		    echo "$e\n";
 		exit;
 	    }
+	    if ( $op == 'push' )
+	        record_push_execution();
+	    else
+	        record_pull_execution();
 	    echo "DONE $id\n";
 	    exit;
 	}
