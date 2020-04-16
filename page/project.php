@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 15 21:46:13 EDT 2020
+    // Date:	Thu Apr 16 14:44:23 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -742,6 +742,45 @@ EOT;
 	return $list;
     }
 
+    // Return a list whose elements have the form:
+    //
+    //		[TIME - PROBLEM]
+    //
+    // for all PROBLEMs users/UID/PROBLEM where TIME
+    // is the modification time of the problem +changes+
+    // file, or is the current time if there is no
+    // such file.  Sort by TIME.
+    //
+    function problems_to_edit_list()
+    {
+	global $epm_data, $uid, $epm_name_re,
+	       $epm_time_format;
+
+	$pmap = [];
+	$f = "users/$uid";
+	$ps = @scandir ( "$epm_data/$f" );
+	if ( $ps == false )
+	    ERROR ( "cannot read $f directory" );
+	foreach ( $ps as $problem )
+	{
+	    if ( ! preg_match
+	               ( $epm_name_re, $problem ) )
+	        continue;
+
+	    $g = "$f/$problem/+changes+";
+	    $time = @filemtime ( "$epm_data/$g" );
+	    if ( $time === false ) $time = time();
+	    $pmap[$problem] = $time;
+	}
+	arsort ( $pmap, SORT_NUMERIC );
+	$list = [];
+	foreach ( $pmap as $problem => $time )
+	    $list[] = [strftime ( $epm_time_format,
+	                          $time ),
+		       '-', $problem];
+	return $list;
+    }
+
     // Given a list name of the form 'PROJECT:BASENAME'
     // return the file name of the list relative to
     // $epm_data.
@@ -1036,6 +1075,59 @@ EOT;
 EOT;
 	}
 	return $r;
+    }
+
+    // Given a list name PROJECT:BASENAME, where
+    // this may be PROJECT:- or -:-, add the list
+    // elements to the $elements list and return
+    // a string whose segments are HTML rows of
+    // the form:
+    //
+    //		<tr class='edit-row'>
+    //		<td></td>
+    //		<td data-index='I' class='edit-name'>
+    //		PROJECT PROBLEM TIME
+    //		</td>
+    //		</tr>
+    //
+    // where if PROJECT is '-' it is replaced by
+    // '<i>Your</i>' in the string, TIME is the first
+    // 10 characters of the time (just the day part),
+    // and I is the index of the element in the
+    // $elements list.
+    //
+    function list_to_edit_rows
+    		( & $elements, $listname )
+    {
+        list ( $project, $basename ) = $listname;
+	if ( $project == '-' )
+	    $list = problems_to_edit_list();
+	elseif ( $basename == '-' )
+    	    $list = read_project_list ( $project );
+	else
+	    $list = read_file_list
+		( listname_to_filename ( $listname ) );
+	$r = '';
+	if ( $project == '-' )
+	    $project = '<i>Your</i>';
+	foreach ( $list as $element )
+	{
+	    $I = count ( $elements );
+	    $elements[] = $element;
+	    list ( $time, $project, $problem ) =
+	        $element;
+	    if ( $project == '-' )
+		$project = '<i>Your</i>';
+	    $time = substr ( $time, 0, 10 );
+	    $r .= <<<EOT
+	          <tr class='edit-row'>
+		  <td></td>
+		  <td data-index='$I' class='edit-name>
+		  $project $problem $time
+		  </td>
+		  </tr>
+EOT;
+	}
     }
 
     // Return the lines from:
