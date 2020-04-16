@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 15 14:22:48 EDT 2020
+    // Date:	Wed Apr 15 21:46:13 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1499,11 +1499,13 @@ EOT;
     {
 	global $epm_data, $data;
 
+	$changes = $data['CHANGES'];
+	if ( $changes == '' ) return;
+
 	$project = $data['PROJECT'];
 	$problem = $data['PROBLEM'];
 	$f = "projects/$project/$problem/"
 	   . "+changes+";
-	$changes = $data['CHANGES'];
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
@@ -1517,10 +1519,12 @@ EOT;
     {
 	global $epm_data, $data, $uid, $epm_time_format;
 
+	$changes = $data['CHANGES'];
+	if ( $changes == '' ) return;
+
 	$project = $data['PROJECT'];
 	$problem = $data['PROBLEM'];
 	$f = "users/$uid/$problem/+changes+";
-	$changes = $data['CHANGES'];
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
