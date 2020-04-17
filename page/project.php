@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 17 06:12:45 EDT 2020
+    // Date:	Fri Apr 17 12:49:49 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1893,6 +1893,14 @@ EOT;
 	color: red;
 	display:inline-block;
     }
+    table.stack-table {
+	background-color: #E6FF99;
+	float: left;
+    }
+    table.edit-table {
+	background-color: #B3FFB3;
+	float: left;
+    }
     #warn-response {
         background-color: #FF99FF;
 	margin-bottom: 0px;
@@ -2700,12 +2708,25 @@ EOT;
 	$elements = [];
 	$list_rows = list_to_edit_rows
 	    ( $elements, listname_to_list ( $list ) );
-	list ( $project, $basename ) =
-	    explode ( ':', $list );
-	if ( $project == '-' )
-	    $project = '<i>Your</i>';
-	if ( $basename == '-' )
-	    $basename = '<i>Problems</i> (read-only)';
+	if ( $list == '+favorites+' )
+	{
+	    $name = '<i>Favorites</i>';
+	    $stack = '+fstack+';
+	}
+	else
+	{
+	    list ( $project, $basename ) =
+		explode ( ':', $list );
+	    if ( $project == '-' )
+		$project = '<i>Your</i>';
+	    if ( $basename == '-' )
+		$basename =
+		    '<i>Problems</i> (read-only)';
+	    $name = "$project $basename";
+	    $stack = '+istack+';
+	}
+	$stack_rows = list_to_edit_rows
+	    ( $elements, listname_to_list ( $stack ) );
 
 	echo <<<EOT
 	<div class='edit-list'>
@@ -2735,8 +2756,12 @@ EOT;
 	</form>
 	</div>
 
+	<table class='stack-table'>
+	<tr><th colspan=2><i>Stack</i></th></tr>
+	$stack_rows
+	</table>
 	<table class='edit-table'>
-	<tr><th colspan=2>$project $basename</th></tr>
+	<tr><th colspan=2>$name</th></tr>
 	$list_rows
 	</table>
 EOT;
