@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 17 02:01:31 EDT 2020
+    // Date:	Fri Apr 17 02:41:18 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -915,7 +915,7 @@ EOT;
     // a PROBLEM will not appear twice in the same list
     // with the same PROJECT.
     //
-    function list_to_push_rows ( $listname )
+    function listname_to_push_rows ( $listname )
     {
 	list ( $project, $basename ) =
 	    explode ( ':', $listname );
@@ -986,7 +986,7 @@ EOT;
     // $warnings and NO string segment is generated for
     // the list element.
     //
-    function list_to_pull_rows
+    function listname_to_pull_rows
 	    ( $listname, & $warnings )
     {
         global $epm_data, $uid;
@@ -1077,11 +1077,13 @@ EOT;
 	return $r;
     }
 
-    // Given a list name PROJECT:BASENAME, where
-    // this may be PROJECT:- or -:-, add the list
-    // elements to the $elements list and return
-    // a string whose segments are HTML rows of
-    // the form:
+    // Given a list of elements of the form
+    //
+    //		[TIME PROJECT PROBLEM]
+    //
+    // where PROJECT may be '-', add the elements to the
+    // $elements list and return a string whose segments
+    // are HTML rows of the form:
     //
     //		<tr class='edit-row'>
     //		<td></td>
@@ -1096,19 +1098,8 @@ EOT;
     // and I is the index of the element in the
     // $elements list.
     //
-    function list_to_edit_rows
-    		( & $elements, $listname )
+    function list_to_edit_rows ( & $elements, $list )
     {
-        list ( $project, $basename ) =
-	    explode ( ':', $listname );
-	if ( $project == '-' )
-	    $list = problems_to_edit_list();
-	elseif ( $basename == '-' )
-    	    $list = read_project_list ( $project );
-	else
-	    $list = read_file_list
-		( listname_to_filename ( $listname ) );
-
 	$r = '';
 	if ( $project == '-' )
 	    $project = '<i>Your</i>';
@@ -1131,6 +1122,33 @@ EOT;
 EOT;
 	}
 	return $r;
+    }
+
+    // Given a $listname return the list of elements
+    //
+    //		[TIME PROJECT PROBLEM]
+    //
+    // named.  $listname may be one of:
+    //
+    //     -:-
+    //     PROJECT:-
+    //     PROJECT:BASENAME
+    //	   +istack+
+    //	   +fstack+
+    //	   +favorites+
+    //	   
+    function listname_to_list ( $listname )
+    {
+        list ( $project, $basename ) =
+	    explode ( ':', $listname );
+	if ( $project == '-' )
+	    $list = problems_to_edit_list();
+	elseif ( $basename == '-' )
+    	    $list = read_project_list ( $project );
+	else
+	    $list = read_file_list
+		( listname_to_filename ( $listname ) );
+	return $list;
     }
 
     // Return the lines from:
@@ -1942,7 +1960,7 @@ EOT;
 <?php 
 
     if ( $op == 'pull' )
-	$pull_rows = list_to_pull_rows
+	$pull_rows = listname_to_pull_rows
 	    ( $list, $warnings );
 	// Must execute before $warnings is used.
 
@@ -2135,7 +2153,7 @@ EOT;
     {
 	$push_help = HELP ( 'project-push' );
 
-	$rows = list_to_push_rows ( $list );
+	$rows = listname_to_push_rows ( $list );
 
 	$project_options = projects_to_options
 	    ( read_projects ( 'push' ) );
@@ -2678,7 +2696,7 @@ EOT;
 
 	$elements = [];
 	$list_rows = list_to_edit_rows
-	    ( $elements, $list );
+	    ( $elements, listname_to_list ( $list ) );
 	list ( $project, $basename ) =
 	    explode ( ':', $list );
 	if ( $project == '-' )
