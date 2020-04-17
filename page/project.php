@@ -1666,10 +1666,15 @@ EOT;
 	    $op = NULL;
 	    $data['OP'] = $op;
 	}
+        elseif ( isset ( $_POST['submit'] ) )
+	{
+	    if ( $op != 'edit' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    execute_edit ( $errors );
+	    // TBD
+	}
         elseif ( isset ( $_POST['done'] ) )
 	{
-	    if ( $op == 'edit' )
-	        execute_edit ( $errors );
 	    $op = NULL;
 	    $data['OP'] = $op;
 	}
@@ -1844,7 +1849,7 @@ EOT;
 	padding-bottom: 5px;
 	padding-top: 5px;
     }
-    div.push-pull-list {
+    div.push-pull-list, div.edit-list {
 	background-color: #F2D9D9;
     }
     span.problem-checkbox {
@@ -2663,6 +2668,40 @@ EOT;
 
 	</script>
 EOT;
+
+    if ( $op == 'edit' )
+    {
+	$edit_help = HELP ( 'project-edit' );
+
+	echo <<<EOT
+	<div class='edit-list'>
+	<form method='POST'>
+	<input type='hidden' id='ID'
+	       name='ID' value='$id'>
+	<div style='display:inline'>
+	<input type='button'
+	       onclick='SUBMIT_EDIT()'
+	       value='Submit'>
+	<input type='button'
+	       onclick='UNDO_EDIT()'
+	       value='Undo'>
+	<input type='button'
+	       onclick='REDO_EDIT()'
+	       value='Redo'>
+	<input type='button'
+	       onclick='RESET_EDIT()'
+	       value='Reset'>
+	<input type='submit'
+	       name='done'
+	       value='Cancel'></td>
+	</div>
+	<div style='display:inline;float:right'>
+	$edit_help
+	</div>
+	</form>
+	</div>
+EOT;
+    }
 
 ?>
 
