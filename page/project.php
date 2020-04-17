@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 16 14:44:23 EDT 2020
+    // Date:	Fri Apr 17 02:01:31 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1099,7 +1099,8 @@ EOT;
     function list_to_edit_rows
     		( & $elements, $listname )
     {
-        list ( $project, $basename ) = $listname;
+        list ( $project, $basename ) =
+	    explode ( ':', $listname );
 	if ( $project == '-' )
 	    $list = problems_to_edit_list();
 	elseif ( $basename == '-' )
@@ -1107,6 +1108,7 @@ EOT;
 	else
 	    $list = read_file_list
 		( listname_to_filename ( $listname ) );
+
 	$r = '';
 	if ( $project == '-' )
 	    $project = '<i>Your</i>';
@@ -1122,12 +1124,13 @@ EOT;
 	    $r .= <<<EOT
 	          <tr class='edit-row'>
 		  <td></td>
-		  <td data-index='$I' class='edit-name>
+		  <td data-index='$I' class='edit-name'>
 		  $project $problem $time
 		  </td>
 		  </tr>
 EOT;
 	}
+	return $r;
     }
 
     // Return the lines from:
@@ -2673,6 +2676,16 @@ EOT;
     {
 	$edit_help = HELP ( 'project-edit' );
 
+	$elements = [];
+	$list_rows = list_to_edit_rows
+	    ( $elements, $list );
+	list ( $project, $basename ) =
+	    explode ( ':', $list );
+	if ( $project == '-' )
+	    $project = '<i>Your</i>';
+	if ( $basename == '-' )
+	    $basename = '<i>Problems</i>';
+
 	echo <<<EOT
 	<div class='edit-list'>
 	<form method='POST'>
@@ -2700,6 +2713,11 @@ EOT;
 	</div>
 	</form>
 	</div>
+
+	<table class='edit-table'>
+	<tr><th colspan=2>$project $basename</th></tr>
+	$list_rows
+	</table>
 EOT;
     }
 
