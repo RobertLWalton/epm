@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 17 03:10:16 EDT 2020
+    // Date:	Fri Apr 17 06:12:45 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -48,21 +48,24 @@
     // files.
     //
     // In the following all TIMEs are in the $epm_time_
-    // format, and all descriptions are any sequence
-    // of non-blank lines followed by a blank line or
-    // end of file.  Descriptions may NOT contain '<' or
-    // '>', but may may contain HTML symbol names of the
-    // form '&...;'.  The description are meant to be
-    // displayed in an HTML <p> paragraph.
+    // format, and all descriptions consist of para-
+    // graphs at the end of a file, each paragraph
+    // preceeded by a blank line.  Descriptions may NOT
+    // contain '<' or '>', but may may contain HTML
+    // symbol names of the form '&...;'.  Each non-
+    // indented description paragraph is displayed in
+    // an HTML <p> paragraph.  Each indented description
+    // paragraph is displayed in a <pre> paragraph after
+    // tabs are each replaced by 8 spaces (tabs should
+    // ONLY be at the beginnings of lines).
     //
     // An index is a NAME.index file in a directory:
     //
     //	    users/UID/+indices+
     //
     // Such a file belongs to the UID user and can be
-    // edited by the user.  The file begins with a
-    // description of the index followed by a blank line
-    // followed by lines of the form:
+    // edited by the user.  The file begins with lines
+    // of the form:
     //
     //	    TIME PROJECT PROBLEM
     //
@@ -73,6 +76,12 @@
     // time the index entry was used to push or pull
     // the problem or perform a maintenance operation
     // on the problem (e.g., change owner).
+    //
+    // An index file ends with description paragraphs
+    // describing the index, each preceeded by a blank
+    // line.  Note that an index file that is empty
+    // except for descriptions must begin with a blank
+    // line.
     //
     // For each project the directory:
     //
@@ -108,15 +117,7 @@
     // the problem by the UID user.  There can be at
     // most one review for each PROJECT, PROBLEM, UID
     // triple.  A review file is just a sequence of
-    // paragraphs separated by blank lines.  There are
-    // two kinds of paragraphs.  Non-indented paragraphs
-    // are just like descriptions and are displayed as
-    // <p> paragraphs.  Indented paragraphs are display-
-    // ed inside <pre></pre> so they are displayed
-    // literally in monospace font.  In addition, before
-    // display any tabs are replaced by exactly 8
-    // spaces (so tabs should only be used in a sequence
-    // of tabs at the very beginning of a line).
+    // description paragraphs separated by blank lines.
     //
     // A review file may be created by its UID user
     // after the user has solved the PROBLEM, if the
@@ -781,7 +782,15 @@ EOT;
 	return $list;
     }
 
-    // Given a list name of the form 'PROJECT:BASENAME'
+    // Given a list name of one of the forms:
+    //
+    //		-:-
+    //		PROJECT:-
+    //		PROJECT:BASENAME
+    //		+favorites+
+    //		+istack+
+    //		+fstack+
+    //
     // return the file name of the list relative to
     // $epm_data.
     //
@@ -789,9 +798,8 @@ EOT;
     {
         global $uid;
 
-	if ( $listname == '+favorites+' )
-	    ERROR ( "listname_to_filename was given" .
-	            " '$listname' as a listname" );
+	if ( preg_match ( '/\+.+\+/', $listname ) )
+	    return "users/$uid/+indices+/$listname";
 
         list ( $project, $basename ) =
 	    explode ( ':', $listname );
@@ -799,7 +807,7 @@ EOT;
 	    $d = "users/$uid/";
 	else
 	    $d = "projects/$project";
-	return "$d/+indices+/$listname";
+	return "$d/+indices+/{$basename}.index";
     }
 
     // Return the lines from the list with the given
@@ -808,11 +816,9 @@ EOT;
     //
     //	    [TIME PROJECT PROBLEM]
     //
-    // where PROJECT may be `-'.  The description at the
-    // beginning of the file is skipped (the list proper
-    // must follow a blank line).  If the file does
-    // not exist, [] is returned.  File list line for-
-    // matting errors are fatal.
+    // where PROJECT may be `-'.  Reading stops with the
+    // first blank line.  If the file does not exist, []
+    // is returned.  Line formatting errors are fatal.
     //
     function read_file_list ( $filename )
     {
@@ -824,17 +830,10 @@ EOT;
 	if ( $c !== false )
 	{
 	    $c = explode ( "\n", $c );
-	    $in_description = true;
 	    foreach ( $c as $line )
 	    {
 		$line = $trim ( $line );
-		if ( $line == '' )
-		{
-		    $in_description = false;
-		    continue;
-		}
-		elseif ( $in_description )
-		    continue;
+		if ( $line == '' ) break;
 
 		$line = preg_replace
 		    ( '/\h+/', ' ', $line );
@@ -1136,19 +1135,20 @@ EOT;
     //	   +istack+
     //	   +fstack+
     //	   +favorites+
+    //
+    // Note that if $listname ends with '-' the list is
+    // read-only.
     //	   
     function listname_to_list ( $listname )
     {
-        list ( $project, $basename ) =
-	    explode ( ':', $listname );
-	if ( $project == '-' )
-	    $list = problems_to_edit_list();
-	elseif ( $basename == '-' )
-    	    $list = read_project_list ( $project );
+	if ( $listname == '-:-' )
+	    return problems_to_edit_list();
+	elseif ( preg_match ( '/^(.+):-/',
+	                      $listname, $matches ) )
+    	    return read_project_list ( $matches[1] );
 	else
-	    $list = read_file_list
+	    return read_file_list
 		( listname_to_filename ( $listname ) );
-	return $list;
     }
 
     // Return the lines from:
@@ -1236,11 +1236,14 @@ EOT;
     //      </option>
     //
     // where $project is PROJECT unless that is `-', in
-    // which case it is `<i>Your</i>', $basename is
+    // which case it is `Your', $basename is
     // BASENAME unless that is `-', in which case it is
-    // `<i>Problems</i>', and $time is the first 10
-    // characters of TIME (i.e., the day, excluding the
-    // time of day).
+    // `Problems', and $time is the first 10 characters
+    // of TIME (i.e., the day, excluding the time of
+    // day).
+    //
+    // Note that markup such as <i> is NOT recognized in
+    // options by HTML, so is not used here.
     //
     function favorites_to_options ( $type_re )
     {
@@ -1262,9 +1265,9 @@ EOT;
 	    list ( $project, $basename ) =
 	        explode ( ':', $key );
 	    if ( $project == '-' )
-		$project = '<i>Your</i>';
+		$project = 'Your';
 	    if ( $basename == '-' )
-		$basename = '<i>Problems</i>';
+		$basename = 'Problems';
 	    else
 		$basename = preg_replace
 		    ( '-', ' ', $basename );
@@ -2702,7 +2705,7 @@ EOT;
 	if ( $project == '-' )
 	    $project = '<i>Your</i>';
 	if ( $basename == '-' )
-	    $basename = '<i>Problems</i>';
+	    $basename = '<i>Problems</i> (read-only)';
 
 	echo <<<EOT
 	<div class='edit-list'>
