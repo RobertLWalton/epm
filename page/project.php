@@ -1896,10 +1896,14 @@ EOT;
     table.stack-table {
 	background-color: #E6FF99;
 	float: left;
+	width: 45%;
+        font-size: var(--large-font-size);
     }
     table.edit-table {
 	background-color: #B3FFB3;
 	float: left;
+	width: 45%;
+        font-size: var(--large-font-size);
     }
     #warn-response {
         background-color: #FF99FF;
