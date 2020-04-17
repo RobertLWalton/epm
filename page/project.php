@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 17 12:49:49 EDT 2020
+    // Date:	Fri Apr 17 15:11:00 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1893,13 +1893,13 @@ EOT;
 	color: red;
 	display:inline-block;
     }
-    table.stack-table {
+    #stack-table {
 	background-color: #E6FF99;
 	float: left;
 	width: 45%;
         font-size: var(--large-font-size);
     }
-    table.edit-table {
+    #edit-table {
 	background-color: #B3FFB3;
 	float: left;
 	width: 45%;
@@ -2760,14 +2760,29 @@ EOT;
 	</form>
 	</div>
 
-	<table class='stack-table'>
+	<table id='stack-table'>
 	<tr><th colspan=2><i>Stack</i></th></tr>
 	$stack_rows
 	</table>
-	<table class='edit-table'>
+	<table id='edit-table'>
 	<tr><th colspan=2>$name</th></tr>
 	$list_rows
 	</table>
+
+	<script>
+	let edit_rows = document.getElementById
+	    ( 'edit-table' ) .rows;
+	let edit_buttons =
+	    "<button type='button' onclick='COPY()'>" +
+	    "&#8598;</button>";
+
+	for ( var i = 1; i < edit_rows.length; ++ i )
+	{
+	    var td = edit_rows[i].children[0];
+	    td.innerHTML = edit_buttons;
+	}
+
+	</script>
 EOT;
     }
 
