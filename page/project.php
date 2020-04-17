@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 17 02:41:18 EDT 2020
+    // Date:	Fri Apr 17 03:10:16 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -789,7 +789,7 @@ EOT;
     {
         global $uid;
 
-	if ( $listname == '*FAVORITES*' )
+	if ( $listname == '+favorites+' )
 	    ERROR ( "listname_to_filename was given" .
 	            " '$listname' as a listname" );
 
@@ -1662,7 +1662,7 @@ EOT;
 	                            'edit'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
-	    if ( $list == '*FAVORITES*'
+	    if ( $list == '+favorites+'
 		 &&
 		 $op != 'edit' )
 	    {
@@ -2119,8 +2119,8 @@ EOT;
 EOT;
     if ( $op == NULL )
     {
-	$options = "<option value='*FAVORITES*'>"
-		 . "<i>Favorites</i></option>"
+	$options = "<option value='+favorites+'>"
+		 . "Favorites</option>"
 		 . favorites_to_options ( 'pull' );
         echo <<<EOT
 	<form method='POST'>
