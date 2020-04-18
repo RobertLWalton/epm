@@ -1117,6 +1117,7 @@ EOT;
 		      ondragover='return false'
 		      ondragenter='return false'
 		      ondrop='MOVEUP(this,event)'
+		      ondragend='MOVEEND(this,event)'
 		      draggable='true'>
 		  <td></td>
 		  <td data-index='$I' class='edit-name'>
@@ -2818,15 +2819,29 @@ EOT;
 	    EXECUTE ( op );
 	}
 
+	var drag_start;
+	var drag_stop;
 	function MOVEDOWN ( row, event )
 	{
-	    console.log ( 'MOVEDOWN ' + row.rowIndex );
+	    drag_start = row.rowIndex;
+	    drag_stop = null;
 	}
 
 	function MOVEUP ( row, event )
 	{
-	    console.log ( 'MOVEUP ' + row.rowIndex );
+	    drag_stop = row.rowIndex;
 	    event.preventDefault();
+	}
+
+	function MOVEEND ( row, event )
+	{
+	    if ( drag_stop != null )
+		console.log
+		    ( 'DRAG FROM ' + drag_start +
+		      ' TO ' + drag_stop );
+	    else
+		console.log
+		    ( 'DRAG ABORTED' );
 	}
 
 	var ops = [];
