@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 18 04:31:42 EDT 2020
+    // Date:	Sat Apr 18 09:00:17 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1112,7 +1112,12 @@ EOT;
 		$project = '<i>Your</i>';
 	    $time = substr ( $time, 0, 10 );
 	    $r .= <<<EOT
-	          <tr class='edit-row'>
+	          <tr class='edit-row'
+		      ondragstart='MOVEDOWN(this,event)'
+		      ondragover='return false'
+		      ondragenter='return false'
+		      ondrop='MOVEUP(this,event)'
+		      draggable='true'>
 		  <td></td>
 		  <td data-index='$I' class='edit-name'>
 		  $project $problem $time
@@ -2811,6 +2816,17 @@ EOT;
 	    let table = tr.parentElement.parentElement;
 	    let op = ['copy', table, index];
 	    EXECUTE ( op );
+	}
+
+	function MOVEDOWN ( row, event )
+	{
+	    console.log ( 'MOVEDOWN ' + row.rowIndex );
+	}
+
+	function MOVEUP ( row, event )
+	{
+	    console.log ( 'MOVEUP ' + row.rowIndex );
+	    event.preventDefault();
 	}
 
 	var ops = [];
