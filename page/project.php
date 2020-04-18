@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 18 12:36:58 EDT 2020
+    // Date:	Sat Apr 18 14:01:38 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1112,9 +1112,12 @@ EOT;
 		$project = '<i>Your</i>';
 	    $time = substr ( $time, 0, 10 );
 	    $r .= <<<EOT
-	          <tr class='edit-row' draggable='true'>
-		  <td></td>
-		  <td data-index='$I' class='edit-name'>
+	          <tr>
+		  <td><button type='button'
+		              onclick='DELETE(this)'>
+		      &Chi;</button></td>
+		  <td data-index='$I' class='edit-name'
+		       onclick='DUP(this)'>
 		  $project $problem $time
 		  </td>
 		  </tr>
@@ -2712,6 +2715,7 @@ EOT;
 	$elements = [];
 	$list_rows = list_to_edit_rows
 	    ( $elements, listname_to_list ( $list ) );
+	$is_read_only = 'false';
 	if ( $list == '+favorites+' )
 	{
 	    $name = '<i>Favorites</i>';
@@ -2724,8 +2728,11 @@ EOT;
 	    if ( $project == '-' )
 		$project = '<i>Your</i>';
 	    if ( $basename == '-' )
+	    {
 		$basename =
 		    '<i>Problems</i> (read-only)';
+		$is_read_only = 'true';
+	    }
 	    $name = "$project $basename";
 	    $stack = '+istack+';
 	}
@@ -2773,36 +2780,55 @@ EOT;
 
 	<script>
 
+	let is_read_only = '$is_read_only';
+
 	let stack_table = document.getElementById
 	    ( 'stack-table' );
 	let stack_rows = stack_table.rows;
-	let stack_buttons =
-	    "<button type='button'" +
-	    " onclick='DELETE(this)'>&Chi;</button>";
 	let list_table = document.getElementById
 	    ( 'list-table' );
 	let list_rows = list_table.rows;
-	let list_buttons =
-	    "<button type='button'" +
-	    " onclick='COPY(this)'>" +
-	    "&#8598;</button>";
 
-	for ( var i = 1; i < list_rows.length; ++ i )
+	let delete_button =
+	    "<button type='button'" +
+		   " onclick='DELETE(this)'>" +
+	    "&Chi;</button>";
+
+	if ( is_read_only )
+	    for ( var i = 1; i < list_rows.length;
+	                     ++ i )
+		list_rows[i].children[0].style.display =
+		    'none';
+	else
+	    for ( var i = 0; i < list_rows.length;
+	                     ++ i )
+	    {
+	        var tr = list_rows[i];
+		tr.setAttribute ( 'class', 'edit-row' );
+	    }
+
+	for ( var i = 1; i < list_rows.length;
+			 ++ i )
 	{
-	    var td = list_rows[i].children[0];
-	    td.innerHTML = list_buttons;
+	    var tr = list_rows[i];
+	    tr.setAttribute ( 'draggable', 'true' );
+	}
+	for ( var i = 0; i < stack_rows.length;
+			 ++ i )
+	{
+	    var tr = stack_rows[i];
+	    tr.setAttribute ( 'class', 'edit-row' );
+	    if ( i != 0 )
+		tr.setAttribute
+		    ( 'draggable', 'true' );
 	}
 
-	var drag_table = null;
-	var drag_start;
+	var drag_start = null;
 	document.addEventListener ( "drag",
 	    function(event) {}, false );
 	document.addEventListener ( "dragstart",
 	    function(event) {
-		drag_table = event.target.parentElement
-					 .parentElement;
-		drag_start = event.target.rowIndex;
-		console.log ( "START " + drag_start );
+		drag_start = event.target;
 	    }, false );
 	document.addEventListener ( "dragover",
 	    function(event) {
@@ -2819,8 +2845,37 @@ EOT;
 
 		if ( t != undefined )
 		{
-		    console.log ( "MOVE " + drag_start +
-		                  " " + t.rowIndex );
+		    let drag_table =
+		        drag_start.parentElement
+				  .parentElement;
+		    let tr =
+		        drag_start.cloneNode ( true );
+		    let des_table =
+		        t.parentElement.parentElement;
+		    let des_rows = des_table.rows;
+		    let des_body = des_table.tBodies[0];
+		    let des_index = t.rowIndex + 1;
+
+		    if ( drag_table == stack_table
+		         ||
+			 ! is_read_only )
+		        drag_table.deleteRow
+			    ( drag_start.rowIndex );
+		    if (   des_index + 1
+		         < des_rows.length )
+		        des_body.insertBefore
+			    ( tr, des_rows[des_index] );
+		    else
+		        des_body.appendChild ( tr );
+		    tr.children[0].innerHTML =
+		        delete_button;
+		    tr.children[0].style.display =
+		        'inline';
+		    tr.children[1].style
+		                  .textDecoration =
+		        'none';
+		    tr.setAttribute
+		        ( 'class', 'edit-row' );
 		}
 	    }, false );
 
@@ -2836,15 +2891,6 @@ EOT;
 		  == 'line-through' );
 	    let op =
 	        ['delete', table, index, was_deleted];
-	    EXECUTE ( op );
-	}
-
-	function COPY ( button )
-	{
-	    let tr = button.parentElement.parentElement;
-	    let index = tr.rowIndex;
-	    let table = tr.parentElement.parentElement;
-	    let op = ['copy', table, index];
 	    EXECUTE ( op );
 	}
 
@@ -2870,23 +2916,6 @@ EOT;
 		text.style.textDecoration =
 		    ( was_deleted ? 'none' :
 		      'line-through' );
-	    }
-	    else if ( op[0] == 'copy' )
-	    {
-	        let tr = table.rows[index];
-		let td = tr.children[1];
-		let push_table =
-		    ( table == stack_table ?
-		      list_table : stack_table );
-		let new_tr = push_table.insertRow ( 1 );
-		new_tr.setAttribute ( 'draggable', 'true' );
-		new_tr.setAttribute ( 'class', 'edit-row' );
-		let td0 = new_tr.insertCell ( 0 );
-		let td1 = new_tr.insertCell ( 1 );
-		td0.innerHTML =
-		    ( push_table == stack_table ?
-		      stack_buttons : list_buttons );
-		td1.innerText = td.innerText;
 	    }
 	    last_done = i;
 	}
@@ -2919,13 +2948,6 @@ EOT;
 		text.style.textDecoration =
 		    ( was_deleted ? 'line-through' :
 		      'none' );
-	    }
-	    else if ( op[0] == 'copy' )
-	    {
-		let push_table =
-		    ( table == stack_table ?
-		      list_table : stack_table );
-		push_table.deleteRow ( 1 );
 	    }
 	    -- last_done;
 	}
