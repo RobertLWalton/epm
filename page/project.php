@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 17 15:11:00 EDT 2020
+    // Date:	Fri Apr 17 22:11:15 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2770,6 +2770,14 @@ EOT;
 	</table>
 
 	<script>
+	let delete = "#Chi;";
+	let undelete = "+";
+	let stack_rows = document.getElementById
+	    ( 'stack-table' ) .rows;
+	let stack_buttons =
+	    "<button type='button'" +
+	    " onclick='DELETE()'>" +
+	    delete + "</button>";
 	let edit_rows = document.getElementById
 	    ( 'edit-table' ) .rows;
 	let edit_buttons =
@@ -2781,6 +2789,24 @@ EOT;
 	    var td = edit_rows[i].children[0];
 	    td.innerHTML = edit_buttons;
 	}
+
+	function DELETE ( button )
+	{
+	    let sybling = button.parent.children[1];
+	    if ( button.innerHTML == delete )
+	    {
+	        button.innerHTML == undelete;
+		sybling.style.textDecoration =
+		    'line-through';
+	    }
+	    else
+	    {
+	        button.innerHTML == delete;
+		sybling.style.textDecoration = 'none';
+	    }
+	}
+
+
 
 	</script>
 EOT;
