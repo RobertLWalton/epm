@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 17 22:11:15 EDT 2020
+    // Date:	Sat Apr 18 04:31:42 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1899,7 +1899,7 @@ EOT;
 	width: 45%;
         font-size: var(--large-font-size);
     }
-    #edit-table {
+    #list-table {
 	background-color: #B3FFB3;
 	float: left;
 	width: 45%;
@@ -2764,49 +2764,134 @@ EOT;
 	<tr><th colspan=2><i>Stack</i></th></tr>
 	$stack_rows
 	</table>
-	<table id='edit-table'>
+	<table id='list-table'>
 	<tr><th colspan=2>$name</th></tr>
 	$list_rows
 	</table>
 
 	<script>
-	let delete = "#Chi;";
-	let undelete = "+";
-	let stack_rows = document.getElementById
-	    ( 'stack-table' ) .rows;
+	let stack_table = document.getElementById
+	    ( 'stack-table' );
+	let stack_rows = stack_table.rows;
 	let stack_buttons =
 	    "<button type='button'" +
-	    " onclick='DELETE()'>" +
-	    delete + "</button>";
-	let edit_rows = document.getElementById
-	    ( 'edit-table' ) .rows;
-	let edit_buttons =
-	    "<button type='button' onclick='COPY()'>" +
+	    " onclick='DELETE(this)'>&Chi;</button>";
+	let list_table = document.getElementById
+	    ( 'list-table' );
+	let list_rows = list_table.rows;
+	let list_buttons =
+	    "<button type='button'" +
+	    " onclick='COPY(this)'>" +
 	    "&#8598;</button>";
 
-	for ( var i = 1; i < edit_rows.length; ++ i )
+	for ( var i = 1; i < list_rows.length; ++ i )
 	{
-	    var td = edit_rows[i].children[0];
-	    td.innerHTML = edit_buttons;
+	    var td = list_rows[i].children[0];
+	    td.innerHTML = list_buttons;
 	}
 
 	function DELETE ( button )
 	{
-	    let sybling = button.parent.children[1];
-	    if ( button.innerHTML == delete )
-	    {
-	        button.innerHTML == undelete;
-		sybling.style.textDecoration =
-		    'line-through';
-	    }
-	    else
-	    {
-	        button.innerHTML == delete;
-		sybling.style.textDecoration = 'none';
-	    }
+	    let tr = button.parentElement.parentElement;
+	    let index = tr.rowIndex;
+	    let table = tr.parentElement.parentElement;
+	    let text = tr.children[1];
+	    let was_deleted =
+		(    text.style.textDecoration
+		  == 'line-through' );
+	    let op =
+	        ['delete', table, index, was_deleted];
+	    EXECUTE ( op );
 	}
 
+	function COPY ( button )
+	{
+	    let tr = button.parentElement.parentElement;
+	    let index = tr.rowIndex;
+	    let table = tr.parentElement.parentElement;
+	    let op = ['copy', table, index];
+	    EXECUTE ( op );
+	}
 
+	var ops = [];
+	var last_done = -1;
+
+	function EXECUTE ( op )
+	{
+	    ops.push ( op );
+	    DO ( ops.length - 1 );
+	}
+
+	function DO ( i )
+	{
+	    let op = ops[i];
+	    let table = op[1];
+	    let index = op[2];
+	    if ( op[0] == 'delete' )
+	    {
+	        let was_deleted = op[3];
+		let tr = table.rows[index];
+		let text = tr.children[1];
+		text.style.textDecoration =
+		    ( was_deleted ? 'none' :
+		      'line-through' );
+	    }
+	    else if ( op[0] == 'copy' )
+	    {
+	        let tr = table.rows[index];
+		let td = tr.children[1];
+		let push_table =
+		    ( table == stack_table ?
+		      list_table : stack_table );
+		let new_tr = push_table.insertRow ( 1 );
+		let td0 = new_tr.insertCell ( 0 );
+		let td1 = new_tr.insertCell ( 1 );
+		td0.innerHTML =
+		    ( push_table == stack_table ?
+		      stack_buttons : list_buttons );
+		td1.innerText = td.innerText;
+	    }
+	    last_done = i;
+	}
+
+	function REDO ()
+	{
+	    if ( last_done + 1 >= ops.length )
+		setTimeout ( function () {
+		    alert ( "Nothing to Re-Do" ); } );
+	    else
+	        DO ( last_done + 1 );
+	}
+
+	function UNDO ( )
+	{
+	    if ( last_done == 0 )
+	    {
+		setTimeout ( function () {
+		    alert ( "Nothing to Un-Do" ); } );
+		return;
+	    }
+	    let op = ops[last_done];
+	    let table = op[1];
+	    let index = op[2];
+	    if ( op[0] == 'delete' )
+	    {
+	        let was_deleted = op[3];
+		let tr = table.rows[index];
+		let text = tr.children[1];
+		text.style.textDecoration =
+		    ( was_deleted ? 'line-through' :
+		      'none' );
+	    }
+	    else if ( op[0] == 'copy' )
+	    {
+		let push_table =
+		    ( table == stack_table ?
+		      list_table : stack_table );
+		push_table.deleteRow ( 1 );
+	    }
+	    -- last_done;
+	}
 
 	</script>
 EOT;
