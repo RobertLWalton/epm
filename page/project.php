@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 18 09:00:17 EDT 2020
+    // Date:	Sat Apr 18 12:36:58 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1112,13 +1112,7 @@ EOT;
 		$project = '<i>Your</i>';
 	    $time = substr ( $time, 0, 10 );
 	    $r .= <<<EOT
-	          <tr class='edit-row'
-		      ondragstart='MOVEDOWN(this,event)'
-		      ondragover='return false'
-		      ondragenter='return false'
-		      ondrop='MOVEUP(this,event)'
-		      ondragend='MOVEEND(this,event)'
-		      draggable='true'>
+	          <tr class='edit-row' draggable='true'>
 		  <td></td>
 		  <td data-index='$I' class='edit-name'>
 		  $project $problem $time
@@ -2767,15 +2761,18 @@ EOT;
 	</div>
 
 	<table id='stack-table'>
-	<tr><th colspan=2><i>Stack</i></th></tr>
+	<tr class='edit-row'>
+	<th colspan=2><i>Stack</i></th></tr>
 	$stack_rows
 	</table>
 	<table id='list-table'>
-	<tr><th colspan=2>$name</th></tr>
+	<tr class='edit-row'>
+	<th colspan=2>$name</th></tr>
 	$list_rows
 	</table>
 
 	<script>
+
 	let stack_table = document.getElementById
 	    ( 'stack-table' );
 	let stack_rows = stack_table.rows;
@@ -2795,6 +2792,38 @@ EOT;
 	    var td = list_rows[i].children[0];
 	    td.innerHTML = list_buttons;
 	}
+
+	var drag_table = null;
+	var drag_start;
+	document.addEventListener ( "drag",
+	    function(event) {}, false );
+	document.addEventListener ( "dragstart",
+	    function(event) {
+		drag_table = event.target.parentElement
+					 .parentElement;
+		drag_start = event.target.rowIndex;
+		console.log ( "START " + drag_start );
+	    }, false );
+	document.addEventListener ( "dragover",
+	    function(event) {
+	        event.preventDefault();
+	    }, false );
+	document.addEventListener ( "drop",
+	    function(event) {
+	        event.preventDefault();
+		var t = event.target;
+		while ( t != undefined
+		        &&
+			t.className != 'edit-row' )
+		    t = t.parentElement;
+
+		if ( t != undefined )
+		{
+		    console.log ( "MOVE " + drag_start +
+		                  " " + t.rowIndex );
+		}
+	    }, false );
+
 
 	function DELETE ( button )
 	{
@@ -2817,31 +2846,6 @@ EOT;
 	    let table = tr.parentElement.parentElement;
 	    let op = ['copy', table, index];
 	    EXECUTE ( op );
-	}
-
-	var drag_start;
-	var drag_stop;
-	function MOVEDOWN ( row, event )
-	{
-	    drag_start = row.rowIndex;
-	    drag_stop = null;
-	}
-
-	function MOVEUP ( row, event )
-	{
-	    drag_stop = row.rowIndex;
-	    event.preventDefault();
-	}
-
-	function MOVEEND ( row, event )
-	{
-	    if ( drag_stop != null )
-		console.log
-		    ( 'DRAG FROM ' + drag_start +
-		      ' TO ' + drag_stop );
-	    else
-		console.log
-		    ( 'DRAG ABORTED' );
 	}
 
 	var ops = [];
@@ -2875,6 +2879,8 @@ EOT;
 		    ( table == stack_table ?
 		      list_table : stack_table );
 		let new_tr = push_table.insertRow ( 1 );
+		new_tr.setAttribute ( 'draggable', 'true' );
+		new_tr.setAttribute ( 'class', 'edit-row' );
 		let td0 = new_tr.insertCell ( 0 );
 		let td1 = new_tr.insertCell ( 1 );
 		td0.innerHTML =
