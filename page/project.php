@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 18 21:38:50 EDT 2020
+    // Date:	Sat Apr 18 23:43:20 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2902,6 +2902,7 @@ EOT;
 	function CLEAR_EDIT ()
 	{
 	    var list = [];
+	    var index = [];
 	    for ( var i = 1; i < list_rows.length; )
 	    {
 		var tr = list_rows[i];
@@ -2912,7 +2913,11 @@ EOT;
 		     list.push
 		         ( tbody.removeChild ( tr ) );
 		else
+		{
+		    let k = text.dataset.index;
+		    index[k] = true;
 		    ++ i;
+		}
 	    }
 	    for ( var i = 1; i < stack_rows.length; )
 	    {
@@ -2924,24 +2929,22 @@ EOT;
 		     list.push
 		         ( tbody.removeChild ( tr ) );
 		else
+		{
+		    let k = text.dataset.index;
+		    index[k] = true;
 		    ++ i;
+		}
 	    }
 	    let stack_body = stack_table.tBodies[0];
 	    for ( var i = 0; i < list.length; ++ i )
 	    {
-		var found = false;
-		let iindex = list[i].children[1]
-		                    .dataset.index;
-	        for ( var j = 0; j < i; ++ j )
+		let k = list[i].children[1]
+		               .dataset.index;
+		if ( index[k] != true )
 		{
-		    let jindex = list[j].children[1]
-				        .dataset.index;
-		    if ( iindex != jindex ) continue;
-		    found = true;
-		    break;
+		    stack_body.appendChild ( list[i] );
+		    index[k] = true;
 		}
-		if ( ! found )
-		    tbody.appendChild ( list[i] );
 	    }
 	}
 
