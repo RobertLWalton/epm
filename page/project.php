@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 19 05:50:18 EDT 2020
+    // Date:	Sun Apr 19 13:51:57 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -397,7 +397,7 @@
 	exit;
     }
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -2137,6 +2137,14 @@ EOT;
         echo <<<EOT
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
+	<input type='submit' name='create-list'
+	       value= ''
+	       style='visibility:hidden'>
+	       <!-- This is the first submit input
+	            in the form and is therefore
+		    triggered when a new list name
+		    is entered at the end of the form.
+		 -->
 	<button type='submit' name='op' value='push'>
 	Push
 	</button>
@@ -2162,15 +2170,11 @@ EOT;
 	       size="32" name="new-list"
                placeholder="New List Name"
 	       id="create-list">
+	       <!-- Pressing the enter key here
+	            triggers the hidden input submit
+		    above.
+		-->
 	</form>
-	<script>
-	document.getElementById ( 'create-list' )
-	    .addEventListener ( 'keypress',
-	    function(event) {
-	    if ( event.keyCode == 13 )
-	        event.preventDefault();
-	    } );
-	</script>
 EOT;
     }
     echo <<<EOT
