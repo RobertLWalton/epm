@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 18 23:43:20 EDT 2020
+    // Date:	Sun Apr 19 05:50:18 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -315,13 +315,9 @@
     //		Return to project page and do NOT update
     //		list or stack.
     //
-    //	    done='yes' list='...' stack='...'
+    //	    submit='yes' list='...' stack='...'
     //		Update list and stack and return to
     //		project page.
-    //
-    //	    new-list='LIST' list='...' stack='...'
-    //		Update list and stack and load a new
-    //		edit page with the new LIST.
     //
     // In list='...' the '...' is just a list of entry
     // ids in the order that they appear in the edited
@@ -2155,11 +2151,26 @@ EOT;
 	</button>
 	<pre>   </pre>
 	<label>
-	<h5>Selected List</h5>
+	<h5>Select List</h5>
 	<select name='selected-list'>
 	$options
 	</select>
 	</label>
+	<pre>   </pre>
+	<h5>or Create New List</h5>
+	<input type="text"
+	       size="32" name="new-list"
+               placeholder="New List Name"
+	       id="create-list">
+	</form>
+	<script>
+	document.getElementById ( 'create-list' )
+	    .addEventListener ( 'keypress',
+	    function(event) {
+	    if ( event.keyCode == 13 )
+	        event.preventDefault();
+	    } );
+	</script>
 EOT;
     }
     echo <<<EOT
@@ -2744,7 +2755,7 @@ EOT;
 	       name='ID' value='$id'>
 	<div style='display:inline'>
 	<input type='button'
-	       onclick='SUBMIT_EDIT()'
+	       onclick='SUBMIT_EDIT ( "" )'
 	       value='Submit'>
 	<input type='button'
 	       onclick='CLEAR_EDIT()'
@@ -2946,6 +2957,14 @@ EOT;
 		    index[k] = true;
 		}
 	    }
+	}
+
+	// Send `submit' post with stack and list ids.
+	// New_list may be '' to specify current list.
+	//
+	function SUBMIT_EDIT ( new_list )
+	{
+	    console.log ( 'SUBMIT ' . new_list );
 	}
 
 	</script>
