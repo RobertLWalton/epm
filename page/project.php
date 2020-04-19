@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 18 21:37:39 EDT 2020
+    // Date:	Sat Apr 18 21:38:50 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2821,7 +2821,6 @@ EOT;
 	document.addEventListener ( "dragstart",
 	    function(event) {
 		drag_start = event.target;
-		console.log ( 'START ' + drag_start.rowIndex );
 	    }, false );
 	document.addEventListener ( "dragover",
 	    function(event) {
@@ -2834,14 +2833,10 @@ EOT;
 		while ( t != undefined
 		        &&
 			t.className != 'edit-row' )
-		{
-		    console.log ( 'T ' + t.tagName );
 		    t = t.parentElement;
-		}
 
 		if ( t != undefined )
 		{
-		    console.log ( 'DROP ' + t.rowIndex );
 		    let drag_table =
 		        drag_start.parentElement
 				  .parentElement;
@@ -2933,7 +2928,21 @@ EOT;
 	    }
 	    let stack_body = stack_table.tBodies[0];
 	    for ( var i = 0; i < list.length; ++ i )
-	        tbody.appendChild ( list[i] );
+	    {
+		var found = false;
+		let iindex = list[i].children[1]
+		                    .dataset.index;
+	        for ( var j = 0; j < i; ++ j )
+		{
+		    let jindex = list[j].children[1]
+				        .dataset.index;
+		    if ( iindex != jindex ) continue;
+		    found = true;
+		    break;
+		}
+		if ( ! found )
+		    tbody.appendChild ( list[i] );
+	    }
 	}
 
 	</script>
