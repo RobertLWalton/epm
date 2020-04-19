@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 18 14:01:38 EDT 2020
+    // Date:	Sat Apr 18 21:37:39 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1100,8 +1100,6 @@ EOT;
     function list_to_edit_rows ( & $elements, $list )
     {
 	$r = '';
-	if ( $project == '-' )
-	    $project = '<i>Your</i>';
 	foreach ( $list as $element )
 	{
 	    $I = count ( $elements );
@@ -2749,14 +2747,8 @@ EOT;
 	       onclick='SUBMIT_EDIT()'
 	       value='Submit'>
 	<input type='button'
-	       onclick='UNDO_EDIT()'
-	       value='Undo'>
-	<input type='button'
-	       onclick='REDO_EDIT()'
-	       value='Redo'>
-	<input type='button'
-	       onclick='RESET_EDIT()'
-	       value='Reset'>
+	       onclick='CLEAR_EDIT()'
+	       value='Clear'>
 	<input type='submit'
 	       name='done'
 	       value='Cancel'></td>
@@ -2829,6 +2821,7 @@ EOT;
 	document.addEventListener ( "dragstart",
 	    function(event) {
 		drag_start = event.target;
+		console.log ( 'START ' + drag_start.rowIndex );
 	    }, false );
 	document.addEventListener ( "dragover",
 	    function(event) {
@@ -2841,10 +2834,14 @@ EOT;
 		while ( t != undefined
 		        &&
 			t.className != 'edit-row' )
+		{
+		    console.log ( 'T ' + t.tagName );
 		    t = t.parentElement;
+		}
 
 		if ( t != undefined )
 		{
+		    console.log ( 'DROP ' + t.rowIndex );
 		    let drag_table =
 		        drag_start.parentElement
 				  .parentElement;
@@ -2861,8 +2858,7 @@ EOT;
 			 ! is_read_only )
 		        drag_table.deleteRow
 			    ( drag_start.rowIndex );
-		    if (   des_index + 1
-		         < des_rows.length )
+		    if ( des_index < des_rows.length )
 		        des_body.insertBefore
 			    ( tr, des_rows[des_index] );
 		    else
@@ -2883,73 +2879,61 @@ EOT;
 	function DELETE ( button )
 	{
 	    let tr = button.parentElement.parentElement;
-	    let index = tr.rowIndex;
-	    let table = tr.parentElement.parentElement;
 	    let text = tr.children[1];
-	    let was_deleted =
-		(    text.style.textDecoration
-		  == 'line-through' );
-	    let op =
-	        ['delete', table, index, was_deleted];
-	    EXECUTE ( op );
-	}
-
-	var ops = [];
-	var last_done = -1;
-
-	function EXECUTE ( op )
-	{
-	    ops.push ( op );
-	    DO ( ops.length - 1 );
-	}
-
-	function DO ( i )
-	{
-	    let op = ops[i];
-	    let table = op[1];
-	    let index = op[2];
-	    if ( op[0] == 'delete' )
-	    {
-	        let was_deleted = op[3];
-		let tr = table.rows[index];
-		let text = tr.children[1];
-		text.style.textDecoration =
-		    ( was_deleted ? 'none' :
-		      'line-through' );
-	    }
-	    last_done = i;
-	}
-
-	function REDO ()
-	{
-	    if ( last_done + 1 >= ops.length )
-		setTimeout ( function () {
-		    alert ( "Nothing to Re-Do" ); } );
+	    if (    text.style.textDecoration
+		 == 'line-through' )
+		text.style.textDecoration = 'none';
 	    else
-	        DO ( last_done + 1 );
+		text.style.textDecoration =
+		    'line-through';
 	}
 
-	function UNDO ( )
+	function DUP ( td )
 	{
-	    if ( last_done == 0 )
+	    let tr = td.parentElement;
+	    let tbody = tr.parentElement;
+	    let table = tbody.parentElement;
+	    if ( table == list_table
+	         &&
+		 is_read_only )
+	        return;
+
+	    let new_tr = tr.cloneNode ( true );
+	    tbody.insertBefore ( new_tr, tr );
+	    new_tr.children[1].style.textDecoration =
+	        'none';
+	}
+
+	function CLEAR_EDIT ()
+	{
+	    var list = [];
+	    for ( var i = 1; i < list_rows.length; )
 	    {
-		setTimeout ( function () {
-		    alert ( "Nothing to Un-Do" ); } );
-		return;
+		var tr = list_rows[i];
+		var text = tr.children[1];
+		var tbody = tr.parentElement;
+		if (    text.style.textDecoration
+		     == 'line-through' )
+		     list.push
+		         ( tbody.removeChild ( tr ) );
+		else
+		    ++ i;
 	    }
-	    let op = ops[last_done];
-	    let table = op[1];
-	    let index = op[2];
-	    if ( op[0] == 'delete' )
+	    for ( var i = 1; i < stack_rows.length; )
 	    {
-	        let was_deleted = op[3];
-		let tr = table.rows[index];
-		let text = tr.children[1];
-		text.style.textDecoration =
-		    ( was_deleted ? 'line-through' :
-		      'none' );
+		var tr = stack_rows[i];
+		var text = tr.children[1];
+		var tbody = tr.parentElement;
+		if (    text.style.textDecoration
+		     == 'line-through' )
+		     list.push
+		         ( tbody.removeChild ( tr ) );
+		else
+		    ++ i;
 	    }
-	    -- last_done;
+	    let stack_body = stack_table.tBodies[0];
+	    for ( var i = 0; i < list.length; ++ i )
+	        tbody.appendChild ( list[i] );
 	}
 
 	</script>
