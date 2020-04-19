@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 13:21:18 EDT 2020
+    // Date:	Sun Apr 19 14:13:33 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -572,7 +572,7 @@
 	:root {
 	    --font-size: 16px;
 	    --large-font-size: 20px;
-	    width: 1280px;
+	    width: 1366px;
 	    font-size: var(--font-size);
 	    overflow: scroll;
 	}

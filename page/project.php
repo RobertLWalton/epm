@@ -397,7 +397,7 @@
 	exit;
     }
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -1822,7 +1822,7 @@ EOT;
 	:root {
 	    --font-size: 16px;
 	    --large-font-size: 20px;
-	    width: 1280px;
+	    width: 1366px;
 	    font-size: var(--font-size);
 	    overflow: scroll;
 	}
