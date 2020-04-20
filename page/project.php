@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 20 14:40:39 EDT 2020
+    // Date:	Mon Apr 20 16:21:46 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -226,9 +226,9 @@
     //		    'edit'
     //
     //	   EPM_PROJECT LIST
-    //		['PROJECT', 'LIST']
     //		Names current list for operations that
-    //		need it, or is NULL.
+    //		need it, in the format PROJECT:BASENAME,
+    //		or is NULL;
     //
     // During a push or pull operation:
     //
@@ -287,7 +287,8 @@
     //	    op='OPERATION' selected-list='SELECTED-LIST'
     //		where OPERATION is 'push', 'pull, or
     //		'edit' and SELECTED-LIST is selected
-    //		from <selection>... in the project page.
+    //		from <selection>... in the project page
+    //		and has the format PROJECT:BASENAME.
     //
     //	    Response is one of 3 page layouts according
     //      to the operation.
@@ -788,7 +789,8 @@ EOT;
     //		+fstack+
     //
     // return the file name of the list relative to
-    // $epm_data.
+    // $epm_data.  Return NULL if the name is of
+    // the form -:- or PROJECT:-.
     //
     function listname_to_filename ( $listname )
     {
@@ -799,6 +801,8 @@ EOT;
 
         list ( $project, $basename ) =
 	    explode ( ':', $listname );
+	if ( $basename == '-' ) return NULL;
+
 	if ( $project == '-' )
 	    $d = "users/$uid/";
 	else
@@ -904,7 +908,10 @@ EOT;
 	    // file.
 	    foreach ( $flines as $fline )
 	    {
-	        $fline = trim ( $fline );
+	        $fline = rtrim ( $fline );
+		    // We need to find blank lines BUT
+		    // leave indentation of non-blank
+		    // lines.
 		if ( $fline == '' )
 		{
 		    if ( ! $in_description )
@@ -1736,7 +1743,46 @@ EOT;
 
     function execute_edit ( & $errors )
     {
-        $errors[] = json_encode ( $_POST );
+        global $data, $list;
+
+	if ( ! isset ( $POST['list'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	if ( ! isset ( $POST['stack'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+
+	$elements = $data['ELEMENTS'];
+	$bound = count ( $elements );
+
+	$fname = listname_to_filename ( $list );
+	$sname = listname_to_filename
+	    ( $list == '+favorites+' ?
+	      '+fstack+' : '+istack+' );
+
+	$indices = explode ( ':', $_POST['list'] );
+	$slist = [];
+	foreach ( $indices as $index )
+	{
+	    if ( $index < 0 || $index >= $bound )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $slist[] = $elements[$index];
+	}
+
+	if ( isset ( $fname ) )
+	{
+	    $indices = explode ( ':', $_POST['list'] );
+	    $flist = [];
+	    foreach ( $indices as $index )
+	    {
+	        if ( $index < 0 || $index >= $bound )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		$flist[] = $elements[$index];
+	    }
+	    write_file_list ( $fname, $flist );
+	        // Don't write until all UNACCEPTABLE
+		// HTTP POST checks done.
+	}
+
+	write_file_list ( $sname, $slist );
     }
 
     if ( $method == 'POST' )
