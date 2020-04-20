@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 20 04:05:03 EDT 2020
+    // Date:	Mon Apr 20 14:40:39 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -256,17 +256,17 @@
     //
     // During an edit operation;
     //
-    //     EPM_PROJECT LIST-CONTENTS
-    //     EPM_PROJECT STACK-CONTENTS 
-    //		Each is a list of the lines in the LIST
-    //		or STACK, exclusive of description and
-    //		blank lines.  The lines are assigned
-    //		natural number IDs as follows.  If
-    //		there are S stack lines and L LIST
-    //		lines, the stack lines have IDs 1, ...,
-    //		S and the LIST lines IDs S+2, ...,
-    //		S+1+L.  IDs S+1 and S+2+L are reserved
-    //		for empty entries at the ends of lists.
+    //     EPM_PROJECT ELEMENTS
+    //		A list of the elements of the form
+    //
+    //			[TIME PROBJECT PROBLEM]
+    //		or
+    //			[TIME PROJECT BASENAME]
+    //
+    //		that are displayed as list or stack
+    //		rows.  The 'submit' POST contains
+    //		indices of these elements for the
+    //		edited version of the list and stack.
 
 
     // Non-XHTTP POSTs:
@@ -849,6 +849,91 @@ EOT;
 	    }
 	}
 	return $list;
+    }
+
+    // Write a list of elements of the form
+    //
+    //	    [TIME PROJECT NAME]
+    //
+    // to the named file, preserving any part of the
+    // file that is after its first blank line.  Each
+    // element becomes one line consisting of the
+    // element members separated by 2 single spaces.
+    //
+    // If a PROJECT:NAME occurs several times, only the
+    // first is kept, but the output TIME is the latest
+    // of the associated TIMEs.
+    //
+    function write_file_list ( $filename, $list )
+    {
+        global $epm_data;
+	$keys = [];
+	$map = [];
+	foreach ( $list as $items )
+	{
+	    list ( $time, $project, $name ) = $items;
+	    $key = "$project:$name";
+	    if ( isset ( $map[$key] ) )
+	    {
+	        $time2 = $map[$key];
+		if ( $time > $time2 )
+		    $map[$key] = $time;
+	    }
+	    else
+	    {
+	        $map[$key] = $time;
+		$keys[] = $key;
+	    }
+	}
+	$lines = [];
+	foreach ( $keys as $key )
+	{
+	    list ( $project, $name ) =
+	        explode ( ':', $key );
+	    $lines[] = "{$map[$key]} $project $name}";
+	}
+
+	$c = @file_get_contents
+	    ( "$epm_data/$filename" );
+	if ( $c !== false )
+	{
+	    $flines = explode ( "\n", $c );
+	    $in_description = false;
+	    $last_blank = true;
+	    // This deletes blank lines at end of
+	    // file.
+	    foreach ( $flines as $fline )
+	    {
+	        $fline = trim ( $fline );
+		if ( $fline == '' )
+		{
+		    if ( ! $in_description )
+		        $in_description = true;
+		    else
+		        $last_blank = true;
+		}
+		else
+		{
+		    if ( ! $in_description )
+		        continue;
+
+		    if ( $last_blank )
+		    {
+		        $lines[] = '';
+			$last_blank = false;
+		    }
+		    $lines[] = $fline;
+		}
+	    }
+	}
+
+	$c = '';
+	foreach ( $lines as $line )
+	    $c .= $line . PHP_EOL;
+	$r = @file_put_contents
+	         ( "$epm_data/$filename", $c );
+	if ( $r === false )
+	    ERROR ( "cannot write $filename" );
     }
 
     // Return the problems in $project in the form
@@ -1697,7 +1782,6 @@ EOT;
 	    if ( $op != 'edit' )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    execute_edit ( $errors );
-	    // TBD
 	}
         elseif ( isset ( $_POST['done'] ) )
 	{
@@ -2730,7 +2814,9 @@ EOT;
     {
 	$edit_help = HELP ( 'project-edit' );
 
-	$elements = [];
+	$data['ELEMENTS'] = [];
+	$elements = & $data['ELEMENTS'];
+
 	$list_rows = list_to_edit_rows
 	    ( $elements, listname_to_list ( $list ) );
 	$is_read_only = 'false';
@@ -2756,6 +2842,7 @@ EOT;
 	}
 	$stack_rows = list_to_edit_rows
 	    ( $elements, listname_to_list ( $stack ) );
+
 
 	echo <<<EOT
 	<div class='edit-list'>
