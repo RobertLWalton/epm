@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 19 13:51:57 EDT 2020
+    // Date:	Mon Apr 20 04:05:03 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1649,6 +1649,11 @@ EOT;
 	    ERROR ( "cannot write $g" );
     }
 
+    function execute_edit ( & $errors )
+    {
+        $errors[] = json_encode ( $_POST );
+    }
+
     if ( $method == 'POST' )
     {
         if ( isset ( $_POST['op'] ) )
@@ -2754,24 +2759,33 @@ EOT;
 
 	echo <<<EOT
 	<div class='edit-list'>
-	<form method='POST'>
-	<input type='hidden' id='ID'
-	       name='ID' value='$id'>
 	<div style='display:inline'>
+	<form method='POST' action='project.php'
+	      id='submit-form'>
+	<input type='hidden' name='ID' value='$id'>
+	<input type='hidden' name='submit' value='yes'>
+	<input type='hidden' name='stack' value=''
+	       id='stack-args'>
+	<input type='hidden' name='list' value=''
+	       id='list-args'>
 	<input type='button'
 	       onclick='SUBMIT_EDIT ( "" )'
 	       value='Submit'>
+	</form>
 	<input type='button'
 	       onclick='CLEAR_EDIT()'
 	       value='Clear'>
+	<form method='POST' action='project.php'
+	      style='display:inline'>
+	<input type='hidden' name='ID' value='$id'>
 	<input type='submit'
 	       name='done'
 	       value='Cancel'></td>
+	</form>
 	</div>
 	<div style='display:inline;float:right'>
 	$edit_help
 	</div>
-	</form>
 	</div>
 
 	<table id='stack-table'>
@@ -2964,11 +2978,61 @@ EOT;
 	}
 
 	// Send `submit' post with stack and list ids.
-	// New_list may be '' to specify current list.
 	//
-	function SUBMIT_EDIT ( new_list )
+	function SUBMIT_EDIT ()
 	{
-	    console.log ( 'SUBMIT ' . new_list );
+	    let submit_form = document.getElementById
+		( 'submit-form' );
+	    let stack_args = document.getElementById
+		( 'stack-args' );
+	    let list_args = document.getElementById
+		( 'list-args' );
+
+	    var stack = [];
+	    var indices = [];
+	    for ( var i = 1; i < stack_rows.length;
+	                     ++ i )
+	    {
+	        let tr = stack_rows[i];
+		let text = tr.children[1];
+		if (    text.style.textDecoration
+		     == 'line-through' )
+		    continue;
+		let index = text.dataset.index;
+		if ( indices[index] == true )
+		    continue;
+		stack.push ( index );
+		indices[index] = true;
+	    }
+	    stack_args.value = stack.join(':');
+
+	    if ( ! is_read_only )
+	    {
+		var list = [];
+		indices = [];
+		for ( var i = 1; i < list_rows.length;
+				 ++ i )
+		{
+		    let tr = list_rows[i];
+		    let text = tr.children[1];
+		    if (    text.style.textDecoration
+			 == 'line-through' )
+			continue;
+		    let index = text.dataset.index;
+		    if ( indices[index] == true )
+			continue;
+		    list.push ( index );
+		    indices[index] = true;
+		}
+		list_args.value = list.join(':');
+	    }
+	    HTMLFormElement.prototype.submit.call
+	        ( submit_form );
+		// submit_form.submit() does not work
+		// because submit_form has an input with
+		// name `submit' which hides the
+		// function submit() for submit_form.
+
 	}
 
 	</script>
