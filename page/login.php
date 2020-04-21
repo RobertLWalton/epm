@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 11 12:54:41 EDT 2020
+    // Date:	Tue Apr 21 15:43:15 EDT 2020
 
     // Handles login for a session.
     //
@@ -585,27 +585,41 @@
 <html>
 <head>
 <style>
-    @media screen and ( max-width: 1279px ) {
+    @media screen and ( max-width: 1365px ) {
 	:root {
 	    --font-size: 1.1vw;
 	    --large-font-size: 1.3vw;
 	}
     }
-    @media screen and ( min-width: 1280px ) {
+    @media screen and ( min-width: 1366px ) {
 	:root {
 	    --font-size: 16px;
 	    --large-font-size: 20px;
 	    width: 1280px;
 	    font-size: var(--font-size);
-	    overflow: scroll;
 	}
     }
-    button, input, mark, span {
+    button, input, mark, span, pre {
 	display:inline;
-        font-size: var(--font-size);
+        font-size: var(--large-font-size);
     }
     pre {
 	font-family: "Courier New", Courier, monospace;
+    }
+    h5 {
+        font-size: var(--large-font-size);
+	margin: 0 0 0 0;
+	display:inline;
+    }
+    #get_email, #show_email {
+	background-color: #96F9F3;
+	padding: 20px 20px 20px 20px;
+        font-size: var(--large-font-size);
+    }
+    #get_cnum {
+	background-color: #80FFCC;
+	padding: 20px 20px 20px 20px;
+        font-size: var(--large-font-size);
     }
 </style>
 </head>
@@ -639,35 +653,42 @@ EOT;
 ?>
 
 <div id='get_email' style.display='none'>
+<table style='width:100%'>
+<tr><td style='width:90%'>
 <input type='text' id='email_in'
        placeholder='Enter Email Address'
        autofocus
        title='address (to be) associated with account'>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</td><td style='width:10%;text-align:right'>
 <?php echo ( HELP('login-page') )?>
+</td></tr></table>
 </div>
 
 <div id='show_email' style.display='none'>
-Email:&nbsp;<span id='email_out'></span>
+<table style='width:100%'>
+<tr><td style='width:90%'>
+<h5>Email:<pre>   </pre><span id='email_out'></span></h5>
+</td><td style='width:10%;text-align:right'>
+<?php echo ( HELP('browser-ticket') )?>
+</td></tr></table>
 <br>
-<button onclick="window.location.reload(true)">
+<button type='button' onclick="window.location.reload(true)">
 Change Email Address
 </button>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<button onclick="RESET_EMAIL()">
+<pre>   </pre>
+<button type='button' onclick="RESET_EMAIL()">
 Get New Ticket
 </button>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<button onclick="RESET_BROWSER()">
+<pre>   </pre>
+<button type='button' onclick="RESET_BROWSER()">
 Delete All Tickets
 </button>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<?php echo ( HELP('browser-ticket') )?>
 </div>
 
 <div id='get_cnum' style.display='none'>
 A Confirmation Number has been sent
 to the above Email Address.
+<br>
 <br>
 Please <input type='text' size='40' id='cnum_in'
        placeholder='Enter Confirmation Number'>

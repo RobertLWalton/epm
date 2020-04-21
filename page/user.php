@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 21 00:12:30 EDT 2020
+    // Date:	Tue Apr 21 16:13:03 EDT 2020
 
     // Display and edit user information in:
     //
@@ -415,6 +415,12 @@
 			ERROR ( "could not write $f" );
 		}
 	    }
+	    $d = "admin/users/$uid/";
+	    if ( ! mkdir ( "$epm_data/$d", 0770 ) )
+		ERROR ( "could not mkdir $d" );
+	    $d = "users/$uid/+indices+";
+	    if ( ! mkdir ( "$epm_data/$d", 0770 ) )
+		ERROR ( "could not mkdir $d" );
 	}
 
 	$f = "admin/users/$uid/$uid.info";

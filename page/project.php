@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 20 16:21:46 EDT 2020
+    // Date:	Tue Apr 21 16:13:52 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -832,7 +832,7 @@ EOT;
 	    $c = explode ( "\n", $c );
 	    foreach ( $c as $line )
 	    {
-		$line = $trim ( $line );
+		$line = trim ( $line );
 		if ( $line == '' ) break;
 
 		$line = preg_replace
@@ -894,7 +894,7 @@ EOT;
 	{
 	    list ( $project, $name ) =
 	        explode ( ':', $key );
-	    $lines[] = "{$map[$key]} $project $name}";
+	    $lines[] = "{$map[$key]} $project $name";
 	}
 
 	$c = @file_get_contents
@@ -1279,7 +1279,7 @@ EOT;
 	    $c = explode ( "\n", $c );
 	    foreach ( $c as $line )
 	    {
-		$line = $trim ( $line );
+		$line = trim ( $line );
 		if ( $line == '' ) continue;
 		$line = preg_replace
 		    ( '/\h+/', ' ', $line );
@@ -1745,9 +1745,9 @@ EOT;
     {
         global $data, $list;
 
-	if ( ! isset ( $POST['list'] ) )
+	if ( ! isset ( $_POST['list'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	if ( ! isset ( $POST['stack'] ) )
+	if ( ! isset ( $_POST['stack'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
 	$elements = $data['ELEMENTS'];
@@ -1758,7 +1758,7 @@ EOT;
 	    ( $list == '+favorites+' ?
 	      '+fstack+' : '+istack+' );
 
-	$indices = explode ( ':', $_POST['list'] );
+	$indices = explode ( ':', $_POST['stack'] );
 	$slist = [];
 	foreach ( $indices as $index )
 	{
@@ -2028,13 +2028,13 @@ EOT;
     #stack-table {
 	background-color: #E6FF99;
 	float: left;
-	width: 45%;
+	width: 50%;
         font-size: var(--large-font-size);
     }
     #list-table {
 	background-color: #B3FFB3;
 	float: left;
-	width: 45%;
+	width: 50%;
         font-size: var(--large-font-size);
     }
     #warn-response {
