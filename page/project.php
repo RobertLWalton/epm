@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 22 12:54:16 EDT 2020
+    // Date:	Wed Apr 22 13:19:06 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1871,8 +1871,12 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( ! isset ( $_POST['new-list'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $_POST['basename'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    execute_edit ( $errors );
-	    if ( $_POST['update'] == 'done' )
+	    if ( count ( $errors ) > 0 )
+	        /* do nothing */;
+	    elseif ( $_POST['update'] == 'done' )
 	    {
 		$op = NULL;
 		$data['OP'] = $op;
@@ -1881,6 +1885,16 @@ EOT;
 	    {
 		$list = $_POST['new-list'];
 		$data['LIST'] = $list;
+	    }
+	    elseif ( $_POST['update'] == 'create-list' )
+	    {
+		$basename = $_POST['basename'];
+		make_new_list ( $basename, $errors );
+		if ( count ( $errors ) == 0 )
+		{
+		    $list = "-:$basename";
+		    $data['LIST'] = $list;
+		}
 	    }
 	}
         elseif ( isset ( $_POST['cancel'] ) )
@@ -2949,6 +2963,7 @@ EOT;
 	<input type='hidden' name='ID' value='$id'>
 	<input type='hidden' name='update' id='update'>
 	<input type='hidden' name='new-list' id='new-list'>
+	<input type='hidden' name='basename' id='basename'>
 	<input type='hidden' name='stack' value=''
 	       id='stack-args'>
 	<input type='hidden' name='list' value=''
@@ -2981,6 +2996,7 @@ EOT;
 	<pre>   </pre>
 	<h5>or Create New List:</h5>
 	<input type="text"
+	       id='created-basename'
 	       size="24"
                placeholder="New List Name"
 	       onkeydown='CREATE_NEW_LIST(event)'>
@@ -3239,6 +3255,24 @@ EOT;
 		list_args.value = list.join(':');
 	    }
 	    submit_form.submit();
+	}
+
+	function CREATE_NEW_LIST ( event )
+	{
+	    if ( event.keyCode === 13 )
+	    {
+	        event.preventDefault();
+		let created_basename =
+		    document.getElementById
+			( 'created-basename' );
+		let basename =
+		    document.getElementById
+			( 'basename' );
+		basename.value =
+		    created_basename.value;
+		UPDATE_EDIT ( 'create-list' );
+
+	    }
 	}
 
 	</script>
