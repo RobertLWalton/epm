@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 22 13:19:06 EDT 2020
+    // Date:	Wed Apr 22 13:38:46 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1401,7 +1401,7 @@ EOT;
 		$basename = 'Problems';
 	    else
 		$basename = preg_replace
-		    ( '-', ' ', $basename );
+		    ( '/-/', ' ', $basename );
 	    $time = substr ( $time, 0, 10 );
 	    $r .= "<option value='$key'>"
 		. "$project $basename $time"
@@ -1800,7 +1800,10 @@ EOT;
 	    ( $list == '+favorites+' ?
 	      '+fstack+' : '+istack+' );
 
-	$indices = explode ( ':', $_POST['stack'] );
+	$indices = $_POST['stack'];
+	$indices = ( $indices == '' ? [] :
+	             explode ( ':', $indices ) );
+	    // explode ( ':', '' ) === ['']
 	$slist = [];
 	foreach ( $indices as $index )
 	{
@@ -1811,7 +1814,9 @@ EOT;
 
 	if ( isset ( $fname ) )
 	{
-	    $indices = explode ( ':', $_POST['list'] );
+	    $indices = $_POST['list'];
+	    $indices = ( $indices == '' ? [] :
+			 explode ( ':', $indices ) );
 	    $flist = [];
 	    foreach ( $indices as $index )
 	    {
@@ -3020,7 +3025,7 @@ EOT;
 
 	<script>
 
-	let is_read_only = '$is_read_only';
+	let is_read_only = $is_read_only;
 
 	let stack_table = document.getElementById
 	    ( 'stack-table' );
