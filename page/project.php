@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 22 09:04:58 EDT 2020
+    // Date:	Wed Apr 22 12:54:16 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -398,7 +398,7 @@
 	exit;
     }
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -808,6 +808,48 @@ EOT;
 	else
 	    $d = "projects/$project";
 	return "$d/+indices+/{$basename}.index";
+    }
+
+    // Given a basename make a new empty file for the
+    // listname '-:basename' and add its name to the
+    // beginning of +favorites+ using the current
+    // time as the TIME value.  If there are errors
+    // append to $errors.
+    //
+    function make_new_list ( $basename, & $errors )
+    {
+        global $epm_data, $uid, $epm_name_re,
+	       $epm_time_format;
+
+	if ( ! preg_match ( $epm_name_re, $basename ) )
+	{
+	   $errors[] = "$basename is badly formed"
+	             . " list name";
+	   return;
+	}
+	$f = "users/$uid/+indices+/$basename.index";
+	if ( file_exists ( "$epm_data/$f" ) )
+	{
+	   $errors[] = "the $basename list already"
+	             . " exists";
+	   return;
+	}
+
+	$r = @file_put_contents ( "$epm_data/$f", '' );
+	if ( $r === false )
+	    ERROR ( "could not write $f" );
+	$time = @filemtime ( "$epm_data/$f" );
+	if ( $time === false )
+	    ERROR ( "could not stat $f" );
+	$time = strftime ( $epm_time_format, $time );
+
+	$g = "users/$uid/+indices+/+favorites+";
+	$c = @file_get_contents ( "$epm_data/$g", '' );
+	if ( $c === false ) $c = '';
+	$c = "$time - $basename" . PHP_EOL . $c;
+	$r = @file_put_contents ( "$epm_data/$g", $c );
+	if ( $r === false )
+	    ERROR ( "could not write $g" );
     }
 
     // Return the lines from the list with the given
@@ -1827,23 +1869,24 @@ EOT;
 	{
 	    if ( $op != 'edit' )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $_POST['new-list'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    execute_edit ( $errors );
+	    if ( $_POST['update'] == 'done' )
+	    {
+		$op = NULL;
+		$data['OP'] = $op;
+	    }
+	    elseif ( $_POST['update'] == 'change-list' )
+	    {
+		$list = $_POST['new-list'];
+		$data['LIST'] = $list;
+	    }
 	}
-        elseif ( isset ( $_POST['done'] ) )
+        elseif ( isset ( $_POST['cancel'] ) )
 	{
 	    $op = NULL;
 	    $data['OP'] = $op;
-	}
-        elseif ( isset ( $_POST['new-list'] ) )
-	{
-	    if ( $op != 'edit' )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    execute_edit ( $errors );
-	    if ( count ( $errors ) == 0 )
-	    {
-	        $list = $_POST['new-list'];
-		$data['LIST'] = $list;
-	    }
 	}
         elseif ( isset ( $_POST['send-changes'] ) )
 	{
@@ -2905,6 +2948,7 @@ EOT;
 	      id='submit-form'>
 	<input type='hidden' name='ID' value='$id'>
 	<input type='hidden' name='update' id='update'>
+	<input type='hidden' name='new-list' id='new-list'>
 	<input type='hidden' name='stack' value=''
 	       id='stack-args'>
 	<input type='hidden' name='list' value=''
@@ -2918,7 +2962,7 @@ EOT;
 	      style='display:inline'>
 	<input type='hidden' name='ID' value='$id'>
 	<input type='submit'
-	       name='done'
+	       name='cancel'
 	       value='Cancel'></td>
 	</form>
 	<input type='button'
@@ -2927,19 +2971,19 @@ EOT;
 	<input type='button'
 	       onclick='UPDATE_EDIT ( "update" )'
 	       value='Update'>
-	<pre>   </pre>
-	<label>
-	<h5>Change List</h5>
+	<input type='button'
+	       onclick='UPDATE_EDIT ( "change-list" )'
+	       value='Change List'>
+	<h5>:</h5>
 	<select id='change-list'>
 	$options
 	</select>
-	</label>
 	<pre>   </pre>
-	<h5>or Create New List</h5>
+	<h5>or Create New List:</h5>
 	<input type="text"
-	       size="24" name="new-list"
+	       size="24"
                placeholder="New List Name"
-	       onkeydown='EDIT_CREATE_NEW_LIST(event)'>
+	       onkeydown='CREATE_NEW_LIST(event)'>
 	</form>
 	</div>
 	<div style='display:inline;float:right'>
@@ -3148,8 +3192,13 @@ EOT;
 		( 'stack-args' );
 	    let list_args = document.getElementById
 		( 'list-args' );
+	    let new_list = document.getElementById
+		( 'new-list' );
+	    let change_list = document.getElementById
+		( 'change-list' );
 
 	    update.value = kind;
+	    new_list.value = change_list.value;
 
 	    var stack = [];
 	    var indices = [];
