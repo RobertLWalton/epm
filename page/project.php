@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 22 06:33:41 EDT 2020
+    // Date:	Wed Apr 22 09:04:58 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1823,7 +1823,7 @@ EOT;
 	    $op = NULL;
 	    $data['OP'] = $op;
 	}
-        elseif ( isset ( $_POST['submit'] ) )
+        elseif ( isset ( $_POST['update'] ) )
 	{
 	    if ( $op != 'edit' )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -2270,9 +2270,9 @@ EOT;
 EOT;
     if ( $op == NULL )
     {
-	$options = "<option value='+favorites+'>"
-		 . "Favorites</option>"
-		 . favorites_to_options ( 'pull' );
+	$options = favorites_to_options ( 'pull|push' )
+	         . "<option value='+favorites+'>"
+		 . "Favorites</option>";
         echo <<<EOT
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
@@ -2893,25 +2893,24 @@ EOT;
 	$stack_rows = list_to_edit_rows
 	    ( $elements, listname_to_list ( $stack ) );
 
-	$options = "<option value='+favorites+'>"
-		 . "Favorites</option>"
-		 . favorites_to_options ( 'pull' );
+	$options = favorites_to_options ( 'pull|push' )
+	         . "<option value='+favorites+'>"
+		 . "Favorites</option>";
 
 	echo <<<EOT
 	<div class='edit-list'>
 	<div style='display:inline'>
+
 	<form method='POST' action='project.php'
 	      id='submit-form'>
 	<input type='hidden' name='ID' value='$id'>
-	<input type='hidden' name='submit' value='yes'>
+	<input type='hidden' name='update' id='update'>
 	<input type='hidden' name='stack' value=''
 	       id='stack-args'>
 	<input type='hidden' name='list' value=''
 	       id='list-args'>
-	<input type='button'
-	       onclick='SUBMIT_EDIT ( "" )'
-	       value='Submit'>
 	</form>
+
 	<input type='button'
 	       onclick='CLEAR_EDIT()'
 	       value='Clear'>
@@ -2921,6 +2920,13 @@ EOT;
 	<input type='submit'
 	       name='done'
 	       value='Cancel'></td>
+	</form>
+	<input type='button'
+	       onclick='UPDATE_EDIT ( "done" )'
+	       value='Done'>
+	<input type='button'
+	       onclick='UPDATE_EDIT ( "update" )'
+	       value='Update'>
 	<pre>   </pre>
 	<label>
 	<h5>Change List</h5>
@@ -3132,14 +3138,18 @@ EOT;
 
 	// Send `submit' post with stack and list ids.
 	//
-	function SUBMIT_EDIT ()
+	function UPDATE_EDIT ( kind )
 	{
 	    let submit_form = document.getElementById
 		( 'submit-form' );
+	    let update = document.getElementById
+		( 'update' );
 	    let stack_args = document.getElementById
 		( 'stack-args' );
 	    let list_args = document.getElementById
 		( 'list-args' );
+
+	    update.value = kind;
 
 	    var stack = [];
 	    var indices = [];
@@ -3179,13 +3189,7 @@ EOT;
 		}
 		list_args.value = list.join(':');
 	    }
-	    HTMLFormElement.prototype.submit.call
-	        ( submit_form );
-		// submit_form.submit() does not work
-		// because submit_form has an input with
-		// name `submit' which hides the
-		// function submit() for submit_form.
-
+	    submit_form.submit();
 	}
 
 	</script>
