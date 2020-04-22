@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 21 16:13:52 EDT 2020
+    // Date:	Wed Apr 22 05:49:41 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2889,6 +2889,9 @@ EOT;
 	$stack_rows = list_to_edit_rows
 	    ( $elements, listname_to_list ( $stack ) );
 
+	$options = "<option value='+favorites+'>"
+		 . "Favorites</option>"
+		 . favorites_to_options ( 'pull' );
 
 	echo <<<EOT
 	<div class='edit-list'>
@@ -2914,6 +2917,19 @@ EOT;
 	<input type='submit'
 	       name='done'
 	       value='Cancel'></td>
+	<pre>   </pre>
+	<label>
+	<h5>Change List</h5>
+	<select id='change-list'>
+	$options
+	</select>
+	</label>
+	<pre>   </pre>
+	<h5>or Create New List</h5>
+	<input type="text"
+	       size="32" name="new-list"
+               placeholder="New List Name"
+	       onkeydown='EDIT_CREATE_NEW_LIST(event)'>
 	</form>
 	</div>
 	<div style='display:inline;float:right'>
