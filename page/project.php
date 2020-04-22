@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 22 05:49:41 EDT 2020
+    // Date:	Wed Apr 22 06:33:41 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1980,6 +1980,10 @@ EOT;
 	display:inline;
         font-size: var(--font-size);
     }
+    button {
+        border-width: 2px;
+	padding: 1px 6px 1px 6px;
+    }
     div.op th {
         font-size: var(--large-font-size);
 	text-align: left;
@@ -2283,26 +2287,26 @@ EOT;
 	<button type='submit' name='op' value='push'>
 	Push
 	</button>
-	<pre>   </pre>
+	<pre>  </pre>
 	<button type='submit' name='op' value='pull'>
 	Pull
 	</button>
-	<pre>   </pre>
+	<pre>  </pre>
 	<button type='submit'
 	       name='op' value='edit'>
 	Edit List
 	</button>
-	<pre>   </pre>
+	<pre>  </pre>
 	<label>
 	<h5>Select List</h5>
 	<select name='selected-list'>
 	$options
 	</select>
 	</label>
-	<pre>   </pre>
+	<pre>  </pre>
 	<h5>or Create New List</h5>
 	<input type="text"
-	       size="32" name="new-list"
+	       size="24" name="new-list"
                placeholder="New List Name"
 	       id="create-list">
 	       <!-- Pressing the enter key here
@@ -2927,7 +2931,7 @@ EOT;
 	<pre>   </pre>
 	<h5>or Create New List</h5>
 	<input type="text"
-	       size="32" name="new-list"
+	       size="24" name="new-list"
                placeholder="New List Name"
 	       onkeydown='EDIT_CREATE_NEW_LIST(event)'>
 	</form>
