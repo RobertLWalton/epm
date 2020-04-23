@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 23 04:17:36 EDT 2020
+    // Date:	Thu Apr 23 06:04:33 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -432,8 +432,9 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $delete_basename = NULL;
-        // Set to basename of list to be deleted.
+    $delete_list = NULL;
+        // Set to list to be deleted.  Causes delete
+	// OK question.
     $compile_next = false;
     	// Set to cause first element of EPM_PROJECT
 	// CHECKED-PROBLEMS to be compiled.
@@ -852,6 +853,67 @@ EOT;
 	$r = @file_put_contents ( "$epm_data/$g", $c );
 	if ( $r === false )
 	    ERROR ( "could not write $g" );
+    }
+
+    // Delete the named list, or append to $errors.
+    // However if $execute is false, just check for
+    // errors and return.
+    //
+    function delete_list
+            ( $listname, & $errors, $execute )
+    {
+        global $epm_data, $uid;
+
+        list ( $project, $basename ) =
+	    explode ( ':', $listname );
+	$pname = ( $project == '-' ?
+	           'Your' : $project );
+	if ( $basename = '-' )
+	{
+	    $errors[] = "cannot delete $pname Problems";
+	    return;
+	}
+	else
+	    $bname = preg_replace
+		( '/-/', ' ', $basename );
+
+        $f = "users/$uid/+indices+/$basename.index";
+	if ( $project == '-' )
+	{
+	    if ( ! file_exists ( "$epm_data/$f" ) )
+	    {
+	        $errors[] = "you have no list named"
+		          . " $bname";
+	        return;
+	    }
+	}
+	else
+	{
+	    $g = "project/$project/+indices+/"
+	       . "$basename.index";
+	    if ( ! is_link ( "$epm_data/$g" ) )
+	    {
+	        $errors[] = "there is no list"
+		          . " `$pname $bname'";
+	        return;
+	    }
+	    $n = @readlink ( "$epm_data/$g" );
+	    if ( $n === false )
+	        ERROR ( "cannot read link $g" );
+	    $re = '#^\.\./\.\./\.\./users/([^/]+)/#';
+	    if ( ! preg_match ( $re, $n, $matches ) )
+	        ERROR ( "$n read from link $g is" .
+		        " badly formed" );
+	    if ( $uid != $matches[1] )
+	    {
+	        $errors[] = "list `$pname $bname'"
+		          . " belongs to {$matches[1]}"
+			  . " and not to you";
+	        return;
+	    }
+	}
+
+	// TBD: execute
     }
 
     // Return the lines from the list with the given
@@ -1923,9 +1985,17 @@ EOT;
 	}
         elseif ( isset ( $_POST['delete-list'] ) )
 	{
-	    list ( $project, $basename ) =
-	        explode ( ':', $list );
-	    $delete_basename = $list;
+	    $action = $_POST['delete-list'];
+	    if ( $action == 'YES' )
+		delete_list ( $list, $errors, true );
+	    elseif ( $action == 'Delete List' )
+	    {
+		delete_list ( $list, $errors, false );
+		if ( count ( $errors ) == 0 )
+		    $delete_list = $list;
+	    }
+	    elseif ( $action != 'NO' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	}
         elseif ( isset ( $_POST['send-changes'] ) )
 	{
@@ -2200,6 +2270,30 @@ EOT;
 	    ( $list, $warnings );
 	// Must execute before $warnings is used.
 
+    if ( isset ( $delete_list ) )
+    {
+	list ( $project, $basename ) =
+	    explode ( ':', $delete_list );
+	if ( $project == '-' )
+	    $project = '<i>Your</i>';
+	if ( $basename == '-' )
+	    $basename = '<i>Problems</i>';
+	else
+	    $basename = preg_replace
+		( '/-/', ' ', $basename );
+	echo <<<EOT
+	<div class='errors'>
+	<h5>Do you really want to delete
+	    $project $basename?</h5>
+	<form action='project.php' method='POST'>
+	<input type='submit' name='delete-list'
+	       value='YES'>
+	<input type='submit' name='delete-list'
+	       value='NO'>
+	</form>
+	<br></div>
+EOT;
+    }
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
