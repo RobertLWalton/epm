@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 23 06:04:33 EDT 2020
+    // Date:	Thu Apr 23 15:12:11 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -398,7 +398,7 @@
 	exit;
     }
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -868,7 +868,7 @@ EOT;
 	    explode ( ':', $listname );
 	$pname = ( $project == '-' ?
 	           'Your' : $project );
-	if ( $basename = '-' )
+	if ( $basename == '-' )
 	{
 	    $errors[] = "cannot delete $pname Problems";
 	    return;
@@ -911,9 +911,17 @@ EOT;
 			  . " and not to you";
 	        return;
 	    }
+
+	    $f = $g;
 	}
 
-	// TBD: execute
+	if ( ! $execute ) return;
+
+	unlink ( "$epm_data/$f" );
+
+	$f = "users/$uid/+indices+/+favorites+";
+	delete_from_file_list
+	    ( $f, $project, $basename );
     }
 
     // Return the lines from the list with the given
@@ -1047,6 +1055,27 @@ EOT;
 	         ( "$epm_data/$filename", $c );
 	if ( $r === false )
 	    ERROR ( "cannot write $filename" );
+    }
+
+    // Delete all lines `TIME $project $basename' from
+    // list with given $filename.
+    //
+    function delete_from_file_list
+	    ( $filename, $project, $basename )
+    {
+	$list = read_file_list ( $filename );
+	$changed = false;
+	$out = [];
+	foreach ( $list as $e )
+	{
+	    if (    $e[1] == $project
+	         && $e[2] == $basename )
+	        $changed = true;
+	    else
+	        $out[] = $e;
+	}
+	if ( $changed )
+	    write_file_list ( $filename, $out );
     }
 
     // Return the problems in $project in the form
@@ -1396,7 +1425,7 @@ EOT;
 		list ( $time, $project, $basename ) =
 		    $items;
 		$key = "$project:$basename";
-		if ( isset ( $map[$linekey] ) )
+		if ( isset ( $map[$key] ) )
 		    ERROR ( "line '$line' duplicates" .
 			    " line '{$linemap[$key]}'" .
 			    " in $f" );
@@ -1987,7 +2016,11 @@ EOT;
 	{
 	    $action = $_POST['delete-list'];
 	    if ( $action == 'YES' )
+	    {
 		delete_list ( $list, $errors, true );
+		$op = NULL;
+		$data['OP'] = $op;
+	    }
 	    elseif ( $action == 'Delete List' )
 	    {
 		delete_list ( $list, $errors, false );
@@ -2286,6 +2319,7 @@ EOT;
 	<h5>Do you really want to delete
 	    $project $basename?</h5>
 	<form action='project.php' method='POST'>
+	<input type='hidden' name='ID' value='$id'>
 	<input type='submit' name='delete-list'
 	       value='YES'>
 	<input type='submit' name='delete-list'
@@ -3049,6 +3083,7 @@ EOT;
 	$list_rows = list_to_edit_rows
 	    ( $elements, listname_to_list ( $list ) );
 	$is_read_only = 'false';
+	$delete_list_ok = false;
 	if ( $list == '+favorites+' )
 	{
 	    $name = '<i>Favorites</i>';
@@ -3066,6 +3101,8 @@ EOT;
 		    '<i>Problems</i> (read-only)';
 		$is_read_only = 'true';
 	    }
+	    else
+		$delete_list_ok = true;
 	    $name = "$project $basename";
 	    $stack = '+istack+';
 	}
@@ -3084,8 +3121,10 @@ EOT;
 	      id='submit-form'>
 	<input type='hidden' name='ID' value='$id'>
 	<input type='hidden' name='update' id='update'>
-	<input type='hidden' name='new-list' id='new-list'>
-	<input type='hidden' name='basename' id='basename'>
+	<input type='hidden' name='new-list'
+	       id='new-list'>
+	<input type='hidden' name='basename'
+	       id='basename'>
 	<input type='hidden' name='stack' value=''
 	       id='stack-args'>
 	<input type='hidden' name='list' value=''
@@ -3100,7 +3139,7 @@ EOT;
 	<input type='hidden' name='ID' value='$id'>
 	<input type='submit'
 	       name='cancel'
-	       value='Cancel'></td>
+	       value='Cancel'>
 	</form>
 	<input type='button'
 	       onclick='CLEAR_EDIT()'
@@ -3116,21 +3155,26 @@ EOT;
 	$options
 	</select>
 	<pre>  </pre>
-	<form method='POST' action='project.php'
-	      style='display:inline'>
-	<input type='hidden' name='ID' value='$id'>
-	<input type='submit'
-	       name='delete-list'
-	       value='Delete List'></td>
-	</form>
-	<pre>  </pre>
-	<h5>or Create New List:</h5>
+	<h5>Create New List:</h5>
 	<input type="text"
 	       id='created-basename'
 	       size="24"
                placeholder="New List Name"
 	       onkeydown='CREATE_NEW_LIST(event)'>
-	</form>
+EOT;
+	if ( $delete_list_ok )
+	    echo <<<EOT
+	    <pre>  </pre>
+	    <form method='POST' action='project.php'
+		  style='display:inline'>
+	    <input type='hidden' name='ID' value='$id'>
+	    <button type='submit'
+		    name='delete-list'
+		    value='Delete List'>
+	    Delete $name</button>
+	    </form>
+EOT;
+	echo <<<EOT
 	</div>
 	<div style='display:inline;float:right'>
 	$edit_help
