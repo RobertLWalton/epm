@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 22 22:02:45 EDT 2020
+    // Date:	Thu Apr 23 04:17:36 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -432,6 +432,8 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $delete_basename = NULL;
+        // Set to basename of list to be deleted.
     $compile_next = false;
     	// Set to cause first element of EPM_PROJECT
 	// CHECKED-PROBLEMS to be compiled.
@@ -1919,6 +1921,12 @@ EOT;
 	    $op = NULL;
 	    $data['OP'] = $op;
 	}
+        elseif ( isset ( $_POST['delete-list'] ) )
+	{
+	    list ( $project, $basename ) =
+	        explode ( ':', $list );
+	    $delete_basename = $list;
+	}
         elseif ( isset ( $_POST['send-changes'] ) )
 	{
 	    if ( $op == 'edit' )
@@ -2050,13 +2058,16 @@ EOT;
 	margin: 0 0 0 0;
 	display:inline;
     }
-    pre, button, input, select, form {
+    pre, select, form {
 	display:inline;
         font-size: var(--font-size);
     }
-    button {
-        border-width: 2px;
+    input, button {
+	border-width: 2px;
 	padding: 1px 6px 1px 6px;
+	margin: 0px;
+	display:inline;
+        font-size: var(--font-size);
     }
     div.op th {
         font-size: var(--large-font-size);
@@ -2988,8 +2999,8 @@ EOT;
 	</form>
 
 	<input type='button'
-	       onclick='CLEAR_EDIT()'
-	       value='Clear'>
+	       onclick='UPDATE_EDIT ( "done" )'
+	       value='Done'>
 	<form method='POST' action='project.php'
 	      style='display:inline'>
 	<input type='hidden' name='ID' value='$id'>
@@ -2998,8 +3009,8 @@ EOT;
 	       value='Cancel'></td>
 	</form>
 	<input type='button'
-	       onclick='UPDATE_EDIT ( "done" )'
-	       value='Done'>
+	       onclick='CLEAR_EDIT()'
+	       value='Clear'>
 	<input type='button'
 	       onclick='UPDATE_EDIT ( "update" )'
 	       value='Update'>
@@ -3010,7 +3021,15 @@ EOT;
 	<select id='change-list'>
 	$options
 	</select>
-	<pre>   </pre>
+	<pre>  </pre>
+	<form method='POST' action='project.php'
+	      style='display:inline'>
+	<input type='hidden' name='ID' value='$id'>
+	<input type='submit'
+	       name='delete-list'
+	       value='Delete List'></td>
+	</form>
+	<pre>  </pre>
 	<h5>or Create New List:</h5>
 	<input type="text"
 	       id='created-basename'
