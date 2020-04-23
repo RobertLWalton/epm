@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 23 15:12:11 EDT 2020
+    // Date:	Thu Apr 23 16:55:28 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -3084,10 +3084,12 @@ EOT;
 	    ( $elements, listname_to_list ( $list ) );
 	$is_read_only = 'false';
 	$delete_list_ok = false;
+	$stack_name = NULL;
 	if ( $list == '+favorites+' )
 	{
 	    $name = '<i>Favorites</i>';
 	    $stack = '+fstack+';
+	    $stack_name = 'Favorites Stack';
 	}
 	else
 	{
@@ -3105,6 +3107,7 @@ EOT;
 		$delete_list_ok = true;
 	    $name = "$project $basename";
 	    $stack = '+istack+';
+	    $stack_name = 'LIST Stack';
 	}
 	$stack_rows = list_to_edit_rows
 	    ( $elements, listname_to_list ( $stack ) );
@@ -3183,7 +3186,7 @@ EOT;
 
 	<table id='stack-table'>
 	<tr class='edit-row'>
-	<th colspan=2><i>Stack</i></th></tr>
+	<th colspan=2><i>$stack_name</i></th></tr>
 	$stack_rows
 	</table>
 	<table id='list-table'>
