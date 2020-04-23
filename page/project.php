@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 22 13:38:46 EDT 2020
+    // Date:	Wed Apr 22 22:02:45 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1861,6 +1861,18 @@ EOT;
 		$data['LIST'] = $list;
 	    }
 	}
+        elseif ( isset ( $_POST['create-list'] ) )
+	{
+	    if ( ! isset ( $_POST['basename'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $basename = $_POST['basename'];
+	    make_new_list ( $basename, $errors );
+	    if ( count ( $errors ) == 0 )
+	    {
+		$list = "-:$basename";
+		$data['LIST'] = $list;
+	    }
+	}
 	elseif ( ! isset ( $op ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         elseif ( isset ( $_POST['cancel'] ) )
@@ -2368,7 +2380,7 @@ EOT;
 	<pre>  </pre>
 	<h5>or Create New List</h5>
 	<input type="text"
-	       size="24" name="new-list"
+	       size="24" name="basename"
                placeholder="New List Name"
 	       id="create-list">
 	       <!-- Pressing the enter key here
