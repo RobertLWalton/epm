@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 24 08:55:44 EDT 2020
+    // Date:	Fri Apr 24 14:41:02 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2443,7 +2443,7 @@ EOT;
     <h5>User:</h5> <input type='submit' value='$email'
 		    formaction='user.php'
 		    formmethod='GET'
-                    title='click to see user profile'>
+                    title='Click to See User Profile'>
     </label>
     </td>
     <td>
@@ -2486,6 +2486,17 @@ EOT;
 	$options = favorites_to_options ( 'pull|push' )
 	         . "<option value='+favorites+'>"
 		 . "Favorites</option>";
+	$push_title = 'Click to Push Problems to'
+	            . ' Projects';
+	$pull_title = 'Click to Pull Problems from'
+	            . ' Projects';
+	$edit_list_title = 'Click to Edit Selected'
+	                 . ' List';
+	$select_title = 'Selected List of'
+	              . ' Problems to Push or Pull'
+		      . ' or List to Edit';
+	$new_list_title = 'New List of'
+	              . ' Problems to Push or Pull';
         echo <<<EOT
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
@@ -2497,22 +2508,26 @@ EOT;
 		    triggered when a new list name
 		    is entered at the end of the form.
 		 -->
-	<button type='submit' name='op' value='push'>
+	<button type='submit' name='op' value='push'
+	        title='$push_title'>
 	Push
 	</button>
 	<pre>  </pre>
-	<button type='submit' name='op' value='pull'>
+	<button type='submit' name='op' value='pull'
+	        title='$pull_title'>
 	Pull
 	</button>
 	<pre>  </pre>
 	<button type='submit'
-	       name='op' value='edit'>
+	        name='op' value='edit'
+	        title='$edit_list_title'>
 	Edit List
 	</button>
 	<pre>  </pre>
 	<label>
 	<h5>Select List</h5>
-	<select name='selected-list'>
+	<select name='selected-list'
+	        title='$select_title'>
 	$options
 	</select>
 	</label>
@@ -2521,7 +2536,8 @@ EOT;
 	<input type="text"
 	       size="24" name="basename"
                placeholder="New List Name"
-	       id="create-list">
+	       id="create-list"
+	       title='$new_list_title'>
 	       <!-- Pressing the enter key here
 	            triggers the hidden input submit
 		    above.
