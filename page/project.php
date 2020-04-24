@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 24 14:41:02 EDT 2020
+    // Date:	Fri Apr 24 15:54:32 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1970,8 +1970,6 @@ EOT;
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         elseif ( isset ( $_POST['cancel'] ) )
 	{
-	    if ( $op != 'edit' )
-		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $op = NULL;
 	    $data['OP'] = $op;
 	}
@@ -2168,7 +2166,7 @@ EOT;
     input, button {
 	border-width: 2px;
 	padding: 1px 6px 1px 6px;
-	margin: 0px;
+	margin: 2px 3px 2px 3px;
 	display:inline;
         font-size: var(--font-size);
     }
@@ -2392,7 +2390,7 @@ EOT;
 	<button type='button' onclick='START_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
-	<button type='submit' name='done' value='yes'
+	<button type='submit' name='cancel' value='yes'
 	        formaction='project.php'
 		formmethod='GET'>
 	$cancel</button>
@@ -2417,7 +2415,7 @@ EOT;
 	<button type='button' onclick='SKIP_TO_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
-	<button type='submit' name='done' value='yes'
+	<button type='submit' name='cancel' value='yes'
 	        formaction='project.php'
 		formmethod='GET'>
 	$cancel</button>
@@ -2453,7 +2451,6 @@ EOT;
 	    formaction='project.php'
 	    formmethod='GET'>
 	    Continue</button>
-    <pre>  </pre>
     </div>
     <div id='check-proposed-display'
          style='display:none'>
@@ -2461,14 +2458,12 @@ EOT;
 	  id='check-proposed'
 	  onclick='CHECK(this)'>&nbsp;</span>
     <h5>Check Proposed Actions</h5>
-    <pre>  </pre>
     </div>
     <h5>Go To:</h5>
     <button type='submit'
 	    formaction='problem.php'
 	    formmethod='GET'>
 	    Problem Page</button>
-    <pre>  </pre>
     <button type='submit'
 	    formaction='run.php'
 	    formmethod='GET'>
@@ -2497,6 +2492,7 @@ EOT;
 		      . ' or List to Edit';
 	$new_list_title = 'New List of'
 	              . ' Problems to Push or Pull';
+	$upload_title = 'Upload .lstdes File';
         echo <<<EOT
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
@@ -2512,18 +2508,15 @@ EOT;
 	        title='$push_title'>
 	Push
 	</button>
-	<pre>  </pre>
 	<button type='submit' name='op' value='pull'
 	        title='$pull_title'>
 	Pull
 	</button>
-	<pre>  </pre>
 	<button type='submit'
 	        name='op' value='edit'
 	        title='$edit_list_title'>
 	Edit List
 	</button>
-	<pre>  </pre>
 	<label>
 	<h5>Select List</h5>
 	<select name='selected-list'
@@ -2531,7 +2524,6 @@ EOT;
 	$options
 	</select>
 	</label>
-	<pre>  </pre>
 	<h5>or Create New List</h5>
 	<input type="text"
 	       size="24" name="basename"
@@ -2542,6 +2534,18 @@ EOT;
 	            triggers the hidden input submit
 		    above.
 		-->
+	<br>
+	<label>
+	<input type="hidden" name="MAX_FILE_SIZE"
+	       value="$epm_upload_maxsize">
+	<button type='submit'
+	        name='op' value='upload'
+	        title='$upload_title'>
+	Upload List Description:
+	</button>
+	<input type="file" name="uploaded_file"
+	       title="List Description File to Upload">
+	</label>
 	</form>
 EOT;
     }
@@ -2573,7 +2577,7 @@ EOT;
 	               onclick='RESET_PUSH()'
 		       value='Reset'>
 		<input type='submit'
-	               name='done'
+	               name='cancel'
 		       value='Cancel'></td>
 	    <td id='project-selector'
 	        style='visibility:hidden'>
@@ -2766,7 +2770,7 @@ EOT;
 	               onclick='RESET_PULL()'
 		       value='Reset'>
 		<input type='submit'
-	               name='done'
+	               name='cancel'
 		       value='Cancel'></td>
 	    <td>
             <td style='text-align:right'>
@@ -3189,7 +3193,6 @@ EOT;
 	        title='New List to Edit'>
 	$options
 	</select>
-	<pre> </pre>
 	<b>Create New List:</b>
 	<input type="text"
 	       id='created-basename'
@@ -3200,7 +3203,6 @@ EOT;
 EOT;
 	if ( $delete_list_ok )
 	    echo <<<EOT
-	    <pre>  </pre>
 	    <form method='POST' action='project.php'
 		  style='display:inline'>
 	    <input type='hidden' name='ID' value='$id'>
