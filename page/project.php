@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 23 16:55:28 EDT 2020
+    // Date:	Fri Apr 24 03:47:11 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -3116,6 +3116,16 @@ EOT;
 	         . "<option value='+favorites+'>"
 		 . "Favorites</option>";
 
+	$finish_title = 'Save Changes and Return to'
+	              . ' Project Page';
+	$cancel_title = 'DISCARD Changes and Return to'
+	              . ' Project Page';
+	$clear_title = 'Move Overstrikes to End of'
+	             . ' Stack and Remove Duplicate'
+		     . ' Overstrikes';
+	$change_to_title = 'Save Changes and Change the'
+	                 . ' List Being Edited';
+
 	echo <<<EOT
 	<div class='edit-list'>
 	<div style='display:inline'>
@@ -3135,34 +3145,41 @@ EOT;
 	</form>
 
 	<input type='button'
+	       onclick='UPDATE_EDIT ( "update" )'
+	       value='Save'
+	       title='Save Changes'>
+	<input type='button'
 	       onclick='UPDATE_EDIT ( "done" )'
-	       value='Done'>
+	       value='Finish'
+	       title='$finish_title'>
 	<form method='POST' action='project.php'
 	      style='display:inline'>
 	<input type='hidden' name='ID' value='$id'>
 	<input type='submit'
 	       name='cancel'
-	       value='Cancel'>
+	       value='Cancel'
+	       title='$cancel_title'>
 	</form>
 	<input type='button'
 	       onclick='CLEAR_EDIT()'
-	       value='Clear'>
-	<input type='button'
-	       onclick='UPDATE_EDIT ( "update" )'
-	       value='Update'>
+	       value='Clear Strikes'
+	       title='$clear_title'>
 	<input type='button'
 	       onclick='UPDATE_EDIT ( "change-list" )'
-	       value='Change List'>
+	       value='Change To'
+	       title='$change_to_title'>
 	<h5>:</h5>
-	<select id='change-list'>
+	<select id='change-list'
+	        title='New List to Edit'>
 	$options
 	</select>
-	<pre>  </pre>
-	<h5>Create New List:</h5>
+	<pre> </pre>
+	<b>Create New List:</b>
 	<input type="text"
 	       id='created-basename'
 	       size="24"
                placeholder="New List Name"
+               title="New List Name"
 	       onkeydown='CREATE_NEW_LIST(event)'>
 EOT;
 	if ( $delete_list_ok )
@@ -3173,7 +3190,8 @@ EOT;
 	    <input type='hidden' name='ID' value='$id'>
 	    <button type='submit'
 		    name='delete-list'
-		    value='Delete List'>
+		    value='Delete List'
+		    title='Delete List Being Edited'>
 	    Delete $name</button>
 	    </form>
 EOT;
