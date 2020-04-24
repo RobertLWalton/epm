@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 24 03:47:11 EDT 2020
+    // Date:	Fri Apr 24 08:55:44 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -3242,20 +3242,32 @@ EOT;
 		tr.setAttribute ( 'class', 'edit-row' );
 	    }
 
+	function make_draggable ( element )
+	{
+	    element.setAttribute
+	        ( 'draggable', 'true' );
+
+	    // Mozilla but not Chrome requires the
+	    // following:
+	    //
+	    element.addEventListener ( "dragstart",
+		function(event) {
+		    event.dataTransfer.setData
+		        ('text/plain',null);
+		}, false );
+	}
+
 	for ( var i = 1; i < list_rows.length;
 			 ++ i )
-	{
-	    var tr = list_rows[i];
-	    tr.setAttribute ( 'draggable', 'true' );
-	}
+	    make_draggable ( list_rows[i] );
+
 	for ( var i = 0; i < stack_rows.length;
 			 ++ i )
 	{
 	    var tr = stack_rows[i];
 	    tr.setAttribute ( 'class', 'edit-row' );
 	    if ( i != 0 )
-		tr.setAttribute
-		    ( 'draggable', 'true' );
+		make_draggable ( tr );
 	}
 
 	var drag_start = null;
@@ -3310,6 +3322,7 @@ EOT;
 		        'none';
 		    tr.setAttribute
 		        ( 'class', 'edit-row' );
+		    make_draggable ( tr );
 		}
 	    }, false );
 
@@ -3340,6 +3353,7 @@ EOT;
 	    tbody.insertBefore ( new_tr, tr );
 	    new_tr.children[1].style.textDecoration =
 	        'none';
+	    make_draggable ( new_tr );
 	}
 
 	function CLEAR_EDIT ()
