@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 25 04:19:35 EDT 2020
+    // Date:	Sat Apr 25 04:36:06 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2602,18 +2602,23 @@ EOT;
 	$options = favorites_to_options ( 'pull|push' )
 	         . "<option value='+favorites+'>"
 		 . "Favorites</option>";
-	$push_title = 'Click to Push Problems to'
-	            . ' Projects';
-	$pull_title = 'Click to Pull Problems from'
-	            . ' Projects';
-	$edit_list_title = 'Click to Edit Selected'
-	                 . ' List';
-	$select_title = 'Selected List of'
+	$push_title = 'Push Problems in Selected'
+	            . ' List to Projects';
+	$pull_title = 'Pull Problems in Selected'
+	            . ' List from Projects';
+	$edit_list_title = 'Edit Selected List';
+	$select_title = 'Favorites List of Lists of'
 	              . ' Problems to Push or Pull'
-		      . ' or List to Edit';
+		      . ' or Lists to Edit';
 	$new_list_title = 'New List of'
 	              . ' Problems to Push or Pull';
-	$upload_title = 'Upload .lstdes File';
+	$upload_title = 'Upload Selected List'
+	              . ' Description (.des) File';
+	$upload_file_title = 'Selected List Description'
+	                   . ' (.des) File to be'
+			   . ' Uploaded';
+	$add_to_title = 'Add to Favorites List of'
+	              . ' Lists to Select';
         echo <<<EOT
 	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
@@ -2638,6 +2643,29 @@ EOT;
 	        title='$edit_list_title'>
 	Edit List
 	</button>
+	<button type='submit'
+	        name='op' value='publish'
+	        title='Publish Selected List'>
+	Publish List
+	</button>
+	<button type='submit'
+	        name='op' value='show-description'
+	        title='Show Selected List Description'>
+	Show Description
+	</button>
+	<label>
+	<input type="hidden" name="MAX_FILE_SIZE"
+	       value="$epm_upload_maxsize">
+	<button type='submit'
+	        name='op' value='upload'
+	        title='$upload_title'>
+	Upload List Description
+	</button>
+	<h5>:</h5>
+	<input type="file" name="uploaded_file"
+	       title="$upload_file_title">
+	</label>
+	<br>
 	<label>
 	<h5>Select List:</h5>
 	<select name='selected-list'
@@ -2655,19 +2683,12 @@ EOT;
 	            triggers the hidden input submit
 		    above.
 		-->
-	<br>
-	<label>
-	<input type="hidden" name="MAX_FILE_SIZE"
-	       value="$epm_upload_maxsize">
+	<h5>or</h5>
 	<button type='submit'
-	        name='op' value='upload'
-	        title='$upload_title'>
-	Upload List Description
+	        name='op' value='add-to-favorites'
+	        title='$add_to_title'>
+	Add to Favorites
 	</button>
-	<h5>:</h5>
-	<input type="file" name="uploaded_file"
-	       title="List Description File to Upload">
-	</label>
 	</form>
 EOT;
     }
