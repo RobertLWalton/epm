@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 24 21:43:03 EDT 2020
+    // Date:	Sat Apr 25 04:19:35 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1076,6 +1076,127 @@ EOT;
 	}
 	if ( $changed )
 	    write_file_list ( $filename, $out );
+    }
+
+    // Replace description in a list file.  Append
+    // error instead if description contains < or >.
+    // Description is NOT changed or otherwise checked.
+    //
+    function write_list_description
+	    ( $filename, $description, & $errors )
+    {
+        global $epm_data;
+
+	foreach ( ['<','>'] as $needle )
+	{
+	    $r = strpos ( $description, $needle );
+	    if ( $r === false ) continue;
+	    $ldots = '...';
+	    $l = $r - 10;
+	    if ( $l < 0 )
+	    {
+	        $l = 0;
+		$ldots = '';
+	    }
+	    $r += 10;
+	    $rdots = '...';
+	    if ( $r >= strlen ( $description ) )
+	    {
+	        $r = strlen ( $description );
+		$rdots = '';
+	    }
+	    $m = $ldots
+	       . substr ( $description, $l, $r - $l )
+	       . $rdots;
+
+	    $errors[] = "$needle is in description: $m";
+	    return;
+	}
+
+	$c = @file_get_contents
+	    ( "$epm_data/$filename" );
+	if ( $c === false ) $c = '';
+	$c = explode ( "\n", $c );
+	    // If $c was '' it is now ['']
+	$r = '';
+	foreach ( $c as $line )
+	{
+	    $line = rtrim ( $line );
+	    if ( $line == '' ) break;
+	    $r .= $line . PHP_EOL;
+	}
+	if ( $description != '' )
+	    $r .= PHP_EOL . $description;
+
+	$r = @file_put_contents
+	         ( "$epm_data/$filename", $r );
+	if ( $r === false )
+	    ERROR ( "cannot write $filename" );
+    }
+
+    // Read list description and return it as as HTML.
+    // Returns '' if file does not exist.
+    //
+    function read_list_description ( $filename )
+    {
+	$c = @file_get_contents
+	    ( "$epm_data/$filename" );
+	if ( $c === false ) return '';
+
+	$c = explode ( "\n", $c );
+	    // If $c was '' it is now ['']
+	$r = '';
+	$in_description = false;
+	$after_blank = true;
+	$paragraph = '';
+	foreach ( $c as $line )
+	{
+	    $line = rtrim ( $line );
+	    if ( $line == '' )
+	    {
+	        if ( ! $in_description )
+		{
+		    $in_description = true;
+		    continue;
+		}
+		if ( $after_blank ) continue;
+
+		if ( $paragraph != '' )
+		{
+		    $r .= "</$paragraph>" . PHP_EOL;
+		    $paragraph = '';
+		}
+		$after_blank = true;
+		continue;
+	    }
+	    elseif ( ! $in_description )
+	        continue;
+
+	    $line = str_replace
+	        ( "\t", "        ", $line );
+	    $desired =
+		 ( $line[0] == ' ' ? 'pre' : 'p' );
+
+	    if ( $after_blank )
+	    {
+	        $paragraph = $desired;
+		$r .= "<$paragraph>" . PHP_EOL;
+		$after_blank = false;
+	    }
+	    elseif ( $paragraph != $desired )
+	    {
+		// Switch paragraph type.
+		//
+		$r .= "</$paragraph>" . PHP_EOL;
+		$paragraph = $desired;
+		$r .= "<$paragraph>" . PHP_EOL;
+	    }
+	    $r .= $line . PHP_EOL;
+	}
+
+	if ( $paragraph != '' )
+	    $r .= "</$paragraph>" . PHP_EOL;
+	return $r;
     }
 
     // Return the problems in $project in the form
