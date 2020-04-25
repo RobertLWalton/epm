@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 24 15:54:32 EDT 2020
+    // Date:	Fri Apr 24 21:43:03 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2518,13 +2518,13 @@ EOT;
 	Edit List
 	</button>
 	<label>
-	<h5>Select List</h5>
+	<h5>Select List:</h5>
 	<select name='selected-list'
 	        title='$select_title'>
 	$options
 	</select>
 	</label>
-	<h5>or Create New List</h5>
+	<h5>or Create New List:</h5>
 	<input type="text"
 	       size="24" name="basename"
                placeholder="New List Name"
@@ -2541,8 +2541,9 @@ EOT;
 	<button type='submit'
 	        name='op' value='upload'
 	        title='$upload_title'>
-	Upload List Description:
+	Upload List Description
 	</button>
+	<h5>:</h5>
 	<input type="file" name="uploaded_file"
 	       title="List Description File to Upload">
 	</label>
