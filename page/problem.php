@@ -370,6 +370,7 @@
 		$fcomment = "($fsize Bytes)";
 	    else
 		$fcomment = "(Has Undetermined Size)";
+	    $fshow = true;
 	}
 	else
 	{

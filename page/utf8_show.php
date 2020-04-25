@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar 16 04:45:53 EDT 2020
+    // Date:	Fri Apr 24 20:50:03 EDT 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // Filename is relative to problem directory.
@@ -10,6 +10,7 @@
 ?>
 
 <html>
+<head>
 <style>
 
     div.body {
@@ -29,9 +30,6 @@
 	text-align:right;
     }
 </style>
-<body>
-
-<div class='body'>
 
 <?php
 
@@ -64,9 +62,9 @@
     $fbase = pathinfo ( $filename, PATHINFO_BASENAME );
     $fdir = pathinfo ( $filename, PATHINFO_DIRNAME );
     if ( $fdir == '.' )
-	$printname = "<u>$fbase</u>:";
+	$title = "$fbase";
     elseif ( $fdir == '+work+' )
-	$printname = "<u>[working directory]$fbase</u>:";
+	$title = "[working directory]$fbase";
     else
         exit ( "ACCESS: illegal GET to utf8_show.php" );
 
@@ -79,10 +77,18 @@
     if ( array_slice ( $lines, -1, 1 ) == [""] )
 	array_splice ( $lines, -1, 1 );
     $count = 0;
-    echo "<h2 class='filename'>" .
-         "<pre>$printname</pre></h2>";
-    echo "<div class='filecontents'>" .
-         "<table class='filecontents'>" . PHP_EOL;
+    echo <<<EOT
+    <title>$title</title>
+    </head>
+
+    <body>
+
+    <div class='body'>
+    <h2 class='filename'>
+    <pre><u>$title:</u></pre></h2>
+    <div class='filecontents'>
+    <table class='filecontents'>
+EOT;
     foreach ( $lines as $line )
     {
 	++ $count;
@@ -92,10 +98,10 @@
 	     "<td><pre>  $hline</pre></td></tr>" .
 	     PHP_EOL;
     }
-    echo "</table></div>" . PHP_EOL;
 
 ?>
 
+</table></div>
 </div>
 </body>
 </html>

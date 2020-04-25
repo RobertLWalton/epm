@@ -2,7 +2,7 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Mar  9 15:32:02 EDT 2020
+    // Date:	Fri Apr 24 21:11:18 EDT 2020
 
     // Show the PDF file $_GET['filename'].
     // File may be in current problem directory
@@ -38,8 +38,8 @@
 	    '&nbsp;&nbsp;&nbsp;&nbsp;(temporary)';
     }
 
-    $t = exec ( "file $epm_data/$f" );
-    if ( ! preg_match ( '/PDF/', $t ) )
+    $ext = pathinfo ( $filename, PATHINFO_EXTENSION ); 
+    if ( $ext != 'pdf' )
 	exit
 	    ( "ACCESS: illegal GET to pdf_show.php" );
 
