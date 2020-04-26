@@ -1256,7 +1256,6 @@ EOT;
 	foreach ( $c as $line )
 	{
 	    $line = rtrim ( $line );
-	    DEBUG ( "LINE $line" );
 	    if ( $line == '' )
 	    {
 	        if ( ! $in_description )
