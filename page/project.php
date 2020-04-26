@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 26 13:21:16 EDT 2020
+    // Date:	Sun Apr 26 14:05:02 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -435,9 +435,6 @@
     $delete_list = NULL;
         // Set to list to be deleted.  Causes delete
 	// OK question.
-    $show_description = false;
-        // Set true if description of list being
-	// edited is to be shown.
     $compile_next = false;
     	// Set to cause first element of EPM_PROJECT
 	// CHECKED-PROBLEMS to be compiled.
@@ -810,7 +807,7 @@ EOT;
 	if ( $basename == '-' ) return NULL;
 
 	if ( $project == '-' )
-	    $d = "users/$uid/";
+	    $d = "users/$uid";
 	else
 	    $d = "projects/$project";
 	return "$d/+indices+/{$basename}.index";
@@ -1161,6 +1158,32 @@ EOT;
 	$fname = $upload['name'];
 	$errors_size = count ( $errors );
 
+	$ferror = $upload['error'];
+	if ( $ferror != 0 )
+	{
+	    switch ( $ferror )
+	    {
+		case UPLOAD_ERR_INI_SIZE:
+		case UPLOAD_ERR_FORM_SIZE:
+		    $errors[] = "$fname too large";
+		    break;
+		case UPLOAD_ERR_NO_FILE:
+		    $errors[] = "no file choosen;"
+			      . " try again";
+		    break;
+		case UPLOAD_ERR_PARTIAL:
+		    $errors[] = "$fname upload failed;"
+			      . " try again";
+		    break;
+		default:
+		    $e = "uploading $fname, PHP upload"
+		       . " error code $ferror";
+		    WARN ( $e );
+		    $errors[] = "EPM SYSTEM ERROR: $e";
+	    }
+	    return false;
+	}
+
 	$fext = pathinfo ( $fname, PATHINFO_EXTENSION );
 	$fbase = pathinfo ( $fname, PATHINFO_FILENAME );
 
@@ -1174,29 +1197,6 @@ EOT;
 	{
 	    $errors[] = "$fbase is not a legal"
 	              . " EPM name";
-	    return false;
-	}
-
-	$ferror = $upload['error'];
-	if ( $ferror != 0 )
-	{
-	    switch ( $ferror )
-	    {
-		case UPLOAD_ERR_INI_SIZE:
-		case UPLOAD_ERR_FORM_SIZE:
-		    $errors[] = "$fname too large";
-		    break;
-		case UPLOAD_ERR_PARTIAL:
-		case UPLOAD_ERR_NO_FILE:
-		    $errors[] = "$fname upload failed;"
-			      . " try again";
-		    break;
-		default:
-		    $e = "uploading $fname, PHP upload"
-		       . " error code $ferror";
-		    WARN ( $e );
-		    $errors[] = "EPM SYSTEM ERROR: $e";
-	    }
 	    return false;
 	}
 
@@ -1241,7 +1241,9 @@ EOT;
     //
     function read_list_description ( $filename )
     {
-	$c = @file_get_contents
+        global $epm_data;
+
+	$c = file_get_contents
 	    ( "$epm_data/$filename" );
 	if ( $c === false ) return '';
 
@@ -1254,6 +1256,7 @@ EOT;
 	foreach ( $c as $line )
 	{
 	    $line = rtrim ( $line );
+	    DEBUG ( "LINE $line" );
 	    if ( $line == '' )
 	    {
 	        if ( ! $in_description )
@@ -2158,22 +2161,15 @@ EOT;
 	    $list = $_POST['selected-list'];
 
 	    if ( ! in_array ( $op, ['push', 'pull',
-	                            'edit', 'publish',
-				    'show-description']
+	                            'edit', 'publish']
 			    ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
-	    if ( $op = 'show-description' )
-	    {
-	        $op = 'edit';
-		$data['OP'] = $op;
-		$data['LIST'] = $list;
-		$show_description = true;
-	    }
-	    elseif ( $op == 'publish' )
+	    if ( $op == 'publish' )
 	    {
 		$op = NULL;
 		$data['OP'] = $op;
+		// TBD
 	    }
 	    elseif ( $list == '+favorites+'
 		     &&
@@ -2215,7 +2211,6 @@ EOT;
 
 		$op = 'edit';
 		$data['OP'] = $op;
-		$show_description = true;
 	    }
 	}
 	elseif ( ! isset ( $op ) )
@@ -2449,6 +2444,18 @@ EOT;
     }
     div.push-pull-list, div.edit-list {
 	background-color: #F2D9D9;
+    }
+    div.list-description-header {
+	background-color: #FF8080;
+	text-align: center;
+	padding: 10px;
+    }
+    div.list-description {
+	background-color: #FFCCCC;
+    }
+    div.list-description p, div.list-description pre {
+        margin: 0px;
+        padding: 10px 0px 0px 10px;
     }
     span.problem-checkbox {
         height: 15px;
@@ -2780,11 +2787,33 @@ EOT;
 	        title='Publish Selected List'>
 	Publish List
 	</button>
+	<h5>or</h5>
 	<button type='submit'
-	        name='op' value='show-description'
-	        title='Show Selected List Description'>
-	Show Description
+	        name='op' value='add-to-favorites'
+	        title='$add_to_title'>
+	Add to Favorites
 	</button>
+	<br>
+	<label>
+	<h5>Select List:</h5>
+	<select name='selected-list'
+	        title='$select_title'>
+	$options
+	</select>
+	</label>
+	<pre> </pre>
+	<h5>Create New List:</h5>
+	<input type="text"
+	       size="24" name="basename"
+               placeholder="New List Name"
+	       id="create-list"
+	       title='$new_list_title'>
+	       <!-- Pressing the enter key here
+	            triggers the hidden input submit
+		    above.
+		-->
+	<pre> </pre>
+	<h5>or</h5>
 	<label>
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$epm_upload_maxsize">
@@ -2797,30 +2826,6 @@ EOT;
 	<input type="file" name="uploaded_file"
 	       title="$upload_file_title">
 	</label>
-	<br>
-	<label>
-	<h5>Select List:</h5>
-	<select name='selected-list'
-	        title='$select_title'>
-	$options
-	</select>
-	</label>
-	<h5>or Create New List:</h5>
-	<input type="text"
-	       size="24" name="basename"
-               placeholder="New List Name"
-	       id="create-list"
-	       title='$new_list_title'>
-	       <!-- Pressing the enter key here
-	            triggers the hidden input submit
-		    above.
-		-->
-	<h5>or</h5>
-	<button type='submit'
-	        name='op' value='add-to-favorites'
-	        title='$add_to_title'>
-	Add to Favorites
-	</button>
 	</form>
 EOT;
     }
@@ -3380,6 +3385,7 @@ EOT;
 	$is_read_only = 'false';
 	$delete_list_ok = false;
 	$stack_name = NULL;
+	$description = '';
 	if ( $list == '+favorites+' )
 	{
 	    $name = '<i>Favorites</i>';
@@ -3399,7 +3405,11 @@ EOT;
 		$is_read_only = 'true';
 	    }
 	    else
+	    {
 		$delete_list_ok = true;
+		$description = read_list_description
+		    ( listname_to_filename ( $list ) );
+	    }
 	    $name = "$project $basename";
 	    $stack = '+istack+';
 	    $stack_name = 'LIST Stack';
@@ -3495,6 +3505,7 @@ EOT;
 	</div>
 	</div>
 
+	<div>
 	<table id='stack-table'>
 	<tr class='edit-row'>
 	<th colspan=2><i>$stack_name</i></th></tr>
@@ -3505,7 +3516,21 @@ EOT;
 	<th colspan=2>$name</th></tr>
 	$list_rows
 	</table>
+	</div>
+EOT;
+	if ( $description != '' )
+	    echo <<<EOT
+	    <div style='display:table;clear:both'>
+	    </div>
+	    <div class='list-description-header'>
+	    <h5>$name Description</h5>
+	    </div>
+	    <div class='list-description'>
+	    $description
+	    </div>
+EOT;
 
+	echo <<<EOT
 	<script>
 
 	let is_read_only = $is_read_only;
