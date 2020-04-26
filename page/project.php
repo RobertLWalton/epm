@@ -1243,7 +1243,7 @@ EOT;
     {
         global $epm_data;
 
-	$c = file_get_contents
+	$c = @file_get_contents
 	    ( "$epm_data/$filename" );
 	if ( $c === false ) return '';
 
