@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 26 09:04:23 EDT 2020
+    // Date:	Sun Apr 26 13:21:16 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -435,6 +435,9 @@
     $delete_list = NULL;
         // Set to list to be deleted.  Causes delete
 	// OK question.
+    $show_description = false;
+        // Set true if description of list being
+	// edited is to be shown.
     $compile_next = false;
     	// Set to cause first element of EPM_PROJECT
 	// CHECKED-PROBLEMS to be compiled.
@@ -2155,12 +2158,27 @@ EOT;
 	    $list = $_POST['selected-list'];
 
 	    if ( ! in_array ( $op, ['push', 'pull',
-	                            'edit'] ) )
+	                            'edit', 'publish',
+				    'show-description']
+			    ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
-	    if ( $list == '+favorites+'
-		 &&
-		 ( $op == 'push' || $op == 'pull' ) )
+	    if ( $op = 'show-description' )
+	    {
+	        $op = 'edit';
+		$data['OP'] = $op;
+		$data['LIST'] = $list;
+		$show_description = true;
+	    }
+	    elseif ( $op == 'publish' )
+	    {
+		$op = NULL;
+		$data['OP'] = $op;
+	    }
+	    elseif ( $list == '+favorites+'
+		     &&
+		     ( $op == 'push' || $op == 'pull' )
+		   )
 	    {
 		$errors[] = "Favorites is not allowed"
 			  . " as a list of problems to"
@@ -2194,6 +2212,10 @@ EOT;
 	    {
 	        $list = $r;
 		$data['LIST'] = $list;
+
+		$op = 'edit';
+		$data['OP'] = $op;
+		$show_description = true;
 	    }
 	}
 	elseif ( ! isset ( $op ) )
