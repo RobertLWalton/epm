@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 26 05:12:29 EDT 2020
+    // Date:	Sun Apr 26 09:04:23 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -398,7 +398,7 @@
 	exit;
     }
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -1138,8 +1138,13 @@ EOT;
     // Write uploaded description.  Takes global $_FILES
     // value as input, extracts description, and writes
     // into list file.  Errors append to $errors and
-    // suppress write.  If list does not exist, a warning
-    // message is added to $warnings.
+    // suppress write.  If list does not exist, a
+    // warning message is added to $warnings.
+    //
+    // If successful, this function returns the listname
+    // of the list given the description, in the form
+    // '-:basename'.  If unsuccessful, false is
+    // returned.
     //
     function upload_list_description
 	    ( & $warnings, & $errors )
@@ -1147,10 +1152,11 @@ EOT;
         global $epm_data, $uid, $epm_name_re,
 	       $epm_upload_maxsize;
 
-        if ( ! isset ( $_FILE['uploaded_file'] ) )
+        if ( ! isset ( $_FILES['uploaded_file'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	$upload = & $_FILE['uploaded_file'];
+	$upload = & $_FILES['uploaded_file'];
 	$fname = $upload['name'];
+	$errors_size = count ( $errors );
 
 	$fext = pathinfo ( $fname, PATHINFO_EXTENSION );
 	$fbase = pathinfo ( $fname, PATHINFO_FILENAME );
@@ -1165,7 +1171,7 @@ EOT;
 	{
 	    $errors[] = "$fbase is not a legal"
 	              . " EPM name";
-	    return;
+	    return false;
 	}
 
 	$ferror = $upload['error'];
@@ -1188,7 +1194,7 @@ EOT;
 		    WARN ( $e );
 		    $errors[] = "EPM SYSTEM ERROR: $e";
 	    }
-	    return;
+	    return false;
 	}
 
 	$fsize = $upload['size'];
@@ -1197,7 +1203,7 @@ EOT;
 	    $errors[] =
 		"uploaded file $fname too large;" .
 		" limit is $epm_upload_maxsize";
-	    return;
+	    return false;
 	}
 
 	$ftmp_name = $upload['tmp_name'];
@@ -1208,20 +1214,23 @@ EOT;
 	       . " from temporary";
 	    $errors[] = "$m; try again";
 	    WARN ( "$m $ftmp_name" );
-	    return;
+	    return false;
 	}
 	$f = "users/$uid/+indices+/$fbase.index";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
 	    $warnings[] = "creating list $fbase which"
 	                . " does not previously exist";
-	    $errors_size = count ( $errors );
 	    make_new_list ( $fname, $errors );
 	    if ( count ( $errors ) > $errors_size )
-	        return;
+	        return false;
 	}
 
 	write_list_description ( $f, $dsc, $errors );
+	if ( count ( $errors ) > $errors_size )
+	    return false;
+	else
+	    return ( "-:$fbase" );
     }
 
     // Read list description and return it as as HTML.
@@ -2146,8 +2155,7 @@ EOT;
 	    $list = $_POST['selected-list'];
 
 	    if ( ! in_array ( $op, ['push', 'pull',
-	                            'edit',
-				    'upload'] ) )
+	                            'edit'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
 	    if ( $list == '+favorites+'
@@ -2175,6 +2183,16 @@ EOT;
 	    if ( count ( $errors ) == 0 )
 	    {
 		$list = "-:$basename";
+		$data['LIST'] = $list;
+	    }
+	}
+        elseif ( isset ( $_POST['upload'] ) )
+	{
+	    $r = upload_list_description
+		( $warnings, $errors );
+	    if ( $r !== false )
+	    {
+	        $list = $r;
 		$data['LIST'] = $list;
 	    }
 	}
@@ -2711,7 +2729,8 @@ EOT;
 	$add_to_title = 'Add to Favorites List of'
 	              . ' Lists to Select';
         echo <<<EOT
-	<form method='POST'>
+	<form method='POST'
+	      enctype='multipart/form-data'>
 	<input type='hidden' name='ID' value='$id'>
 	<input type='submit' name='create-list'
 	       value= ''
@@ -2748,7 +2767,7 @@ EOT;
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$epm_upload_maxsize">
 	<button type='submit'
-	        name='op' value='upload'
+	        name='upload' value='yes'
 	        title='$upload_title'>
 	Upload List Description
 	</button>
