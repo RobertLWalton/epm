@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 25 04:36:06 EDT 2020
+    // Date:	Sun Apr 26 05:12:29 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1080,7 +1080,8 @@ EOT;
 
     // Replace description in a list file.  Append
     // error instead if description contains < or >.
-    // Description is NOT changed or otherwise checked.
+    // Written description is NOT altered or otherwise
+    // checked.
     //
     function write_list_description
 	    ( $filename, $description, & $errors )
@@ -1132,6 +1133,95 @@ EOT;
 	         ( "$epm_data/$filename", $r );
 	if ( $r === false )
 	    ERROR ( "cannot write $filename" );
+    }
+
+    // Write uploaded description.  Takes global $_FILES
+    // value as input, extracts description, and writes
+    // into list file.  Errors append to $errors and
+    // suppress write.  If list does not exist, a warning
+    // message is added to $warnings.
+    //
+    function upload_list_description
+	    ( & $warnings, & $errors )
+    {
+        global $epm_data, $uid, $epm_name_re,
+	       $epm_upload_maxsize;
+
+        if ( ! isset ( $_FILE['uploaded_file'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$upload = & $_FILE['uploaded_file'];
+	$fname = $upload['name'];
+
+	$fext = pathinfo ( $fname, PATHINFO_EXTENSION );
+	$fbase = pathinfo ( $fname, PATHINFO_FILENAME );
+
+	if ( $fext != 'dsc' )
+	{
+	    $errors[] = "$fname has wrong extension"
+	              . " (should be .dsc)";
+	    return;
+	}
+	if ( ! preg_match ( $epm_name_re, $fbase ) )
+	{
+	    $errors[] = "$fbase is not a legal"
+	              . " EPM name";
+	    return;
+	}
+
+	$ferror = $upload['error'];
+	if ( $ferror != 0 )
+	{
+	    switch ( $ferror )
+	    {
+		case UPLOAD_ERR_INI_SIZE:
+		case UPLOAD_ERR_FORM_SIZE:
+		    $errors[] = "$fname too large";
+		    break;
+		case UPLOAD_ERR_PARTIAL:
+		case UPLOAD_ERR_NO_FILE:
+		    $errors[] = "$fname upload failed;"
+			      . " try again";
+		    break;
+		default:
+		    $e = "uploading $fname, PHP upload"
+		       . " error code $ferror";
+		    WARN ( $e );
+		    $errors[] = "EPM SYSTEM ERROR: $e";
+	    }
+	    return;
+	}
+
+	$fsize = $upload['size'];
+	if ( $fsize > $epm_upload_maxsize )
+	{
+	    $errors[] =
+		"uploaded file $fname too large;" .
+		" limit is $epm_upload_maxsize";
+	    return;
+	}
+
+	$ftmp_name = $upload['tmp_name'];
+	$dsc = @file_get_contents ( $ftmp_name );
+	if ( $dsc === false )
+	{
+	    $m = "cannot read uploaded file"
+	       . " from temporary";
+	    $errors[] = "$m; try again";
+	    WARN ( "$m $ftmp_name" );
+	    return;
+	}
+	$f = "users/$uid/+indices+/$fbase.index";
+	if ( ! file_exists ( "$epm_data/$f" ) )
+	{
+	    $warnings[] = "creating list $fbase which"
+	                . " does not previously exist";
+	    $errors_size = count ( $errors );
+	    make_new_list ( $fname, $errors );
+	    if ( count ( $errors ) > $errors_size )
+	        return;
+	}
+
+	write_list_description ( $f, $dsc, $errors );
     }
 
     // Read list description and return it as as HTML.
@@ -2056,12 +2146,13 @@ EOT;
 	    $list = $_POST['selected-list'];
 
 	    if ( ! in_array ( $op, ['push', 'pull',
-	                            'edit'] ) )
+	                            'edit',
+				    'upload'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
 	    if ( $list == '+favorites+'
 		 &&
-		 $op != 'edit' )
+		 ( $op == 'push' || $op == 'pull' ) )
 	    {
 		$errors[] = "Favorites is not allowed"
 			  . " as a list of problems to"
