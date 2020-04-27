@@ -2,22 +2,12 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 26 14:14:08 EDT 2020
+    // Date:	Mon Apr 27 10:10:02 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
-
-    if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
-         &&
-	 $_SESSION['EPM_RUN']['RESULT'] === true )
-    {
-	// Run still running.
-	//
-	header ( 'Location: /page/run.php' );
-	exit;
-    }
 
     // if ( ! isset ( $_POST['update'] ) ) // xhttp
     //     require "$epm_home/include/debug_info.php";

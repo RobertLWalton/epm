@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 26 21:15:51 EDT 2020
+    // Date:	Mon Apr 27 10:09:23 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -387,16 +387,6 @@
 
     
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
-
-    if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
-         &&
-	 $_SESSION['EPM_RUN']['RESULT'] === true )
-    {
-	// Run still running.
-	//
-	header ( 'Location: /page/run.php' );
-	exit;
-    }
 
     // require "$epm_home/include/debug_info.php";
 

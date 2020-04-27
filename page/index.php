@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Apr  5 14:22:20 EDT 2020
+// Date:    Mon Apr 27 15:37:45 EDT 2020
 
 // See page/parameters.php for EPM server setup
 // instructions.
@@ -78,6 +78,15 @@ else if ( ! isset ( $_SESSION['EPM_UID'] ) )
 	header ( 'Location: /page/user.php' );
 	exit;
     }
+}
+else if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
+         &&
+	 $_SESSION['EPM_RUN']['RESULT'] === true )
+{
+    // Run still running.
+    //
+    header ( 'Location: /page/run.php' );
+    exit;
 }
 else if ( $epm_self == "/index.php" )
 {

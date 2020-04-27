@@ -730,7 +730,7 @@
     //
     // Note that PROBLEM == '-' denotes the list of
     // problems in PROJECT, or if PROJECT is also '-',
-    // the list of the UID user's problems is denotes.
+    // the list of the UID user's problems is denoted.
     //
     function read_favorites ( $inmap = [] )
     {
