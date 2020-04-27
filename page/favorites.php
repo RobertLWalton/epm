@@ -1,0 +1,362 @@
+<?php
+
+    // File:	favorites.php
+    // Author:	Robert L Walton <walton@acm.org>
+    // Date:	Mon Apr 27 10:04:28 EDT 2020
+
+    // Edits +favorites+ list.  See project.php for
+    // file formats.
+
+    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+
+    // require "$epm_home/include/debug_info.php";
+
+    $uid = $_SESSION['EPM_UID'];
+    $email = $_SESSION['EPM_EMAIL'];
+
+    require "$epm_home/include/epm_list.php";
+
+    $method = $_SERVER['REQUEST_METHOD'];
+    if ( $method != 'GET' && $method != 'POST' )
+        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
+
+    if ( $method == 'GET' )
+        $_SESSION['EPM_FAVORITES'] = [];
+    elseif ( ! isset ( $_SESSION['EPM_FAVORITES'] ) )
+        exit ( 'UNACCEPTABLE HTTP POST' );
+    $data = & $_SESSION['EPM_FAVORITES'];
+
+    if ( $method == 'GET' )
+        /* Do nothing */;
+    elseif ( ! isset ( $_POST['ID'] ) )
+        exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( $_POST['ID'] != $data['ID'] )
+        exit ( 'UNACCEPTABLE HTTP POST' );
+
+    $data['ID'] = bin2hex ( random_bytes ( 16 ) );
+    $id = $data['ID'];
+
+    $errors = [];    // Error messages to be shown.
+    $warnings = [];  // Warning messages to be shown.
+
+    if ( $method == 'POST' )
+    {
+        if ( !isset ( $_POST['favorites'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$list = $data['LIST'];
+	$count = count ( $list );
+	$flist = [];
+	$favs = explode ( ',', $_POST['favorites'] );
+	foreach ( $favs as $index )
+	{
+	    if ( $index == '' ) continue;
+	    if ( ! preg_match ( '/\d+/', $index ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( $index >= $count )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $flist[] = $list[$index];
+	}
+	write_file_list
+	    ( "users/$uid/+indices+/+favorites+",
+	      $flist );
+    }
+
+    $time = strftime ( $epm_time_format );
+
+    function append_listnames
+	    ( & $inmap, $time, $project, $dirname )
+    {
+	global $epm_data;
+
+        $fnames = @scandir ( "$epm_data/$dirname" );
+	if ( $fnames === false ) return;
+	foreach ( $fnames as $fname )
+	{
+	    $ext = pathinfo
+	        ( $fname, PATHINFO_EXTENSION );
+	    if ( $ext != 'index' ) continue;
+	    $basename = pathinfo
+	        ( $fname, PATHINFO_FILENAME );
+	    $inmap["$project:$basename"] = $time;
+	}
+    }
+
+    $inmap = [];
+    append_listnames
+        ( $inmap, $time, '-', "users/$uid/+indices+" );
+    $projects = read_projects ( 'index|push|pull' );
+    foreach ( $projects as $project )
+        append_listnames
+	    ( $inmap, $time, $project,
+	      "/projects/$project/+indices+" );
+
+    $favorites = read_file_list
+        ( "users/$uid/+indices+/+favorites+" );
+
+    // Build $fmap containing list of all lists
+    // in the form PROJECT:BASENAME => TIME.  The
+    // first elements are taken from the +favorites+
+    // file, excluding names of lists that no longer
+    // exist.  There are $fcount such elements, and
+    // these will be marked initially as being in the
+    // `Favorites'.
+    //
+    $fmap = [];
+    $fcount = 0;
+    foreach ( $favorites as $e )
+    {
+        list ( $time, $project, $basename ) = $e;
+	$key = "$project:$basename";
+	if ( ! isset ( $inmap[$key] ) ) continue;
+	$fmap[$key] = $time;
+	++ $fcount;
+    }
+    foreach ( $inmap as $key => $time )
+    {
+        if ( ! isset ( $fmap[$key] ) )
+	    $fmap[$key] = $time;
+    }
+
+    $data['LIST'] = [];
+    $list = & $data['LIST'];
+    foreach ( $fmap as $key => $time )
+    {
+        list ( $project, $basename ) = $key;
+	$list[] = [$time, $project, $basename];
+    }
+
+?>
+
+<html>
+<head>
+<style>
+    @media screen and ( max-width: 1365px ) {
+	:root {
+	    --font-size: 1.1vw;
+	    --large-font-size: 1.3vw;
+	}
+    }
+    @media screen and ( min-width: 1366px ) {
+	:root {
+	    --font-size: 16px;
+	    --large-font-size: 20px;
+	    width: 1366px;
+	    font-size: var(--font-size);
+	    overflow: scroll;
+	}
+    }
+    h5 {
+        font-size: var(--large-font-size);
+	margin: 0 0 0 0;
+	display:inline;
+    }
+    pre, form {
+	display:inline;
+        font-size: var(--font-size);
+    }
+    input, button, select {
+	border-width: 2px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px 3px 2px 3px;
+	display:inline;
+        font-size: var(--font-size);
+    }
+    span.problem {
+	display:inline;
+        font-size: var(--large-font-size);
+    }
+    pre {
+	font-family: "Courier New", Courier, monospace;
+    }
+    div.errors, div.notices {
+	background-color: #F5F81A;
+    }
+    div.warnings {
+	background-color: #FFC0FF;
+    }
+    div.manage {
+	background-color: #96F9F3;
+	padding-bottom: 5px;
+	padding-top: 5px;
+    }
+    div.favorites-title {
+	background-color: #FFC0FF;
+	text-align: center;
+	width: 100%;
+	padding: 10px 0px 10px 0px;
+        font-size: var(--large-font-size);
+    }
+    div.list-description-header {
+	background-color: #FF8080;
+	text-align: center;
+	width: 100%;
+	padding: 10px 0px 10px 0px;
+        font-size: var(--large-font-size);
+    }
+    div.list-description {
+	background-color: #FFCCCC;
+    }
+    div.list-description p, div.list-description pre {
+        margin: 0px;
+        padding: 10px 0px 0px 10px;
+    }
+    span.checkbox {
+        height: 15px;
+        width: 30px;
+	display: inline-block;
+	margin-right: 3px;
+	border: 1px solid;
+	border-radius: 7.5px;
+    }
+
+</style>
+
+<script>
+var LOG = function(message) {};
+<?php if ( $epm_debug )
+          echo "LOG = console.log;" . PHP_EOL ?>
+
+function FAIL ( message )
+{
+    // Alert must be scheduled as separate task.
+    //
+    LOG ( "call to FAIL: " + message );
+<?php
+    if ( $epm_debug )
+        echo <<<'EOT'
+	    setTimeout ( function () {
+		alert ( message );
+		window.location.reload ( true );
+	    });
+EOT;
+    else
+        echo <<<'EOT'
+	    throw "CALL TO FAIL: " + message;
+EOT;
+?>
+}
+</script>
+
+</head>
+
+<?php 
+
+    if ( count ( $errors ) > 0 )
+    {
+	echo "<div class='errors'>";
+	echo "<h5>Errors:</h5>";
+	echo "<div class='indented'>";
+	foreach ( $errors as $e )
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
+    }
+    if ( count ( $warnings ) > 0 )
+    {
+	echo "<div class='warnings'>";
+	echo "<h5>Warnings:</h5>";
+	echo "<div class='indented'>";
+	foreach ( $warnings as $e )
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
+    }
+
+    $favorites_help = HELP ( 'favorites-page' );
+    echo <<<EOT
+    <div class='manage'>
+    <form>
+    <table style='width:100%'>
+    <tr>
+    <td>
+    <label>
+    <h5>User:</h5> <input type='submit' value='$email'
+		    formaction='user.php'
+		    formmethod='GET'
+                    title='Click to See User Profile'>
+    </label>
+    </td>
+    <td>
+    <button type='button'
+	    formaction='favorites.php'
+	    formmethod='POST'
+	    onclick='SUBMIT("update")'>
+	    Update</button>
+    <button type='button'
+	    formaction='favorites.php'
+	    formmethod='POST'
+	    onclick='SUBMIT("finish")'>
+	    Finish</button>
+    <button type='submit'
+	    formaction='project.php'
+	    formmethod='GET'>
+	    Cancel</button>
+    </form>
+
+    <form method='POST' action='favorites.php'
+	  id='submit-form'>
+    <input type='hidden' name='ID' value='$id'>
+    <input type='hidden' name='goto' id='goto'>
+    <input type='hidden' name='indices'
+	   id='indices'>
+    </form>
+    </td>
+    <td>
+    </td><td style='text-align:right'>
+    $favorites_help</td>
+    </tr>
+    </table>
+    </form>
+    <div class='favorites-title'
+         ondrop='DROP(event)'
+	 ondragover='ALLOWDROP(event)'>
+         Favorites</div>
+    <div id='list'>
+EOT;
+    $c = 0;
+    foreach ( $list as $e )
+    {
+        list ( $time, $project, $basename ) = $e;
+	$listname = "$project:$basename";
+	$filename = listname_to_filename ( $listname );
+	$description = '';
+	if ( isset ( $filename ) )
+	    $description = read_list_description
+	        ( $filename );
+	if ( $project == '-' )
+	    $project = '<i>Your</i>';
+	if ( $basename = '-' )
+	    $basename = '<i>Problems<i>';
+	echo <<<EOT
+	<div id='$c'
+	     draggable='true'
+	     ondragstart='DRAGSTART(event,$c)'>
+	<table style='width:100%'
+	       class='list-description-header'>
+	<tr>
+	<td style='width:10%;text-align:right'>
+	<span class='checkbox'
+	      onclick='CHECK(this,"$c")'>&nbsp;
+	      </span></td>
+	<td style='width:80%;text-align:center'>
+	    $name</td>
+	</tr></table>
+EOT;
+        if ( $description != '' )
+	    echo <<<EOT
+	    <div class='list-description'>
+	    $description
+	    </div>
+EOT;
+
+	echo <<<EOT
+	</div>
+EOT;
+    }
+
+?>
+
+<script>
+
+</script>
+
+</body>
+</html>

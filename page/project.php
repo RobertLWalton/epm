@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 27 10:09:23 EDT 2020
+    // Date:	Mon Apr 27 16:56:42 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1914,8 +1914,8 @@ EOT;
 	$upload_file_title = 'Selected List Description'
 	                   . ' (.des) File to be'
 			   . ' Uploaded';
-	$add_to_title = 'Add to Favorites List of'
-	              . ' Lists to Select';
+	$edit_favorites_title = 'Edit Favorites List of'
+	                      . ' Lists to Select';
         echo <<<EOT
 	<form method='POST'
 	      enctype='multipart/form-data'>
@@ -1948,9 +1948,10 @@ EOT;
 	</button>
 	<h5>or</h5>
 	<button type='submit'
-	        name='op' value='add-to-favorites'
-	        title='$add_to_title'>
-	Add to Favorites
+	        formaction='favorites.php'
+		formmethod='GET'
+	        title='$edit_favorites_title'>
+	Edit Favorites
 	</button>
 	<br>
 	<label>
