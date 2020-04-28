@@ -2,14 +2,14 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 16:55:53 EDT 2020
+    // Date:	Tue Apr 28 17:32:47 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -47,27 +47,30 @@
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
         $goto = $_POST['goto'];
-	if ( $goto == 'cancel' )
+	if ( $goto == 'finish' || $goto == 'update' )
+	{
+	    $list = $data['LIST'];
+	    $count = count ( $list );
+	    $flist = [];
+	    $favs = explode ( ':', $_POST['indices'] );
+	    foreach ( $favs as $index )
+	    {
+		if ( $index == '' ) continue;
+		if ( ! preg_match ( '/\d+/', $index ) )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		if ( $index >= $count )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		$flist[] = $list[$index];
+	    }
+	    write_file_list
+		( "users/$uid/+indices+/+favorites+",
+		  $flist );
+	}
+	if ( $goto == 'finish' || $goto == 'cancel' )
 	{
 	    header ( 'Location: /page/project.php' );
 	    exit;
 	}
-	$list = $data['LIST'];
-	$count = count ( $list );
-	$flist = [];
-	$favs = explode ( ',', $_POST['favorites'] );
-	foreach ( $favs as $index )
-	{
-	    if ( $index == '' ) continue;
-	    if ( ! preg_match ( '/\d+/', $index ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( $index >= $count )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $flist[] = $list[$index];
-	}
-	write_file_list
-	    ( "users/$uid/+indices+/+favorites+",
-	      $flist );
     }
 
     function append_listnames
@@ -321,6 +324,9 @@ EOT;
     <button type='button'
 	    onclick='SUBMIT("cancel")'>
 	    Cancel</button>
+    <button type='button'
+	    onclick='SUBMIT("reset")'>
+	    Reset</button>
     </form>
 
     <form method='POST' action='favorites.php'
@@ -441,18 +447,27 @@ EOT;
 	let src = document.getElementById ( id );
 	let next = des.nextElementSibling;
 	let src_box = BOXFROMDIV ( src );
-	if ( next == null )
+	if ( des == lists.firstElement )
 	{
-	    if ( lists.firstElement != des )
-		src_box.style.backgroundColor =
-		    BOXFROMDIV(des).style
-		                   .backgroundColor;
+	    src_box.style.backgroundColor =
+	        BOXFROMDIV(next).style.backgroundColor;
+	    lists.insertBefore ( src, next );
+	}
+	else if ( next == null )
+	{
+	    src_box.style.backgroundColor =
+	        BOXFROMDIV(des).style.backgroundColor;
 	    lists.appendChild ( src );
 	}
 	else
 	{
-	    src_box.style.backgroundColor =
+	    let des_color =
+	        BOXFROMDIV(des).style.backgroundColor;
+	    let next_color =
 	        BOXFROMDIV(next).style.backgroundColor;
+	    if ( des_color == next_color )
+		src_box.style.backgroundColor =
+		    des_color;
 	    lists.insertBefore ( src, next );
 	}
     }
@@ -490,6 +505,19 @@ EOT;
 
     function SUBMIT ( to )
     {
+	var list = [];
+	for ( var i = 1; i < lists.children.length;
+	                 ++ i )
+	{
+	    let div = lists.children[i];
+	    let color = BOXFROMDIV(div).style
+	                               .backgroundColor;
+	    if ( color == on )
+	        list.push ( div.id );
+	    else
+	        break;
+	}
+	indices.value = list.join ( ':' );
         goto.value = to;
 	submit_form.submit();
     }
