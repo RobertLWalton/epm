@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 17:45:42 EDT 2020
+    // Date:	Tue Apr 28 18:05:04 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1885,11 +1885,11 @@ EOT;
 	$pull_title = 'Pull Problems in Selected'
 	            . ' List from Projects';
 	$edit_list_title = 'Edit Selected List';
-	$select_title = 'Favorites List of Lists of'
-	              . ' Problems to Push or Pull'
-		      . ' or Lists to Edit';
-	$new_list_title = 'New List of'
-	              . ' Problems to Push or Pull';
+	$select_title = 'Lists of'
+	              . ' Problems to Push, Pull,'
+		      . ' Edit, or Publish;'
+		      . ' Favorites are First';
+	$new_list_title = 'New List of Problems';
 	$upload_title = 'Upload Selected List'
 	              . ' Description (.des) File';
 	$upload_file_title = 'Selected List Description'
