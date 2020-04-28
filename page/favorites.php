@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 04:20:16 EDT 2020
+    // Date:	Tue Apr 28 05:11:34 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -62,9 +62,9 @@
     }
 
     function append_listnames
-	    ( & $inmap, $time, $project, $dirname )
+	    ( & $inmap, $project, $dirname )
     {
-	global $epm_data;
+	global $epm_data, $epm_time_format;
 
         $fnames = @scandir ( "$epm_data/$dirname" );
 	if ( $fnames === false ) return;
@@ -75,18 +75,31 @@
 	    if ( $ext != 'index' ) continue;
 	    $basename = pathinfo
 	        ( $fname, PATHINFO_FILENAME );
-	    $inmap["$project:$basename"] = $time;
+	    $time = @filemtime
+	        ( "$epm_data/$dirname/$fname" );
+	    if ( $time === false )
+	        $time = time();
+	    $inmap["$project:$basename"] =
+	        strftime ( $epm_time_format, $time );
 	}
     }
 
+    // Build $inmap containing list of all lists
+    // in the form PROJECT:BASENAME => TIME.  Lists
+    // of problems with BASENAME = '-' are first.
+    //
+
     $inmap = [];
     $time = strftime ( $epm_time_format );
-    append_listnames
-        ( $inmap, $time, '-', "users/$uid/+indices+" );
+    $inmap["-:-"] = $time;
     $projects = read_projects ( 'index|push|pull' );
     foreach ( $projects as $project )
+        $inmap["$project:-"] = $time;
+    append_listnames
+        ( $inmap, '-', "users/$uid/+indices+" );
+    foreach ( $projects as $project )
         append_listnames
-	    ( $inmap, $time, $project,
+	    ( $inmap, $project,
 	      "/projects/$project/+indices+" );
 
     $favorites = read_file_list
@@ -98,7 +111,8 @@
     // file, excluding names of lists that no longer
     // exist.  There are $fcount such elements, and
     // these will be marked initially as being in the
-    // `Favorites'.
+    // `Favorites'.  TIMEs are mod times of the list
+    // files, taken from $inmap.
     //
     $fmap = [];
     $fcount = 0;
@@ -107,7 +121,7 @@
         list ( $time, $project, $basename ) = $e;
 	$key = "$project:$basename";
 	if ( ! isset ( $inmap[$key] ) ) continue;
-	$fmap[$key] = $time;
+	$fmap[$key] = $inmap[$key];
 	++ $fcount;
     }
     foreach ( $inmap as $key => $time )
