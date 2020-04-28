@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 12:25:24 EDT 2020
+    // Date:	Tue Apr 28 16:55:53 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -413,6 +413,16 @@ EOT;
     let goto = document.getElementById ( 'goto' );
     let indices = document.getElementById ( 'indices' );
 
+    function BOXFROMDIV ( div )
+    {
+	let table = div.firstElementChild;
+	let tbody = table.firstElementChild;
+	let tr = tbody.firstElementChild;
+	let td = tr.firstElementChild;
+	let span = td.firstElementChild;
+	return span;
+    }
+
     function DRAGSTART ( event, c )
     {
         event.dataTransfer.setData ( "id", c );
@@ -429,11 +439,22 @@ EOT;
 	while ( des.tagName != 'DIV' )
 	    des = des.parentElement;
 	let src = document.getElementById ( id );
-	let next = des.nextSibling;
+	let next = des.nextElementSibling;
+	let src_box = BOXFROMDIV ( src );
 	if ( next == null )
+	{
+	    if ( lists.firstElement != des )
+		src_box.style.backgroundColor =
+		    BOXFROMDIV(des).style
+		                   .backgroundColor;
 	    lists.appendChild ( src );
+	}
 	else
+	{
+	    src_box.style.backgroundColor =
+	        BOXFROMDIV(next).style.backgroundColor;
 	    lists.insertBefore ( src, next );
+	}
     }
 
     function CHECK ( event, c )
@@ -450,12 +471,8 @@ EOT;
 	        des = des.nextElementSibling;
 		if ( des == null ) break;
 
-		let table = des.firstElementChild;
-		let tbody = table.firstElementChild;
-		let tr = tbody.firstElementChild;
-		let td = tr.firstElementChild;
-		let span = td.firstElementChild;
-		if ( span.style.backgroundColor == off )
+		let box = BOXFROMDIV ( des );
+		if ( box.style.backgroundColor == off )
 		    break;
 	    }
 	    if ( des == null )
