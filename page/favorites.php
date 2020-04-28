@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 05:36:30 EDT 2020
+    // Date:	Tue Apr 28 11:00:16 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -375,7 +375,7 @@ EOT;
 	<tr>
 	<td style='width:10%;text-align:left'>
 	<span class='checkbox'
-	      onclick='CHECK(this,"$c")'
+	      onclick='CHECK(event,"$c")'
 	      style='background-color:$switch'>
 	      &nbsp;
 	      </span></td>
@@ -403,8 +403,8 @@ EOT;
 <script>
 
     let lists = document.getElementById ( 'lists' );
-    let off = '$off';
-    let on = '$on';
+    let off = 'transparent';
+    let on = 'black';
 
     function DRAGSTART ( event, c )
     {
@@ -421,13 +421,47 @@ EOT;
 	let des = event.target;
 	while ( des.tagName != 'DIV' )
 	    des = des.parentElement;
-	console.log ( 'TAG ' + des.tagName );
 	let src = document.getElementById ( id );
 	let next = des.nextSibling;
 	if ( next == null )
 	    lists.appendChild ( src );
 	else
 	    lists.insertBefore ( src, next );
+    }
+
+    function CHECK ( event, c )
+    {
+        event.preventDefault();
+	let checkbox = event.target;
+	let src = document.getElementById ( c );
+	if ( checkbox.style.backgroundColor == on )
+	{
+	    checkbox.style.backgroundColor = off;
+	    var des = src;
+	    while ( true )
+	    {
+	        des = des.nextElementSibling;
+		if ( des == null ) break;
+
+		let table = des.firstElementChild;
+		let tbody = table.firstElementChild;
+		let tr = tbody.firstElementChild;
+		let td = tr.firstElementChild;
+		let span = td.firstElementChild;
+		if ( span.style.backgroundColor == off )
+		    break;
+	    }
+	    if ( des == null )
+	        lists.appendChild ( src );
+	    else
+	        lists.insertBefore ( src, des );
+	}
+	else
+	{
+	     des = lists.children[1];
+	     checkbox.style.backgroundColor = on;
+	     lists.insertBefore ( src, des );
+	}
     }
 
 </script>
