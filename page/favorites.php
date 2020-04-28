@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 27 10:04:28 EDT 2020
+    // Date:	Tue Apr 28 03:08:48 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -61,8 +61,6 @@
 	      $flist );
     }
 
-    $time = strftime ( $epm_time_format );
-
     function append_listnames
 	    ( & $inmap, $time, $project, $dirname )
     {
@@ -82,6 +80,7 @@
     }
 
     $inmap = [];
+    $time = strftime ( $epm_time_format );
     append_listnames
         ( $inmap, $time, '-', "users/$uid/+indices+" );
     $projects = read_projects ( 'index|push|pull' );
@@ -121,7 +120,8 @@
     $list = & $data['LIST'];
     foreach ( $fmap as $key => $time )
     {
-        list ( $project, $basename ) = $key;
+        list ( $project, $basename ) =
+	    explode ( ':', $key );
 	$list[] = [$time, $project, $basename];
     }
 
@@ -181,24 +181,36 @@
     }
     div.favorites-title {
 	background-color: #FFC0FF;
+	border-radius: 10px;
 	text-align: center;
 	width: 100%;
 	padding: 10px 0px 10px 0px;
         font-size: var(--large-font-size);
     }
-    div.list-description-header {
-	background-color: #FF8080;
+    div.lists {
+	background-color: white;
+	margin: 0px;
+    }
+    div.list {
+	background-color: #FFB0B0;
+	border: 1px solid black;
+	border-radius: 10px;
+	border-collapse: collapse;
+    }
+    table.list-description-header {
 	text-align: center;
 	width: 100%;
-	padding: 10px 0px 10px 0px;
+	padding: 2px;
         font-size: var(--large-font-size);
     }
     div.list-description {
 	background-color: #FFCCCC;
+	margin-left: 20px;
+        font-size: var(--font-size);
     }
     div.list-description p, div.list-description pre {
         margin: 0px;
-        padding: 10px 0px 0px 10px;
+        padding: 5px 0px 5px 10px;
     }
     span.checkbox {
         height: 15px;
@@ -305,11 +317,12 @@ EOT;
     </tr>
     </table>
     </form>
+    </div>
     <div class='favorites-title'
          ondrop='DROP(event)'
 	 ondragover='ALLOWDROP(event)'>
          Favorites</div>
-    <div id='list'>
+    <div id='lists' class='lists'>
 EOT;
     $c = 0;
     foreach ( $list as $e )
@@ -323,21 +336,26 @@ EOT;
 	        ( $filename );
 	if ( $project == '-' )
 	    $project = '<i>Your</i>';
-	if ( $basename = '-' )
+	if ( $basename == '-' )
 	    $basename = '<i>Problems<i>';
+	else
+	    $basename = preg_replace
+	        ( '/-/', ' ', $basename );
+	$time = substr ( $time, 0, 10 );
+
 	echo <<<EOT
-	<div id='$c'
+	<div id='$c' class='list'
 	     draggable='true'
 	     ondragstart='DRAGSTART(event,$c)'>
 	<table style='width:100%'
 	       class='list-description-header'>
 	<tr>
-	<td style='width:10%;text-align:right'>
+	<td style='width:10%;text-align:left'>
 	<span class='checkbox'
 	      onclick='CHECK(this,"$c")'>&nbsp;
 	      </span></td>
 	<td style='width:80%;text-align:center'>
-	    $name</td>
+	    $project $basename $time</td>
 	</tr></table>
 EOT;
         if ( $description != '' )
@@ -351,6 +369,9 @@ EOT;
 	</div>
 EOT;
     }
+    echo <<<EOT
+    </div>
+EOT;
 
 ?>
 
