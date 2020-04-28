@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 27 16:56:42 EDT 2020
+    // Date:	Tue Apr 28 17:45:42 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -198,16 +198,12 @@
     // the UID user's problems.  The user may edit this
     // in the same manner as the user edits lists.
     //
-    // Lastly there are two stacks used in editing:
+    // Lastly there is a stack used in editing:
     //
-    //	    users/UID/+indices+/+fstack+
-    //	    users/UID/+indices+/+istack+
+    //	    users/UID/+indices+/+stack+
     //
-    // +fstack+ is the favorites stack and contains
-    // lines copied from or to be copied to the
-    // +favorites+ file.  +istack+ is the index stack
-    // and contains non-description lines copied from
-    // or to be copied to indices.
+    // +stack+ contains non-description lines copied
+    // from or to be copied to indices.
 
     // Session Data
     // ------- ----
@@ -1274,9 +1270,7 @@ EOT;
 	$bound = count ( $elements );
 
 	$fname = listname_to_filename ( $list );
-	$sname = listname_to_filename
-	    ( $list == '+favorites+' ?
-	      '+fstack+' : '+istack+' );
+	$sname = listname_to_filename ( '+stack+' );
 
 	$indices = $_POST['stack'];
 	$indices = ( $indices == '' ? [] :
@@ -1329,17 +1323,6 @@ EOT;
 		$op = NULL;
 		$data['OP'] = $op;
 		// TBD
-	    }
-	    elseif ( $list == '+favorites+'
-		     &&
-		     ( $op == 'push' || $op == 'pull' )
-		   )
-	    {
-		$errors[] = "Favorites is not allowed"
-			  . " as a list of problems to"
-			  . " $op";
-		$op = NULL;
-		$data['OP'] = $op;
 	    }
 	    else
 	    {
@@ -1896,9 +1879,7 @@ EOT;
 EOT;
     if ( $op == NULL )
     {
-	$options = favorites_to_options ( 'pull|push' )
-	         . "<option value='+favorites+'>"
-		 . "Favorites</option>";
+	$options = favorites_to_options ( 'pull|push' );
 	$push_title = 'Push Problems in Selected'
 	            . ' List to Projects';
 	$pull_title = 'Pull Problems in Selected'
@@ -2544,42 +2525,30 @@ EOT;
 	    ( $elements, listname_to_list ( $list ) );
 	$is_read_only = 'false';
 	$delete_list_ok = false;
-	$stack_name = NULL;
 	$description = '';
-	if ( $list == '+favorites+' )
+
+	list ( $project, $basename ) =
+	    explode ( ':', $list );
+	if ( $project == '-' )
+	    $project = '<i>Your</i>';
+	if ( $basename == '-' )
 	{
-	    $name = '<i>Favorites</i>';
-	    $stack = '+fstack+';
-	    $stack_name = 'Favorites Stack';
+	    $basename =
+		'<i>Problems</i> (read-only)';
+	    $is_read_only = 'true';
 	}
 	else
 	{
-	    list ( $project, $basename ) =
-		explode ( ':', $list );
-	    if ( $project == '-' )
-		$project = '<i>Your</i>';
-	    if ( $basename == '-' )
-	    {
-		$basename =
-		    '<i>Problems</i> (read-only)';
-		$is_read_only = 'true';
-	    }
-	    else
-	    {
-		$delete_list_ok = true;
-		$description = read_list_description
-		    ( listname_to_filename ( $list ) );
-	    }
-	    $name = "$project $basename";
-	    $stack = '+istack+';
-	    $stack_name = 'LIST Stack';
+	    $delete_list_ok = true;
+	    $description = read_list_description
+		( listname_to_filename ( $list ) );
 	}
-	$stack_rows = list_to_edit_rows
-	    ( $elements, listname_to_list ( $stack ) );
+	$name = "$project $basename";
 
-	$options = favorites_to_options ( 'pull|push' )
-	         . "<option value='+favorites+'>"
-		 . "Favorites</option>";
+	$stack_rows = list_to_edit_rows
+	    ( $elements, listname_to_list ( '+stack+' ) );
+
+	$options = favorites_to_options ( 'pull|push' );
 
 	$finish_title = 'Save Changes and Return to'
 	              . ' Project Page';
@@ -2668,7 +2637,7 @@ EOT;
 	<div>
 	<table id='stack-table'>
 	<tr class='edit-row'>
-	<th colspan=2><i>$stack_name</i></th></tr>
+	<th colspan=2><i>Stack</i></th></tr>
 	$stack_rows
 	</table>
 	<table id='list-table'>

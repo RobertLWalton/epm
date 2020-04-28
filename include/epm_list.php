@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 27 02:23:38 EDT 2020
+    // Date:	Tue Apr 28 17:51:04 EDT 2020
 
     // Functions for managing lists.
 
@@ -221,8 +221,7 @@
     //		PROJECT:-
     //		PROJECT:BASENAME
     //		+favorites+
-    //		+istack+
-    //		+fstack+
+    //		+stack+
     //
     // return the file name of the list relative to
     // $epm_data.  Return NULL if the name is of
