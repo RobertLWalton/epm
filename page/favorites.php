@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 11:00:16 EDT 2020
+    // Date:	Tue Apr 28 12:25:24 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -41,8 +41,17 @@
 
     if ( $method == 'POST' )
     {
-        if ( !isset ( $_POST['favorites'] ) )
+        if ( !isset ( $_POST['goto'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
+        if ( !isset ( $_POST['indices'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+
+        $goto = $_POST['goto'];
+	if ( $goto == 'cancel' )
+	{
+	    header ( 'Location: /page/project.php' );
+	    exit;
+	}
 	$list = $data['LIST'];
 	$count = count ( $list );
 	$flist = [];
@@ -289,31 +298,28 @@ EOT;
     $favorites_help = HELP ( 'favorites-page' );
     echo <<<EOT
     <div class='manage'>
-    <form>
     <table style='width:100%'>
     <tr>
     <td>
+    <form>
     <label>
     <h5>User:</h5> <input type='submit' value='$email'
 		    formaction='user.php'
 		    formmethod='GET'
                     title='Click to See User Profile'>
     </label>
+    </form>
     </td>
     <td>
+    <form>
     <button type='button'
-	    formaction='favorites.php'
-	    formmethod='POST'
 	    onclick='SUBMIT("update")'>
 	    Update</button>
     <button type='button'
-	    formaction='favorites.php'
-	    formmethod='POST'
 	    onclick='SUBMIT("finish")'>
 	    Finish</button>
-    <button type='submit'
-	    formaction='project.php'
-	    formmethod='GET'>
+    <button type='button'
+	    onclick='SUBMIT("cancel")'>
 	    Cancel</button>
     </form>
 
@@ -330,7 +336,6 @@ EOT;
     $favorites_help</td>
     </tr>
     </table>
-    </form>
     </div>
 
     <div id='lists' class='lists'>
@@ -396,15 +401,17 @@ EOT;
     }
     echo <<<EOT
     </div>
-EOT;
 
-?>
-
-<script>
+    <script>
 
     let lists = document.getElementById ( 'lists' );
     let off = 'transparent';
     let on = 'black';
+
+    let submit_form = document.getElementById
+	( 'submit-form' );
+    let goto = document.getElementById ( 'goto' );
+    let indices = document.getElementById ( 'indices' );
 
     function DRAGSTART ( event, c )
     {
@@ -464,7 +471,16 @@ EOT;
 	}
     }
 
-</script>
+    function SUBMIT ( to )
+    {
+        goto.value = to;
+	submit_form.submit();
+    }
+
+    </script>
+EOT;
+
+?>
 
 </body>
 </html>
