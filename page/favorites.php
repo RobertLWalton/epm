@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 05:11:34 EDT 2020
+    // Date:	Tue Apr 28 05:36:30 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -340,6 +340,8 @@ EOT;
 	 ondragover='ALLOWDROP(event)'>
          Favorites</div>
 EOT;
+    $off = 'transparent';
+    $on = 'black';
     $c = -1;
     foreach ( $list as $e )
     {
@@ -360,6 +362,8 @@ EOT;
 	        ( '/-/', ' ', $basename );
 	$time = substr ( $time, 0, 10 );
 
+	$switch = ( $c < $fcount ? $on : $off );
+
 	echo <<<EOT
 	<div id='$c' class='list'
 	     draggable='true'
@@ -371,7 +375,9 @@ EOT;
 	<tr>
 	<td style='width:10%;text-align:left'>
 	<span class='checkbox'
-	      onclick='CHECK(this,"$c")'>&nbsp;
+	      onclick='CHECK(this,"$c")'
+	      style='background-color:$switch'>
+	      &nbsp;
 	      </span></td>
 	<td style='width:80%;text-align:center'>
 	    $project $basename $time</td>
@@ -397,6 +403,8 @@ EOT;
 <script>
 
     let lists = document.getElementById ( 'lists' );
+    let off = '$off';
+    let on = '$on';
 
     function DRAGSTART ( event, c )
     {
