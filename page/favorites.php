@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 03:08:48 EDT 2020
+    // Date:	Tue Apr 28 04:20:16 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -318,15 +318,18 @@ EOT;
     </table>
     </form>
     </div>
+
+    <div id='lists' class='lists'>
+
     <div class='favorites-title'
          ondrop='DROP(event)'
 	 ondragover='ALLOWDROP(event)'>
          Favorites</div>
-    <div id='lists' class='lists'>
 EOT;
-    $c = 0;
+    $c = -1;
     foreach ( $list as $e )
     {
+        ++ $c;
         list ( $time, $project, $basename ) = $e;
 	$listname = "$project:$basename";
 	$filename = listname_to_filename ( $listname );
@@ -346,6 +349,8 @@ EOT;
 	echo <<<EOT
 	<div id='$c' class='list'
 	     draggable='true'
+	     ondragover='ALLOWDROP(event)'
+             ondrop='DROP(event)'
 	     ondragstart='DRAGSTART(event,$c)'>
 	<table style='width:100%'
 	       class='list-description-header'>
@@ -376,6 +381,32 @@ EOT;
 ?>
 
 <script>
+
+    let lists = document.getElementById ( 'lists' );
+
+    function DRAGSTART ( event, c )
+    {
+        event.dataTransfer.setData ( "id", c );
+    }
+    function ALLOWDROP ( event )
+    {
+        event.preventDefault();
+    }
+    function DROP ( event )
+    {
+        event.preventDefault();
+	id = event.dataTransfer.getData ( "id" );
+	let des = event.target;
+	while ( des.tagName != 'DIV' )
+	    des = des.parentElement;
+	console.log ( 'TAG ' + des.tagName );
+	let src = document.getElementById ( id );
+	let next = des.nextSibling;
+	if ( next == null )
+	    lists.appendChild ( src );
+	else
+	    lists.insertBefore ( src, next );
+    }
 
 </script>
 
