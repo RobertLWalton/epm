@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 27 10:10:02 EDT 2020
+    // Date:	Wed Apr 29 15:19:33 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -552,22 +552,8 @@
 ?>
 
 <html>
+<?php require "$epm_home/include/epm_head.php"; ?>
 <style>
-    @media screen and ( max-width: 1365px ) {
-	:root {
-	    --font-size: 1.1vw;
-	    --large-font-size: 1.3vw;
-	}
-    }
-    @media screen and ( min-width: 1366px ) {
-	:root {
-	    --font-size: 16px;
-	    --large-font-size: 20px;
-	    width: 1366px;
-	    font-size: var(--font-size);
-	    overflow: scroll;
-	}
-    }
     .indented {
 	margin-left: 20px;
     }
