@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:43:58 EDT 2020
+    // Date:	Thu Apr 30 10:19:42 EDT 2020
 
     // Edits problem option page.
 
@@ -60,17 +60,6 @@
 	    --large-font-size: 20px;
 	    --indent: 20px;
 	}
-    }
-    pre, button, input {
-	display:inline;
-        font-size: var(--font-size);
-    }
-    pre {
-	font-family: "Courier New", Courier, monospace;
-    }
-    div.manage {
-	background-color: #96F9F3;
-	padding-bottom: 5px;
     }
     div.title {
 	background-color: #F2D9D9;

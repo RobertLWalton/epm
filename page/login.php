@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:19:00 EDT 2020
+    // Date:	Thu Apr 30 10:08:13 EDT 2020
 
     // Handles login for a session.
     //
@@ -588,11 +588,7 @@
 
 <style>
     button, input, mark, span, pre {
-	display:inline;
         font-size: var(--large-font-size);
-    }
-    pre {
-	font-family: "Courier New", Courier, monospace;
     }
     #get_email, #show_email {
 	background-color: #96F9F3;

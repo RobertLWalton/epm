@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:26:24 EDT 2020
+    // Date:	Thu Apr 30 10:18:47 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -223,28 +223,8 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .no-margin {
-	margin: 0 0 0 0;
-    }
-    pre, button, input, select {
-	display:inline;
-        font-size: var(--font-size);
-    }
-    pre {
-	font-family: "Courier New", Courier, monospace;
-    }
     pre.red {
         color: #BB0000;
-    }
-    div.errors {
-	background-color: #F5F81A;
-    }
-    div.warnings {
-	background-color: #FFC0FF;
-    }
-    div.manage {
-	background-color: #96F9F3;
-	padding-bottom: var(--indent);
     }
     pre.problem {
         color: #CC00FF;
@@ -375,8 +355,7 @@ EOT;
     {
     	echo <<<EOT
 	<div class='run_list'>
-    	<form action='run.php' method='POST'
-	      class='no-margin'>
+    	<form action='run.php' method='POST'>
 	<table>
 EOT;
 	foreach ( $local_map as $fbase => $e )

@@ -81,7 +81,9 @@ else if ( ! isset ( $_SESSION['EPM_UID'] ) )
 }
 else if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
          &&
-	 $_SESSION['EPM_RUN']['RESULT'] === true )
+	 $_SESSION['EPM_RUN']['RESULT'] === true
+	 &&
+         $epm_self != "/page/run.php" )
 {
     // Run still running.
     //

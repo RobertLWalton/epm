@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:29:49 EDT 2020
+    // Date:	Thu Apr 30 10:11:44 EDT 2020
 
     // Display and edit user information in:
     //
@@ -441,22 +441,12 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .inline {
-	display: inline;
-    }
-    .no-margin {
-	margin: 0 0 0 0;
-    }
-    pre, button, input {
-	display:inline;
-        font-size: var(--font-size);
-    }
     th, td {
         font-size: var(--font-size);
 	text-align: left;
 	padding: 3px;
     }
-    pre, td {
+    td {
 	font-family: "Courier New", Courier, monospace;
     }
 

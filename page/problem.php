@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:14:21 EDT 2020
+    // Date:	Thu Apr 30 10:07:33 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -476,7 +476,7 @@
 
 	    process_upload
 		( $upload_info, "$probdir/+work+",
-		  $warnings, $errors );
+		  $errors );
 	}
 	else
 	    $errors[] = "no file selected for upload";
@@ -556,29 +556,6 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .no-margin {
-	margin: 0 0 0 0;
-    }
-    pre, button, input, select, form {
-	display:inline;
-        font-size: var(--font-size);
-    }
-    pre {
-	font-family: "Courier New", Courier, monospace;
-    }
-    pre.red {
-        color: #BB0000;
-    }
-    div.errors, div.notices {
-	background-color: #F5F81A;
-    }
-    div.warnings {
-	background-color: #FFC0FF;
-    }
-    div.manage {
-	background-color: #96F9F3;
-	padding-bottom: 5px;
-    }
     pre.problem {
         color: #CC00FF;
         font-size: var(--large-font-size);

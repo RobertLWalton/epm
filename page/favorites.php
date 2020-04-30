@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:36:11 EDT 2020
+    // Date:	Thu Apr 30 10:54:29 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -158,34 +158,9 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    pre, form {
-	display:inline;
-        font-size: var(--font-size);
-    }
-    input, button, select {
-	border-width: 2px;
-	padding: 1px 6px 1px 6px;
-	margin: 2px 3px 2px 3px;
-	display:inline;
-        font-size: var(--font-size);
-    }
     span.problem {
 	display:inline;
         font-size: var(--large-font-size);
-    }
-    pre {
-	font-family: "Courier New", Courier, monospace;
-    }
-    div.errors, div.notices {
-	background-color: #F5F81A;
-    }
-    div.warnings {
-	background-color: #FFC0FF;
-    }
-    div.manage {
-	background-color: #96F9F3;
-	padding-bottom: 5px;
-	padding-top: 5px;
     }
     div.favorites-title {
 	background-color: #FFC0FF;

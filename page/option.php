@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:46:26 EDT 2020
+    // Date:	Thu Apr 30 10:56:43 EDT 2020
 
     // Edits problem option page.
 
@@ -321,16 +321,6 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .no-margin {
-	margin: 0 0 0 0;
-    }
-    pre, button, input, select {
-	display:inline;
-        font-size: var(--font-size);
-    }
-    pre {
-	font-family: "Courier New", Courier, monospace;
-    }
     .mono {
 	display:inline;
 	font-family: "Courier New", Courier, monospace;

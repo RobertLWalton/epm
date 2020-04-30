@@ -2,10 +2,10 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Apr 30 01:40:00 EDT 2020
+// Date:    Thu Apr 30 10:03:17 EDT 2020
 
-// HTML code included in the <head> section of each
-// page.
+// HTML code included at the beginning of the <head>
+// section of each page.
 
 ?>
 
@@ -34,5 +34,32 @@
     strong {
         font-size: var(--large-font-size);
 	font-weight: bold;
+    }
+    form {
+	margin: 0px;
+	padding: 0px;
+	display:inline;
+    }
+    button, input, select {
+	display:inline;
+        font-size: var(--font-size);
+	margin-bottom: 5px;
+    }
+    pre {
+	display:inline;
+        font-size: var(--font-size);
+	font-family: "Courier New", Courier, monospace;
+    }
+    div.errors, div.notices {
+	background-color: #F5F81A;
+	padding-bottom: 5px;
+    }
+    div.warnings {
+	background-color: #FFC0FF;
+	padding-bottom: 5px;
+    }
+    div.manage {
+	background-color: #96F9F3;
+	padding-bottom: 5px;
     }
 </style>

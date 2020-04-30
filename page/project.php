@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:25:02 EDT 2020
+    // Date:	Thu Apr 30 10:10:30 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1521,23 +1521,6 @@ EOT;
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .inline {
-	display:inline;
-    }
-    .no-margin {
-	margin: 0 0 0 0;
-    }
-    pre, form {
-	display:inline;
-        font-size: var(--font-size);
-    }
-    input, button, select {
-	border-width: 2px;
-	padding: 1px 6px 1px 6px;
-	margin: 2px 3px 2px 3px;
-	display:inline;
-        font-size: var(--font-size);
-    }
     div.op th {
         font-size: var(--large-font-size);
 	text-align: left;
@@ -1546,22 +1529,8 @@ EOT;
 	display:inline;
         font-size: var(--large-font-size);
     }
-    pre {
-	font-family: "Courier New", Courier, monospace;
-    }
-    div.errors, div.notices {
-	background-color: #F5F81A;
-    }
-    div.warnings {
-	background-color: #FFC0FF;
-    }
     div.progress {
 	background-color: #00FF00;
-    }
-    div.manage {
-	background-color: #96F9F3;
-	padding-bottom: 5px;
-	padding-top: 5px;
     }
     div.push-pull-list, div.edit-list {
 	background-color: #F2D9D9;
