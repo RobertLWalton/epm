@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 10:07:33 EDT 2020
+    // Date:	Thu Apr 30 14:12:30 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -284,6 +284,9 @@
     //	   (Lines ###) iff the above do not apply and
     //         the file is UTF8 with ### lines
     //
+    //     If in addition the file is linked from
+    //     PROJECT, `(Linked from PROJECT)' is appended.
+    //
     // If FILE-DISPLAY is set to true, the element
     //
     //	  [$count, $fname, FILE-CONTENTS]
@@ -298,7 +301,7 @@
     function file_info
             ( $dir, $fname, $count, & $display_list )
     {
-        global $epm_data, $display_file_type,
+        global $epm_data, $problem, $display_file_type,
 	       $display_file_map, $epm_file_maxsize,
 	       $max_display_lines, $min_display_lines;
 
@@ -368,6 +371,17 @@
 		$fcomment = "Link to $ftype";
 	    else 
 		$fcomment = $ftype;
+	}
+
+	if ( is_link ( $f ) )
+	{
+	    $r = @readlink ( $f );
+	    $re = "#^\.\./\.\./\.\./projects/"
+	        . "([^/]+)/$problem/$fname\$#";
+	    if (    $r !== false
+	         && preg_match ( $re, $r, $matches ) )
+	        $fcomment .=
+		    " (Linked from {$matches[1]})";
 	}
 
 	return [ $fext, $ftype,
@@ -637,7 +651,6 @@
 	if ( i == -1 )
 	{
 	    DELETE_LIST.push ( fname );
-	    MARK.innerHTML = "+";
 	    BUTTON.title = "Cancel " + fname +
 	                   " Deletion Mark";
 	    FILE.style = 'text-decoration:line-through';
@@ -646,7 +659,6 @@
 	else
 	{
 	    DELETE_LIST.splice ( i, 1 );
-	    MARK.innerHTML = "&Chi;";
 	    BUTTON.title = "Mark " + fname +
 	                   " For Deletion";
 	    FILE.style = 'text-decoration:';
@@ -1015,7 +1027,7 @@ EOT;
 	<pre>    </pre>
 	<input type="submit" name="execute_deletes"
 	       value=
-	         "Delete Marked (Over-Struck) Files">
+	         "Delete Over-Struck Files">
 	</td><td style='text-align:right'>
 	$current_problem_files_help</td>
 	</tr>
