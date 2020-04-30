@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 01:28:43 EDT 2020
+    // Date:	Thu Apr 30 01:43:58 EDT 2020
 
     // Edits problem option page.
 
@@ -45,6 +45,22 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
+    @media screen and ( max-width: 1199px ) {
+	:root {
+	    --font-size: 1.4vw;
+	    --large-font-size: 1.6vw;
+	    --indent: 1.6vw;
+	}
+    }
+    @media screen and ( min-width: 1200px ) {
+	:root {
+	    width: 1200px;
+
+	    --font-size: 16px;
+	    --large-font-size: 20px;
+	    --indent: 20px;
+	}
+    }
     pre, button, input {
 	display:inline;
         font-size: var(--font-size);
