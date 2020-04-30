@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr  3 04:18:36 EDT 2020
+    // Date:	Thu Apr 30 01:28:43 EDT 2020
 
     // Edits problem option page.
 
@@ -45,14 +45,6 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .indented {
-	margin-left: 20px;
-    }
-    h5 {
-        font-size: var(--large-font-size);
-	margin: 0 0 0 0;
-	display:inline;
-    }
     pre, button, input {
 	display:inline;
         font-size: var(--font-size);
@@ -125,14 +117,14 @@
 	<form method='GET' style='margin-bottom:0'>
 	<table style='width:100%'><tr>
 	<td>
-	<h5>User:</h5> <input type='submit'
+	<strong>User:</strong> <input type='submit'
 	                value='$email'
 			formaction='user.php'
 			title='click to see user
 			       profile'>
 	</td>
 	<td style='padding-left:20px'>
-	<h5>Go To:</h5>
+	<strong>Go To:</strong>
 	<button type='submit'
 		formaction='problem.php'>Problem Page
 	</button>
@@ -190,7 +182,7 @@ EOT;
 	     <div id='template{$tcount}_body'
 	          style='display:none'
 	          style='padding-bottom:5px'>
-	     <h5>$tpretty:</h5>
+	     <strong>$tpretty:</strong>
 	     <br>
 	     <div class='commands'>
 EOT;

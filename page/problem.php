@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 29 15:19:33 EDT 2020
+    // Date:	Thu Apr 30 01:14:21 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -556,16 +556,8 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .indented {
-	margin-left: 20px;
-    }
     .no-margin {
 	margin: 0 0 0 0;
-    }
-    h5 {
-        font-size: var(--large-font-size);
-	margin: 0 0 0 0;
-	display:inline;
     }
     pre, button, input, select, form {
 	display:inline;
@@ -609,7 +601,7 @@
     td.time {
 	color: #99003D;
 	text-align: right;
-	padding-left:20px;
+	padding-left: var(--indent);
     }
 
 </style>
@@ -741,7 +733,7 @@
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
-	echo "<h5>Errors:</h5>";
+	echo "<strong>Errors:</strong>";
 	echo "<div class='indented'>";
 	foreach ( $errors as $e )
 	    echo "<pre>$e</pre><br>";
@@ -750,7 +742,7 @@
     if ( count ( $warnings ) > 0 )
     {
 	echo "<div class='warnings'>";
-	echo "<h5>Warnings:</h5>";
+	echo "<strong>Warnings:</strong>";
 	echo "<div class='indented'>";
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>";
@@ -768,13 +760,14 @@
     <tr>
     <td>
     <label>
-    <h5>User:</h5> <input type='submit' value='$email'
-		    formaction='user.php'
-                    title='click to see user profile'>
+    <strong>User:</strong>
+    <input type='submit' value='$email'
+	   formaction='user.php'
+           title='click to see user profile'>
     </label>
     </td>
     <td>
-    <h5>Go To:</h5>
+    <strong>Go To:</strong>
 EOT;
     if ( isset ( $problem ) )
         echo <<<EOT
@@ -795,7 +788,7 @@ EOT;
     $problem_page_help</td>
     </tr></table></form>
     <form action='problem.php' method='POST'>
-    <h5>Current Problem:</h5>&nbsp;
+    <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
 EOT;
     if ( isset ( $problem ) )
@@ -827,7 +820,8 @@ EOT;
     echo <<<EOT
     </form>
     <form action='problem.php' method='POST'>
-    <pre>    </pre><h5>or Create New Problem:<h5>
+    <pre>    </pre>
+    <strong>or Create New Problem:<strong>
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name" id="create">
     </form>
@@ -879,7 +873,8 @@ EOT;
 		    title='Show Commands Last Executed'>
 		    <pre id='commands_mark'>&darr;</pre>
 		    </button>
-	    <h5>Commands Last Executed:</h5>&nbsp;
+	    <strong>Commands Last Executed:</strong>
+	    &nbsp;
 	    <pre>($r)</pre>
 	    </td><td style='text-align:right'>
 	    $commands_help</td>
@@ -892,7 +887,7 @@ EOT;
 	    echo "</div>";
 	    if ( count ( $kept ) > 0 )
 	    {
-		echo "<h5>Kept:</h5>";
+		echo "<strong>Kept:</strong>";
 		echo "<div class='indented'>";
 		foreach ( $kept as $e )
 		    echo "<pre>$e</pre><br>";
@@ -905,7 +900,8 @@ EOT;
 
 	    if ( count ( $working_files ) > 0 )
 	    {
-		$working_help = HELP ( 'problem-working' );
+		$working_help =
+		    HELP ( 'problem-working' );
 		echo <<<EOT
 		<div class='work_display'>
 		<table style='width:100%'><tr>
@@ -918,9 +914,9 @@ EOT;
 		    title='Show Current Working Files'>
 		    <pre id='working_mark'>&darr;</pre>
 		    </button>
-		<h5>Working Files of Last Executed
+		<strong>Working Files of Last Executed
 		    Commands
-		    (most recent first):</h5>
+		    (most recent first):</strong>
 	        </td><td style='text-align:right'>
 		$working_help</td>
 		</tr></table>
@@ -1029,8 +1025,8 @@ EOT;
 		title='Hide Current Problem Files'>
 		<pre id='problems_mark'>&uarr;</pre>
 		</button>
-	<h5>Current Problem Files
-	    (most recent first):</h5>
+	<strong>Current Problem Files
+	    (most recent first):</strong>
 	</td><td><label>
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$epm_upload_maxsize">
@@ -1173,7 +1169,7 @@ EOT;
 		<div style='display:none'
 		     id='file{$count}_body'
 		     class='file-name'>
-		<h5>$fname:</h5><br>
+		<strong>$fname:</strong><br>
 		<div class='file-contents indented'>
 		<pre>$fcontents</pre>
 		</div></div>

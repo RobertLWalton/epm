@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 17:32:47 EDT 2020
+    // Date:	Thu Apr 30 01:36:11 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -158,11 +158,6 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    h5 {
-        font-size: var(--large-font-size);
-	margin: 0 0 0 0;
-	display:inline;
-    }
     pre, form {
 	display:inline;
         font-size: var(--font-size);
@@ -218,7 +213,7 @@
     }
     div.list-description {
 	background-color: #FFCCCC;
-	margin-left: 20px;
+	margin-left: var(--indent);
         font-size: var(--font-size);
     }
     div.list-description p, div.list-description pre {
@@ -269,7 +264,7 @@ EOT;
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
-	echo "<h5>Errors:</h5>";
+	echo "<strong>Errors:</strong>";
 	echo "<div class='indented'>";
 	foreach ( $errors as $e )
 	    echo "<pre>$e</pre><br>";
@@ -278,7 +273,7 @@ EOT;
     if ( count ( $warnings ) > 0 )
     {
 	echo "<div class='warnings'>";
-	echo "<h5>Warnings:</h5>";
+	echo "<strong>Warnings:</strong>";
 	echo "<div class='indented'>";
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>";
@@ -293,10 +288,11 @@ EOT;
     <td>
     <form>
     <label>
-    <h5>User:</h5> <input type='submit' value='$email'
-		    formaction='user.php'
-		    formmethod='GET'
-                    title='Click to See User Profile'>
+    <strong>User:</strong>
+    <input type='submit' value='$email'
+	   formaction='user.php'
+	   formmethod='GET'
+           title='Click to See User Profile'>
     </label>
     </form>
     </td>

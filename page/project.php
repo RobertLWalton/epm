@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 18:05:04 EDT 2020
+    // Date:	Thu Apr 30 01:25:02 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1521,19 +1521,11 @@ EOT;
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .indented {
-	margin-left: 20px;
-    }
     .inline {
 	display:inline;
     }
     .no-margin {
 	margin: 0 0 0 0;
-    }
-    h5 {
-        font-size: var(--large-font-size);
-	margin: 0 0 0 0;
-	display:inline;
     }
     pre, form {
 	display:inline;
@@ -1624,7 +1616,7 @@ EOT;
         font-size: var(--large-font-size);
 	display: block;
 	margin-top: 3px;
-	margin-left: 20px;
+	margin-left: var(--indent);
 	margin-bottom: 0px;
     }
     #error-response {
@@ -1636,7 +1628,7 @@ EOT;
         font-size: var(--large-font-size);
 	display: block;
 	margin-top: 3px;
-	margin-left: 20px;
+	margin-left: var(--indent);
 	margin-bottom: 0px;
     }
     #compile-response {
@@ -1648,7 +1640,7 @@ EOT;
         font-size: var(--large-font-size);
 	display: block;
 	margin-top: 3px;
-	margin-left: 20px;
+	margin-left: var(--indent);
 	margin-bottom: 0px;
     }
 
@@ -1702,8 +1694,8 @@ EOT;
 		( '/-/', ' ', $basename );
 	echo <<<EOT
 	<div class='errors'>
-	<h5>Do you really want to delete
-	    $project $basename?</h5>
+	<strong>Do you really want to delete
+	        $project $basename?</strong>
 	<form action='project.php' method='POST'>
 	<input type='hidden' name='ID' value='$id'>
 	<input type='submit' name='delete-list'
@@ -1717,7 +1709,7 @@ EOT;
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
-	echo "<h5>Errors:</h5>";
+	echo "<strong>Errors:</strong>";
 	echo "<div class='indented'>";
 	foreach ( $errors as $e )
 	    echo "<pre>$e</pre><br>";
@@ -1726,7 +1718,7 @@ EOT;
     if ( count ( $warnings ) > 0 )
     {
 	echo "<div class='warnings'>";
-	echo "<h5>Warnings:</h5>";
+	echo "<strong>Warnings:</strong>";
 	echo "<div class='indented'>";
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>";
@@ -1747,7 +1739,7 @@ EOT;
 	<form>
 	<table style='width:100%'>
 	<tr>
-	<td><h5>WARNINGS:</h5></td>
+	<td><strong>WARNINGS:</strong></td>
 	<td>
 	<button type='button'
 	        onclick='IGNORE_WARNINGS()'>
@@ -1773,7 +1765,7 @@ EOT;
 	<form>
 	<table style='width:100%'>
 	<tr>
-	<td><h5>Errors:</h5></td>
+	<td><strong>Errors:</strong></td>
 	<td>
 	<button type='button' onclick='START_NEXT()'>
 	Skip to Next</button>
@@ -1795,7 +1787,7 @@ EOT;
 	<form>
 	<table style='width:100%'>
 	<tr>
-	<td><h5>Proposed Actions:</h5></td>
+	<td><strong>Proposed Actions:</strong></td>
 	<td>
 	<button type='button' onclick='EXECUTE()'>
 	EXECUTE</button>
@@ -1826,15 +1818,16 @@ EOT;
     <tr>
     <td>
     <label>
-    <h5>User:</h5> <input type='submit' value='$email'
-		    formaction='user.php'
-		    formmethod='GET'
-                    title='Click to See User Profile'>
+    <strong>User:</strong>
+    <input type='submit' value='$email'
+	   formaction='user.php'
+	   formmethod='GET'
+           title='Click to See User Profile'>
     </label>
     </td>
     <td>
     <div id='done-response' style='display:none'>
-    <h5>Done!</h5>
+    <strong>Done!</strong>
     <button type='submit'
 	    formaction='project.php'
 	    formmethod='GET'>
@@ -1845,9 +1838,9 @@ EOT;
     <span class='problem-checkbox'
 	  id='check-proposed'
 	  onclick='CHECK(this)'>&nbsp;</span>
-    <h5>Check Proposed Actions</h5>
+    <strong>Check Proposed Actions</strong>
     </div>
-    <h5>Go To:</h5>
+    <strong>Go To:</strong>
     <button type='submit'
 	    formaction='problem.php'
 	    formmethod='GET'>
@@ -1914,7 +1907,7 @@ EOT;
 	        title='Publish Selected List'>
 	Publish List
 	</button>
-	<h5>or</h5>
+	<strong>or</strong>
 	<button type='submit'
 	        formaction='favorites.php'
 		formmethod='GET'
@@ -1923,14 +1916,14 @@ EOT;
 	</button>
 	<br>
 	<label>
-	<h5>List Select:</h5>
+	<strong>List Select:</strong>
 	<select name='selected-list'
 	        title='$select_title'>
 	$options
 	</select>
 	</label>
 	<pre> </pre>
-	<h5>or Create:</h5>
+	<strong>or Create:</strong>
 	<input type="text"
 	       size="24" name="basename"
                placeholder="New List Name"
@@ -1941,7 +1934,7 @@ EOT;
 		    above.
 		-->
 	<pre> </pre>
-	<h5>or</h5>
+	<strong>or</strong>
 	<label>
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$epm_upload_maxsize">
@@ -1950,7 +1943,7 @@ EOT;
 	        title='$upload_title'>
 	Upload Description
 	</button>
-	<h5>:</h5>
+	<strong>:</strong>
 	<input type="file" name="uploaded_file"
 	       title="$upload_file_title">
 	</label>
@@ -1977,7 +1970,8 @@ EOT;
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
-	        <h5>Problems (select to push)</h5></th>
+	        <strong>Problems (select to push)
+		        </strong></th>
 	    <td><input type='button'
 	               onclick='SUBMIT_PUSH()'
 		       value='Submit'>
@@ -1990,7 +1984,7 @@ EOT;
 	    <td id='project-selector'
 	        style='visibility:hidden'>
 	    <label class='select-project'>
-	    <h5>Select Project</h5>:
+	    <strong>Select Project</strong>:
 	    <select id='selected-project-selector'>
 	    $project_options
 	    </select></label>
@@ -2002,13 +1996,14 @@ EOT;
 	<tr id='post-submit' style='display:none'>
 	    <th id='post-submit'
 	        style='text-align:left'>
-	        <h5>Problems (selected are being pushed)
-		    </h5></th>
+	        <strong>Problems
+		        (selected are being pushed)
+		    </strong></th>
 	    <td id='selected-project-column'>
-	    <h5>Selected Project:
+	    <strong>Selected Project:
 	    <span id='selected-project-value'
 	          class='selected-project'>
-	    </span></h5></td>
+	    </span></strong></td>
 	    <td>
             <td style='text-align:right'>
             $push_help</td>
@@ -2170,7 +2165,8 @@ EOT;
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
-	        <h5>Problems (select to pull)</h5></th>
+	        <strong>Problems (select to pull)
+		        </strong></th>
 	    <td><input type='button'
 	               onclick='SUBMIT_PULL()'
 		       value='Submit'>
@@ -2187,8 +2183,9 @@ EOT;
 	<tr id='post-submit' style='display:none'>
 	    <th id='post-submit'
 	        style='text-align:left'>
-	        <h5>Problems (selected are being pulled)
-		    </h5></th>
+	        <strong>Problems
+		        (selected are being pulled)
+		    </strong></th>
             <td style='text-align:right'>
             $pull_help</td>
 	</tr>
@@ -2533,7 +2530,8 @@ EOT;
 	$name = "$project $basename";
 
 	$stack_rows = list_to_edit_rows
-	    ( $elements, listname_to_list ( '+stack+' ) );
+	    ( $elements,
+	      listname_to_list ( '+stack+' ) );
 
 	$options = favorites_to_options ( 'pull|push' );
 
@@ -2589,7 +2587,7 @@ EOT;
 	       onclick='UPDATE_EDIT ( "change-list" )'
 	       value='Change To'
 	       title='$change_to_title'>
-	<h5>:</h5>
+	<strong>:</strong>
 	<select id='change-list'
 	        title='New List to Edit'>
 	$options
@@ -2639,7 +2637,7 @@ EOT;
 	    <div style='display:table;clear:both'>
 	    </div>
 	    <div class='list-description-header'>
-	    <h5>$name Description</h5>
+	    <strong>$name Description</strong>
 	    </div>
 	    <div class='list-description'>
 	    $description

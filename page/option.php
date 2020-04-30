@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr  3 04:08:18 EDT 2020
+    // Date:	Thu Apr 30 01:21:35 EDT 2020
 
     // Edits problem option page.
 
@@ -321,16 +321,8 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .indented {
-	margin-left: 20px;
-    }
     .no-margin {
 	margin: 0 0 0 0;
-    }
-    h5 {
-        font-size: var(--large-font-size);
-	margin: 0 0 0 0;
-	display:inline;
     }
     pre, button, input, select {
 	display:inline;
@@ -422,9 +414,6 @@
         color: #CC00FF;
         font-size: var(--large-font-size);
     }
-    div.indented {
-	margin-left: 20px;
-    }
 </style>
 
 <script>
@@ -468,7 +457,8 @@
 
     function TEMPLATE_WINDOW ( ) {
 	var src = '/page/template.php?subwindow';
-	if ( template_window == null || template_window.closed )
+	if (    template_window == null
+	     || template_window.closed )
 	{
 	    var x = screen.width - 1024;
 	    var y = screen.height - 800;
@@ -503,7 +493,7 @@
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
-	echo "<h5>Errors:</h5>";
+	echo "<strong>Errors:</strong>";
 	echo "<div class='indented'>";
 	foreach ( $errors as $e )
 	    echo "<pre>$e</pre><br>";
@@ -512,7 +502,7 @@
     if ( count ( $warnings ) > 0 )
     {
 	echo "<div class='warnings'>";
-	echo "<h5>Warnings:</h5>";
+	echo "<strong>Warnings:</strong>";
 	echo "<div class='indented'>";
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>";
@@ -525,12 +515,13 @@
     <form method='GET' style='margin-bottom:0'>
     <table style='width:100%'>
     <td>
-    <h5>User:</h5> <input type='submit' value='$email'
+    <strong>User:</strong>
+    <input type='submit' value='$email'
                     formaction='user.php'
                     title='click to see user profile'>
     </td>
-    <td style='padding-left:20px'>
-    <h5>Go To:</h5>
+    <td style='padding-left:var(--indent)'>
+    <strong>Go To:</strong>
     <button type='submit'
             formaction='problem.php'>Problem Page
     </button>
@@ -543,8 +534,8 @@
         Show Templates
     </button>
     </td>
-    <td style='padding-left:20px'>
-    <h5>Current Problem:</h5>&nbsp;
+    <td style='padding-left:var(--indent)'>
+    <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$problem</pre></b>
     </td><td style='text-align:right'>
     $option_help</td>
@@ -589,7 +580,7 @@ EOT;
 	    <pre id='values_mark'>&uarr;</pre>
 	    </button>
     &nbsp;
-    <h5>Number Options:</h5>
+    <strong>Number Options:</strong>
     </td><td style='text-align:right'>
     $values_help</td>
     </tr></table>
@@ -635,7 +626,8 @@ EOT;
 	         "<pre>$v</pre></td>";
 	echo <<<EOT
 	<td style='padding-left:10px'>
-	<div class='mono'>$des; $t in [{$r[0]},{$r[1]}]</div>
+	<div class='mono'>
+	$des; $t in [{$r[0]},{$r[1]}]</div>
 	</td></tr>
 EOT;
     }
@@ -656,7 +648,7 @@ EOT;
 	    <pre id='arguments_mark'>&uarr;</pre>
 	    </button>
     &nbsp;
-    <h5>Argument Options:</h5>
+    <strong>Argument Options:</strong>
     </td><td style='text-align:right'>
     $arguments_help</td>
     </tr></table>

@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  1 15:01:02 EDT 2020
+    // Date:	Thu Apr 30 01:26:24 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -183,7 +183,8 @@
 	    {
 		$ext = pathinfo
 		    ( $fname, PATHINFO_EXTENSION );
-		if ( ! in_array ( $ext, $exts ) ) continue;
+		if ( ! in_array ( $ext, $exts ) )
+		    continue;
 		if ( $ext == 'run' ) continue;
 
 		$f = "$epm_data/$rundir/$fname";
@@ -222,16 +223,8 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .indented {
-	margin-left: 20px;
-    }
     .no-margin {
 	margin: 0 0 0 0;
-    }
-    h5 {
-        font-size: var(--large-font-size);
-	margin: 0 0 0 0;
-	display:inline;
     }
     pre, button, input, select {
 	display:inline;
@@ -251,7 +244,7 @@
     }
     div.manage {
 	background-color: #96F9F3;
-	padding-bottom: 20px;
+	padding-bottom: var(--indent);
     }
     pre.problem {
         color: #CC00FF;
@@ -270,7 +263,7 @@
     }
     div.file-contents {
 	background-color: #C0FFC0;
-	margin-left: 20px;
+	margin-left: var(--indent);
     }
 </style>
 
@@ -301,7 +294,7 @@
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>" .  PHP_EOL;
-	echo "<h5>Errors:</h5>" . PHP_EOL;
+	echo "<strong>Errors:</strong>" . PHP_EOL;
 	echo "<div class='indented'>" . PHP_EOL;
 	foreach ( $errors as $e )
 	    echo "<pre>$e</pre><br>" . PHP_EOL;
@@ -310,7 +303,7 @@
     if ( count ( $warnings ) > 0 )
     {
 	echo "<div class='warnings'>" .  PHP_EOL;
-	echo "<h5>Warnings:</h5>" . PHP_EOL;
+	echo "<strong>Warnings:</strong>" . PHP_EOL;
 	echo "<div class='indented'>" . PHP_EOL;
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>" . PHP_EOL;
@@ -324,9 +317,10 @@
     <table style='width:100%'>
     <tr>
     <td>
-    <h5>User:</h5> <input type='submit' value='$email'
-                    formaction='user.php'
-                    title='click to see user profile'>
+    <strong>User:</strong>
+    <input type='submit' value='$email'
+           formaction='user.php'
+           title='click to see user profile'>
     </td>
     <td style='padding-left:50px'>
     <button type='submit'
@@ -334,7 +328,7 @@
     </button>
     </td>
     <td style='padding-left:50px'>
-    <h5>Current Problem:</h5>&nbsp;
+    <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$problem</pre></b>
     </td>
     <td style='text-align:right'>$run_help</td>
@@ -356,7 +350,7 @@ EOT;
 	    $c = '(no status available)';
 	echo <<<EOT
 	<div class='run'>
-	<h5>$h&nbsp;-&nbsp;$runbase.run:</h5>
+	<strong>$h&nbsp;-&nbsp;$runbase.run:</strong>
 	<div class='indented'>
 	<pre id='status'>$c</pre>
 EOT;
@@ -473,7 +467,7 @@ EOT;
 	    echo <<<EOT
 	    <div style='display:none' id='$id'
 	         class='file-name'>
-	    <h5>$fname:</h5><br>
+	    <strong>$fname:</strong><br>
 	    <div class='file-contents'>
 	    <pre>$fcontents</pre>
 	    </div></div>

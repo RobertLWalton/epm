@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 21 16:13:03 EDT 2020
+    // Date:	Thu Apr 30 01:29:49 EDT 2020
 
     // Display and edit user information in:
     //
@@ -441,19 +441,11 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    .indented {
-	margin-left: 20px;
-    }
     .inline {
 	display: inline;
     }
     .no-margin {
 	margin: 0 0 0 0;
-    }
-    h5 {
-        font-size: var(--large-font-size);
-	margin: 0 0 0 0;
-	display:inline;
     }
     pre, button, input {
 	display:inline;
@@ -476,7 +468,7 @@
 
     if ( count ( $errors ) > 0 )
     {
-        echo '<h5>Errors:</h5>';
+        echo '<strong>Errors:</strong>';
 	echo "<div class='indented'>";
 	foreach ( $errors as $value )
 	{
@@ -496,7 +488,7 @@
 	$h = "User Email Addresses";
     $help = HELP ( 'user-page' );
     echo <<<EOT
-    <h5>$h</h5>
+    <strong>$h</strong>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     $help<br><br>
 EOT;
@@ -548,7 +540,7 @@ EOT;
     if ( $edit )
     {
 	echo <<<EOT
-	<h5>Edit User Profile:</h5><br>
+	<strong>Edit User Profile:</strong><br>
 	<form  method='POST' action='user.php'>
 	<table>
 EOT;
@@ -591,7 +583,7 @@ EOT;
     }
     else
 	echo <<<EOT
-	<h5>User Profile:</h5>
+	<strong>User Profile:</strong>
 	<table>
 	<tr><th>User ID:</th>
 	    <td>$uid</td></tr>

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 21 15:43:15 EDT 2020
+    // Date:	Thu Apr 30 01:19:00 EDT 2020
 
     // Handles login for a session.
     //
@@ -594,19 +594,14 @@
     pre {
 	font-family: "Courier New", Courier, monospace;
     }
-    h5 {
-        font-size: var(--large-font-size);
-	margin: 0 0 0 0;
-	display:inline;
-    }
     #get_email, #show_email {
 	background-color: #96F9F3;
-	padding: 20px 20px 20px 20px;
+	padding: var(--indent);
         font-size: var(--large-font-size);
     }
     #get_cnum {
 	background-color: #80FFCC;
-	padding: 20px 20px 20px 20px;
+	padding: var(--indent);
         font-size: var(--large-font-size);
     }
 </style>
@@ -655,12 +650,14 @@ EOT;
 <div id='show_email' style.display='none'>
 <table style='width:100%'>
 <tr><td style='width:90%'>
-<h5>Email:<pre>   </pre><span id='email_out'></span></h5>
+<strong>Email:<pre>   </pre>
+<span id='email_out'></span></strong>
 </td><td style='width:10%;text-align:right'>
 <?php echo ( HELP('browser-ticket') )?>
 </td></tr></table>
 <br>
-<button type='button' onclick="window.location.reload(true)">
+<button type='button'
+        onclick="window.location.reload(true)">
 Change Email Address
 </button>
 <pre>   </pre>
