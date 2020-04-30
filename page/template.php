@@ -42,22 +42,9 @@
 
 <html>
 <head>
+<?php require "$epm_home/include/epm_head.php"; ?>
+
 <style>
-    @media screen and ( max-width: 1365px ) {
-	:root {
-	    --font-size: 1.1vw;
-	    --large-font-size: 1.3vw;
-	}
-    }
-    @media screen and ( min-width: 1366 ) {
-	:root {
-	    --font-size: 16px;
-	    --large-font-size: 20px;
-	    width: 1366px;
-	    font-size: var(--font-size);
-	    overflow: scroll;
-	}
-    }
     .indented {
 	margin-left: 20px;
     }

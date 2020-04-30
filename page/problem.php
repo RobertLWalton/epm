@@ -552,7 +552,9 @@
 ?>
 
 <html>
+<head>
 <?php require "$epm_home/include/epm_head.php"; ?>
+
 <style>
     .indented {
 	margin-left: 20px;
