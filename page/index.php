@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Apr 27 15:37:45 EDT 2020
+// Date:    Fri May  1 03:12:40 EDT 2020
 
 // See page/parameters.php for EPM server setup
 // instructions.
@@ -94,6 +94,19 @@ else if ( $epm_self == "/index.php" )
 {
     header ( 'Location: /page/problem.php' );
     exit;
+}
+
+// The rest of this file consists of functions that
+// most pages need to be defined.
+
+// Do what PHP symlink should do, but PHP symlink is
+// known to fail sometimes for no good reason (see
+// comments on PHP documentation site; this behavior has
+// also been observed in EPM testing).
+//
+function symbolic_link ( $target, $link )
+{
+    return exec ( "ln -s $target $link 2>&1" ) == '';
 }
 
 if ( $epm_debug )

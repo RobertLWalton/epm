@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Apr 11 13:05:57 EDT 2020
+// Date:    Fri May  1 03:09:56 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -79,16 +79,6 @@ function is_running ( $pid )
     // available in vanilla PHP.
 
     return ( $kill_status == 0 );
-}
-
-// Do what PHP symlink should do, but PHP symlink is
-// known to fail sometimes for no good reason (see
-// comments on PHP documentation site; this behavior has
-// also been observed in EPM testing).
-//
-function symbolic_link ( $target, $link )
-{
-    return exec ( "ln -s $target $link 2>&1" ) == '';
 }
 
 // Given file names, and a template, determine if the
