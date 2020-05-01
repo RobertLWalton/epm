@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 10:10:30 EDT 2020
+    // Date:	Fri May  1 03:20:15 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -948,7 +948,7 @@ EOT;
 	{
 	    $changes .= "make $project/$problem"
 	              . " directory" . PHP_EOL;
-	    $commands[] = "mkdir $desdir";
+	    $commands[] = ['mkdir', $desdir];
 	}
 	$files = @scandir ( "$epm_data/$srcdir" );
 	if ( $files === false )
@@ -999,7 +999,8 @@ EOT;
 	    	      . " $project/$problem/$fname"
 		      . PHP_EOL;
 	    $commands[] =
-	        "mv -f $srcdir/$fname $desdir";
+	        ['rename', "$srcdir/$fname",
+		           "$desdir/$fname"];
 		    // This will also move a link.
 
 	    if ( $action == 'R' ) continue;
@@ -1010,18 +1011,18 @@ EOT;
 	    $changes .= "link $fname to"
 	              . " $project/$problem/$fname"
 	              . PHP_EOL;
-	    $commands[] = "ln -s"
-	                . " ../../../$desdir/$fname"
-	                . " $srcdir/$fname";
+	    $commands[] = ['link',
+	                   "../../../$desdir/$fname",
+	                   "$srcdir/$fname"];
 	}
 	if ( $new_push )
 	{
 	    $changes .= "link +parent+ to"
 	              . " $project/$problem"
 	              . PHP_EOL;
-	    $commands[] = "ln -s"
-	                . " ../../../$desdir"
-	                . " $srcdir/+parent+";
+	    $commands[] = ['link',
+	                   "../../../$desdir",
+	                   "$srcdir/+parent+"];
 	}
 	if ( count ( $commands ) == 0 )
 	    $changes = '';
@@ -1092,7 +1093,7 @@ EOT;
 	{
 	    $changes .= "make $uid/$problem"
 	              . " directory" . PHP_EOL;
-	    $commands[] = "mkdir $desdir";
+	    $commands[] = ['mkdir', $desdir];
 	}
 
 	$files = @scandir ( "$epm_data/$srcdir" );
@@ -1156,18 +1157,18 @@ EOT;
 	    $changes .= "link $project/$problem/$fname"
 	              . " to $fname"
 	              . PHP_EOL;
-	    $commands[] = "ln -s"
-	                . " ../../../$srcdir/$fname"
-	                . " $desdir/$fname";
+	    $commands[] = ['link',
+	                   "../../../$srcdir/$fname",
+	                   "$desdir/$fname"];
 	}
 	if ( $new_pull )
 	{
 	    $changes .= "link +parent+ to"
 	              . " $project/$problem"
 	              . PHP_EOL;
-	    $commands[] = "ln -s"
-	                . " ../../../$srcdir"
-	                . " $desdir/+parent+";
+	    $commands[] = ['link',
+	                   "../../../$srcdir",
+	                   "$desdir/+parent+"];
 	}
 	if ( count ( $commands ) == 0 )
 	    $changes = '';
@@ -1178,39 +1179,53 @@ EOT;
     }
 
     // Execute EPM_PROJECT COMMANDS.  Errors cause abort
-    // and append to $errors.  A command is in error
-    // if it produces any standard output or standard
-    // error output.
+    // and append to $errors.
+    //
+    // The supported commands are:
+    //
+    //     ['mkdir',$d] => mkdir $epm_data/$d
+    //
+    //     ['rename',$f,$g] => rename $epm_data/$f
+    //				      $epm_data/$g
+    //
+    //     ['link',$f,$g] => symbolic_link $f
+    //				           $epm_data/$g
     //
     function execute_commands ( & $errors )
     {
         global $epm_data, $data;
 
 	$commands = $data['COMMANDS'];
-	if ( count ( $commands ) == 0 ) return;
 
+	$umask = umask ( 06 );
 	foreach ( $commands as $command )
 	{
-	    $output = [];
-	    exec ( "umask 06; cd $epm_data;" .
-	           " $command 2>&1", $output );
-	    $err = '';
-	    foreach ( $output as $line )
+	    $cop = $command[0];
+	    if ( $cop == 'mkdir' )
+	        $r = @mkdir
+		         ( "$epm_data/{$command[1]}" );
+	    elseif ( $cop == 'rename' )
+	        $r = @rename
+		         ( "$epm_data/{$command[1]}",
+			   "$epm_data/{$command[2]}" );
+	    elseif ( $cop == 'link' )
+	        $r = symbolic_link
+		         ( "$command[1]",
+			   "$epm_data/{$command[2]}" );
+	    else
+	        ERROR ( 'bad command: ' .
+		        json_encode ( $command ) );
+
+	    if ( $r === false )
 	    {
-	        if ( preg_match ( '/^\s*$/', $line ) )
-		    continue;
-		if ( $err != '' ) $err .= PHP_EOL;
-		$err .= "    $line";
-	    }
-	    if ( $err != '' )
-	    {
-	        $err = "Error in $command:" . PHP_EOL
-		     . $err;
-		WARN ( $err );
-		$errors[] = $err;
+		$c = implode ( ' ', $command );
+		WARN ( "$c failed" );
+		$errors[] = "$c failed";
+		umask ( $umask );
 		return;
 	    }
 	}
+	umask ( $umask );
     }
 
     // Write EPM_PROJECT CHANGES to destination
