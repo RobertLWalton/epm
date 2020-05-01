@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 14:12:30 EDT 2020
+    // Date:	Fri May  1 03:58:11 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -594,6 +594,9 @@
 	text-align: right;
 	padding-left: var(--indent);
     }
+    pre.error-message {
+	color: #99003D;
+    }
 
 </style>
 
@@ -810,7 +813,7 @@ EOT;
     </form>
     <form action='problem.php' method='POST'>
     <pre>    </pre>
-    <strong>or Create New Problem:<strong>
+    <strong>or Create New Problem:</strong>
     <input type="text" size="32" name="new_problem"
            placeholder="New Problem Name" id="create">
     </form>

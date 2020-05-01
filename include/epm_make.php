@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri May  1 03:09:56 EDT 2020
+// Date:    Fri May  1 03:54:53 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1291,7 +1291,9 @@ function execute_commands_2 ( $base, $dir )
 //	<table id='command_table'>
 //
 // and ends with '</table>' followed by error messages,
-// if any.
+// if any.  Error messages are output as
+//
+//    <pre class='error-message'>$message</pre>
 //
 // Each command line gets a row in a table, and if that
 // command line number has 'X' or 'R' state in the
@@ -1423,7 +1425,8 @@ function get_commands_display ( & $display )
     if ( count ( $messages ) > 0 )
     {
         foreach ( $messages as $m )
-	    $display .= "<br><pre class='red'>$m<pre>";
+	    $display .=
+	      "<br><pre class='error-message'>$m<pre>";
     }
 }
 
