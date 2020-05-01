@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May  1 13:59:39 EDT 2020
+    // Date:	Fri May  1 14:29:22 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -351,10 +351,17 @@ EOT;
 	echo "</div>" . PHP_EOL;
     }
 
-    $n = 0;
-    $display_list = [];
+    // If $runbase.rerr exists in $rundir and has size
+    // > 0, ignore $runbase.rout in local directory.
+    //
+    $f = "$epm_data/$rundir/$runbase.rerr";
+    if ( file_exists ( $f ) && filesize ( $f ) > 0 )
+	unset ( $local_file_cache["$runbase.rout"] );
     compute_run_map
         ( $local_map, $local_file_cache, $rundir );
+
+    $n = 0;
+    $display_list = [];
     $initially_display = [];
     if ( $local_map != [] )
     {
