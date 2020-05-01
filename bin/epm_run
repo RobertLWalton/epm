@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Mar 26 01:23:53 EDT 2020
+// Date:	Fri May  1 12:57:12 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -68,15 +68,30 @@ if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
     exit ( 0 );
 }
 
+function printerr ( $message )
+{
+    fprintf ( STDERR, '%s', $message . PHP_EOL );
+}
+
 function ERROR ( $message )
 {
-    echo 'epm_run: ' . $message . PHP_EOL;
+    printerr ( "epm_run: $message" );
     exit ( 1 );
 }
 
 function WARN ( $message )
 {
-    echo 'epm_run: warning: ' . $message . PHP_EOL;
+    printerr ( "epm_run: warning: $message" );
+}
+
+// Do what PHP symlink should do, but PHP symlink is
+// known to fail sometimes for no good reason (see
+// comments on PHP documentation site; this behavior has
+// also been observed in EPM testing).
+//
+function symbolic_link ( $target, $link )
+{
+    return exec ( "ln -s $target $link 2>&1" ) == '';
 }
 
 $dryrun = false;
@@ -180,8 +195,8 @@ foreach ( $runin as $infile )
                ( "/^([-_A-Za-z0-9]+)-$problem\\.in\$/",
 	         $infile, $matches ) )
     {
-        echo "epm_run: $infile is not acceptable .in" .
-	     " file name" . PHP_EOL;
+        printerr ( "epm_run: $infile is not" .
+	           " acceptable .in file name" );
 	if ( $errors >= 5 ) break;
 	else continue;
     }
@@ -189,24 +204,24 @@ foreach ( $runin as $infile )
 
     if ( ! isset ( $cache[$infile] ) )
     {
-	echo "epm_run: cannot find $cname $infile" .
-	     PHP_EOL;
+	printerr ( "epm_run: cannot find $cname" .
+	           " $infile" );
 	if ( ++ $errors >= 5 ) break;
 	else continue;
     }
     $indir = $cache[$infile];
     if ( ! is_readable ( "$epm_data/$indir/$infile" ) )
     {
-	echo "epm_run: cannot read $cname" .
-	     " $indir/$infile" .  PHP_EOL;
+	printerr ( "epm_run: cannot read $cname" .
+	           " $indir/$infile" );
 	if ( ++ $errors >= 5 ) break;
 	else continue;
     }
     $ftestfile = "$inbase.ftest";
     if ( ! isset ( $cache[$ftestfile] ) )
     {
-	echo "epm_run: cannot find $cname $ftestfile" .
-	     PHP_EOL;
+	printerr ( "epm_run: cannot find $cname" .
+	           " $ftestfile" );
 	if ( ++ $errors >= 5 ) break;
 	else continue;
     }
@@ -214,8 +229,8 @@ foreach ( $runin as $infile )
     if ( ! is_readable
                ( "$epm_data/$ftestdir/$ftestfile" ) )
     {
-	echo "epm_run: cannot read $cname" .
-	     " $ftestdir/$ftestfile" .  PHP_EOL;
+	printerr ( "epm_run: cannot read $cname" .
+	           " $ftestdir/$ftestfile" );
 	if ( ++ $errors >= 5 ) break;
 	else continue;
     }
@@ -233,7 +248,7 @@ load_argument_map ( ! $submit, $warnings, $errors );
 if ( count ( $errors ) > 0 )
 {
     foreach ( $errors as $e )
-	echo "epm_run: $e" .  PHP_EOL;
+        printerr ( "epm_run: $e" );
     exit ( 1 );
 }
 

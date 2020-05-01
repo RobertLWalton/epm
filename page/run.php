@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 10:18:47 EDT 2020
+    // Date:	Fri May  1 13:59:39 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -137,14 +137,18 @@
         exit ( 'UNACCEPTABLE HTTP POST' );
 
 
-    // Compute $map[$base][$ext] => [$fname,$fdir]
-    // where $fname is $base.$ext, $ext is one $exts,
-    // $fdir is the directory containing $fname,
-    // relative to $epm_data, and $map[.] is sorted
-    // in order of modification time of $base....,
-    // most recent first.  To compute modification
-    // time $ext's are taken in preference order
-    // rout, rerr, run.
+    // Compute
+    //
+    //     $map[$base][$ext] => [$fname,TIME,CONTENTS]
+    //
+    // where $fname is $base.$ext, $ext is one of $exts,
+    // TIME is the mod-time of $fname (as a UNIX
+    // integer), and CONTENTS is the contents of
+    // $fname.
+    //
+    // $map[.] is sorted in order of TIME of
+    // $map[.][$ext] for the first $ext that exists
+    // in the preference order rout, rerr, run.
     //
     $exts = ['run','rerr','rout'];
         // In reverse preference order.
@@ -342,8 +346,8 @@ EOT;
 		 $runresult != ['D',0] )
 	    echo "<br><pre class='red'>Run Terminated" .
 	         " Prematurely With Exit Code" .
-		 " {$runresult[1]}<pre>" .
-		 PHP_EOL;
+		 " {$runresult[1]};" .
+		 " see .rerr file<pre>" .  PHP_EOL;
 	echo "</div>" . PHP_EOL;
     }
 
@@ -351,6 +355,7 @@ EOT;
     $display_list = [];
     compute_run_map
         ( $local_map, $local_file_cache, $rundir );
+    $initially_display = [];
     if ( $local_map != [] )
     {
     	echo <<<EOT
@@ -392,6 +397,8 @@ EOT;
 		    $e['rout'];
 		$display_list[] =
 		    ["rout$n",$fname,$fcontents];
+		if ( $n == 1 )
+		    $initially_display[] = "rout$n";
 		echo <<<EOT
 		     <button type='button'
 		             id='s_rout$n'
@@ -410,6 +417,7 @@ EOT;
 		    $e['rerr'];
 		$display_list[] =
 		    ["rerr$n",$fname,$fcontents];
+		$initially_display[] = "rerr$n";
 		echo <<<EOT
 		     <button type='button'
 		             id='s_rerr$n'
@@ -454,8 +462,10 @@ EOT;
 	}
     }
     if ( isset ( $runbase ) && $runresult !== true )
-        echo "<script>" .
-	     "TOGGLE('s_rout1','rout1')</script>";
+        foreach ( $initially_display as $rxxxN )
+	    echo "<script>" .
+		 "TOGGLE('s_$rxxxN','$rxxxN')" .
+		 "</script>";
 ?>
 
 <form action='run.php' method='POST' id='reload'>
