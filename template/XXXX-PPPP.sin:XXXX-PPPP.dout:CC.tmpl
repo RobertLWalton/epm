@@ -1,0 +1,20 @@
+{
+
+"COMMANDS": ["g++ -g -o PPPP PPPP.cc $LIBRARIES \\",
+             "    > PPPP.cout 2> PPPP.cerr",
+	     "chmod o+xr PPPP",
+	     "chmod o+r XXXX-PPPP.sin PPPP.cc",
+	     "epm_sandbox $SSARGS $SSDTIME $SSPACE \\",
+	     "    -status XXXX-PPPP.sstat gdb -batch \\",
+	     "    -ex 'run < XXXX-PPPP.sin $DARGS' \\",
+	     "    -ex back PPPP \\",
+	     "    > XXXX-PPPP.dout 2> XXXX-PPPP.derr",
+	     "chmod o-r XXXX-PPPP.sin PPPP.cc"],
+
+"LOCAL-REQUIRES": ["XXXX-PPPP.sin", "PPPP.cc"],
+"KEEP":    ["XXXX-PPPP.dout"],
+"SHOW":    ["PPPP.cout","PPPP.cerr","XXXX-PPPP.derr",
+                                    "XXXX-PPPP.dout"],
+"KEEP-ON-ERROR": true
+
+}
