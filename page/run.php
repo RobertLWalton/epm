@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May  1 14:29:22 EDT 2020
+    // Date:	Sat May  2 02:27:06 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -139,85 +139,139 @@
 
     // Compute
     //
-    //     $map[$base][$ext] => [$fname,TIME,CONTENTS]
+    //   $map[$base][EXT] => CONTENTS
     //
-    // where $fname is $base.$ext, $ext is one of $exts,
-    // TIME is the mod-time of $fname (as a UNIX
-    // integer), and CONTENTS is the contents of
-    // $fname.
+    // where EXT is one of 'loc', 'run', 'rout', or
+    // 'rerr'.  If EXT != 'loc', CONTENTS is the
+    // contents of the file $base.EXT.  For 'loc',
+    // CONTENTS is instead either 'local' or 'remote'
+    // and tells whether the $base.run file was found
+    // in the $local_file_cache or $remote_file_cache.
     //
-    // $map[.] is sorted in order of TIME of
-    // $map[.][$ext] for the first $ext that exists
-    // in the preference order rout, rerr, run.
+    // These entries are defined for a given $base iff
+    // $base.run is found.  If one of the other files
+    // $base.EXT does not exist, its CONTENTS is
+    // set === false.
     //
-    $exts = ['run','rerr','rout'];
-        // In reverse preference order.
-    function compute_run_map ( & $map, $cache, $rundir )
+    // If $base.run can be found both locally and
+    // remotely, the local version is used.
+    //
+    // If $base.rout can be found both in the $rundir
+    // and locally, the $rundir version is used.
+    //
+    // However $base.rerr can only be found in $rundir.
+    //
+    // $rundir may be NULL if it does not exist.
+    //
+    // A .rout or .rerr file whose mod-time is after
+    // $base.run's mod-time is treated as non-existant.
+    //
+    // The $map is sorted by the TIME associated with
+    // each $base, most recent first.  The TIME
+    // associated is the most recent mod-time of any
+    // of the $base.EXT files.
+    //
+    // This function begins by calling load_file_caches.
+    //
+    function compute_run_map ( & $map, $rundir )
     {
-        global $epm_data, $exts;
+        global $epm_data, $local_file_cache,
+	       $remote_file_cache;
+	load_file_caches();
 
+	// Build $fmap containing 'loc' and 'run' but
+	// with CONTENTS for 'run' replaced by directory
+	// containing $base.run.
+	//
         $fmap = [];
-	if ( isset ( $cache ) )
+	foreach ( ['remote','local'] as $loc )
+	{
+	    if ( $loc == 'remote' )
+	        $cache = & $remote_file_cache;
+	    else
+	        $cache = & $local_file_cache;
 	    foreach ( $cache as $fname => $fdir )
-	{
-	    $ext = pathinfo
-	        ( $fname, PATHINFO_EXTENSION );
-	    if ( ! in_array ( $ext, $exts ) ) continue;
-
-	    $f = "$epm_data/$fdir/$fname";
-	    if ( ! is_readable ( $f ) ) continue;
-	    $ftime = @filemtime ( $f );
-	    if ( $ftime === false ) continue;
-	    $fcontents = @file_get_contents ( $f );
-	    if ( $fcontents === false ) continue;
-	    if ( $fcontents == '' ) continue;
-
-	    $base = pathinfo
-	        ( $fname, PATHINFO_FILENAME );
-	    $fmap[$base][$ext] =
-	        [$fname,$ftime,$fcontents];
-	}
-	
-	if ( isset ( $rundir ) )
-	{
-	    $files = @scandir ( "$epm_data/$rundir" );
-	    if ( $files === false )
-	        ERROR ( "cannot read $rundir" );
-	    foreach ( $files as $fname )
 	    {
 		$ext = pathinfo
 		    ( $fname, PATHINFO_EXTENSION );
-		if ( ! in_array ( $ext, $exts ) )
-		    continue;
-		if ( $ext == 'run' ) continue;
-
-		$f = "$epm_data/$rundir/$fname";
-		if ( ! is_readable ( $f ) ) continue;
-		$ftime = @filemtime ( $f );
-		if ( $ftime === false ) continue;
-		$fcontents = @file_get_contents ( $f );
-		if ( $fcontents === false ) continue;
-		if ( $fcontents == '' ) continue;
-
-		$base = pathinfo
-		    ( $fname, PATHINFO_FILENAME );
-		$fmap[$base][$ext] =
-		    [$fname,$ftime,$fcontents];
+		if ( $ext == 'run' )
+		{
+		    $base = pathinfo
+		        ( $fname, PATHINFO_FILENAME );
+		    $fmap[$base]['run'] = $fdir;
+		    $fmap[$base]['loc'] = $loc;
+		}
 	    }
 	}
 
-	$map = [];
-	foreach ( $fmap as $key => $e )
+	// Complete each $fmap entry, and also build
+	// $tmap[$base] => TIME, where TIME is the
+	// latest mod-time of any file with given $base.
+	//
+	$tmap = [];
+	foreach ( $fmap as $base => & $entry )
 	{
-	    foreach ( $exts as $ext ) // rout is last
+	    $d = $entry['run'];
+	    $f = "$d/$base.run";
+	    $c = @file_get_contents ( "$epm_data/$f" );
+	    if ( $c === false )
+	        ERROR ( "cannot read $f" );
+	    $runtime = @filemtime ( "$epm_data/$f" );
+	    if ( $runtime === false )
+	        ERROR ( "can read but not stat $f" );
+	    $entry['run'] = $c;
+	    $entry['rout'] = false;
+	    $entry['rerr'] = false;
+	    $time = $runtime;
+	    if ( $rundir != NULL )
 	    {
-		if ( ! isset ( $e[$ext] ) ) continue;
-		$map[$key] = $e[$ext][1];
+	        foreach ( ['rout','rerr'] as $rxxx )
+		{
+		    $f = "$rundir/$base.$rxxx";
+		    $c = @file_get_contents
+		        ( "$epm_data/$f" );
+		    if ( $c === false ) continue;
+		    $t = @filemtime
+		        ( "$epm_data/$f" );
+		    if ( $t === false )
+			ERROR ( "can read but not" .
+			        " stat $f" );
+
+		    if ( $t < $runtime ) continue;
+
+		    $entry[$rxxx] = $c;
+		    if ( $time < $t ) $time = $t;
+		}
 	    }
+	    if ( $entry['rout'] === false
+	         &&
+		 isset ( $local_file_cache
+		             ["$base.rout"] ) )
+	    {
+		$d = $local_file_cache["$base.rout"];
+		$f = "$d/$base.rout";
+		$c = @file_get_contents
+		    ( "$epm_data/$f" );
+		if ( $c === false )
+		    ERROR ( "cannot read $f" );
+		$t = @filemtime ( "$epm_data/$f" );
+		if ( $t === false )
+		    ERROR ( "can read but not stat" .
+		            " $f" );
+		if ( $t >= $runtime )
+		{
+		    $entry['rout'] = $c;
+		    if ( $time < $t ) $time = $t;
+		}
+	    }
+
+	    $tmap[$base] = $time;
 	}
-	arsort ( $map, SORT_NUMERIC );
-	foreach ( $map as $key => $value )
-	    $map[$key] = $fmap[$key];
+
+	arsort ( $tmap, SORT_NUMERIC );
+	$map = [];
+	foreach ( $tmap as $base => $time )
+	    $map[$base] = $fmap[$base];
     }
 
 ?>
@@ -351,14 +405,7 @@ EOT;
 	echo "</div>" . PHP_EOL;
     }
 
-    // If $runbase.rerr exists in $rundir and has size
-    // > 0, ignore $runbase.rout in local directory.
-    //
-    $f = "$epm_data/$rundir/$runbase.rerr";
-    if ( file_exists ( $f ) && filesize ( $f ) > 0 )
-	unset ( $local_file_cache["$runbase.rout"] );
-    compute_run_map
-        ( $local_map, $local_file_cache, $rundir );
+    compute_run_map ( $local_map, $rundir );
 
     $n = 0;
     $display_list = [];
@@ -370,71 +417,60 @@ EOT;
     	<form action='run.php' method='POST'>
 	<table>
 EOT;
-	foreach ( $local_map as $fbase => $e )
+	$td = [ 'run' => "<td>",
+	        'rout' =>
+		    "<td style='padding-left:40px'>",
+	        'rerr' =>
+		    "<td style='padding-left:40px'>" ];
+	foreach ( $local_map as $base => $entry )
 	{
 	    ++ $n;
 
 	    echo "<tr>";
-	    echo "<td>";
-	    if ( isset ( $e['run'] ) )
+	    foreach ( ['run','rout','rerr'] as $rxxx )
 	    {
-	        list ( $fname, $ftime, $fcontents ) =
-		    $e['run'];
+	        if ( $entry[$rxxx] === false ) continue;
+		if (    $entry[$rxxx] == ''
+		     && $rxxx != 'run' )
+		    continue;
+
+		$fname = "$base.$rxxx";
+		echo $td[$rxxx];
 		$display_list[] =
-		    ["run$n",$fname,$fcontents];
+		    ["$rxxx$n",
+		     "$base.$rxxx", $entry[$rxxx]];
 		echo <<<EOT
 		     <button type='button'
-		             id='s_run$n'
+		             id='s_$rxxx$n'
 		             onclick='TOGGLE
-		                 ("s_run$n","run$n")'
+			       ("s_$rxxx$n","$rxxx$n")'
 			>&darr;</button>
 		     <pre>$fname</pre>
+EOT;
+		if ( $rxxx != 'run' )
+		{
+		    if ( $n == 1 )
+		        $initially_display[] =
+			    "$rxxx$n";
+		    continue;
+		}
+
+		if ( $entry['loc'] == 'local' )
+		     echo <<<EOT
 		     <button type='submit'
 			     name='execute_run'
 			     value='$fname'
 			 >Run</button>
 EOT;
-	    }
-	    echo "</td>";
-
-	    echo "<td style='padding-left:40px'>";
-	    if ( isset ( $e['rout'] ) )
-	    {
-	        list ( $fname, $ftime, $fcontents ) =
-		    $e['rout'];
-		$display_list[] =
-		    ["rout$n",$fname,$fcontents];
-		if ( $n == 1 )
-		    $initially_display[] = "rout$n";
-		echo <<<EOT
-		     <button type='button'
-		             id='s_rout$n'
-		             onclick='TOGGLE
-		                 ("s_rout$n","rout$n")'
-			>&darr;</button>
-		     <pre>$fname</pre>
+		else
+		     echo <<<EOT
+		     <button type='submit'
+			     name='submit_run'
+			     value='$fname'
+			 >Submit</button>
 EOT;
+		echo "</td>";
 	    }
-	    echo "</td>";
-
-	    echo "<td style='padding-left:40px'>";
-	    if ( isset ( $e['rerr'] ) )
-	    {
-	        list ( $fname, $ftime, $fcontents ) =
-		    $e['rerr'];
-		$display_list[] =
-		    ["rerr$n",$fname,$fcontents];
-		$initially_display[] = "rerr$n";
-		echo <<<EOT
-		     <button type='button'
-		             id='s_rerr$n'
-		             onclick='TOGGLE
-		                 ("s_rerr$n","rerr$n")'
-			>&darr;</button>
-		     <pre>$fname</pre>
-EOT;
-	    }
-	    echo "</td>";
 	    echo "</tr>";
 	}
 
