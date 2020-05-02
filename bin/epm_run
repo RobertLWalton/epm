@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri May  1 12:57:12 EDT 2020
+// Date:	Sat May  2 15:29:11 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -129,13 +129,14 @@ switch ( $argc )
 // Note: $_ENV does NOT work here because $ is not in
 // ini variables_order.  But getenv does work.
 //
-$epm_web = getenv ( 'EPM_WEB' );
+$epm_web  = getenv ( 'EPM_WEB' );
 $uid      = getenv ( 'EPM_UID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
 $dir      = getenv ( 'EPM_DIR' );
 
 $epm_self = "/bin/epm_run";
 require "$epm_web/parameters.php";
+    // This sets $epm_home and $epm_data
 
 $probdir = "users/$uid/$problem";
 require "$epm_home/include/epm_make.php";
@@ -241,9 +242,8 @@ if ( $dryrun ) exit ( 0 );
 
 load_template_cache();
 
-$warnings = [];
 $errors   = [];
-load_argument_map ( ! $submit, $warnings, $errors );
+load_argument_map ( ! $submit, $errors );
 
 if ( count ( $errors ) > 0 )
 {
@@ -255,13 +255,13 @@ if ( count ( $errors ) > 0 )
 echo "Run-File: $runfile" . PHP_EOL;
 $start_time = microtime ( true );
 echo "Start-Time: " .
-     strftime ( "%FT%T%z", $start_time ) .  PHP_EOL;
+     strftime ( "%FT%T%z", intval ( $start_time ) ) .
+     PHP_EOL;
 
 $lines = [];
 $max_map = ['g' => 0, 's' => 0, 'f' => 0];
 $first_failed = NULL;
 $score = NULL;
-$warnings_count = 0;
 foreach ( $runin as $infile )
 {
     $base = pathinfo ( $infile, PATHINFO_FILENAME );
@@ -270,17 +270,7 @@ foreach ( $runin as $infile )
 	   $submit ? 'SUBMIT': NULL,
 	   true, $workdir,
 	   NULL, NULL /* no upload, upload_tmp */,
-	   $warnings, $errors );
-    if ( count ( $warnings ) > 0 )
-    {
-        echo "epm_run: WARNINGS during $base:" .
-	     PHP_EOL;
-	foreach ( $warnings as $w )
-	{
-	    echo "    $w" . PHP_EOL;
-	    $warnings_count += 1;
-	}
-    }
+	   $errors );
     if ( count ( $errors ) > 0 )
     {
 	$first_failed = $base;
@@ -374,10 +364,6 @@ if ( count ( $errors ) > 0 )
 }
 else
     echo "Score: Completely Correct" . PHP_EOL;
-
-if ( $warnings_count > 0 )
-    echo "Number-of-Warning-Messages:" .
-         " $warnings_count" . PHP_EOL;
 
 $max_label = ['g' => 'Generate', 's' => 'Solution',
               'f' => 'Filter'];

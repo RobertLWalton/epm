@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri May  1 03:54:53 EDT 2020
+// Date:    Sat May  2 14:59:10 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2057,7 +2057,7 @@ function start_run
 	              . " directory";
 	    return;
 	}
-	$d = $remote_file_cache[$f];
+	$d = $remote_file_cache[$runfile];
 	$r = "$relfile/$d";
     }
     $f = "$d/$runfile";
@@ -2170,6 +2170,16 @@ function finish_run ( & $errors )
     }
     else
     {
+	$f = "$probdir/$runbase.rout";
+	$contents = @file_get_contents
+	    ( "$epm_data/$rout" );
+	if ( $contents === false )
+	    ERROR ( "cannot read $rout" );
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $contents );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+
 	$d = "admin/submit/$uid/$problem";
 	@mkdir ( "$epm_data/$d", 0770, true );
 	if ( ! is_dir ( "$epm_data/$d" ) )
@@ -2199,7 +2209,8 @@ function finish_run ( & $errors )
 	    }
 	    $c += 1;
 	    if ( $c > 1000 )
-	        ERROR ( "too many .rout files in $d" );
+	        ERROR ( "too many $runbase-*s.rout" .
+		        " files in $d" );
 	}
     }
 }
