@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May  3 03:52:33 EDT 2020
+    // Date:	Sun May  3 04:16:37 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -748,7 +748,7 @@ EOT;
     function listname_to_pull_rows
 	    ( $listname, & $warnings )
     {
-        global $epm_data, $uid;
+        global $epm_data, $uid, $epm_parent_re;
 
 	list ( $project, $basename ) =
 	    explode ( ':', $listname );
@@ -761,7 +761,6 @@ EOT;
 		( listname_to_filename ( $listname ) );
 
 	$r = '';
-	$re = '#^\.\./\.\./\.\./projects/(.+)$#';
         foreach ( $list as $items )
 	{
 	    list ( $time, $project, $problem ) = $items;
@@ -775,22 +774,32 @@ EOT;
 		        ( "$epm_data/$g" );
 		    if ( $parent === false )
 		        ERROR ( "cannot read link $g" );
-		    if ( ! preg_match ( $re, $parent,
-		                        $matches ) )
+		    if ( ! preg_match ( $epm_parent_re,
+		                        $parent,
+					$matches ) )
 		        ERROR ( "link $g has" .
 			        " malformed value" .
 				" $parent" );
-		    $parent = $matches[1];
+		    $parent =
+		        "{$matches[1]}/{$matches[2]}";
 		    if ( $project == '-' )
-		        $project =
-			    explode ( '/', $parent )[0];
-
-		    if (    "$project/$problem"
-		         != $parent )
+		        $project = $matches[1];
+		    elseif ( $project != $matches[1] )
 		    {
 		        $warnings[] =
-			    "$problem already has" .
-			    " parent $parent that" .
+			    "$problem has been" .
+			    " previously pulled from" .
+			    " {$matches[1]} and this" .
+			    " conflicts with request" .
+			    " to pull from $project";
+			continue;
+		    }
+		    elseif ( $problem != $matches[2] )
+		    {
+		        $warnings[] =
+			    "$problem has been" .
+			    " previously pulled from" .
+			    " $parent and this" .
 			    " conflicts with request" .
 			    " to pull from" .
 			    " $project/$problem";
