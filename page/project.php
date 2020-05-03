@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May  1 03:20:15 EDT 2020
+    // Date:	Sun May  3 03:52:33 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1833,6 +1833,10 @@ EOT;
 	    formaction='run.php'
 	    formmethod='GET'>
 	    Run Page</button>
+    <button type='submit'
+	    formaction='option.php'
+	    formmethod='GET'>
+	    Option Page</button>
     </td>
     <td>
     </td><td style='text-align:right'>

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May  2 14:59:10 EDT 2020
+// Date:    Sun May  3 04:01:10 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2058,7 +2058,7 @@ function start_run
 	    return;
 	}
 	$d = $remote_file_cache[$runfile];
-	$r = "$relfile/$d";
+	$r = "$reldir/$d";
     }
     $f = "$d/$runfile";
 
@@ -2104,7 +2104,8 @@ function start_run
 // Then if there are no errors, moves the .rout file
 // into $probdir is $submit is false, or to"
 //
-//	admin/submit/$uid/$problem/$runbase-C.rout
+//	admin/submit/$uid/$project/$problem/
+//		$runbase-C.rout
 //
 // if $submit is true.  Here C is the smallest integer
 // >= 1 such that the file named does not pre-exist.
@@ -2112,7 +2113,7 @@ function start_run
 function finish_run ( & $errors )
 {
     global $epm_data, $probdir, $uid, $problem,
-           $_SESSION;
+           $epm_parent_re, $_SESSION;
 
     $run = & $_SESSION['EPM_RUN'];
     $rundir = $run['DIR'];
@@ -2180,7 +2181,18 @@ function finish_run ( & $errors )
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
 
-	$d = "admin/submit/$uid/$problem";
+	$f = "$probdir/+parent+";
+	if ( ! is_link ( "$epm_data/$f" ) )
+	    ERROR ( "$f is not a link" );
+	$r = @readlink ( "$epm_data/$f" );
+	if ( $r === false )
+	    ERROR ( "cannot read link $f" );
+	if ( ! preg_match
+	           ( $epm_parent_re, $r, $matches ) )
+	    ERROR ( "link $f has bad value $r" );
+	$project = $matches[1];
+
+	$d = "admin/submit/$uid/$project/$problem";
 	@mkdir ( "$epm_data/$d", 0770, true );
 	if ( ! is_dir ( "$epm_data/$d" ) )
 	    ERROR ( "could not make directory $d" );

@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Apr 11 11:52:48 EDT 2020
+// Date:    Sun May  3 03:42:06 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -151,6 +151,11 @@ $epm_filename_re =
     // extension, and dash(-) and underline(_) must
     // not be the first or last character of the file
     // base name or extension.
+
+$epm_parent_re =
+    '#^\.\./\.\./\.\./projects/([^/]+)/([^/]+)$#';
+    // Regular expression to find PROJECT and
+    // PROBLEM in +parent+.
 
 $upload_target_ext = [
     // If file YYYY.EEE is uploadable, then

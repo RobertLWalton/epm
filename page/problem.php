@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May  1 03:58:11 EDT 2020
+    // Date:	Sun May  3 03:48:43 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -766,11 +766,9 @@ EOT;
 	<button type='submit'
 		formaction='run.php'>
 		Run Page</button>
-	<pre>  </pre>
 	<button type='submit'
 		formaction='option.php'>
 		Option Page</button>
-	<pre>  </pre>
 EOT;
     echo <<<EOT
     <button type='submit'
