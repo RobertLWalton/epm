@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May  4 14:25:25 EDT 2020
+    // Date:	Mon May  4 15:00:01 EDT 2020
 
     // Edits problem option page.
 
@@ -107,8 +107,8 @@
 	if ( isset ( $value['default'] ) )
 	    $optmap[$opt] = $value['default'];
     }
-    check_optmap ( $optmap, $template_optn,
-                   'template default', $errors );
+    check_optmap
+        ( $optmap, 'template default', $errors );
     check_errors ( 'template default values' );
 
     $dirs = find_ancestors ( $probdir );
@@ -127,9 +127,8 @@
 		          . " in templates";
 	}
     }
-    check_optmap ( $optmap, $template_optn,
-                   'inherited', $errors );
-    check_errors ( 'template inhertied values' );
+    check_optmap ( $optmap, 'inherited', $errors );
+    check_errors ( 'template inherited values' );
 
     $inherited = $optmap;
 
@@ -146,8 +145,7 @@
 		          . " in templates";
 	}
     }
-    check_optmap ( $optmap, $template_optn,
-                   'local', $errors );
+    check_optmap ( $optmap, 'local', $errors );
 
     // Compute data for Template Commands in $template_
     // cache.
@@ -180,8 +178,7 @@
 	}
 	$errors = [];
 	    // Clear previous $optmap errors.
-	check_optmap ( $optmap, $template_optn,
-	               'update', $errors );
+	check_optmap ( $optmap, 'update', $errors );
 	if ( count ( $errors ) > 0 )
 	{
 	    $optmap = $defaults;

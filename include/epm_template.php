@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 14:25:55 EDT 2020
+// Date:    Mon May  4 14:57:13 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -178,7 +178,7 @@ function get_template_json ( $template )
 // Cache result in $template_optn.
 //
 // Checking of template option contents for validity is
-// done by check_optmap, and is not done here.
+// done by check_template_optn, and is not done here.
 //
 $template_optn = NULL;
 function get_template_optn()
@@ -295,13 +295,20 @@ function check_template_optn ( & $errors )
 }
 
 // Add to $errors any errors found in the $optmap of
-// $opt => $value.  Template options are in $options
-// and must be valid.  Error messages complain about
-// `$name values'.
+// $opt => $value.  Template options are in global
+// $template_optn and must be valid.  Error messages
+// complain about `$name values', e.g., if $name is
+// 'default' they complain about `default values'.
+//
+// If $correct is true, correct the value by changing
+// it to default value or moving it to nearest range
+// limit.
 //
 function check_optmap
-    ( & $optmap, $options, $name, & $errors )
+    ( & $optmap, $name, & $errors, $correct = false )
 {
+    global $template_optn;
+
     $type_re =
 	['natural' => '/^\d+$/',
 	 'integer' => '/^(|\+|-)\d+$/',
@@ -310,46 +317,74 @@ function check_optmap
 
     foreach ( $optmap as $opt => $value )
     {
-	$d = & $options[$opt];
+	$d = & $template_optn[$opt];
+	$set_to_default = false;
 	if ( isset ( $d['values'] ) )
 	{
 	    $values = $d['values'];
 	    if ( ! in_array ( $value, $values ) )
+	    {
 		$errors[] = "option $opt $name"
 			  . " value '$value' is not"
 			  . " in option `values'";
+		$set_to_default = $correct;
+	    }
 	}
 	elseif ( isset ( $d['type'] ) )
 	{
 	    $type = $d['type'];
 	    $re = $type_re[$type];
 	    if ( ! preg_match ( $re, $value ) )
+	    {
 		$errors[] =
 		    "option $opt $name value" .
 		    " '$value' has illegal" .
 		    " format for its type $type";
+		$set_to_default = $correct;
+	    }
 	    else
 	    {
 		$r = $d['range'];
 		if ( $value < $r[0] )
+		{
 		    $errors[] =
 			"option $opt $name value" .
 			" '$value' is too small";
+		    $optmap[$opt] = $r[0];
+		    $errors[] =
+			"option $opt $name value" .
+			" reset to {$r[0]}";
+		}
 		elseif ( $value > $r[1] )
+		{
 		    $errors[] =
 			"option $opt $name value" .
 			" '$value' is too large";
+		    $optmap[$opt] = $r[1];
+		    $errors[] =
+			"option $opt $name value" .
+			" reset to {$r[1]}";
+		}
 	    }
 	}
 	else
 	{
 	    $re = '/^[-\+_@=\/:\.,A-Za-z0-9\h]*$/';
 	    if ( ! preg_match ( $re, $value ) )
+	    {
 		$errors[] =
 		    "option $opt $name value" .
 		    " '$value' contains a" .
 		    " special character other" .
 		    " than - + _ @ = / : . ,";
+		$set_to_default = $correct;
+	    }
+	}
+	if ( $set_to_default )
+	{
+	    $optmap[$opt] = $d['default'];
+	    $errors[] = "option $opt $name value reset"
+	              . " to default {$d['default']}";
 	}
     }
 }
@@ -415,8 +450,7 @@ function get_problem_optn
 	}
 
     }
-    check_optmap ( $problem_optn, $template_optn,
-                   'option', $errors );
+    check_optmap ( $problem_optn, 'option', $errors );
     return $problem_optn;
 }
 
