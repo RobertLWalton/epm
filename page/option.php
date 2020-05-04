@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May  4 16:05:59 EDT 2020
+    // Date:	Mon May  4 17:39:54 EDT 2020
 
     // Edits problem option page.
 
@@ -111,40 +111,16 @@
         ( $optmap, 'template default', $errors );
     check_errors ( 'template default values' );
 
-    $dirs = find_ancestors ( $probdir );
-    foreach ( array_reverse ( $dirs ) as $dir )
-    {
-	$f = "$dir/$problem.optn";
-        if ( ! is_readable ( "$epm_data/$f" ) )
-	    continue;
-	$j = get_json ( $epm_data, $f );
-	foreach ( $j as $opt => $value )
-	{
-	    if ( isset ( $optmap[$opt] ) )
-		$optmap[$opt] = $value;
-	    else
-	        $errors[] = "option $opt in $f is not"
-		          . " in templates";
-	}
-    }
+    $dirs = array_reverse
+        ( find_ancestors ( $probdir ) );
+    load_optmap ( $optmap, $dirs, $problem, $errors );
     check_optmap ( $optmap, 'inherited', $errors );
     check_errors ( 'template inherited values' );
 
     $inherited = $optmap;
 
-    $f = "$probdir/$problem.optn";
-    if ( is_readable ( "$epm_data/$f" ) )
-    {
-	$j = get_json ( $epm_data, $f );
-	foreach ( $j as $opt => $value )
-	{
-	    if ( isset ( $optmap[$opt] ) )
-		$optmap[$opt] = $value;
-	    else
-	        $errors[] = "option $opt in $f is not"
-		          . " in templates";
-	}
-    }
+    load_optmap
+        ( $optmap, [$probdir], $problem, $errors );
     check_optmap ( $optmap, 'local', $errors );
 
     $defaults = $optmap;

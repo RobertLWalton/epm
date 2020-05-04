@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 16:04:02 EDT 2020
+// Date:    Mon May  4 17:35:10 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -224,7 +224,7 @@ function get_template_optn()
 //
 function check_template_optn ( & $errors )
 {
-    global $template_optn;
+    $template_optn = get_template_optn();
 
     $type_re =
 	['natural' => '/^\d+$/',
@@ -343,6 +343,39 @@ function check_template_optn ( & $errors )
     check_optmap ( $defaultmap, 'default', $errors );
 }
 
+// Load into $optmap options from $dir/$problem.optn
+// files where the directories are listed in $dirs.
+// $optmap entries have the form $option => $value.
+//
+// Options in later files override those in earlier
+// files.  Options that are not in $template_optn
+// cause error messages to be appended to $errors.
+//
+function load_optmap
+	( & $optmap, $dirs, $problem, $errors )
+{
+    global $epm_data;
+
+    $template_optn = get_template_optn();
+
+    foreach ( $dirs as $dir )
+    {
+	$f = "$dir/$problem.optn";
+	if ( is_readable ( "$epm_data/$f" ) )
+	{
+	    $j = get_json ( $epm_data, $f );
+	    foreach ( $j as $opt => $value )
+	    {
+		if ( isset ( $template_optn[$opt] ) )
+		    $optmap[$opt] = $value;
+		else
+		    $errors[] = "option $opt in $f is"
+		              . " not in templates";
+	    }
+	}
+    }
+}
+
 // Add to $errors any errors found in the $optmap of
 // $opt => $value.  Template options are in global
 // $template_optn and must be valid.  Error messages
@@ -356,7 +389,7 @@ function check_template_optn ( & $errors )
 function check_optmap
     ( & $optmap, $name, & $errors, $correct = false )
 {
-    global $template_optn;
+    $template_optn = get_template_optn();
 
     $type_re =
 	['natural' => '/^\d+$/',
@@ -477,31 +510,12 @@ function get_problem_optn
 	    $problem_optn[$opt] = $desc['default'];
     }
 
-    $f = "$problem.optn";
     $dirs = array_reverse
 	( find_ancestors ( $probdir ) );
     if ( $allow_local_optn )
         $dirs[] = $probdir;
-
-    foreach ( $dirs as $d )
-    {
-        if ( ! is_readable ( "$epm_data/$d/$f" ) )
-	    continue;
-	$j = get_json ( $epm_data, "$d/$f" );
-
-	// PPPP.optn values are 1D arrays.  We process
-	// directories in use-last order.  If an option
-	// has no value when we encounter it, the
-	// option has no template default value, and
-	// we ignore the option.
-	//
-	foreach ( $j as $opt => $value )
-	{
-	    if ( isset ( $problem_optn[$opt] ) )
-		$problem_optn[$opt] = $value;
-	}
-
-    }
+    load_optmap
+        ( $problem_optn, $dirs, $problem, $errors );
     check_optmap ( $problem_optn, 'option', $errors );
     return $problem_optn;
 }
