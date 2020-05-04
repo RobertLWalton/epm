@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May  4 02:49:22 EDT 2020
+    // Date:	Mon May  4 03:50:39 EDT 2020
 
     // Edits problem option page.
 
@@ -176,6 +176,7 @@
                    'template default', $errors );
     check_errors ( 'template default values' );
 
+    compute_remote_dirs ( $problem );
     foreach ( array_reverse ( $remote_dirs ) as $dir )
     {
 	$f = "$dir/$problem.optn";

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May  3 17:55:07 EDT 2020
+// Date:    Mon May  4 03:51:31 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -40,29 +40,6 @@ if ( ! isset ( $is_epm_test ) )
     // NOT driven by an http server.  Some functions,
     // notably move_uploaded_file, will not work
     // in this test script environment.
-
-// Compute $remote_dirs, the list of ancestor problem
-// directories in closest ancestor first order.  The
-// ancestor of $probdir is connected to the link
-// $probdir/+parent+, and so forth.  The link values
-// all begin with '../../../' to get to $epm_data
-// without including the value of $epm_data.
-//
-$remote_dirs = [];
-$d = $probdir;
-while ( is_link ( "$epm_data/$d/+parent+" ) )
-{
-    $s = @readlink ( "$epm_data/$d/+parent+" );
-    if ( $s === false )
-        ERROR ( "cannot read link $d/+parent+" );
-    if ( ! preg_match
-               ( '/^\.\.\/\.\.\/\.\.\/([^\.]+)$/',
-	         $s, $matches ) )
-        ERROR ( "link $d/+parent+ value $s is" .
-	        " malformed" );
-    $d = $matches[1];
-    $remote_dirs[] = $d;
-}
 
 // Return true if process with $pid is still running,
 // and false otherwise.
@@ -321,7 +298,7 @@ $local_file_cache = NULL;
 $remote_file_cache = NULL;
 function load_file_caches()
 {
-    global $epm_data, $remote_dirs, $probdir,
+    global $epm_data, $remote_dirs, $problem, $probdir,
 	   $epm_filename_re,
            $remote_file_cache, $local_file_cache;
 
@@ -332,6 +309,7 @@ function load_file_caches()
 
     $local_file_cache = [];
     $remote_file_cache = [];
+    compute_remote_dirs ( $problem );
     foreach ( $remote_dirs as $dir )
     {
 	$c = @scandir ( "$epm_data/$dir" );

@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 02:49:10 EDT 2020
+// Date:    Mon May  4 03:51:45 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -30,6 +30,36 @@ if ( is_dir ( "$epm_data/template" ) )
     $template_dirs[] = [$epm_data, "template"];
 $template_dirs[] = [$epm_home, "template"];
 
+// Compute $remote_dirs, the list of ancestor problem
+// directories in closest ancestor first order.  The
+// ancestor of users/$uid/$problem is connected to the
+// link +parent+, and so forth.  The link values all
+// begin with '../../../' to get to $epm_data without
+// including the value of $epm_data.
+//
+$remote_dirs = NULL;
+function compute_remote_dirs ( $problem )
+{
+    global $epm_data, $uid, $remote_dirs;
+
+    if ( isset ( $remote_dirs ) ) return;
+
+    $remote_dirs = [];
+    $d = "users/$uid/$problem";
+    while ( is_link ( "$epm_data/$d/+parent+" ) )
+    {
+	$s = @readlink ( "$epm_data/$d/+parent+" );
+	if ( $s === false )
+	    ERROR ( "cannot read link $d/+parent+" );
+	if ( ! preg_match
+		   ( '/^\.\.\/\.\.\/\.\.\/([^\.]+)$/',
+		     $s, $matches ) )
+	    ERROR ( "link $d/+parent+ value $s is" .
+		    " malformed" );
+	$d = $matches[1];
+	$remote_dirs[] = $d;
+    }
+}
 
 // Function to get and decode json file, which must be
 // readable.  It is a fatal error if the file cannot be
@@ -287,6 +317,7 @@ function get_problem_optn
 	    $problem_optn[$opt] = $desc['default'];
     }
 
+    compute_remote_dirs ( $problem );
     $f = "$problem.optn";
     $dirs = array_reverse ( $remote_dirs );
     if ( $allow_local_optn )
