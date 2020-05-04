@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May  4 15:00:01 EDT 2020
+    // Date:	Mon May  4 16:05:59 EDT 2020
 
     // Edits problem option page.
 
@@ -147,12 +147,6 @@
     }
     check_optmap ( $optmap, 'local', $errors );
 
-    // Compute data for Template Commands in $template_
-    // cache.
-    //
-    load_template_cache();
-    ksort ( $template_cache, SORT_NATURAL );
-
     $defaults = $optmap;
     $edit = false;
         // False to display options, true to edit them.
@@ -182,7 +176,7 @@
 	if ( count ( $errors ) > 0 )
 	{
 	    $optmap = $defaults;
-	    $edit = true;
+	    $errors[] = "update is cancelled";
 	}
 	else
 	{

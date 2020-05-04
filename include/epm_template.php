@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 15:29:50 EDT 2020
+// Date:    Mon May  4 16:04:02 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -368,6 +368,7 @@ function check_optmap
     {
 	$d = & $template_optn[$opt];
 	$set_to_default = false;
+	$reset_value = NULL;
 	if ( isset ( $d['values'] ) )
 	{
 	    $values = $d['values'];
@@ -399,20 +400,16 @@ function check_optmap
 		    $errors[] =
 			"option $opt $name value" .
 			" '$value' is too small";
-		    $optmap[$opt] = $r[0];
-		    $errors[] =
-			"option $opt $name value" .
-			" reset to {$r[0]}";
+		    if ( $correct )
+			$reset_value = $r[0];
 		}
 		elseif ( $value > $r[1] )
 		{
 		    $errors[] =
 			"option $opt $name value" .
 			" '$value' is too large";
-		    $optmap[$opt] = $r[1];
-		    $errors[] =
-			"option $opt $name value" .
-			" reset to {$r[1]}";
+		    if ( $correct )
+			$reset_value = $r[1];
 		}
 	    }
 	}
@@ -434,6 +431,12 @@ function check_optmap
 	    $optmap[$opt] = $d['default'];
 	    $errors[] = "option $opt $name value reset"
 	              . " to default {$d['default']}";
+	}
+	elseif ( isset ( $reset_value ) )
+	{
+	    $optmap[$opt] = $reset_value;
+	    $errors[] = "option $opt $name value reset"
+	              . " to $reset_value";
 	}
     }
 }
