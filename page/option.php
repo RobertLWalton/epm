@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 10:56:43 EDT 2020
+    // Date:	Mon May  4 02:37:01 EDT 2020
 
     // Edits problem option page.
 
@@ -34,12 +34,7 @@
 	exit;
     }
 
-    require "$epm_home/include/epm_make.php";
-        // We do not need most of epm_make.php, but
-	// since editing options is not done that
-	// frequently, the extra overhead of loading
-	// a lot of stuff we do not need is not really
-	// harmful.
+    require "$epm_home/include/epm_template.php";
 
     $lock_desc = NULL;
     function shutdown ()

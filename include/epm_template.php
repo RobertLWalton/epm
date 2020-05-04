@@ -149,7 +149,7 @@ function get_template_json ( $template )
 // Cache result in $template_optn.
 //
 // Checking of template option contents for validity is
-// done in option.php, and is not done here.
+// done by check_optmap, and is not done here.
 //
 $template_optn = NULL;
 function get_template_optn()
