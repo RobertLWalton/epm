@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May  3 04:16:37 EDT 2020
+    // Date:	Mon May  4 14:00:27 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -780,29 +780,20 @@ EOT;
 		        ERROR ( "link $g has" .
 			        " malformed value" .
 				" $parent" );
-		    $parent =
-		        "{$matches[1]}/{$matches[2]}";
+		    $parent = $matches[1];
+		    $parts = explode ( '/', $parent );
 		    if ( $project == '-' )
-		        $project = $matches[1];
-		    elseif ( $project != $matches[1] )
-		    {
-		        $warnings[] =
-			    "$problem has been" .
-			    " previously pulled from" .
-			    " {$matches[1]} and this" .
-			    " conflicts with request" .
-			    " to pull from $project";
-			continue;
-		    }
-		    elseif ( $problem != $matches[2] )
+		        $project = $parts[1];
+		    $desired =
+		         "projects/$project/$problem";
+		    if ( $parent != $desired )
 		    {
 		        $warnings[] =
 			    "$problem has been" .
 			    " previously pulled from" .
 			    " $parent and this" .
 			    " conflicts with request" .
-			    " to pull from" .
-			    " $project/$problem";
+			    " to pull from $desired";
 			continue;
 		    }
 		    else

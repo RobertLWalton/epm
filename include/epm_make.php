@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 03:51:31 EDT 2020
+// Date:    Mon May  4 13:50:15 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -281,13 +281,13 @@ function load_argument_map
 //
 // where filename is the last component of the file
 // name and directory is the first directory in the
-// list $remote_dirs in which the file can be found
+// ancestors of $probdir in which the file can be found
 // under the full name:
 //
 //	$epm_data/directory/filename
 //
-// $remote_file_cache is for the directories listed in
-// $remote_dirs.   $local_file_cache is for the files
+// $remote_file_cache is for the ancestor directories
+// of $probdir.   $local_file_cache is for the files
 // listed in the single directory $probdir.
 //
 // All directories names are relative to $epm_data.  Any
@@ -298,7 +298,7 @@ $local_file_cache = NULL;
 $remote_file_cache = NULL;
 function load_file_caches()
 {
-    global $epm_data, $remote_dirs, $problem, $probdir,
+    global $epm_data, $problem, $probdir,
 	   $epm_filename_re,
            $remote_file_cache, $local_file_cache;
 
@@ -309,8 +309,7 @@ function load_file_caches()
 
     $local_file_cache = [];
     $remote_file_cache = [];
-    compute_remote_dirs ( $problem );
-    foreach ( $remote_dirs as $dir )
+    foreach ( find_ancestors ( $probdir ) as $dir )
     {
 	$c = @scandir ( "$epm_data/$dir" );
 	if ( $c === false )
@@ -2005,7 +2004,7 @@ function finish_run ( & $errors )
 	if ( ! preg_match
 	           ( $epm_parent_re, $r, $matches ) )
 	    ERROR ( "link $f has bad value $r" );
-	$project = $matches[1];
+	$project = explode ( '/', $matches[1] ) [1];
 
 	$d = "admin/submit/$uid/$project/$problem";
 	@mkdir ( "$epm_data/$d", 0770, true );

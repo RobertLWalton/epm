@@ -176,8 +176,8 @@
                    'template default', $errors );
     check_errors ( 'template default values' );
 
-    compute_remote_dirs ( $problem );
-    foreach ( array_reverse ( $remote_dirs ) as $dir )
+    $dirs = find_ancestors ( $probdir );
+    foreach ( array_reverse ( $dirs ) as $dir )
     {
 	$f = "$dir/$problem.optn";
         if ( ! is_readable ( "$epm_data/$f" ) )

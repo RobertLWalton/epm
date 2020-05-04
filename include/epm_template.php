@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 03:51:45 EDT 2020
+// Date:    Mon May  4 09:43:46 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -30,35 +30,34 @@ if ( is_dir ( "$epm_data/template" ) )
     $template_dirs[] = [$epm_data, "template"];
 $template_dirs[] = [$epm_home, "template"];
 
-// Compute $remote_dirs, the list of ancestor problem
-// directories in closest ancestor first order.  The
-// ancestor of users/$uid/$problem is connected to the
-// link +parent+, and so forth.  The link values all
-// begin with '../../../' to get to $epm_data without
-// including the value of $epm_data.
+// Compute the list of ancestors of a directory by
+// tracing the +parent+ links.  Each directory is
+// relative to $epm_data.
 //
-$remote_dirs = NULL;
-function compute_remote_dirs ( $problem )
+// All link values must match $epm_parent_re.
+//
+function find_ancestors ( $directory )
 {
-    global $epm_data, $uid, $remote_dirs;
+    global $epm_data, $epm_parent_re;
 
-    if ( isset ( $remote_dirs ) ) return;
-
-    $remote_dirs = [];
-    $d = "users/$uid/$problem";
-    while ( is_link ( "$epm_data/$d/+parent+" ) )
+    $ancestors = [];
+    while ( is_link
+                ( "$epm_data/$directory/+parent+" ) )
     {
-	$s = @readlink ( "$epm_data/$d/+parent+" );
+	$s = @readlink
+	    ( "$epm_data/$directory/+parent+" );
 	if ( $s === false )
-	    ERROR ( "cannot read link $d/+parent+" );
+	    ERROR ( "cannot read link" .
+	            " $directory/+parent+" );
 	if ( ! preg_match
-		   ( '/^\.\.\/\.\.\/\.\.\/([^\.]+)$/',
+		   ( $epm_parent_re,
 		     $s, $matches ) )
-	    ERROR ( "link $d/+parent+ value $s is" .
-		    " malformed" );
-	$d = $matches[1];
-	$remote_dirs[] = $d;
+	    ERROR ( "link $directory/+parent+ value" .
+	            " $s is malformed" );
+	$directory = $matches[1];
+	$ancestors[] = $directory;
     }
+    return $ancestors;
 }
 
 // Function to get and decode json file, which must be
@@ -285,7 +284,7 @@ function check_optmap
 // using later values to override previous values:
 //
 //	Defaults from (get_)template_optn.
-//	$problem.optn files in $remote_dirs.
+//	$problem.optn files in ancestors of $probdir
 //      $problem.optn file in $probdir iff
 //          $allow_local_optn is true.
 //
@@ -299,7 +298,7 @@ $problem_optn_allow_local = NULL;
 function get_problem_optn
 	( $allow_local_optn, & $errors )
 {
-    global $epm_data, $problem, $probdir, $remote_dirs,
+    global $epm_data, $problem, $probdir,
            $problem_optn, $problem_optn_allow_local;
 
     if ( isset ( $problem_optn )
@@ -317,9 +316,9 @@ function get_problem_optn
 	    $problem_optn[$opt] = $desc['default'];
     }
 
-    compute_remote_dirs ( $problem );
     $f = "$problem.optn";
-    $dirs = array_reverse ( $remote_dirs );
+    $dirs = array_reverse
+	( find_ancestors ( $probdir ) );
     if ( $allow_local_optn )
         $dirs[] = $probdir;
 
