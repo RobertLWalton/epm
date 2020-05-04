@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 09:43:46 EDT 2020
+// Date:    Mon May  4 14:25:55 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -218,21 +218,95 @@ function get_template_optn()
     return $template_optn;
 }
 
+// Add to $errors any errors found in $template_optn.
+// Default values are not checked; for these call
+// check_template_defaults.
+//
+function check_template_optn ( & $errors )
+{
+    global $template_optn;
+
+    foreach ( $template_optn as $opt => $description )
+    {
+	if ( ! isset ( $description['description'] ) )
+	{
+	    $errors[] =
+	        "option $opt has NO description";
+	    continue;
+	}
+
+	$isarg = isset ( $description['argname'] );
+	$isval = isset ( $description['valname'] );
+	$hasvalues = isset ( $description['values'] );
+	$hastype = isset ( $description['type'] );
+	$hasdefault = isset ( $description['default'] );
+	$hasrange = isset ( $description['range'] );
+
+	if ( $isarg && $isval )
+	    $errors[] = "option $opt has BOTH"
+	              . " 'argname' AND 'valname'";
+	if ( $isval )
+	{
+	    if ( ! $hasdefault )
+		$errors[] = "option $opt has 'valname'"
+		          . " but no 'default'";
+	    if ( ! $hasrange )
+		$errors[] = "option $opt has 'valname'"
+		          . " but no 'range'";
+	    if ( ! $hastype )
+		$errors[] = "option $opt has 'valname'"
+		          . " but no 'type'";
+	    if ( $hasvalues )
+		$errors[] = "option $opt has 'valname'"
+		          . " and also has 'values'";
+	}
+	elseif ( $isarg )
+	{
+	    if ( ! $hasdefault )
+		$errors[] = "option $opt has 'argname'"
+		          . " but no 'default'";
+	    if ( $hastype )
+		$errors[] = "option $opt has 'valname'"
+		          . " and also has 'type'";
+	    if ( $hasrange )
+		$errors[] = "option $opt has 'valname'"
+		          . " and also has 'range'";
+	}
+	else
+	{
+	    if ( $hasvalues )
+		$errors[] = "option $opt has 'values'"
+		          . " but has neither"
+			  . " 'argname' or 'valname'";
+	    if ( $hastype )
+		$errors[] = "option $opt has 'type'"
+		          . " but has neither"
+			  . " 'argname' or 'valname'";
+	    if ( $hasrange )
+		$errors[] = "option $opt has 'range'"
+		          . " but has neither"
+			  . " 'argname' or 'valname'";
+	    if ( $hasdefault )
+		$errors[] = "option $opt has 'default'"
+		          . " but has neither"
+			  . " 'argname' or 'valname'";
+	}
+    }
+}
+
 // Add to $errors any errors found in the $optmap of
 // $opt => $value.  Template options are in $options
 // and must be valid.  Error messages complain about
 // `$name values'.
 //
-$epm_type_re =
-    ['natural' => '/^\d+$/',
-     'integer' => '/^(|\+|-)\d+$/',
-     'float' => '/^(|\+|-)\d+(|\.\d+)'
-	      . '(|(e|E)(|\+|-)\d+)$/'];
-//
 function check_optmap
     ( & $optmap, $options, $name, & $errors )
 {
-    global $epm_type_re;
+    $type_re =
+	['natural' => '/^\d+$/',
+	 'integer' => '/^(|\+|-)\d+$/',
+	 'float' => '/^(|\+|-)\d+(|\.\d+)'
+		  . '(|(e|E)(|\+|-)\d+)$/'];
 
     foreach ( $optmap as $opt => $value )
     {
@@ -248,7 +322,7 @@ function check_optmap
 	elseif ( isset ( $d['type'] ) )
 	{
 	    $type = $d['type'];
-	    $re = $epm_type_re[$type];
+	    $re = $type_re[$type];
 	    if ( ! preg_match ( $re, $value ) )
 		$errors[] =
 		    "option $opt $name value" .

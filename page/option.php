@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May  4 03:50:39 EDT 2020
+    // Date:	Mon May  4 14:25:25 EDT 2020
 
     // Edits problem option page.
 
@@ -84,85 +84,20 @@
     // errors will result in a call to ERROR below.
 
     get_template_optn();
+    check_template_optn ( $errors );
+    check_errors ( 'option_templates' );
+
     $argnames = [];
     $valnames = [];
-    $type_re =
-        ['natural' => '/^\d+$/',
-	 'integer' => '/^(|\+|-)\d+$/',
-	 'float' => '/^(|\+|-)\d+(|\.\d+)'
-	          . '(|(e|E)(|\+|-)\d+)$/'];
-
     foreach ( $template_optn as $opt => $description )
     {
-	if ( ! isset ( $description['description'] ) )
-	    $errors[] =
-	        "option $opt has NO description";
-
-	$isarg = isset ( $description['argname'] );
-	$isval = isset ( $description['valname'] );
-	if ( $isarg && $isval )
-	    $errors[] = "option $opt has BOTH"
-	              . " 'argname' AND 'valname'";
-	elseif ( $isarg )
+	if ( isset ( $description['argname'] ) )
 	    $argnames[$description['argname']][] =
 		$opt;
-	elseif ( $isval )
+	if ( isset ( $description['valname'] ) )
 	    $valnames[$description['valname']][] =
 		$opt;
-
-	$hasvalues = isset ( $description['values'] );
-	$hastype = isset ( $description['type'] );
-	$hasdefault = isset ( $description['default'] );
-	$hasrange = isset ( $description['range'] );
-
-	if ( $isval )
-	{
-	    if ( ! $hasdefault )
-		$errors[] = "option $opt has 'valname'"
-		          . " but no 'default'";
-	    if ( ! $hasrange )
-		$errors[] = "option $opt has 'valname'"
-		          . " but no 'range'";
-	    if ( ! $hastype )
-		$errors[] = "option $opt has 'valname'"
-		          . " but no 'type'";
-	    if ( $hasvalues )
-		$errors[] = "option $opt has 'valname'"
-		          . " and also has 'values'";
-	}
-	elseif ( $isarg )
-	{
-	    if ( ! $hasdefault )
-		$errors[] = "option $opt has 'argname'"
-		          . " but no 'default'";
-	    if ( $hastype )
-		$errors[] = "option $opt has 'valname'"
-		          . " and also has 'type'";
-	    if ( $hasrange )
-		$errors[] = "option $opt has 'valname'"
-		          . " and also has 'range'";
-	}
-	else
-	{
-	    if ( $hasvalues )
-		$errors[] = "option $opt has 'values'"
-		          . " but has neither"
-			  . " 'argname' or 'valname'";
-	    if ( $hastype )
-		$errors[] = "option $opt has 'type'"
-		          . " but has neither"
-			  . " 'argname' or 'valname'";
-	    if ( $hasrange )
-		$errors[] = "option $opt has 'range'"
-		          . " but has neither"
-			  . " 'argname' or 'valname'";
-	    if ( $hasdefault )
-		$errors[] = "option $opt has 'default'"
-		          . " but has neither"
-			  . " 'argname' or 'valname'";
-	}
     }
-    check_errors ( 'option_templates' );
     ksort ( $valnames, SORT_NATURAL );
     ksort ( $argnames, SORT_NATURAL );
 
