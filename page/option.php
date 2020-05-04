@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May  4 02:37:01 EDT 2020
+    // Date:	Mon May  4 02:49:22 EDT 2020
 
     // Edits problem option page.
 
@@ -83,44 +83,16 @@
     // report errors by appending to $errors.  Template
     // errors will result in a call to ERROR below.
 
-    // See epm_make.php for $template_dirs.
-
-    $options = [];
+    get_template_optn();
     $argnames = [];
     $valnames = [];
-    $description_keys =
-        ['argname', 'valname', 'description',
-	 'values','type','range','default'];
     $type_re =
         ['natural' => '/^\d+$/',
 	 'integer' => '/^(|\+|-)\d+$/',
 	 'float' => '/^(|\+|-)\d+(|\.\d+)'
 	          . '(|(e|E)(|\+|-)\d+)$/'];
-    foreach ( $template_dirs as $dir )
-    {
-	$r = $dir[0];
-	$f = "$dir[1]/template.optn";
-	if ( ! is_readable ( "$r/$f" ) ) continue;
-	$j = get_json ( $r, $f );
 
-	// template.optn values are 2D arrays.
-	//
-	foreach ( $j as $opt => $description )
-	{
-	    foreach ( $description as $key => $value )
-	    {
-	        if ( ! in_array
-		           ( $key, $description_keys ) )
-		    $errors[] =
-		        "invalid description key $key" .
-			" for option $opt in $f";
-		else
-		    $options[$opt][$key] = $value;
-	    }
-	}
-    }
-
-    foreach ( $options as $opt => $description )
+    foreach ( $template_optn as $opt => $description )
     {
 	if ( ! isset ( $description['description'] ) )
 	    $errors[] =
@@ -195,12 +167,12 @@
     ksort ( $argnames, SORT_NATURAL );
 
     $optmap = [];
-    foreach ( $options as $opt => $value )
+    foreach ( $template_optn as $opt => $value )
     {
 	if ( isset ( $value['default'] ) )
 	    $optmap[$opt] = $value['default'];
     }
-    check_optmap ( $optmap, $options,
+    check_optmap ( $optmap, $template_optn,
                    'template default', $errors );
     check_errors ( 'template default values' );
 
@@ -219,7 +191,7 @@
 		          . " in templates";
 	}
     }
-    check_optmap ( $optmap, $options,
+    check_optmap ( $optmap, $template_optn,
                    'inherited', $errors );
     check_errors ( 'template inhertied values' );
 
@@ -238,7 +210,7 @@
 		          . " in templates";
 	}
     }
-    check_optmap ( $optmap, $options,
+    check_optmap ( $optmap, $template_optn,
                    'local', $errors );
 
     // Compute data for Template Commands in $template_
@@ -272,7 +244,7 @@
 	}
 	$errors = [];
 	    // Clear previous $optmap errors.
-	check_optmap ( $optmap, $options,
+	check_optmap ( $optmap, $template_optn,
 	               'update', $errors );
 	if ( count ( $errors ) > 0 )
 	{
@@ -582,7 +554,7 @@ EOT;
 		    " element" );
 	$count += 1;
 	$opt = $optlist[0];
-	$d = $options[$opt];
+	$d = $template_optn[$opt];
 	$description = $d['description'];
 	$default = $d['default'];
 	$iv = $inherited[$opt];
@@ -645,7 +617,7 @@ EOT;
 	if ( count ( $optlist ) == 0 )
 	    ERROR ( "\$argnames[$argname] is" .
 		    " empty" );
-	$des = $options[$argname]['description'];
+	$des = $template_optn[$argname]['description'];
 	echo <<<EOT
 	<tr><td>$argname</td>
 	<td style='padding-left:5px'>
@@ -654,7 +626,7 @@ EOT;
 EOT;
 	foreach ( $optlist as $opt )
 	{
-	    $d = $options[$opt];
+	    $d = $template_optn[$opt];
 	    $des = $d['description'];
 	    $iv = $inherited[$opt];
 	    $vv = $optmap[$opt];

@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May  3 17:55:23 EDT 2020
+// Date:    Mon May  4 02:49:10 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -156,6 +156,10 @@ function get_template_optn()
 {
     global $template_dirs, $template_optn;
 
+    $description_keys =
+	['argname', 'valname', 'description',
+	 'values','type','range','default'];
+
     if ( isset ( $template_optn ) )
         return $template_optn;
 
@@ -172,6 +176,11 @@ function get_template_optn()
 	foreach ( $j as $opt => $description )
 	foreach ( $description as $key => $value )
 	{
+	    if ( ! in_array
+	               ( $key, $description_keys ) )
+		ERROR ( "bad description key $key" .
+		        " in $f" );
+
 	    if ( ! isset
 	               ( $template_optn[$opt][$key] ) )
 		$template_optn[$opt][$key] = $value;
