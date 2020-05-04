@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 14:57:13 EDT 2020
+// Date:    Mon May  4 15:29:50 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -226,6 +226,17 @@ function check_template_optn ( & $errors )
 {
     global $template_optn;
 
+    $type_re =
+	['natural' => '/^\d+$/',
+	 'integer' => '/^(|\+|-)\d+$/',
+	 'float' => '/^(|\+|-)\d+(|\.\d+)'
+		  . '(|(e|E)(|\+|-)\d+)$/'];
+
+    $defaultmap = [];
+    $errors_size = count ( $errors );
+	// check_optmap will check default values in
+	// $defaultmap below.
+
     foreach ( $template_optn as $opt => $description )
     {
 	if ( ! isset ( $description['description'] ) )
@@ -291,7 +302,45 @@ function check_template_optn ( & $errors )
 		          . " but has neither"
 			  . " 'argname' or 'valname'";
 	}
+
+	if ( $hastype )
+	{
+	    $type = $description['type'];
+	    if ( ! isset ( $type_re[$type] ) )
+	        $errors[] = "option $opt has undefined"
+		          . " type $type";
+	    elseif ( $hasrange )
+	    {
+	        $re = $type_re[$type];
+	        $r = $description['range'];
+		if ( ! isset ( $r[0] )
+		     ||
+		     ! isset ( $r[1] ) )
+		    $errors[] = "option $opt has badly"
+			      . " formatted range";
+		elseif ( ! preg_match ( $re, $r[0] )
+		         ||
+		         ! preg_match ( $re, $r[1] ) )
+			$errors[] =
+			    "option $opt has range" .
+			    " [{$r[0]},{$r[1]}] with" .
+			    " badly formatted limits";
+		elseif ( $r[0] > $r[1] )
+		    $errors[] =
+			"option $opt has range" .
+			" [{$r[0]},{$r[1]}] with" .
+			" lower limit > upper limit";
+	    }
+	}
+
+	if ( $hasdefault ) $defaultmap[$opt] =
+	    $description['default'];
     }
+
+    if ( count ( $errors ) > $errors_size )
+        return;
+
+    check_optmap ( $defaultmap, 'default', $errors );
 }
 
 // Add to $errors any errors found in the $optmap of
