@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue May  5 15:24:01 EDT 2020
+Date:	Tue May  5 16:03:39 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -440,19 +440,53 @@ If you click a <b>Run</b> button on the problem page, the associated
 .run file will be run and the page will switch to the Run Page where
 the results will be displayed.
 <p>
+A <a name='.run-file'>.run file</a> is just a list of .in files
+from which .score files may be computed.  A .run file can be uploaded
+on the <a href="problem-page">Problem Page</a>,
+and pushed along with other files to a project
+by the <a href="project-page">Project Page</a>.
+<p>
+During a run and after it is over a line is displayed for each .in
+file giving its base name and the CPU execution
+times of various sub-computations
+needed to compute the .score file.  These times are marked
+as follows:
+</p>
+<table style='margin-left:10%'>
+<tr><td>g1:</td><td>generate program making input for solution</td></tr>
+<tr><td>s:</td><td>solution making .sout file from generated input</td></tr>
+<tr><td>g2:</td><td>generate program making input for filter program</td></tr>
+<tr><td>f:</td><td>filter program making .fout file from .sout file and generated input</td></tr>
+</table>
+</div>
+<p>
 The Run Page lists all the .run files in a table, one file per line.
 For the last run of a particular .run file,
-the associated run output, or .rout file,
-and if non-empty the run error, or .rerr
-file, are also listed and can be displayed with the &darr; button.
+the associated run output, or .rout file is given.
+If there is also a non-empty run error, or .rerr
+file, it is also listed.  These files can be displayed with the &darr; button.
 <p>
 A .rout run output file gives the `Score' for the run, and if not
 `Completely Correct', gives the name of the first failed test case.
-Also given are the CPU execution times for the various input files: here
-the `s:' time is the solution time, the `g1:' and `g2:' times are the
-times for the two generate program executions, and the `f:' time is
-the time for the filter program execution.  The maximum of these
-times over all input files is given at the end of the .rout file.
+Also given are the maximum CPU execution times over all input files
+of the generate, solution, and filter programs.
+<p>
+If a .run file is not in your directory,
+it has a `Submit' button, and submitting
+it will run it (compute .score files from all the .in files) and
+record the results in its .rout file that is both copied into your
+problem directory and also into an administrative directory that
+maintains a history of your submissions and allows every user
+to see them.  This computation will not use any local files in
+your problem directory except your solution binary.
+<p>
+If a .run file is in your directory,
+it has a `Run' button, and running it will compute the .rout
+file in your problem directory and NOT copy it into administrative
+directories, so in this case other users cannot see the .rout file.
+For problems you have pulled from a project, the sample .run file
+is linked into your directory, and so can be run in this manner
+without other users seeing the results.
 </p>
 
 <a name="option-page"><h1>Option Page</h1></a>

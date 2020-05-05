@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May  3 03:51:44 EDT 2020
+    // Date:	Tue May  5 16:01:45 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -358,19 +358,20 @@
     <strong>User:</strong>
     <input type='submit' value='$email'
            formaction='user.php'
-           title='click to see user profile'>
+           title='Click to See User Profile'>
     </td>
     <td style='padding-left:50px'>
-    <strong>Go To:</strong>
+    <strong>Go To</strong>
     <button type='submit'
-            formaction='problem.php'>Problem Page
+            formaction='problem.php'>Problem
     </button>
     <button type='submit'
-            formaction='project.php'>Project Page
+            formaction='project.php'>Project
     </button>
     <button type='submit'
-            formaction='option.php'>Option Page
+            formaction='option.php'>Option
     </button>
+    <strong>Page</strong>
     </td>
     <td style='padding-left:50px'>
     <strong>Current Problem:</strong>&nbsp;
