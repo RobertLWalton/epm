@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May  3 03:48:43 EDT 2020
+    // Date:	Tue May  5 14:05:47 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -755,25 +755,26 @@
     <strong>User:</strong>
     <input type='submit' value='$email'
 	   formaction='user.php'
-           title='click to see user profile'>
+           title='Click to See User Profile'>
     </label>
     </td>
     <td>
-    <strong>Go To:</strong>
+    <strong>Go To</strong>
 EOT;
     if ( isset ( $problem ) )
         echo <<<EOT
 	<button type='submit'
 		formaction='run.php'>
-		Run Page</button>
+		Run</button>
 	<button type='submit'
 		formaction='option.php'>
-		Option Page</button>
+		Option</button>
 EOT;
     echo <<<EOT
     <button type='submit'
 	    formaction='project.php'>
-	    Project Page</button>
+	    Project</button>
+    <strong>Page</strong>
     </td><td style='text-align:right'>
     $problem_page_help</td>
     </tr></table></form>
@@ -785,7 +786,8 @@ EOT;
         echo <<<EOT
 	<button type='submit'
 	        name='delete_problem'
-	        value='$problem'>
+	        value='$problem'
+		title='Delete Current Problem'>
 	Delete</button>
 EOT;
 
@@ -802,7 +804,7 @@ EOT;
 	       name='goto_problem'
 	       value='Go To Problem:'>
         <select name='selected_problem'
-	        title='problem to go to'>
+	        title='Problem to Go To'>
 	$options
         </select></label>
 EOT;
@@ -996,7 +998,7 @@ EOT;
 	}
 
 	$current_problem_files_help =
-	    HELP ( 'current-problem-files' );
+	    HELP ( 'problem-marks' );
 
         echo <<<EOT
 	<div class='problem_display'>
@@ -1023,7 +1025,7 @@ EOT;
 	<input type="submit" name="upload"
 	       value="Upload File:">
 	<input type="file" name="uploaded_file"
-	       title="file to upload">
+	       title="File to Upload">
 	</label>
 	<pre>    </pre>
 	<input type="submit" name="execute_deletes"

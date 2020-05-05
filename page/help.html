@@ -1,9 +1,13 @@
 <html>
+<head>
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Apr 30 14:12:46 EDT 2020
+Date:	Thu Apr 30 14:12:46 EDT 2020 Tue May  5 14:10:27 EDT 2020
 -->
+
+<title>EPM Help Page</title>
+
 <style>
 div.header {
 text-align: center;
@@ -55,6 +59,9 @@ table.extension td {
 vertical-align: top;
 }
 </style>
+
+</head>
+
 <body>
 <div class='header'>
 <a href="#TOC" title='Go to Table of Contents'>TOC</a>
@@ -231,7 +238,7 @@ or upload or make a new file</td></tr>
 <a name="current-problem-files"><h2>Current Problem Files</h2></a>
 <p>
 The <b>current problem files</b> are the files that you have uploaded
-or created for the problem.  These files are stored in the problem
+or made for the problem.  These files are stored in your problem
 directory and can be viewed, used, or deleted.  They are displayed
 in the `Current Problem File' table, one line per file.
 <p>
@@ -239,7 +246,7 @@ Current problem <a name='file-names'><b>file names</b></a> must have particular
 <a href='#file-extensions'>extensions</a> that specify their role within
 the problem.  The rest of a file name can contain
 only letters, digits, and the special characters dash(<pre.inline>-</pre>) and
-underline(<pre.inline>_</pre>), must begin with a letter, and must
+underline(<pre.inline>_</pre>), must begin with a letter or digit, and must
 end with the <a href='#problem-name'>problem name</a>, which if it is
 preceded by anything must be preceded by a
 dash(<pre.inline>-</pre>).
@@ -263,6 +270,16 @@ A UTF-8 file that is displayable has its number of lines indicated
 at the end of the file's line.
 Only if this number of lines is small enough does the file have
 a &darr; that permits the file to be displayed below.
+<p>
+If a file has been pushed to or pulled from a
+<a href='#project'>project</a>, the
+file itself is not in your problem directory, but is
+in the project's problem directory and is linked to your problem
+directory.  These are marked by `(Linked from PROJECT-NAME)' at
+the end of the file's line.
+<p>
+Public binary files may be linked into your problem directory.
+These are marked as `Link to ...'.
 </p>
 
 <a name="file-extensions"><h2>File Extensions</h2></a>
@@ -405,7 +422,7 @@ contain their own failure messages, if any).
 <p>
 This section lists the files made by the last executed commands
 which were <u>not</u> kept.  These files can be displayed in the
-same manner as the files in the files in the
+same manner as the files in the
 <a href="#current-problem-files">Current Problem Files</a>
 section.
 <p>

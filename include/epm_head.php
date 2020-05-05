@@ -2,14 +2,18 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Apr 30 10:03:17 EDT 2020
+// Date:    Tue May  5 14:17:06 EDT 2020
 
 // HTML code included at the beginning of the <head>
 // section of each page.
 
-?>
+$title = pathinfo ( $epm_self, PATHINFO_FILENAME );
+$title = ucfirst ( $title);
+$title = "EPM $title Page";
 
-<title>Educational Program Manager (EPM)</title>
+echo "<title>$title</title>";
+
+?>
 
 <style>
     @media screen and ( max-width: 1365px ) {
