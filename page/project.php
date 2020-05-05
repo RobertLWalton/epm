@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May  4 14:00:27 EDT 2020
+    // Date:	Tue May  5 02:16:03 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1015,6 +1015,18 @@ EOT;
 	                   "../../../$desdir/$fname",
 	                   "$srcdir/$fname"];
 	}
+	$fname = "$problem.optn";
+	if ( is_readable
+	    ( "$epm_data/$srcdir/$fname" ) )
+	{
+	    $changes .= "merge $fname into"
+	    	      . " $project/$problem/$fname"
+		      . PHP_EOL;
+	    $commands[] =
+	        ['merge', "$srcdir/$fname",
+		          "$desdir/$fname"];
+		// Merge merges optn files.
+	}
 	if ( $new_push )
 	{
 	    $changes .= "link +parent+ to"
@@ -1161,6 +1173,15 @@ EOT;
 	                   "../../../$srcdir/$fname",
 	                   "$desdir/$fname"];
 	}
+	$f = "$desdir/$problem.optn";
+	if ( is_readable ( "$epm_data/$f" ) )
+	{
+	    $warnings[] =
+		"existing $f will remain and override" .
+		" inherited options;" . PHP_EOL .
+		"use Options Page to revert to" .
+		" inherited options if desired";
+	}
 	if ( $new_pull )
 	{
 	    $changes .= "link +parent+ to"
@@ -1212,6 +1233,8 @@ EOT;
 	        $r = symbolic_link
 		         ( "$command[1]",
 			   "$epm_data/{$command[2]}" );
+	    elseif ( $cop == 'merge' )
+	        $r = merge ( $command[1], $command[2] );
 	    else
 	        ERROR ( 'bad command: ' .
 		        json_encode ( $command ) );
@@ -1226,6 +1249,72 @@ EOT;
 	    }
 	}
 	umask ( $umask );
+    }
+
+    function merge ( $srcfile, $desfile )
+    {
+        return true;
+
+        global $template_dirs;
+	DEBUG ( "TEMPLATE_DIRS " . json_encode ( $template_dirs ) );
+
+	$srcdir = pathinfo
+	    ( $srcfile, PATHINFO_DIRNAME );
+	$problem = pathinfo
+	    ( $srcfile, PATHINFO_FILENAME );
+	$desdir = pathinfo
+	    ( $desfile, PATHINFO_DIRNAME );
+
+	DEBUG ( "merge $srcdir $desdir $problem" );
+
+        $template_optn = get_template_optn();
+	DEBUG ( "got template_optn" );
+	$optmap = [];
+	$errors = [];
+	foreach ( $template_optn
+	          as $opt => $description )
+	{
+	    if ( isset ( $description['default'] ) )
+		$optmap[$opt] = $description['default'];
+	}
+	DEBUG ( "DEFAULTMAP " . json_encode ( $optmap ) );
+	$dirs = array_reverse
+	    ( find_ancestors ( $desdir ) );
+	DEBUG ( "ANCESTORS " . json_encode ( $dirs ) );
+	load_optmap
+	    ( $optmap, $dirs, $problem, $errors );
+	$basemap = $optmap;
+	DEBUG ( "BASEMAP " . json_encode ( $basemap ) );
+	$dirs = [$desdir, $srcdir];
+	load_optmap
+	    ( $optmap, $dirs, $problem, $errors );
+	if ( count ( $errors ) > 0 )
+	{
+	    WARN ( implode ( PHP_EOL, $errors ) );
+	    return false;
+	}
+
+	$newmap = [];
+	foreach ( $optmap as $opt => $value )
+	{
+	    if ( $basemap[$opt] != $value )
+	        $newmap[$opt] = $value;
+	}
+
+	DEBUG ( "NEWMAP " . json_encode ( $newmap ) );
+
+	if ( @unlink ( "$epm_data/$srcfile" ) )
+	    ERROR ( "could not unlink $srcfile" );
+	if ( file_exists ( "$epm_data/$desfile" )
+	     &&
+	     ! @unlink ( "$epm_data/$srcfile" ) )
+	    ERROR ( "could not unlink $desfile" );
+	if ( count ( $newmap ) == 0 ) return true;
+	$r = @file_put_contents
+	    ( "$epm_data/$desfile",
+	      json_encode ( $newmap,
+	                    JSON_PRETTY_PRINT ) );
+	return $r;
     }
 
     // Write EPM_PROJECT CHANGES to destination
@@ -1727,7 +1816,7 @@ EOT;
 	<td>
 	<button type='button'
 	        onclick='IGNORE_WARNINGS()'>
-	IGNORE</button>
+	IGNORE WARNINGS</button>
 	<pre>    </pre>
 	<button type='button' onclick='WARNINGS_NEXT()'>
 	Skip to Next</button>

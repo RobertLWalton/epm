@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 17:35:10 EDT 2020
+// Date:    Tue May  5 02:55:11 EDT 2020
 
 // Functions used to read templates and option files.
 // Required by epm_make.php.
@@ -366,11 +366,13 @@ function load_optmap
 	    $j = get_json ( $epm_data, $f );
 	    foreach ( $j as $opt => $value )
 	    {
-		if ( isset ( $template_optn[$opt] ) )
+		if ( isset ( $template_optn
+		                 [$opt]['default'] ) )
 		    $optmap[$opt] = $value;
 		else
 		    $errors[] = "option $opt in $f is"
-		              . " not in templates";
+		              . " not in legal (not in"
+			      . " template.optn)";
 	    }
 	}
     }
@@ -446,7 +448,7 @@ function check_optmap
 		}
 	    }
 	}
-	else
+	elseif ( isset ( $d['default'] ) )
 	{
 	    $re = '/^[-\+_@=\/:\.,A-Za-z0-9\h]*$/';
 	    if ( ! preg_match ( $re, $value ) )
@@ -459,6 +461,18 @@ function check_optmap
 		$set_to_default = $correct;
 	    }
 	}
+	else
+	{
+	    $errors[] =
+	        "option $opt is not legal option" .
+		" (not in template.optn)";
+	    if ( $correct )
+	    {
+	        $errors[] = "option $opt deleted";
+		unset ( $optmap[$opt] );
+	    }
+	}
+
 	if ( $set_to_default )
 	{
 	    $optmap[$opt] = $d['default'];

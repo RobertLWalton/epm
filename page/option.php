@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May  4 17:39:54 EDT 2020
+    // Date:	Tue May  5 03:04:45 EDT 2020
 
     // Edits problem option page.
 
@@ -385,11 +385,12 @@
     <button type='submit'
             formaction='problem.php'>Problem Page
     </button>
-    &nbsp;&nbsp;
     <button type='submit'
             formaction='run.php'>Run Page
     </button>
-    &nbsp;&nbsp;
+    <button type='submit'
+            formaction='project.php'>Project Page
+    </button>
     <button type='button' onclick='TEMPLATE_WINDOW()'>
         Show Templates
     </button>

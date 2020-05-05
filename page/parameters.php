@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 09:38:02 EDT 2020
+// Date:    Tue May  5 01:56:18 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -240,6 +240,8 @@ $push_file_map = [
     // In the RE, `PPPP' is replaced by the problem
     // name before the RE is used.
     //
+    // Note: merge of .optn files is handled separately.
+    //
     "c" => "R",
     "cc" => "R",
     "java" => "R",
@@ -253,6 +255,6 @@ $push_file_map = [
     "pdf" => [ "PPPP" => "L" ],
     "" => [ "generate_PPPP" => "R",
             "filter_PPPP" => "R" ]
-]
+];
 
 ?>
