@@ -390,6 +390,8 @@
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
+    require "$epm_home/include/epm_template.php";
+        // This last is only needed by merge function.
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
@@ -1251,12 +1253,12 @@ EOT;
 	umask ( $umask );
     }
 
+    // Merge source .optn file into destination .optn
+    // file.
+    //
     function merge ( $srcfile, $desfile )
     {
-        return true;
-
-        global $template_dirs;
-	DEBUG ( "TEMPLATE_DIRS " . json_encode ( $template_dirs ) );
+        global $epm_data;
 
 	$srcdir = pathinfo
 	    ( $srcfile, PATHINFO_DIRNAME );
@@ -1265,10 +1267,8 @@ EOT;
 	$desdir = pathinfo
 	    ( $desfile, PATHINFO_DIRNAME );
 
-	DEBUG ( "merge $srcdir $desdir $problem" );
 
         $template_optn = get_template_optn();
-	DEBUG ( "got template_optn" );
 	$optmap = [];
 	$errors = [];
 	foreach ( $template_optn
@@ -1277,14 +1277,11 @@ EOT;
 	    if ( isset ( $description['default'] ) )
 		$optmap[$opt] = $description['default'];
 	}
-	DEBUG ( "DEFAULTMAP " . json_encode ( $optmap ) );
 	$dirs = array_reverse
 	    ( find_ancestors ( $desdir ) );
-	DEBUG ( "ANCESTORS " . json_encode ( $dirs ) );
 	load_optmap
 	    ( $optmap, $dirs, $problem, $errors );
 	$basemap = $optmap;
-	DEBUG ( "BASEMAP " . json_encode ( $basemap ) );
 	$dirs = [$desdir, $srcdir];
 	load_optmap
 	    ( $optmap, $dirs, $problem, $errors );
@@ -1301,13 +1298,11 @@ EOT;
 	        $newmap[$opt] = $value;
 	}
 
-	DEBUG ( "NEWMAP " . json_encode ( $newmap ) );
-
-	if ( @unlink ( "$epm_data/$srcfile" ) )
+	if ( ! @unlink ( "$epm_data/$srcfile" ) )
 	    ERROR ( "could not unlink $srcfile" );
 	if ( file_exists ( "$epm_data/$desfile" )
 	     &&
-	     ! @unlink ( "$epm_data/$srcfile" ) )
+	     ! @unlink ( "$epm_data/$desfile" ) )
 	    ERROR ( "could not unlink $desfile" );
 	if ( count ( $newmap ) == 0 ) return true;
 	$r = @file_put_contents
