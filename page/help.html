@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Apr 30 14:12:46 EDT 2020 Tue May  5 14:10:27 EDT 2020
+Date:	Tue May  5 15:24:01 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -533,19 +533,21 @@ the option value is inherited, even if the box is colored green
 
 <a name="template-page"><h1>Template Page</h1></a>
 <p>
-A <b>Template</b> supplied the commands used to make one
+A <b>Template</b> supplies the commands used to make one
 file from another file.
 Templates can be displayed in a separate
 window by clicking the `Show Templates' button on
 the <a href='#option-page'>Option Page</a>.
 <p>
 An index of all the available templates is displayed at the top
-of the page.  Clicking on the button next to a template name
+of the page.  Clicking on the box next to a template name
 displays or hides the relevant contents of the template.
 <p>
 The commands displayed for a template are executed when the
-template is used.  There contain argument names substituted 
+template is used.  These contain argument names substituted 
 from the <a href='#option-arguments'>argument options</a>.
+Each substitutable argument name is preceeded in its command by a dollar
+sign ($).
 In addition to argument option substitutions, the problem
 name is substituted for PPPP, and the reminder of the file names
 is substituted for other sequences of 4 consecutive capital
@@ -555,14 +557,14 @@ The template selected for a particular
 task is controlled by the extensions of the input and output
 files, but also by what other files are available.  For example,
 several tempates are available to make a .score file with
-a score from a .in file with solution input.  One of these
+a score from an .in file with solution input.  One of these
 is selected if there is a binary file with no extension
 (for C or C++);
 another is selected if there is a binary file with the .class
 extension (for JAVA); and a third is selected if there is a binary
 file with the .py extension (for PYTHON).
-The various binary files which required to use the various
-templates, and are call <b>required files</b> of the template.
+Files which are required to use a
+template are call the <b>required files</b> of the template.
 <p>
 Some required files may be <b>creatable</b>.  There are automatically
 created from defaults if they do not exist.  For example, the
@@ -572,13 +574,16 @@ nothing but strip comments from a .in file to make a .sin file.
 Some required files are required to be <b>local</b>, that is, not
 in an ancestor of the current problem.  Others are required to be
 <b>remote</b>, that is, they <u>must</u> be in an ancestor of the
-current problem.  Lastly may required files can be either local or
+current problem (i.e., in a project).
+Lastly many required files can be either local or
 remote.  When a creatable file is created, it is always created
 locally, so it must not be a remote required file.
 <p>
 In addition the template selected is controlled by <b>conditions</b>.
 For example, to be used during the upload of a PPPP.cc file, a
 template must have the `UPLOAD PPPP.cc' condition.
+As another example, a template used when a .run file is submitted
+must have the `SUBMIT' condition.
 Most of the time only templates with no conditions are selected.
 </p>
 

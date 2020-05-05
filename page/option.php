@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May  5 03:04:45 EDT 2020
+    // Date:	Tue May  5 15:09:29 EDT 2020
 
     // Edits problem option page.
 
@@ -304,6 +304,8 @@
         var ITEM = document.getElementById
 	    ( 'value' + count );
 	ITEM.style.backgroundColor = '#99FF99';
+	if ( event.keyCode == 13 )
+	    event.preventDefault();
     }
     function SET_INHERITED ( count, inherited )
     {
@@ -378,19 +380,21 @@
     <strong>User:</strong>
     <input type='submit' value='$email'
                     formaction='user.php'
-                    title='click to see user profile'>
+                    title='Click to See User Profile'>
     </td>
     <td style='padding-left:var(--indent)'>
-    <strong>Go To:</strong>
+    <strong>Go To</strong>
     <button type='submit'
-            formaction='problem.php'>Problem Page
+            formaction='problem.php'>Problem
     </button>
     <button type='submit'
-            formaction='run.php'>Run Page
+            formaction='run.php'>Run
     </button>
     <button type='submit'
-            formaction='project.php'>Project Page
+            formaction='project.php'>Project
     </button>
+    <strong>Page</strong>
+    <pre>   </pre>
     <button type='button' onclick='TEMPLATE_WINDOW()'>
         Show Templates
     </button>
