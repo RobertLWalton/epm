@@ -3,25 +3,32 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue May  5 16:03:39 EDT 2020
+Date:	Wed May  6 14:05:44 EDT 2020
 -->
 
 <title>EPM Help Page</title>
 
 <style>
+body {
+    overflow: hidden;
+}
 div.header {
-text-align: center;
-position: fixed;
-top: 0;
-right: 0;
+    background-color: #96F9F3;
+    height: 5%;
+    margin: 0px;
+}
+#toc {
+    background-color: #F2D9D9;
+    margin: 0px;
+    width: 100%;
 }
 div.text {
+    overflow: scroll;
+    height: 95%;
 }
-div.center {
-text-align: center;
-}
+
 h1 {
-font-size: 20pt;
+font-size: 20px;
 text-decoration: underline;
 }
 h2 {
@@ -63,17 +70,25 @@ vertical-align: top;
 </head>
 
 <body>
+
 <div class='header'>
-<a href="#TOC" title='Go to Table of Contents'>TOC</a>
+<table style='width:100%'>
+<tr>
+<td style='text-align:left'>
+<button type='button'
+        onclick='TOGGLE_TOC()'
+	title='Show/Hide Table of Contents'>
+	<span id='toc-mark'>&darr;</span></button>
+<strong>Table of Contents</strong>
+</td>
+<td style='text-align:right'>
+<strong>Other Documents:</strong>
+</td>
+</tr>
+</table>
 </div>
-<div class='center'>
-<h1>Educational Problem Manager<br>(EPM)<h1>
-<h2>March 24, 2020</h2>
-<br>
-<a name="TOC"><h1>Table of Contents</h1></a>
-</div>
-<div class='text'>
-<p>
+
+<div id='toc' style='display:none'>
 <ul>
 
 <li><a href="#login-page">Login Page</a><br>
@@ -103,8 +118,26 @@ vertical-align: top;
 </ul>
 
 </ul>
-
 </div>
+
+<script>
+let toc = document.getElementById ( 'toc' );
+let toc_mark = document.getElementById ( 'toc-mark' );
+function TOGGLE_TOC()
+{
+    if ( toc.style.display == 'none' )
+    {
+        toc.style.display = 'block';
+	toc_mark.innerHTML = '&uarr;';
+    }
+    else
+    {
+        toc.style.display = 'none';
+	toc_mark.innerHTML = '&darr;';
+    }
+}
+</script>
+
 <div class='text'>
 
 <a name="login-page"><h1>Login Page</h1></a>
@@ -452,7 +485,8 @@ times of various sub-computations
 needed to compute the .score file.  These times are marked
 as follows:
 </p>
-<table style='margin-left:10%'>
+<div class='indented'>
+<table>
 <tr><td>g1:</td><td>generate program making input for solution</td></tr>
 <tr><td>s:</td><td>solution making .sout file from generated input</td></tr>
 <tr><td>g2:</td><td>generate program making input for filter program</td></tr>
@@ -622,5 +656,6 @@ Most of the time only templates with no conditions are selected.
 </p>
 
 </div>
+
 </body>
 </html>
