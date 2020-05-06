@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 10:11:44 EDT 2020
+    // Date:	Tue May  5 23:27:50 EDT 2020
 
     // Display and edit user information in:
     //
@@ -472,15 +472,53 @@
         echo "<mark>Its a good idea to add a second" .
 	     " email address.</mark><br>";
 
+    $user_help = HELP ( 'user-page' );
+    echo <<<EOT
+    <div class='manage'>
+    <form>
+    <table style='width:100%'>
+    <tr>
+    <td>
+    <strong>Your User Profile</strong>
+EOT;
+    if ( $edit )
+    	echo <<<EOT
+	<button type="button"
+		onclick='UPDATE()'>
+		Update</button>
+EOT;
+    else
+    	echo <<<EOT
+	<button type="submit"
+	        formaction="user.php"
+	        formmethod='POST'
+		name='edit' value='yes'>
+		Edit</button>
+EOT;
+    echo <<<EOT
+    </td><td>
+    <strong>Go To</strong>
+    <button type="submit"
+	    formaction="problem.php"
+	    formmethod='GET'>Problem</button>
+    <button type="submit"
+	    formaction="project.php"
+	    formmethod='GET'>Project</button>
+    <strong>Page</strong>
+    </td>
+    <td style='text-align:right'>$user_help</td>
+    </tr>
+    </table>
+    </form>
+    </div>
+EOT;
+
     if ( $edit )
 	$h = "Edit User Email Addresses";
     else
 	$h = "User Email Addresses";
-    $help = HELP ( 'user-page' );
     echo <<<EOT
     <strong>$h</strong>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    $help<br><br>
 EOT;
 
     echo "<div class='indented'>";
@@ -517,10 +555,10 @@ EOT;
 	     " to the account'>" .
 	     "&nbsp;&nbsp;&nbsp;&nbsp;" .
 	     "<input type='submit'" .
-	     " name='add_email' value='Add'>";
+	     " name='add_email' value='Add'>" .
 	     "</form>";
 
-    echo "</div><br>";
+    echo "</div>";
 
     $location_placeholder =
 	 "Town, State (and Country) of Organization";
@@ -530,8 +568,10 @@ EOT;
     if ( $edit )
     {
 	echo <<<EOT
-	<strong>Edit User Profile:</strong><br>
-	<form  method='POST' action='user.php'>
+	<form method='POST' action='user.php'
+	      id='profile-update'>
+	<input type='hidden' name='update' value='yes'>
+	<strong>Edit Your User Profile:</strong><br>
 	<table>
 EOT;
 	if ( $new_user ) echo <<<EOT
@@ -565,15 +605,13 @@ EOT;
 	     title='$location_placeholder'
 	     placeholder='$location_placeholder'>
 	     </td></tr>
-	<tr><th></th><td style='text-align:right'>
-	    <input type='submit' name='update'
-		   value='update'></td></tr>
-	</table></form>
+	</table>
+	</form>
 EOT;
     }
     else
 	echo <<<EOT
-	<strong>User Profile:</strong>
+	<strong>Your User Profile:</strong>
 	<table>
 	<tr><th>User ID:</th>
 	    <td>$uid</td></tr>
@@ -584,17 +622,17 @@ EOT;
 	<tr><th>Location:</th>
 	    <td>$hlocation</td></tr>
 	</table><br>
-	<form>
-	<input type="submit" formaction="user.php"
-	       formmethod='POST' name='edit'
-	       value="Edit">
-        &nbsp;&nbsp;&nbsp;&nbsp;
-	<input type="submit" formaction="problem.php"
-	       formmethod='GET'
-	       value="Go To Problem"</input>
-	</form>
 EOT;
 ?>
+
+<script>
+let profile_update = document.getElementById
+    ( 'profile-update' );
+function UPDATE()
+{
+    profile_update.submit();
+}
+</script>
 
 </body>
 </html>
