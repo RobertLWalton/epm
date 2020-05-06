@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May  5 23:27:50 EDT 2020
+    // Date:	Wed May  6 00:08:53 EDT 2020
 
     // Display and edit user information in:
     //
@@ -441,10 +441,25 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    th, td {
-        font-size: var(--font-size);
+    div.email-addresses {
+	background-color: #FFCCFF;
+	padding: 10px 0px 0px 0px;
+    }
+    div.email-addresses * {
+        font-size: var(--large-font-size);
+	padding: 5px;
 	text-align: left;
-	padding: 3px;
+    }
+    div.user-profile {
+	background-color: #F2D9D9;
+	padding: 10px 0px 0px 0px;
+    }
+    div.user-profile * {
+        font-size: var(--large-font-size);
+	padding: 5px;
+    }
+    div.user-profile th {
+	text-align: right;
     }
     td {
 	font-family: "Courier New", Courier, monospace;
@@ -518,6 +533,7 @@ EOT;
     else
 	$h = "User Email Addresses";
     echo <<<EOT
+    <div class='email-addresses'>
     <strong>$h</strong>
 EOT;
 
@@ -558,13 +574,16 @@ EOT;
 	     " name='add_email' value='Add'>" .
 	     "</form>";
 
-    echo "</div>";
+    echo "</div></div>";
 
     $location_placeholder =
 	 "Town, State (and Country) of Organization";
     $hfull_name = htmlspecialchars ( $full_name );
     $horganization = htmlspecialchars ( $organization );
     $hlocation = htmlspecialchars ( $location );
+    echo <<<EOT
+    <div class='user-profile'>
+EOT;
     if ( $edit )
     {
 	echo <<<EOT
@@ -575,7 +594,7 @@ EOT;
 	<table>
 EOT;
 	if ( $new_user ) echo <<<EOT
-	    <tr><td><b>User ID:</b></td>
+	    <tr><th>User ID:</th>
 		<td> <input type='text' size='10'
 		      name='uid'
 		      title='Your User ID (Short Name)'
@@ -622,6 +641,9 @@ EOT;
 	<tr><th>Location:</th>
 	    <td>$hlocation</td></tr>
 	</table><br>
+EOT;
+    echo <<<EOT
+    </div>
 EOT;
 ?>
 
