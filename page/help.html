@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed May  6 14:05:44 EDT 2020
+Date:	Wed May  6 14:39:00 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -19,11 +19,11 @@ div.header {
 }
 #toc {
     background-color: #F2D9D9;
-    margin: 0px;
-    width: 100%;
+    overflow: auto;
+    height: 95%;
 }
-div.text {
-    overflow: scroll;
+#text {
+    overflow: auto;
     height: 95%;
 }
 
@@ -120,25 +120,7 @@ vertical-align: top;
 </ul>
 </div>
 
-<script>
-let toc = document.getElementById ( 'toc' );
-let toc_mark = document.getElementById ( 'toc-mark' );
-function TOGGLE_TOC()
-{
-    if ( toc.style.display == 'none' )
-    {
-        toc.style.display = 'block';
-	toc_mark.innerHTML = '&uarr;';
-    }
-    else
-    {
-        toc.style.display = 'none';
-	toc_mark.innerHTML = '&darr;';
-    }
-}
-</script>
-
-<div class='text'>
+<div id='text'>
 
 <a name="login-page"><h1>Login Page</h1></a>
 
@@ -475,9 +457,9 @@ the results will be displayed.
 <p>
 A <a name='.run-file'>.run file</a> is just a list of .in files
 from which .score files may be computed.  A .run file can be uploaded
-on the <a href="problem-page">Problem Page</a>,
+on the <a href="#problem-page">Problem Page</a>,
 and pushed along with other files to a project
-by the <a href="project-page">Project Page</a>.
+by the <a href="#project-page">Project Page</a>.
 <p>
 During a run and after it is over a line is displayed for each .in
 file giving its base name and the CPU execution
@@ -656,6 +638,37 @@ Most of the time only templates with no conditions are selected.
 </p>
 
 </div>
+
+<script>
+let toc = document.getElementById ( 'toc' );
+let toc_mark = document.getElementById ( 'toc-mark' );
+let text = document.getElementById ( 'text' );
+function TOGGLE_TOC()
+{
+    if ( toc.style.display == 'none' )
+    {
+        toc.style.display = 'block';
+        text.style.display = 'none';
+	toc_mark.innerHTML = '&uarr;';
+    }
+    else
+    {
+        toc.style.display = 'none';
+        text.style.display = 'block';
+	toc_mark.innerHTML = '&darr;';
+    }
+}
+
+function CLICK_TOC()
+{
+    console.log ( 'CLICK_TOC' );
+    toc.style.display = 'none';
+    text.style.display = 'block';
+    toc_mark.innerHTML = '&darr;';
+}
+
+toc.addEventListener ( 'click', CLICK_TOC );
+</script>
 
 </body>
 </html>
