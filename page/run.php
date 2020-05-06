@@ -1,6 +1,6 @@
 <?php
 
-    // File:	run.php
+    // File:	Wed May  6 15:34:41 EDT 2020
     // Author:	Robert L Walton <walton@acm.org>
     // Date:	Tue May  5 16:01:45 EDT 2020
 
@@ -283,10 +283,6 @@
 <style>
     pre.red {
         color: #BB0000;
-    }
-    pre.problem {
-        color: #CC00FF;
-        font-size: 14pt;
     }
     div.run_list {
 	background-color: #F2D9D9;

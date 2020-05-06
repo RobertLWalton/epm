@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May  5 14:05:47 EDT 2020
+    // Date:	Wed May  6 15:29:45 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -570,10 +570,6 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    pre.problem {
-        color: #CC00FF;
-        font-size: var(--large-font-size);
-    }
     div.problem_display {
 	background-color: #F2D9D9;
     }

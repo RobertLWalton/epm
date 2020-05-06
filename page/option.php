@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May  5 15:09:29 EDT 2020
+    // Date:	Wed May  6 15:30:51 EDT 2020
 
     // Edits problem option page.
 
@@ -269,10 +269,6 @@
     }
     div.arguments {
 	background-color: #ECFFE6;
-    }
-    pre.problem {
-        color: #CC00FF;
-        font-size: var(--large-font-size);
     }
 </style>
 
