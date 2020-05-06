@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May  5 02:16:03 EDT 2020
+    // Date:	Wed May  6 14:52:16 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1908,19 +1908,12 @@ EOT;
 	  onclick='CHECK(this)'>&nbsp;</span>
     <strong>Check Proposed Actions</strong>
     </div>
-    <strong>Go To:</strong>
+    <strong>Go To</strong>
     <button type='submit'
 	    formaction='problem.php'
 	    formmethod='GET'>
-	    Problem Page</button>
-    <button type='submit'
-	    formaction='run.php'
-	    formmethod='GET'>
-	    Run Page</button>
-    <button type='submit'
-	    formaction='option.php'
-	    formmethod='GET'>
-	    Option Page</button>
+	    Problem</button>
+    <strong>Page</strong>
     </td>
     <td>
     </td><td style='text-align:right'>
