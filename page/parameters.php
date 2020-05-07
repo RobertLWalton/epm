@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue May  5 01:56:18 EDT 2020
+// Date:    Thu May  7 10:41:09 EDT 2020
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']
@@ -251,7 +251,7 @@ $push_file_map = [
              "\\d+-\\d+-PPPP" => "R"],
     "ftest" => ["00-\\d+-PPPP" => "L",
                 "\\d+-\\d+-PPPP" => "R"],
-    "run" => "R",
+    "run" => ["sample-PPPP" => "L", ".*-PPPP" =>"R"],
     "pdf" => [ "PPPP" => "L" ],
     "" => [ "generate_PPPP" => "R",
             "filter_PPPP" => "R" ]

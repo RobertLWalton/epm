@@ -642,7 +642,7 @@ EOT;
 <?php echo ( HELP('login-page') )?>
 </td></tr></table>
 <br>
-<strong>New Users See
+<strong>New Users - See
         <a href='/page/guide.html'>Guide</a></strong>
 </div>
 
