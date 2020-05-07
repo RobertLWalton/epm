@@ -1,0 +1,167 @@
+<html>
+<head>
+<!--
+File:	guide.html
+Author:	Robert L Walton <walton@acm.org>
+Date:	Wed May  6 14:39:00 EDT 2020
+-->
+
+<title>EPM Guide</title>
+
+<style>
+:root {
+    width: 800px;
+    height: 800px;
+}
+body {
+    overflow: hidden;
+}
+div.header {
+    background-color: #96F9F3;
+    height: 5%;
+    margin: 0px;
+}
+#toc {
+    background-color: #F2D9D9;
+    overflow: auto;
+    height: 95%;
+}
+#text {
+    overflow: auto;
+    height: 95%;
+}
+
+h1 {
+font-size: 20px;
+text-decoration: underline;
+}
+h2 {
+font-size: 18pt;
+}
+strong {
+font-size: 16pt;
+}
+table, td, a {
+font-size: 16pt;
+}
+p {
+margin-left: 10px;
+font-size: 16pt;
+}
+p.inline {
+display: inline;
+}
+p.list {
+margin-left: 20px;
+margin-top: 0;
+font-size: 16pt;
+}
+table.top-align td {
+vertical-align: top;
+}
+.indented {
+margin-left: 20px;
+}
+table.extension {
+margin-left: 20px;
+border-spacing: 20px 0;
+}
+table.extension td {
+vertical-align: top;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class='header'>
+<table style='width:100%'>
+<tr>
+<td style='text-align:left'>
+<button type='button'
+        onclick='TOGGLE_TOC()'
+	title='Show/Hide Table of Contents'>
+	<span id='toc-mark'>&darr;</span></button>
+<strong>Table of Contents</strong>
+</td>
+<td style='text-align:right'>
+<strong>Other Documents:</strong>
+<a href="/page/help.html">Help</a>
+</td>
+</tr>
+</table>
+</div>
+
+<div id='toc' style='display:none'>
+<ul>
+
+<li><a href="#getting-started">Getting Started</a><br>
+<ul>
+<li><a href="#logging-in">Logging In</a><br>
+<li><a href="#solving-problems">Solving Problems</a><br>
+<li><a href="#writing-problems">Writing Problems</a><br>
+</ul>
+
+</ul>
+</div>
+
+<div id='text'>
+
+<a name="logging-in"><h1>Getting Started In</h1></a>
+
+<p>
+TBD
+</p>
+
+<a name="logging-in"><h2>Logging In</h2></a>
+<p>
+TBD
+</p>
+
+<a name="solving-problems"><h2>Solving Problems</h2></a>
+<p>
+TBD
+</p>
+
+<a name="writing-problems"><h2>Writing Problems</h2></a>
+<p>
+TBD
+</p>
+
+</div>
+
+<script>
+let toc = document.getElementById ( 'toc' );
+let toc_mark = document.getElementById ( 'toc-mark' );
+let text = document.getElementById ( 'text' );
+function TOGGLE_TOC()
+{
+    if ( toc.style.display == 'none' )
+    {
+        toc.style.display = 'block';
+        text.style.display = 'none';
+	toc_mark.innerHTML = '&uarr;';
+    }
+    else
+    {
+        toc.style.display = 'none';
+        text.style.display = 'block';
+	toc_mark.innerHTML = '&darr;';
+    }
+}
+
+function CLICK_TOC()
+{
+    console.log ( 'CLICK_TOC' );
+    toc.style.display = 'none';
+    text.style.display = 'block';
+    toc_mark.innerHTML = '&darr;';
+}
+
+toc.addEventListener ( 'click', CLICK_TOC );
+</script>
+
+</body>
+</html>
+

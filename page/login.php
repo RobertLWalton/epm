@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 10:08:13 EDT 2020
+    // Date:	Thu May  7 02:27:59 EDT 2020
 
     // Handles login for a session.
     //
@@ -641,6 +641,9 @@ EOT;
 </td><td style='width:10%;text-align:right'>
 <?php echo ( HELP('login-page') )?>
 </td></tr></table>
+<br>
+<strong>New Users See
+        <a href='/page/guide.html'>Guide</a></strong>
 </div>
 
 <div id='show_email' style.display='none'>
