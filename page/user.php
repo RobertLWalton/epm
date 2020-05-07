@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May  6 00:08:53 EDT 2020
+    // Date:	Thu May  7 15:48:03 EDT 2020
 
     // Display and edit user information in:
     //
@@ -442,7 +442,7 @@
 
 <style>
     div.email-addresses {
-	background-color: #FFCCFF;
+	background-color: var(--bg-green);
 	padding: 10px 0px 0px 0px;
     }
     div.email-addresses * {
@@ -451,7 +451,7 @@
 	text-align: left;
     }
     div.user-profile {
-	background-color: #F2D9D9;
+	background-color: var(--bg-tan);
 	padding: 10px 0px 0px 0px;
     }
     div.user-profile * {
@@ -501,6 +501,10 @@ EOT;
 	<button type="button"
 		onclick='UPDATE()'>
 		Update</button>
+	<button type="submit"
+	        formaction="user.php"
+	        formmethod='GET'>
+		Cancel</button>
 EOT;
     else
     	echo <<<EOT

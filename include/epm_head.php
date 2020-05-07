@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed May  6 15:42:40 EDT 2020
+// Date:    Thu May  7 15:34:29 EDT 2020
 
 // HTML code included at the beginning of the <head>
 // section of each page.
@@ -32,6 +32,23 @@ echo "<title>$title</title>";
 	    --indent: 20px;
 	}
     }
+
+    :root {
+	/* Background Colors (Light)
+	 */
+	--bg-cyan: #96F9F3;
+	--bg-tan: #F2D9D9;
+	--bg-green: #C0FFC0;
+	--bg-blue: #B3E6FF;
+	--bg-violet: #FFCCFF;
+	--bg-yellow: #F5F81A;
+	/* Highlight Colors
+	 */
+	--hl-orange: #FF6347;
+	--hl-purple: #CC00FF;
+	--hl-red: #FF003D;
+    }
+
     .indented {
 	margin-left: var(--indent);
     }
@@ -40,7 +57,7 @@ echo "<title>$title</title>";
 	font-weight: bold;
     }
     pre.problem {
-        color: #CC00FF;
+        color: var(--hl-purple);
         font-size: var(--large-font-size);
 	padding: 0px 5px 0px 5px;
 	border: 2px solid red;
@@ -61,7 +78,7 @@ echo "<title>$title</title>";
 	font-family: "Courier New", Courier, monospace;
     }
     div.errors, div.notices {
-	background-color: #F5F81A;
+	background-color: var(--bg-yellow);
 	padding-bottom: 5px;
     }
     div.warnings {
@@ -69,7 +86,7 @@ echo "<title>$title</title>";
 	padding-bottom: 5px;
     }
     div.manage {
-	background-color: #96F9F3;
+	background-color: var(--bg-cyan);
 	padding-bottom: 5px;
     }
 </style>

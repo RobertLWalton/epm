@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May  6 15:29:45 EDT 2020
+    // Date:	Thu May  7 15:46:11 EDT 2020
 
     // Selects user problem.  Displays and uploads
     // problem files.
@@ -571,27 +571,27 @@
 
 <style>
     div.problem_display {
-	background-color: #F2D9D9;
+	background-color: var(--bg-tan);
     }
     div.command_display {
-	background-color: #C0FFC0;
+	background-color: var(--bg-green);
     }
     div.work_display {
-	background-color: #FFCCFF;
+	background-color: var(--bg-violet);
     }
     div.file-name {
-	background-color: #B3E6FF;
+	background-color: var(--bg-blue);
     }
     div.file-contents {
-	background-color: #C0FFC0;
+	background-color: var(--bg-green);
     }
     td.time {
-	color: #99003D;
+	color: var(--hl-red);
 	text-align: right;
 	padding-left: var(--indent);
     }
     pre.error-message {
-	color: #99003D;
+	color: var(--hl-red);
     }
 
 </style>
@@ -1125,7 +1125,7 @@ EOT;
 	        MAKE ( $fbase, 'fout', 'score' );
 		echo "<td><button type='submit'" .
 		     " style='background-color:" .
-		             "#FF6666'" .
+		             "var(--hl-orange)'" .
 		     " name='make'" .
 		     " title='Make $fbase.ftest" .
 		     " from $fname'" .

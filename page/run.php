@@ -2,7 +2,7 @@
 
     // File:	Wed May  6 15:34:41 EDT 2020
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May  5 16:01:45 EDT 2020
+    // Date:	Thu May  7 15:18:00 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -285,18 +285,18 @@
         color: #BB0000;
     }
     div.run_list {
-	background-color: #F2D9D9;
+	background-color: var(--bg-tan);
 	clear: both;
     }
     div.run {
-	background-color: #C0FFC0;
+	background-color: var(--bg-green);
 	clear: both;
     }
     div.file-name {
-	background-color: #B3E6FF;
+	background-color: var(--bg-blue);
     }
     div.file-contents {
-	background-color: #C0FFC0;
+	background-color: var(--bg-green);
 	margin-left: var(--indent);
     }
 </style>
