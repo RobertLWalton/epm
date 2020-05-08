@@ -42,6 +42,7 @@ echo "<title>$title</title>";
 	--bg-blue: #B3E6FF;
 	--bg-violet: #FFCCFF;
 	--bg-yellow: #F5F81A;
+	--bg-orange: #FFB0B0;
 	/* Highlight Colors
 	 */
 	--hl-orange: #FF6347;

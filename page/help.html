@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Fri May  8 03:21:30 EDT 2020
+Date:	Fri May  8 10:32:56 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -127,9 +127,10 @@ vertical-align: top;
 <ul>
 <li><a href="#project-pull">Pulling Problems</a>
 <li><a href="#project-push">Pushing Problems</a>
-<li><a href="#favorites">Favorites</a>
 <li><a href="#creating-lists">Creating Lists</a>
 </ul>
+
+<li><a href="#favorites-page">Favorites Page
 
 </ul>
 </div>
@@ -679,11 +680,11 @@ are created by users like yourself
 (see <a href='#creating-lists'>Creating Lists</a>).
 <p>
 The list selector on this page contains a list of lists
-called your `<a href='#favorites'>Favorites</a>' list.
-This page allows you to
-edit this `Favorites' list.  If they are not in your
-`Favorites' list, the `Your Problems' and `PROJECT-NAME Problems'
-lists are added to the end of the list selector.
+called your `Favorites' list.
+The `<a href='#favorites-page'>Favorites Page</a>'
+allows you to edit this `Favorites' list.  If they are not in your
+`Favorites' list, the `Your Problems' list and various
+`PROJECT-NAME Problems' lists are added to the end of the list selector.
 <p>
 You will likely not have access to all projects.  You will be
 able to pull problems from `demos', but NOT push problems to it.
@@ -702,12 +703,37 @@ See the <a href='#admin-page'>Admin Page</a> for more details.
 <p>
 </p>
 
-<a name="favorites"><h2>Favorites</h2></a>
+<a name="creating-lists"><h2>Creating Lists</h2></a>
 <p>
 </p>
 
-<a name="creating-lists"><h2>Creating Lists</h2></a>
+<a name="favorites-page"><h1>Favorites Page</h1></a>
 <p>
+The `Favorites' list is a list of those problem lists
+you find most interesting, in order of interest.
+This Favorites Page is a sub-page of the Project Page
+that allows you to edit the Favorites list.
+<p>
+This page displays all the lists that can be on the
+Favorites list, along with a check oval that is checked
+for those problem lists that are on the Favorites list.
+The checked lists are in the order they appear in when
+the Favorites list is used.
+<p>
+If you click on a check oval it toggles from checked to
+unchecked or from unchecked to checked.  In either case
+its list is moved to the boundary between checked and unchecked
+lists, so the checked lists are always above the unchecked
+lists.
+<p>
+You can change the order of lists by dragging a list
+to a second list below which you want the first list to be.
+To move a list to the top, drag it to the `Favorites' title
+line.
+<p>
+Changes you make are not recorded until you click `Update'
+or `Finish'.  Clicking `Reset' or `Cancel' restores Favorites
+to its state.  `Finish' and `Cancel' return to the Projects Page.
 </p>
 
 </div>

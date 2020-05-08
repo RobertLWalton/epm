@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May  8 09:18:19 EDT 2020
+    // Date:	Fri May  8 10:33:46 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -163,7 +163,7 @@
         font-size: var(--large-font-size);
     }
     div.favorites-title {
-	background-color: #FFC0FF;
+	background-color: var(--bg-violet);
 	border-radius: 10px;
 	text-align: center;
 	width: 100%;
@@ -175,7 +175,7 @@
 	margin: 0px;
     }
     div.list {
-	background-color: #FFB0B0;
+	background-color: var(--bg-orange);
 	border: 1px solid black;
 	border-radius: 10px;
 	border-collapse: collapse;
@@ -187,7 +187,7 @@
         font-size: var(--large-font-size);
     }
     div.list-description {
-	background-color: #FFCCCC;
+	background-color: var(--bg-green);
 	margin-left: var(--indent);
         font-size: var(--font-size);
     }
@@ -469,6 +469,7 @@ EOT;
 	    }
 	    des = des.nextElementSibling;
 	    lists.insertBefore ( src, des );
+	        // This does nothing if src == des.
 	}
     }
 
