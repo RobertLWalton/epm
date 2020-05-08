@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 10:54:29 EDT 2020
+    // Date:	Fri May  8 04:24:31 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -405,7 +405,7 @@ EOT;
 	let src = document.getElementById ( id );
 	let next = des.nextElementSibling;
 	let src_box = BOXFROMDIV ( src );
-	if ( des == lists.firstElement )
+	if ( des == lists.firstElementChild )
 	{
 	    src_box.style.backgroundColor =
 	        BOXFROMDIV(next).style.backgroundColor;
