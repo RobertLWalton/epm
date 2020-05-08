@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May  8 04:24:31 EDT 2020
+    // Date:	Fri May  8 09:18:19 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -455,9 +455,20 @@ EOT;
 	}
 	else
 	{
-	     des = lists.children[1];
-	     checkbox.style.backgroundColor = on;
-	     lists.insertBefore ( src, des );
+	    checkbox.style.backgroundColor = on;
+	    var des = src;
+	    while ( true )
+	    {
+	        des = des.previousElementSibling;
+		if ( des == lists.firstElementChild )
+		    break;
+
+		let box = BOXFROMDIV ( des );
+		if ( box.style.backgroundColor == on )
+		    break;
+	    }
+	    des = des.nextElementSibling;
+	    lists.insertBefore ( src, des );
 	}
     }
 
