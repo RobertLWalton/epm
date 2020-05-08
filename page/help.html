@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu May  7 16:28:25 EDT 2020
+Date:	Fri May  8 03:21:30 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -96,36 +96,39 @@ vertical-align: top;
 <div id='toc' style='display:none'>
 <ul>
 
-<li><a href="#login-page">Login Page</a><br>
+<li><a href="#login-page">Login Page</a>
 <ul>
-<li><a href="#login-email">User Email Address</a><br>
-<li><a href="#browser-ticket">Browser Ticket</a><br>
+<li><a href="#login-email">User Email Address</a>
+<li><a href="#browser-ticket">Browser Ticket</a>
 </ul>
-<li><a href="#user-page">User Page
+<li><a href="#user-page">User Page</a>
 
-<li><a href="#problem-page">Problem Page
+<li><a href="#problem-page">Problem Page</a>
 <ul>
-<li><a href="#problem-names">Problem Names</a><br>
-<li><a href="#problem-marks">Problem Marks</a><br>
-<li><a href="#current-problem-files">Current Problem Files</a><br>
-<li><a href="#file-extensions">File Extensions</a><br>
-<li><a href="#problem-commands">Commands Last Executed</a><br>
-<li><a href="#problem-working">Working Files of Last Executed Commands</a><br>
+<li><a href="#problem-names">Problem Names</a>
+<li><a href="#problem-marks">Problem Marks</a>
+<li><a href="#current-problem-files">Current Problem Files</a>
+<li><a href="#file-extensions">File Extensions</a>
+<li><a href="#problem-commands">Commands Last Executed</a>
+<li><a href="#problem-working">Working Files of Last Executed Commands</a>
 </ul>
 
-<li><a href="#run-page">Run Page
+<li><a href="#run-page">Run Page</a>
 
-<li><a href="#option-page">Option Page
+<li><a href="#option-page">Option Page</a>
 <ul>
-<li><a href="#option-values">Option Values</a><br>
-<li><a href="#option-arguments">Option Command Arguments</a><br>
-<li><a href="#option-templates">Template Commands</a><br>
+<li><a href="#option-numbers">Number Options</a>
+<li><a href="#option-arguments">Argument Options</a>
 </ul>
+
+<li><a href="#template-page">Template Page
 
 <li><a href="#project-page">Project Page
 <ul>
-<li><a href="#project-pull">Pulling Problems</a><br>
-<li><a href="#project-push">Pushing Problems</a><br>
+<li><a href="#project-pull">Pulling Problems</a>
+<li><a href="#project-push">Pushing Problems</a>
+<li><a href="#favorites">Favorites</a>
+<li><a href="#creating-lists">Creating Lists</a>
 </ul>
 
 </ul>
@@ -298,7 +301,7 @@ Only if this number of lines is small enough does the file have
 a &darr; that permits the file to be displayed below.
 <p>
 If a file has been pushed to or pulled from a
-<a href='#project'>project</a>, the
+<a href='#project-page'>project</a>, the
 file itself is not in your problem directory, but is
 in the project's problem directory and is linked to your problem
 directory.  These are marked by `(Linked from PROJECT-NAME)' at
@@ -650,6 +653,16 @@ Most of the time only templates with no conditions are selected.
 
 <a name="project-page"><h1>Project Page</h1></a>
 <p>
+A project is a collection of problems which may be solved
+by EPM users.  Before solving a problem in a project, a user pulls
+the problem.  If a user writes their own new problem, the user
+may push that problem to a project so other users can pull the
+problem.
+<p>
+Two builtin projects are `demos', which contains demonstration
+problems, and `public', into which anyone may push problems
+they have developed.
+<p>
 The project page lets you pull problems you want to solve
 from projects and push problems you have written to projects.
 The problems to be pushed or pulled are choosen from a list
@@ -657,17 +670,27 @@ of problems, and this
 page also allows you to create and edit such lists.
 <p>
 The first thing you must do is select a list of problems.
-One of the lists is labelled `Your Problems' and is simply
+One of the builtin lists is labelled `Your Problems' and is simply
 a list of all your problems.  For each project from which
 you are permitted to push or pull problems, there is
-a list named `PROJECT-NAME Problems'.  All the other lists
-are created by users like yourself.
+a builtin list named `PROJECT-NAME Problems' (e.g., `demos Problems'
+and `public Problems').  All the other lists
+are created by users like yourself
+(see <a href='#creating-lists'>Creating Lists</a>).
 <p>
 The list selector on this page contains a list of lists
-called your `Favorites' list.   This page allows you to
+called your `<a href='#favorites'>Favorites</a>' list.
+This page allows you to
 edit this `Favorites' list.  If they are not in your
 `Favorites' list, the `Your Problems' and `PROJECT-NAME Problems'
 lists are added to the end of the list selector.
+<p>
+You will likely not have access to all projects.  You will be
+able to pull problems from `demos', but NOT push problems to it.
+You will be able to both pull and push problems from `public'.
+Projects you have no access to will not be visible on the
+Projects Page.
+See the <a href='#admin-page'>Admin Page</a> for more details.
 </p>
 
 
@@ -676,6 +699,14 @@ lists are added to the end of the list selector.
 </p>
 
 <a name="project-push"><h2>Pushing Problems</h2></a>
+<p>
+</p>
+
+<a name="favorites"><h2>Favorites</h2></a>
+<p>
+</p>
+
+<a name="creating-lists"><h2>Creating Lists</h2></a>
 <p>
 </p>
 
