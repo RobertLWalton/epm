@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May  8 03:53:21 EDT 2020
+    // Date:	Sat May  9 15:38:11 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1900,6 +1900,7 @@ EOT;
 	    formaction='project.php'
 	    formmethod='GET'>
 	    Continue</button>
+    <pre>    </pre>
     </div>
     <div id='check-proposed-display'
          style='display:none'>
@@ -1907,6 +1908,7 @@ EOT;
 	  id='check-proposed'
 	  onclick='CHECK(this)'>&nbsp;</span>
     <strong>Check Proposed Actions</strong>
+    <pre>    </pre>
     </div>
     <strong>Go To</strong>
     <button type='submit'
@@ -2359,6 +2361,9 @@ EOT;
     }
 
     if ( $op == 'push' || $op == 'pull' )
+    {
+        $check_proposed =
+	    ( $op == 'push' ? 'on' : 'off' );
         echo <<<EOT
 	<script>
 
@@ -2382,7 +2387,8 @@ EOT;
 	        ('check-proposed-display');
 	var check_proposed =
 	    document.getElementById('check-proposed');
-	check_proposed.style.backgroundColor = on;
+	check_proposed.style.backgroundColor =
+	    $check_proposed;
 	check_proposed_display.style.display = 'inline';
 
 	var compile_response =
@@ -2456,6 +2462,11 @@ EOT;
 	    if ( op == 'ERROR' )
 	    {
 	        ERROR_RESPONSE ( text );
+		return;
+	    }
+	    else if ( op == 'WARN' )
+	    {
+	        WARN_RESPONSE ( text );
 		return;
 	    }
 	    let row = problem_rows[current_row];
@@ -2561,6 +2572,7 @@ EOT;
 
 	</script>
 EOT;
+    }
 
     if ( $op == 'edit' )
     {
