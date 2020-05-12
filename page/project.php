@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May  9 15:38:11 EDT 2020
+    // Date:	Tue May 12 17:37:10 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2688,6 +2688,9 @@ EOT;
 	    Delete $name</button>
 	    </form>
 EOT;
+	$list_head_class = "class='edit-row'";
+	if ( $is_read_only )
+	    $list_head_class = "";
 	echo <<<EOT
 	</div>
 	<div style='display:inline;float:right'>
@@ -2702,7 +2705,7 @@ EOT;
 	$stack_rows
 	</table>
 	<table id='list-table'>
-	<tr class='edit-row'>
+	<tr $list_head_class>
 	<th colspan=2>$name</th></tr>
 	$list_rows
 	</table>
