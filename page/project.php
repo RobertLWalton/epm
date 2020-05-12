@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 12 17:37:10 EDT 2020
+    // Date:	Tue May 12 17:49:32 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1935,7 +1935,7 @@ EOT;
 	$select_title = 'Lists of'
 	              . ' Problems to Push, Pull,'
 		      . ' Edit, or Publish';
-	$new_list_title = 'New List of Problems';
+	$new_list_title = 'New Problem List';
 	$upload_title = 'Upload Selected List'
 	              . ' Description (.des) File';
 	$upload_file_title = 'Selected List Description'
@@ -1992,7 +1992,7 @@ EOT;
 	<strong>or Create:</strong>
 	<input type="text"
 	       size="24" name="basename"
-               placeholder="New List Name"
+               placeholder="New Problem List Name"
 	       id="create-list"
 	       title='$new_list_title'>
 	       <!-- Pressing the enter key here
@@ -2576,7 +2576,7 @@ EOT;
 
     if ( $op == 'edit' )
     {
-	$edit_help = HELP ( 'project-edit' );
+	$edit_help = HELP ( 'problem-lists' );
 
 	$data['ELEMENTS'] = [];
 	$elements = & $data['ELEMENTS'];
@@ -2665,15 +2665,15 @@ EOT;
 	       title='$change_to_title'>
 	<strong>:</strong>
 	<select id='change-list'
-	        title='New List to Edit'>
+	        title='New Problem List to Edit'>
 	$options
 	</select>
 	<b>Create New List:</b>
 	<input type="text"
 	       id='created-basename'
 	       size="24"
-               placeholder="New List Name"
-               title="New List Name"
+               placeholder="New Problem List Name"
+               title="New Problem List Name"
 	       onkeydown='CREATE_NEW_LIST(event)'>
 EOT;
 	if ( $delete_list_ok )
