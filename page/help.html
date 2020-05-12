@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat May  9 15:38:59 EDT 2020
+Date:	Tue May 12 14:50:04 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -660,8 +660,10 @@ the problem.  If a user writes their own new problem, the user
 may push that problem to a project so other users can pull the
 problem.
 <p>
-Two builtin projects are `demos', which contains demonstration
-problems, and `public', into which anyone may push problems
+Two builtin projects are `<href name='demos'>demos</a>',
+which contains demonstration
+problems, and `<a href name='public'>public</a>',
+into which anyone may push problems
 they have developed.
 <p>
 The project page lets you pull problems you want to solve
@@ -700,6 +702,9 @@ or `Push'.  For lists, see <a href='#creating-lists'>Creating Lists</a>.
 
 <a name="project-pull"><h2>Pulling Problems</h2></a>
 <p>
+If you want to solve a problem that someone else has written,
+you must pull the problem from a project.
+<p>
 To pull problems, select a list of problems and click `Pull'.
 Then check the ovals for the problems you want to pull.
 Lastly, click submit.  If all of the problems pull successfully,
@@ -711,10 +716,8 @@ Checked problems are pulled in the order they appear in the list.
 If there is an error or warning pulling a problem, 
 messages will be displayed and you will be given a choice
 on how to proceed.  You can skip to the next problem or cancel
-all pulling.  For warnings, you can ignore the warning.
-The problem's oval left yellow
-if there was an error, green if a warning was ignored, and
-unchecked if the problem is left unpulled and untouched.
+all pulling.  For warnings, you can ignore the warning and
+execute the pull actions.
 <p>
 If you want to see the actions that will be taken to pull
 a problem, check the `Check Proposed Actions' button before
@@ -722,10 +725,51 @@ you `Submit'.  You will be shown the proposed actions and
 asked whether or not to execute them or skip to the next
 problem or cancel all pulling.  The problem's oval will become
 red while you are deciding what to do about the actions.
+<p>
+At the end a problem's oval will be green if it was successfully
+pulled, yellow if there were errors while executing the pull
+actions for the problem, and white if no pull actions were executed
+for the problem.
 </p>
 
 <a name="project-push"><h2>Pushing Problems</h2></a>
 <p>
+If you have written your own problem, you can make it
+available for others to solve by pushing the problem
+into a project, such as the <a href='#public'>public</a>
+project.  Then others can <a href='#project-pull'>pull</a>
+your problem from the `public' project and try to solve it.
+<p>
+To push problems, select a list of problems and click `Push'.
+Then check the ovals for the problems you want to push.
+Lastly, click submit.
+<p>
+Checked problems are pushed in the order they appear in the list.
+For each, you will be given a list of the actions that will be
+taken if the problem is to be pushed, and asked whether to
+execute the actions, skip the problem, or cancel all pushing.
+While you are deciding, the oval of the problem being processed
+is red.
+<p>
+If you do not want to see the list of actions before they
+are executed, click the `Check Proposed Actions' oval to turn
+it off.
+<p>
+If there is an error or warning pushing a problem, 
+messages will be displayed and you will be given a choice
+on how to proceed.  You can skip to the next problem or cancel
+all pushing.  For warnings, you can ignore the warning and
+execute the push actions.
+<p>
+When all of the problems to be pushed have been processed,
+a `Done!' message
+will appear, and you will be given a choice whether
+to `Continue' with the Project Page or go to another page.
+<p>
+At the end a problem's oval will be green if it was successfully
+pushed, yellow if there were errors while executing the push
+actions for the problem, and white if no push actions were executed
+for the problem.
 </p>
 
 <a name="creating-lists"><h2>Creating Lists</h2></a>
