@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 01:02:27 EDT 2020
+    // Date:	Wed May 13 09:49:37 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -640,7 +640,6 @@ EOT;
 	    WARN ( "$m $ftmp_name" );
 	    return false;
 	}
-	$fbase = preg_replace ( '/ /', '_', $fbase );
 	$f = "users/$uid/+indices+/$fbase.index";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
@@ -1754,9 +1753,6 @@ EOT;
 	    $project = '<i>Your</i>';
 	if ( $basename == '-' )
 	    $basename = '<i>Problems</i>';
-	else
-	    $basename = preg_replace
-		( '/_/', ' ', $basename );
 	echo <<<EOT
 	<div class='errors'>
 	<strong>Do you really want to delete
@@ -2599,8 +2595,6 @@ EOT;
 	    $delete_list_ok = true;
 	    $description = read_list_description
 		( listname_to_filename ( $list ) );
-	    $basename = preg_replace
-		( '/_/', ' ', $basename );
 	}
 	$name = "$project $basename";
 

@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 00:24:43 EDT 2020
+    // Date:	Wed May 13 09:50:13 EDT 2020
 
     // Edits +favorites+ list.  See project.php for
     // file formats.
@@ -326,9 +326,6 @@ EOT;
 	    $project = '<i>Your</i>';
 	if ( $basename == '-' )
 	    $basename = '<i>Problems<i>';
-	else
-	    $basename = preg_replace
-	        ( '/_/', ' ', $basename );
 	$time = substr ( $time, 0, 10 );
 
 	$switch = ( $c < $fcount ? $on : $off );

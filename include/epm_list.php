@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 00:57:50 EDT 2020
+    // Date:	Wed May 13 09:52:06 EDT 2020
 
     // Functions for managing lists.
 
@@ -259,8 +259,6 @@
         global $epm_data, $uid, $epm_name_re,
 	       $epm_time_format;
 
-	$basename = preg_replace
-	    ( '/ /', '_', $basename );
 	if ( ! preg_match ( $epm_name_re, $basename ) )
 	{
 	   $errors[] = "$basename is badly formed"
@@ -310,9 +308,6 @@
 	    $errors[] = "cannot delete $pname Problems";
 	    return;
 	}
-	else
-	    $bname = preg_replace
-		( '/_/', ' ', $basename );
 
         $f = "users/$uid/+indices+/$basename.index";
 	if ( $project == '-' )
@@ -830,9 +825,6 @@
 		$project = 'Your';
 	    if ( $basename == '-' )
 		$basename = 'Problems';
-	    else
-		$basename = preg_replace
-		    ( '/_/', ' ', $basename );
 	    $time = substr ( $time, 0, 10 );
 	    $r .= "<option value='$key'>"
 		. "$project $basename $time"
