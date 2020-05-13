@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 09:52:06 EDT 2020
+    // Date:	Wed May 13 17:10:16 EDT 2020
 
     // Functions for managing lists.
 
@@ -680,6 +680,45 @@
 	return $list;
     }
 
+    // Return a list whose elements have the form:
+    //
+    //		[TIME - PROBLEM]
+    //
+    // for all PROBLEMs users/UID/PROBLEM where TIME
+    // is the modification time of the problem +changes+
+    // file, or is the current time if there is no
+    // such file.  Sort by TIME.
+    //
+    function problems_to_list()
+    {
+	global $epm_data, $uid, $epm_name_re,
+	       $epm_time_format;
+
+	$pmap = [];
+	$f = "users/$uid";
+	$ps = @scandir ( "$epm_data/$f" );
+	if ( $ps == false )
+	    ERROR ( "cannot read $f directory" );
+	foreach ( $ps as $problem )
+	{
+	    if ( ! preg_match
+	               ( $epm_name_re, $problem ) )
+	        continue;
+
+	    $g = "$f/$problem/+changes+";
+	    $time = @filemtime ( "$epm_data/$g" );
+	    if ( $time === false ) $time = time();
+	    $pmap[$problem] = $time;
+	}
+	arsort ( $pmap, SORT_NUMERIC );
+	$list = [];
+	foreach ( $pmap as $problem => $time )
+	    $list[] = [strftime ( $epm_time_format,
+	                          $time ),
+		       '-', $problem];
+	return $list;
+    }
+
     // Given a $listname return the list of elements
     //
     //		[TIME PROJECT PROBLEM]
@@ -699,7 +738,7 @@
     function listname_to_list ( $listname )
     {
 	if ( $listname == '-:-' )
-	    return problems_to_edit_list();
+	    return problems_to_list();
 	elseif ( preg_match ( '/^(.+):-/',
 	                      $listname, $matches ) )
     	    return read_project_list ( $matches[1] );

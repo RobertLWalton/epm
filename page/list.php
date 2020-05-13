@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 14:11:09 EDT 2020
+    // Date:	Wed May 13 17:31:16 EDT 2020
 
     // Maintains problem lists.
 
@@ -103,45 +103,6 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-
-    // Return a list whose elements have the form:
-    //
-    //		[TIME - PROBLEM]
-    //
-    // for all PROBLEMs users/UID/PROBLEM where TIME
-    // is the modification time of the problem +changes+
-    // file, or is the current time if there is no
-    // such file.  Sort by TIME.
-    //
-    function problems_to_edit_list()
-    {
-	global $epm_data, $uid, $epm_name_re,
-	       $epm_time_format;
-
-	$pmap = [];
-	$f = "users/$uid";
-	$ps = @scandir ( "$epm_data/$f" );
-	if ( $ps == false )
-	    ERROR ( "cannot read $f directory" );
-	foreach ( $ps as $problem )
-	{
-	    if ( ! preg_match
-	               ( $epm_name_re, $problem ) )
-	        continue;
-
-	    $g = "$f/$problem/+changes+";
-	    $time = @filemtime ( "$epm_data/$g" );
-	    if ( $time === false ) $time = time();
-	    $pmap[$problem] = $time;
-	}
-	arsort ( $pmap, SORT_NUMERIC );
-	$list = [];
-	foreach ( $pmap as $problem => $time )
-	    $list[] = [strftime ( $epm_time_format,
-	                          $time ),
-		       '-', $problem];
-	return $list;
-    }
 
     // Given a list of elements of the form
     //
@@ -273,9 +234,16 @@ EOT;
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    div.op th {
-        font-size: var(--large-font-size);
-	text-align: left;
+    div.list0, div.list1 {
+        width:48%;
+	float:left;
+	padding: 1%;
+    }
+    div.list0 {
+        background-color: var(--bg-tan);
+    }
+    div.list1 {
+        background-color: var(--bg-blue);
     }
     div.push-pull-list, div.edit-list {
 	background-color: #F2D9D9;
@@ -335,28 +303,6 @@ var LOG = function(message) {};
 
 <?php 
 
-    if ( isset ( $delete_list ) )
-    {
-	list ( $project, $basename ) =
-	    explode ( ':', $delete_list );
-	if ( $project == '-' )
-	    $project = '<i>Your</i>';
-	if ( $basename == '-' )
-	    $basename = '<i>Problems</i>';
-	echo <<<EOT
-	<div class='errors'>
-	<strong>Do you really want to delete
-	        $project $basename?</strong>
-	<form action='project.php' method='POST'>
-	<input type='hidden' name='ID' value='$id'>
-	<input type='submit' name='delete-list'
-	       value='YES'>
-	<input type='submit' name='delete-list'
-	       value='NO'>
-	</form>
-	<br></div>
-EOT;
-    }
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
@@ -401,12 +347,23 @@ EOT;
     </form>
     </div>
 EOT;
+    $options = favorites_to_options ( 'pull|push' );
+    $data['ELEMENTS'] = [];
+    $elements = & $data['ELEMENTS'];
     foreach ( [0,1] as $J )
     {
         $name = $names[$J];
 	echo <<<EOT
-	<div class='list' id='list$J'>
-	<div style='text-align:right'>
+	<div class='list$J' id='list$J'>
+	<div style='text-align:center'>
+	<strong>Change To New List:</strong>
+	<input type="text"
+	       id='new$J'
+	       size="24"
+               placeholder="New Problem List Name"
+               title="New Problem List Name"
+	       onkeydown='NEW(event)'>
+	<br>
 	<input type='button'
 	       onclick='CHANGE_LIST("$J")'
 	       value='Change To'
@@ -416,22 +373,17 @@ EOT;
 	        title='New Problem List to Edit'>
 	$options
 	</select>
-	<pre> </pre>
-	<strong>Change To New List:</strong>
-	<input type="text"
-	       id='new$J'
-	       size="24"
-               placeholder="New Problem List Name"
-               title="New Problem List Name"
-	       onkeydown='NEW(event)'>
-	</div>
-	<div style='text-align:left'>
+	<br>
 EOT;
 	if ( ! isset ( $name ) )
 	    echo <<<EOT
 	    <strong>No List Selected</strong>
 EOT;
 	else
+	{
+	    $lines = list_to_element_rows
+	        ( $elements,
+		  listname_to_list ( $name ) );
 	    echo <<<EOT
 	    <strong>$name:</strong>
 	    <pre>  </pre>
@@ -451,9 +403,10 @@ EOT;
 	            onclick='DELETE("$J")'>
 	    DELETE</button>
 EOT;
+	}
 	echo <<<EOT
 	</div>
-	{$lines[$J]}
+	$lines
 	</div>
 EOT;
     }

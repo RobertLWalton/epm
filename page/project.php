@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 09:49:37 EDT 2020
+    // Date:	Wed May 13 17:09:13 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -520,45 +520,6 @@ EOT;
 	                          $time ),
 		       $project, $problem];
 	}
-	return $list;
-    }
-
-    // Return a list whose elements have the form:
-    //
-    //		[TIME - PROBLEM]
-    //
-    // for all PROBLEMs users/UID/PROBLEM where TIME
-    // is the modification time of the problem +changes+
-    // file, or is the current time if there is no
-    // such file.  Sort by TIME.
-    //
-    function problems_to_edit_list()
-    {
-	global $epm_data, $uid, $epm_name_re,
-	       $epm_time_format;
-
-	$pmap = [];
-	$f = "users/$uid";
-	$ps = @scandir ( "$epm_data/$f" );
-	if ( $ps == false )
-	    ERROR ( "cannot read $f directory" );
-	foreach ( $ps as $problem )
-	{
-	    if ( ! preg_match
-	               ( $epm_name_re, $problem ) )
-	        continue;
-
-	    $g = "$f/$problem/+changes+";
-	    $time = @filemtime ( "$epm_data/$g" );
-	    if ( $time === false ) $time = time();
-	    $pmap[$problem] = $time;
-	}
-	arsort ( $pmap, SORT_NUMERIC );
-	$list = [];
-	foreach ( $pmap as $problem => $time )
-	    $list[] = [strftime ( $epm_time_format,
-	                          $time ),
-		       '-', $problem];
 	return $list;
     }
 
@@ -1924,7 +1885,7 @@ EOT;
 	            . ' List to Projects';
 	$pull_title = 'Pull Problems in Selected'
 	            . ' List from Projects';
-	$edit_list_title = 'Edit Selected List';
+	$edit_list_title = 'Edit Lists';
 	$select_title = 'Lists of'
 	              . ' Problems to Push, Pull,'
 		      . ' Edit, or Publish';
@@ -1957,14 +1918,10 @@ EOT;
 	Pull
 	</button>
 	<button type='submit'
-	        name='op' value='edit'
+	        formaction='list.php'
+		formmethod='GET'
 	        title='$edit_list_title'>
-	Edit List
-	</button>
-	<button type='submit'
-	        name='op' value='publish'
-	        title='Publish Selected List'>
-	Publish List
+	Edit Lists
 	</button>
 	<strong>or</strong>
 	<button type='submit'
