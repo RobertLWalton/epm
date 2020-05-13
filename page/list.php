@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 13:41:25 EDT 2020
+    // Date:	Wed May 13 14:11:09 EDT 2020
 
     // Maintains problem lists.
 
@@ -78,23 +78,20 @@
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
-    require "$epm_home/include/epm_template.php";
-        // This last is only needed by merge function.
 
     $method = $_SERVER['REQUEST_METHOD'];
     if ( $method != 'GET' && $method != 'POST' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     if ( $method == 'GET' )
-        $_SESSION['EPM_PROJECT'] = [
+        $_SESSION['EPM_LIST'] = [
 	    'ID' => bin2hex ( random_bytes ( 16 ) ),
-	    'OP' => NULL,
-	    'LIST' => NULL ];
+	    'NAMES' => [NULL,NULL],
+	    'ELEMENTS' => [] ];
 
-    $data = & $_SESSION['EPM_PROJECT'];
+    $data = & $_SESSION['EPM_LIST'];
     $id = $data['ID'];
-    $op = $data['OP'];
-    $list = $data['LIST'];
+    $names = $data['NAMES'];
 
     if ( $method == 'POST'
          &&
@@ -108,12 +105,6 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $delete_list = NULL;
-        // Set to list to be deleted.  Causes delete
-	// OK question.
-    $compile_next = false;
-    	// Set to cause first element of EPM_PROJECT
-	// CHECKED-PROBLEMS to be compiled.
 
     // Return a list whose elements have the form:
     //
@@ -154,103 +145,6 @@
 	return $list;
     }
 
-    // Write uploaded description.  Takes global $_FILES
-    // value as input, extracts description, and writes
-    // into list file.  Errors append to $errors and
-    // suppress write.  If list does not exist, a
-    // warning message is added to $warnings.
-    //
-    // If successful, this function returns the listname
-    // of the list given the description, in the form
-    // '-:basename'.  If unsuccessful, false is
-    // returned.
-    //
-    function upload_list_description
-	    ( & $warnings, & $errors )
-    {
-        global $epm_data, $uid, $epm_name_re,
-	       $epm_upload_maxsize;
-
-        if ( ! isset ( $_FILES['uploaded_file'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	$upload = & $_FILES['uploaded_file'];
-	$fname = $upload['name'];
-	$errors_size = count ( $errors );
-
-	$ferror = $upload['error'];
-	if ( $ferror != 0 )
-	{
-	    switch ( $ferror )
-	    {
-		case UPLOAD_ERR_INI_SIZE:
-		case UPLOAD_ERR_FORM_SIZE:
-		    $errors[] = "$fname too large";
-		    break;
-		case UPLOAD_ERR_NO_FILE:
-		    $errors[] = "no file choosen;"
-			      . " try again";
-		    break;
-		case UPLOAD_ERR_PARTIAL:
-		    $errors[] = "$fname upload failed;"
-			      . " try again";
-		    break;
-		default:
-		    $e = "uploading $fname, PHP upload"
-		       . " error code $ferror";
-		    WARN ( $e );
-		    $errors[] = "EPM SYSTEM ERROR: $e";
-	    }
-	    return false;
-	}
-
-	$fext = pathinfo ( $fname, PATHINFO_EXTENSION );
-	$fbase = pathinfo ( $fname, PATHINFO_FILENAME );
-
-	if ( $fext != 'dsc' )
-	{
-	    $errors[] = "$fname has wrong extension"
-	              . " (should be .dsc)";
-	    return;
-	}
-
-	$fsize = $upload['size'];
-	if ( $fsize > $epm_upload_maxsize )
-	{
-	    $errors[] =
-		"uploaded file $fname too large;" .
-		" limit is $epm_upload_maxsize";
-	    return false;
-	}
-
-	$ftmp_name = $upload['tmp_name'];
-	$dsc = @file_get_contents ( $ftmp_name );
-	if ( $dsc === false )
-	{
-	    $m = "cannot read uploaded file"
-	       . " from temporary";
-	    $errors[] = "$m; try again";
-	    WARN ( "$m $ftmp_name" );
-	    return false;
-	}
-	$f = "users/$uid/+indices+/$fbase.index";
-	if ( ! file_exists ( "$epm_data/$f" ) )
-	{
-	    make_new_list ( $fname, $errors );
-	        // This will check that $fname is
-		// well formed EPM file name base.
-	    if ( count ( $errors ) > $errors_size )
-	        return false;
-	    $warnings[] = "created list $fbase which"
-	                . " does not previously exist";
-	}
-
-	write_list_description ( $f, $dsc, $errors );
-	if ( count ( $errors ) > $errors_size )
-	    return false;
-	else
-	    return ( "-:$fbase" );
-    }
-
     // Given a list of elements of the form
     //
     //		[TIME PROJECT PROBLEM]
@@ -259,12 +153,21 @@
     // $elements list and return a string whose segments
     // are HTML rows of the form:
     //
-    //		<tr class='edit-row'>
-    //		<td></td>
-    //		<td data-index='I' class='edit-name'>
-    //		PROJECT PROBLEM TIME
-    //		</td>
-    //		</tr>
+    //		<table id='I' class='problem'
+    //                 draggable='true'
+    //		       ondragover='ALLOWDROP(event)'
+    //		       ondrop='DROP(event)'
+    //                 ondragstart='DRAGSTART(event,"I")'
+    //                 onclick='DUP(event)'>
+    //		<tr>
+    //		<td style='width:10%;text-align:left'>
+    //		<span class='checkbox'
+    //		      onclick='CHECK(event,"I")'>
+    //		&nbsp;
+    //		</span></td>
+    //		<td style='width:80%;text-align:center'>
+    //		$project $problem $time</td>
+    //		</tr></table>
     //
     // where if PROJECT is '-' it is replaced by
     // '<i>Your</i>' in the string, TIME is the first
@@ -285,15 +188,22 @@
 		$project = '<i>Your</i>';
 	    $time = substr ( $time, 0, 10 );
 	    $r .= <<<EOT
-	          <tr>
-		  <td><button type='button'
-		              onclick='DELETE(this)'>
-		      &Chi;</button></td>
-		  <td data-index='$I' class='edit-name'
-		       onclick='DUP(this)'>
-		  $project $problem $time
-		  </td>
-		  </tr>
+    	    <table id='$I'
+	           class='problem'
+    	           draggable='true'
+    	           ondragover='ALLOWDROP(event)'
+    	           ondrop='DROP(event)'
+    	           ondragstart='DRAGSTART(event,"$I")'
+    	           onclick='DUP(event)'>
+    	    <tr>
+    	    <td style='width:10%;text-align:left'>
+    	    <span class='checkbox'
+    	          onclick='CHECK(event,"$I")'>
+    	    &nbsp;
+    	    </span></td>
+    	    <td style='width:80%;text-align:center'>
+    	    $project $problem $time</td>
+    	    </tr></table>
 EOT;
 	}
 	return $r;
@@ -468,7 +378,7 @@ EOT;
 	echo "<br></div></div>";
     }
 
-    $project_help = HELP ( 'list-page' );
+    $list_help = HELP ( 'list-page' );
     echo <<<EOT
     <div class='manage'>
     <form>
@@ -484,32 +394,10 @@ EOT;
     </label>
     </td>
     <td>
-    <div id='done-response' style='display:none'>
-    <strong>Done!</strong>
-    <button type='submit'
-	    formaction='project.php'
-	    formmethod='GET'>
-	    Continue</button>
-    <pre>    </pre>
-    </div>
-    <div id='check-proposed-display'
-         style='display:none'>
-    <span class='problem-checkbox'
-	  id='check-proposed'
-	  onclick='CHECK(this)'>&nbsp;</span>
-    <strong>Check Proposed Actions</strong>
-    <pre>    </pre>
-    </div>
-    <strong>Go To</strong>
-    <button type='submit'
-	    formaction='problem.php'
-	    formmethod='GET'>
-	    Problem</button>
-    <strong>Page</strong>
     </td>
     <td>
     </td><td style='text-align:right'>
-    $project_help</td>
+    $list_help</td>
     </tr>
     </table>
     </form>
