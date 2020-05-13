@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 17:31:16 EDT 2020
+    // Date:	Wed May 13 18:55:02 EDT 2020
 
     // Maintains problem lists.
 
@@ -19,7 +19,7 @@
     //
     //	   EPM_LIST NAMES
     //		[name1,name2] where nameI is in the
-    //		format PROJECT:BASENAME or is NULL
+    //		format PROJECT:BASENAME or is ''
     //		for no-list.
     //
     //     EPM_LIST ELEMENTS
@@ -41,10 +41,9 @@
     // ----
     //
     // Each post may update the lists and has the
-    // following values.  Here space separation items
-    // must be a single space character.
+    // following values.
     //
-    //	    op='op1 op2' where opI is one of:
+    //	    op='op1;op2' where opI is one of:
     //
     //		SAVE	Save used portion of list in
     //			list file.
@@ -52,25 +51,25 @@
     //		DELETE	Delete file.
     //		KEEP	Keep list as is.
     //
-    //	     elements='e1 e2'
+    //	     elements='e1;e2'
     //		where eI is the indices in EPM_LIST
     //		ELEMENTS of list I, with the indices
     //		separated by `:'.
     //
-    //	     length='len1 len2'
+    //	     lengths='len1;len2'
     //		The number of elements actually in list
     //		I is lenI; the remaining elements have
     //		been removed.
     //
-    //	     names='name1 name2'
+    //	     names='name1;name2'
     //		New values for EPM_LIST NAMES.  These
     //		are to be installed after opI is
     //		executed.  NameI is ignored if opI is
-    //		RESET.  The value ':' means NULL.
+    //		RESET.  NameI is '' to mean NULL.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -84,7 +83,7 @@
     if ( $method == 'GET' )
         $_SESSION['EPM_LIST'] = [
 	    'ID' => bin2hex ( random_bytes ( 16 ) ),
-	    'NAMES' => [NULL,NULL],
+	    'NAMES' => ['',''],
 	    'ELEMENTS' => [] ];
 
     $data = & $_SESSION['EPM_LIST'];
@@ -300,8 +299,24 @@ var LOG = function(message) {};
 </script>
 
 </head>
+<body>
 
 <?php 
+
+    echo <<<EOT
+    <form method='POST' action='list.php'
+	  id='submit-form'>
+    <input type='hidden' name='ID' value='$id'>
+    <input type='hidden' name='ops' id='ops'
+           value='KEEP;KEEP'>
+    <input type='hidden' name='lengths' id='lengths'
+           value='0;0'>
+    <input type='hidden' name='elements' id='elements'
+           value=';'>
+    <input type='hidden' name='names' id='names'
+           value=';'>
+    </form>
+EOT;
 
     if ( count ( $errors ) > 0 )
     {
@@ -375,7 +390,7 @@ EOT;
 	</select>
 	<br>
 EOT;
-	if ( ! isset ( $name ) )
+	if ( $name == '' )
 	    echo <<<EOT
 	    <strong>No List Selected</strong>
 EOT;
@@ -411,7 +426,27 @@ EOT;
 EOT;
     }
 
+    echo <<<EOT
+    <script>
+    var names = ['$names[0]','$names[1]'];
+    </script>
+
 ?>
+
+<script>
+let ops_input = document.getElementById ( 'ops' );
+let lengths_input = document.getElementById
+    ( 'lengths' );
+let elements_input = document.getElementById
+    ( 'elements' );
+let names_input = document.getElementById ( 'names' );
+function CHANGE_LIST ( J )
+{
+    let ch = document.getElementById ( 'change' + J );
+    names[J] = ch.value;
+    names_input.value = names.join ( ';' );
+}
+</script>
 
 </body>
 </html>
