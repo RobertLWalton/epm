@@ -46,12 +46,11 @@
     //
     //	    op='op1 op2' where opI is one of:
     //
-    //		KEEP	Keep list as is.
     //		SAVE	Save used portion of list in
     //			list file.
-    //		FINISH	Ditto but set list name to NULL.
-    //		CANCEL	Just set list name to NULL.
-    //		RESET	Reset list to initial contents.
+    //		RESET	Reset list to file contents.
+    //		DELETE	Delete file.
+    //		KEEP	Keep list as is.
     //
     //	     elements='e1 e2'
     //		where eI is the indices in EPM_LIST
@@ -66,9 +65,8 @@
     //	     names='name1 name2'
     //		New values for EPM_LIST NAMES.  These
     //		are to be installed after opI is
-    //		executed, and should be the same as the
-    //		old names unless opI is FINISH or
-    //		CANCEL.
+    //		executed.  NameI is ignored if opI is
+    //		RESET.  The value ':' means NULL.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -165,7 +163,7 @@
     //		      onclick='CHECK(event,"I")'>
     //		&nbsp;
     //		</span></td>
-    //		<td style='width:80%;text-align:center'>
+    //		<td style='width:30%;text-align:center'>
     //		$project $problem $time</td>
     //		</tr></table>
     //
@@ -403,428 +401,60 @@ EOT;
     </form>
     </div>
 EOT;
-    if ( $op == 'edit' )
+    foreach ( [0,1] as $J )
     {
-	$edit_help = HELP ( 'problem-lists' );
-
-	$data['ELEMENTS'] = [];
-	$elements = & $data['ELEMENTS'];
-
-	$list_rows = list_to_edit_rows
-	    ( $elements, listname_to_list ( $list ) );
-	$is_read_only = 'false';
-	$delete_list_ok = false;
-	$description = '';
-
-	list ( $project, $basename ) =
-	    explode ( ':', $list );
-	if ( $project == '-' )
-	    $project = '<i>Your</i>';
-	if ( $basename == '-' )
-	{
-	    $basename =
-		'<i>Problems</i> (read-only)';
-	    $is_read_only = 'true';
-	}
-	else
-	{
-	    $delete_list_ok = true;
-	    $description = read_list_description
-		( listname_to_filename ( $list ) );
-	}
-	$name = "$project $basename";
-
-	$stack_rows = list_to_edit_rows
-	    ( $elements,
-	      listname_to_list ( '+stack+' ) );
-
-	$options = favorites_to_options ( 'pull|push' );
-
-	$finish_title = 'Save Changes and Return to'
-	              . ' Project Page';
-	$cancel_title = 'DISCARD Changes and Return to'
-	              . ' Project Page';
-	$clear_title = 'Move Overstrikes to End of'
-	             . ' Stack and Remove Duplicate'
-		     . ' Overstrikes';
-	$change_to_title = 'Save Changes and Change the'
-	                 . ' List Being Edited';
-
+        $name = $names[$J];
 	echo <<<EOT
-	<div class='edit-list'>
-	<div style='display:inline'>
-
-	<form method='POST' action='project.php'
-	      id='submit-form'>
-	<input type='hidden' name='ID' value='$id'>
-	<input type='hidden' name='update' id='update'>
-	<input type='hidden' name='new-list'
-	       id='new-list'>
-	<input type='hidden' name='basename'
-	       id='basename'>
-	<input type='hidden' name='stack' value=''
-	       id='stack-args'>
-	<input type='hidden' name='list' value=''
-	       id='list-args'>
-	</form>
-
+	<div class='list' id='list$J'>
+	<div style='text-align:right'>
 	<input type='button'
-	       onclick='UPDATE_EDIT ( "update" )'
-	       value='Save'
-	       title='Save Changes'>
-	<input type='button'
-	       onclick='UPDATE_EDIT ( "done" )'
-	       value='Finish'
-	       title='$finish_title'>
-	<form method='POST' action='project.php'
-	      style='display:inline'>
-	<input type='hidden' name='ID' value='$id'>
-	<input type='submit'
-	       name='cancel'
-	       value='Cancel'
-	       title='$cancel_title'>
-	</form>
-	<input type='button'
-	       onclick='CLEAR_EDIT()'
-	       value='Clear Strikes'
-	       title='$clear_title'>
-	<input type='button'
-	       onclick='UPDATE_EDIT ( "change-list" )'
+	       onclick='CHANGE_LIST("$J")'
 	       value='Change To'
 	       title='$change_to_title'>
 	<strong>:</strong>
-	<select id='change-list'
+	<select id='change$J'
 	        title='New Problem List to Edit'>
 	$options
 	</select>
-	<b>Create New List:</b>
+	<pre> </pre>
+	<strong>Change To New List:</strong>
 	<input type="text"
-	       id='created-basename'
+	       id='new$J'
 	       size="24"
                placeholder="New Problem List Name"
                title="New Problem List Name"
-	       onkeydown='CREATE_NEW_LIST(event)'>
+	       onkeydown='NEW(event)'>
+	</div>
+	<div style='text-align:left'>
 EOT;
-	if ( $delete_list_ok )
+	if ( ! isset ( $name ) )
 	    echo <<<EOT
-	    <form method='POST' action='project.php'
-		  style='display:inline'>
-	    <input type='hidden' name='ID' value='$id'>
-	    <button type='submit'
-		    name='delete-list'
-		    value='Delete List'
-		    title='Delete List Being Edited'>
-	    Delete $name</button>
-	    </form>
+	    <strong>No List Selected</strong>
 EOT;
-	$list_head_class = "class='edit-row'";
-	if ( $is_read_only )
-	    $list_head_class = "";
-	echo <<<EOT
-	</div>
-	<div style='display:inline;float:right'>
-	$edit_help
-	</div>
-	</div>
-
-	<div>
-	<table id='stack-table'>
-	<tr class='edit-row'>
-	<th colspan=2><i>Stack</i></th></tr>
-	$stack_rows
-	</table>
-	<table id='list-table'>
-	<tr $list_head_class>
-	<th colspan=2>$name</th></tr>
-	$list_rows
-	</table>
-	</div>
-EOT;
-	if ( $description != '' )
-	    echo <<<EOT
-	    <div style='display:table;clear:both'>
-	    </div>
-	    <div class='list-description-header'>
-	    <strong>$name Description</strong>
-	    </div>
-	    <div class='list-description'>
-	    $description
-	    </div>
-EOT;
-
-	echo <<<EOT
-	<script>
-
-	let is_read_only = $is_read_only;
-
-	let stack_table = document.getElementById
-	    ( 'stack-table' );
-	let stack_rows = stack_table.rows;
-	let list_table = document.getElementById
-	    ( 'list-table' );
-	let list_rows = list_table.rows;
-
-	let delete_button =
-	    "<button type='button'" +
-		   " onclick='DELETE(this)'>" +
-	    "&Chi;</button>";
-
-	if ( is_read_only )
-	    for ( var i = 1; i < list_rows.length;
-	                     ++ i )
-		list_rows[i].children[0].style.display =
-		    'none';
 	else
-	    for ( var i = 0; i < list_rows.length;
-	                     ++ i )
-	    {
-	        var tr = list_rows[i];
-		tr.setAttribute ( 'class', 'edit-row' );
-	    }
-
-	function make_draggable ( element )
-	{
-	    element.setAttribute
-	        ( 'draggable', 'true' );
-
-	    // Mozilla but not Chrome requires the
-	    // following:
-	    //
-	    element.addEventListener ( "dragstart",
-		function(event) {
-		    event.dataTransfer.setData
-		        ('text/plain',null);
-		}, false );
-	}
-
-	for ( var i = 1; i < list_rows.length;
-			 ++ i )
-	    make_draggable ( list_rows[i] );
-
-	for ( var i = 0; i < stack_rows.length;
-			 ++ i )
-	{
-	    var tr = stack_rows[i];
-	    tr.setAttribute ( 'class', 'edit-row' );
-	    if ( i != 0 )
-		make_draggable ( tr );
-	}
-
-	var drag_start = null;
-	document.addEventListener ( "drag",
-	    function(event) {}, false );
-	document.addEventListener ( "dragstart",
-	    function(event) {
-		drag_start = event.target;
-	    }, false );
-	document.addEventListener ( "dragover",
-	    function(event) {
-	        event.preventDefault();
-	    }, false );
-	document.addEventListener ( "drop",
-	    function(event) {
-	        event.preventDefault();
-		var t = event.target;
-		while ( t != undefined
-		        &&
-			t.className != 'edit-row' )
-		    t = t.parentElement;
-
-		if ( t != undefined )
-		{
-		    let drag_table =
-		        drag_start.parentElement
-				  .parentElement;
-		    let tr =
-		        drag_start.cloneNode ( true );
-		    let des_table =
-		        t.parentElement.parentElement;
-		    let des_rows = des_table.rows;
-		    let des_body = des_table.tBodies[0];
-		    let des_index = t.rowIndex + 1;
-
-		    if ( drag_table == stack_table
-		         ||
-			 ! is_read_only )
-		        drag_table.deleteRow
-			    ( drag_start.rowIndex );
-		    if ( des_index < des_rows.length )
-		        des_body.insertBefore
-			    ( tr, des_rows[des_index] );
-		    else
-		        des_body.appendChild ( tr );
-		    tr.children[0].innerHTML =
-		        delete_button;
-		    tr.children[0].style.display =
-		        'inline';
-		    tr.children[1].style
-		                  .textDecoration =
-		        'none';
-		    tr.setAttribute
-		        ( 'class', 'edit-row' );
-		    make_draggable ( tr );
-		}
-	    }, false );
-
-
-	function DELETE ( button )
-	{
-	    let tr = button.parentElement.parentElement;
-	    let text = tr.children[1];
-	    if (    text.style.textDecoration
-		 == 'line-through' )
-		text.style.textDecoration = 'none';
-	    else
-		text.style.textDecoration =
-		    'line-through';
-	}
-
-	function DUP ( td )
-	{
-	    let tr = td.parentElement;
-	    let tbody = tr.parentElement;
-	    let table = tbody.parentElement;
-	    if ( table == list_table
-	         &&
-		 is_read_only )
-	        return;
-
-	    let new_tr = tr.cloneNode ( true );
-	    tbody.insertBefore ( new_tr, tr );
-	    new_tr.children[1].style.textDecoration =
-	        'none';
-	    make_draggable ( new_tr );
-	}
-
-	function CLEAR_EDIT ()
-	{
-	    var list = [];
-	    var index = [];
-	    for ( var i = 1; i < list_rows.length; )
-	    {
-		var tr = list_rows[i];
-		var text = tr.children[1];
-		var tbody = tr.parentElement;
-		if (    text.style.textDecoration
-		     == 'line-through' )
-		     list.push
-		         ( tbody.removeChild ( tr ) );
-		else
-		{
-		    let k = text.dataset.index;
-		    index[k] = true;
-		    ++ i;
-		}
-	    }
-	    for ( var i = 1; i < stack_rows.length; )
-	    {
-		var tr = stack_rows[i];
-		var text = tr.children[1];
-		var tbody = tr.parentElement;
-		if (    text.style.textDecoration
-		     == 'line-through' )
-		     list.push
-		         ( tbody.removeChild ( tr ) );
-		else
-		{
-		    let k = text.dataset.index;
-		    index[k] = true;
-		    ++ i;
-		}
-	    }
-	    let stack_body = stack_table.tBodies[0];
-	    for ( var i = 0; i < list.length; ++ i )
-	    {
-		let k = list[i].children[1]
-		               .dataset.index;
-		if ( index[k] != true )
-		{
-		    stack_body.appendChild ( list[i] );
-		    index[k] = true;
-		}
-	    }
-	}
-
-	// Send `submit' post with stack and list ids.
-	//
-	function UPDATE_EDIT ( kind )
-	{
-	    let submit_form = document.getElementById
-		( 'submit-form' );
-	    let update = document.getElementById
-		( 'update' );
-	    let stack_args = document.getElementById
-		( 'stack-args' );
-	    let list_args = document.getElementById
-		( 'list-args' );
-	    let new_list = document.getElementById
-		( 'new-list' );
-	    let change_list = document.getElementById
-		( 'change-list' );
-
-	    update.value = kind;
-	    new_list.value = change_list.value;
-
-	    var stack = [];
-	    var indices = [];
-	    for ( var i = 1; i < stack_rows.length;
-	                     ++ i )
-	    {
-	        let tr = stack_rows[i];
-		let text = tr.children[1];
-		if (    text.style.textDecoration
-		     == 'line-through' )
-		    continue;
-		let index = text.dataset.index;
-		if ( indices[index] == true )
-		    continue;
-		stack.push ( index );
-		indices[index] = true;
-	    }
-	    stack_args.value = stack.join(':');
-
-	    if ( ! is_read_only )
-	    {
-		var list = [];
-		indices = [];
-		for ( var i = 1; i < list_rows.length;
-				 ++ i )
-		{
-		    let tr = list_rows[i];
-		    let text = tr.children[1];
-		    if (    text.style.textDecoration
-			 == 'line-through' )
-			continue;
-		    let index = text.dataset.index;
-		    if ( indices[index] == true )
-			continue;
-		    list.push ( index );
-		    indices[index] = true;
-		}
-		list_args.value = list.join(':');
-	    }
-	    submit_form.submit();
-	}
-
-	function CREATE_NEW_LIST ( event )
-	{
-	    if ( event.keyCode === 13 )
-	    {
-	        event.preventDefault();
-		let created_basename =
-		    document.getElementById
-			( 'created-basename' );
-		let basename =
-		    document.getElementById
-			( 'basename' );
-		basename.value =
-		    created_basename.value;
-		UPDATE_EDIT ( 'create-list' );
-
-	    }
-	}
-
-	</script>
+	    echo <<<EOT
+	    <strong>$name:</strong>
+	    <pre>  </pre>
+	    <button type='button'
+	            onclick='SAVE("$J")'>
+	    SAVE</button>
+	    <button type='button'
+	            onclick='FINISH("$J")'>
+	    FINISH</button>
+	    <button type='button'
+	            onclick='RESET("$J")'>
+	    RESET</button>
+	    <button type='button'
+	            onclick='CANCEL("$J")'>
+	    CANCEL</button>
+	    <button type='button'
+	            onclick='DELETE("$J")'>
+	    DELETE</button>
+EOT;
+	echo <<<EOT
+	</div>
+	{$lines[$J]}
+	</div>
 EOT;
     }
 
