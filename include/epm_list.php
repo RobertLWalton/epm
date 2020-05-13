@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 00:36:46 EDT 2020
+    // Date:	Wed May 13 00:57:50 EDT 2020
 
     // Functions for managing lists.
 
@@ -251,11 +251,16 @@
     // time as the TIME value.  If there are errors
     // append to $errors.
     //
+    // Any single spaces in $basename are replaced by
+    // `_'s.
+    //
     function make_new_list ( $basename, & $errors )
     {
         global $epm_data, $uid, $epm_name_re,
 	       $epm_time_format;
 
+	$basename = preg_replace
+	    ( '/ /', '_', $basename );
 	if ( ! preg_match ( $epm_name_re, $basename ) )
 	{
 	   $errors[] = "$basename is badly formed"

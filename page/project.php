@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 00:28:14 EDT 2020
+    // Date:	Wed May 13 01:02:27 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -620,12 +620,6 @@ EOT;
 	              . " (should be .dsc)";
 	    return;
 	}
-	if ( ! preg_match ( $epm_name_re, $fbase ) )
-	{
-	    $errors[] = "$fbase is not a legal"
-	              . " EPM name";
-	    return false;
-	}
 
 	$fsize = $upload['size'];
 	if ( $fsize > $epm_upload_maxsize )
@@ -646,14 +640,17 @@ EOT;
 	    WARN ( "$m $ftmp_name" );
 	    return false;
 	}
+	$fbase = preg_replace ( '/ /', '_', $fbase );
 	$f = "users/$uid/+indices+/$fbase.index";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
-	    $warnings[] = "creating list $fbase which"
-	                . " does not previously exist";
 	    make_new_list ( $fname, $errors );
+	        // This will check that $fname is
+		// well formed EPM file name base.
 	    if ( count ( $errors ) > $errors_size )
 	        return false;
+	    $warnings[] = "created list $fbase which"
+	                . " does not previously exist";
 	}
 
 	write_list_description ( $f, $dsc, $errors );
@@ -1937,9 +1934,9 @@ EOT;
 		      . ' Edit, or Publish';
 	$new_list_title = 'New Problem List';
 	$upload_title = 'Upload Selected List'
-	              . ' Description (.des) File';
+	              . ' Description (.dsc) File';
 	$upload_file_title = 'Selected List Description'
-	                   . ' (.des) File to be'
+	                   . ' (.dsc) File to be'
 			   . ' Uploaded';
 	$edit_favorites_title = 'Edit Favorites List of'
 	                      . ' Lists to Select';
