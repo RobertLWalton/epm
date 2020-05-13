@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 12 17:49:32 EDT 2020
+    // Date:	Wed May 13 00:28:14 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1759,7 +1759,7 @@ EOT;
 	    $basename = '<i>Problems</i>';
 	else
 	    $basename = preg_replace
-		( '/-/', ' ', $basename );
+		( '/_/', ' ', $basename );
 	echo <<<EOT
 	<div class='errors'>
 	<strong>Do you really want to delete
@@ -2602,6 +2602,8 @@ EOT;
 	    $delete_list_ok = true;
 	    $description = read_list_description
 		( listname_to_filename ( $list ) );
+	    $basename = preg_replace
+		( '/_/', ' ', $basename );
 	}
 	$name = "$project $basename";
 

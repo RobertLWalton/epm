@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 28 17:51:04 EDT 2020
+    // Date:	Wed May 13 00:36:46 EDT 2020
 
     // Functions for managing lists.
 
@@ -307,7 +307,7 @@
 	}
 	else
 	    $bname = preg_replace
-		( '/-/', ' ', $basename );
+		( '/_/', ' ', $basename );
 
         $f = "users/$uid/+indices+/$basename.index";
 	if ( $project == '-' )
@@ -827,7 +827,7 @@
 		$basename = 'Problems';
 	    else
 		$basename = preg_replace
-		    ( '/-/', ' ', $basename );
+		    ( '/_/', ' ', $basename );
 	    $time = substr ( $time, 0, 10 );
 	    $r .= "<option value='$key'>"
 		. "$project $basename $time"
