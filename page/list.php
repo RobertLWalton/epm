@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 18:55:02 EDT 2020
+    // Date:	Thu May 14 04:17:07 EDT 2020
 
     // Maintains problem lists.
 
@@ -11,18 +11,18 @@
     // Session Data
     // ------- ----
 
-    // Session data is in EPM_LIST as follows:
+    // Session data is in EPM_DATA as follows:
     //
-    //     EPM_LIST ID
+    //     EPM_DATA ID
     //	   	32 hex digit random number used to
     //		verify POSTs to this page.
     //
-    //	   EPM_LIST NAMES
+    //	   EPM_DATA NAMES
     //		[name1,name2] where nameI is in the
     //		format PROJECT:BASENAME or is ''
     //		for no-list.
     //
-    //     EPM_LIST ELEMENTS
+    //     EPM_DATA ELEMENTS
     //		A list of the elements of the form
     //
     //			[TIME PROJECT PROBLEM]
@@ -43,29 +43,36 @@
     // Each post may update the lists and has the
     // following values.
     //
-    //	    op='op1;op2' where opI is one of:
+    //	     ops='op1;op2' where opI is one of:
     //
     //		SAVE	Save used portion of list in
-    //			list file.
-    //		RESET	Reset list to file contents.
-    //		DELETE	Delete file.
-    //		KEEP	Keep list as is.
+    //			list file.  Keep list if
+    //			nameI is current list name,
+    //			or change if otherwise.
+    //		KEEP	Ditto but do not save in file.
+    //		CHANGE	Change list to file contents
+    //			of nameI (which might be
+    //			current list or '').
+    //		DELETE	Delete file of current list.
+    //			nameI must match current list.
     //
-    //	     elements='e1;e2'
-    //		where eI is the indices in EPM_LIST
+    //	     indices='i1;i2'
+    //		where iI is the indices in EPM_DATA
     //		ELEMENTS of list I, with the indices
-    //		separated by `:'.
+    //		separated by `:', and ':' denoting the
+    //		empty list.  Not used by RESET or
+    //		DELETE.
     //
     //	     lengths='len1;len2'
     //		The number of elements actually in list
     //		I is lenI; the remaining elements have
-    //		been removed.
+    //		been removed.  Not used by RESET or
+    //		DELETE.
     //
     //	     names='name1;name2'
-    //		New values for EPM_LIST NAMES.  These
+    //		New values for EPM_DATA NAMES.  These
     //		are to be installed after opI is
-    //		executed.  NameI is ignored if opI is
-    //		RESET.  NameI is '' to mean NULL.
+    //		executed.  NameI is '' to mean no-list.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -81,12 +88,12 @@
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     if ( $method == 'GET' )
-        $_SESSION['EPM_LIST'] = [
+        $_SESSION['EPM_DATA'] = [
 	    'ID' => bin2hex ( random_bytes ( 16 ) ),
 	    'NAMES' => ['',''],
 	    'ELEMENTS' => [] ];
 
-    $data = & $_SESSION['EPM_LIST'];
+    $data = & $_SESSION['EPM_DATA'];
     $id = $data['ID'];
     $names = $data['NAMES'];
 
@@ -102,6 +109,16 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+
+    $lists = [NULL,NULL];
+        // Lists to be given to list_to_edit_rows.
+	// If $lists[J] not set by POST, will be set
+	// according to $names[J].
+
+    $options = favorites_to_options
+        ( 'pull|push', $fmap );
+	// Note: $fmap['LISTNAME'] exists iff LISTNAME
+	// is legal list name in favorites.
 
     // Given a list of elements of the form
     //
@@ -224,6 +241,65 @@ EOT;
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         if ( ! isset ( $_POST['names'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$ops = explode ( ';', $_POST['ops'] );
+	$indices = explode ( ';', $_POST['elements'] );
+	$lengths = explode ( ';', $_POST['elements'] );
+	$new_names = explode
+	    ( ';', $_POST['elements'] );
+
+	// First check ops, collect lists for SAVE and
+	// KEEP, and check $indices and lengths in these
+	// cases, and lastly check $new_names for
+	// SAVE.
+	//
+	foreach ( [0,1] as $J )
+	{
+	    if (    $ops[$J] == 'SAVE'
+	         || $ops[$J] == 'KEEP' )
+	    {
+	        $lists[$J] = [];
+	        $list = & $lists[$J];
+		if ( $indices[$J] == ';' )
+		    $indices = [];
+		else
+		    $indices = explode
+		        ( ':', $indices[$J] );
+		foreach ( $indices as $I )
+		{
+		    if ( ! preg_match
+		               ( '/^\d+$/', $I ) )
+			exit
+			  ( 'UNACCEPTABLE HTTP POST' );
+		    $list[] = $elements[$I];
+		}
+		if ( ! preg_match
+			   ( '/^\d+$/', $lengths[$J] ) )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		if ( $lengths[$J] >= count ( $list ) )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+	    }
+
+	    if ( $ops[$J] == 'SAVE'
+	         &&
+		 $names[$J] == '' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    $new_name = $name_names[$J];
+	    if ( $new_name != ''
+		 &&
+		 ! isset ( $fmap[$new_name] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	}
+
+	foreach ( [0,1] as $J )
+	{
+	    if ( $ops[$J] == 'SAVE' )
+	    {
+	        write_file_list
+		    ( filename_from_listname
+		          ( $names[$J], $lists[$J] ) );
+	    }
+	}
     }
 
 ?>
@@ -362,7 +438,6 @@ EOT;
     </form>
     </div>
 EOT;
-    $options = favorites_to_options ( 'pull|push' );
     $data['ELEMENTS'] = [];
     $elements = & $data['ELEMENTS'];
     foreach ( [0,1] as $J )
@@ -430,6 +505,7 @@ EOT;
     <script>
     var names = ['$names[0]','$names[1]'];
     </script>
+EOT;
 
 ?>
 

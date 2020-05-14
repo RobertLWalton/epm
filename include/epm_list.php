@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 17:10:16 EDT 2020
+    // Date:	Thu May 14 03:45:55 EDT 2020
 
     // Functions for managing lists.
 
@@ -841,7 +841,13 @@
     // Note that markup such as <i> is NOT recognized in
     // options by HTML, so is not used here.
     //
-    function favorites_to_options ( $type_re )
+    // If $fmap is given, it is returned as a map of
+    // the form PROJECT:BASENAME => TIME that can be
+    // used to verify whether a listname is in the
+    // list of options.
+    //
+    function favorites_to_options
+        ( $type_re, & $fmap = [] )
     {
 	global $epm_time_format;
 	$time = strftime ( $epm_time_format );
