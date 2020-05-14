@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 11:29:06 EDT 2020
+    // Date:	Thu May 14 16:02:15 EDT 2020
 
     // Maintains problem lists.
 
@@ -132,12 +132,12 @@
     //                 draggable='true'
     //		       ondragover='ALLOWDROP(event)'
     //		       ondrop='DROP(event)'
-    //                 ondragstart='DRAGSTART(event,"I")'
+    //                 ondragstart='DRAGSTART(event)'
     //                 onclick='DUP(event)'>
     //		<tr>
     //		<td style='width:10%;text-align:left'>
     //		<span class='checkbox'
-    //		      onclick='CHECK(event,"I")'
+    //		      onclick='CHECK(event)'
     //		      >&nbsp;</span></td>
     //		<td style='width:30%;text-align:center'>
     //		$project $problem $time</td>
@@ -167,14 +167,14 @@
     	           draggable='true'
     	           ondragover='ALLOWDROP(event)'
     	           ondrop='DROP(event)'
-    	           ondragstart='DRAGSTART(event,"$I")'
-    	           onclick='DUP(event)'>
+    	           ondragstart='DRAGSTART(event)'>
     	    <tr>
     	    <td style='width:10%;text-align:left'>
     	    <span class='checkbox'
-    	          onclick='CHECK(event,"$I")'
+    	          onclick='CHECK(event)'
 		  >&nbsp;</span></td>
-    	    <td style='width:80%;text-align:center'>
+    	    <td style='width:80%;text-align:center'
+    	        onclick='DUP(event)'>
     	    $project $problem $time</td>
     	    </tr></table>
 EOT;
@@ -456,9 +456,36 @@ EOT;
     foreach ( [0,1] as $J )
     {
         $name = $names[$J];
+	$writable = 'no';
+	$lines = '';
+	if ( $name != '' )
+	{
+	    $lines = list_to_edit_rows
+	        ( $elements,
+		  listname_to_list ( $name ) );
+
+	    list ( $project, $basename ) =
+	        explode ( ':', $name );
+	    if ( $project == '-' )
+	    {
+	        $project = '<i>Your</i>';
+		$writable = 'yes';
+	    }
+	    if ( $basename == '-' )
+	    {
+	        $basename = '<i>Problems</i>';
+		$writable = 'no';
+	    }
+	}
+
 	echo <<<EOT
-	<div class='list$J' id='list$J'>
-	<div style='text-align:center'>
+	<div class='list$J' id='list$J'
+	     data-writable='$writable'>
+
+	<div style='text-align:center'
+	     ondrop='DROP(event)'
+	     ondragover='ALLOWDROP(event)'>
+
 	<strong>Change To New List:</strong>
 	<input type="text"
 	       id='new$J'
@@ -480,22 +507,12 @@ EOT;
 EOT;
 	if ( $name == '' )
 	{
-	    $lines = '';
 	    echo <<<EOT
 	    <strong>No List Selected</strong>
 EOT;
 	}
 	else
 	{
-	    $lines = list_to_edit_rows
-	        ( $elements,
-		  listname_to_list ( $name ) );
-	    list ( $project, $basename ) =
-	        explode ( ':', $name );
-	    if ( $project == '-' )
-	        $project = '<i>Your</i>';
-	    if ( $basename == '-' )
-	        $basename = '<i>Problems</i>';
 	    echo <<<EOT
 	    <strong>$project $basename:</strong>
 	    <pre>  </pre>
@@ -518,6 +535,7 @@ EOT;
 	}
 	echo <<<EOT
 	</div>
+
 	$lines
 	</div>
 EOT;
@@ -579,7 +597,11 @@ function SUBMIT()
 	while ( next != null )
 	{
 	    ilist.push ( next.id );
-	    if ( next.style.backgroundColor == on )
+	    let tbody = next.firstElementChild;
+	    let tr = tbody.firstElementChild;
+	    let td = tr.firstElementChild;
+	    let span = td.firstElementChild;
+	    if ( span.style.backgroundColor == on )
 	        ++ length;
 	    next = next.nextElementSibling;
 	}
@@ -599,6 +621,48 @@ function CHANGE_LIST ( J )
     ops[J] = 'RESET';
     SUBMIT();
 }
+
+function CHECK ( event )
+{
+    event.preventDefault();
+    let span = event.currentTarget;
+    console.log ( 'SPAN ' + span.tagName );
+    if ( span.style.backgroundColor == on )
+	span.style.backgroundColor = off;
+    else
+	span.style.backgroundColor = on;
+}
+
+function DRAGSTART ( event )
+{
+    let table = event.currentTarget;
+    let id = table.id;
+    let div = table.parentElement;
+    let writable = div.dataset.writable;
+    if ( writable == 'no' )
+        event.preventDefault();
+    else
+        event.dataTransfer.setData ( "id", id );
+}
+function ALLOWDROP ( event )
+{
+    event.preventDefault();
+}
+function DROP ( event )
+{
+    let target = event.currentTarget;
+        // May be table or div above tables.
+    let div = target.parentElement;
+    let writable = div.dataset.writable;
+    if ( writable == 'no' )
+    {
+        event.preventDefault();
+	return;
+    }
+    let id = event.dataTransfer.getData ( 'id' );
+    console.log ( "ID " + id );
+}
+
 </script>
 
 </body>
