@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 17:53:27 EDT 2020
+    // Date:	Thu May 14 17:59:47 EDT 2020
 
     // Maintains problem lists.
 
@@ -96,6 +96,7 @@
     $data = & $_SESSION['EPM_DATA'];
     $id = $data['ID'];
     $names = $data['NAMES'];
+    $elements = $data['ELEMENTS'];
 
     if ( $method == 'POST'
          &&
