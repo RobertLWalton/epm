@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 16:08:57 EDT 2020
+    // Date:	Thu May 14 17:53:27 EDT 2020
 
     // Maintains problem lists.
 
@@ -661,25 +661,30 @@ function DROP ( event )
         event.preventDefault();
 	return;
     }
+    let src = dragsrc;
+    let srcdiv = dragsrc.parentElement;
+    let srcwritable = srcdiv.dataset.writable;
+    if ( srcwritable == 'no' )
+        src = src.cloneNode ( true );
     let next = target.nextElementSibling;
     if ( next == null )
     {
-        div.appendChild ( dragsrc );
+        div.appendChild ( src );
 	if ( target != div.firstElementChild
 	     &&
 	     SPAN(target).style.backgroundColor != on )
-	    SPAN(dragsrc).style.backgroundColor = off;
+	    SPAN(src).style.backgroundColor = off;
 	}
     else
     {
-	div.insertBefore ( dragsrc, next );
+	div.insertBefore ( src, next );
 	if ( SPAN(next).style.backgroundColor == on )
-	    SPAN(dragsrc).style.backgroundColor = on;
+	    SPAN(src).style.backgroundColor = on;
 	else if ( target != div.firstElementChild
 	          &&
 	             SPAN(target).style.backgroundColor
 		  != on )
-	    SPAN(dragsrc).style.backgroundColor = off;
+	    SPAN(src).style.backgroundColor = off;
     }
 }
 function DUP ( event )
