@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 06:16:58 EDT 2020
+    // Date:	Thu May 14 11:29:06 EDT 2020
 
     // Maintains problem lists.
 
@@ -137,9 +137,8 @@
     //		<tr>
     //		<td style='width:10%;text-align:left'>
     //		<span class='checkbox'
-    //		      onclick='CHECK(event,"I")'>
-    //		&nbsp;
-    //		</span></td>
+    //		      onclick='CHECK(event,"I")'
+    //		      >&nbsp;</span></td>
     //		<td style='width:30%;text-align:center'>
     //		$project $problem $time</td>
     //		</tr></table>
@@ -173,9 +172,8 @@
     	    <tr>
     	    <td style='width:10%;text-align:left'>
     	    <span class='checkbox'
-    	          onclick='CHECK(event,"$I")'>
-    	    &nbsp;
-    	    </span></td>
+    	          onclick='CHECK(event,"$I")'
+		  >&nbsp;</span></td>
     	    <td style='width:80%;text-align:center'>
     	    $project $problem $time</td>
     	    </tr></table>
@@ -303,7 +301,6 @@ EOT;
 	}
     }
 
-    echo ( 'NAMES ' . json_encode ( $names ) . '<BR>' );
     foreach ( [0,1] as $J )
     {
         if ( isset ( $lists[$J] ) ) continue;
@@ -312,8 +309,8 @@ EOT;
 	else
 	    $lists[$J] = listname_to_list
 	        ( $names[$J] );
+	$lengths[$J] = count ( $lists[$J] );
     }
-    echo ( 'LISTS ' . json_encode ( $lists ) . '<BR>' );
 
 ?>
 
@@ -333,6 +330,9 @@ EOT;
     div.list1 {
         background-color: var(--bg-blue);
     }
+    th, td {
+        font-size: var(--large-font-size);
+    }
     div.push-pull-list, div.edit-list {
 	background-color: #F2D9D9;
     }
@@ -348,7 +348,7 @@ EOT;
         margin: 0px;
         padding: 10px 0px 0px 10px;
     }
-    span.problem-checkbox {
+    span.checkbox {
         height: 15px;
         width: 30px;
 	display: inline-block;
@@ -490,8 +490,14 @@ EOT;
 	    $lines = list_to_edit_rows
 	        ( $elements,
 		  listname_to_list ( $name ) );
+	    list ( $project, $basename ) =
+	        explode ( ':', $name );
+	    if ( $project == '-' )
+	        $project = '<i>Your</i>';
+	    if ( $basename == '-' )
+	        $basename = '<i>Problems</i>';
 	    echo <<<EOT
-	    <strong>$name:</strong>
+	    <strong>$project $basename:</strong>
 	    <pre>  </pre>
 	    <button type='button'
 	            onclick='SAVE("$J")'>
@@ -520,6 +526,7 @@ EOT;
     echo <<<EOT
     <script>
     var names = ['{$names[0]}','{$names[1]}'];
+    var lengths = ['{$lengths[0]}','{$lengths[1]}'];
     var ops = ['KEEP','KEEP'];
     </script>
 EOT;
@@ -538,15 +545,32 @@ let names_input = document.getElementById ( 'names' );
 let on = 'black';
 let off = 'transparent';
 
+for ( var J = 0; J <= 1; ++ J )
+{
+    let list = document.getElementById ( 'list' + J );
+    let first = list.firstElementChild;
+    var next = first.nextElementSibling;
+    if ( next == null ) continue;
+    for ( I = 0; I < lengths[J]; ++ I )
+    {
+        let tbody = next.firstElementChild;
+        let tr = tbody.firstElementChild;
+        let td = tr.firstElementChild;
+        let span = td.firstElementChild;
+	span.style.backgroundColor = on;
+	next = next.nextElementSibling;
+    }
+}
+
 function SUBMIT()
 {
-    var lengths = [0,0];
+    lengths = [0,0];
     var indices = ['',''];
     for ( var J = 0; J <= 1; ++ J )
     {
         let list = document.getElementById
 	    ( 'list' + J );
-	var first = list.firstElementChild;
+	let first = list.firstElementChild;
 	var next = first.nextElementSibling;
 	if ( next == null ) continue;
 
