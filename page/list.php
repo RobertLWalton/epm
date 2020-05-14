@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 05:03:50 EDT 2020
+    // Date:	Thu May 14 06:16:58 EDT 2020
 
     // Maintains problem lists.
 
@@ -235,17 +235,17 @@ EOT;
     {
         if ( ! isset ( $_POST['ops'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-        if ( ! isset ( $_POST['elements'] ) )
+        if ( ! isset ( $_POST['indices'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         if ( ! isset ( $_POST['lengths'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         if ( ! isset ( $_POST['names'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$ops = explode ( ';', $_POST['ops'] );
-	$indices = explode ( ';', $_POST['elements'] );
-	$lengths = explode ( ';', $_POST['elements'] );
+	$indices = explode ( ';', $_POST['indices'] );
+	$lengths = explode ( ';', $_POST['lengths'] );
 	$new_names = explode
-	    ( ';', $_POST['elements'] );
+	    ( ';', $_POST['names'] );
 
 	// First check ops, collect lists for SAVE and
 	// KEEP, and check $indices and lengths in these
@@ -259,7 +259,7 @@ EOT;
 	    {
 	        $lists[$J] = [];
 	        $list = & $lists[$J];
-		if ( $indices[$J] == ';' )
+		if ( $indices[$J] == '' )
 		    $indices = [];
 		else
 		    $indices = explode
@@ -275,7 +275,7 @@ EOT;
 		if ( ! preg_match
 			   ( '/^\d+$/', $lengths[$J] ) )
 		    exit ( 'UNACCEPTABLE HTTP POST' );
-		if ( $lengths[$J] >= count ( $list ) )
+		if ( $lengths[$J] > count ( $list ) )
 		    exit ( 'UNACCEPTABLE HTTP POST' );
 	    }
 
@@ -284,7 +284,7 @@ EOT;
 		 $names[$J] == '' )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
-	    $new_name = $name_names[$J];
+	    $new_name = $new_names[$J];
 	    if ( $new_name != ''
 		 &&
 		 ! isset ( $fmap[$new_name] ) )
@@ -299,8 +299,21 @@ EOT;
 		    ( filename_from_listname
 		          ( $names[$J], $lists[$J] ) );
 	    }
+	    $names[$J] = $new_names[$J];
 	}
     }
+
+    echo ( 'NAMES ' . json_encode ( $names ) . '<BR>' );
+    foreach ( [0,1] as $J )
+    {
+        if ( isset ( $lists[$J] ) ) continue;
+	if ( $names[$J] == '' )
+	    $lists[$J] = [];
+	else
+	    $lists[$J] = listname_to_list
+	        ( $names[$J] );
+    }
+    echo ( 'LISTS ' . json_encode ( $lists ) . '<BR>' );
 
 ?>
 
@@ -457,7 +470,7 @@ EOT;
 	<input type='button'
 	       onclick='CHANGE_LIST("$J")'
 	       value='Change To'
-	       title='$change_to_title'>
+	       title='Change Problem List'>
 	<strong>:</strong>
 	<select id='change$J'
 	        title='New Problem List to Edit'>
@@ -466,12 +479,15 @@ EOT;
 	<br>
 EOT;
 	if ( $name == '' )
+	{
+	    $lines = '';
 	    echo <<<EOT
 	    <strong>No List Selected</strong>
 EOT;
+	}
 	else
 	{
-	    $lines = list_to_element_rows
+	    $lines = list_to_edit_rows
 	        ( $elements,
 		  listname_to_list ( $name ) );
 	    echo <<<EOT
@@ -541,6 +557,7 @@ function SUBMIT()
 	    ilist.push ( next.id );
 	    if ( next.style.backgroundColor == on )
 	        ++ length;
+	    next = next.nextElementSibling;
 	}
 	lengths[J] = length;
 	indices[J] = ilist.join ( ':' );
