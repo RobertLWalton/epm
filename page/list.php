@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 04:17:07 EDT 2020
+    // Date:	Thu May 14 05:03:50 EDT 2020
 
     // Maintains problem lists.
 
@@ -387,7 +387,7 @@ var LOG = function(message) {};
            value='KEEP;KEEP'>
     <input type='hidden' name='lengths' id='lengths'
            value='0;0'>
-    <input type='hidden' name='elements' id='elements'
+    <input type='hidden' name='indices' id='indices'
            value=';'>
     <input type='hidden' name='names' id='names'
            value=';'>
@@ -503,24 +503,60 @@ EOT;
 
     echo <<<EOT
     <script>
-    var names = ['$names[0]','$names[1]'];
+    var names = ['{$names[0]}','{$names[1]}'];
+    var ops = ['KEEP','KEEP'];
     </script>
 EOT;
 
 ?>
 
 <script>
+let submit_form = document.getElementById ( 'submit-form' );
 let ops_input = document.getElementById ( 'ops' );
 let lengths_input = document.getElementById
     ( 'lengths' );
-let elements_input = document.getElementById
-    ( 'elements' );
+let indices_input = document.getElementById
+    ( 'indices' );
 let names_input = document.getElementById ( 'names' );
+
+let on = 'black';
+let off = 'transparent';
+
+function SUBMIT()
+{
+    var lengths = [0,0];
+    var indices = ['',''];
+    for ( var J = 0; J <= 1; ++ J )
+    {
+        let list = document.getElementById
+	    ( 'list' + J );
+	var first = list.firstElementChild;
+	var next = first.nextElementSibling;
+	if ( next == null ) continue;
+
+	var ilist = [];
+	var length = 0;
+	while ( next != null )
+	{
+	    ilist.push ( next.id );
+	    if ( next.style.backgroundColor == on )
+	        ++ length;
+	}
+	lengths[J] = length;
+	indices[J] = ilist.join ( ':' );
+    }
+    ops_input.value = ops.join ( ';' );
+    indices_input.value = indices.join ( ';' );
+    lengths_input.value = lengths.join ( ';' );
+    names_input.value = names.join ( ';' );
+    submit_form.submit();
+}
 function CHANGE_LIST ( J )
 {
     let ch = document.getElementById ( 'change' + J );
     names[J] = ch.value;
-    names_input.value = names.join ( ';' );
+    ops[J] = 'RESET';
+    SUBMIT();
 }
 </script>
 
