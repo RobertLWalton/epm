@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 16:02:15 EDT 2020
+    // Date:	Thu May 14 16:08:57 EDT 2020
 
     // Maintains problem lists.
 
@@ -133,13 +133,14 @@
     //		       ondragover='ALLOWDROP(event)'
     //		       ondrop='DROP(event)'
     //                 ondragstart='DRAGSTART(event)'
-    //                 onclick='DUP(event)'>
+    //                 ondragend='DRAGEND(event)'>
     //		<tr>
     //		<td style='width:10%;text-align:left'>
     //		<span class='checkbox'
     //		      onclick='CHECK(event)'
     //		      >&nbsp;</span></td>
-    //		<td style='width:30%;text-align:center'>
+    //		<td style='width:30%;text-align:center'
+    //              onclick='DUP(event)'>
     //		$project $problem $time</td>
     //		</tr></table>
     //
@@ -167,7 +168,8 @@
     	           draggable='true'
     	           ondragover='ALLOWDROP(event)'
     	           ondrop='DROP(event)'
-    	           ondragstart='DRAGSTART(event)'>
+    	           ondragstart='DRAGSTART(event)'
+    	           ondragend='DRAGEND(event)'>
     	    <tr>
     	    <td style='width:10%;text-align:left'>
     	    <span class='checkbox'
@@ -180,53 +182,6 @@
 EOT;
 	}
 	return $r;
-    }
-
-    function execute_edit ( & $errors )
-    {
-        global $data, $list;
-
-	if ( ! isset ( $_POST['list'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	if ( ! isset ( $_POST['stack'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-
-	$elements = $data['ELEMENTS'];
-	$bound = count ( $elements );
-
-	$fname = listname_to_filename ( $list );
-	$sname = listname_to_filename ( '+stack+' );
-
-	$indices = $_POST['stack'];
-	$indices = ( $indices == '' ? [] :
-	             explode ( ':', $indices ) );
-	    // explode ( ':', '' ) === ['']
-	$slist = [];
-	foreach ( $indices as $index )
-	{
-	    if ( $index < 0 || $index >= $bound )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $slist[] = $elements[$index];
-	}
-
-	if ( isset ( $fname ) )
-	{
-	    $indices = $_POST['list'];
-	    $indices = ( $indices == '' ? [] :
-			 explode ( ':', $indices ) );
-	    $flist = [];
-	    foreach ( $indices as $index )
-	    {
-	        if ( $index < 0 || $index >= $bound )
-		    exit ( 'UNACCEPTABLE HTTP POST' );
-		$flist[] = $elements[$index];
-	    }
-	    write_file_list ( $fname, $flist );
-	        // Don't write until all UNACCEPTABLE
-		// HTTP POST checks done.
-	}
-
-	write_file_list ( $sname, $slist );
     }
 
     if ( $method == 'POST' )
@@ -511,6 +466,10 @@ EOT;
 	    <strong>No List Selected</strong>
 EOT;
 	}
+	elseif ( $writable == 'no' )
+	    echo <<<EOT
+	    <strong>$project $basename</strong>
+EOT;
 	else
 	{
 	    echo <<<EOT
@@ -580,6 +539,15 @@ for ( var J = 0; J <= 1; ++ J )
     }
 }
 
+function SPAN ( table )
+{
+    let tbody = table.firstElementChild;
+    let tr = tbody.firstElementChild;
+    let td = tr.firstElementChild;
+    let span = td.firstElementChild;
+    return span;
+}
+
 function SUBMIT()
 {
     lengths = [0,0];
@@ -597,10 +565,7 @@ function SUBMIT()
 	while ( next != null )
 	{
 	    ilist.push ( next.id );
-	    let tbody = next.firstElementChild;
-	    let tr = tbody.firstElementChild;
-	    let td = tr.firstElementChild;
-	    let span = td.firstElementChild;
+	    let span = SPAN ( next );
 	    if ( span.style.backgroundColor == on )
 	        ++ length;
 	    next = next.nextElementSibling;
@@ -626,23 +591,60 @@ function CHECK ( event )
 {
     event.preventDefault();
     let span = event.currentTarget;
-    console.log ( 'SPAN ' + span.tagName );
+    let td = span.parentElement;
+    let tr = td.parentElement;
+    let tbody = tr.parentElement;
+    let table = tbody.parentElement;
+    let div = table.parentElement;
     if ( span.style.backgroundColor == on )
+    {
 	span.style.backgroundColor = off;
+	var next = table.nextElementSibling;
+	while ( next != null
+		&&
+		   SPAN(next).style.backgroundColor
+		== on )
+	    next = next.nextElementSibling;
+	if ( next != table.nextElementSibling )
+	{
+	    if ( next == null )
+		div.appendChild ( table );
+	    else
+		div.insertBefore ( table, next );
+	}
+    }
     else
+    {
 	span.style.backgroundColor = on;
+	var previous = table.previousElementSibling;
+	while ( previous != div.firstElementChild
+	        &&
+		   SPAN(previous).style.backgroundColor
+		!= on )
+	    previous = previous.previousElementSibling;
+	if ( previous != table.previousElementSibling )
+	{
+	    let next = previous.nextElementSibling;
+	    div.insertBefore ( table, next );
+	}
+    }
 }
+
+var dragsrc = null;
+    // Source (start) table of drag.
+    // We cannot use id because of DUP.
 
 function DRAGSTART ( event )
 {
     let table = event.currentTarget;
     let id = table.id;
     let div = table.parentElement;
-    let writable = div.dataset.writable;
-    if ( writable == 'no' )
-        event.preventDefault();
-    else
-        event.dataTransfer.setData ( "id", id );
+    event.dataTransfer.setData ( "xx", "xx" );
+    dragsrc = table;
+}
+function DRAGEND ( event )
+{
+    dragsrc = null;
 }
 function ALLOWDROP ( event )
 {
@@ -651,7 +653,7 @@ function ALLOWDROP ( event )
 function DROP ( event )
 {
     let target = event.currentTarget;
-        // May be table or div above tables.
+        // May be table or the header div above tables.
     let div = target.parentElement;
     let writable = div.dataset.writable;
     if ( writable == 'no' )
@@ -659,8 +661,42 @@ function DROP ( event )
         event.preventDefault();
 	return;
     }
-    let id = event.dataTransfer.getData ( 'id' );
-    console.log ( "ID " + id );
+    let next = target.nextElementSibling;
+    if ( next == null )
+    {
+        div.appendChild ( dragsrc );
+	if ( target != div.firstElementChild
+	     &&
+	     SPAN(target).style.backgroundColor != on )
+	    SPAN(dragsrc).style.backgroundColor = off;
+	}
+    else
+    {
+	div.insertBefore ( dragsrc, next );
+	if ( SPAN(next).style.backgroundColor == on )
+	    SPAN(dragsrc).style.backgroundColor = on;
+	else if ( target != div.firstElementChild
+	          &&
+	             SPAN(target).style.backgroundColor
+		  != on )
+	    SPAN(dragsrc).style.backgroundColor = off;
+    }
+}
+function DUP ( event )
+{
+    let td = event.currentTarget;
+    let tr = td.parentElement;
+    let tbody = tr.parentElement;
+    let table = tbody.parentElement;
+    let div = table.parentElement;
+    let writable = div.dataset.writable;
+    if ( writable == 'no' )
+    {
+        event.preventDefault();
+	return;
+    }
+    let new_table = table.cloneNode ( true );
+    div.insertBefore ( new_table, table );
 }
 
 </script>
