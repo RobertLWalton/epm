@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 17:59:47 EDT 2020
+    // Date:	Thu May 14 23:01:47 EDT 2020
 
     // Maintains problem lists.
 
@@ -417,8 +417,7 @@ EOT;
 	if ( $name != '' )
 	{
 	    $lines = list_to_edit_rows
-	        ( $elements,
-		  listname_to_list ( $name ) );
+	        ( $elements, $lists[$J] );
 
 	    list ( $project, $basename ) =
 	        explode ( ':', $name );
