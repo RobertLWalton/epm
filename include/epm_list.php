@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 03:45:55 EDT 2020
+    // Date:	Fri May 15 06:21:42 EDT 2020
 
     // Functions for managing lists.
 
@@ -18,14 +18,14 @@
     // according to whether or not the current $uid is
     // granted or not granted the permission.
     //
-    $all_permissions =
-        [ 'owner'  => true, 'push'  => true,
-	  'pull'   => true, 'index' => true,
-	  'review' => true ];
-    $no_permissions =
-        [ 'owner'  => false, 'push'  => false,
-	  'pull'   => false, 'index' => false,
-	  'review' => false ];
+    define ( "ALL_PERMISSIONS",
+             [ 'owner'  => true, 'push'  => true,
+	       'pull'   => true, 'index' => true,
+	       'review' => true ] );
+    define ( "NO_PERMISSIONS",
+             [ 'owner'  => false, 'push'  => false,
+	       'pull'   => false, 'index' => false,
+	       'review' => false ] );
 
     // Add permissions from $pfile into permission map
     // $pmap.  Erroneous lines in the file generate
@@ -35,7 +35,8 @@
     // error).  If a permission TYPE is not set in the
     // initial $pmap, it is not legal.
     //
-    function add_permissions ( & $pmap, $pfile )
+    function add_permissions
+	    ( $pfile, & $pmap = NO_PERMISSIONS )
     {
         global $uid, $epm_data;
 
@@ -77,35 +78,31 @@
 	}
     }
 
-    // Return the permission map for a project.
+    // Add project permissions to $pmap and return $pmap.
     //
-    function project_permissions ( $project )
+    function project_permissions
+	    ( $project, & $pmap = NO_PERMISSIONS )
     {
-        global $all_permissions, $no_permissions;
-        $pmap = ['owner' => false];
-	add_permissions ( $pmap, 'projects/+perm+' );
-	if ( $pmap['owner'] ) return $all_permissions;
-	$pmap = $no_permissions;
 	add_permissions
-	    ( $pmap, "projects/$project/+perm+" );
+	    ( "projects/$project/+perm+", $pmap );
+	if ( $pmap['owner'] ) return ALL_PERMISSIONS;
+	add_permissions ( 'projects/+perm+', $pmap );
+	if ( $pmap['owner'] ) return ALL_PERMISSIONS;
 	return $pmap;
     }
 
-    // Return the permission map for a problem in a
-    // project.  If the $uid has owner permission in
-    // in projects/$project/$problem/+perm+, then
-    // $all_permissions is returned, else the permis-
-    // sions of the project is returned.
+    // Add problem permissions to $pmap and return $pmap.
     //
-    function problem_permissions ( $project, $problem )
+    function problem_permissions
+	    ( $project, $problem,
+	      & $pmap = NO_PERMISSIONS )
     {
-        global $all_permissions;
-        $pmap = ['owner' => false];
 	add_permissions
-	    ( $pmap,
-	      "projects/$project/$problem/+perm+" );
-	if ( $pmap['owner'] ) return $all_permissions;
-	return project_permissions ( $project );
+	    ( "projects/$project/$problem/+perm+",
+	      $pmap );
+	if ( $pmap['owner'] ) return ALL_PERMISSIONS;
+	return project_permissions
+	    ( $project, $pmap );
     }
 
     // Return the list of projects that have a given
