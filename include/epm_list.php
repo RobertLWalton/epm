@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 15 06:21:42 EDT 2020
+    // Date:	Fri May 15 15:29:50 EDT 2020
 
     // Functions for managing lists.
 
@@ -65,7 +65,7 @@
 	    else
 	    {
 	        $r = preg_match
-		    ( "/({$matches[2]})/", $uid );
+		    ( "/^({$matches[2]})\$/", $uid );
 		if ( $r === false )
 		    $m = "bad permission regular"
 		       . " expression '{$matches[2]}'"
@@ -218,10 +218,9 @@
     //		PROJECT:-
     //		PROJECT:BASENAME
     //		+favorites+
-    //		+stack+
     //
     // return the file name of the list relative to
-    // $epm_data.  Return NULL if the name is of
+    // $epm_data, or return NULL if the name is of
     // the form -:- or PROJECT:-.
     //
     function listname_to_filename ( $listname )
@@ -247,9 +246,6 @@
     // beginning of +favorites+ using the current
     // time as the TIME value.  If there are errors
     // append to $errors.
-    //
-    // Any single spaces in $basename are replaced by
-    // `_'s.
     //
     function make_new_list ( $basename, & $errors )
     {
@@ -278,13 +274,13 @@
 	    ERROR ( "could not stat $f" );
 	$time = strftime ( $epm_time_format, $time );
 
-	$g = "users/$uid/+indices+/+favorites+";
-	$c = @file_get_contents ( "$epm_data/$g", '' );
-	if ( $c === false ) $c = '';
-	$c = "$time - $basename" . PHP_EOL . $c;
-	$r = @file_put_contents ( "$epm_data/$g", $c );
-	if ( $r === false )
-	    ERROR ( "could not write $g" );
+	$f = "users/$uid/+indices+/+favorites+";
+	$flist = read_file_list ( $f );
+	array_unshift ( $flist, [$time, '-', $basename] );
+	write_file_list ( $f, $flist );
+	    // We need to remove any previous
+	    // -:$basename in case list was deleted
+	    // and then re-created.
     }
 
     // Delete the named list, or append to $errors.
@@ -312,18 +308,18 @@
 	    if ( ! file_exists ( "$epm_data/$f" ) )
 	    {
 	        $errors[] = "you have no list named"
-		          . " $bname";
+		          . " $basename";
 	        return;
 	    }
 	}
 	else
 	{
-	    $g = "project/$project/+indices+/"
+	    $g = "projects/$project/+indices+/"
 	       . "$basename.index";
 	    if ( ! is_link ( "$epm_data/$g" ) )
 	    {
 	        $errors[] = "there is no list"
-		          . " `$pname $bname'";
+		          . " `$pname $basename'";
 	        return;
 	    }
 	    $n = @readlink ( "$epm_data/$g" );
@@ -335,7 +331,7 @@
 		        " badly formed" );
 	    if ( $uid != $matches[1] )
 	    {
-	        $errors[] = "list `$pname $bname'"
+	        $errors[] = "list `$pname $basename'"
 		          . " belongs to {$matches[1]}"
 			  . " and not to you";
 	        return;
@@ -362,6 +358,7 @@
     // where PROJECT may be `-'.  Reading stops with the
     // first blank line.  If the file does not exist, []
     // is returned.  Line formatting errors are fatal.
+    // Lines with duplicate PROJECT:PROBLEM are fatal.
     //
     function read_file_list ( $filename )
     {
@@ -517,30 +514,17 @@
     {
         global $epm_data;
 
-	foreach ( ['<','>'] as $needle )
+	$lines = explode ( "\n", $description );
+	foreach ( $lines as $line )
 	{
-	    $r = strpos ( $description, $needle );
-	    if ( $r === false ) continue;
-	    $ldots = '...';
-	    $l = $r - 10;
-	    if ( $l < 0 )
+	    if ( preg_match ( '/(<|>)/', $line ) )
 	    {
-	        $l = 0;
-		$ldots = '';
+		$line = trim ( $line );
+	        $errors[] =
+		    "< or > is in description line:" .
+		    PHP_EOL . "    $line";
+		return;
 	    }
-	    $r += 10;
-	    $rdots = '...';
-	    if ( $r >= strlen ( $description ) )
-	    {
-	        $r = strlen ( $description );
-		$rdots = '';
-	    }
-	    $m = $ldots
-	       . substr ( $description, $l, $r - $l )
-	       . $rdots;
-
-	    $errors[] = "$needle is in description: $m";
-	    return;
 	}
 
 	$c = @file_get_contents
@@ -682,16 +666,18 @@
     //		[TIME - PROBLEM]
     //
     // for all PROBLEMs users/UID/PROBLEM where TIME
-    // is the modification time of the problem +changes+
-    // file, or is the current time if there is no
-    // such file.  Sort by TIME.
+    // is the modification time of the problem
+    // directory.  Sort by TIME.
     //
-    function problems_to_list()
+    function read_your_list()
     {
 	global $epm_data, $uid, $epm_name_re,
 	       $epm_time_format;
 
-	$pmap = [];
+	// First build map from PROBLEM to TIME
+	// and sort on TIME.
+	//
+	$map = [];
 	$f = "users/$uid";
 	$ps = @scandir ( "$epm_data/$f" );
 	if ( $ps == false )
@@ -702,14 +688,15 @@
 	               ( $epm_name_re, $problem ) )
 	        continue;
 
-	    $g = "$f/$problem/+changes+";
+	    $g = "$f/$problem";
 	    $time = @filemtime ( "$epm_data/$g" );
-	    if ( $time === false ) $time = time();
-	    $pmap[$problem] = $time;
+	    if ( $time === false )
+	        ERROR ( "cannot stat $g" );
+	    $map[$problem] = $time;
 	}
-	arsort ( $pmap, SORT_NUMERIC );
+	arsort ( $map, SORT_NUMERIC );
 	$list = [];
-	foreach ( $pmap as $problem => $time )
+	foreach ( $map as $problem => $time )
 	    $list[] = [strftime ( $epm_time_format,
 	                          $time ),
 		       '-', $problem];
@@ -735,8 +722,8 @@
     function listname_to_list ( $listname )
     {
 	if ( $listname == '-:-' )
-	    return problems_to_list();
-	elseif ( preg_match ( '/^(.+):-/',
+	    return read_your_list();
+	elseif ( preg_match ( '/^(.+):-$/',
 	                      $listname, $matches ) )
     	    return read_project_list ( $matches[1] );
 	else
