@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 14 23:01:47 EDT 2020
+    // Date:	Fri May 15 16:55:29 EDT 2020
 
     // Maintains problem lists.
 
@@ -116,10 +116,17 @@
 	// If $lists[J] not set by POST, will be set
 	// according to $names[J].
 
-    $options = favorites_to_options
-        ( 'pull|push', $fmap );
-	// Note: $fmap['LISTNAME'] exists iff LISTNAME
-	// is legal list name in favorites.
+    $favorites = favorites_to_list ( 'pull|push' );
+    $options = list_to_options ( $favorites );
+    // Build $fmap so that $fmap["PROJECT:BASENAME"]
+    // exists iff [TIME PROJECT BASENAME] is in
+    // $favorites.
+    $fmap = [];
+    foreach ( $favorites as $e )
+    {
+        list ( $time, $project, $basename ) = $e;
+	$fmap["$project:$basename"] = true;
+    }
 
     // Given a list of elements of the form
     //

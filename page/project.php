@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 17:09:13 EDT 2020
+    // Date:	Fri May 15 17:06:30 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1880,7 +1880,8 @@ EOT;
 EOT;
     if ( $op == NULL )
     {
-	$options = favorites_to_options ( 'pull|push' );
+	$options = list_to_options
+	    ( favorites_to_list ( 'pull|push' ) );
 	$push_title = 'Push Problems in Selected'
 	            . ' List to Projects';
 	$pull_title = 'Pull Problems in Selected'
@@ -2559,7 +2560,8 @@ EOT;
 	    ( $elements,
 	      listname_to_list ( '+stack+' ) );
 
-	$options = favorites_to_options ( 'pull|push' );
+	$options = list_to_options
+	    ( favorites_to_list ( 'pull|push' ) );
 
 	$finish_title = 'Save Changes and Return to'
 	              . ' Project Page';

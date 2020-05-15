@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 15 15:29:50 EDT 2020
+    // Date:	Fri May 15 16:06:26 EDT 2020
 
     // Functions for managing lists.
 
@@ -712,8 +712,6 @@
     //     -:-
     //     PROJECT:-
     //     PROJECT:BASENAME
-    //	   +istack+
-    //	   +fstack+
     //	   +favorites+
     //
     // Note that if $listname ends with '-' the list is
@@ -729,6 +727,79 @@
 	else
 	    return read_file_list
 		( listname_to_filename ( $listname ) );
+    }
+
+    // Returns favorites list as per
+    //
+    //    listname_to_list ( '+favorites+' )
+    //
+    // unless that list is empty, in which case
+    // constructs a list consisting of users problems
+    // and problems of all projects for which user
+    // has a permission of a type matching $type_re,
+    // and writes that into +favorites+ before
+    // returning the constructed list.
+    //
+    function favorites_to_list ( $type_re )
+    {
+	global $epm_data, $uid, $epm_time_format;
+
+        $list = listname_to_list ( '+favorites+' );
+	if ( count ( $list ) > 0 ) return $list;
+	$f = "users/$uid";
+	$time = @filemtime ( "$epm_data/$f" );
+	if ( $time === false )
+	    ERROR ( "cannot stat $f" );
+	$time = strftime ( $epm_time_format, $time );
+	$list[] = [$time, '-', '-'];
+	foreach ( read_projects ( $type_re )
+	          as $project )
+	{
+	    $f = "projects/$project";
+	    $time = @filemtime ( "$epm_data/$f" );
+	    if ( $time === false )
+	        ERROR ( "cannot stat $f" );
+	    $time = strftime ( $epm_time_format, $time );
+	    $list[] = [$time, $project, '-'];
+	}
+	$f = "users/$uid/+indices+/+favorites+";
+	write_file_list ( $f, $list );
+	return $list;
+    }
+
+    // Given a list of elements of the form
+    //
+    //		[TIME PROJECT NAME]
+    //
+    // return a string whose segments have the form
+    //
+    //	    <option value='PROJECT:NAME'>
+    //      $project $name $time
+    //      </option>
+    //
+    // where $project is PROJECT unless that is `-', in
+    // which case it is `Your', $name is NAME unless
+    // that is `-', in which case it is `Problems', and
+    // $time is the first 10 characters of TIME (i.e.,
+    // the day, excluding the time of day).
+    //
+    function list_to_options ( $list )
+    {
+        $r = '';
+	foreach ( $list as $e )
+	{
+	    list ( $time, $project, $name ) = $e;
+	    $key = "$project:$name";
+	    if ( $project == '-' )
+	        $project = 'Your';
+	    if ( $name == '-' )
+	        $name = 'Problems';
+	    $time = substr ( $time, 0, 10 );
+	    $r .= "<option value='$key'>"
+	        . "$project $name $time"
+		. "</option>";
+	}
+	return $r;
     }
 
     // Return the lines from:
@@ -830,7 +901,7 @@
     // used to verify whether a listname is in the
     // list of options.
     //
-    function favorites_to_options
+    function favorites_to_options_1
         ( $type_re, & $fmap = [] )
     {
 	global $epm_time_format;
