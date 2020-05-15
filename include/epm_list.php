@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 15 16:06:26 EDT 2020
+    // Date:	Fri May 15 17:24:20 EDT 2020
 
     // Functions for managing lists.
 
@@ -783,13 +783,19 @@
     // $time is the first 10 characters of TIME (i.e.,
     // the day, excluding the time of day).
     //
-    function list_to_options ( $list )
+    // However, if 'PROJECT:NAME' is listed in $exclude,
+    // omit that option.
+    //
+    function list_to_options ( $list, & $exclude = [] )
     {
         $r = '';
 	foreach ( $list as $e )
 	{
 	    list ( $time, $project, $name ) = $e;
 	    $key = "$project:$name";
+	    if ( in_array ( $key, $exclude, true ) )
+	        continue;
+
 	    if ( $project == '-' )
 	        $project = 'Your';
 	    if ( $name == '-' )

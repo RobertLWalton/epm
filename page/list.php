@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 15 16:55:29 EDT 2020
+    // Date:	Fri May 15 17:38:16 EDT 2020
 
     // Maintains problem lists.
 
@@ -117,7 +117,6 @@
 	// according to $names[J].
 
     $favorites = favorites_to_list ( 'pull|push' );
-    $options = list_to_options ( $favorites );
     // Build $fmap so that $fmap["PROJECT:BASENAME"]
     // exists iff [TIME PROJECT BASENAME] is in
     // $favorites.
@@ -207,6 +206,10 @@ EOT;
 	$lengths = explode ( ';', $_POST['lengths'] );
 	$new_names = explode
 	    ( ';', $_POST['names'] );
+	if ( $new_names[0] == $new_names[1]
+	     &&
+	     $new_names[0] != '' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
 
 	// First check ops, collect lists for SAVE and
 	// KEEP, and check $indices and lengths in these
@@ -416,6 +419,7 @@ EOT;
 EOT;
     $data['ELEMENTS'] = [];
     $elements = & $data['ELEMENTS'];
+    $options = list_to_options ( $favorites, $names );
     foreach ( [0,1] as $J )
     {
         $name = $names[$J];
