@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 15 17:38:16 EDT 2020
+    // Date:	Fri May 15 18:36:52 EDT 2020
 
     // Maintains problem lists.
 
@@ -191,7 +191,120 @@ EOT;
 	return $r;
     }
 
-    if ( $method == 'POST' )
+    // Write uploaded description.  Takes global $_FILES
+    // value as input, extracts description, and writes
+    // into list file.  Errors append to $errors and
+    // suppress write.  If list does not exist, a
+    // warning message is added to $warnings.
+    //
+    // If successful, this function returns the listname
+    // of the list given the description, in the form
+    // '-:basename'.  If unsuccessful, false is
+    // returned.
+    //
+    function upload_list_description
+	    ( & $warnings, & $errors )
+    {
+        global $epm_data, $uid, $epm_name_re,
+	       $epm_upload_maxsize;
+
+        if ( ! isset ( $_FILES['uploaded_file'] ) )
+	{
+	    $errors[] = "no file choosen; try again";
+	    return;
+	}
+
+	$upload = & $_FILES['uploaded_file'];
+	$fname = $upload['name'];
+	$errors_size = count ( $errors );
+
+	$ferror = $upload['error'];
+	if ( $ferror != 0 )
+	{
+	    switch ( $ferror )
+	    {
+		case UPLOAD_ERR_INI_SIZE:
+		case UPLOAD_ERR_FORM_SIZE:
+		    $errors[] = "$fname too large";
+		    break;
+		case UPLOAD_ERR_NO_FILE:
+		    $errors[] = "no file choosen;"
+			      . " try again";
+		    break;
+		case UPLOAD_ERR_PARTIAL:
+		    $errors[] = "$fname upload failed;"
+			      . " try again";
+		    break;
+		default:
+		    $e = "uploading $fname, PHP upload"
+		       . " error code $ferror";
+		    WARN ( $e );
+		    $errors[] = "EPM SYSTEM ERROR: $e";
+	    }
+	    return false;
+	}
+
+	$fext = pathinfo ( $fname, PATHINFO_EXTENSION );
+	$fbase = pathinfo ( $fname, PATHINFO_FILENAME );
+
+	if ( $fext != 'dsc' )
+	{
+	    $errors[] = "$fname has wrong extension"
+	              . " (should be .dsc)";
+	    return;
+	}
+
+	$fsize = $upload['size'];
+	if ( $fsize > $epm_upload_maxsize )
+	{
+	    $errors[] =
+		"uploaded file $fname too large;" .
+		" limit is $epm_upload_maxsize";
+	    return false;
+	}
+
+	$ftmp_name = $upload['tmp_name'];
+	$dsc = @file_get_contents ( $ftmp_name );
+	if ( $dsc === false )
+	{
+	    $m = "cannot read uploaded file"
+	       . " from temporary";
+	    $errors[] = "$m; try again";
+	    WARN ( "$m $ftmp_name" );
+	    return false;
+	}
+	$f = "users/$uid/+indices+/$fbase.index";
+	if ( ! file_exists ( "$epm_data/$f" ) )
+	{
+	    make_new_list ( $fbase, $errors );
+	        // This will check that $fname is
+		// well formed EPM file name base.
+	    if ( count ( $errors ) > $errors_size )
+	        return false;
+	    $warnings[] = "created list $fbase which"
+	                . " does not previously exist";
+	}
+
+	write_list_description ( $f, $dsc, $errors );
+	if ( count ( $errors ) > $errors_size )
+	    return false;
+	else
+	    return ( "-:$fbase" );
+    }
+
+    if ( $method != 'POST' )
+        // Do Nothing
+	;
+    elseif ( isset ( $_POST['upload'] ) )
+    {
+	$r = upload_list_description
+	    ( $warnings, $errors );
+	if ( $r === false )
+	    $names = ['',''];
+	else
+	    $names = [$r,''];
+    }
+    else
     {
         if ( ! isset ( $_POST['ops'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
@@ -393,12 +506,16 @@ EOT;
     }
 
     $list_help = HELP ( 'list-page' );
+    $upload_title = 'Upload Selected List'
+		  . ' Description (.dsc) File';
+    $upload_file_title = 'Selected List Description'
+		       . ' (.dsc) File to be Uploaded';
     echo <<<EOT
     <div class='manage'>
-    <form>
     <table style='width:100%'>
     <tr>
     <td>
+    <form>
     <label>
     <strong>User:</strong>
     <input type='submit' value='$email'
@@ -406,15 +523,31 @@ EOT;
 	   formmethod='GET'
            title='Click to See User Profile'>
     </label>
+    </form>
     </td>
     <td>
+    <form method='POST' action='list.php'
+	  enctype='multipart/form-data'>
+    <input type='hidden' name='ID' value='$id'>
+    <label>
+    <input type="hidden" name="MAX_FILE_SIZE"
+	   value="$epm_upload_maxsize">
+    <button type='submit'
+	    name='upload' value='yes'
+	    title='$upload_title'>
+    Upload Description
+    </button>
+    <strong>:</strong>
+    <input type="file" name="uploaded_file"
+	   title="$upload_file_title">
+    </label>
+    </form>
     </td>
     <td>
     </td><td style='text-align:right'>
     $list_help</td>
     </tr>
     </table>
-    </form>
     </div>
 EOT;
     $data['ELEMENTS'] = [];

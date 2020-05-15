@@ -9,7 +9,6 @@ echo "COOKIE: "; print_r ( $_COOKIE ); echo "<br>";
 $__server = [];
 $__server['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'];
 $__server['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
-$__server['HTTP_REFERER'] = $_SERVER['HTTP_REFERER'];
 $__server['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
 $__server['PHP_SELF'] = $_SERVER['PHP_SELF'];
 $__server['SCRIPT_NAME'] = $_SERVER['SCRIPT_NAME'];
