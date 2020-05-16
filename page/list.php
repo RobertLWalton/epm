@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 16 12:56:34 EDT 2020
+    // Date:	Sat May 16 13:17:47 EDT 2020
 
     // Maintains problem lists.
 
@@ -537,14 +537,11 @@ var LOG = function(message) {};
     <form method='POST' action='list.php'
 	  id='submit-form'>
     <input type='hidden' name='ID' value='$id'>
-    <input type='hidden' name='ops' id='ops'
-           value='KEEP;KEEP'>
-    <input type='hidden' name='lengths' id='lengths'
-           value='0;0'>
-    <input type='hidden' name='indices' id='indices'
-           value=';'>
-    <input type='hidden' name='names' id='names'
-           value=';'>
+    <input type='hidden' name='op' id='op'>
+    <input type='hidden' name='list' id='list'>
+    <input type='hidden' name='lengths' id='lengths'>
+    <input type='hidden' name='indices' id='indices'>
+    <input type='hidden' name='name' id='name'>
     </form>
 EOT;
 
@@ -636,8 +633,8 @@ EOT;
 	<label>
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$epm_upload_maxsize">
-	<button type='submit'
-		name='upload' value='$J'
+	<button type='button'
+		onclick='UPLOAD("$J")'
 		title='$upload_title'>
 	Upload Description
 	</button>
@@ -655,7 +652,7 @@ EOT;
 	       size="24"
                placeholder="New Problem List Name"
                title="New Problem List Name"
-	       onkeydown='NEW(event)'>
+	       onkeydown='NEW(event,"$J")'>
 
 	<br>
 
@@ -674,19 +671,19 @@ EOT;
 	{
 	    echo <<<EOT
 	    <button type='button'
-	            onclick='SAVE("$J")'>
+	            onclick='SUBMIT("save","$J")'>
 	    SAVE</button>
 	    <button type='button'
-	            onclick='FINISH("$J")'>
+	            onclick='SUBMIT("finish","$J")'>
 	    FINISH</button>
 	    <button type='button'
-	            onclick='RESET("$J")'>
+	            onclick='SUBMIT("reset","$J")'>
 	    RESET</button>
 	    <button type='button'
-	            onclick='CANCEL("$J")'>
+	            onclick='SUBMIT("cancel","$J")'>
 	    CANCEL</button>
 	    <button type='button'
-	            onclick='DELETE("$J")'>
+	            onclick='SUBMIT("delete","$J")'>
 	    DELETE</button>
 EOT;
 	}
@@ -716,13 +713,13 @@ EOT;
 ?>
 
 <script>
-let submit_form = document.getElementById ( 'submit-form' );
-let ops_input = document.getElementById ( 'ops' );
-let lengths_input = document.getElementById
-    ( 'lengths' );
-let indices_input = document.getElementById
-    ( 'indices' );
-let names_input = document.getElementById ( 'names' );
+let submit_form = document.getElementById
+    ( 'submit-form' );
+let op_in = document.getElementById ( 'op' );
+let list_in = document.getElementById ( 'list' );
+let lengths_in = document.getElementById ( 'lengths' );
+let indices_in = document.getElementById ( 'indices' );
+let name_in = document.getElementById ( 'name' );
 
 let on = 'black';
 let off = 'transparent';
@@ -753,7 +750,7 @@ function SPAN ( table )
     return span;
 }
 
-function SUBMIT()
+function SUBMIT(op,list,name = '')
 {
     lengths = [0,0];
     var indices = ['',''];
@@ -778,18 +775,18 @@ function SUBMIT()
 	lengths[J] = length;
 	indices[J] = ilist.join ( ':' );
     }
-    ops_input.value = ops.join ( ';' );
-    indices_input.value = indices.join ( ';' );
-    lengths_input.value = lengths.join ( ';' );
-    names_input.value = names.join ( ';' );
+    ops_in.value = op;
+    list_in.value = list;
+    indices_in.value = indices.join ( ';' );
+    lengths_in.value = lengths.join ( ';' );
+    name_in.value = name;
     submit_form.submit();
 }
+
 function CHANGE_LIST ( J )
 {
     let ch = document.getElementById ( 'change' + J );
-    names[J] = ch.value;
-    ops[J] = 'RESET';
-    SUBMIT();
+    SUBMIT ( 'change', J, ch.value );
 }
 
 function CHECK ( event )
