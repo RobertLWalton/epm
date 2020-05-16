@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 16 16:58:29 EDT 2020
+    // Date:	Sat May 16 17:51:17 EDT 2020
 
     // Maintains problem lists.
 
@@ -403,7 +403,23 @@ EOT;
 	{
 	    delete_list ( $names[$J], $errors, true );
 	    if ( count ( $errors ) == 0 )
+	    {
 		$names[$J] = '';
+		$favorites = favorites_to_list
+		    ( 'pull|push' );
+	    }
+	}
+	elseif ( $op == 'new' )
+	{
+	    if ( ! isset ( $_POST['name'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $name = $_POST['name'];
+	    make_new_list ( $name, $errors );
+	    if ( count ( $errors ) == 0 )
+	    	$names[$J] = "-:$name";
+		// No need to update $favorites as
+		// new list is excluded from
+		// selectors.
 	}
 	elseif ( $op == 'change' )
 	{
@@ -776,6 +792,17 @@ function SUBMIT(op,list,name = '')
     lengths_in.value = lengths.join ( ';' );
     name_in.value = name;
     submit_form.submit();
+}
+
+function NEW ( event, J )
+{
+    if ( event.keyCode === 13 )
+    {
+	event.preventDefault();
+        let new_in = document.getElementById
+	    ( 'new' + J );
+	SUBMIT ( 'new', J, new_in.value );
+    }
 }
 
 function CHANGE_LIST ( J )
