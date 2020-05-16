@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 16 17:51:17 EDT 2020
+    // Date:	Sat May 16 18:50:36 EDT 2020
 
     // Maintains problem lists.
 
@@ -334,7 +334,7 @@ EOT;
 	    if ( count ( $errors ) > $errors_size )
 	        return false;
 	    $warnings[] = "created list $fbase which"
-	                . " does not previously exist";
+	                . " did not previously exist";
 	}
 
 	write_list_description ( $f, $dsc, $errors );
@@ -364,6 +364,24 @@ EOT;
 	if ( ! in_array ( $J, [0,1] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$K = 1 - $J;
+
+	// For list description upload, if list is
+	// for $names[$K] exchange $J and $K.
+	//
+	if ( $op == 'dsc' )
+	{
+	    if ( ! isset ( $_FILES['uploaded_file']
+	                          ['name'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $name = $_FILES['uploaded_file']['name'];
+	    $basename =
+	        pathinfo ( $name, PATHINFO_FILENAME );
+	    if ( $names[$K] == "-:$basename" )
+	    {
+	        $J = 1 - $J;
+		$K = 1 - $K;
+	    }
+	}
 
 	$indices = explode ( ';', $_POST['indices'] );
 	$lengths = explode ( ';', $_POST['lengths'] );
@@ -409,6 +427,13 @@ EOT;
 		    ( 'pull|push' );
 	    }
 	}
+	elseif ( $op == 'dsc' )
+	{
+	    $name = upload_list_description
+	        ( $warnings, $errors );
+	    if ( $name !== false )
+	        $names[$J] = $name;
+	}
 	elseif ( $op == 'new' )
 	{
 	    if ( ! isset ( $_POST['name'] ) )
@@ -435,7 +460,6 @@ EOT;
 	    else
 	    	$names[$J] = $name;
 	}
-	    
 
 	// If there were errors, restore $list[$J].
 	//
@@ -450,7 +474,6 @@ EOT;
 	    if ( $lengths[$J] > count ( $lists[$J] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	}
-
     }
 
     foreach ( [0,1] as $J )
@@ -639,13 +662,20 @@ EOT;
 	<div style='text-align:center'>
 
 	<form method='POST' action='list.php'
-	      enctype='multipart/form-data'>
+	      enctype='multipart/form-data'
+	      id='upload-form$J'>
 	<input type='hidden' name='ID' value='$id'>
-	<label>
+	<input type='hidden' name='op' value='dsc'>
+	<input type='hidden' name='list' value='$J'>
+	<input type='hidden' name='indices'
+	       id='upload-indices$J'>
+	<input type='hidden' name='lengths'
+	       id='upload-lengths$J'>
 	<input type="hidden" name="MAX_FILE_SIZE"
 	       value="$epm_upload_maxsize">
+	<label>
 	<button type='button'
-		onclick='UPLOAD("$J")'
+		onclick='UPLOAD(event,"$J")'
 		title='$upload_title'>
 	Upload Description
 	</button>
@@ -761,10 +791,10 @@ function SPAN ( table )
     return span;
 }
 
-function SUBMIT(op,list,name = '')
+var lengths = [0,0];
+var indices = ['',''];
+function COMPUTE_INDICES()
 {
-    lengths = [0,0];
-    var indices = ['',''];
     for ( var J = 0; J <= 1; ++ J )
     {
         let list = document.getElementById
@@ -786,11 +816,31 @@ function SUBMIT(op,list,name = '')
 	lengths[J] = length;
 	indices[J] = ilist.join ( ':' );
     }
+}
+
+function SUBMIT(op,list,name = '')
+{
+    COMPUTE_INDICES();
     op_in.value = op;
     list_in.value = list;
-    indices_in.value = indices.join ( ';' );
-    lengths_in.value = lengths.join ( ';' );
+    indices_in.value = indices.join(';');
+    lengths_in.value = lengths.join(';');
     name_in.value = name;
+    submit_form.submit();
+}
+
+function UPLOAD ( event, J )
+{
+    event.preventDefault();
+    let submit_form = document.getElementById
+	    ( 'upload-form' + J );
+    let indices_in = document.getElementById
+	    ( 'upload-indices' + J );
+    let lengths_in = document.getElementById
+	    ( 'upload-lengths' + J );
+    COMPUTE_INDICES();
+    indices_in.value = indices.join(';');
+    lengths_in.value = lengths.join(';');
     submit_form.submit();
 }
 
