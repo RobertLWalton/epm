@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 16 09:29:26 EDT 2020
+    // Date:	Sat May 16 12:56:34 EDT 2020
 
     // Maintains problem lists.
 
@@ -121,8 +121,8 @@
 
     $data = & $_SESSION['EPM_DATA'];
     $id = $data['ID'];
-    $names = $data['NAMES'];
-    $elements = $data['ELEMENTS'];
+    $names = & $data['NAMES'];
+    $elements = & $data['ELEMENTS'];
 
     if ( $method == 'POST'
          &&
@@ -138,9 +138,12 @@
     $warnings = [];  // Warning messages to be shown.
 
     $lists = [NULL,NULL];
+    $lengths = [0,0];
         // Lists to be given to list_to_edit_rows.
 	// If $lists[J] not set by POST, will be set
-	// according to $names[J].
+	// according to files named by $names[J].
+	// $lengths[J] is the number of marked
+	// elements of $list[J].
 
     $favorites = favorites_to_list ( 'pull|push' );
     // Build $fmap so that $fmap["PROJECT:BASENAME"]
@@ -153,8 +156,8 @@
 	$fmap["$project:$basename"] = true;
     }
 
-    // Given indexJ return is of elements it designates.
-    // Errors are UNACCEPTABLE POST.
+    // Given indexJ return the list of elements it
+    // designates.  Errors are UNACCEPTABLE POST.
     //
     function index_to_list ( $index )
     {
@@ -344,89 +347,99 @@ EOT;
     if ( $method != 'POST' )
         // Do Nothing
 	;
-    elseif ( isset ( $_POST['upload'] ) )
-    {
-	$r = upload_list_description
-	    ( $warnings, $errors );
-	if ( $r === false )
-	    $names = ['',''];
-	else
-	    $names = [$r,''];
-    }
     else
     {
-        if ( ! isset ( $_POST['ops'] ) )
+        if ( ! isset ( $_POST['op'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         if ( ! isset ( $_POST['indices'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         if ( ! isset ( $_POST['lengths'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-        if ( ! isset ( $_POST['names'] ) )
+        if ( ! isset ( $_POST['list'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	$ops = explode ( ';', $_POST['ops'] );
+	$op = $_POST['op'];
+	if ( ! in_array ( $op, ['save','finish','reset',
+	                        'cancel','delete',
+				'change','new',
+				'dsc'], true ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$J = $_POST['list'];
+	if ( ! in_array ( $J, [0,1] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$K = 1 - $J;
+
 	$indices = explode ( ';', $_POST['indices'] );
 	$lengths = explode ( ';', $_POST['lengths'] );
-	$new_names = explode
-	    ( ';', $_POST['names'] );
-	if ( $new_names[0] == $new_names[1]
-	     &&
-	     $new_names[0] != '' )
+
+	$lists[$K] = index_to_list ( $indices[$K] );
+	if ( ! preg_match ( '/^\d+$/', $lengths[$K] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	if ( $lengths[$K] > count ( $lists[$K] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
-	// First check ops, collect lists for SAVE and
-	// KEEP, and check $indices and lengths in these
-	// cases, and lastly check $new_names for
-	// SAVE.
+	if ( $op == 'save' || $op == 'finish' )
+	{
+	    $lists[$J] = index_to_list ( $indices[$J] );
+	    if ( ! preg_match ( '/^\d+$/', $lengths[$J] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( $lengths[$J] > count ( $lists[$J] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    // Be sure all UNACCEPTABLE HTTP POST checks
+	    // are done before we write the file.
+	    //
+	    write_file_list
+		( filename_from_listname
+		      ( $names[$J],
+		        array_slice
+			    ( $lists[$J],
+			      0, $lengths[$J] ) ) );
+	    if ( $op == 'finish' )
+	    {
+	        $lists[$J] = NULL;
+		$names[$J] = '';
+	    }
+	}
+	elseif ( $op == 'reset' )
+	    /* Do Nothing */;
+	elseif ( $op == 'cancel' )
+	    $names[$J] = '';
+	elseif ( $op == 'delete' )
+	{
+	    delete_list ( $names[$J], $errors, true );
+	    if ( count ( $errors ) == 0 )
+		$names[$J] = '';
+	}
+	elseif ( $op == 'change' )
+	{
+	    if ( ! isset ( $_POST['name'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $name = $_POST['name'];
+	    if ( ! isset ( $fmap[$name] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( $name == $names[$K] )
+	        $errors[] = "cannot change list so that"
+		          . " both lists are the same"
+			  . " list";
+	    else
+	    	$names[$J] = $name;
+	}
+	    
+
+	// If there were errors, restore $list[$J].
 	//
-	foreach ( [0,1] as $J )
+	// Importantly, if there were errors no files
+	// have been changed.
+	//
+	if ( count ( $errors ) > 0 )
 	{
-	    if (    $ops[$J] == 'SAVE'
-	         || $ops[$J] == 'KEEP' )
-	    {
-	        $lists[$J] = [];
-	        $list = & $lists[$J];
-		if ( $indices[$J] == '' )
-		    $indices = [];
-		else
-		    $indices = explode
-		        ( ':', $indices[$J] );
-		foreach ( $indices as $I )
-		{
-		    if ( ! preg_match
-		               ( '/^\d+$/', $I ) )
-			exit
-			  ( 'UNACCEPTABLE HTTP POST' );
-		    $list[] = $elements[$I];
-		}
-		if ( ! preg_match
-			   ( '/^\d+$/', $lengths[$J] ) )
-		    exit ( 'UNACCEPTABLE HTTP POST' );
-		if ( $lengths[$J] > count ( $list ) )
-		    exit ( 'UNACCEPTABLE HTTP POST' );
-	    }
-
-	    if ( $ops[$J] == 'SAVE'
-	         &&
-		 $names[$J] == '' )
+	    $lists[$J] = index_to_list ( $indices[$J] );
+	    if ( ! preg_match ( '/^\d+$/', $lengths[$J] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-
-	    $new_name = $new_names[$J];
-	    if ( $new_name != ''
-		 &&
-		 ! isset ( $fmap[$new_name] ) )
+	    if ( $lengths[$J] > count ( $lists[$J] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	}
 
-	foreach ( [0,1] as $J )
-	{
-	    if ( $ops[$J] == 'SAVE' )
-	    {
-	        write_file_list
-		    ( filename_from_listname
-		          ( $names[$J], $lists[$J] ) );
-	    }
-	    $names[$J] = $new_names[$J];
-	}
     }
 
     foreach ( [0,1] as $J )
