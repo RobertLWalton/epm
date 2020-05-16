@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 16 05:29:13 EDT 2020
+    // Date:	Sat May 16 09:29:26 EDT 2020
 
     // Maintains problem lists.
 
@@ -18,7 +18,7 @@
     //		verify POSTs to this page.
     //
     //	   EPM_DATA NAMES
-    //		[name1,name2] where nameI is in the
+    //		[name1,name2] where nameJ is in the
     //		format PROJECT:BASENAME or is ''
     //		for no-list.
     //
@@ -41,38 +41,64 @@
     // ----
     //
     // Each post may update the lists and has the
-    // following values.
+    // following values.  J is 0 or 1.
     //
-    //	     ops='op1;op2' where opI is one of:
+    //	    ID=<value of EPM_DATA ID>
     //
-    //		SAVE	Save used portion of list in
-    //			list file.  Keep list if
-    //			nameI is current list name,
-    //			or change if otherwise.
-    //		KEEP	Ditto but do not save in file.
-    //		CHANGE	Change list to file contents
-    //			of nameI (which might be
-    //			current list or '').
-    //		DELETE	Delete file of current list.
-    //			nameI must match current list.
+    //	    indices='index1;index2'
+    //		Here indexJ is the indices in EPM_DATA
+    //		ELEMENTS of list J, with the indices
+    //		separated by `:', and '' denoting the
+    //		empty list.
     //
-    //	     indices='i1;i2'
-    //		where iI is the indices in EPM_DATA
-    //		ELEMENTS of list I, with the indices
-    //		separated by `:', and ':' denoting the
-    //		empty list.  Not used by RESET or
-    //		DELETE.
+    //	    lengths='length1;length2'
+    //		The first lengthJ elements of list J are
+    //		marked, and the rest are NOT marked.
     //
-    //	     lengths='len1;len2'
-    //		The number of elements actually in list
-    //		I is lenI; the remaining elements have
-    //		been removed.  Not used by RESET or
-    //		DELETE.
+    //	    list=J
+    //		List number (J = 0 or 1) affected by
+    //		operation.
     //
-    //	     names='name1;name2'
-    //		New values for EPM_DATA NAMES.  These
-    //		are to be installed after opI is
-    //		executed.  NameI is '' to mean no-list.
+    //	    name=NAME
+    //		List name for change operation below, or
+    //		basename for new operation below.
+    //
+    //	    op=OPERATION
+    //		OPERATION is one of:
+    //
+    //	     *	save	Save used portion of list J in
+    //			its file.
+    //
+    //	     *	finish	Ditto and set nameJ = '',
+    //			indicating there is no longer
+    //			any list J.
+    //
+    //	     *	reset	Restore list J from its file.
+    //
+    //	     *	cancel	Set nameJ = '' indicating there
+    //			is no longer any list J.
+    //
+    //	     *	delete	Delete list J file and set
+    //			nameJ = '' indicating there is
+    //			no longer any list J.
+    //
+    //	    **	change	Set nameJ = NAME and load list J
+    //			from file designated by NAME.
+    //
+    //	    **	new	Create a new list J with given
+    //			NAME and load list J from the
+    //			empty new list.
+    //
+    //	    **	dsc	Upload description file and load
+    //			list J from the list designated
+    //			by the description file.  How-
+    //			ever, if the list of the des-
+    //			cription file is the list of
+    //			list 1-J, this is an error.
+    //
+    //  * Should be sent ONLY if list J HAS been modified.
+    // ** Should be send ONLY if list J has NOT been
+    //    modified.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -125,6 +151,29 @@
     {
         list ( $time, $project, $basename ) = $e;
 	$fmap["$project:$basename"] = true;
+    }
+
+    // Given indexJ return is of elements it designates.
+    // Errors are UNACCEPTABLE POST.
+    //
+    function index_to_list ( $index )
+    {
+        global $elements;
+
+	$list = [];
+	if ( $index == '' ) return $list;
+
+        $indices = explode ( ':', $index );
+	$limit = count ( $elements );
+	foreach ( $indices as $I )
+	{
+	    if ( ! preg_match ( '/^\d+$/', $I ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( $I >= $limit )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $list[] = $elements[$I];
+	}
+	return $list;
     }
 
     // Given a list of elements of the form
