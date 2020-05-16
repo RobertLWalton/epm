@@ -96,7 +96,8 @@ $epm_session_name = "EPM_859036254367";
     // SPECIFIC 12 digit random number.
 
 $epm_debug = preg_match
-    ( '/(login|user|problem|run|project)/', $epm_self );
+    ( '/(login|user|problem|run|project|list)/',
+      $epm_self );
     // True to turn debugging on; false for off.
 
 

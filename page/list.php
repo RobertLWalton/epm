@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 16 13:17:47 EDT 2020
+    // Date:	Sat May 16 16:58:29 EDT 2020
 
     // Maintains problem lists.
 
@@ -344,10 +344,7 @@ EOT;
 	    return ( "-:$fbase" );
     }
 
-    if ( $method != 'POST' )
-        // Do Nothing
-	;
-    else
+    if ( $method == 'POST' )
     {
         if ( ! isset ( $_POST['op'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
@@ -389,11 +386,9 @@ EOT;
 	    // are done before we write the file.
 	    //
 	    write_file_list
-		( filename_from_listname
-		      ( $names[$J],
-		        array_slice
-			    ( $lists[$J],
-			      0, $lengths[$J] ) ) );
+		( listname_to_filename ( $names[$J] ),
+		  array_slice
+		      ( $lists[$J], 0, $lengths[$J] ) );
 	    if ( $op == 'finish' )
 	    {
 	        $lists[$J] = NULL;
@@ -775,7 +770,7 @@ function SUBMIT(op,list,name = '')
 	lengths[J] = length;
 	indices[J] = ilist.join ( ':' );
     }
-    ops_in.value = op;
+    op_in.value = op;
     list_in.value = list;
     indices_in.value = indices.join ( ';' );
     lengths_in.value = lengths.join ( ';' );
