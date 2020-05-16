@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 15 18:36:52 EDT 2020
+    // Date:	Sat May 16 05:29:13 EDT 2020
 
     // Maintains problem lists.
 
@@ -506,10 +506,6 @@ EOT;
     }
 
     $list_help = HELP ( 'list-page' );
-    $upload_title = 'Upload Selected List'
-		  . ' Description (.dsc) File';
-    $upload_file_title = 'Selected List Description'
-		       . ' (.dsc) File to be Uploaded';
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
@@ -526,22 +522,6 @@ EOT;
     </form>
     </td>
     <td>
-    <form method='POST' action='list.php'
-	  enctype='multipart/form-data'>
-    <input type='hidden' name='ID' value='$id'>
-    <label>
-    <input type="hidden" name="MAX_FILE_SIZE"
-	   value="$epm_upload_maxsize">
-    <button type='submit'
-	    name='upload' value='yes'
-	    title='$upload_title'>
-    Upload Description
-    </button>
-    <strong>:</strong>
-    <input type="file" name="uploaded_file"
-	   title="$upload_file_title">
-    </label>
-    </form>
     </td>
     <td>
     </td><td style='text-align:right'>
@@ -553,10 +533,15 @@ EOT;
     $data['ELEMENTS'] = [];
     $elements = & $data['ELEMENTS'];
     $options = list_to_options ( $favorites, $names );
+    $upload_title = 'Upload Selected List'
+		  . ' Description (.dsc) File';
+    $upload_file_title = 'Selected List Description'
+		       . ' (.dsc) File to be Uploaded';
     foreach ( [0,1] as $J )
     {
         $name = $names[$J];
 	$writable = 'no';
+	$pname = 'No List Selected';
 	$lines = '';
 	if ( $name != '' )
 	{
@@ -575,15 +560,32 @@ EOT;
 	        $basename = '<i>Problems</i>';
 		$writable = 'no';
 	    }
+	    $pname = "$project $basename";
 	}
 
 	echo <<<EOT
-	<div class='list$J' id='list$J'
-	     data-writable='$writable'>
+	<div class='list$J'>
 
-	<div style='text-align:center'
-	     ondrop='DROP(event)'
-	     ondragover='ALLOWDROP(event)'>
+	<div style='text-align:center'>
+
+	<form method='POST' action='list.php'
+	      enctype='multipart/form-data'>
+	<input type='hidden' name='ID' value='$id'>
+	<label>
+	<input type="hidden" name="MAX_FILE_SIZE"
+	       value="$epm_upload_maxsize">
+	<button type='submit'
+		name='upload' value='$J'
+		title='$upload_title'>
+	Upload Description
+	</button>
+	<strong>:</strong>
+	<input type="file" name="uploaded_file"
+	       title="$upload_file_title">
+	</label>
+	</form>
+
+	<br>
 
 	<strong>Change To New List:</strong>
 	<input type="text"
@@ -592,7 +594,9 @@ EOT;
                placeholder="New Problem List Name"
                title="New Problem List Name"
 	       onkeydown='NEW(event)'>
+
 	<br>
+
 	<input type='button'
 	       onclick='CHANGE_LIST("$J")'
 	       value='Change To'
@@ -604,21 +608,9 @@ EOT;
 	</select>
 	<br>
 EOT;
-	if ( $name == '' )
+	if ( $writable == 'yes' )
 	{
 	    echo <<<EOT
-	    <strong>No List Selected</strong>
-EOT;
-	}
-	elseif ( $writable == 'no' )
-	    echo <<<EOT
-	    <strong>$project $basename</strong>
-EOT;
-	else
-	{
-	    echo <<<EOT
-	    <strong>$project $basename:</strong>
-	    <pre>  </pre>
 	    <button type='button'
 	            onclick='SAVE("$J")'>
 	    SAVE</button>
@@ -638,8 +630,15 @@ EOT;
 	}
 	echo <<<EOT
 	</div>
+	<div id='list$J' data-writable='$writable'>
+	<div style='text-align:center'
+	     ondrop='DROP(event)'
+	     ondragover='ALLOWDROP(event)'>
+	<strong class='list-name'>$pname</strong>
+	</div>
 
 	$lines
+	</div>
 	</div>
 EOT;
     }
