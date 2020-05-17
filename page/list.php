@@ -621,10 +621,10 @@ EOT;
     <td>
     <strong>$goto</strong>
     <form method='GET'>
-    <button type='submit' action='project.php'>
+    <button type='submit' formaction='project.php'>
     Project
     </button>
-    <button type='submit' action='problem.php'>
+    <button type='submit' formaction='problem.php'>
     Problem
     </button>
     </form>
