@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 01:33:33 EDT 2020
+    // Date:	Sun May 17 04:44:07 EDT 2020
 
     // Maintains problem lists.
 
@@ -245,7 +245,9 @@ EOT;
     // value as input, extracts description, and writes
     // into list file.  Errors append to $errors and
     // suppress write.  If list does not exist, a
-    // warning message is added to $warnings.
+    // warning message is added to $warnings.  If $name
+    // is not NULL, it is an error if the list will
+    // not have the given name.
     //
     // If successful, this function returns the listname
     // of the list given the description, in the form
@@ -253,7 +255,7 @@ EOT;
     // returned.
     //
     function upload_list_description
-	    ( & $warnings, & $errors )
+	    ( $name, & $warnings, & $errors )
     {
         global $epm_data, $uid, $epm_name_re,
 	       $epm_upload_maxsize;
@@ -296,6 +298,18 @@ EOT;
 
 	$fext = pathinfo ( $fname, PATHINFO_EXTENSION );
 	$fbase = pathinfo ( $fname, PATHINFO_FILENAME );
+
+	if ( isset ( $name ) )
+	{
+	    list ( $project, $problem ) =
+	        explode ( ':', $name );
+	    if ( "$fbase.$fext" != "$problem.dsc" )
+	    {
+		$errors[] = "$fbase.$fext is not"
+		          . " $problem.dsc";
+		return;
+	    }
+	}
 
 	if ( $fext != 'dsc' )
 	{
@@ -363,24 +377,6 @@ EOT;
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$K = 1 - $J;
 
-	// For list description upload, if list is
-	// for $names[$K] exchange $J and $K.
-	//
-	if ( $op == 'dsc' )
-	{
-	    if ( ! isset ( $_FILES['uploaded_file']
-	                          ['name'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $name = $_FILES['uploaded_file']['name'];
-	    $basename =
-	        pathinfo ( $name, PATHINFO_FILENAME );
-	    if ( $names[$K] == "-:$basename" )
-	    {
-	        $J = 1 - $J;
-		$K = 1 - $K;
-	    }
-	}
-
 	$indices = explode ( ';', $_POST['indices'] );
 	$lengths = explode ( ';', $_POST['lengths'] );
 
@@ -427,10 +423,8 @@ EOT;
 	}
 	elseif ( $op == 'dsc' )
 	{
-	    $name = upload_list_description
-	        ( $warnings, $errors );
-	    if ( $name !== false )
-	        $names[$J] = $name;
+	    upload_list_description
+		( $names[$J], $warnings, $errors );
 	}
 	elseif ( $op == 'new' )
 	{
@@ -619,8 +613,6 @@ EOT;
     $data['ELEMENTS'] = [];
     $elements = & $data['ELEMENTS'];
     $options = list_to_options ( $favorites, $names );
-    $upload_title = 'Upload Selected List'
-		  . ' Description (.dsc) File';
     $upload_file_title = 'Selected List Description'
 		       . ' (.dsc) File to be Uploaded';
     foreach ( [0,1] as $J )
@@ -656,32 +648,6 @@ EOT;
 	if ( $writable == 'no' )
 	    echo <<<EOT
 	    <div class='read-only-header'>
-
-	    <form method='POST' action='list.php'
-		  enctype='multipart/form-data'
-		  id='upload-form$J'>
-	    <input type='hidden' name='ID' value='$id'>
-	    <input type='hidden' name='op' value='dsc'>
-	    <input type='hidden' name='list' value='$J'>
-	    <input type='hidden' name='indices'
-		   id='upload-indices$J'>
-	    <input type='hidden' name='lengths'
-		   id='upload-lengths$J'>
-	    <input type="hidden" name="MAX_FILE_SIZE"
-		   value="$epm_upload_maxsize">
-	    <label>
-	    <button type='button'
-		    onclick='UPLOAD(event,"$J")'
-		    title='$upload_title'>
-	    Upload Description
-	    </button>
-	    <strong>:</strong>
-	    <input type="file" name="uploaded_file"
-		   title="$upload_file_title">
-	    </label>
-	    </form>
-
-	    <br>
 
 	    <strong>Change To New List:</strong>
 	    <input type="text"
@@ -723,6 +689,28 @@ EOT;
 	    <button type='button'
 	            onclick='SUBMIT("delete","$J")'>
 	    DELETE</button>
+
+	    <br>
+
+	    <form method='POST' action='list.php'
+		  enctype='multipart/form-data'
+		  id='upload-form$J'>
+	    <input type='hidden' name='ID' value='$id'>
+	    <input type='hidden' name='op' value='dsc'>
+	    <input type='hidden' name='list' value='$J'>
+	    <input type='hidden' name='indices'
+		   id='upload-indices$J'>
+	    <input type='hidden' name='lengths'
+		   id='upload-lengths$J'>
+	    <input type="hidden" name="MAX_FILE_SIZE"
+		   value="$epm_upload_maxsize">
+	    <label>
+	    <strong>Upload $basename.dsc Description File:</strong>
+	    <input type="file" name="uploaded_file"
+	           onchange='UPLOAD(event,"$J")'
+		   title="$upload_file_title">
+	    </label>
+	    </form>
 	    </div>
 EOT;
 	}
