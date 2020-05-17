@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 15 17:06:30 EDT 2020
+    // Date:	Sun May 17 16:16:30 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1835,7 +1835,7 @@ EOT;
     $project_help = HELP ( 'project-page' );
     echo <<<EOT
     <div class='manage'>
-    <form>
+    <form method='GET'>
     <table style='width:100%'>
     <tr>
     <td>
@@ -1843,36 +1843,45 @@ EOT;
     <strong>User:</strong>
     <input type='submit' value='$email'
 	   formaction='user.php'
-	   formmethod='GET'
            title='Click to See User Profile'>
     </label>
     </td>
     <td>
-    <div id='done-response' style='display:none'>
-    <strong>Done!</strong>
-    <button type='submit'
-	    formaction='project.php'
-	    formmethod='GET'>
-	    Continue</button>
-    <pre>    </pre>
-    </div>
-    <div id='check-proposed-display'
-         style='display:none'>
-    <span class='problem-checkbox'
-	  id='check-proposed'
-	  onclick='CHECK(this)'>&nbsp;</span>
-    <strong>Check Proposed Actions</strong>
-    <pre>    </pre>
-    </div>
-    <strong>Go To</strong>
-    <button type='submit'
-	    formaction='problem.php'
-	    formmethod='GET'>
-	    Problem</button>
-    <strong>Page</strong>
+EOT;
+    if ( $op == 'push' || $op == 'pull' )
+    	echo <<<EOT
+	<div id='done-response' style='display:none'>
+	<strong>Done!</strong>
+	<button type='submit'
+		formaction='project.php'>
+		Continue</button>
+	<pre>    </pre>
+	</div>
+	<div id='check-proposed-display'
+	     style='display:none'>
+	<span class='problem-checkbox'
+	      id='check-proposed'
+	      onclick='CHECK(this)'>&nbsp;</span>
+	<strong>Check Proposed Actions</strong>
+	</div>
+EOT;
+    else
+    	echo <<<EOT
+	<strong>Go To</strong>
+	<button type='submit'
+		formaction='problem.php'>
+		Problem</button>
+	<button type='submit'
+		formaction='list.php'>
+		Edit Lists</button>
+	<button type='submit'
+		formaction='favorites.php'>
+		Edit Favorites</button>
+	<strong>Page</strong>
+EOT;
+    echo <<<EOT
     </td>
-    <td>
-    </td><td style='text-align:right'>
+    <td style='text-align:right'>
     $project_help</td>
     </tr>
     </table>
@@ -1899,70 +1908,24 @@ EOT;
 	$edit_favorites_title = 'Edit Favorites List of'
 	                      . ' Lists to Select';
         echo <<<EOT
-	<form method='POST'
-	      enctype='multipart/form-data'>
+	<form method='POST'>
 	<input type='hidden' name='ID' value='$id'>
-	<input type='submit' name='create-list'
-	       value= ''
-	       style='visibility:hidden'>
-	       <!-- This is the first submit input
-	            in the form and is therefore
-		    triggered when a new list name
-		    is entered at the end of the form.
-		 -->
-	<button type='submit' name='op' value='push'
-	        title='$push_title'>
-	Push
-	</button>
-	<button type='submit' name='op' value='pull'
-	        title='$pull_title'>
-	Pull
-	</button>
-	<button type='submit'
-	        formaction='list.php'
-		formmethod='GET'
-	        title='$edit_list_title'>
-	Edit Lists
-	</button>
-	<strong>or</strong>
-	<button type='submit'
-	        formaction='favorites.php'
-		formmethod='GET'
-	        title='$edit_favorites_title'>
-	Edit Favorites
-	</button>
-	<br>
 	<label>
-	<strong>List Select:</strong>
+	<strong>Select List:</strong>
 	<select name='selected-list'
 	        title='$select_title'>
 	$options
 	</select>
-	</label>
-	<pre> </pre>
-	<strong>or Create:</strong>
-	<input type="text"
-	       size="24" name="basename"
-               placeholder="New Problem List Name"
-	       id="create-list"
-	       title='$new_list_title'>
-	       <!-- Pressing the enter key here
-	            triggers the hidden input submit
-		    above.
-		-->
-	<pre> </pre>
-	<strong>or</strong>
-	<label>
-	<input type="hidden" name="MAX_FILE_SIZE"
-	       value="$epm_upload_maxsize">
-	<button type='submit'
-	        name='upload' value='yes'
-	        title='$upload_title'>
-	Upload Description
+	<strong>and</strong>
+	<button type='submit' name='op' value='push'
+	        title='$push_title'>
+	Push
 	</button>
-	<strong>:</strong>
-	<input type="file" name="uploaded_file"
-	       title="$upload_file_title">
+	<strong>or</strong>
+	<button type='submit' name='op' value='pull'
+	        title='$pull_title'>
+	Pull
+	</button>
 	</label>
 	</form>
 EOT;
