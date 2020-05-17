@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 10:15:18 EDT 2020
+    // Date:	Sun May 17 10:56:10 EDT 2020
 
     // Maintains problem lists.
 
@@ -468,7 +468,7 @@ EOT;
 	}
     }
 
-    $writeable_count = 0;
+    $writable_count = 0;
     foreach ( [0,1] as $J )
     {
 	if ( $names[$J] != '' )
@@ -647,6 +647,7 @@ EOT;
         $name = $names[$J];
 	$writable = 'no';
 	$pname = 'No List Selected';
+	$description = '';
 	$lines = '';
 	if ( $name != '' )
 	{
@@ -664,6 +665,13 @@ EOT;
 	    {
 	        $basename = '<i>Problems</i>';
 		$writable = 'no';
+	    }
+	    elseif ( $writable == 'yes' )
+	    {
+	        $f = "users/$uid/+indices+/"
+		   . "$basename.index";
+		$description = read_list_description
+		    ( $f );
 	    }
 	    $pname = "$project $basename";
 	}
@@ -748,6 +756,14 @@ EOT;
 
 	$lines
 	</div>
+EOT;
+	if ( $description != '' )
+	    echo <<<EOT
+	    <div class='description'>
+	    $description
+	    </div>
+EOT;
+	echo <<<EOT
 	</div>
 EOT;
     }
