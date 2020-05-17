@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 09:57:52 EDT 2020
+    // Date:	Sun May 17 10:15:18 EDT 2020
 
     // Maintains problem lists.
 
@@ -60,7 +60,7 @@
     //		operation.
     //
     //	    name=NAME
-    //		List name for change operation below, or
+    //		List name for select operation below, or
     //		basename for new operation below.
     //
     //	    op=OPERATION
@@ -82,7 +82,7 @@
     //			nameJ = '' indicating there is
     //			no longer any list J.
     //
-    //	    **	change	Set nameJ = NAME and load list J
+    //	    **	select	Set nameJ = NAME and load list J
     //			from file designated by NAME.
     //
     //	    **	new	Create a new list J with given
@@ -369,7 +369,7 @@ EOT;
 	$op = $_POST['op'];
 	if ( ! in_array ( $op, ['save','finish','reset',
 	                        'cancel','delete',
-				'change','new',
+				'select','new',
 				'dsc'], true ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$J = $_POST['list'];
@@ -438,7 +438,7 @@ EOT;
 		// new list is excluded from
 		// selectors.
 	}
-	elseif ( $op == 'change' )
+	elseif ( $op == 'select' )
 	{
 	    if ( ! isset ( $_POST['name'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -446,9 +446,9 @@ EOT;
 	    if ( ! isset ( $fmap[$name] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( $name == $names[$K] )
-	        $errors[] = "cannot change list so that"
-		          . " both lists are the same"
-			  . " list";
+	        $errors[] = "cannot select list because"
+		          . " then both lists would be"
+			  . " the same";
 	    else
 	    	$names[$J] = $name;
 	}
@@ -686,13 +686,10 @@ EOT;
 
 	    <br>
 
-	    <input type='button'
-		   onclick='CHANGE_LIST("$J")'
-		   value='Change To'
-		   title='Change Problem List'>
-	    <strong>:</strong>
-	    <select id='change$J'
-		    title='New Problem List to Edit'>
+	    <strong>Select List to Edit:</strong>
+	    <select id='select$J'
+		    title='New Problem List to Edit'
+		   onclick='SELECT_LIST("$J")'>
 	    $options
 	    </select>
 	    </div>
@@ -867,10 +864,11 @@ function NEW ( event, J )
     }
 }
 
-function CHANGE_LIST ( J )
+function SELECT_LIST ( J )
 {
-    let ch = document.getElementById ( 'change' + J );
-    SUBMIT ( 'change', J, ch.value );
+    let select = document.getElementById
+	( 'select' + J );
+    SUBMIT ( 'select', J, select.value );
 }
 
 function CHECK ( event )
