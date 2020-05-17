@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 04:44:07 EDT 2020
+    // Date:	Sun May 17 09:57:52 EDT 2020
 
     // Maintains problem lists.
 
@@ -468,9 +468,19 @@ EOT;
 	}
     }
 
+    $writeable_count = 0;
     foreach ( [0,1] as $J )
     {
+	if ( $names[$J] != '' )
+	{
+	    list ( $project, $basename ) =
+	        explode ( ':', $names[$J] );
+	    if ( $project == '-' && $basename != '-' )
+	        ++ $writable_count;
+	}
+
         if ( isset ( $lists[$J] ) ) continue;
+
 	if ( $names[$J] == '' )
 	    $lists[$J] = [];
 	else
@@ -586,6 +596,13 @@ EOT;
     }
 
     $list_help = HELP ( 'list-page' );
+    switch ( $writable_count )
+    {
+    case 0: $goto = 'Go To'; break;
+    case 1: $goto = 'Cancel Edit and Go To'; break;
+    case 2: $goto = 'Cancel Both Edits and Go To';
+            break;
+    }
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
@@ -602,6 +619,16 @@ EOT;
     </form>
     </td>
     <td>
+    <strong>$goto</strong>
+    <form method='GET'>
+    <button type='submit' action='project.php'>
+    Project
+    </button>
+    <button type='submit' action='problem.php'>
+    Problem
+    </button>
+    </form>
+    <strong>Page</strong>
     </td>
     <td>
     </td><td style='text-align:right'>
@@ -831,7 +858,7 @@ function UPLOAD ( event, J )
 
 function NEW ( event, J )
 {
-    if ( event.code === 13 )
+    if ( event.code === 'Enter' )
     {
 	event.preventDefault();
         let new_in = document.getElementById
