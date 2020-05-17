@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May  7 15:34:29 EDT 2020
+// Date:    Sun May 17 15:31:00 EDT 2020
 
 // HTML code included at the beginning of the <head>
 // section of each page.
@@ -38,8 +38,10 @@ echo "<title>$title</title>";
 	 */
 	--bg-cyan: #96F9F3;
 	--bg-tan: #F2D9D9;
+	--bg-dark-tan: #E5B3B3;
 	--bg-green: #C0FFC0;
 	--bg-blue: #B3E6FF;
+	--bg-dark-blue: #80D4FF;
 	--bg-violet: #FFCCFF;
 	--bg-yellow: #F5F81A;
 	--bg-orange: #FFB0B0;

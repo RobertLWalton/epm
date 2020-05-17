@@ -554,13 +554,10 @@
     function read_list_description ( $filename )
     {
         global $epm_data;
-	DEBUG ( 'FILE ' . $filename );
 
 	$c = @file_get_contents
 	    ( "$epm_data/$filename" );
 	if ( $c === false ) return '';
-
-	DEBUG ( 'C ' . $c );
 
 	$c = explode ( "\n", $c );
 	    // If $c was '' it is now ['']
@@ -615,7 +612,6 @@
 
 	if ( $paragraph != '' )
 	    $r .= "</$paragraph>" . PHP_EOL;
-	DEBUG ( 'R ' . $r );
 	return $r;
     }
 

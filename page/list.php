@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 10:56:10 EDT 2020
+    // Date:	Sun May 17 15:36:19 EDT 2020
 
     // Maintains problem lists.
 
@@ -496,25 +496,35 @@ EOT;
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    div.list0, div.list1 {
+    div.list {
         width:50%;
 	float:left;
 	padding: 0px;
     }
-    div.list0 {
+    div.header0 {
+        background-color: var(--bg-dark-tan);
+    }
+    div.header1 {
+        background-color: var(--bg-dark-blue);
+    }
+    div.body0 {
         background-color: var(--bg-tan);
     }
-    div.list1 {
+    div.body1 {
         background-color: var(--bg-blue);
     }
     div.read-only-header, div.writable-header,
-                          div.list-name {
+                          div.list-name,
+			  div.dsc-header {
         text-align: center;
 	border: 1px solid black;
 	border-radius: 10px;
 	border-collapse: collapse;
-	padding: 10px;
 	margin: 0px;
+    }
+    div.read-only-header, div.writable-header,
+                          div.list-name {
+	padding: 10px;
     }
     table.problem {
 	border: 1px solid black;
@@ -528,19 +538,6 @@ EOT;
     table.problem td {
         padding: 5px;
     }
-
-    div.list-description-header {
-	background-color: #FF8080;
-	text-align: center;
-	padding: 10px;
-    }
-    div.list-description {
-	background-color: #FFCCCC;
-    }
-    div.list-description p, div.list-description pre {
-        margin: 0px;
-        padding: 10px 0px 0px 10px;
-    }
     span.checkbox {
         height: 15px;
         width: 30px;
@@ -548,6 +545,25 @@ EOT;
 	margin-right: 3px;
 	border: 1px solid;
 	border-radius: 7.5px;
+    }
+    div.dsc-header {
+	padding: calc(0.5*var(--font-size));
+	/* 0.5em does NOT scale */
+    }
+    div.dsc-body {
+	border: 1px solid black;
+	margin-top: calc(0.5*var(--font-size));
+	text-align: left;
+    }
+    div.dsc-body p, div.dsc-body pre {
+        margin: 0px;
+	padding: calc(0.5*var(--font-size));
+    }
+    div.dsc-body p {
+	font-size: var(--large-font-size);
+    }
+    div.dsc-body pre {
+	font-size: var(--font-size);
     }
 
 </style>
@@ -677,7 +693,7 @@ EOT;
 	}
 
 	echo <<<EOT
-	<div class='list$J'>
+	<div class='list body$J'>
 EOT;
 
 	if ( $writable == 'no' )
@@ -748,7 +764,7 @@ EOT;
 	}
 	echo <<<EOT
 	<div id='list$J' data-writable='$writable'>
-	<div class='list-name'
+	<div class='list-name header$J'
 	     ondrop='DROP(event)'
 	     ondragover='ALLOWDROP(event)'>
 	<strong>$pname</strong>
@@ -759,8 +775,11 @@ EOT;
 EOT;
 	if ( $description != '' )
 	    echo <<<EOT
-	    <div class='description'>
+	    <div class='dsc-header header$J'>
+	    <strong>$pname List Description</strong>
+	    <div class='dsc-body body$J'>
 	    $description
+	    </div>
 	    </div>
 EOT;
 	echo <<<EOT
