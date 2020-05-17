@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 16 18:50:36 EDT 2020
+    // Date:	Sun May 17 00:07:18 EDT 2020
 
     // Maintains problem lists.
 
@@ -198,8 +198,7 @@
     //		<span class='checkbox'
     //		      onclick='CHECK(event)'
     //		      >&nbsp;</span></td>
-    //		<td style='width:30%;text-align:center'
-    //              onclick='DUP(event)'>
+    //		<td style='width:30%;text-align:center'>
     //		$project $problem $time</td>
     //		</tr></table>
     //
@@ -234,8 +233,7 @@
     	    <span class='checkbox'
     	          onclick='CHECK(event)'
 		  >&nbsp;</span></td>
-    	    <td style='width:80%;text-align:center'
-    	        onclick='DUP(event)'>
+    	    <td style='width:80%;text-align:center'>
     	    $project $problem $time</td>
     	    </tr></table>
 EOT;
@@ -846,7 +844,7 @@ function UPLOAD ( event, J )
 
 function NEW ( event, J )
 {
-    if ( event.keyCode === 13 )
+    if ( event.code === 13 )
     {
 	event.preventDefault();
         let new_in = document.getElementById
@@ -906,14 +904,40 @@ function CHECK ( event )
 
 var dragsrc = null;
     // Source (start) table of drag.
-    // We cannot use id because of DUP.
+    // We cannot use id because `copy' duplicates ids.
+var controls_down = 0;
+    // Non-zero if some control key is down.
+
+function KEYDOWN ( event )
+{
+    if ( event.code == 'ControlLeft'
+         ||
+	 event.code == 'ControlRight' )
+        ++ controls_down;
+}
+
+function KEYUP ( event )
+{
+    if ( event.code == 'ControlLeft'
+         ||
+	 event.code == 'ControlRight' )
+        -- controls_down;
+}
+
+window.addEventListener ( 'keydown', KEYDOWN );
+window.addEventListener ( 'keyup', KEYUP );
 
 function DRAGSTART ( event )
 {
     let table = event.currentTarget;
     let id = table.id;
     let div = table.parentElement;
-    event.dataTransfer.setData ( "xx", "xx" );
+    let writable = div.dataset.writable;
+    let effect = 'copy';
+    if ( writable == 'yes' && controls_down == 0 )
+        effect = 'move';
+    event.dataTransfer.dropEffect = effect;
+    event.dataTransfer.setData ( 'effect', effect );
     dragsrc = table;
 }
 function DRAGEND ( event )
@@ -935,10 +959,10 @@ function DROP ( event )
         event.preventDefault();
 	return;
     }
+    let effect = event.dataTransfer.getData
+        ( 'effect' );
     let src = dragsrc;
-    let srcdiv = dragsrc.parentElement;
-    let srcwritable = srcdiv.dataset.writable;
-    if ( srcwritable == 'no' )
+    if ( effect == 'copy' )
         src = src.cloneNode ( true );
     let next = target.nextElementSibling;
     if ( next == null )
@@ -960,22 +984,6 @@ function DROP ( event )
 		  != on )
 	    SPAN(src).style.backgroundColor = off;
     }
-}
-function DUP ( event )
-{
-    let td = event.currentTarget;
-    let tr = td.parentElement;
-    let tbody = tr.parentElement;
-    let table = tbody.parentElement;
-    let div = table.parentElement;
-    let writable = div.dataset.writable;
-    if ( writable == 'no' )
-    {
-        event.preventDefault();
-	return;
-    }
-    let new_table = table.cloneNode ( true );
-    div.insertBefore ( new_table, table );
 }
 
 </script>
