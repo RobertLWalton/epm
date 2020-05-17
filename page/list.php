@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 00:07:18 EDT 2020
+    // Date:	Sun May 17 01:33:33 EDT 2020
 
     // Maintains problem lists.
 
@@ -493,9 +493,9 @@ EOT;
 
 <style>
     div.list0, div.list1 {
-        width:48%;
+        width:50%;
 	float:left;
-	padding: 1%;
+	padding: 0px;
     }
     div.list0 {
         background-color: var(--bg-tan);
@@ -503,12 +503,28 @@ EOT;
     div.list1 {
         background-color: var(--bg-blue);
     }
-    th, td {
-        font-size: var(--large-font-size);
+    div.read-only-header, div.writable-header,
+                          div.list-name {
+        text-align: center;
+	border: 1px solid black;
+	border-radius: 10px;
+	border-collapse: collapse;
+	padding: 10px;
+	margin: 0px;
     }
-    div.push-pull-list, div.edit-list {
-	background-color: #F2D9D9;
+    table.problem {
+	border: 1px solid black;
+	border-radius: 10px;
+	margin: 0px;
+	width: 100%;
+	/* border-radius does not apply to table
+	 * elements when border-collapse is collapse
+	 */
     }
+    table.problem td {
+        padding: 5px;
+    }
+
     div.list-description-header {
 	background-color: #FF8080;
 	text-align: center;
@@ -528,27 +544,6 @@ EOT;
 	margin-right: 3px;
 	border: 1px solid;
 	border-radius: 7.5px;
-    }
-    span.selected-project {
-	color: red;
-	display:inline-block;
-	font-weight: bold;
-    }
-    label.select-project {
-	color: red;
-	display:inline-block;
-    }
-    #stack-table {
-	background-color: #E6FF99;
-	float: left;
-	width: 50%;
-        font-size: var(--large-font-size);
-    }
-    #list-table {
-	background-color: #B3FFB3;
-	float: left;
-	width: 50%;
-        font-size: var(--large-font-size);
     }
 
 </style>
@@ -656,59 +651,63 @@ EOT;
 
 	echo <<<EOT
 	<div class='list$J'>
+EOT;
 
-	<div style='text-align:center'>
+	if ( $writable == 'no' )
+	    echo <<<EOT
+	    <div class='read-only-header'>
 
-	<form method='POST' action='list.php'
-	      enctype='multipart/form-data'
-	      id='upload-form$J'>
-	<input type='hidden' name='ID' value='$id'>
-	<input type='hidden' name='op' value='dsc'>
-	<input type='hidden' name='list' value='$J'>
-	<input type='hidden' name='indices'
-	       id='upload-indices$J'>
-	<input type='hidden' name='lengths'
-	       id='upload-lengths$J'>
-	<input type="hidden" name="MAX_FILE_SIZE"
-	       value="$epm_upload_maxsize">
-	<label>
-	<button type='button'
-		onclick='UPLOAD(event,"$J")'
-		title='$upload_title'>
-	Upload Description
-	</button>
-	<strong>:</strong>
-	<input type="file" name="uploaded_file"
-	       title="$upload_file_title">
-	</label>
-	</form>
+	    <form method='POST' action='list.php'
+		  enctype='multipart/form-data'
+		  id='upload-form$J'>
+	    <input type='hidden' name='ID' value='$id'>
+	    <input type='hidden' name='op' value='dsc'>
+	    <input type='hidden' name='list' value='$J'>
+	    <input type='hidden' name='indices'
+		   id='upload-indices$J'>
+	    <input type='hidden' name='lengths'
+		   id='upload-lengths$J'>
+	    <input type="hidden" name="MAX_FILE_SIZE"
+		   value="$epm_upload_maxsize">
+	    <label>
+	    <button type='button'
+		    onclick='UPLOAD(event,"$J")'
+		    title='$upload_title'>
+	    Upload Description
+	    </button>
+	    <strong>:</strong>
+	    <input type="file" name="uploaded_file"
+		   title="$upload_file_title">
+	    </label>
+	    </form>
 
-	<br>
+	    <br>
 
-	<strong>Change To New List:</strong>
-	<input type="text"
-	       id='new$J'
-	       size="24"
-               placeholder="New Problem List Name"
-               title="New Problem List Name"
-	       onkeydown='NEW(event,"$J")'>
+	    <strong>Change To New List:</strong>
+	    <input type="text"
+		   id='new$J'
+		   size="24"
+		   placeholder="New Problem List Name"
+		   title="New Problem List Name"
+		   onkeydown='NEW(event,"$J")'>
 
-	<br>
+	    <br>
 
-	<input type='button'
-	       onclick='CHANGE_LIST("$J")'
-	       value='Change To'
-	       title='Change Problem List'>
-	<strong>:</strong>
-	<select id='change$J'
-	        title='New Problem List to Edit'>
-	$options
-	</select>
-	<br>
+	    <input type='button'
+		   onclick='CHANGE_LIST("$J")'
+		   value='Change To'
+		   title='Change Problem List'>
+	    <strong>:</strong>
+	    <select id='change$J'
+		    title='New Problem List to Edit'>
+	    $options
+	    </select>
+	    </div>
 EOT;
 	if ( $writable == 'yes' )
 	{
 	    echo <<<EOT
+	    <div class='writable-header'>
 	    <button type='button'
 	            onclick='SUBMIT("save","$J")'>
 	    SAVE</button>
@@ -724,15 +723,15 @@ EOT;
 	    <button type='button'
 	            onclick='SUBMIT("delete","$J")'>
 	    DELETE</button>
+	    </div>
 EOT;
 	}
 	echo <<<EOT
-	</div>
 	<div id='list$J' data-writable='$writable'>
-	<div style='text-align:center'
+	<div class='list-name'
 	     ondrop='DROP(event)'
 	     ondragover='ALLOWDROP(event)'>
-	<strong class='list-name'>$pname</strong>
+	<strong>$pname</strong>
 	</div>
 
 	$lines
