@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 18 14:42:14 EDT 2020
+    // Date:	Mon May 18 16:05:51 EDT 2020
 
     // Maintains problem lists.
 
@@ -26,32 +26,29 @@
     //		A list of the elements of the form
     //
     //			[TIME PROJECT PROBLEM]
-    //		or
-    //			[TIME PROJECT BASENAME]
     //
     //		that are displayed as list rows.  The
     //		The 'op' POST contains indices of these
     //		elements for the edited versions of each
-    //		list and stack.  The elements for both
-    //		lists are included here in arbitrary
-    //		order.
+    //		list.  The elements for both lists are
+    //		included here in arbitrary order.
 
 
     // POST:
     // ----
     //
-    // Each post may update the lists and has the
-    // following values.  J is 0 or 1.
+    // Each post may update one list and has the
+    // following values.
     //
     //	    ID=<value of EPM_DATA ID>
     //
-    //	    indices='index1;index2'
+    //	    indices='index0;index1'
     //		Here indexJ is the indices in EPM_DATA
     //		ELEMENTS of list J, with the indices
     //		separated by `:', and '' denoting the
     //		empty list.
     //
-    //	    lengths='length1;length2'
+    //	    lengths='length0;length1'
     //		The first lengthJ elements of list J are
     //		marked, and the rest are NOT marked.
     //
@@ -60,8 +57,8 @@
     //		operation.
     //
     //	    name=NAME
-    //		List name for select operation below, or
-    //		basename for new operation below.
+    //		List name for `select' operation below,
+    //		or basename for `new' operation below.
     //
     //	    op=OPERATION
     //		OPERATION is one of:
@@ -82,6 +79,10 @@
     //			nameJ = '' indicating there is
     //			no longer any list J.
     //
+    //	    *	dsc	Upload description file for list
+    //		        J.  Basename of file must match
+    //			basename of nameJ.
+    //
     //	    **	select	Set nameJ = NAME and load list J
     //			from file designated by NAME.
     //
@@ -89,15 +90,8 @@
     //			NAME and load list J from the
     //			empty new list.
     //
-    //	    **	dsc	Upload description file and load
-    //			list J from the list designated
-    //			by the description file.  How-
-    //			ever, if the list of the des-
-    //			cription file is the list of
-    //			list 1-J, this is an error.
-    //
     //  * Should be sent ONLY if list J is writable.
-    // ** Should be send ONLY if list J is read-only.
+    // ** Should be sent ONLY if list J is read-only.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -187,7 +181,7 @@
     //
     // where PROJECT may be '-', add the elements to the
     // $elements list and return a string whose segments
-    // are HTML rows of the form:
+    // are HTML tables of the form:
     //
     //		<table id='I' class='problem'
     //                 draggable='true'
@@ -198,17 +192,21 @@
     //		<tr>
     //		<td style='width:10%;text-align:left'>
     //		<div class='checkbox'
-    //		      onclick='CHECK(event)'
-    //		      ></div></td>
-    //		<td style='width:30%;text-align:center'>
+    //		      onclick='CHECK(event)'>
+    //		</div></td>
+    //		<td style='width:80%;text-align:center'>
     //		$project $problem $time</td>
     //		</tr></table>
     //
-    // where if PROJECT is '-' it is replaced by
-    // '<i>Your</i>' in the string, TIME is the first
-    // 10 characters of the time (just the day part),
-    // and I is the index of the element in the
+    // Here $project is PROJECT unless that is '-', in
+    // which case $project is '<i>Your</i>'.  $time is
+    // the first 10 characters of TIME (just the day
+    // part).  I is the index of the element in the
     // $elements list.
+    //
+    // Note that the browser may move or duplicate table
+    // elements, so for example, the indices in a POST
+    // may contain duplicates.
     //
     function list_to_edit_rows ( & $elements, $list )
     {
@@ -233,8 +231,8 @@
     	    <tr>
     	    <td style='width:10%;text-align:left'>
     	    <div class='checkbox'
-    	          onclick='CHECK(event)'
-		  </div></td>
+    	          onclick='CHECK(event)'>
+	    </div></td>
     	    <td style='width:80%;text-align:center'>
     	    $project $problem $time</td>
     	    </tr></table>
@@ -247,9 +245,9 @@ EOT;
     // value as input, extracts description, and writes
     // into list file.  Errors append to $errors and
     // suppress write.  If list does not exist, a
-    // warning message is added to $warnings.  If $name
-    // is not NULL, it is an error if the list will
-    // not have the given name.
+    // warning message is added to $warnings.  It is an
+    // error if the file last name component is not
+    // BASENAME.dsc, where $name is -:BASENAME.
     //
     // If successful, this function returns the listname
     // of the list given the description, in the form
@@ -263,10 +261,7 @@ EOT;
 	       $epm_upload_maxsize;
 
         if ( ! isset ( $_FILES['uploaded_file'] ) )
-	{
-	    $errors[] = "no file choosen; try again";
-	    return;
-	}
+	    exit ( 'UNACCEPTABLE HTTP POST' );
 
 	$upload = & $_FILES['uploaded_file'];
 	$fname = $upload['name'];
@@ -301,22 +296,12 @@ EOT;
 	$fext = pathinfo ( $fname, PATHINFO_EXTENSION );
 	$fbase = pathinfo ( $fname, PATHINFO_FILENAME );
 
-	if ( isset ( $name ) )
+	list ( $project, $basename ) =
+	    explode ( ':', $name );
+	if ( "$fbase.$fext" != "$basename.dsc" )
 	{
-	    list ( $project, $problem ) =
-	        explode ( ':', $name );
-	    if ( "$fbase.$fext" != "$problem.dsc" )
-	    {
-		$errors[] = "$fbase.$fext is not"
-		          . " $problem.dsc";
-		return;
-	    }
-	}
-
-	if ( $fext != 'dsc' )
-	{
-	    $errors[] = "$fname has wrong extension"
-	              . " (should be .dsc)";
+	    $errors[] = "$fbase.$fext is not"
+		      . " $basename.dsc";
 	    return;
 	}
 
