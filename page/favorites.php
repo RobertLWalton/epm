@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 18 14:41:50 EDT 2020
+    // Date:	Mon May 18 15:33:40 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -102,6 +102,11 @@
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
         $op = $_POST['op'];
+	if ( ! in_array ( $op, ['update','finish',
+	                        'cancel','reset'],
+			       true ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+
 	if ( $op == 'finish' || $op == 'update' )
 	{
 	    $list = $data['LIST'];
