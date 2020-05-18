@@ -2,10 +2,38 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 13 09:50:13 EDT 2020
+    // Date:	Sun May 17 22:17:45 EDT 2020
 
-    // Edits +favorites+ list.  See project.php for
-    // file formats.
+    // Maintains favorites list of problem lists.
+
+    // See doc/epm_admin.pdf for directory and file
+    // formats.
+
+    // Session Data
+    // ------- ----
+
+    // Session data is in EPM_DATA as follows:
+    //
+    //	   EPM_DATA ID
+    //		32 hex digit random number used to
+    //		verify POSTs to this page.
+    //
+    //	   EPM_DATA LIST
+    //		List whose elements correspond to lines
+    //		that may be included in the favorites
+    //		list.  Each element has the form:
+    //
+    //		    [TIME PROJECT BASENAME]
+    //
+    //		naming a list and giving its current
+    //		modification time, for problem lists
+    //		the modification time is that of the
+    //		list directory, either projects/PROJECT
+    //		or users/UID.
+
+    // POST:
+    //
+    //
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -210,26 +238,6 @@
 var LOG = function(message) {};
 <?php if ( $epm_debug )
           echo "LOG = console.log;" . PHP_EOL ?>
-
-function FAIL ( message )
-{
-    // Alert must be scheduled as separate task.
-    //
-    LOG ( "call to FAIL: " + message );
-<?php
-    if ( $epm_debug )
-        echo <<<'EOT'
-	    setTimeout ( function () {
-		alert ( message );
-		window.location.reload ( true );
-	    });
-EOT;
-    else
-        echo <<<'EOT'
-	    throw "CALL TO FAIL: " + message;
-EOT;
-?>
-}
 </script>
 
 </head>
