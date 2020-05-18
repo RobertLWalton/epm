@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 16:16:30 EDT 2020
+    // Date:	Mon May 18 14:43:07 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -28,7 +28,7 @@
     // where TYPE is one of:
     //
     //	   owner	Specify PROJECT owners.
-    //	   index	Allow attaching indices.
+    //	   list		Allow attaching lists.
     //	   review	Allow attaching problem reviews.
     //	   push		Allow pushing new problems.
     //	   pull		Allow pulling problems.
@@ -59,9 +59,9 @@
     // tabs are each replaced by 8 spaces (tabs should
     // ONLY be at the beginnings of lines).
     //
-    // An index is a NAME.index file in a directory:
+    // A list is a NAME.list file in a directory:
     //
-    //	    users/UID/+indices+
+    //	    users/UID/+lists+
     //
     // Such a file belongs to the UID user and can be
     // edited by the user.  The file begins with lines
@@ -69,45 +69,44 @@
     //
     //	    TIME PROJECT PROBLEM
     //
-    // that specify a problem in a project.  Thus an
-    // index is a list of problems.  If a problem is not
-    // in a project, but is in the user's users/UID
-    // directory, PROJECT is `-'.  The TIME is the last
-    // time the index entry was used to push or pull
+    // that specify a problem in a project.  Thus a list
+    // is a list of problems.  If a problem is not in a
+    // project, but is in the user's users/UID direc-
+    // tory, PROJECT is `-'.  The TIME is the last
+    // time the list entry was used to push or pull
     // the problem or perform a maintenance operation
     // on the problem (e.g., change owner).
     //
-    // An index file ends with description paragraphs
-    // describing the index, each preceeded by a blank
-    // line.  Note that an index file that is empty
+    // A list file ends with description paragraphs
+    // describing the list, each preceeded by a blank
+    // line.  Note that a list file that is empty
     // except for descriptions must begin with a blank
     // line.
     //
     // For each project the directory:
     //
-    //	    projects/PROJECT/+indices+
+    //	    projects/PROJECT/+lists+
     //
     // contains symbolic links of the form:
     //
-    //	    UID-NAME.index =>
-    //		users/UID/+indices+/NAME.index
+    //	    UID-NAME.list =>
+    //		users/UID/+lists+/NAME.list
     //
     // which make particular indices visible to users
-    // who have `index' permission for the project.  To
+    // who have `list' permission for the project.  To
     // these users these indices are read-only.  These
     // users may add symbolic links to their own
     // indices, and delete such links.
     //
-    // In addition there are read-only indices contain-
+    // In addition there are read-only lists contain-
     // ing the problems in the directories:
     //
     //	    users/UID
     //
     //	    projects/PROJECT
     //
-    // These are used to edit other indices, which is
-    // done by copying entries from one index to another
-    // (via an intermediary called the stack).
+    // These are used to edit other lists, which is
+    // done by copying entries from one list to another.
     //
     // The directory:
     //
@@ -153,13 +152,13 @@
     // whenever a file or immediate subdirectory of the
     // log containing directory is `used':
     //
-    //	    users/UID/+indices+/usage.log
-    //	    projects/PROJECT/+indices+/usage.log
+    //	    users/UID/+lists+/usage.log
+    //	    projects/PROJECT/+lists+/usage.log
     //	    projects/PROJECT/PROBLEM/+review+/usage.log
     //	    projects/PROJECT/usage.log
     //
-    // For indices, using means opening the index proper
-    // for viewing, and not just reading the index des-
+    // For lists, using means opening the list proper
+    // for viewing, and not just reading the list des-
     // cription.  For reviews usage means opening the
     // review file for viewing, and for PROJECT direct-
     // ories, usage means pulling a problem.  The log
@@ -174,33 +173,33 @@
     // have the same UID and FILENAME as more recent
     // entries.
     //
-    // If an index file with symbolic link name
-    // UID-NAME.index is opened, a log entry will be
+    // If an list file with symbolic link name
+    // UID-NAME.list is opened, a log entry will be
     // written in both the directory containing the
     // symbolic link to the file and in the directory
-    // containing the index file itself.
+    // containing the list file itself.
     //
     // For each user with given UID there is the file:
     //
-    //	    users/UID/+indices+/+favorites+
+    //	    users/UID/+lists+/+favorites+
     //
     // that lists the user's favorite indices.  Its
     // contents are lines of the forms:
     //
     //	    TIME PROJECT BASENAME
     //
-    // indicating that the index file with the name
-    // BASENAME.index in PROJECT was viewed at the given
-    // TIME.  PROJECT may be '-' to indicate an index of
+    // indicating that the list file with the name
+    // BASENAME.list in PROJECT was viewed at the given
+    // TIME.  PROJECT may be '-' to indicate a list of
     // the current user and NOT of a project, and
-    // BASENAME may be '-' to indicate the index is a
+    // BASENAME may be '-' to indicate the list is a
     // list of all the problems in the PROJECT or of all
     // the UID user's problems.  The user may edit this
     // in the same manner as the user edits lists.
     //
     // Lastly there is a stack used in editing:
     //
-    //	    users/UID/+indices+/+stack+
+    //	    users/UID/+lists+/+stack+
     //
     // +stack+ contains non-description lines copied
     // from or to be copied to indices.
@@ -601,7 +600,7 @@ EOT;
 	    WARN ( "$m $ftmp_name" );
 	    return false;
 	}
-	$f = "users/$uid/+indices+/$fbase.index";
+	$f = "users/$uid/+lists+/$fbase.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
 	    make_new_list ( $fname, $errors );

@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 18 04:06:42 EDT 2020
+    // Date:	Mon May 18 14:42:14 EDT 2020
 
     // Maintains problem lists.
 
@@ -339,7 +339,7 @@ EOT;
 	    WARN ( "$m $ftmp_name" );
 	    return false;
 	}
-	$f = "users/$uid/+indices+/$fbase.index";
+	$f = "users/$uid/+lists+/$fbase.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
 	    make_new_list ( $fbase, $errors );
@@ -680,8 +680,8 @@ EOT;
 	    }
 	    elseif ( $writable == 'yes' )
 	    {
-	        $f = "users/$uid/+indices+/"
-		   . "$basename.index";
+	        $f = "users/$uid/+lists+/"
+		   . "$basename.list";
 		$description = read_list_description
 		    ( $f );
 	    }

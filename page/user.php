@@ -418,7 +418,7 @@
 	    $d = "admin/users/$uid/";
 	    if ( ! mkdir ( "$epm_data/$d", 0770 ) )
 		ERROR ( "could not mkdir $d" );
-	    $d = "users/$uid/+indices+";
+	    $d = "users/$uid/+lists+";
 	    if ( ! mkdir ( "$epm_data/$d", 0770 ) )
 		ERROR ( "could not mkdir $d" );
 	}

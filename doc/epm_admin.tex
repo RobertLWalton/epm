@@ -29,10 +29,6 @@
 \newcommand{\subsubsubsection}[1]{\paragraph[#1]{#1.}}
 \newcommand{\subsubsubsubsection}[1]{\subparagraph[#1]{#1.}}
 
-\newcommand{\TT}[1]{{\tt \bfseries #1}}
-\newcommand{\key}[1]{{\bf \em #1}}
-\newcommand{\EOL}{\penalty \exhyphenpenalty}
-
 % Begin \tableofcontents surgery.
 
 \newcount\AtCatcode
@@ -81,6 +77,15 @@
 	 \item}%
 	{\end{list}}
 
+\newcommand{\TT}[1]{{\tt \bfseries #1}}
+\newcommand{\key}[1]{{\bf \em #1}}
+\newcommand{\EOL}{\penalty \exhyphenpenalty}
+\newcommand{\pagref}[1]{p\pageref{#1}}
+\newcommand{\FSTACK}[2]{{\tt \bfseries
+    #1\begin{tabular}[t]{@{}l@{}}#2\end{tabular}}}
+\newcommand{\PSTACK}[1]{\begin{tabular}[t]{@{}l@{}}
+                        #1\end{tabular}}
+
 \newcommand{\ITEM}{\hspace*{-0.2in}}
 \newcommand{\TTITEM}[1]{\hspace*{-0.2in}{\TT{#1}}\\}
 \newcommand{\BFITEM}[1]{\hspace*{-0.2in}{{\bf #1}}\\}
@@ -92,7 +97,7 @@ Administration Manual}
 
 \author{Robert L. Walton}
 
-\date{October 31, 2019}
+\date{May 18, 2020}
  
 \maketitle
 
@@ -112,6 +117,57 @@ See the Educational Problem Manager for an introduction to EPM
 and an initial overview.
 
 This document is a comprehensive manual for EPM system maintainers.
+
+\section{Data Files}
+
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Format & Description & Creators & Updaters & Readers \\
+\hline\hline
+\TT{admin} & dir & \pagref{ADMIN}
+	& login & user & \\ 
+\hline
+\TT{admin/browser} & dir & \pagref{ADMIN/BROWSER}
+	& login & user & \\ 
+\hline
+\TT{admin/browser/BID} & bid & \pagref{ADMIN/BROWSER/BID}
+	& login & & \\ 
+\hline
+\TT{admin/email/EMAIL} & email & \pagref{ADMIN/EMAIL/EMAIL}
+	& user & & \\ 
+\hline
+\TT{admin/email} & dir & \pagref{ADMIN/EMAIL}
+	& login & user & \\ 
+\hline
+\TT{admin/submit} & dir & \pagref{ADMIN/SUBMIT}
+	& run & run & \\ 
+\hline
+\TT{admin/users} & dir & \pagref{ADMIN/USERS}
+	& login & user & \\ 
+\hline
+\TT{admin/users/UID} & dir & \pagref{ADMIN/USERS/UID}
+	& user & & \\ 
+\hline
+\FSTACK{admin/}{users/UID/\\UID.info}} & json
+	& \pagref{ADMIN/USERS/UID/UID.INFO}
+	& user & & \\ 
+\hline
+\TT{users} & dir & \pagref{USERS} & login & user & \\ 
+\hline
+\TT{users/UID} & dir & \pagref{ADMIN/USERS/UID}
+	& user & \PSTACK{problem\\project} & \\ 
+\hline
+\FSTACK{users/}{UID/PROBLEM/\\PROBLEM.cc}
+    & C++ & \pagref{USERS/UID/PROBLEM/PROBLEM.cc}
+    	& \PSTACK{problem\\(upload)} & & \\ 
+\hline
+\TT{projects} & dir & \pagref{PROJECTS} & login & maint & \\ 
+\hline
+\TT{solutions} & dir & \pagref{SOLUTIONS} & login & maint & \\ 
+\hline
+\end{tabular}
+\end{center}
 
 \section{Overview}
 

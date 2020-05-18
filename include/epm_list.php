@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 15 17:24:20 EDT 2020
+    // Date:	Mon May 18 14:44:16 EDT 2020
 
     // Functions for managing lists.
 
@@ -20,11 +20,11 @@
     //
     define ( "ALL_PERMISSIONS",
              [ 'owner'  => true, 'push'  => true,
-	       'pull'   => true, 'index' => true,
+	       'pull'   => true, 'list' => true,
 	       'review' => true ] );
     define ( "NO_PERMISSIONS",
              [ 'owner'  => false, 'push'  => false,
-	       'pull'   => false, 'index' => false,
+	       'pull'   => false, 'list' => false,
 	       'review' => false ] );
 
     // Add permissions from $pfile into permission map
@@ -228,7 +228,7 @@
         global $uid;
 
 	if ( preg_match ( '/\+.+\+/', $listname ) )
-	    return "users/$uid/+indices+/$listname";
+	    return "users/$uid/+lists+/$listname";
 
         list ( $project, $basename ) =
 	    explode ( ':', $listname );
@@ -238,7 +238,7 @@
 	    $d = "users/$uid";
 	else
 	    $d = "projects/$project";
-	return "$d/+indices+/{$basename}.index";
+	return "$d/+lists+/{$basename}.list";
     }
 
     // Given a basename make a new empty file for the
@@ -258,7 +258,7 @@
 	             . " list name";
 	   return;
 	}
-	$f = "users/$uid/+indices+/$basename.index";
+	$f = "users/$uid/+lists+/$basename.list";
 	if ( file_exists ( "$epm_data/$f" ) )
 	{
 	   $errors[] = "the $basename list already"
@@ -274,7 +274,7 @@
 	    ERROR ( "could not stat $f" );
 	$time = strftime ( $epm_time_format, $time );
 
-	$f = "users/$uid/+indices+/+favorites+";
+	$f = "users/$uid/+lists+/+favorites+";
 	$flist = read_file_list ( $f );
 	array_unshift ( $flist, [$time, '-', $basename] );
 	write_file_list ( $f, $flist );
@@ -302,7 +302,7 @@
 	    return;
 	}
 
-        $f = "users/$uid/+indices+/$basename.index";
+        $f = "users/$uid/+lists+/$basename.list";
 	if ( $project == '-' )
 	{
 	    if ( ! file_exists ( "$epm_data/$f" ) )
@@ -314,8 +314,8 @@
 	}
 	else
 	{
-	    $g = "projects/$project/+indices+/"
-	       . "$basename.index";
+	    $g = "projects/$project/+lists+/"
+	       . "$basename.list";
 	    if ( ! is_link ( "$epm_data/$g" ) )
 	    {
 	        $errors[] = "there is no list"
@@ -344,7 +344,7 @@
 
 	unlink ( "$epm_data/$f" );
 
-	$f = "users/$uid/+indices+/+favorites+";
+	$f = "users/$uid/+lists+/+favorites+";
 	delete_from_file_list
 	    ( $f, $project, $basename );
     }
@@ -762,7 +762,7 @@
 	    $time = strftime ( $epm_time_format, $time );
 	    $list[] = [$time, $project, '-'];
 	}
-	$f = "users/$uid/+indices+/+favorites+";
+	$f = "users/$uid/+lists+/+favorites+";
 	write_file_list ( $f, $list );
 	return $list;
     }

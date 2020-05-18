@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 18 09:13:32 EDT 2020
+    // Date:	Mon May 18 14:41:50 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -120,7 +120,7 @@
 		$flist[] = $list[$index];
 	    }
 	    write_file_list
-		( "users/$uid/+indices+/+favorites+",
+		( "users/$uid/+lists+/+favorites+",
 		  $flist );
 	}
 	if ( $op == 'finish' || $op == 'cancel' )
@@ -138,11 +138,11 @@
     $inmap = [];
     $time = strftime ( $epm_time_format );
     $inmap["-:-"] = $time;
-    $projects = read_projects ( 'index|push|pull' );
+    $projects = read_projects ( 'list|push|pull' );
     foreach ( $projects as $project )
         $inmap["$project:-"] = $time;
 
-    // Add .index files in $dirname using $project
+    // Add .list files in $dirname using $project
     // as project name.
     //
     function append_listnames
@@ -156,7 +156,7 @@
 	{
 	    $ext = pathinfo
 	        ( $fname, PATHINFO_EXTENSION );
-	    if ( $ext != 'index' ) continue;
+	    if ( $ext != 'list' ) continue;
 	    $basename = pathinfo
 	        ( $fname, PATHINFO_FILENAME );
 	    $time = @filemtime
@@ -168,14 +168,14 @@
 	}
     }
     append_listnames
-        ( $inmap, '-', "users/$uid/+indices+" );
+        ( $inmap, '-', "users/$uid/+lists+" );
     foreach ( $projects as $project )
         append_listnames
 	    ( $inmap, $project,
-	      "/projects/$project/+indices+" );
+	      "/projects/$project/+lists+" );
 
     $favorites = read_file_list
-        ( "users/$uid/+indices+/+favorites+" );
+        ( "users/$uid/+lists+/+favorites+" );
 
     // Build $fmap containing list of all lists
     // in the form PROJECT:BASENAME => TIME.  The
