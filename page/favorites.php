@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 18 03:16:18 EDT 2020
+    // Date:	Mon May 18 09:13:32 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -218,25 +218,26 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    div.favorites-title {
-	background-color: var(--bg-violet);
-	border-radius: 10px;
-	text-align: center;
-	width: 100%;
-	padding: 10px 0px 10px 0px;
-        font-size: var(--large-font-size);
-    }
     div.lists {
 	background-color: white;
 	margin: 0px;
     }
-    div.list {
+    div.favorites-title {
+	background-color: var(--bg-violet);
+	border-radius: var(--radius);
+	text-align: center;
+	margin: 0px;
+	padding: var(--font-size) 0
+	         var(--font-size) 0;
+        font-size: var(--large-font-size);
+    }
+    div.list-line {
 	background-color: var(--bg-orange);
 	border: 1px solid black;
-	border-radius: 10px;
+	border-radius: var(--radius);
 	border-collapse: collapse;
     }
-    table.list-description-header {
+    table.list-line-header {
 	text-align: center;
 	width: 100%;
 	padding: 2px;
@@ -249,7 +250,7 @@
     }
     div.list-description p, div.list-description pre {
         margin: 0px;
-        padding: 5px 0px 5px 10px;
+        padding: var(--pad);
     }
 
 </style>
@@ -357,13 +358,13 @@ EOT;
 	$switch = ( $c < $fcount ? $on : $off );
 
 	echo <<<EOT
-	<div id='$c' class='list'
+	<div id='$c' class='list-line'
 	     draggable='true'
 	     ondragover='ALLOWDROP(event)'
              ondrop='DROP(event)'
 	     ondragstart='DRAGSTART(event,$c)'>
 	<table style='width:100%'
-	       class='list-description-header'>
+	       class='list-line-header'>
 	<tr>
 	<td style='width:10%;text-align:left'>
 	<div class='checkbox'

@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May 18 03:56:36 EDT 2020
+// Date:    Mon May 18 09:14:34 EDT 2020
 
 // HTML code included at the beginning of the <head>
 // section of each page.
@@ -21,6 +21,8 @@ echo "<title>$title</title>";
 	    --font-size: 1.1vw;
 	    --large-font-size: 1.3vw;
 	    --indent: 1.3vw;
+	    --radius: 0.55vw;
+	    --pad: 0.55vw;
 	}
     }
     @media screen and ( min-width: 1366px ) {
@@ -30,6 +32,8 @@ echo "<title>$title</title>";
 	    --font-size: 16px;
 	    --large-font-size: 20px;
 	    --indent: 20px;
+	    --radius: 8px;
+	    --pad: 8px;
 	}
     }
 
@@ -98,6 +102,6 @@ echo "<title>$title</title>";
         width: calc(2*var(--font-size));
 	display: inline-block;
 	border: 2px solid black;
-	border-radius: calc(0.5*var(--font-size));
+	border-radius: var(--radius);
     }
 </style>
