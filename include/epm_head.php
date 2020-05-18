@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 17 15:31:00 EDT 2020
+// Date:    Mon May 18 03:56:36 EDT 2020
 
 // HTML code included at the beginning of the <head>
 // section of each page.
@@ -62,7 +62,8 @@ echo "<title>$title</title>";
     pre.problem {
         color: var(--hl-purple);
         font-size: var(--large-font-size);
-	padding: 0px 5px 0px 5px;
+	padding: 0px calc(0.5*var(--font-size))
+	         0px calc(0.5*var(--font-size));
 	border: 2px solid red;
     }
     form {
@@ -73,7 +74,7 @@ echo "<title>$title</title>";
     button, input, select {
 	display:inline;
         font-size: var(--font-size);
-	margin-bottom: 5px;
+	margin-bottom: calc(0.5*var(--font-size));
     }
     pre {
 	display:inline;
@@ -82,14 +83,21 @@ echo "<title>$title</title>";
     }
     div.errors, div.notices {
 	background-color: var(--bg-yellow);
-	padding-bottom: 5px;
+	padding-bottom: calc(0.5*var(--font-size));
     }
     div.warnings {
 	background-color: #FFC0FF;
-	padding-bottom: 5px;
+	padding-bottom: calc(0.5*var(--font-size));
     }
     div.manage {
 	background-color: var(--bg-cyan);
-	padding-bottom: 5px;
+	padding-bottom: calc(0.5*var(--font-size));
+    }
+    div.checkbox {
+        height: var(--font-size);
+        width: calc(2*var(--font-size));
+	display: inline-block;
+	border: 2px solid black;
+	border-radius: calc(0.5*var(--font-size));
     }
 </style>

@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 22:17:45 EDT 2020
+    // Date:	Mon May 18 03:16:18 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -33,7 +33,28 @@
 
     // POST:
     //
+    // Each post may update the +favorites+ file and
+    // has the following values:
     //
+    //	   ID=<value of EPM_DATA ID>
+    //
+    //	   indices=INDICES
+    //		Here INDICES are the indices in
+    //		EPM_DATA LIST of the elements to be
+    //		included in +favorites+, in order,
+    //		separated by ':'s, with '' denoting
+    //		the empty list.
+    //
+    //	    op=OPERATION
+    //		OPERATION is one of:
+    //
+    //		update	Update +favorites+ from INDICES
+    //
+    //		finish	Ditto and go to project.php
+    //
+    //		cancel	Just go to project.php
+    //
+    //		reset	Just reload page as per GET.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -49,38 +70,46 @@
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     if ( $method == 'GET' )
-        $_SESSION['EPM_FAVORITES'] = [];
-    elseif ( ! isset ( $_SESSION['EPM_FAVORITES'] ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-    $data = & $_SESSION['EPM_FAVORITES'];
-
-    if ( $method == 'GET' )
-        /* Do nothing */;
-    elseif ( ! isset ( $_POST['ID'] ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-    elseif ( $_POST['ID'] != $data['ID'] )
+        $_SESSION['EPM_DATA'] = [
+	    'ID' => bin2hex ( random_bytes (16 ) ),
+	    'LIST' => [] ];
+    elseif ( ! isset ( $_SESSION['EPM_DATA'] ) )
         exit ( 'UNACCEPTABLE HTTP POST' );
 
-    $data['ID'] = bin2hex ( random_bytes ( 16 ) );
+    $data = & $_SESSION['EPM_DATA'];
     $id = $data['ID'];
+    $list = & $data['LIST'];
+
+    if ( $method == 'POST' )
+    {
+        if ( ! isset ( $_POST['ID'] )
+	     ||
+	     $_POST['ID'] != $id )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$id = substr ( $id, 2 )
+	    . bin2hex ( random_bytes ( 1 ) );
+	$data['ID'] = $id;
+    }
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
 
     if ( $method == 'POST' )
     {
-        if ( !isset ( $_POST['goto'] ) )
+        if ( !isset ( $_POST['op'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         if ( !isset ( $_POST['indices'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
-        $goto = $_POST['goto'];
-	if ( $goto == 'finish' || $goto == 'update' )
+        $op = $_POST['op'];
+	if ( $op == 'finish' || $op == 'update' )
 	{
 	    $list = $data['LIST'];
 	    $count = count ( $list );
 	    $flist = [];
-	    $favs = explode ( ':', $_POST['indices'] );
+	    $indices = $_POST['indices'];
+	    $favs = ( $indices == '' ? [] :
+	              explode ( ':', $indices ) );
 	    foreach ( $favs as $index )
 	    {
 		if ( $index == '' ) continue;
@@ -94,13 +123,28 @@
 		( "users/$uid/+indices+/+favorites+",
 		  $flist );
 	}
-	if ( $goto == 'finish' || $goto == 'cancel' )
+	if ( $op == 'finish' || $op == 'cancel' )
 	{
 	    header ( 'Location: /page/project.php' );
 	    exit;
 	}
     }
 
+    // Build $inmap containing list of all lists
+    // in the form PROJECT:BASENAME => TIME.  Lists
+    // of problems with BASENAME = '-' are first.
+    //
+
+    $inmap = [];
+    $time = strftime ( $epm_time_format );
+    $inmap["-:-"] = $time;
+    $projects = read_projects ( 'index|push|pull' );
+    foreach ( $projects as $project )
+        $inmap["$project:-"] = $time;
+
+    // Add .index files in $dirname using $project
+    // as project name.
+    //
     function append_listnames
 	    ( & $inmap, $project, $dirname )
     {
@@ -123,18 +167,6 @@
 	        strftime ( $epm_time_format, $time );
 	}
     }
-
-    // Build $inmap containing list of all lists
-    // in the form PROJECT:BASENAME => TIME.  Lists
-    // of problems with BASENAME = '-' are first.
-    //
-
-    $inmap = [];
-    $time = strftime ( $epm_time_format );
-    $inmap["-:-"] = $time;
-    $projects = read_projects ( 'index|push|pull' );
-    foreach ( $projects as $project )
-        $inmap["$project:-"] = $time;
     append_listnames
         ( $inmap, '-', "users/$uid/+indices+" );
     foreach ( $projects as $project )
@@ -186,10 +218,6 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    span.problem {
-	display:inline;
-        font-size: var(--large-font-size);
-    }
     div.favorites-title {
 	background-color: var(--bg-violet);
 	border-radius: 10px;
@@ -222,14 +250,6 @@
     div.list-description p, div.list-description pre {
         margin: 0px;
         padding: 5px 0px 5px 10px;
-    }
-    span.checkbox {
-        height: 15px;
-        width: 30px;
-	display: inline-block;
-	margin-right: 3px;
-	border: 1px solid;
-	border-radius: 7.5px;
     }
 
 </style>
@@ -280,7 +300,6 @@ var LOG = function(message) {};
     </form>
     </td>
     <td>
-    <form>
     <button type='button'
 	    onclick='SUBMIT("update")'>
 	    Update</button>
@@ -293,12 +312,11 @@ var LOG = function(message) {};
     <button type='button'
 	    onclick='SUBMIT("reset")'>
 	    Reset</button>
-    </form>
 
     <form method='POST' action='favorites.php'
 	  id='submit-form'>
     <input type='hidden' name='ID' value='$id'>
-    <input type='hidden' name='goto' id='goto'>
+    <input type='hidden' name='op' id='op'>
     <input type='hidden' name='indices'
 	   id='indices'>
     </form>
@@ -348,11 +366,10 @@ EOT;
 	       class='list-description-header'>
 	<tr>
 	<td style='width:10%;text-align:left'>
-	<span class='checkbox'
+	<div class='checkbox'
 	      onclick='CHECK(event,"$c")'
 	      style='background-color:$switch'>
-	      &nbsp;
-	      </span></td>
+	      </div></td>
 	<td style='width:80%;text-align:center'>
 	    $project $basename $time</td>
 	</tr></table>
@@ -379,8 +396,9 @@ EOT;
 
     let submit_form = document.getElementById
 	( 'submit-form' );
-    let goto = document.getElementById ( 'goto' );
-    let indices = document.getElementById ( 'indices' );
+    let op_in = document.getElementById ( 'op' );
+    let indices_in = document.getElementById
+        ( 'indices' );
 
     function BOXFROMDIV ( div )
     {
@@ -388,8 +406,8 @@ EOT;
 	let tbody = table.firstElementChild;
 	let tr = tbody.firstElementChild;
 	let td = tr.firstElementChild;
-	let span = td.firstElementChild;
-	return span;
+	let checkbox = td.firstElementChild;
+	return checkbox;
     }
 
     function DRAGSTART ( event, c )
@@ -404,9 +422,7 @@ EOT;
     {
         event.preventDefault();
 	id = event.dataTransfer.getData ( "id" );
-	let des = event.target;
-	while ( des.tagName != 'DIV' )
-	    des = des.parentElement;
+	let des = event.currentTarget;
 	let src = document.getElementById ( id );
 	let next = des.nextElementSibling;
 	let src_box = BOXFROMDIV ( src );
@@ -438,7 +454,7 @@ EOT;
     function CHECK ( event, c )
     {
         event.preventDefault();
-	let checkbox = event.target;
+	let checkbox = event.currentTarget;
 	let src = document.getElementById ( c );
 	if ( checkbox.style.backgroundColor == on )
 	{
@@ -478,7 +494,7 @@ EOT;
 	}
     }
 
-    function SUBMIT ( to )
+    function SUBMIT ( op )
     {
 	var list = [];
 	for ( var i = 1; i < lists.children.length;
@@ -492,8 +508,8 @@ EOT;
 	    else
 	        break;
 	}
-	indices.value = list.join ( ':' );
-        goto.value = to;
+	indices_in.value = list.join ( ':' );
+        op_in.value = op;
 	submit_form.submit();
     }
 

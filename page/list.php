@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 17 15:36:19 EDT 2020
+    // Date:	Mon May 18 04:06:42 EDT 2020
 
     // Maintains problem lists.
 
@@ -96,13 +96,12 @@
     //			cription file is the list of
     //			list 1-J, this is an error.
     //
-    //  * Should be sent ONLY if list J HAS been modified.
-    // ** Should be send ONLY if list J has NOT been
-    //    modified.
+    //  * Should be sent ONLY if list J is writable.
+    // ** Should be send ONLY if list J is read-only.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -118,21 +117,24 @@
 	    'ID' => bin2hex ( random_bytes ( 16 ) ),
 	    'NAMES' => ['',''],
 	    'ELEMENTS' => [] ];
+    elseif ( ! isset ( $_SESSION['EPM_DATA'] ) )
+        exit ( 'UNACCEPTABLE HTTP POST' );
 
     $data = & $_SESSION['EPM_DATA'];
     $id = $data['ID'];
     $names = & $data['NAMES'];
     $elements = & $data['ELEMENTS'];
 
-    if ( $method == 'POST'
-         &&
-	 ( ! isset ( $_POST['ID'] )
-	   ||
-	   $_POST['ID'] != $id ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-
-    $id = bin2hex ( random_bytes ( 16 ) );
-    $data['ID'] = $id;
+    if ( $method == 'POST' )
+    {
+        if ( ! isset ( $_POST['ID'] )
+	     ||
+	     $_POST['ID'] != $id )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$id = substr ( $id, 2 )
+	    . bin2hex ( random_bytes ( 1 ) );
+	$data['ID'] = $id;
+    }
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -195,9 +197,9 @@
     //                 ondragend='DRAGEND(event)'>
     //		<tr>
     //		<td style='width:10%;text-align:left'>
-    //		<span class='checkbox'
+    //		<div class='checkbox'
     //		      onclick='CHECK(event)'
-    //		      >&nbsp;</span></td>
+    //		      ></div></td>
     //		<td style='width:30%;text-align:center'>
     //		$project $problem $time</td>
     //		</tr></table>
@@ -230,9 +232,9 @@
     	           ondragend='DRAGEND(event)'>
     	    <tr>
     	    <td style='width:10%;text-align:left'>
-    	    <span class='checkbox'
+    	    <div class='checkbox'
     	          onclick='CHECK(event)'
-		  >&nbsp;</span></td>
+		  </div></td>
     	    <td style='width:80%;text-align:center'>
     	    $project $problem $time</td>
     	    </tr></table>
@@ -389,7 +391,8 @@ EOT;
 	if ( $op == 'save' || $op == 'finish' )
 	{
 	    $lists[$J] = index_to_list ( $indices[$J] );
-	    if ( ! preg_match ( '/^\d+$/', $lengths[$J] ) )
+	    if ( ! preg_match
+	               ( '/^\d+$/', $lengths[$J] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( $lengths[$J] > count ( $lists[$J] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -461,7 +464,8 @@ EOT;
 	if ( count ( $errors ) > 0 )
 	{
 	    $lists[$J] = index_to_list ( $indices[$J] );
-	    if ( ! preg_match ( '/^\d+$/', $lengths[$J] ) )
+	    if ( ! preg_match
+	               ( '/^\d+$/', $lengths[$J] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( $lengths[$J] > count ( $lists[$J] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -537,14 +541,6 @@ EOT;
     }
     table.problem td {
         padding: 5px;
-    }
-    span.checkbox {
-        height: 15px;
-        width: 30px;
-	display: inline-block;
-	margin-right: 3px;
-	border: 1px solid;
-	border-radius: 7.5px;
     }
     div.dsc-header {
 	padding: calc(0.5*var(--font-size));
@@ -753,7 +749,8 @@ EOT;
 	    <input type="hidden" name="MAX_FILE_SIZE"
 		   value="$epm_upload_maxsize">
 	    <label>
-	    <strong>Upload $basename.dsc Description File:</strong>
+	    <strong>Upload $basename.dsc
+	            Description File:</strong>
 	    <input type="file" name="uploaded_file"
 	           onchange='UPLOAD(event,"$J")'
 		   title="$upload_file_title">
@@ -820,19 +817,19 @@ for ( var J = 0; J <= 1; ++ J )
         let tbody = next.firstElementChild;
         let tr = tbody.firstElementChild;
         let td = tr.firstElementChild;
-        let span = td.firstElementChild;
-	span.style.backgroundColor = on;
+        let checkbox = td.firstElementChild;
+	checkbox.style.backgroundColor = on;
 	next = next.nextElementSibling;
     }
 }
 
-function SPAN ( table )
+function BOX ( table )
 {
     let tbody = table.firstElementChild;
     let tr = tbody.firstElementChild;
     let td = tr.firstElementChild;
-    let span = td.firstElementChild;
-    return span;
+    let checkbox = td.firstElementChild;
+    return checkbox;
 }
 
 var lengths = [0,0];
@@ -852,8 +849,8 @@ function COMPUTE_INDICES()
 	while ( next != null )
 	{
 	    ilist.push ( next.id );
-	    let span = SPAN ( next );
-	    if ( span.style.backgroundColor == on )
+	    let checkbox = BOX ( next );
+	    if ( checkbox.style.backgroundColor == on )
 	        ++ length;
 	    next = next.nextElementSibling;
 	}
@@ -909,19 +906,19 @@ function SELECT_LIST ( J )
 function CHECK ( event )
 {
     event.preventDefault();
-    let span = event.currentTarget;
-    let td = span.parentElement;
+    let checkbox = event.currentTarget;
+    let td = checkbox.parentElement;
     let tr = td.parentElement;
     let tbody = tr.parentElement;
     let table = tbody.parentElement;
     let div = table.parentElement;
-    if ( span.style.backgroundColor == on )
+    if ( checkbox.style.backgroundColor == on )
     {
-	span.style.backgroundColor = off;
+	checkbox.style.backgroundColor = off;
 	var next = table.nextElementSibling;
 	while ( next != null
 		&&
-		   SPAN(next).style.backgroundColor
+		   BOX(next).style.backgroundColor
 		== on )
 	    next = next.nextElementSibling;
 	if ( next != table.nextElementSibling )
@@ -934,11 +931,11 @@ function CHECK ( event )
     }
     else
     {
-	span.style.backgroundColor = on;
+	checkbox.style.backgroundColor = on;
 	var previous = table.previousElementSibling;
 	while ( previous != div.firstElementChild
 	        &&
-		   SPAN(previous).style.backgroundColor
+		   BOX(previous).style.backgroundColor
 		!= on )
 	    previous = previous.previousElementSibling;
 	if ( previous != table.previousElementSibling )
@@ -1017,19 +1014,19 @@ function DROP ( event )
         div.appendChild ( src );
 	if ( target != div.firstElementChild
 	     &&
-	     SPAN(target).style.backgroundColor != on )
-	    SPAN(src).style.backgroundColor = off;
+	     BOX(target).style.backgroundColor != on )
+	    BOX(src).style.backgroundColor = off;
 	}
     else
     {
 	div.insertBefore ( src, next );
-	if ( SPAN(next).style.backgroundColor == on )
-	    SPAN(src).style.backgroundColor = on;
+	if ( BOX(next).style.backgroundColor == on )
+	    BOX(src).style.backgroundColor = on;
 	else if ( target != div.firstElementChild
 	          &&
-	             SPAN(target).style.backgroundColor
+	             BOX(target).style.backgroundColor
 		  != on )
-	    SPAN(src).style.backgroundColor = off;
+	    BOX(src).style.backgroundColor = off;
     }
 }
 
