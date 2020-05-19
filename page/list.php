@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 18 16:05:51 EDT 2020
+    // Date:	Tue May 19 03:35:53 EDT 2020
 
     // Maintains problem lists.
 
@@ -485,39 +485,42 @@ EOT;
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    div.list {
+    div.list0, div.list1 {
         width:50%;
 	float:left;
 	padding: 0px;
     }
-    div.header0 {
+    div.list0 .list-name, div.list0 .dsc-header {
         background-color: var(--bg-dark-tan);
     }
-    div.header1 {
+    div.list1 .list-name, div.list1 .dsc-header {
         background-color: var(--bg-dark-blue);
     }
-    div.body0 {
+    div.list0 .dsc-body, div.list0 .list-header,
+                         div.list0 .problem {
         background-color: var(--bg-tan);
     }
-    div.body1 {
+    div.list1 .dsc-body, div.list1 .list-header,
+                         div.list1 .problem {
         background-color: var(--bg-blue);
     }
+
     div.read-only-header, div.writable-header,
                           div.list-name,
 			  div.dsc-header {
         text-align: center;
 	border: 1px solid black;
-	border-radius: 10px;
+	border-radius: var(--radius);
 	border-collapse: collapse;
 	margin: 0px;
     }
     div.read-only-header, div.writable-header,
                           div.list-name {
-	padding: 10px;
+	padding: var(--font-size);
     }
     table.problem {
 	border: 1px solid black;
-	border-radius: 10px;
+	border-radius: var(--radius);
 	margin: 0px;
 	width: 100%;
 	/* border-radius does not apply to table
@@ -525,20 +528,20 @@ EOT;
 	 */
     }
     table.problem td {
-        padding: 5px;
+        padding: var(--pad);
+	font-size: var(--large-font-size);
     }
     div.dsc-header {
-	padding: calc(0.5*var(--font-size));
-	/* 0.5em does NOT scale */
+	padding: var(--pad);
     }
     div.dsc-body {
 	border: 1px solid black;
-	margin-top: calc(0.5*var(--font-size));
+	margin-top: var(--pad);
 	text-align: left;
     }
     div.dsc-body p, div.dsc-body pre {
         margin: 0px;
-	padding: calc(0.5*var(--font-size));
+	padding: var(--pad);
     }
     div.dsc-body p {
 	font-size: var(--large-font-size);
@@ -674,16 +677,15 @@ EOT;
 	}
 
 	echo <<<EOT
-	<div class='list body$J'>
+	<div class='list$J'>
 EOT;
 
 	if ( $writable == 'no' )
 	    echo <<<EOT
-	    <div class='read-only-header'>
+	    <div class='read-only-header list-header'>
 
 	    <strong>Change To New List:</strong>
 	    <input type="text"
-		   id='new$J'
 		   size="24"
 		   placeholder="New Problem List Name"
 		   title="New Problem List Name"
@@ -692,8 +694,7 @@ EOT;
 	    <br>
 
 	    <strong>Select List to Edit:</strong>
-	    <select id='select$J'
-		    title='New Problem List to Edit'
+	    <select title='New Problem List to Edit'
 		   onclick='SELECT_LIST("$J")'>
 	    $options
 	    </select>
@@ -702,7 +703,7 @@ EOT;
 	if ( $writable == 'yes' )
 	{
 	    echo <<<EOT
-	    <div class='writable-header'>
+	    <div class='writable-header list-header'>
 	    <button type='button'
 	            onclick='SUBMIT("save","$J")'>
 	    SAVE</button>
@@ -746,7 +747,7 @@ EOT;
 	}
 	echo <<<EOT
 	<div id='list$J' data-writable='$writable'>
-	<div class='list-name header$J'
+	<div class='list-name'
 	     ondrop='DROP(event)'
 	     ondragover='ALLOWDROP(event)'>
 	<strong>$pname</strong>
@@ -757,9 +758,9 @@ EOT;
 EOT;
 	if ( $description != '' )
 	    echo <<<EOT
-	    <div class='dsc-header header$J'>
+	    <div class='dsc-header'>
 	    <strong>$pname List Description</strong>
-	    <div class='dsc-body body$J'>
+	    <div class='dsc-body'>
 	    $description
 	    </div>
 	    </div>
@@ -773,7 +774,7 @@ EOT;
     <script>
     var names = ['{$names[0]}','{$names[1]}'];
     var lengths = ['{$lengths[0]}','{$lengths[1]}'];
-    var ops = ['KEEP','KEEP'];
+    var indices = ['',''];
     </script>
 EOT;
 
@@ -791,23 +792,6 @@ let name_in = document.getElementById ( 'name' );
 let on = 'black';
 let off = 'transparent';
 
-for ( var J = 0; J <= 1; ++ J )
-{
-    let list = document.getElementById ( 'list' + J );
-    let first = list.firstElementChild;
-    var next = first.nextElementSibling;
-    if ( next == null ) continue;
-    for ( I = 0; I < lengths[J]; ++ I )
-    {
-        let tbody = next.firstElementChild;
-        let tr = tbody.firstElementChild;
-        let td = tr.firstElementChild;
-        let checkbox = td.firstElementChild;
-	checkbox.style.backgroundColor = on;
-	next = next.nextElementSibling;
-    }
-}
-
 function BOX ( table )
 {
     let tbody = table.firstElementChild;
@@ -817,8 +801,19 @@ function BOX ( table )
     return checkbox;
 }
 
-var lengths = [0,0];
-var indices = ['',''];
+for ( var J = 0; J <= 1; ++ J )
+{
+    let list = document.getElementById ( 'list' + J );
+    let first = list.firstElementChild;
+    var next = first.nextElementSibling;
+    for ( I = 0; I < lengths[J]; ++ I )
+    {
+	if ( next == null ) break;
+	BOX(next).style.backgroundColor = on;
+	next = next.nextElementSibling;
+    }
+}
+
 function COMPUTE_INDICES()
 {
     for ( var J = 0; J <= 1; ++ J )
@@ -827,7 +822,6 @@ function COMPUTE_INDICES()
 	    ( 'list' + J );
 	let first = list.firstElementChild;
 	var next = first.nextElementSibling;
-	if ( next == null ) continue;
 
 	var ilist = [];
 	var length = 0;
@@ -844,7 +838,7 @@ function COMPUTE_INDICES()
     }
 }
 
-function SUBMIT(op,list,name = '')
+function SUBMIT ( op, list, name = '' )
 {
     COMPUTE_INDICES();
     op_in.value = op;
@@ -875,16 +869,14 @@ function NEW ( event, J )
     if ( event.code === 'Enter' )
     {
 	event.preventDefault();
-        let new_in = document.getElementById
-	    ( 'new' + J );
+        let new_in = event.currentTarget;
 	SUBMIT ( 'new', J, new_in.value );
     }
 }
 
 function SELECT_LIST ( J )
 {
-    let select = document.getElementById
-	( 'select' + J );
+    let select = event.currentTarget;
     SUBMIT ( 'select', J, select.value );
 }
 
@@ -959,7 +951,6 @@ window.addEventListener ( 'keyup', KEYUP );
 function DRAGSTART ( event )
 {
     let table = event.currentTarget;
-    let id = table.id;
     let div = table.parentElement;
     let writable = div.dataset.writable;
     let effect = 'copy';
