@@ -2,7 +2,11 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May  7 10:41:09 EDT 2020
+// Date:    Tue May 19 13:21:50 EDT 2020
+
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain; they
+// make no warranty and accept no liability for EPM.
 
 // Per web site EPM parameters.  An edited version of
 // this file located in the $_SERVER['DOCUMENT_ROOT']

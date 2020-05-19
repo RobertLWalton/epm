@@ -2,7 +2,11 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri May  1 03:12:40 EDT 2020
+// Date:    Tue May 19 13:21:41 EDT 2020
+
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain; they
+// make no warranty and accept no liability for EPM.
 
 // See page/parameters.php for EPM server setup
 // instructions.

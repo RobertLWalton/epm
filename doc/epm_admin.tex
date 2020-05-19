@@ -97,10 +97,19 @@ Administration Manual}
 
 \author{Robert L. Walton}
 
-\date{May 18, 2020}
+\date{May 19, 2020}
  
 \maketitle
 
+\begin{center}
+{\large \bf Notice}
+\\[2ex]
+\begin{minipage}{5.5in}
+The authors have placed EPM (its files and the content of these files) in
+the public domain; they make no warranty and accept
+no liability for EPM.
+\end{minipage}
+\end{center}
 \begin{center}
 \large \bf Table of Contents
 \end{center}
@@ -149,14 +158,20 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \TT{admin/users/UID} & dir & \pagref{ADMIN/USERS/UID}
 	& user & & \\ 
 \hline
-\FSTACK{admin/}{users/UID/\\UID.info}} & json
+\FSTACK{admin/}{users/UID/\\UID.info} & json
 	& \pagref{ADMIN/USERS/UID/UID.INFO}
 	& user & & \\ 
 \hline
 \TT{users} & dir & \pagref{USERS} & login & user & \\ 
 \hline
-\TT{users/UID} & dir & \pagref{ADMIN/USERS/UID}
+\TT{users/UID} & dir & \pagref{USERS/UID}
 	& user & \PSTACK{problem\\project} & \\ 
+\hline
+\TT{users/UID/+lists+} & dir & \pagref{USERS/UID/+LISTS+}
+	& user & \PSTACK{list\\favorites} & project \\ 
+\hline
+\TT{users/UID/PROBLEM} & dir & \pagref{USERS/UID/PROBLEM}
+	& \PSTACK{problem\\project} & & \\ 
 \hline
 \FSTACK{users/}{UID/PROBLEM/\\PROBLEM.cc}
     & C++ & \pagref{USERS/UID/PROBLEM/PROBLEM.cc}
