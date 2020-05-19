@@ -1,8 +1,12 @@
-% Educational Problem Manager (EPM) Administration Manual.
+% Educational Problem Manager (EPM) Maintenance Manual.
 %
-% File:         epm.tex
+% File:         epm_maintenance.tex
 % Author:       Bob Walton (walton@acm.org)
 % Date:		See \date below.
+
+% The authors have placed EPM (its files and the
+% content of these files) in the public domain; they
+% make no warranty and accept no liability for EPM.
   
 \documentclass[12pt]{article}
 
@@ -93,7 +97,7 @@
 \begin{document}
         
 \title{Educational Problem Manager\\
-Administration Manual}
+Maintenance Manual}
 
 \author{Robert L. Walton}
 
@@ -122,10 +126,11 @@ no liability for EPM.
 
 \section{Introduction}
 
-See the Educational Problem Manager for an introduction to EPM
-and an initial overview.
+See the Administration Manual for instructions on how to install
+and run an EPM web site.
+This document is a manual for EPM system maintainers.
 
-This document is a comprehensive manual for EPM system maintainers.
+\section{Names}
 
 \section{Data Files}
 
@@ -181,6 +186,99 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 \TT{solutions} & dir & \pagref{SOLUTIONS} & login & maint & \\ 
 \hline
+\end{tabular}
+\end{center}
+
+\section{Web Pages}
+
+\subsection{Login}
+
+\begin{center}
+{\bf Login Page Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{admim/browser/BID}	& create  & update & read \\
+\TT{admim/email/EMAIL}	& -       & update & read \\
+\TT{admim/login.log}	& create  & update & -    \\
+\end{tabular}
+\\[3ex]
+{\bf Login Page Session Data}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{EPM\_EMAIL}	& -       & -      & read \\
+\TT{EPM\_UID}	& create  & -      & -    \\
+\TT{EPM\_IPADDR}& -       & -      & read \\
+\TT{EPM\_SESSION\_TIME}
+                & -       & -      & read \\
+\end{tabular}
+\end{center}
+
+\subsection{User}
+
+\begin{center}
+{\bf User Page Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{admim/browser/BID}	& create  & update & read \\
+\TT{admim/email/EMAIL}	& -       & update & read \\
+\TT{admim/login.log}	& create  & update & -    \\
+\end{tabular}
+\\[3ex]
+{\bf User Page Session Data}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{EPM\_EMAIL}	& -       & -      & read \\
+\TT{EPM\_UID}	& create  & -      & read \\
+\TT{EPM\_IPADDR}& -       & -      & read \\
+\TT{EPM\_SESSION\_TIME}
+                & -       & -      & read \\
+\end{tabular}
+\end{center}
+
+\subsection{Problem}
+
+\begin{center}
+{\bf Problem Page Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{users/UID/PROBLEM}	                & create  & update & read & delete
+\\[1ex]
+\TT{users/UID/PROBLEM/PROBLEM.tex}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/PROBLEM.pdf}	& create  & -      & read & delete
+\\[1ex]
+\TT{users/UID/PROBLEM/PROBLEM.c}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/PROBLEM.cc}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/PROBLEM.java}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/PROBLEM.py}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/PROBLEM}		& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/PROBLEM.class}	& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/PROBLEM.pyc}	& create  & -      & read & delete
+\\[1ex]
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.c}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.cc}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.java}& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.py}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM}	& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.class}
+					& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.pyc}	& create  & -      & read & delete
+\\[1ex]
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.in}	& upload  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.sin}	& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.sout}& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.fout}& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.ftest}& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.dout}& create  & -      & read & delete \\
+\TT{users/UID/PROBLEM/XXXX-PROBLEM.score}& create  & -      & read & delete \\
+\end{tabular}
+\\[3ex]
+{\bf Problem Page Session Data}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{EPM\_EMAIL}	& -       & -      & read \\
+\TT{EPM\_UID}	& -       & -      & read \\
+\TT{EPM\_PROBLEM}
+		& create  & update & read \\
 \end{tabular}
 \end{center}
 

@@ -2,9 +2,14 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May  7 15:46:11 EDT 2020
+    // Date:	Tue May 19 17:17:20 EDT 2020
 
-    // Selects user problem.  Displays and uploads
+    // The authors have placed EPM (its files and the
+    // content of these files) in the public domain;
+    // they make no warranty and accept no liability
+    // for EPM.
+
+    // Selects EPM user problem.  Displays and uploads
     // problem files.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
