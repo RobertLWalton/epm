@@ -11,7 +11,7 @@
 // See page/parameters.php for EPM server setup
 // instructions.
 
-// The following is included by all pages using:
+// The following is included by all EPM pages using:
 //
 //    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 //
@@ -24,10 +24,12 @@
 $epm_web = $_SERVER['DOCUMENT_ROOT'];
 
 $epm_self = $_SERVER['PHP_SELF'];
+
+
 if ( $epm_self == '/page/index.php' )
 {
-    // This is the unedited version of the file, and
-    // we need to go to the edited version.
+    // This is the wrong location for this file, and
+    // we need to go to the right location.
     //
     header ( 'Location: index.php' );
     exit;

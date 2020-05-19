@@ -4,7 +4,11 @@
     // Author:	Robert L Walton <walton@acm.org>
     // Date:	Thu May  7 02:27:59 EDT 2020
 
-    // Handles login for a session.
+    // The authors have placed EPM (its files and the
+    // content of these files) in the public domain; they
+    // make no warranty and accept no liability for EPM.
+
+    // Handles login for an EPM session.
     //
     // Data:
     //
