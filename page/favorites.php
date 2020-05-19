@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 18 15:33:40 EDT 2020
+    // Date:	Tue May 19 08:42:12 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -406,7 +406,7 @@ EOT;
     let indices_in = document.getElementById
         ( 'indices' );
 
-    function BOXFROMDIV ( div )
+function BOX ( div )
     {
 	let table = div.firstElementChild;
 	let tbody = table.firstElementChild;
@@ -430,30 +430,28 @@ EOT;
 	id = event.dataTransfer.getData ( "id" );
 	let des = event.currentTarget;
 	let src = document.getElementById ( id );
+	let src_box = BOX ( src );
+	let div = des.parentElement;
+
 	let next = des.nextElementSibling;
-	let src_box = BOXFROMDIV ( src );
-	if ( des == lists.firstElementChild )
+	if ( next == null )
 	{
-	    src_box.style.backgroundColor =
-	        BOXFROMDIV(next).style.backgroundColor;
-	    lists.insertBefore ( src, next );
-	}
-	else if ( next == null )
-	{
-	    src_box.style.backgroundColor =
-	        BOXFROMDIV(des).style.backgroundColor;
-	    lists.appendChild ( src );
-	}
+	    div.appendChild ( src );
+	    if ( des != div.firstElementChild
+		 &&
+		 BOX(des).style.backgroundColor != on )
+		src_box.style.backgroundColor = off;
+	    }
 	else
 	{
-	    let des_color =
-	        BOXFROMDIV(des).style.backgroundColor;
-	    let next_color =
-	        BOXFROMDIV(next).style.backgroundColor;
-	    if ( des_color == next_color )
-		src_box.style.backgroundColor =
-		    des_color;
-	    lists.insertBefore ( src, next );
+	    div.insertBefore ( src, next );
+	    if ( BOX(next).style.backgroundColor == on )
+		src_box.style.backgroundColor = on;
+	    else if ( des != div.firstElementChild
+		      &&
+			 BOX(des).style.backgroundColor
+		      != on )
+		src_box.style.backgroundColor = off;
 	}
     }
 
@@ -462,41 +460,42 @@ EOT;
         event.preventDefault();
 	let checkbox = event.currentTarget;
 	let src = document.getElementById ( c );
+	let div = src.parentElement;
+
 	if ( checkbox.style.backgroundColor == on )
 	{
 	    checkbox.style.backgroundColor = off;
-	    var des = src;
-	    while ( true )
+	    var next = src.nextElementSibling;
+	    while ( next != null
+		    &&
+		       BOX(next).style.backgroundColor
+		    == on )
+		next = next.nextElementSibling;
+	    if ( next != src.nextElementSibling )
 	    {
-	        des = des.nextElementSibling;
-		if ( des == null ) break;
-
-		let box = BOXFROMDIV ( des );
-		if ( box.style.backgroundColor == off )
-		    break;
+		if ( next == null )
+		    div.appendChild ( src );
+		else
+		    div.insertBefore ( src, next );
 	    }
-	    if ( des == null )
-	        lists.appendChild ( src );
-	    else
-	        lists.insertBefore ( src, des );
 	}
 	else
 	{
 	    checkbox.style.backgroundColor = on;
-	    var des = src;
-	    while ( true )
+	    var previous = src.previousElementSibling;
+	    while ( previous != div.firstElementChild
+		    &&
+		       BOX(previous).style
+		                    .backgroundColor
+		    != on )
+		previous =
+		    previous.previousElementSibling;
+	    if (    previous
+	         != src.previousElementSibling )
 	    {
-	        des = des.previousElementSibling;
-		if ( des == lists.firstElementChild )
-		    break;
-
-		let box = BOXFROMDIV ( des );
-		if ( box.style.backgroundColor == on )
-		    break;
+		let next = previous.nextElementSibling;
+		div.insertBefore ( src, next );
 	    }
-	    des = des.nextElementSibling;
-	    lists.insertBefore ( src, des );
-	        // This does nothing if src == des.
 	}
     }
 
@@ -507,8 +506,7 @@ EOT;
 	                 ++ i )
 	{
 	    let div = lists.children[i];
-	    let color = BOXFROMDIV(div).style
-	                               .backgroundColor;
+	    let color = BOX(div).style.backgroundColor;
 	    if ( color == on )
 	        list.push ( div.id );
 	    else
