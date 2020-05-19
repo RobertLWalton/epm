@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 18 14:44:16 EDT 2020
+    // Date:	Tue May 19 17:57:27 EDT 2020
 
     // Functions for managing lists.
 
@@ -55,13 +55,13 @@
 	               ( '/^(\S+)\s+(\S+)$/',
 		         $line, $matches ) )
 	        $m = "badly formatted permission"
-		   . " '$line' in $f";
+		   . " '$line' in $pfile";
 	    elseif ( preg_match ( '#/#', $line ) )
 	        $m = "permission '$line' in $pfile has"
 		   . " illegal '/'";
 	    elseif ( ! isset ( $pmap[$matches[1]] ) )
 	        $m = "bad permission type"
-		   . " '{$matches[1]}' in $f";
+		   . " '{$matches[1]}' in $pfile";
 	    else
 	    {
 	        $r = preg_match
@@ -69,7 +69,7 @@
 		if ( $r === false )
 		    $m = "bad permission regular"
 		       . " expression '{$matches[2]}'"
-		       . " in $f";
+		       . " in $pfile";
 		elseif ( $r )
 		    $pmap[$matches[1]] = true;
 	    }
