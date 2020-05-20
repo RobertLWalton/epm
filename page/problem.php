@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 19 17:17:20 EDT 2020
+    // Date:	Wed May 20 09:26:37 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -16,15 +16,12 @@
 
     // if ( ! isset ( $_POST['update'] ) ) // xhttp
     //     require "$epm_home/include/debug_info.php";
+    DEBUG ( 'POST ' . json_encode ( $_POST ) );
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     $user_dir = "users/$uid";
-
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET' && $method != 'POST' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -402,7 +399,7 @@
     // Remaining POSTs require $problem and $probdir
     // to be non-NULL.
     //
-    if ( $method != 'POST' ) /* Do Nothing */;
+    if ( $epm_method != 'POST' ) /* Do Nothing */;
     elseif ( ! isset ( $probdir ) )
 	/* Do Nothing */;
     elseif ( isset ( $_POST['delete_files'] ) )
@@ -430,7 +427,7 @@
 	}
     }
 
-    if ( $method != 'POST' ) /* Do Nothing */;
+    if ( $epm_method != 'POST' ) /* Do Nothing */;
     elseif ( ! isset ( $probdir ) )
 	/* Do Nothing */;
     elseif ( isset ( $_POST['make'] ) )
@@ -540,7 +537,7 @@
 	    if ( $r !== true || $count == 50 )
 	    			// 5 seconds
 	    {
-	        echo 'RELOAD';
+	        echo "$ID RELOAD";
 		exit;
 	    }
 	    $r = update_workmap();
@@ -551,7 +548,7 @@
 	        foreach ( $r as $n )
 		{
 		    $e = $workmap[$n];
-		    echo "TIME $n {$e[2]}\n";
+		    echo "$ID TIME $n {$e[2]}\n";
 		}
 		exit;
 	    }
@@ -560,7 +557,7 @@
 	}
     }
 
-    if ( ! $post_processed && $method == 'POST' )
+    if ( ! $post_processed && $epm_method == 'POST' )
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
     if ( isset ( $_SESSION['EPM_WORK']['CONTROL'] )
@@ -682,6 +679,8 @@
 	echo "<form method='POST'" .
 	     " style='display:inline'" .
 	     " action=problem.php>";
+	echo "<input type='hidden'" .
+	     " name='id' value='$ID'>";
 	echo "Do you really want to delete current" .
 	     " problem $problem?";
 	echo "&nbsp;&nbsp;<button type='submit'" .
@@ -710,6 +709,8 @@
 	echo "<form method='POST'" .
 	     " style='display:inline'" .
 	     " action=problem.php>";
+	echo "<input type='hidden'" .
+	     " name='id' value='$ID'>";
 	echo "Do you really want to copy $fout to" .
 	     " $make_ftest (this will force score" .
 	     " to be `Completely Correct')?";
@@ -749,6 +750,7 @@
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
+    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
     <td>
@@ -780,6 +782,7 @@ EOT;
     $problem_page_help</td>
     </tr></table></form>
     <form action='problem.php' method='POST'>
+    <input type='hidden' name='id' value='$ID'>
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
 EOT;
@@ -813,6 +816,7 @@ EOT;
     echo <<<EOT
     </form>
     <form action='problem.php' method='POST'>
+    <input type='hidden' name='id' value='$ID'>
     <pre>    </pre>
     <strong>or Create New Problem:</strong>
     <input type="text" size="32" name="new_problem"
@@ -1007,6 +1011,7 @@ EOT;
 	      enctype='multipart/form-data'
 	      method='POST'
 	      class='no-margin'>
+	<input type='hidden' name='id' value='$ID'>
 	<table style='width:100%'>
 	<tr>
 	<td>
@@ -1198,17 +1203,21 @@ EOT;
 	    }
 	}
     }
-?>
 
-<form action='problem.php' method='POST' id='reload'>
-<input type='hidden' name='reload' value='reload'>
-</form>
+    echo <<<EOT
+    <form action='problem.php' method='POST' id='reload'>
+    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' name='reload' value='reload'>
+    </form>
+EOT;
+?>
 
 <script>
     var LOG = function(message) {};
     <?php if ( $epm_debug )
               echo "LOG = console.log;";
     ?>
+    var ID = '<?php echo $ID; ?>';
 
     var xhttp = new XMLHttpRequest();
 
@@ -1249,6 +1258,7 @@ EOT;
 	for ( i = 0; i < response.length; ++ i )
 	{
 	    let item = response[i].trim().split( ' ' );
+	    ID = item.shift();
 	    if ( item.length == 0 ) continue;
 	    if ( item[0] == '' )
 	        continue;
@@ -1308,7 +1318,7 @@ EOT;
 	      "application/x-www-form-urlencoded" );
 	REQUEST_IN_PROGRESS = true;
 	LOG ( 'xhttp sent: update' );
-	xhttp.send ( 'update=update' );
+	xhttp.send ( 'update=update&id=' + ID );
     }
     <?php
 	if ( isset ( $_SESSION['EPM_WORK']['RESULT'] ) )
