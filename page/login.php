@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May  7 02:27:59 EDT 2020
+    // Date:	Wed May 20 02:29:13 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain; they
@@ -235,12 +235,6 @@
     //      ! isset ( $_POST['value'] ) )
     //     require "$epm_home/include/debug_info.php";
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET'
-         &&
-         $method != 'POST' )
-	exit ( "UNACCEPTABLE HTTP METHOD $method" );
-
     if ( ! isset ( $_SESSION['EPM_LOGIN_DATA'] ) )
 	$_SESSION['EPM_LOGIN_DATA'] = [];
     $data = & $_SESSION['EPM_LOGIN_DATA'];
@@ -250,7 +244,8 @@
     //
     function reply ( $reply )
     {
-	echo ( $reply );
+        global $ID;
+	echo ( "$ID $reply" );
 	exit;
     }
 
@@ -576,10 +571,10 @@
 		ERROR ( "could not write login.log" );
 
 	    unset ( $_SESSION['EPM_LOGIN_DATA'] );
-	    reply ( "DONE $next_page?id=$ID" );
+	    reply ( "DONE $next_page" );
 	}
     }
-    elseif ( $method == 'POST' )
+    elseif ( $epm_method == 'POST' )
 	exit ( "UNACCEPTABLE HTTP POST" );
 
     // Else load html and script.
@@ -688,6 +683,7 @@ var LOG = function(message) {};
 <?php if ( $epm_debug )
           echo "LOG = console.log;" . PHP_EOL ?>
 
+var ID = '<?php echo $ID; ?>';
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;
 var get_email = document.getElementById("get_email");
@@ -756,13 +752,18 @@ function SEND ( data, callback, error_message )
 	REQUEST_IN_PROGRESS = false;
 	LOG ( 'xhttp response: '
 	      + this.responseText );
-	callback ( this.responseText );
+	item = this.responseText.trim().split ( ' ' );
+	ID = item.shift();
+	if ( ID == undefined )
+	    FAIL ( 'empty response' );
+	callback ( item );
     };
     xhttp.open ( 'POST', "login.php", true );
     xhttp.setRequestHeader
         ( "Content-Type",
 	  "application/x-www-form-urlencoded" );
     REQUEST_IN_PROGRESS = true;
+    data += '&id=' + ID;
     LOG ( 'xhttp sent: ' + data );
     xhttp.send ( data );
 }
@@ -948,23 +949,22 @@ function MANUAL_ID()
 	   'sending ' + EMAIL + ' to server' );
 }
 
-function MANUAL_RESPONSE ( response )
+function MANUAL_RESPONSE ( item )
 {
-    var r = response.trim().split ( ' ' );
-    if ( r[0] == 'BAD_EMAIL' )
+    if ( item[0] == 'BAD_EMAIL' )
         FAIL ( EMAIL +
 	       ' is not a valid email address' );
-    else if ( r[0] != 'NEW'
+    else if ( item[0] != 'NEW'
 	      ||
-	      r.length != 5 )
+	      item.length != 5 )
         FAIL ( 'Response from server on sending '
 	       + EMAIL + ' to server is malformed' );
     else
     {
-	BID = r[1];
-	EKEYA = r[2];
-	EKEYB = r[3];
-	CTIME = r[4];
+	BID = item[1];
+	EKEYA = item[2];
+	EKEYB = item[3];
+	CTIME = item[4];
 	EXPIRED();
     }
 };
@@ -1057,7 +1057,6 @@ function AUTO_ID()
 
 function AUTO_RESPONSE ( item )
 {
-    item = item.trim().split ( ' ' );
     if ( item[0] == 'EXPIRED' )
     {
 	storage.removeItem ( EMAIL );
@@ -1146,7 +1145,6 @@ function GOT_SHAKEB ( shakeB )
 
 function SHAKE_RESPONSE ( item )
 {
-    item = item.trim().split ( ' ' );
     if ( item[0] == 'FAIL' )
     {
         AUTO_ID();  // Retry
@@ -1162,7 +1160,8 @@ function SHAKE_RESPONSE ( item )
 	    storage.setItem ( EMAIL, TICKET );
 	}
 	try {
-	    window.location.assign ( item[1] );
+	    window.location.assign
+	        ( item[1] + '?id=' + ID );
 	} catch ( e ) {
 	    FAIL
 	       ( 'could not access page ' + item[1] );

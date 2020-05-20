@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue May 19 21:38:54 EDT 2020
+// Date:    Wed May 20 02:35:28 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -35,6 +35,12 @@ if ( $epm_self == '/page/index.php' )
     exit;
 }
 
+$epm_method = $_SERVER['REQUEST_METHOD'];
+if ( $epm_method != 'GET'
+     &&
+     $epm_method != 'POST' )
+    exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
+
 require "parameters.php";
 
 // The rest of this file is code that is included at the
@@ -52,11 +58,6 @@ if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
     $_SESSION['EPM_SESSION_TIME'] =
         strftime ( $epm_time_format,
 	           $_SERVER['REQUEST_TIME'] );
-    $_SESSION['EPM_ID_GEN'] =
-        [ random_bytes ( 16 ), random_bytes ( 16 ),
-	  bin2hex
-	      ( '00000000000000000000000000000000' )];
-    $ID = bin2hex ( $_SESSION['EPM_ID_GEN'][0] );
     file_put_contents (
         "$epm_data/error.log",
 	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
@@ -73,7 +74,22 @@ else if (    $_SESSION['EPM_IPADDR']
     // will stop the hack.  On the other hand, it might
     // disrupt laptops that are moving between wireless
     // cells.
-else
+
+if ( $epm_self == '/page/login.php'
+     &&
+     $epm_method == 'GET' )
+{
+    unset ( $_SESSION['EPM_BID'] );
+    unset ( $_SESSION['EPM_UID'] );
+    unset ( $_SESSION['EPM_RUN'] );
+
+    $_SESSION['EPM_ID_GEN'] =
+        [ random_bytes ( 16 ), random_bytes ( 16 ),
+	  bin2hex
+	      ( '00000000000000000000000000000000' )];
+    $ID = bin2hex ( $_SESSION['EPM_ID_GEN'][0] );
+}
+elseif ( $epm_self != '/index.php' )
 {
     $id_gen = & $_SESSION['EPM_ID_GEN'];
     $id_gen[0] = substr
@@ -92,7 +108,7 @@ if ( ! isset ( $_SESSION['EPM_BID'] ) )
 {
     if ( $epm_self != "/page/login.php" )
     {
-	header ( "Location: /page/login.php?id=$ID" );
+	header ( "Location: /page/login.php" );
 	exit;
     }
 }
