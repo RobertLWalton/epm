@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 09:26:37 EDT 2020
+    // Date:	Wed May 20 13:51:39 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -16,7 +16,6 @@
 
     // if ( ! isset ( $_POST['update'] ) ) // xhttp
     //     require "$epm_home/include/debug_info.php";
-    DEBUG ( 'POST ' . json_encode ( $_POST ) );
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -531,13 +530,14 @@
     {
         $post_processed = true;
 	$count = 0;
+	echo "ID $ID\n";
 	while ( true )
 	{
 	    $r = update_work_results ( 0 );
 	    if ( $r !== true || $count == 50 )
 	    			// 5 seconds
 	    {
-	        echo "$ID RELOAD";
+	        echo "RELOAD\n";
 		exit;
 	    }
 	    $r = update_workmap();
@@ -548,7 +548,7 @@
 	        foreach ( $r as $n )
 		{
 		    $e = $workmap[$n];
-		    echo "$ID TIME $n {$e[2]}\n";
+		    echo "TIME $n {$e[2]}\n";
 		}
 		exit;
 	    }
@@ -1258,11 +1258,19 @@ EOT;
 	for ( i = 0; i < response.length; ++ i )
 	{
 	    let item = response[i].trim().split( ' ' );
-	    ID = item.shift();
 	    if ( item.length == 0 ) continue;
 	    if ( item[0] == '' )
 	        continue;
-	    else if ( item[0] == 'RELOAD' )
+	    else if ( item[0] == 'ID'
+	              &&
+		      item.length == 2 )
+	    {
+	        ID = item[1];
+		continue;
+	    }
+	    else if ( item[0] == 'RELOAD'
+	              &&
+		      item.length == 1 )
 	    {
 	    	reload.submit();
 		return;

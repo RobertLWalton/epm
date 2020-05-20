@@ -2,14 +2,15 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 30 10:19:42 EDT 2020
+    // Date:	Wed May 20 14:32:13 EDT 2020
 
     // Edits problem option page.
 
+    if ( isset ( $_GET['subwindow'] ) )
+	$epm_is_subwindow = true;
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET' )
+    if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     // require "$epm_home/include/debug_info.php";
@@ -120,6 +121,7 @@
 	echo <<<EOT
 	<div class='manage'>
 	<form method='GET' style='margin-bottom:0'>
+	<input type='hidden' name='id' value='$ID'>
 	<table style='width:100%'><tr>
 	<td>
 	<strong>User:</strong> <input type='submit'

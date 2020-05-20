@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May  6 15:30:51 EDT 2020
+    // Date:	Wed May 20 14:05:01 EDT 2020
 
     // Edits problem option page.
 
@@ -10,13 +10,9 @@
 
     if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
     {
-	header ( 'Location: /page/problem.php' );
+	header ( "Location: /page/problem.php?id=$ID" );
 	exit;
     }
-
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET' && $method != 'POST' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     // require "$epm_home/include/debug_info.php";
 
@@ -371,6 +367,7 @@
     echo <<<EOT
     <div class='manage'>
     <form method='GET' style='margin-bottom:0'>
+    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <td>
     <strong>User:</strong>
@@ -409,6 +406,7 @@
 	       from triggering submit -->
     <!-- This form lasts till the end of the
          document -->
+    <input type='hidden' name='id' value='$ID'>
     <div class='center'>
 EOT;
     if ( $edit )

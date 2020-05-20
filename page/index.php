@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed May 20 03:32:27 EDT 2020
+// Date:    Wed May 20 14:38:37 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -82,7 +82,7 @@ if ( $epm_self == '/page/login.php'
 	" {$_SERVER['REMOTE_HOST']}" . PHP_EOL,
 	FILE_APPEND );
 }
-else
+elseif ( ! isset ( $epm_is_subwindow ) )
 {
     // Check session on everything BUT login.php GET.
 
