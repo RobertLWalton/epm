@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed May 20 02:35:28 EDT 2020
+// Date:    Wed May 20 03:32:27 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -26,25 +26,30 @@ $epm_web = $_SERVER['DOCUMENT_ROOT'];
 $epm_self = $_SERVER['PHP_SELF'];
 
 
-if ( $epm_self == '/page/index.php' )
-{
-    // This is the wrong location for this file, and
-    // we need to go to the right location.
-    //
-    header ( 'Location: index.php' );
-    exit;
-}
-
 $epm_method = $_SERVER['REQUEST_METHOD'];
 if ( $epm_method != 'GET'
      &&
      $epm_method != 'POST' )
     exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
 
+if ( $epm_self == "/index.php"
+     ||
+     $epm_self == '/page/index.php' )
+{
+    if ( $epm_message == 'POST' )
+	exit ( "UNACCEPTABLE HTTP POST" );
+
+    // Redirect GETs to this page using either of
+    // its names to login.php.
+    //
+    header ( "Location: /page/login.php" );
+    exit;
+}
+
 require "parameters.php";
 
 // The rest of this file is code that is included at the
-// start of all EPM PHP pages.
+// start of *ALL* EPM PHP pages for both GETs and POSTs.
 
 session_name ( $epm_session_name );
 session_start();
@@ -52,8 +57,20 @@ clearstatcache();
 umask ( 07 );
 header ( 'Cache-Control: no-store' );
 
-if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
+if ( $epm_self == '/page/login.php'
+     &&
+     $epm_method == 'GET' )
 {
+    // Initialize session on login.php GET.
+
+    session_unset();
+
+    $_SESSION['EPM_ID_GEN'] =
+        [ random_bytes ( 16 ), random_bytes ( 16 ),
+	  bin2hex
+	      ( '00000000000000000000000000000000' )];
+    $ID = bin2hex ( $_SESSION['EPM_ID_GEN'][0] );
+
     $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];
     $_SESSION['EPM_SESSION_TIME'] =
         strftime ( $epm_time_format,
@@ -65,32 +82,10 @@ if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
 	" {$_SERVER['REMOTE_HOST']}" . PHP_EOL,
 	FILE_APPEND );
 }
-else if (    $_SESSION['EPM_IPADDR']
-          != $_SERVER['REMOTE_ADDR'] )
-    error ( 'UNACCEPTABLE SESSION IPADDR CHANGE' );
-    // A hacker who intercepts the session cookie can
-    // try to hijack the session, but will likely not
-    // have the same IP address as the session, so this
-    // will stop the hack.  On the other hand, it might
-    // disrupt laptops that are moving between wireless
-    // cells.
-
-if ( $epm_self == '/page/login.php'
-     &&
-     $epm_method == 'GET' )
+else
 {
-    unset ( $_SESSION['EPM_BID'] );
-    unset ( $_SESSION['EPM_UID'] );
-    unset ( $_SESSION['EPM_RUN'] );
+    // Check session on everything BUT login.php GET.
 
-    $_SESSION['EPM_ID_GEN'] =
-        [ random_bytes ( 16 ), random_bytes ( 16 ),
-	  bin2hex
-	      ( '00000000000000000000000000000000' )];
-    $ID = bin2hex ( $_SESSION['EPM_ID_GEN'][0] );
-}
-elseif ( $epm_self != '/index.php' )
-{
     $id_gen = & $_SESSION['EPM_ID_GEN'];
     $id_gen[0] = substr
         ( @openssl_encrypt
@@ -102,39 +97,26 @@ elseif ( $epm_self != '/index.php' )
 	// last 16 of which are an encryption of the
 	// first 16.
     $ID = bin2hex ( $id_gen[0] );
-}
 
-if ( ! isset ( $_SESSION['EPM_BID'] ) )
-{
-    if ( $epm_self != "/page/login.php" )
-    {
-	header ( "Location: /page/login.php" );
-	exit;
-    }
-}
-else if ( ! isset ( $_SESSION['EPM_UID'] ) )
-{
-    if ( $epm_self != "/page/user.php" )
-    {
-	header ( "Location: /page/user.php?id=$ID" );
-	exit;
-    }
-}
-else if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
-         &&
-	 $_SESSION['EPM_RUN']['RESULT'] === true
-	 &&
-         $epm_self != "/page/run.php" )
-{
-    // Run still running.
+    // Check that we have not skipped a page.
     //
-    header ( "Location: /page/run.php?id=$ID" );
-    exit;
-}
-else if ( $epm_self == "/index.php" )
-{
-    header ( "Location: /page/problem.php?id=$ID" );
-    exit;
+    if ( ! isset ( $_SESSION['EPM_BID'] )
+	 &&
+	 $epm_self != "/page/login.php" )
+	exit ( 'UNACCEPTABLE HTTP GET/POST' );
+    else if ( ! isset ( $_SESSION['EPM_UID'] )
+	      &&
+	      $epm_self != "/page/login.php"
+	      &&
+	      $epm_self != "/page/user.php" )
+	exit ( 'UNACCEPTABLE HTTP GET/POST' );
+    else if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
+	      &&
+	      $_SESSION['EPM_RUN']['RESULT'] === true
+	      &&
+	      $epm_self != "/page/run.php" )
+	exit ( 'UNACCEPTABLE HTTP GET/POST' );
+	    // Run still running.
 }
 
 // The rest of this file consists of functions that
