@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 15:32:15 EDT 2020
+    // Date:	Wed May 20 16:33:17 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1453,18 +1453,13 @@ EOT;
            name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
-    <td>
-    <label>
-    <strong>User:</strong>
-    <input type='submit' value='$email'
-	   formaction='user.php'
-           title='Click to See User Profile'>
-    </label>
-    </td>
-    <td>
 EOT;
     if ( $op == 'push' || $op == 'pull' )
     	echo <<<EOT
+	<td>
+	<strong>User: $email</strong>
+	</td>
+	<td>
 	<div id='done-response' style='display:none'>
 	<strong>Done!</strong>
 	<button type='submit'
@@ -1482,6 +1477,15 @@ EOT;
 EOT;
     else
     	echo <<<EOT
+	<td>
+	<label>
+	<strong>User:</strong>
+	<input type='submit' value='$email'
+	       formaction='user.php'
+	       title='Click to See User Profile'>
+	</label>
+	</td>
+	<td>
 	<strong>Go To</strong>
 	<button type='submit'
 		formaction='problem.php'>

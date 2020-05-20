@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 13:51:39 EDT 2020
+    // Date:	Wed May 20 16:20:41 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -748,7 +748,7 @@
 			         "none selected" );
     $problem_page_help = HELP ( 'problem-page' );
     echo <<<EOT
-    <div class='manage'>
+    <div class='manage' id='manage'>
     <form method='GET'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
@@ -900,7 +900,8 @@ EOT;
 		$working_help =
 		    HELP ( 'problem-working' );
 		echo <<<EOT
-		<div class='work_display'>
+		<div class='work_display'
+		     id='work-display'>
 		<table style='width:100%'><tr>
 		<td>
 		<button type='button'
@@ -1006,7 +1007,8 @@ EOT;
 	    HELP ( 'problem-marks' );
 
         echo <<<EOT
-	<div class='problem_display'>
+	<div class='problem_display'
+	     id='problem-display'>
 	<form action='problem.php'
 	      enctype='multipart/form-data'
 	      method='POST'
@@ -1251,6 +1253,11 @@ EOT;
     }
 
     var reload = document.getElementById("reload");
+    var manage = document.getElementById("manage");
+    var work_display =
+        document.getElementById("work-display");
+    var problem_display =
+        document.getElementById("problem-display");
 
     function PROCESS_RESPONSE ( response )
     {
@@ -1326,6 +1333,14 @@ EOT;
 	      "application/x-www-form-urlencoded" );
 	REQUEST_IN_PROGRESS = true;
 	LOG ( 'xhttp sent: update' );
+	manage.style.display = 'none';
+	work_display.style.display = 'none';
+	problem_display.style.display = 'none';
+	    // These keep buttons from being clicked
+	    // while an xhttp response is pending,
+	    // is the ID needs to be updated by the
+	    // response before a button is pressed.
+
 	xhttp.send ( 'update=update&id=' + ID );
     }
     <?php
