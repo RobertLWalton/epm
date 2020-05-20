@@ -5,8 +5,9 @@
     // Date:	Wed May 20 02:29:13 EDT 2020
 
     // The authors have placed EPM (its files and the
-    // content of these files) in the public domain; they
-    // make no warranty and accept no liability for EPM.
+    // content of these files) in the public domain;
+    // they make no warranty and accept no liability
+    // for EPM.
 
     // Handles login for an EPM session.
     //

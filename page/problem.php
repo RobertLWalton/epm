@@ -1207,7 +1207,8 @@ EOT;
     }
 
     echo <<<EOT
-    <form action='problem.php' method='POST' id='reload'>
+    <form action='problem.php'
+          method='POST' id='reload'>
     <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='reload' value='reload'>
     </form>

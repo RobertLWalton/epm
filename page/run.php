@@ -2,7 +2,7 @@
 
     // File:	Wed May  6 15:34:41 EDT 2020
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May  7 15:18:00 EDT 2020
+    // Date:	Wed May 20 17:26:25 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -14,10 +14,6 @@
 	header ( 'Location: /page/problem.php' );
 	exit;
     }
-
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET' && $method != 'POST' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
 
     // require "$epm_home/include/debug_info.php";
 
@@ -118,7 +114,7 @@
 	     ||
 	     $runresult !== true )
 	{
-	    echo 'RELOAD';
+	    echo "$ID\$RELOAD";
 	    exit;
 	}
 	else
@@ -128,12 +124,12 @@
 	    $contents = @file_get_contents
 	        ( "$epm_data/$f" );
 	    if ( $contents !== false )
-	        echo $contents;
+	        echo "$ID\$$contents";
 	    exit;
 	}
     }
 
-    if ( $method == 'POST' && ! $post_processed )
+    if ( $epm_method == 'POST' && ! $post_processed )
         exit ( 'UNACCEPTABLE HTTP POST' );
 
 
@@ -346,8 +342,9 @@
 
     $run_help = HELP ( 'run-page' );
     echo <<<EOT
-    <div class='manage'>
+    <div class='manage' id='manage'>
     <form method='GET'>
+    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
     <td>
@@ -417,8 +414,9 @@ EOT;
     if ( $local_map != [] )
     {
     	echo <<<EOT
-	<div class='run_list'>
+	<div class='run_list' id='run-list'>
     	<form action='run.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
 	<table>
 EOT;
 	$td = [ 'run' => "<td>",
@@ -513,11 +511,14 @@ EOT;
 	    echo "<script>" .
 		 "TOGGLE('s_$rxxxN','$rxxxN')" .
 		 "</script>";
-?>
 
-<form action='run.php' method='POST' id='reload'>
-<input type='hidden' name='reload' value='reload'>
-</form>
+    echo <<<EOT
+    <form action='run.php' method='POST' id='reload'>
+    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' name='reload' value='reload'>
+    </form>
+EOT;
+?>
 
 <script>
     var LOG = function(message) {};
@@ -556,17 +557,21 @@ EOT;
 	    ( function () { alert ( message ); } );
     }
 
+    var manage = document.getElementById("manage");
+    var run_list = document.getElementById("run-list");
     var reload = document.getElementById("reload");
 
     function PROCESS_RESPONSE ( response )
     {
-        if ( response.trim() == 'RELOAD' )
+	item = response.trim().split ( '$' );
+	ID = item[0];
+        if ( item[1].trim() == 'RELOAD' )
 	{
 	    reload.submit();
 	    return;
 	}
 	let e = document.getElementById('status');
-	e.innerText = response;
+	e.innerText = item[1];
 	REQUEST_UPDATE();
     }
 
@@ -598,6 +603,11 @@ EOT;
 	      "application/x-www-form-urlencoded" );
 	REQUEST_IN_PROGRESS = true;
 	LOG ( 'xhttp sent: update' );
+	manage.style.display = 'none';
+	run_list.style.display = 'none';
+	    // These keep buttons from being clicked
+	    // while waiting for xhttp response and
+	    // its updated ID.
 	xhttp.send ( 'update=update' );
     }
     <?php
