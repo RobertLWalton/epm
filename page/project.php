@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 19 17:34:04 EDT 2020
+    // Date:	Wed May 20 15:32:15 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -349,30 +349,14 @@
     require "$epm_home/include/epm_template.php";
         // This last is only needed by merge function.
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET' && $method != 'POST' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
-
-    if ( $method == 'GET' )
+    if ( $epm_method == 'GET' )
         $_SESSION['EPM_PROJECT'] = [
-	    'ID' => bin2hex ( random_bytes ( 16 ) ),
 	    'OP' => NULL,
 	    'LIST' => NULL ];
 
     $data = & $_SESSION['EPM_PROJECT'];
-    $id = $data['ID'];
     $op = $data['OP'];
     $list = $data['LIST'];
-
-    if ( $method == 'POST'
-         &&
-	 ( ! isset ( $_POST['ID'] )
-	   ||
-	   $_POST['ID'] != $id ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-
-    $id = bin2hex ( random_bytes ( 16 ) );
-    $data['ID'] = $id;
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -1124,8 +1108,7 @@ EOT;
 	    ERROR ( "cannot write $g" );
     }
 
-
-    if ( $method == 'POST' )
+    if ( $epm_method == 'POST' )
     {
         if ( isset ( $_POST['op'] ) )
 	{
@@ -1149,7 +1132,7 @@ EOT;
 	}
         elseif ( isset ( $_POST['send-changes'] ) )
 	{
-	    echo "COMPILED $id\n";
+	    echo "COMPILED $ID\n";
 	    echo $data['CHANGES'];
 	    exit;
 	}
@@ -1158,7 +1141,7 @@ EOT;
 	    execute_commands ( $errors );
 	    if ( count ( $errors ) > 0 )
 	    {
-		echo "ERROR $id\n";
+		echo "ERROR $ID\n";
 		foreach ( $errors as $e )
 		    echo "$e\n";
 		exit;
@@ -1167,7 +1150,7 @@ EOT;
 	        record_push_execution();
 	    else
 	        record_pull_execution();
-	    echo "DONE $id\n";
+	    echo "DONE $ID\n";
 	    exit;
 	}
         elseif ( $op == 'push' || $op == 'pull' )
@@ -1205,28 +1188,28 @@ EOT;
 
 	    if ( count ( $errors ) > 0 )
 	    {
-		echo "ERROR $id\n";
+		echo "ERROR $ID\n";
 		foreach ( $errors as $e )
 		    echo "$e\n";
 		exit;
 	    }
 	    if ( count ( $warnings ) > 0 )
 	    {
-		echo "WARN $id\n";
+		echo "WARN $ID\n";
 		foreach ( $warnings as $e )
 		    echo "$e\n";
 		exit;
 	    }
 	    if ( $just_compile )
 	    {
-		echo "COMPILED $id\n";
+		echo "COMPILED $ID\n";
 		echo $data['CHANGES'];
 		exit;
 	    }
 	    execute_commands ( $errors );
 	    if ( count ( $errors ) > 0 )
 	    {
-		echo "ERROR $id\n";
+		echo "ERROR $ID\n";
 		foreach ( $errors as $e )
 		    echo "$e\n";
 		exit;
@@ -1235,7 +1218,7 @@ EOT;
 	        record_push_execution();
 	    else
 	        record_pull_execution();
-	    echo "DONE $id\n";
+	    echo "DONE $ID\n";
 	    exit;
 	}
     }
@@ -1383,6 +1366,8 @@ EOT;
 
 	<div id='warn-response' style='display:none'>
 	<form>
+	<input type='hidden' id='id-warn'
+	       name='id' value='$ID'>
 	<table style='width:100%'>
 	<tr>
 	<td><strong>WARNINGS:</strong></td>
@@ -1409,6 +1394,8 @@ EOT;
 
 	<div id='error-response' style='display:none'>
 	<form>
+	<input type='hidden' id='id-error'
+	       name='id' value='$ID'>
 	<table style='width:100%'>
 	<tr>
 	<td><strong>Errors:</strong></td>
@@ -1431,6 +1418,8 @@ EOT;
 
 	<div id='compile-response' style='display:none'>
 	<form>
+	<input type='hidden' id='id-compile'
+	       name='id' value='$ID'>
 	<table style='width:100%'>
 	<tr>
 	<td><strong>Proposed Actions:</strong></td>
@@ -1460,6 +1449,8 @@ EOT;
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
+    <input type='hidden' id='id-header'
+           name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
     <td>
@@ -1519,21 +1510,12 @@ EOT;
 	            . ' List to Projects';
 	$pull_title = 'Pull Problems in Selected'
 	            . ' List from Projects';
-	$edit_list_title = 'Edit Lists';
 	$select_title = 'Lists of'
-	              . ' Problems to Push, Pull,'
-		      . ' Edit, or Publish';
-	$new_list_title = 'New Problem List';
-	$upload_title = 'Upload Selected List'
-	              . ' Description (.dsc) File';
-	$upload_file_title = 'Selected List Description'
-	                   . ' (.dsc) File to be'
-			   . ' Uploaded';
-	$edit_favorites_title = 'Edit Favorites List of'
-	                      . ' Lists to Select';
+	              . ' Problems to Push or Pull';
         echo <<<EOT
 	<form method='POST'>
-	<input type='hidden' name='ID' value='$id'>
+	<input type='hidden' id='id'
+	       name='id' value='$ID'>
 	<label>
 	<strong>Select List:</strong>
 	<select name='selected-list'
@@ -1569,8 +1551,8 @@ EOT;
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
-	<input type='hidden' id='ID'
-	       name='ID' value='$id'>
+	<input type='hidden' id='id'
+	       name='id' value='$ID'>
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
@@ -1764,8 +1746,8 @@ EOT;
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
-	<input type='hidden' id='ID'
-	       name='ID' value='$id'>
+	<input type='hidden' id='id'
+	       name='id' value='$ID'>
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
@@ -1911,8 +1893,15 @@ EOT;
 	var succeeded = 'green';
 	var failed = 'yellow';
 
-	var ID =
-	    document.getElementById('ID');
+	var id_warn =
+	    document.getElementById('id-warn');
+	var id_error =
+	    document.getElementById('id-error');
+	var id_compile =
+	    document.getElementById('id-compile');
+	var id_header =
+	    document.getElementById('id-header');
+	var id = document.getElementById('id');
 	var problem_rows =
 	    document.getElementById('problem-table')
 	            .rows;
@@ -2096,7 +2085,11 @@ EOT;
 			   ':\\n    ' +
 			   this.responseText );
 		message_sent = null;
-		ID.value = matches[2];
+		id_warn.value = matches[2];
+		id_error.value = matches[2];
+		id_compile.value = matches[2];
+		id_header.value = matches[2];
+		id.value = matches[2];
 		callback ( matches[1], matches[3] );
 	    };
 	    xhttp.open ( 'POST', "project.php", true );
@@ -2105,7 +2098,7 @@ EOT;
 		  "application/x-www-form-urlencoded" );
 	    message_sent = message;
 	    LOG ( 'xhttp sent: ' + message );
-	    xhttp.send ( message + '&ID=' + ID.value );
+	    xhttp.send ( message + '&id=' + id.value );
 	}
 
 	</script>
