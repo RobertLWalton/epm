@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 14:05:01 EDT 2020
+    // Date:	Wed May 20 14:55:13 EDT 2020
 
     // Edits problem option page.
 
@@ -311,22 +311,14 @@
 
     function TEMPLATE_WINDOW ( ) {
 	var src = '/page/template.php?subwindow';
-	if (    template_window == null
-	     || template_window.closed )
-	{
-	    var x = screen.width - 1200;
-	    var y = screen.height - 800;
-	    w = window.open
-		( src, 'template_window',
-		  'height=800px,width=1200px,' +
-		  'screenX=' + x + 'px,' +
-		  'screenY=' + y + 'px' );
-	}
-	else
-	{
-	    template_window.location.href = src;
-	    template_window.location.reload();
-	}
+	if ( template_window ) template_window.close();
+	var x = screen.width - 1200;
+	var y = screen.height - 800;
+	w = window.open
+	    ( src, 'template_window',
+	      'height=800px,width=1200px,' +
+	      'screenX=' + x + 'px,' +
+	      'screenY=' + y + 'px' );
     }
 
     function UNLOAD () {
