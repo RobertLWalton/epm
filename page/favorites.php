@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 19 08:42:12 EDT 2020
+    // Date:	Wed May 20 17:01:56 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -13,10 +13,6 @@
     // ------- ----
 
     // Session data is in EPM_DATA as follows:
-    //
-    //	   EPM_DATA ID
-    //		32 hex digit random number used to
-    //		verify POSTs to this page.
     //
     //	   EPM_DATA LIST
     //		List whose elements correspond to lines
@@ -35,8 +31,6 @@
     //
     // Each post may update the +favorites+ file and
     // has the following values:
-    //
-    //	   ID=<value of EPM_DATA ID>
     //
     //	   indices=INDICES
     //		Here INDICES are the indices in
@@ -65,36 +59,19 @@
 
     require "$epm_home/include/epm_list.php";
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET' && $method != 'POST' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
-
-    if ( $method == 'GET' )
+    if ( $epm_method == 'GET' )
         $_SESSION['EPM_DATA'] = [
-	    'ID' => bin2hex ( random_bytes (16 ) ),
 	    'LIST' => [] ];
     elseif ( ! isset ( $_SESSION['EPM_DATA'] ) )
         exit ( 'UNACCEPTABLE HTTP POST' );
 
     $data = & $_SESSION['EPM_DATA'];
-    $id = $data['ID'];
     $list = & $data['LIST'];
-
-    if ( $method == 'POST' )
-    {
-        if ( ! isset ( $_POST['ID'] )
-	     ||
-	     $_POST['ID'] != $id )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	$id = substr ( $id, 2 )
-	    . bin2hex ( random_bytes ( 1 ) );
-	$data['ID'] = $id;
-    }
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
 
-    if ( $method == 'POST' )
+    if ( $epm_method == 'POST' )
     {
         if ( !isset ( $_POST['op'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
@@ -296,6 +273,7 @@ var LOG = function(message) {};
     <tr>
     <td>
     <form>
+    <input type='hidden' name='id' value='$ID'>
     <label>
     <strong>User:</strong>
     <input type='submit' value='$email'
@@ -321,7 +299,7 @@ var LOG = function(message) {};
 
     <form method='POST' action='favorites.php'
 	  id='submit-form'>
-    <input type='hidden' name='ID' value='$id'>
+    <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='op' id='op'>
     <input type='hidden' name='indices'
 	   id='indices'>

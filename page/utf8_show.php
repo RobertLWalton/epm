@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 24 20:50:03 EDT 2020
+    // Date:	Wed May 20 17:03:59 EDT 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // Filename is relative to problem directory.
@@ -33,6 +33,7 @@
 
 <?php
 
+    $epm_is_subwindow = true;
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";

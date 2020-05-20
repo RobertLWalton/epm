@@ -2,12 +2,13 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 24 21:11:18 EDT 2020
+    // Date:	Wed May 20 17:03:43 EDT 2020
 
     // Show the PDF file $_GET['filename'].
     // File may be in current problem directory
     // or a temporary in its +work+ subdirectory.
 
+    $epm_is_subwindow = true;
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
