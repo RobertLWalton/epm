@@ -576,7 +576,7 @@
 		ERROR ( "could not write login.log" );
 
 	    unset ( $_SESSION['EPM_LOGIN_DATA'] );
-	    reply ( "DONE $next_page" );
+	    reply ( "DONE $next_page?id=$ID" );
 	}
     }
     elseif ( $method == 'POST' )

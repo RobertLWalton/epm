@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue May 19 13:21:41 EDT 2020
+// Date:    Tue May 19 21:38:54 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -52,6 +52,11 @@ if ( ! isset ( $_SESSION['EPM_IPADDR'] ) )
     $_SESSION['EPM_SESSION_TIME'] =
         strftime ( $epm_time_format,
 	           $_SERVER['REQUEST_TIME'] );
+    $_SESSION['EPM_ID_GEN'] =
+        [ random_bytes ( 16 ), random_bytes ( 16 ),
+	  bin2hex
+	      ( '00000000000000000000000000000000' )];
+    $ID = bin2hex ( $_SESSION['EPM_ID_GEN'][0] );
     file_put_contents (
         "$epm_data/error.log",
 	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
@@ -68,12 +73,26 @@ else if (    $_SESSION['EPM_IPADDR']
     // will stop the hack.  On the other hand, it might
     // disrupt laptops that are moving between wireless
     // cells.
+else
+{
+    $id_gen = & $_SESSION['EPM_ID_GEN'];
+    $id_gen[0] = substr
+        ( @openssl_encrypt
+          ( $id_gen[0], 'aes-128-cbc', $id_gen[1],
+	    OPENSSL_RAW_DATA, $id_gen[2] ),
+	  0, 16 );
+	// The @ suppresses the warning about the empty
+	// iv.  openssl_encrypt returns 32 bytes, the
+	// last 16 of which are an encryption of the
+	// first 16.
+    $ID = bin2hex ( $id_gen[0] );
+}
 
 if ( ! isset ( $_SESSION['EPM_BID'] ) )
 {
     if ( $epm_self != "/page/login.php" )
     {
-	header ( 'Location: /page/login.php' );
+	header ( "Location: /page/login.php?id=$ID" );
 	exit;
     }
 }
@@ -81,7 +100,7 @@ else if ( ! isset ( $_SESSION['EPM_UID'] ) )
 {
     if ( $epm_self != "/page/user.php" )
     {
-	header ( 'Location: /page/user.php' );
+	header ( "Location: /page/user.php?id=$ID" );
 	exit;
     }
 }
@@ -93,12 +112,12 @@ else if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
 {
     // Run still running.
     //
-    header ( 'Location: /page/run.php' );
+    header ( "Location: /page/run.php?id=$ID" );
     exit;
 }
 else if ( $epm_self == "/index.php" )
 {
-    header ( 'Location: /page/problem.php' );
+    header ( "Location: /page/problem.php?id=$ID" );
     exit;
 }
 
