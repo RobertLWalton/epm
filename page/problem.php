@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 04:45:49 EDT 2020
+    // Date:	Thu May 21 17:16:39 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -14,8 +14,8 @@
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // if ( ! isset ( $_POST['update'] ) ) // xhttp
-    //     require "$epm_home/include/debug_info.php";
+    if ( ! isset ( $_POST['update'] ) ) // xhttp
+        require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -780,19 +780,21 @@ EOT;
     <strong>Page</strong>
     </td><td style='text-align:right'>
     $problem_page_help</td>
-    </tr></table></form>
-    <form action='problem.php' method='POST'>
-    <input type='hidden' name='id' value='$ID'>
+    </tr></table>
+    </form>
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
 EOT;
     if ( isset ( $problem ) )
         echo <<<EOT
+	<form action='problem.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
 	<button type='submit'
 	        name='delete_problem'
 	        value='$problem'
 		title='Delete Current Problem'>
 	Delete</button>
+	</form>
 EOT;
 
     if ( count ( $problems ) > 0 )
@@ -803,18 +805,31 @@ EOT;
 		        "$value</option>";
 	echo <<<EOT
 	<pre>   </pre>
-	<label>
-	<input type='submit'
-	       name='goto_problem'
-	       value='Go To Problem:'>
+	<strong>Go To Problem:</strong>
+	<form action='problem.php' method='POST'
+	      id='goto-problem'>
+	<script>function GOTO_PROBLEM()
+	        {
+		    console.log ( 'SUBMITTING' );
+	            document.getElementById
+		        ( 'goto-problem' )
+			.submit();
+		}
+	</script>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden'
+	       name='goto_problem' value=yes>
         <select name='selected_problem'
+		onchange='GOTO_PROBLEM()'
 	        title='Problem to Go To'>
+	<option value='Select Problem'>
+	Select Problem</value>
 	$options
-        </select></label>
+        </select>
+	</form>
 EOT;
     }
     echo <<<EOT
-    </form>
     <form action='problem.php' method='POST'>
     <input type='hidden' name='id' value='$ID'>
     <pre>    </pre>
