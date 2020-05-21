@@ -2,7 +2,7 @@
 
     // File:	Wed May  6 15:34:41 EDT 2020
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 17:26:25 EDT 2020
+    // Date:	Wed May 20 23:34:51 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -511,14 +511,12 @@ EOT;
 	    echo "<script>" .
 		 "TOGGLE('s_$rxxxN','$rxxxN')" .
 		 "</script>";
-
-    echo <<<EOT
-    <form action='run.php' method='POST' id='reload'>
-    <input type='hidden' name='id' value='$ID'>
-    <input type='hidden' name='reload' value='reload'>
-    </form>
-EOT;
 ?>
+
+<form action='run.php' method='POST' id='reload'>
+<input type='hidden' name='id' id='reload-id'>
+<input type='hidden' name='reload' value='reload'>
+</form>
 
 <script>
     var LOG = function(message) {};
@@ -560,6 +558,9 @@ EOT;
     var manage = document.getElementById("manage");
     var run_list = document.getElementById("run-list");
     var reload = document.getElementById("reload");
+    var reload_id =
+        document.getElementById("reload-id");
+    var ID = '<?php echo $ID; ?>';
 
     function PROCESS_RESPONSE ( response )
     {
@@ -567,6 +568,7 @@ EOT;
 	ID = item[0];
         if ( item[1].trim() == 'RELOAD' )
 	{
+	    reload_id.value = ID;
 	    reload.submit();
 	    return;
 	}
@@ -608,7 +610,7 @@ EOT;
 	    // These keep buttons from being clicked
 	    // while waiting for xhttp response and
 	    // its updated ID.
-	xhttp.send ( 'update=update' );
+	xhttp.send ( 'update=update&id=' + ID );
     }
     <?php
 	if ( $runresult === true )

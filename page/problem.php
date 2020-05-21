@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 16:20:41 EDT 2020
+    // Date:	Wed May 20 23:35:09 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1205,15 +1205,13 @@ EOT;
 	    }
 	}
     }
-
-    echo <<<EOT
-    <form action='problem.php'
-          method='POST' id='reload'>
-    <input type='hidden' name='id' value='$ID'>
-    <input type='hidden' name='reload' value='reload'>
-    </form>
-EOT;
 ?>
+
+<form action='problem.php'
+      method='POST' id='reload'>
+<input type='hidden' name='id' id='reload-id'>
+<input type='hidden' name='reload' value='reload'>
+</form>
 
 <script>
     var LOG = function(message) {};
@@ -1254,6 +1252,8 @@ EOT;
     }
 
     var reload = document.getElementById("reload");
+    var reload_id =
+        document.getElementById("reload-id");
     var manage = document.getElementById("manage");
     var work_display =
         document.getElementById("work-display");
@@ -1280,6 +1280,7 @@ EOT;
 	              &&
 		      item.length == 1 )
 	    {
+		reload_id.value = ID;
 	    	reload.submit();
 		return;
 	    }
