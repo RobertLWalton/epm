@@ -49,6 +49,7 @@ echo "<title>$title</title>";
 	--bg-violet: #FFCCFF;
 	--bg-yellow: #F5F81A;
 	--bg-orange: #FFB0B0;
+	--bg-red: #FF8080;
 	/* Highlight Colors
 	 */
 	--hl-orange: #FF6347;
@@ -106,10 +107,10 @@ echo "<title>$title</title>";
     }
     .terms {
 	font-size: var(--large-font-size);
-        height: calc(7*var(--large-font-size));
-	width: 100%;
-	background-color: var(--bg-orange);
+        height: calc(8*var(--large-font-size));
+	width: calc(100%-var(--pad));
+	background-color: var(--bg-red);
+	padding-top: calc(0.5*var(--pad));
 	padding-left: var(--pad);
-	padding-top: var(--pad);
     }
 </style>
