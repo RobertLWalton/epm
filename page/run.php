@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 04:46:19 EDT 2020
+    // Date:	Thu May 21 05:47:10 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -125,6 +125,8 @@
 	        ( "$epm_data/$f" );
 	    if ( $contents !== false )
 	        echo "$ID\$$contents";
+	    else
+	        echo "$ID\$(no status available)";
 	    exit;
 	}
     }
