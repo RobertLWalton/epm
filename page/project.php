@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 16:33:17 EDT 2020
+    // Date:	Thu May 21 18:01:33 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1065,27 +1065,46 @@ EOT;
     }
 
     // Write EPM_PROJECT CHANGES to destination
-    // +changes+ file.
+    // +changes+ file and push action item to
+    // +actions+ files.
     //
     function record_push_execution ()
     {
-	global $epm_data, $data;
+	global $epm_data, $data, $uid,
+	       $epm_time_format;
 
 	$changes = $data['CHANGES'];
 	if ( $changes == '' ) return;
 
 	$project = $data['PROJECT'];
 	$problem = $data['PROBLEM'];
-	$f = "projects/$project/$problem/"
-	   . "+changes+";
+	$d = "projects/$project/$problem";
+	$f = "$d/+changes+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+	$time = filemtime ( "$epm_data/$f" );
+	if ( $time === false )
+	    ERROR ( "cannot stat $f" );
+	$time = strftime ( $epm_time_format, $time );
+	$action = "$time $uid push $project:$problem"
+	        . PHP_EOL;
+	$f = "$d/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $action, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+	$f = "users/$uid/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $action, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
     }
 
     // Write EPM_PROJECT CHANGES to destination
-    // +changes+ and source +pulls+ files.
+    // +changes+ file and action to source +actions+
+    // files.
     //
     function record_pull_execution ()
     {
@@ -1101,9 +1120,20 @@ EOT;
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
-	$g = "projects/$project/$problem/+pulls+";
+	$time = filemtime ( "$epm_data/$f" );
+	if ( $time === false )
+	    ERROR ( "cannot stat $f" );
+	$time = strftime ( $epm_time_format, $time );
+	$action = "$time $uid pull $project:$problem"
+	        . PHP_EOL;
+	$g = "projects/$project/$problem/+actions+";
 	$r = @file_put_contents
-	    ( "$epm_data/$g", $changes, FILE_APPEND );
+	    ( "$epm_data/$g", $action, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $g" );
+	$g = "users/$uid/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$g", $action, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $g" );
     }

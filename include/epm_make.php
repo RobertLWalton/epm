@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May  4 13:50:15 EDT 2020
+// Date:    Thu May 21 19:00:47 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1927,7 +1927,8 @@ function start_run
 function finish_run ( & $errors )
 {
     global $epm_data, $probdir, $uid, $problem,
-           $epm_parent_re, $_SESSION;
+           $epm_parent_re, $_SESSION,
+	   $epm_time_format;
 
     $run = & $_SESSION['EPM_RUN'];
     $rundir = $run['DIR'];
@@ -2004,10 +2005,40 @@ function finish_run ( & $errors )
 	if ( ! preg_match
 	           ( $epm_parent_re, $r, $matches ) )
 	    ERROR ( "link $f has bad value $r" );
-	$project = explode ( '/', $matches[1] ) [1];
+	$d = $matches[1];
+	if ( ! preg_match
+	           ( '#^projects/([^/]+)/#',
+		     $d, $matches ) )
+	    ERROR ( "link $f has bad value $r" );
+	$project = $matches[1];
 
-	$d = "admin/submit/$uid/$project/$problem";
-	@mkdir ( "$epm_data/$d", 0770, true );
+	$time = filemtime ( "$epm_data/$rout" );
+	if ( $time === false )
+	    ERROR ( "cannot stat $rout" );
+	$time = strftime ( $epm_time_format, $time );
+
+	if ( preg_match ( '/(?m)^Score:(.*)$/',
+	                   $contents, $matches ) )
+	    $score = trim ( $matches[1] );
+	else
+	    $score = 'Undefined Score';
+	$action = "$time $uid submit $project:$runbase"
+	        . " $score" . PHP_EOL;
+	$f = "$d/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $action,
+	      FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+	$f = "users/$uid/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $action,
+	      FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+
+	$d = "$d/+submit+";
+	@mkdir ( "$epm_data/$d", 0770 );
 	if ( ! is_dir ( "$epm_data/$d" ) )
 	    ERROR ( "could not make directory $d" );
 
