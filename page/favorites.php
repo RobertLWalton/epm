@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 17:01:56 EDT 2020
+    // Date:	Thu May 21 04:44:28 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -107,7 +107,8 @@
 	}
 	if ( $op == 'finish' || $op == 'cancel' )
 	{
-	    header ( 'Location: /page/project.php' );
+	    header ( 'Location: /page/project.php' .
+	             "?id=$ID" );
 	    exit;
 	}
     }

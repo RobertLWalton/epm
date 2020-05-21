@@ -1,8 +1,8 @@
 <?php
 
-    // File:	Wed May  6 15:34:41 EDT 2020
+    // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 23:34:51 EDT 2020
+    // Date:	Thu May 21 04:46:19 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -11,7 +11,7 @@
 
     if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
     {
-	header ( 'Location: /page/problem.php' );
+	header ( "Location: /page/problem.php?id=$ID" );
 	exit;
     }
 
@@ -27,7 +27,7 @@
 	// Some other session deleted the problem;
 	// let problem.php deal with it.
 	//
-	header ( 'Location: /page/problem.php' );
+	header ( "Location: /page/problem.php?id=$ID" );
 	exit;
     }
 

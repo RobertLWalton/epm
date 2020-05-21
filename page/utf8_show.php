@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 17:03:59 EDT 2020
+    // Date:	Thu May 21 04:59:31 EDT 2020
 
     // Show the UTF-8 file $_GET['filename'].
     // Filename is relative to problem directory.
@@ -43,9 +43,9 @@
 
     $probdir = "users/$uid/$problem";
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
+    if ( $epm_method != 'GET' )
+        exit ( 'UNACCEPTABLE HTTP METHOD ' .
+	       $epm_method );
     if ( ! isset ( $_GET['filename'] ) )
 	exit ( "ACCESS: illegal GET to utf8_show.php" );
 

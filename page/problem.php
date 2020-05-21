@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 23:35:09 EDT 2020
+    // Date:	Thu May 21 04:45:49 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -514,7 +514,7 @@
 	      false, $errors );
         if ( isset ( $_SESSION['EPM_RUN']['RESULT'] ) )
 	{
-	    header ( 'Location: /page/run.php' );
+	    header ( "Location: /page/run.php?id=$ID" );
 	    exit;
 	}
     }

@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 14:32:13 EDT 2020
+    // Date:	Thu May 21 04:57:42 EDT 2020
 
     // Edits problem option page.
 
@@ -11,7 +11,8 @@
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     if ( $epm_method != 'GET' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
+        exit ( 'UNACCEPTABLE HTTP METHOD ' .
+	       $epm_method );
 
     // require "$epm_home/include/debug_info.php";
 

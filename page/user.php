@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May  7 15:48:03 EDT 2020
+    // Date:	Thu May 21 05:15:08 EDT 2020
 
     // Display and edit user information in:
     //
@@ -63,16 +63,15 @@
 	$lock_desc = NULL;
     }
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method == 'GET' )
+    if ( $epm_method == 'GET' )
 	$_SESSION['EPM_USER_EDIT_DATA'] = [
 	    'uid' => '',
 	    'emails' => [],
 	    'full_name' => '',
 	    'organization' => '',
 	    'location' => ''];
-    elseif ( $method != 'POST' )
-        exit ( "UNACCEPTABLE HTTP METHOD $method" );
+    elseif ( $epm_method != 'POST' )
+        exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
 
     $data = & $_SESSION['EPM_USER_EDIT_DATA'];
 
@@ -87,7 +86,7 @@
     $edit = false;
     $STIME = $_SESSION['EPM_SESSION_TIME'];
 
-    if ( $method == 'GET' && ! $new_user )
+    if ( $epm_method == 'GET' && ! $new_user )
     {
 	$uid = $_SESSION['EPM_UID'];
 
@@ -228,7 +227,7 @@
 	return true;
     }
 	
-    if ( $method == 'GET' )
+    if ( $epm_method == 'GET' )
     {
 	// Do nothing.  Get or display user info.
     }
@@ -491,6 +490,7 @@
     echo <<<EOT
     <div class='manage'>
     <form>
+    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
     <td>
@@ -549,34 +549,42 @@ EOT;
     {
 	$he = htmlspecialchars ( $e );
 	if ( $edit )
-	    echo "<form style='display:inline'".
-		 " method='POST'" .
-		 " action='user.php'>" .
-		 "<pre>$he</pre>" .
-		 "&nbsp;&nbsp;&nbsp;&nbsp;" .
-		 "<button type='submit'" .
-		 " name='delete_email'" .
-		 " value='$he'>Delete</button><br>" .
-		 PHP_EOL .
-		 "</form>";
+	    echo <<<EOT
+	    <form style='display:inline'
+		  method='POST'
+		  action='user.php'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <pre>$he</pre>
+	    <pre>    </pre>
+	    <button type='submit'
+		    name='delete_email'
+		    value='$he'>Delete</button><br>
+	    </form>
+EOT;
 	else
 	    echo "<pre>$he</pre><br>";
     }
     if ( $edit
          &&
 	 count ( $emails ) + 1 < $max_emails )
-	echo "<form style='display:inline'".
-	     " method='POST'" .
-	     " action='user.php'>" .
-	     "<input type='email' name='new_email'" .
-	     " value='' size='40' placeholder=" .
-	     "'Another Email Address'" .
-	     " title='Add another email address" .
-	     " to the account'>" .
-	     "&nbsp;&nbsp;&nbsp;&nbsp;" .
-	     "<input type='submit'" .
-	     " name='add_email' value='Add'>" .
-	     "</form>";
+    {
+        $new_email_title =
+	     'Add another email address to the account';
+	echo <<<EOT
+	<form style='display:inline'
+	      method='POST'
+	      action='user.php'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='email' name='new_email'
+	       value='' size='40'
+	       placeholder='Another Email Address'
+	       title='$new_email_title'>
+	<pre>    </pre>
+	<input type='submit'
+	       name='add_email' value='Add'>
+	</form>
+EOT;
+    }
 
     echo "</div></div>";
 
@@ -593,11 +601,13 @@ EOT;
 	echo <<<EOT
 	<form method='POST' action='user.php'
 	      id='profile-update'>
+	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden' name='update' value='yes'>
 	<strong>Edit Your User Profile:</strong><br>
 	<table>
 EOT;
-	if ( $new_user ) echo <<<EOT
+	if ( $new_user )
+	    echo <<<EOT
 	    <tr><th>User ID:</th>
 		<td> <input type='text' size='10'
 		      name='uid'

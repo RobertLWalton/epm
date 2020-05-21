@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 14:55:13 EDT 2020
+    // Date:	Thu May 21 04:45:25 EDT 2020
 
     // Edits problem option page.
 
@@ -26,7 +26,7 @@
 	// Some other session deleted the problem;
 	// let problem.php deal with it.
 	//
-	header ( 'Location: /page/problem.php' );
+	header ( "Location: /page/problem.php?id=$ID" );
 	exit;
     }
 

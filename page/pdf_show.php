@@ -2,7 +2,7 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 17:03:43 EDT 2020
+    // Date:	Thu May 21 04:57:12 EDT 2020
 
     // Show the PDF file $_GET['filename'].
     // File may be in current problem directory
@@ -18,9 +18,9 @@
 
     $probdir = "users/$uid/$problem";
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    if ( $method != 'GET' )
-        exit ( 'UNACCEPTABLE HTTP METHOD ' . $method );
+    if ( $epm_method != 'GET' )
+        exit ( 'UNACCEPTABLE HTTP METHOD ' .
+	       $epm_method );
     if ( ! isset ( $_GET['filename'] ) )
 	exit
 	    ( "ACCESS: illegal GET to pdf_show.php" );
