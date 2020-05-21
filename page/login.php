@@ -678,6 +678,10 @@ Please <input type='text' size='40' id='cnum_in'
        placeholder='Enter Confirmation Number'>
 </div>
 
+<div class='terms'>
+<?php require "$epm_home/include/epm_terms.html"; ?>
+</div>
+
 <script>
 
 var LOG = function(message) {};

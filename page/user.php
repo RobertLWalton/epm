@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 05:15:08 EDT 2020
+    // Date:	Thu May 21 11:40:38 EDT 2020
 
     // Display and edit user information in:
     //
@@ -656,10 +656,12 @@ EOT;
 	    <td>$hlocation</td></tr>
 	</table><br>
 EOT;
-    echo <<<EOT
-    </div>
-EOT;
 ?>
+
+</div>
+<div class='terms'>
+<?php require "$epm_home/include/epm_terms.html"; ?>
+</div>
 
 <script>
 let profile_update = document.getElementById
