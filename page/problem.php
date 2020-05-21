@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 17:16:39 EDT 2020
+    // Date:	Thu May 21 17:42:02 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -14,8 +14,8 @@
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    if ( ! isset ( $_POST['update'] ) ) // xhttp
-        require "$epm_home/include/debug_info.php";
+    // if ( ! isset ( $_POST['update'] ) ) // xhttp
+    //     require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -819,10 +819,10 @@ EOT;
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
 	       name='goto_problem' value=yes>
-        <select name='selected_problem'
-		onchange='GOTO_PROBLEM()'
+        <select name='selected_problem' required
+		onchange='GOTO_PROBLEM()'>
 	        title='Problem to Go To'>
-	<option value='Select Problem'>
+	<option value=''>
 	Select Problem</value>
 	$options
         </select>
