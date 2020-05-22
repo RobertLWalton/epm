@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 21 22:30:38 EDT 2020
+// Date:    Fri May 22 16:49:41 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -41,50 +41,16 @@ if ( ! isset ( $is_epm_test ) )
     // notably move_uploaded_file, will not work
     // in this test script environment.
 
-// Directories may be locked.  Specifially, locking
-// a directory will open a +lock+ file in the directory
-// and lock it.  Unlocking the directory will unlock
-// its +lock+ file and close the file (but NOT unlink
-// the file).  The +lock+ file will be created if it
-// does not exist.  The lock may be LOCK_SH or LOCK_EX.
-//
-// Directory names are relative to $epm_data.
-//
-$epm_make_lock_map = [];
-function lock ( $dir, $type = LOCK_EX )
+$epm_lock = NULL;
+function unlock()
 {
-    global $epm_data, $epm_make_lock_map;
-
-    if ( isset ( $epm_make_lock_map[$dir] ) )
-        ERROR ( "locking an already locked" .
-	        " directory: $dir" );
-    $f = "$dir/+lock+";
-    $handle = fopen ( "$epm_data/$f", 'w' );
-    if ( $handle === false )
-        ERROR ( "cannot open $f for writing" );
-    $r = flock ( $handle, $type );
-    if ( $r === false )
-        ERROR ( "cannot lock $f" );
-    $epm_make_lock_map[$dir] = $handle;
+    global $epm_lock;
+    if ( ! isset ( $epm_lock ) ) return;
+    flock ( $epm_lock, LOCK_UN );
+    fclose ( $epm_lock );
+    $epm_lock = NULL;
 }
-function unlock ( $dir )
-{
-    global $epm_make_lock_map;
-    if ( ! isset ( $epm_make_lock_map[$dir] ) )
-        return;
-    $handle = $epm_make_lock_map[$dir];
-    flock ( $handle, LOCK_UN );
-    fclose ( $handle );
-    unset ( $epm_make_lock_map[$dir] );
-}
-function unlock_all()
-{
-    global $epm_make_lock_map;
-    foreach ( $epm_make_lock_map as $dir => $handle )
-        unlock ( $dir );
-}
-register_shutdown_function ( 'unlock_all' );
-
+register_shutdown_function ( 'unlock' );
 
 // Return true if process with $pid is still running,
 // and false otherwise.
@@ -1961,19 +1927,37 @@ function start_run
 //
 // Checks for errors, including non-empty .rerr file.
 // Then if there are no errors, moves the .rout file
-// into $probdir is $submit is false, or to"
+// into $probdir is $submit is false.
 //
-//	admin/submit/$uid/$project/$problem/
-//		$runbase-C.rout
+// If $submit is true and there are no errors, locks
+// project/$project, appends a line to
 //
-// if $submit is true.  Here C is the smallest integer
-// >= 1 such that the file named does not pre-exist.
+//	projects/$project/+actions+
+//
+// copies .rout file to $probdir, and then moves .rout
+// file to
+//
+//	projects/$project/+submit+/
+//		 CCCCCC-$uid-$runbase.rout
+//
+// Here CCCCCC is the value of
+//
+//	projects/$project/+submit+/+count+
+//
+// which is an integer that is incremented by 1.  If
+// 
+//	projects/$project/+submit+
+//
+// does not exist, it is created and +count+ is
+// initialized to 0.  +count+ does not have superfluous
+// high order 0's, but when used in a file name it is
+// expanded to 6 digits.
 //
 function finish_run ( & $errors )
 {
     global $epm_data, $probdir, $uid, $problem,
            $epm_parent_re, $_SESSION,
-	   $epm_time_format;
+	   $epm_time_format, $epm_lock;
 
     $run = & $_SESSION['EPM_RUN'];
     $rundir = $run['DIR'];
@@ -2018,9 +2002,9 @@ function finish_run ( & $errors )
 	return;
     }
 
+    $f = "$probdir/$runbase.rout";
     if ( ! $submit )
     {
-	$f = "$probdir/$runbase.rout";
 	if ( ! rename ( "$epm_data/$rout",
 	                "$epm_data/$f" ) )
 	{
@@ -2028,92 +2012,97 @@ function finish_run ( & $errors )
 	    WARN ( $e );
 	    $errors[] = "EPM SYSTEM ERROR: $e";
 	}
+	return;
+    }
+
+    // From here on $submit == true.
+    //
+    $contents = @file_get_contents
+	( "$epm_data/$rout" );
+    if ( $contents === false )
+	ERROR ( "cannot read $rout" );
+    $r = @file_put_contents
+	( "$epm_data/$f", $contents );
+    if ( $r === false )
+	ERROR ( "cannot write $f" );
+
+    $f = "$probdir/+parent+";
+    if ( ! is_link ( "$epm_data/$f" ) )
+	ERROR ( "$f is not a link" );
+    $r = @readlink ( "$epm_data/$f" );
+    if ( $r === false )
+	ERROR ( "cannot read link $f" );
+    if ( ! preg_match
+	       ( $epm_parent_re, $r, $matches ) )
+	ERROR ( "link $f has bad value $r" );
+    $d = $matches[1];
+    if ( ! preg_match
+	       ( '#^projects/([^/]+)/#',
+		 $d, $matches ) )
+	ERROR ( "link $f has bad value $r" );
+    $project = $matches[1];
+
+    $time = @filemtime ( "$epm_data/$rout" );
+    if ( $time === false )
+	ERROR ( "cannot stat $rout" );
+    $time = strftime ( $epm_time_format, $time );
+
+    if ( preg_match ( '/(?m)^Score:(.*)$/',
+		       $contents, $matches ) )
+	$score = trim ( $matches[1] );
+    else
+	$score = 'Undefined Score';
+
+    $f = "$d/+lock+";
+    $epm_lock = @fopen ( "$epm_data/$f", 'w' );
+    if ( $epm_lock === false )
+        ERROR ( "cannot open $f" );
+    $r = @flock ( $epm_lock, LOCK_EX );
+    if ( $r === false )
+        ERROR ( "cannot lock $f" );
+
+    $action = "$time $uid submit $project:$runbase"
+	    . " $score" . PHP_EOL;
+    $f = "$d/+actions+";
+    $r = @file_put_contents
+	( "$epm_data/$f", $action, FILE_APPEND );
+    if ( $r === false )
+	ERROR ( "cannot write $f" );
+    $f = "users/$uid/+actions+";
+    $r = @file_put_contents
+	( "$epm_data/$f", $action, FILE_APPEND );
+    if ( $r === false )
+	ERROR ( "cannot write $f" );
+
+    $d = "$d/+submit+";
+    $cf = "$d/+count+";
+    if ( ! is_dir ( "$epm_data/$d" ) )
+    {
+	if ( ! mkdir ( "$epm_data/$d", 0770 ) )
+	    ERROR ( "could not make directory $d" );
+	$count = 0;
     }
     else
     {
-	$f = "$probdir/$runbase.rout";
-	$contents = @file_get_contents
-	    ( "$epm_data/$rout" );
-	if ( $contents === false )
-	    ERROR ( "cannot read $rout" );
-	$r = @file_put_contents
-	    ( "$epm_data/$f", $contents );
-	if ( $r === false )
-	    ERROR ( "cannot write $f" );
+	$count = @file_get_contents
+	    ( "$epm_data/$cf" );
+	if ( $count === false )
+	    ERROR ( "could not read $cf" );
+    }
+    $r = @file_put_contents
+	( "$epm_data/$cf", $count + 1);
+    if ( $r === false )
+	ERROR ( "could not write $cf" );
+    $count = sprintf ( '%06d', $count );
 
-	$f = "$probdir/+parent+";
-	if ( ! is_link ( "$epm_data/$f" ) )
-	    ERROR ( "$f is not a link" );
-	$r = @readlink ( "$epm_data/$f" );
-	if ( $r === false )
-	    ERROR ( "cannot read link $f" );
-	if ( ! preg_match
-	           ( $epm_parent_re, $r, $matches ) )
-	    ERROR ( "link $f has bad value $r" );
-	$d = $matches[1];
-	if ( ! preg_match
-	           ( '#^projects/([^/]+)/#',
-		     $d, $matches ) )
-	    ERROR ( "link $f has bad value $r" );
-	$project = $matches[1];
+    $f = "$d/$count-$uid-$runbase.rout";
 
-	$time = filemtime ( "$epm_data/$rout" );
-	if ( $time === false )
-	    ERROR ( "cannot stat $rout" );
-	$time = strftime ( $epm_time_format, $time );
-
-	if ( preg_match ( '/(?m)^Score:(.*)$/',
-	                   $contents, $matches ) )
-	    $score = trim ( $matches[1] );
-	else
-	    $score = 'Undefined Score';
-	$action = "$time $uid submit $project:$runbase"
-	        . " $score" . PHP_EOL;
-	$f = "$d/+actions+";
-	$r = @file_put_contents
-	    ( "$epm_data/$f", $action,
-	      FILE_APPEND );
-	if ( $r === false )
-	    ERROR ( "cannot write $f" );
-	$f = "users/$uid/+actions+";
-	$r = @file_put_contents
-	    ( "$epm_data/$f", $action,
-	      FILE_APPEND );
-	if ( $r === false )
-	    ERROR ( "cannot write $f" );
-
-	$d = "$d/+submit+";
-	@mkdir ( "$epm_data/$d", 0770 );
-	if ( ! is_dir ( "$epm_data/$d" ) )
-	    ERROR ( "could not make directory $d" );
-
-        $c = 1;
-	while ( true )
-	{
-	    $f = "$d/$runbase-{$c}s.rout";
-
-	    if ( ! file_exists ( "$epm_data/$f" ) )
-	    {
-	        if ( ! rename
-		           ( "$epm_data/$rout",
-			     "$epm_data/$f" ) )
-		{
-		    $e = "could not rename"
-		       . " $rout to $f";
-		    WARN ( $e );
-		    $errors[] = "EPM SYSTEM ERROR: $e";
-		    // lock on $probdir/+lock+ should
-		    // have prevented race condition
-		}
-		else
-		    $run['OUT'] = "$runbase-{$c}s.rout";
-		break;
-	    }
-	    $c += 1;
-	    if ( $c > 1000 )
-	        ERROR ( "too many $runbase-*s.rout" .
-		        " files in $d" );
-	}
+    if ( ! rename ( "$epm_data/$rout",
+                    "$epm_data/$f" ) )
+    {
+	$e = "could not rename $rout to $f";
+	WARN ( $e );
+	$errors[] = "EPM SYSTEM ERROR: $e";
     }
 }
 

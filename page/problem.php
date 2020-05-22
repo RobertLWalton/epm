@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 22 06:00:19 EDT 2020
+    // Date:	Fri May 22 13:25:08 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -42,9 +42,6 @@
     // directory does not exist, the problem has been
     // deleted by another session (so set $problem and
     // $probdir to NULL).
-    //
-    // Also lock the problem directory for the duration
-    // of the execution of this page.
     //
     $problem = NULL;
     $probdir = NULL;
@@ -180,7 +177,6 @@
 	    require "$epm_home/include/epm_make.php";
         	// This can only be done if $problem
 		// and $probdir are both set.
-	    lock ( $probdir );
 	}
     }
     else
