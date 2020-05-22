@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 23:02:36 EDT 2020
+    // Date:	Fri May 22 06:00:19 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -801,10 +801,8 @@ EOT;
 	<input type='hidden'
 	       name='goto_problem' value=yes>
         <select name='selected_problem' required
-		onchange='GOTO_PROBLEM()'>
+		onclick='GOTO_PROBLEM()'>
 	        title='Problem to Go To'>
-	<option value=''>
-	Select Problem</value>
 	$options
         </select>
 	</form>

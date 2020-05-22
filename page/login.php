@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 02:29:13 EDT 2020
+    // Date:	Fri May 22 05:50:34 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -504,6 +504,18 @@
 	    if ( isset ( $data['UID'] ) )
 	    {
 		$next_page = 'problem.php';
+
+		$f = "/admin/users/{$data['UID']}" .
+		     "/session_id";
+		$r = file_put_contents
+		    ( "$epm_data/$f", session_id() );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
+		$fmtime = @filemtime ( "$epm_data/$f" );
+		if ( $fmtime === false )
+		    ERROR ( "cannot stat $f" );
+		$_SESSION['EPM_SESSION'] = [$f,$fmtime];
+
 		$_SESSION['EPM_UID'] = $data['UID'];
 
 		if ( isset ( $data['CNUM'] ) )

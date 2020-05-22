@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 11:40:38 EDT 2020
+    // Date:	Fri May 22 05:52:21 EDT 2020
 
     // Display and edit user information in:
     //
@@ -389,7 +389,18 @@
 
 	if ( $new_user && $uid != '' )
 	{
+	    $f = "/admin/users/$uid/session_id";
+	    $r = file_put_contents
+		( "$epm_data/$f", session_id() );
+	    if ( $r === false )
+		ERROR ( "cannot write $f" );
+	    $fmtime = @filemtime ( "$epm_data/$f" );
+	    if ( $fmtime === false )
+		ERROR ( "cannot stat $f" );
+	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
+
 	    $_SESSION['EPM_UID'] = $uid;
+
 	    $items = [ $uid, $STIME, 1, $STIME,
 				     0, 'NONE' ];
 	    foreach ( array_merge ( [$email], $emails )
