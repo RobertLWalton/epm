@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 21 19:00:47 EDT 2020
+// Date:    Thu May 21 22:30:38 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -40,6 +40,51 @@ if ( ! isset ( $is_epm_test ) )
     // NOT driven by an http server.  Some functions,
     // notably move_uploaded_file, will not work
     // in this test script environment.
+
+// Directories may be locked.  Specifially, locking
+// a directory will open a +lock+ file in the directory
+// and lock it.  Unlocking the directory will unlock
+// its +lock+ file and close the file (but NOT unlink
+// the file).  The +lock+ file will be created if it
+// does not exist.  The lock may be LOCK_SH or LOCK_EX.
+//
+// Directory names are relative to $epm_data.
+//
+$epm_make_lock_map = [];
+function lock ( $dir, $type = LOCK_EX )
+{
+    global $epm_data, $epm_make_lock_map;
+
+    if ( isset ( $epm_make_lock_map[$dir] ) )
+        ERROR ( "locking an already locked" .
+	        " directory: $dir" );
+    $f = "$dir/+lock+";
+    $handle = fopen ( "$epm_data/$f", 'w' );
+    if ( $handle === false )
+        ERROR ( "cannot open $f for writing" );
+    $r = flock ( $handle, $type );
+    if ( $r === false )
+        ERROR ( "cannot lock $f" );
+    $epm_make_lock_map[$dir] = $handle;
+}
+function unlock ( $dir )
+{
+    global $epm_make_lock_map;
+    if ( ! isset ( $epm_make_lock_map[$dir] ) )
+        return;
+    $handle = $epm_make_lock_map[$dir];
+    flock ( $handle, LOCK_UN );
+    fclose ( $handle );
+    unset ( $epm_make_lock_map[$dir] );
+}
+function unlock_all()
+{
+    global $epm_make_lock_map;
+    foreach ( $epm_make_lock_map as $dir => $handle )
+        unlock ( $dir );
+}
+register_shutdown_function ( 'unlock_all' );
+
 
 // Return true if process with $pid is still running,
 // and false otherwise.

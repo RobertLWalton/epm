@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 17:42:02 EDT 2020
+    // Date:	Thu May 21 23:02:36 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -162,19 +162,6 @@
 	$_SESSION['EPM_RUN'] = [];
     }
 
-    $lock_desc = NULL;
-    function shutdown ()
-    {
-        global $lock_desc;
-	if ( isset ( $lock_desc ) )
-	{
-	    flock ( $lock_desc, LOCK_UN );
-	    fclose ( $lock_desc );
-	    $lock_desc = NULL;
-	}
-    }
-    register_shutdown_function ( 'shutdown' );
-
     if ( isset ( $problem ) )
     {
 	$probdir = "users/$uid/$problem";
@@ -190,20 +177,14 @@
 	}
 	else
 	{
-	    $lock_desc =
-		fopen ( "$epm_data/$probdir/+lock+",
-		        "w" );
-	    flock ( $lock_desc, LOCK_EX );
+	    require "$epm_home/include/epm_make.php";
+        	// This can only be done if $problem
+		// and $probdir are both set.
+	    lock ( $probdir );
 	}
-
     }
     else
 	$probdir = NULL;
-
-    if ( isset ( $problem ) )
-	require "$epm_home/include/epm_make.php";
-        // Do this after setting $problem and $probdir,
-	// unless this is a GET and not a POST.
 
     // Set $problems to list of available problems.
     //
