@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed May 20 23:35:25 EDT 2020
+// Date:    Fri May 22 05:28:30 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -57,87 +57,7 @@ clearstatcache();
 umask ( 07 );
 header ( 'Cache-Control: no-store' );
 
-if ( $epm_self == '/page/login.php'
-     &&
-     $epm_method == 'GET' )
-{
-    // Initialize session on login.php GET.
-
-    session_unset();
-
-    $_SESSION['EPM_ID_GEN'] =
-        [ random_bytes ( 16 ), random_bytes ( 16 ),
-	  bin2hex
-	      ( '00000000000000000000000000000000' )];
-    $ID = bin2hex ( $_SESSION['EPM_ID_GEN'][0] );
-
-    $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];
-    $_SESSION['EPM_SESSION_TIME'] =
-        strftime ( $epm_time_format,
-	           $_SERVER['REQUEST_TIME'] );
-    file_put_contents (
-        "$epm_data/error.log",
-	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
-	" {$_SESSION['EPM_IPADDR']}" .
-	" {$_SERVER['REMOTE_HOST']}" . PHP_EOL,
-	FILE_APPEND );
-}
-elseif ( ! isset ( $epm_is_subwindow ) )
-{
-    // Check session on everything BUT login.php GET.
-
-    $id_gen = & $_SESSION['EPM_ID_GEN'];
-    $ID = bin2hex ( $id_gen[0] );
-    if ( ! isset ( $_REQUEST['id'] ) )
-	file_put_contents (
-	    "$epm_data/ID.log",
-	    "$epm_self: no id, ID=$ID" .
-	    PHP_EOL, FILE_APPEND );
-    elseif ( $_REQUEST['id'] != $ID )
-	file_put_contents (
-	    "$epm_data/ID.log",
-	    "$epm_self id = {$_REQUEST['id']} != $ID = ID" .
-	    PHP_EOL, FILE_APPEND );
-    else
-	file_put_contents (
-	    "$epm_data/ID.log",
-	    "$epm_self id = {$_REQUEST['id']} == $ID = ID" .
-	    PHP_EOL, FILE_APPEND );
-
-    $id_gen[0] = substr
-        ( @openssl_encrypt
-          ( $id_gen[0], 'aes-128-cbc', $id_gen[1],
-	    OPENSSL_RAW_DATA, $id_gen[2] ),
-	  0, 16 );
-	// The @ suppresses the warning about the empty
-	// iv.  openssl_encrypt returns 32 bytes, the
-	// last 16 of which are an encryption of the
-	// first 16.
-    $ID = bin2hex ( $id_gen[0] );
-
-    // Check that we have not skipped a page.
-    //
-    if ( ! isset ( $_SESSION['EPM_BID'] )
-	 &&
-	 $epm_self != "/page/login.php" )
-	exit ( 'UNACCEPTABLE HTTP GET/POST' );
-    else if ( ! isset ( $_SESSION['EPM_UID'] )
-	      &&
-	      $epm_self != "/page/login.php"
-	      &&
-	      $epm_self != "/page/user.php" )
-	exit ( 'UNACCEPTABLE HTTP GET/POST' );
-    else if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
-	      &&
-	      $_SESSION['EPM_RUN']['RESULT'] === true
-	      &&
-	      $epm_self != "/page/run.php" )
-	exit ( 'UNACCEPTABLE HTTP GET/POST' );
-	    // Run still running.
-}
-
-// The rest of this file consists of functions that
-// most pages need to be defined.
+// First functions that most pages need defined.
 
 // Do what PHP symlink should do, but PHP symlink is
 // known to fail sometimes for no good reason (see
@@ -245,6 +165,106 @@ function HELP ( $item )
 	   "\"EPM HELP\"," .
 	   "\"height=800px,width=800px\")'>" .
 	   "?</button>";
+}
+
+// Check that we have not skipped a page.
+//
+if ( ! isset ( $_SESSION['EPM_BID'] )
+     &&
+     $epm_self != "/page/login.php" )
+    exit ( 'UNACCEPTABLE HTTP GET/POST' );
+else if ( ! isset ( $_SESSION['EPM_UID'] )
+	  &&
+	  $epm_self != "/page/login.php"
+	  &&
+	  $epm_self != "/page/user.php" )
+    exit ( 'UNACCEPTABLE HTTP GET/POST' );
+
+// Enforce session GET/POST request sequencing.
+//
+// The requests of a session are sequenced using $ID
+// which steps through pseudo-random sequence numbers.
+// A request out of sequence is rejected.
+//
+if ( $epm_self == '/page/login.php'
+     &&
+     $epm_method == 'GET' )
+{
+    // Initialize session sequencing on login.php GET.
+
+    session_unset();
+
+    $_SESSION['EPM_ID_GEN'] =
+        [ random_bytes ( 16 ), random_bytes ( 16 ),
+	  bin2hex
+	      ( '00000000000000000000000000000000' )];
+    $ID = bin2hex ( $_SESSION['EPM_ID_GEN'][0] );
+
+    $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];
+    $_SESSION['EPM_SESSION_TIME'] =
+        strftime ( $epm_time_format,
+	           $_SERVER['REQUEST_TIME'] );
+    file_put_contents (
+        "$epm_data/error.log",
+	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
+	" {$_SESSION['EPM_IPADDR']}" .
+	" {$_SERVER['REMOTE_HOST']}" . PHP_EOL,
+	FILE_APPEND );
+}
+elseif ( ! isset ( $epm_is_subwindow ) )
+{
+    // Check sequencing on everything BUT login.php GET
+    // and read-only subwindows.
+
+    $id_gen = & $_SESSION['EPM_ID_GEN'];
+    $ID = bin2hex ( $id_gen[0] );
+    if ( ! isset ( $_REQUEST['id'] ) )
+	file_put_contents (
+	    "$epm_data/ID.log",
+	    "$epm_self: no id, ID=$ID" .
+	    PHP_EOL, FILE_APPEND );
+    elseif ( $_REQUEST['id'] != $ID )
+	file_put_contents (
+	    "$epm_data/ID.log",
+	    "$epm_self id = {$_REQUEST['id']} != $ID = ID" .
+	    PHP_EOL, FILE_APPEND );
+    else
+	file_put_contents (
+	    "$epm_data/ID.log",
+	    "$epm_self id = {$_REQUEST['id']} == $ID = ID" .
+	    PHP_EOL, FILE_APPEND );
+
+    $id_gen[0] = substr
+        ( @openssl_encrypt
+          ( $id_gen[0], 'aes-128-cbc', $id_gen[1],
+	    OPENSSL_RAW_DATA, $id_gen[2] ),
+	  0, 16 );
+	// The @ suppresses the warning about the empty
+	// iv.  openssl_encrypt returns 32 bytes, the
+	// last 16 of which are an encryption of the
+	// first 16.
+    $ID = bin2hex ( $id_gen[0] );
+}
+
+// Each user can have only one session at a time.  When
+// started, each session for a user aborts the previous
+// session for the user.  As there is no way to know
+// when a session has ended, there is no way to know if
+// this session has aborted a previous session.  The
+// previous session finds out here that it has been
+// aborted.
+//
+// When a session EPM_UID is set, the session_id is
+// written to S = "admin/users/UID/session_id"
+// and the mod-time of S identifies the session.
+//
+if ( isset ( $_SESSION['EPM_SESSION'] ) )
+{
+    $epm_session = & $_SESSION['EPM_SESSION'];
+        // This is [S,S-MOD-TIME].
+    if ( $epm_session[1] != filemtime
+             ( "$epm_data/{$epm_session[0]}" ) )
+	exit ( 'SESSION ABORTED BY LATER SESSION' );
 }
 
 ?>
