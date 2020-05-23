@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 04:45:25 EDT 2020
+    // Date:	Sat May 23 14:16:31 EDT 2020
 
     // Edits problem option page.
 
@@ -31,6 +31,8 @@
     }
 
     require "$epm_home/include/epm_template.php";
+    $_SESSION['EPM_PERMISSION']['option']['template'] =
+        true;
 
     $lock_desc = NULL;
     function shutdown ()
@@ -310,7 +312,7 @@
     var template_window = null;
 
     function TEMPLATE_WINDOW ( ) {
-	var src = '/page/template.php?subwindow';
+	var src = '/page/template.php?superpage=option';
 	if ( template_window ) template_window.close();
 	var x = screen.width - 1200;
 	var y = screen.height - 800;

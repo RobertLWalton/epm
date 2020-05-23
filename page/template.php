@@ -2,17 +2,23 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 04:57:42 EDT 2020
+    // Date:	Sat May 23 14:15:48 EDT 2020
 
     // Edits problem option page.
 
-    if ( isset ( $_GET['subwindow'] ) )
+    if ( isset ( $_GET['superpage'] ) )
 	$epm_is_subwindow = true;
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
 	       $epm_method );
+    if ( isset ( $_GET['superpage'] )
+         &&
+	 ! isset ( $_SESSION['EPM_PERMISSION']
+	                    [$_GET['superpage']]
+			    ['template'] ) )
+        exit ( 'UNACCEPTABLE HTTP GET' );
 
     // require "$epm_home/include/debug_info.php";
 
