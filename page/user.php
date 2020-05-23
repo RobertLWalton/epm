@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 22 05:52:21 EDT 2020
+    // Date:	Sat May 23 16:28:51 EDT 2020
 
     // Display and edit user information in:
     //
@@ -34,35 +34,6 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $lock_desc = NULL;
-    function shutdown ()
-    {
-        global $lock_desc;
-	if ( isset ( $lock_desc ) )
-	{
-	    flock ( $lock_desc, LOCK_UN );
-	    fclose ( $lock_desc );
-	}
-    }
-    register_shutdown_function ( 'shutdown' );
-    function lock()
-    {
-        global $lock_desc, $epm_data;
-	$f = "admin/email/+lock+";
-        $lock_desc =
-	    fopen ( "$epm_data/$f", "w" );
-	if ( $lock_desc === false )
-	    ERROR ( "cannot open $f for writing" );
-	flock ( $lock_desc, LOCK_EX );
-    }
-    function unlock()
-    {
-        global $lock_desc;
-	flock ( $lock_desc, LOCK_UN );
-	fclose ( $lock_desc );
-	$lock_desc = NULL;
-    }
-
     if ( $epm_method == 'GET' )
 	$_SESSION['EPM_USER_EDIT_DATA'] = [
 	    'uid' => '',
@@ -86,6 +57,33 @@
     $edit = false;
     $STIME = $_SESSION['EPM_SESSION_TIME'];
 
+    // The following lock prevents others from
+    // creating/deleting users and emails, but
+    // NOT browser tickets.  Even if we are not
+    // editing, we read all the emails to check
+    // if they match the emails recorded in the
+    // UID.info file.
+
+    $lock_desc = NULL;
+    function shutdown ()
+    {
+	global $lock_desc;
+	if ( isset ( $lock_desc ) )
+	{
+	    flock ( $lock_desc, LOCK_UN );
+	    fclose ( $lock_desc );
+	}
+    }
+    register_shutdown_function ( 'shutdown' );
+
+    $f = "admin/+lock+";
+    $lock_desc = fopen ( "$epm_data/$f", "w" );
+    if ( $lock_desc === false )
+	ERROR ( "cannot open $f for writing" );
+    $r = flock ( $lock_desc, LOCK_EX );
+    if ( $r === false )
+	ERROR ( "cannot lock $f" );
+
     if ( $epm_method == 'GET' && ! $new_user )
     {
 	$uid = $_SESSION['EPM_UID'];
@@ -95,7 +93,6 @@
 	// and are NOT equal to $email.
 	//
 	$d = "admin/email";
-	lock();
 	$efiles = @scandir ( "$epm_data/$d" );
 	if ( $efiles === false )
 	    ERROR ( "cannot open $d" );
@@ -130,7 +127,6 @@
 		    $emails[] = $vemail;
 	    }
 	}
-	unlock();
 	sort ( $emails );
 
 	$f = "admin/users/$uid/$uid.info";
@@ -366,8 +362,6 @@
 	$j = json_encode
 	    ( $user_info, JSON_PRETTY_PRINT );
 
-	lock();
-
 	if ( $new_user )
 	{
 	    $m = umask ( 06 );
@@ -438,7 +432,6 @@
 	if ( $r === false )
 	    ERROR ( "count not write $f" );
 	$new_user = false;
-	unlock();
     }
 
     $max_emails = max ( $epm_max_emails,
