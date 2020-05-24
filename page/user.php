@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 24 14:10:51 EDT 2020
+    // Date:	Sun May 24 17:15:56 EDT 2020
 
     // Display and edit user information in:
     //
@@ -62,9 +62,9 @@
     //		organization	string
     //		location	string
     //
-    //	   EPM_DATA CHANGED
-    //		Set of EPM_INFO profile may not
-    //		match .info file.
+    //	   EPM_DATA EDIT
+    //		Value of $edit for the last page
+    //		served.
     //
     if ( $epm_method == 'GET' )
     {
@@ -78,7 +78,6 @@
 		'full_name' => '',
 		'organization' => '',
 		'location' => ''];
-	    $data['CHANGED'] = true;
 	}
 	else
 	    $data['INFO'] = read_uid_info
@@ -171,7 +170,7 @@
 	     // because we do not assume intl extension.
 	{
 	    $errors[] =
-	        "$form_name is too short; re-enter";
+	        "$form_name is too short; retry";
 	    return;
 	}
 	$variable = $value;
@@ -210,6 +209,18 @@
 	$variable = $value;
 	return true;
     }
+
+    function write_info()
+    {
+        global $epm_data, $uid, $info;
+	$f = "admin/users/$uid/$uid.info";
+	$c = json_encode ( $info, JSON_PRETTY_PRINT );
+	if ( $c === false )
+	    ERROR ( 'cannot json_encode $info' );
+	$r = file_put_contents ( "$epm_data/$f", $c );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+    }
 	
     if ( $epm_method == 'GET' )
     {
@@ -222,7 +233,7 @@
 	if ( ! in_array ( $edit, ['emails','profile'],
 	                  true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	if ( isset ( $data['CHANGED'] ) )
+	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
     }
     elseif ( isset ( $_POST['update'] ) )
@@ -257,14 +268,24 @@
 	     || count ( $errors ) > 0 )
 	    $edit = 'profile';
 	else
+	{
+	    $d = "admin/users/$uid";
+	    if ( $new_user
+	         &&
+		 ! mkdir ( "epm_data/$d", 0770, true ) )
+	        ERROR ( "cannot make $d" );
 	    write_info();
+	}
 
     }
     elseif ( isset ( $_POST['add_email'] )
              &&
 	     isset ( $_POST['new_email'] ) )
     {
-	if ( count ( $emails ) + 1 >= 
+        if ( $data['LAST_EMAIL'] != 'emails' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	if ( count ( $emails ) >= 
 	     $epm_max_emails )
 	    $errors[] = "you already have the maximum"
 	              . " limit of $epm_max_emails"
@@ -283,7 +304,7 @@
 		    " assigned to some user" .
 		    " (maybe you)";
 	    }
-	    else if ( ! $new_user )
+	    else
 	    {
 	        $items = [ $uid, $STIME, 0, 'NONE',
 		                         0, 'NONE' ];
@@ -293,15 +314,16 @@
 	        if ( $r === false )
 		    ERROR ( "could not write $f" );
 	        $emails[] = $e;
+		write_info();
 	    }
-	    else
-	        $emails[] = $e;
 	}
-	write_info();
 	$edit = 'emails';
     }
     elseif ( isset ( $_POST['delete_email'] ) )
     {
+        if ( $data['LAST_EMAIL'] != 'emails' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
     	if ( sanitize_email
 	         ( $e, $_POST['delete_email'] ) )
         {
@@ -320,8 +342,6 @@
 		    "trying to delete email address" .
 		    "$e that is NOT assigned to you";
 	    }
-	    elseif ( $new_user )
-		array_splice ( $emails, $k, 1 );
 	    else
 	    {
 	        $c = @file_get_contents
@@ -339,13 +359,15 @@
 			unlink ( "$epm_data/$f" );
 		}
 		array_splice ( $emails, $k, 1 );
+		write_info();
 	    }
 	}
-	write_info();
 	$edit = 'emails';
     }
     else
 	exit ( 'UNACCEPTABLE HTTP POST' );
+
+    $data['LAST_EDIT'] = $edit;
 
 ?>
 
@@ -386,14 +408,18 @@
 
     if ( count ( $errors ) > 0 )
     {
-        echo '<strong>Errors:</strong>';
-	echo "<div class='indented'>";
+	echo <<<EOT
+	<div class='errors'>
+	<strong>
+        Errors:
+	<div class='indented'>
+EOT;
 	foreach ( $errors as $value )
 	{
 	    $hvalue = htmlspecialchars ( $value );
 	    echo "<mark>$hvalue</mark><br>";
 	}
-	echo '</div>';
+	echo '</strong></div></div>';
     }
 
     if ( $edit != 'profile' && count ( $emails ) == 1 )
@@ -421,8 +447,8 @@ EOT;
 		style='background-color:$color'>
 		Finish</button>
 	<button type='button'
-		onclick='UPDATE("update")'>
-		Update</button>
+		onclick='UPDATE("check")'>
+		Check</button>
 	<button type="submit"
 	        formmethod='GET'>
 		Cancel</button>
@@ -554,7 +580,7 @@ EOT;
 	    </strong></mark></td><tr>
 	    <tr><th>User ID:</th>
 		<td> <input type='text' size='20'
-		      name='uid'
+		      name='uid' value='$uid'
 		      title='Your User ID (Short Name)'
 		      placeholder='User Id (Short Name)'
 		      >
