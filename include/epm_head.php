@@ -71,9 +71,9 @@ echo "<title>$title</title>";
 	border: 2px solid red;
     }
     form {
-	margin: 0px;
+	margin:  0px;
 	padding: 0px;
-	display:inline;
+	display: inline;
     }
     button, input, select {
 	display:inline;

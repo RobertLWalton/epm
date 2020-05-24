@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 23 16:28:51 EDT 2020
+    // Date:	Sun May 24 14:10:51 EDT 2020
 
     // Display and edit user information in:
     //
@@ -34,28 +34,64 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    if ( $epm_method == 'GET' )
-	$_SESSION['EPM_USER_EDIT_DATA'] = [
-	    'uid' => '',
-	    'emails' => [],
-	    'full_name' => '',
-	    'organization' => '',
-	    'location' => ''];
-    elseif ( $epm_method != 'POST' )
+    if ( $epm_method != 'GET'
+         &&
+         $epm_method != 'POST' )
         exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
 
-    $data = & $_SESSION['EPM_USER_EDIT_DATA'];
-
-    $uid = & $data['uid'];
-    $emails = & $data['emails'];
-    $full_name = & $data['full_name'];
-    $organization = & $data['organization'];
-    $location = & $data['location'];
+    require "$epm_home/include/epm_user.php";
 
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
-    $edit = false;
     $STIME = $_SESSION['EPM_SESSION_TIME'];
+    $edit = ( $new_user ? 'profile' : NULL );
+        // One of: NULL (just view), 'emails', or
+	// 'profile'.  Set here for GET processing;
+	// changed below by POST processing.
+    $errors = [];
+        // List of error messages to be displayed.
+
+    // Data:
+    //
+    //	   EPM_DATA INFO
+    //	        .info file contents containing:
+    //
+    //		uid		string
+    //		emails		list of strings
+    //		full_name	string
+    //		organization	string
+    //		location	string
+    //
+    //	   EPM_DATA CHANGED
+    //		Set of EPM_INFO profile may not
+    //		match .info file.
+    //
+    if ( $epm_method == 'GET' )
+    {
+	$_SESSION['EPM_DATA'] = [];
+	$data = & $_SESSION['EPM_DATA'];
+        if ( $new_user )
+	{
+	    $data['INFO'] = [
+		'uid' => '',
+		'emails' => [$email],
+		'full_name' => '',
+		'organization' => '',
+		'location' => ''];
+	    $data['CHANGED'] = true;
+	}
+	else
+	    $data['INFO'] = read_uid_info
+	        ( $_SESSION['EPM_UID'] );
+    }
+    else
+	$data = & $_SESSION['EPM_DATA'];
+    $info = & $data['INFO'];
+    $uid = & $info['uid'];
+    $emails = & $info['emails'];
+    $full_name = & $info['full_name'];
+    $organization = & $info['organization'];
+    $location = & $info['location'];
 
     // The following lock prevents others from
     // creating/deleting users and emails, but
@@ -88,70 +124,22 @@
     {
 	$uid = $_SESSION['EPM_UID'];
 
-	// Set $emails to the names of EMAIL-FILEs in
-	// admin/email that point at the current $uid
-	// and are NOT equal to $email.
-	//
-	$d = "admin/email";
-	$efiles = @scandir ( "$epm_data/$d" );
-	if ( $efiles === false )
-	    ERROR ( "cannot open $d" );
-
-	foreach ( $efiles as $efile )
+	email_map ( $map );
+	$actual = [];
+	foreach ( $map as $e => $u )
 	{
-	    if ( preg_match ( '/^\.\.*$/', $efile ) )
-		continue;
-	    if ( $efile == '+lock+' )
-	        continue;
-	    $f = "admin/email/$efile";
-	    $c = @file_get_contents ( "$epm_data/$f" );
-	    if ( $c === false )
-	    {
-		WARN ( "cannot read $f" );
-		continue;
-	    }
-	    $c = trim ( $c );
-	    $items = explode ( ' ', $c );
-	    if ( count ( $items ) < 1
-		 ||
-		 ! preg_match
-		       ( $epm_name_re, $items[0] ) )
-	    {
-		WARN ( "bad value $c in $f" );
-		continue;
-	    }
-	    if ( $items[0] == $uid )
-	    {
-		$vemail = rawurldecode ( $efile );
-	        if ( $vemail != $email )
-		    $emails[] = $vemail;
-	    }
+	    if ( $u == $uid )
+	        $actual[] = $e;
 	}
-	sort ( $emails );
-
-	$f = "admin/users/$uid/$uid.info";
-	$c = @file_get_contents ( "$epm_data/$f" );
-	if ( $c === false )
-	    ERROR ( "cannot read $f" );
-	$c = preg_replace
-		 ( '#(\R|^)\h*//.*#', '', $c );
-	    // Get rid of `//...' comments.
-	$user_info = json_decode ( $c, true );
-	if ( $user_info === NULL )
+	if ( count ( array_diff ( $emails, $actual ) )
+	     +
+	     count ( array_diff ( $actual, $emails ) )
+	     > 0 )
 	{
-	    $m = json_last_error_msg();
-	    ERROR ( "cannot decode json in $f:" .
-		    PHP_EOL . "    $m" );
+	    $emails = $actual;
+	    write_info();
 	}
-	foreach ( ['full_name',
-		   'organization',
-		   'location'] as $key )
-	    $data[$key] = $user_info[$key];
     }
-
-    // Error messages and indicators for POSTs.
-    //
-    $errors = [];  // List of post error messages.
 
     // Sanitize non-email form entries and set variable
     // to new value.  If error, add to $errors and do
@@ -225,10 +213,53 @@
 	
     if ( $epm_method == 'GET' )
     {
-	// Do nothing.  Get or display user info.
+	// Do nothing.  Display user info or edit
+	// new user profile.
     }
     elseif ( isset ( $_POST['edit'] ) )
-        $edit = true;
+    {
+        $edit = $_POST['edit'];
+	if ( ! in_array ( $edit, ['emails','profile'],
+	                  true ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	if ( isset ( $data['CHANGED'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+    }
+    elseif ( isset ( $_POST['update'] ) )
+    {
+        $update = $_POST['update'];
+	if ( ! in_array ( $update, ['check','finish'],
+	                  true ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	// Read and check all the form data.
+	//
+	if ( $new_user )
+	{
+	    sanitize ( $uid, 'uid', 'User ID', 4 );
+	    if ( count ( $errors ) == 0
+	         &&
+		 ! preg_match ( $epm_name_re, $uid ) )
+	        $errors[] = "$uid is not a properly"
+		          . " formatted user id";
+	}
+	sanitize
+	    ( $full_name, 'full_name',
+	                  'Full Name', 5 );
+	sanitize
+	    ( $organization, 'organization',
+	                     'Organization', 3 );
+	sanitize
+	    ( $location, 'location',
+	                 'Location', 6 );
+
+	if (    $update != 'finish'
+	     || count ( $errors ) > 0 )
+	    $edit = 'profile';
+	else
+	    write_info();
+
+    }
     elseif ( isset ( $_POST['add_email'] )
              &&
 	     isset ( $_POST['new_email'] ) )
@@ -241,14 +272,11 @@
     	elseif ( sanitize_email
 	         ( $e, $_POST['new_email'] ) )
 	{
-	    lock();
 	    $re = rawurlencode ( $e );
 	    $f = "admin/email/$re";
 	    if ( is_readable ( "$epm_data/$f" )
 	         ||
-		 in_array ( $e, $emails )
-		 ||
-		 $e == $email )
+		 in_array ( $e, $emails ) )
 	    {
 	        $errors[] =
 		    "email address $e is already" .
@@ -268,15 +296,15 @@
 	    }
 	    else
 	        $emails[] = $e;
-	    unlock();
 	}
+	write_info();
+	$edit = 'emails';
     }
     elseif ( isset ( $_POST['delete_email'] ) )
     {
     	if ( sanitize_email
 	         ( $e, $_POST['delete_email'] ) )
         {
-	    lock();
 	    $re = rawurlencode ( $e );
 	    $f = "admin/email/$re";
 	    $k = array_search ( $e, $emails, true );
@@ -312,130 +340,12 @@
 		}
 		array_splice ( $emails, $k, 1 );
 	    }
-	    unlock();
 	}
-    }
-    elseif ( isset ( $_POST['update'] ) )
-    {
-	// Read and check all the form data.
-	//
-	if ( $new_user )
-	{
-	    sanitize ( $uid, 'uid', 'User ID', 4 );
-	    if ( count ( $errors ) == 0
-	         &&
-		 ! preg_match ( $epm_name_re, $uid ) )
-	        $errors[] = "$uid is not a properly"
-		          . " formatted user id";
-	}
-	sanitize
-	    ( $full_name, 'full_name',
-	                  'Full Name', 5 );
-	sanitize
-	    ( $organization, 'organization',
-	                     'Organization', 3 );
-	sanitize
-	    ( $location, 'location',
-	                 'Location', 6 );
+	write_info();
+	$edit = 'emails';
     }
     else
 	exit ( 'UNACCEPTABLE HTTP POST' );
-
-    if ( count ( $errors ) != 0
-         ||
-	 $full_name == ''
-	 ||
-	 $organization == ''
-	 ||
-	 $location == '' )
-    {
-        $edit = true;
-    }
-    else
-    {
-        // We are done; copy data to files.
-	//
-	$user_info = [];
-	$user_info['full_name'] = $full_name;
-	$user_info['organization'] = $organization;
-	$user_info['location'] = $location;
-	$j = json_encode
-	    ( $user_info, JSON_PRETTY_PRINT );
-
-	if ( $new_user )
-	{
-	    $m = umask ( 06 );
-
-	    if ( ! is_dir ( "$epm_data/users" ) )
-	         ERROR
-		     ( 'cannot open users directory' );
-
-	    if ( ! mkdir ( "$epm_data/users/$uid",
-	                   0771 ) )
-	    {
-	        $errors[] = "user id $uid is already"
-		          . "in use by someone else";
-		$uid = '';
-	    }
-
-	    umask ( $m );
-	}
-
-	if ( $new_user && $uid != '' )
-	{
-	    $f = "/admin/users/$uid/session_id";
-	    $r = file_put_contents
-		( "$epm_data/$f", session_id() );
-	    if ( $r === false )
-		ERROR ( "cannot write $f" );
-	    $fmtime = @filemtime ( "$epm_data/$f" );
-	    if ( $fmtime === false )
-		ERROR ( "cannot stat $f" );
-	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
-
-	    $_SESSION['EPM_UID'] = $uid;
-
-	    $items = [ $uid, $STIME, 1, $STIME,
-				     0, 'NONE' ];
-	    foreach ( array_merge ( [$email], $emails )
-	              as $e )
-	    {
-		$re = rawurlencode ( $e );
-		$f = "admin/email/$re";
-		if ( is_readable ( "$epm_data/$f" ) )
-		    WARN ( "$f exists when it should" .
-		           " not" );
-		else
-		{
-		    $items[2] = 0;
-		    $items[3] = 'NONE';
-		        // For emails other than the one
-			// logged in with which is first
-			// in the merged list.
-		    $c = implode ( ' ', $items );
-		    $r = @file_put_contents
-			     ( "$epm_data/$f", $c );
-		    if ( $r === false )
-			ERROR ( "could not write $f" );
-		}
-	    }
-	    $d = "admin/users/$uid/";
-	    if ( ! mkdir ( "$epm_data/$d", 0770 ) )
-		ERROR ( "could not mkdir $d" );
-	    $d = "users/$uid/+lists+";
-	    if ( ! mkdir ( "$epm_data/$d", 0770 ) )
-		ERROR ( "could not mkdir $d" );
-	}
-
-	$f = "admin/users/$uid/$uid.info";
-	$r = @file_put_contents ( "$epm_data/$f", $j );
-	if ( $r === false )
-	    ERROR ( "count not write $f" );
-	$new_user = false;
-    }
-
-    $max_emails = max ( $epm_max_emails,
-                        1 + count ( $emails ) );
 
 ?>
 
@@ -486,48 +396,63 @@
 	echo '</div>';
     }
 
-    if ( count ( $emails ) == 0 )
-        echo "<mark>Its a good idea to add a second" .
-	     " email address.</mark><br>";
+    if ( $edit != 'profile' && count ( $emails ) == 1 )
+        echo "<mark><strong>Its a good idea to add a" .
+	     " second email address.</strong></mark><br>";
 
     $user_help = HELP ( 'user-page' );
     echo <<<EOT
     <div class='manage'>
-    <form>
+    <form method='POST' action='user.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
     <td>
-    <strong>Your User Profile</strong>
+    <strong>Your User Email Addresses and Profile
+    </strong>
 EOT;
-    if ( $edit )
+    if ( $edit == 'profile' )
+    {
+        $color = 'transparent';
+	if ( $new_user ) $color = 'yellow';
     	echo <<<EOT
-	<button type="button"
-		onclick='UPDATE()'>
+	<button type='button'
+		onclick='UPDATE("finish")'
+		style='background-color:$color'>
+		Finish</button>
+	<button type='button'
+		onclick='UPDATE("update")'>
 		Update</button>
 	<button type="submit"
-	        formaction="user.php"
 	        formmethod='GET'>
 		Cancel</button>
+EOT;
+    }
+    elseif ( $edit == 'emails' )
+    	echo <<<EOT
+	<button type="submit"
+	        formmethod='GET'>
+		Finish</button>
 EOT;
     else
     	echo <<<EOT
 	<button type="submit"
-	        formaction="user.php"
-	        formmethod='POST'
-		name='edit' value='yes'>
-		Edit</button>
+		name='edit' value='profile'>
+		Edit Profile</button>
+	<button type="submit"
+		name='edit' value='emails'>
+		Edit Emails</button>
+	</td><td>
+	<strong>Go To</strong>
+	<button type="submit"
+		formaction="problem.php"
+		formmethod='GET'>Problem</button>
+	<button type="submit"
+		formaction="project.php"
+		formmethod='GET'>Project</button>
+	<strong>Page</strong>
 EOT;
     echo <<<EOT
-    </td><td>
-    <strong>Go To</strong>
-    <button type="submit"
-	    formaction="problem.php"
-	    formmethod='GET'>Problem</button>
-    <button type="submit"
-	    formaction="project.php"
-	    formmethod='GET'>Project</button>
-    <strong>Page</strong>
     </td>
     <td style='text-align:right'>$user_help</td>
     </tr>
@@ -536,27 +461,28 @@ EOT;
     </div>
 EOT;
 
-    if ( $edit )
-	$h = "Edit User Email Addresses";
-    else
-	$h = "User Email Addresses";
-    echo <<<EOT
-    <div class='email-addresses'>
-    <strong>$h</strong>
-EOT;
-
-    echo "<div class='indented'>";
-    $hemail = htmlspecialchars ( $email );
-    echo "<pre>$hemail   " .
-         "(used for this login)</pre><br>";
-    foreach ( $emails as $e )
+    if ( $edit == 'emails' )
     {
-	$he = htmlspecialchars ( $e );
-	if ( $edit )
+	echo <<<EOT
+	<div class='email-addresses'>
+	<strong>Edit User Email Addresses:</strong>
+	<div class='indented'>
+         "(used for this login)</pre><br>";
+EOT;
+	$break = '';
+	foreach ( $emails as $e )
+	{
+	    echo $break;
+	    $break = '<br>';
+	    $he = htmlspecialchars ( $e );
+	    if ( $e == $email )
+	    {
+	        echo ( "<pre>$email</pre>" .
+		       " (used for current login)" );
+		continue;
+	    }
 	    echo <<<EOT
-	    <form style='display:inline'
-		  method='POST'
-		  action='user.php'>
+	    <form method='POST' action='user.php'>
 	    <input type='hidden' name='id' value='$ID'>
 	    <pre>$he</pre>
 	    <pre>    </pre>
@@ -565,32 +491,40 @@ EOT;
 		    value='$he'>Delete</button><br>
 	    </form>
 EOT;
-	else
-	    echo "<pre>$he</pre><br>";
+	}
+	if ( count ( $emails ) < $epm_max_emails )
+	{
+	    $new_email_title =
+		 "Add another email address to the" .
+		 " account";
+	    echo <<<EOT
+	    <form method='POST' action='user.php'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type='email' name='new_email'
+		   value='' size='40'
+		   placeholder='Another Email Address'
+		   title='$new_email_title'>
+	    <pre>    </pre>
+	    <input type='submit'
+		   name='add_email' value='Add'>
+	    </form>
+EOT;
+	}
+
+	echo "</div></div>";
     }
-    if ( $edit
-         &&
-	 count ( $emails ) + 1 < $max_emails )
+    else
     {
-        $new_email_title =
-	     'Add another email address to the account';
+	$addresses = emails_to_lines
+	    ( $emails, $email );
 	echo <<<EOT
-	<form style='display:inline'
-	      method='POST'
-	      action='user.php'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type='email' name='new_email'
-	       value='' size='40'
-	       placeholder='Another Email Address'
-	       title='$new_email_title'>
-	<pre>    </pre>
-	<input type='submit'
-	       name='add_email' value='Add'>
-	</form>
+	<div class='email-addresses'>
+	<strong>User Email Addresses:</strong>
+	<div class='indented'>
+	$addresses
+	</div></div>
 EOT;
     }
-
-    echo "</div></div>";
 
     $location_placeholder =
 	 "Town, State (and Country) of Organization";
@@ -600,26 +534,37 @@ EOT;
     echo <<<EOT
     <div class='user-profile'>
 EOT;
-    if ( $edit )
+    if ( $edit == 'profile' )
     {
 	echo <<<EOT
 	<form method='POST' action='user.php'
 	      id='profile-update'>
 	<input type='hidden' name='id' value='$ID'>
-	<input type='hidden' name='update' value='yes'>
+	<input type='hidden' name='update' id='update'>
 	<strong>Edit Your User Profile:</strong><br>
 	<table>
 EOT;
 	if ( $new_user )
 	    echo <<<EOT
+	    <tr><th><mark>WARNING:</mark</th>
+	    <td>
+	    <mark><strong>
+	    You can never change your User ID after you
+	    hit the Finish button for the first time.
+	    </strong></mark></td><tr>
 	    <tr><th>User ID:</th>
-		<td> <input type='text' size='10'
+		<td> <input type='text' size='20'
 		      name='uid'
 		      title='Your User ID (Short Name)'
 		      placeholder='User Id (Short Name)'
-		      ></td></tr>
+		      >
+	     <pre>  </pre>
+	     (Short name by which you will be known
+	      to other users.)
+	     </td></tr>
 EOT;
-	else echo <<<EOT
+	else
+	    echo <<<EOT
 	    <tr><th>User ID:</th>
 		<td>$uid</td></tr>
 EOT;
@@ -647,19 +592,15 @@ EOT;
 EOT;
     }
     else
+    {
+        $rows = user_info_to_rows ( $info );
 	echo <<<EOT
 	<strong>Your User Profile:</strong>
 	<table>
-	<tr><th>User ID:</th>
-	    <td>$uid</td></tr>
-	<tr><th>Full Name:</th>
-	    <td>$hfull_name</td></tr>
-	<tr><th>Organization:</th>
-	    <td>$horganization</td></tr>
-	<tr><th>Location:</th>
-	    <td>$hlocation</td></tr>
-	</table><br>
+	$rows
+	</table>
 EOT;
+    }
 ?>
 
 </div>
@@ -670,8 +611,11 @@ EOT;
 <script>
 let profile_update = document.getElementById
     ( 'profile-update' );
-function UPDATE()
+let update = document.getElementById
+    ( 'update' );
+function UPDATE ( value )
 {
+    update.value = value;
     profile_update.submit();
 }
 </script>

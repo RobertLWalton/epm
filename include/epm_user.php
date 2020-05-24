@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 24 04:05:24 EDT 2020
+// Date:    Sun May 24 16:16:19 EDT 2020
 
 // Functions to read user information.
 //
@@ -71,7 +71,7 @@ function email_map ( & $map )
 //
 function read_uid_info ( $uid )
 {
-    $global $epm_data;
+    global $epm_data;
 
     $f = "admin/users/$uid/$uid.info";
     $c = @file_get_contents ( "$epm_data/$f" );
@@ -103,7 +103,7 @@ function read_uid_info ( $uid )
 // is marked as '(used for current login)'.  Segments
 // are separated by <br>.
 //
-function emails_to_html ( $list, $email = NULL )
+function emails_to_lines ( $list, $email = NULL )
 {
     $r = [];
     foreach ( $list as $item )
@@ -121,16 +121,16 @@ function emails_to_html ( $list, $email = NULL )
 // for the rows of a table that contains that info.
 // The row labels are <th> and values are <td>.
 //
-function user_info_to_html ( $info )
+function user_info_to_rows ( $info )
 {
-    $uid = $info['uid'] );
+    $uid = $info['uid'];
     $hfull_name = htmlspecialchars
         ( $info['full_name'] );
     $horganization = htmlspecialchars
         ( $info['organization'] );
     $hlocation = htmlspecialchars
         ( $info['location'] );
-    return <<<
+    return <<<EOT
     <tr><th>User ID:</th>
 	<td>$uid</td></tr>
     <tr><th>Full Name:</th>
