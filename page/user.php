@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 24 17:15:56 EDT 2020
+    // Date:	Sun May 24 18:18:44 EDT 2020
 
     // Display and edit user information in:
     //
@@ -32,7 +32,7 @@
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     if ( $epm_method != 'GET'
          &&
@@ -86,6 +86,7 @@
     else
 	$data = & $_SESSION['EPM_DATA'];
     $info = & $data['INFO'];
+    echo ( 'INFO ' . json_encode ( $info ) . '<BR>' );
     $uid = & $info['uid'];
     $emails = & $info['emails'];
     $full_name = & $info['full_name'];
@@ -213,10 +214,10 @@
     function write_info()
     {
         global $epm_data, $uid, $info;
-	$f = "admin/users/$uid/$uid.info";
 	$c = json_encode ( $info, JSON_PRETTY_PRINT );
 	if ( $c === false )
 	    ERROR ( 'cannot json_encode $info' );
+	$f = "admin/users/$uid/$uid.info";
 	$r = file_put_contents ( "$epm_data/$f", $c );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
@@ -248,11 +249,17 @@
 	if ( $new_user )
 	{
 	    sanitize ( $uid, 'uid', 'User ID', 4 );
+	    $d = "admin/users/$uid";
 	    if ( count ( $errors ) == 0
 	         &&
 		 ! preg_match ( $epm_name_re, $uid ) )
 	        $errors[] = "$uid is not a properly"
 		          . " formatted user id";
+	    elseif ( count ( $errors ) == 0
+	             &&
+		     is_dir ( "$epm_data/$d" ) )
+	        $errors[] = "another account is already"
+		          . " using $uid as a User ID";
 	}
 	sanitize
 	    ( $full_name, 'full_name',
@@ -267,14 +274,45 @@
 	if (    $update != 'finish'
 	     || count ( $errors ) > 0 )
 	    $edit = 'profile';
-	else
+	elseif ( $new_user )
 	{
 	    $d = "admin/users/$uid";
-	    if ( $new_user
-	         &&
-		 ! mkdir ( "epm_data/$d", 0770, true ) )
+	    if ( ! mkdir ( "$epm_data/$d", 0770,
+	                   true ) )
 	        ERROR ( "cannot make $d" );
+
+	    $re = rawurlencode ( $email );
+	    $f = "admin/email/$re";
+	    if ( file_exists ( "$epm_data/$f" ) )
+	        WARN ( "$f exists when it should not" );
+	    $items = [ $uid, $STIME, 1, $STIME,
+				     0, 'NONE' ];
+	    $r = @file_put_contents
+		( "$epm_data/$f",
+		  implode ( ' ', $items ) );
+	    if ( $r === false )
+		ERROR ( "could not write $f" );
 	    write_info();
+
+	    $f = "admin/users/$uid/session_id";
+	    $r = file_put_contents
+	        ( "$epm_data/$f", session_id() );
+	    if ( $r === false )
+		ERROR ( "could not write $f" );
+	    $fmtime = filemtime ( "$epm_data/$f" );
+	    if ( $fmtime === false )
+		ERROR ( "could not stat $f" );
+	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
+
+	    $_SESSION['EPM_UID'] = $uid;
+	        // Do this last as it certifies
+		// the EMAIL and .info files exist.
+	    $edit = NULL;
+	}
+	else
+	{
+	    write_info();
+	    $edit = NULL;
 	}
 
     }
@@ -439,12 +477,13 @@ EOT;
 EOT;
     if ( $edit == 'profile' )
     {
-        $color = 'transparent';
-	if ( $new_user ) $color = 'yellow';
+        $style = '';
+	if ( $new_user )
+	    $style = 'style="background-color:yellow';
     	echo <<<EOT
 	<button type='button'
 		onclick='UPDATE("finish")'
-		style='background-color:$color'>
+		$style>
 		Finish</button>
 	<button type='button'
 		onclick='UPDATE("check")'>
@@ -493,7 +532,6 @@ EOT;
 	<div class='email-addresses'>
 	<strong>Edit User Email Addresses:</strong>
 	<div class='indented'>
-         "(used for this login)</pre><br>";
 EOT;
 	$break = '';
 	foreach ( $emails as $e )
