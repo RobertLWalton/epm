@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 24 16:16:19 EDT 2020
+// Date:    Sun May 24 18:53:26 EDT 2020
 
 // Functions to read user information.
 //
@@ -29,10 +29,11 @@ if ( ! isset ( $epm_home ) )
 //
 function email_map ( & $map )
 {
-    global $epm_data, $epm_name;
+    global $epm_data, $epm_name, $epm_name_re;
 
     $map = [];
 
+    $d = 'admin/email';
     $efiles = @scandir ( "$epm_data/$d" );
     if ( $efiles === false )
 	ERROR ( "cannot open $d" );

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 24 18:18:44 EDT 2020
+    // Date:	Sun May 24 18:53:14 EDT 2020
 
     // Display and edit user information in:
     //
@@ -32,7 +32,7 @@
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     if ( $epm_method != 'GET'
          &&
@@ -86,7 +86,6 @@
     else
 	$data = & $_SESSION['EPM_DATA'];
     $info = & $data['INFO'];
-    echo ( 'INFO ' . json_encode ( $info ) . '<BR>' );
     $uid = & $info['uid'];
     $emails = & $info['emails'];
     $full_name = & $info['full_name'];
@@ -271,6 +270,7 @@
 	    ( $location, 'location',
 	                 'Location', 6 );
 
+	echo ( "UPDATE $update" );
 	if (    $update != 'finish'
 	     || count ( $errors ) > 0 )
 	    $edit = 'profile';
@@ -320,7 +320,7 @@
              &&
 	     isset ( $_POST['new_email'] ) )
     {
-        if ( $data['LAST_EMAIL'] != 'emails' )
+        if ( $data['LAST_EDIT'] != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	if ( count ( $emails ) >= 
@@ -359,7 +359,7 @@
     }
     elseif ( isset ( $_POST['delete_email'] ) )
     {
-        if ( $data['LAST_EMAIL'] != 'emails' )
+        if ( $data['LAST_EDIT'] != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
     	if ( sanitize_email
@@ -479,7 +479,7 @@ EOT;
     {
         $style = '';
 	if ( $new_user )
-	    $style = 'style="background-color:yellow';
+	    $style = 'style="background-color:yellow"';
     	echo <<<EOT
 	<button type='button'
 		onclick='UPDATE("finish")'
@@ -562,6 +562,7 @@ EOT;
 		 "Add another email address to the" .
 		 " account";
 	    echo <<<EOT
+	    <br>
 	    <form method='POST' action='user.php'>
 	    <input type='hidden' name='id' value='$ID'>
 	    <input type='email' name='new_email'
