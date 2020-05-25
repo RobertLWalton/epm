@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 24 18:53:14 EDT 2020
+    // Date:	Mon May 25 04:24:12 EDT 2020
 
     // Display and edit user information in:
     //
@@ -212,14 +212,88 @@
 
     function write_info()
     {
-        global $epm_data, $uid, $info;
+        global $epm_data, $epm_time_format,
+	       $uid, $info;
+
+	$changes = '';
+	$time = strftime ( $epm_time_format );
+	$h = "$time $uid info";
+
+	$f = "admin/users/$uid/$uid.info";
+	$old = @file_get_contents ( "$epm_data/$f" );
+	if ( $old === false )
+	{
+	    foreach ( $info as $key => $value )
+	    {
+	        if ( $key != 'email' )
+		    $changes .= "$h $key = $value"
+			      . PHP_EOL;
+		else foreach ( $value as $email )
+		    $changes .= "$h email + $email"
+			      . PHP_EOL;
+	    }
+	}
+	else
+	{
+	    $old = json_decode ( $old, true );
+	    echo ( 'OLD ' . json_encode ( $old ) . '<BR>' );
+	    if ( $old == NULL )
+	        ERROR ( "badly formatted old $f" );
+	    foreach ( $info as $key => $value )
+	    {
+		echo ( "KEY $key " . json_encode ( $value ) . '<BR>' );
+		echo ( "OLD $key " . json_encode ( $old[$key] ) . '<BR>' );
+		if ( $key != 'emails' )
+		{
+		    if ( ! isset ( $old[$key] )
+		         ||
+			 $old[$key] != $info[$key] )
+		        $changes .= "$h $key = $value"
+			          . PHP_EOL;
+		}
+		elseif ( ! is_array ( $old['emails'] ) )
+		    ERROR ( "badly formatted old $f" );
+		else
+		{
+		    $adds = array_diff
+		        ( $info['emails'],
+			  $old['emails'] );
+		    foreach ( $adds as $email )
+			$changes .= "$h email + $email"
+			          . PHP_EOL;
+		    $subs = array_diff
+		        ( $old['emails'],
+			  $info['emails'] );
+		    foreach ( $subs as $email )
+			$changes .= "$h email - $email"
+			          . PHP_EOL;
+		}
+	    }
+	    foreach ( $old as $key => $value )
+	    {
+	        if ( isset ( $info[$key] ) ) continue;
+		$changes .= "$h $key -" . PHP_EOL;
+	    }
+	}
+
+
 	$c = json_encode ( $info, JSON_PRETTY_PRINT );
 	if ( $c === false )
 	    ERROR ( 'cannot json_encode $info' );
-	$f = "admin/users/$uid/$uid.info";
-	$r = file_put_contents ( "$epm_data/$f", $c );
+	$r = @file_put_contents ( "$epm_data/$f", $c );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
+
+	$f = "admin/users/$uid/+changes+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $changes, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot append to $f" );
+	$f = "admin/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $changes, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot append to $f" );
     }
 	
     if ( $epm_method == 'GET' )
