@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri May 22 05:28:30 EDT 2020
+// Date:    Sun May 24 22:10:34 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -138,10 +138,20 @@ function EPM_ERROR_HANDLER
 	$fatal = true;
     }
 
-    file_put_contents (
-        "$epm_data/error.log",
-	"$class $errno [$file:$line] $message" .
-	PHP_EOL, FILE_APPEND );
+    $stack = debug_backtrace
+        ( DEBUG_BACKTRACE_IGNORE_ARGS );
+    $m = "$class $errno $message" . PHP_EOL;
+    foreach ( $stack as $line )
+    {
+        $f = $line['file'];
+	if ( $f == '' ) continue;
+	if ( preg_match ( '#/index.php$#', $f ) )
+	    continue;
+        $m .= "    $f:{$line['line']}"
+	    . PHP_EOL;
+    }
+    file_put_contents
+        ( "$epm_data/error.log", $m, FILE_APPEND );
 
     if ( $fatal )
         exit ( "<pre>$message</pre>" );

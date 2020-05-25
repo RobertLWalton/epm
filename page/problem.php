@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 22 13:25:08 EDT 2020
+    // Date:	Sun May 24 22:15:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -82,7 +82,7 @@
 	else
 	{
 	    $m = umask ( 06 );
-	    if ( ! @mkdir ( "$d", 0771 ) )
+	    if ( ! @mkdir ( "$d", 0771, true ) )
 	    {
 		$errors[] =
 		    "trying to create $problem which" .
@@ -186,6 +186,12 @@
     //
     $problems = [];
 
+    if ( ! is_dir ( "$epm_data/$user_dir" ) )
+    {
+        $m = umask ( 06 );
+	@mkdir ( "$epm_data/$user_dir", 0771, true );
+	umask ( $m );
+    }
     $subdirs = @scandir ( "$epm_data/$user_dir" );
     if ( $subdirs === false )
          ERROR ( "cannot open $user_dir" );
