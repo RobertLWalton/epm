@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 24 22:10:34 EDT 2020
+// Date:    Mon May 25 13:11:58 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -229,20 +229,10 @@ elseif ( ! isset ( $epm_is_subwindow ) )
     $id_gen = & $_SESSION['EPM_ID_GEN'];
     $ID = bin2hex ( $id_gen[0] );
     if ( ! isset ( $_REQUEST['id'] ) )
-	file_put_contents (
-	    "$epm_data/ID.log",
-	    "$epm_self: no id, ID=$ID" .
-	    PHP_EOL, FILE_APPEND );
+	WARN ( "$epm_self: no id, ID=$ID" );
     elseif ( $_REQUEST['id'] != $ID )
-	file_put_contents (
-	    "$epm_data/ID.log",
-	    "$epm_self id = {$_REQUEST['id']} != $ID = ID" .
-	    PHP_EOL, FILE_APPEND );
-    else
-	file_put_contents (
-	    "$epm_data/ID.log",
-	    "$epm_self id = {$_REQUEST['id']} == $ID = ID" .
-	    PHP_EOL, FILE_APPEND );
+	WARN ( "$epm_self id = {$_REQUEST['id']}" .
+	       " != $ID = ID" );
 
     $id_gen[0] = substr
         ( @openssl_encrypt

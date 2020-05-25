@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon May 25 04:24:12 EDT 2020
+    // Date:	Mon May 25 13:23:33 EDT 2020
 
     // Display and edit user information in:
     //
@@ -236,13 +236,10 @@
 	else
 	{
 	    $old = json_decode ( $old, true );
-	    echo ( 'OLD ' . json_encode ( $old ) . '<BR>' );
 	    if ( $old == NULL )
 	        ERROR ( "badly formatted old $f" );
 	    foreach ( $info as $key => $value )
 	    {
-		echo ( "KEY $key " . json_encode ( $value ) . '<BR>' );
-		echo ( "OLD $key " . json_encode ( $old[$key] ) . '<BR>' );
 		if ( $key != 'emails' )
 		{
 		    if ( ! isset ( $old[$key] )
@@ -275,6 +272,8 @@
 		$changes .= "$h $key -" . PHP_EOL;
 	    }
 	}
+
+	if ( $changes == '' ) return;
 
 
 	$c = json_encode ( $info, JSON_PRETTY_PRINT );
@@ -344,7 +343,6 @@
 	    ( $location, 'location',
 	                 'Location', 6 );
 
-	echo ( "UPDATE $update" );
 	if (    $update != 'finish'
 	     || count ( $errors ) > 0 )
 	    $edit = 'profile';
@@ -493,9 +491,14 @@
 	padding: 10px 0px 0px 0px;
     }
     div.email-addresses * {
+	padding-top: var(--pad);
+	padding-bottom: var(--pad);
         font-size: var(--large-font-size);
-	padding: 5px;
-	text-align: left;
+    }
+    div.email-addresses button {
+        font-size: var(--font-size);
+	padding-top: 2px;
+	padding-bottom: 2px;
     }
     div.user-profile {
 	background-color: var(--bg-tan);
@@ -535,8 +538,12 @@ EOT;
     }
 
     if ( $edit != 'profile' && count ( $emails ) == 1 )
-        echo "<mark><strong>Its a good idea to add a" .
-	     " second email address.</strong></mark><br>";
+        echo <<<EOT
+	<div class='warnings'>
+        <strong>Its a good idea to add a
+	        second email address.
+	</div>
+EOT;
 
     $user_help = HELP ( 'user-page' );
     echo <<<EOT
@@ -558,20 +565,20 @@ EOT;
 	<button type='button'
 		onclick='UPDATE("finish")'
 		$style>
-		Finish</button>
+		Finish Editing</button>
 	<button type='button'
 		onclick='UPDATE("check")'>
-		Check</button>
+		Check New Profile</button>
 	<button type="submit"
 	        formmethod='GET'>
-		Cancel</button>
+		Cancel Edit</button>
 EOT;
     }
     elseif ( $edit == 'emails' )
     	echo <<<EOT
 	<button type="submit"
 	        formmethod='GET'>
-		Finish</button>
+		Finish Editing</button>
 EOT;
     else
     	echo <<<EOT
@@ -626,7 +633,7 @@ EOT;
 	    <pre>    </pre>
 	    <button type='submit'
 		    name='delete_email'
-		    value='$he'>Delete</button><br>
+		    value='$he'>Delete</button>
 	    </form>
 EOT;
 	}
