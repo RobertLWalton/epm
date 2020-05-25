@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 19 17:57:27 EDT 2020
+    // Date:	Sun May 24 22:36:21 EDT 2020
 
     // Functions for managing lists.
 
@@ -10,6 +10,10 @@
 	exit ( 'ACCESS ERROR: $epm_data not set' );
     if ( ! isset ( $uid ) )
 	exit ( 'ACCESS ERROR: $uid not set' );
+
+    if ( ! is_dir ( "$epm_data/users/$uid/+lists+" ) )
+        @mkdir ( "$epm_data/users/$uid/+lists+",
+	         0770, true );
 
     // Permission maps.  These map:
     //
