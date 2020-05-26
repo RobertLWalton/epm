@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 23 14:15:48 EDT 2020
+    // Date:	Tue May 26 03:32:27 EDT 2020
 
     // Edits problem option page.
 
@@ -124,7 +124,7 @@
 
 <?php 
 
-    if ( ! isset ( $_GET['subwindow'] ) )
+    if ( ! $epm_is_subwindow )
 	echo <<<EOT
 	<div class='manage'>
 	<form method='GET' style='margin-bottom:0'>
