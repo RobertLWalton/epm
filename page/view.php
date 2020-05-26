@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 26 03:07:30 EDT 2020
+    // Date:	Tue May 26 15:02:21 EDT 2020
 
     // Allows user and problem information to be viewed.
 
@@ -150,7 +150,30 @@
 <style>
 
 div.select {
-     background-color: var(--bg-green);
+    background-color: var(--bg-green);
+}
+div.user {
+    background-color: var(--bg-tan);
+}
+
+div.profile {
+    float: left;
+}
+div.profile table {
+    font-size: var(--large-font-size);
+    padding-left: var(--pad);
+}
+div.profile th {
+    text-align: right;
+    padding-right: var(--pad);
+}
+div.emails {
+    float: left;
+    margin-left: 3em;
+}
+div.emails pre {
+    font-size: var(--large-font-size);
+    padding-left: var(--large-font-size);
 }
 
 </style>
@@ -271,6 +294,36 @@ EOT;
     echo <<<EOT
     </div>
 EOT;
+
+    if ( isset ( $user ) )
+    {
+	$info = read_uid_info ( $user );
+        $rows = user_info_to_rows ( $info );
+	$lines = emails_to_lines ( $info['emails'] );
+	$lines = preg_replace
+	    ( '/<pre>[^@]+@/', '<pre>...@', $lines );
+        echo <<<EOT
+	<div class='user'>
+
+	<div class='profile'>
+	<strong>$uid Profile:</strong>
+	<table>
+	$rows
+	</table>
+	</div>
+
+	<div class='emails'>
+	<strong>$uid Emails:</strong>
+	<br>
+	$lines
+	</div>
+
+	<div style='clear:both'>
+	    <!-- Needed to make div.user height =
+		 max height of contents. -->
+	</div>
+EOT;
+    }
 
 ?>
 
