@@ -151,9 +151,11 @@
 
 div.select {
     background-color: var(--bg-green);
+    padding-top: var(--pad);
 }
 div.user {
     background-color: var(--bg-tan);
+    padding-top: var(--pad);
 }
 
 div.profile {
@@ -174,6 +176,13 @@ div.emails {
 div.emails pre {
     font-size: var(--large-font-size);
     padding-left: var(--large-font-size);
+}
+div.changes {
+    background-color: var(--bg-blue);
+    padding-top: var(--pad);
+}
+div.changes table {
+    margin-left: var(--pad);
 }
 
 </style>
@@ -298,17 +307,22 @@ EOT;
     if ( isset ( $user ) )
     {
 	$info = read_uid_info ( $user );
-        $rows = user_info_to_rows ( $info );
+        $info_rows = user_info_to_rows ( $info );
 	$lines = emails_to_lines ( $info['emails'] );
 	$lines = preg_replace
 	    ( '/<pre>[^@]+@/', '<pre>...@', $lines );
+	$f = "admin/users/$user/+changes+";
+	$change_rows = actions_to_rows
+	    ( read_actions ( "$f" ) );
+	echo 'ACTIONS ' . json_encode
+	    ( read_actions ( "$f" ) ) .  '<BR>';
         echo <<<EOT
 	<div class='user'>
 
 	<div class='profile'>
 	<strong>$uid Profile:</strong>
 	<table>
-	$rows
+	$info_rows
 	</table>
 	</div>
 
@@ -318,10 +332,17 @@ EOT;
 	$lines
 	</div>
 
-	<div style='clear:both'>
+	<div style='clear:both'></div>
 	    <!-- Needed to make div.user height =
 		 max height of contents. -->
 	</div>
+
+	<div class='changes'>
+	<strong>Changes to $uid Profile and Emails:</strong>
+	<table>
+	$change_rows
+	</table>
+	<div>
 EOT;
     }
 

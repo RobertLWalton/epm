@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 24 18:53:26 EDT 2020
+// Date:    Tue May 26 16:21:39 EDT 2020
 
 // Functions to read user information.
 //
@@ -141,4 +141,79 @@ function user_info_to_rows ( $info )
     <tr><th>Location:</th>
 	<td>$hlocation</td></tr>
 EOT;
+}
+
+// Given a list of action items, return the HTML for one
+// table row per line.  Each action item has one of the
+// format:
+//
+//	[TIME, UID, 'info', KEY, OP, VALUE]
+//
+// where KEY is the UID.info element changed, OP is '='
+// to reset the element to VALUE, '+' to add VALUE to
+// the element list, '-' to subtract VALUE from the
+// element list.  If KEY is 'email', a VALUE of the
+// form XXX@YYY is replaced by ...@YYY.
+//
+function actions_to_rows ( $actions )
+{
+    $r = '';
+    foreach ( $actions as $items )
+    {
+        $time = $items[0];
+        $user = $items[1];
+        $type = $items[2];
+        if ( $items[2] != 'info' )
+	    $a = "unknown action type $type";
+	else
+	{
+	    $key = $items[3];
+	    $op = $items[4];
+	    $value = $items[5];
+	    if ( $key == 'email' )
+		$value = preg_replace
+		    ( '/^[^@]+@/', '...@', $value );
+	    if ( $key == 'email' ) $key = 'emails';
+	    elseif ( $key == 'full_name' )
+	        $key = 'full name';
+	    if ( $op == '=' )
+		$a = "set $key to $value";
+	    elseif ( $op == '+' )
+		$a = "add $value to $key";
+	    elseif ( $op == '-' )
+		$a = "remove $value from $key";
+	    else
+		$a = "unknown operation $op";
+	}
+	$r .= "<tr><td>$time</td><td>$user</td>"
+	    . "<td>$a</td></tr>";
+    }
+    return $r;
+}
+
+// Read file and turn its lines into action items.
+// Return a list of the action items.  Return [] if
+// file cannot be read.  Filename is relative to
+// $epm_data.
+//
+function read_actions ( $fname )
+{
+    global $epm_data;
+
+    $r = [];
+    $c = @file_get_contents ( "$epm_data/$fname" );
+    if ( $c === false ) return $r;
+
+    $lines = explode ( "\n", $c );
+    foreach ( $lines as $line )
+    {
+        $line = trim ( $line );
+	if ( $line == '' ) continue;
+	$line = preg_replace ( '/\s+/', ' ', $line );
+	$line = explode ( ' ', $line );
+	$value = implode ( ' ', array_slice ( $line, 5 ) );
+	array_splice ( $line, 5, 1000, [$value] );
+	$r[] = $line;
+    }
+    return $r;
 }
