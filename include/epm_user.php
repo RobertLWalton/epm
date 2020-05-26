@@ -192,8 +192,9 @@ function actions_to_rows ( $actions )
 }
 
 // Read file and turn its lines into action items.
-// Return a list of the action items.  Return [] if
-// file cannot be read.  Filename is relative to
+// Return a list of the action items, most recent
+// first (i.e., reverse order of file lines).  Return
+// [] if file cannot be read.  Filename is relative to
 // $epm_data.
 //
 function read_actions ( $fname )
@@ -215,5 +216,5 @@ function read_actions ( $fname )
 	array_splice ( $line, 5, 1000, [$value] );
 	$r[] = $line;
     }
-    return $r;
+    return array_reverse ( $r );
 }

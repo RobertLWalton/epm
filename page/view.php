@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 26 15:02:21 EDT 2020
+    // Date:	Tue May 26 16:46:59 EDT 2020
 
     // Allows user and problem information to be viewed.
 
@@ -182,7 +182,9 @@ div.changes {
     padding-top: var(--pad);
 }
 div.changes table {
-    margin-left: var(--pad);
+}
+div.changes td {
+    padding-left: var(--font-size);
 }
 
 </style>
@@ -314,8 +316,6 @@ EOT;
 	$f = "admin/users/$user/+changes+";
 	$change_rows = actions_to_rows
 	    ( read_actions ( "$f" ) );
-	echo 'ACTIONS ' . json_encode
-	    ( read_actions ( "$f" ) ) .  '<BR>';
         echo <<<EOT
 	<div class='user'>
 
@@ -338,7 +338,8 @@ EOT;
 	</div>
 
 	<div class='changes'>
-	<strong>Changes to $uid Profile and Emails:</strong>
+	<strong>Changes to $uid Profile and Emails
+	        (most recent first):</strong>
 	<table>
 	$change_rows
 	</table>
