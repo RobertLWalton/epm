@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 18:01:33 EDT 2020
+    // Date:	Wed May 27 16:49:59 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -28,7 +28,6 @@
     // where TYPE is one of:
     //
     //	   owner	Specify PROJECT owners.
-    //	   list		Allow attaching lists.
     //	   review	Allow attaching problem reviews.
     //	   push		Allow pushing new problems.
     //	   pull		Allow pulling problems.
@@ -73,7 +72,10 @@
     // is a list of problems.  If a problem is not in a
     // project, but is in the user's users/UID direc-
     // tory, PROJECT is `-'.  The TIME is the last
-    // time the list entry was used to push or pull
+    // time before the line was added to the list file
+    // that a change was made to the PROBLEM files by a
+    // push or pull.
+
     // the problem or perform a maintenance operation
     // on the problem (e.g., change owner).
     //
@@ -83,20 +85,20 @@
     // except for descriptions must begin with a blank
     // line.
     //
-    // For each project the directory:
+    // For there is a directory
     //
-    //	    projects/PROJECT/+lists+
+    //	    lists
     //
-    // contains symbolic links of the form:
+    // that contains symbolic links of the form:
     //
-    //	    UID-NAME.list =>
-    //		users/UID/+lists+/NAME.list
+    //	    OWNER-NAME.list =>
+    //		users/OWNER/+lists+/NAME.list
     //
-    // which make particular indices visible to users
-    // who have `list' permission for the project.  To
-    // these users these indices are read-only.  These
-    // users may add symbolic links to their own
-    // indices, and delete such links.
+    // which make particular indices visible to users.
+    // To users other than OWNER this lists are read-
+    // only.  The OWNER of a list may create such a
+    // link by publishing the list, and delete the
+    // link by unpublishing the list.
     //
     // In addition there are read-only lists contain-
     // ing the problems in the directories:
@@ -107,6 +109,34 @@
     //
     // These are used to edit other lists, which is
     // done by copying entries from one list to another.
+    //
+    // Each user with given UID has a list of favorite
+    // lists in
+    //
+    //	    users/UID/+lists+/+favorites+
+    //
+    // This files contents are lines of the forms:
+    //
+    //	    TIME OWNER BASENAME
+    //
+    // denoting the list file
+    //
+    //		users/OWNER/+lists+/BASENAME.list
+    //
+    // If the OWNER is not the UID, then the symbolic
+    // link
+    //
+    //		lists/OWNER-BASENAME.list
+    //
+    // to the list must exist whenever the list is added
+    // to favorites or read.  TIME is the modification
+    // time of the list file when the list is added to
+    // the favorites list.
+    //
+    // To use a list you must first add it to your
+    // favorites.  However you may read a list's
+    // desciption before adding it, in order to decide
+    // if the list is worth adding.
     //
     // The directory:
     //
@@ -121,88 +151,92 @@
     // A review file may be created by its UID user
     // after the user has solved the PROBLEM, if the
     // user is the owner of the PROBLEM, or if the user
-    // has `review' permission for the project.  Users
-    // who can create the review can delete it.
+    // has `review' permission for the problem.  The
+    // creator of a review file may delete or replace
+    // it.
     //
     // A problem may be pulled by any user with `pull'
-    // permission for the problem's project.  A problem
-    // may be created in a project by any user with
-    // `push' permission for the project.  When a
-    // problem is created, the user that pushed it
-    // becomes the sole owner of the problem.  Only an
-    // owner of a problem (or of the containing project
-    // or of all projects) may make subsequent pushes
-    // after the problem has been created.
+    // permission for the problem.  A problem may be
+    // created in a project by pushing it into the
+    // project by any user with `push' permission for
+    // the project.  When a problem is created, the
+    // projects/PROJECT/PROBLEM/+perm+ file is set to
+    // make the pushing user the owner of the problem
+    // in the project.  Only an owner of a problem may
+    // make subsequent pushes to the problem after the
+    // problem has been created.
+    //
+    // A PROBLEM in a PROJECT has two directories
+    // containing its files:
+    //
+    //	     projects/PROJECT/PROBLEM
+    // and
+    //	     projects/PROJECT/PROBLEM/+solutions+
+    //
+    // The former directory contains the publicly
+    // useable PROBLEM files, and the latter directory
+    // contains source code.  These are kept in separate
+    // directories so that they may be backed up
+    // separately.
     //
     // When a problem is pushed, only uploaded files
     // and a few made files, such as .ftest and .pdf
     // files, are copied to the problem's project
-    // subdirectory.
+    // subdirectories.
     //
-    // Each project problem has its own .git repository
-    // using the directory
+    // When a problem is submitted, the resulting run
+    // output (.rout) file is placed in the file
     //
-    //	    projects/PROJECT/PROBLEM/.git
+    //	     projects/PROJECT/PROBLEM/+submits+/
+    //		      CCCCCC-UID-RUN-PROBLEM.rout
     //
-    // When the problem is pushed, this directory is
-    // updated.  Versions in the directory may be tagged
-    // by the problem owner.
+    // file, where CCCCCC is a counter that goes 000000,
+    // 000001, 000002, ... as submissions occur, UID
+    // is the user who submitted, and RUN-PROBLEM.run
+    // is the corresponding run (.run) file.
+    //	    
+    // The following are log files:
     //
-    // The following file usage log files are written
-    // whenever a file or immediate subdirectory of the
-    // log containing directory is `used':
+    //	    users/UID/+actions+
+    //	    users/UID/PROBLEM/+actions+
+    //	    users/UID/PROBLEM/+changes+
+    //	    users/UID/+lists+/+actions+
+    //	    projects/PROJECT/+actions+
+    //	    projects/PROJECT/PROBLEM/+actions+
+    //	    projects/PROJECT/PROBLEM/+changes+
     //
-    //	    users/UID/+lists+/usage.log
-    //	    projects/PROJECT/+lists+/usage.log
-    //	    projects/PROJECT/PROBLEM/+review+/usage.log
-    //	    projects/PROJECT/usage.log
+    // The +changes+ files describe change to the files
+    // within the directory containing the +changes+
+    // file.  There is no fixed format for these
+    // descriptions.
     //
-    // For lists, using means opening the list proper
-    // for viewing, and not just reading the list des-
-    // cription.  For reviews usage means opening the
-    // review file for viewing, and for PROJECT direct-
-    // ories, usage means pulling a problem.  The log
-    // files contain lines with the format:
+    // The +actions+ files contains lines each describ-
+    // ing an action.  When an action occures, its
+    // action description line is written into the
+    // +actions+ files of every directory involved in
+    // the action.
     //
-    //		TIME UID FILENAME
+    // The following are the possible action description
+    // lines:
     //
-    // where TIME is the time of usage, UID is the ID of
-    // the using user, and FILENAME is the name of the
-    // file or subdirectory used.  These logs may be
-    // purged when they get large of older entries that
-    // have the same UID and FILENAME as more recent
-    // entries.
+    //	 TIME UID pull PROJECT PROBLEM
+    //	 TIME UID push PROJECT PROBLEM
+    //	 TIME UID submit PROJECT PROBLEM STIME SCORE...
+    //   TIME UID publish OWNER LISTNAME
+    //   TIME UID unpublish OWNER LISTNAME
+    //   TIME UID add OWNER LISTNAME
+    //   TIME UID sub OWNER LISTNAME
     //
-    // If an list file with symbolic link name
-    // UID-NAME.list is opened, a log entry will be
-    // written in both the directory containing the
-    // symbolic link to the file and in the directory
-    // containing the list file itself.
-    //
-    // For each user with given UID there is the file:
-    //
-    //	    users/UID/+lists+/+favorites+
-    //
-    // that lists the user's favorite indices.  Its
-    // contents are lines of the forms:
-    //
-    //	    TIME PROJECT BASENAME
-    //
-    // indicating that the list file with the name
-    // BASENAME.list in PROJECT was viewed at the given
-    // TIME.  PROJECT may be '-' to indicate a list of
-    // the current user and NOT of a project, and
-    // BASENAME may be '-' to indicate the list is a
-    // list of all the problems in the PROJECT or of all
-    // the UID user's problems.  The user may edit this
-    // in the same manner as the user edits lists.
-    //
-    // Lastly there is a stack used in editing:
-    //
-    //	    users/UID/+lists+/+stack+
-    //
-    // +stack+ contains non-description lines copied
-    // from or to be copied to indices.
+    // Here TIME is the time of the action, UID is the
+    // user performing the action, PROJECT may be '-'
+    // to indicate that the PROBLEM is private to the
+    // UID user, STIME is the max solution time in a
+    // submit run, SCORE... is the submit run score and
+    // may contain single spaces, OWNER is the owner of
+    // the list named LISTNAME, add means that user UID
+    // has added the list to their favorites, and sub
+    // means user UID has removed the list from their
+    // favorites.
 
     // Session Data
     // ------- ----
