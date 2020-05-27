@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May 25 13:11:58 EDT 2020
+// Date:    Tue May 26 22:26:18 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -217,8 +217,7 @@ if ( $epm_self == '/page/login.php'
     file_put_contents (
         "$epm_data/error.log",
 	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
-	" {$_SESSION['EPM_IPADDR']}" .
-	" {$_SERVER['REMOTE_HOST']}" . PHP_EOL,
+	" {$_SESSION['EPM_IPADDR']}" . PHP_EOL,
 	FILE_APPEND );
 }
 elseif ( ! isset ( $epm_is_subwindow ) )

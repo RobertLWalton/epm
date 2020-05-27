@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 24 22:15:05 EDT 2020
+    // Date:	Wed May 27 03:52:01 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1005,11 +1005,6 @@ EOT;
         echo <<<EOT
 	<div class='problem_display'
 	     id='problem-display'>
-	<form action='problem.php'
-	      enctype='multipart/form-data'
-	      method='POST'
-	      class='no-margin'>
-	<input type='hidden' name='id' value='$ID'>
 	<table style='width:100%'>
 	<tr>
 	<td>
@@ -1023,26 +1018,39 @@ EOT;
 		</button>
 	<strong>Current Problem Files
 	    (most recent first):</strong>
-	</td><td><label>
-	<input type="hidden" name="MAX_FILE_SIZE"
-	       value="$epm_upload_maxsize">
-	<input type="submit" name="upload"
-	       value="Upload File:">
-	<input type="file" name="uploaded_file"
-	       title="File to Upload">
+	</td><td>
+	<form action='problem.php' method='POST'
+	      enctype='multipart/form-data'
+	      id='upload-form'>
+	<input type='hidden' name='id' value='$ID'>
+        <label>
+	<strong>Upload a File:</strong>
+	<input type='hidden' name='MAX_FILE_SIZE'
+	       value='$epm_upload_maxsize'>
+	<input type='hidden' name='upload' value='yes'>
+	<input type='file' name='uploaded_file'
+	       onchange='document.getElementById
+	                  ( "upload-form" ).submit()'
+	       title='File to Upload'>
 	</label>
+	</form>
 	<pre>    </pre>
+	<form action='problem.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
+	<input id='delete_files'
+	       name='delete_files' value=''
+	       type='hidden'>
 	<input type="submit" name="execute_deletes"
 	       value=
 	         "Delete Over-Struck Files">
+	</form>
 	</td><td style='text-align:right'>
 	$current_problem_files_help</td>
 	</tr>
 	</table>
 	<div id='problems_body'>
-	<input id='delete_files'
-	       name='delete_files' value=''
-	       type='hidden'>
+	<form action='problem.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
 EOT;
 	function MAKE ( $fbase, $sext, $dext )
 	{
