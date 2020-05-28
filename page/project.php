@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 15:39:42 EDT 2020
+    // Date:	Thu May 28 17:34:18 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -737,7 +737,14 @@ EOT;
 	{
 	    $changes .= "make $project/$problem"
 	              . " directory" . PHP_EOL;
-	    $commands[] = ['mkdir', $desdir];
+	    $commands[] = ['mkdir', $desdir, '0771'];
+	    $commands[] = ['mkdir', "$desdir/+solutions+",
+	                            '0770'];
+	    $commands[] = ['mkdir', "$desdir/+submits+",
+	                            '0770'];
+	    $commands[] = ['append', "$desdir/+perm+",
+	                             "owner $uid" .
+				     PHP_EOL];
 	}
 	$files = @scandir ( "$epm_data/$srcdir" );
 	if ( $files === false )
@@ -774,6 +781,18 @@ EOT;
 	        $action = $amap;
 
 	    $g = "$srcdir/$fname";
+	    if ( $action == 'S' )
+	    {
+		$h = "$desdir/+solutions+/$fname";
+		$changes .= "move $fname to $project/"
+		          . "$problem/+solutions+/$fname"
+			  . PHP_EOL;
+		$commands[] =
+		    ['rename', "$srcdir/$fname",
+			       "$desdir/+solutions+/" .
+			       "$fname"];
+		continue;
+	    }
 	    $h = "$desdir/$fname";
 	    if ( is_link ( "$epm_data/$g" ) )
 	    {
@@ -894,7 +913,7 @@ EOT;
 	{
 	    $changes .= "make $uid/$problem"
 	              . " directory" . PHP_EOL;
-	    $commands[] = ['mkdir', $desdir];
+	    $commands[] = ['mkdir', $desdir, '0771'];
 	}
 
 	$files = @scandir ( "$epm_data/$srcdir" );
@@ -993,13 +1012,22 @@ EOT;
     //
     // The supported commands are:
     //
-    //     ['mkdir',$d] => mkdir $epm_data/$d
+    //     ['mkdir',$d, $mode] =>
+    //		mkdir $epm_data/$d $mode true
+    //
+    //	   ['append',$f,$line] =>
+    //		put_file_contents $f $line FILE_APPEND
     //
     //     ['rename',$f,$g] => rename $epm_data/$f
     //				      $epm_data/$g
     //
     //     ['link',$f,$g] => symbolic_link $f
     //				           $epm_data/$g
+    //
+    //	   ['merge',$f,$g] => merge $f into $g
+    //		there $f and $g are .optn files
+    //		in user's problem directory and
+    //		project problem directory respectively.
     //
     function execute_commands ( & $errors )
     {
@@ -1013,7 +1041,14 @@ EOT;
 	    $cop = $command[0];
 	    if ( $cop == 'mkdir' )
 	        $r = @mkdir
-		         ( "$epm_data/{$command[1]}" );
+		         ( "$epm_data/{$command[1]}",
+			   intval ( $command[2], 8 ),
+			   true );
+	    elseif ( $cop == 'append' )
+	        $r = @file_put_contents
+		         ( "$epm_data/{$command[1]}",
+			   $command[2],
+			   FILE_APPEND );
 	    elseif ( $cop == 'rename' )
 	        $r = @rename
 		         ( "$epm_data/{$command[1]}",

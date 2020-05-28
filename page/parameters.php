@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue May 19 13:21:50 EDT 2020
+// Date:    Thu May 28 17:41:53 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -239,7 +239,9 @@ $push_file_map = [
     // (push destination) directory.  If it is 'L',
     // the file should exist in the remote directory
     // and be linked into the local directory.  If
-    // it is a (sub)map RE => V, then each RE is a
+    // it is 'S' then the file should exist in the
+    // +solutions+ subdirectory of the remote directory.
+    // If it is a (sub)map RE => V, then each RE is a
     // regular expression such that if YYYY matches
     // RE then V is to be used: it will be 'R' or 'L'.
     // In the RE, `PPPP' is replaced by the problem
@@ -247,11 +249,11 @@ $push_file_map = [
     //
     // Note: merge of .optn files is handled separately.
     //
-    "c" => "R",
-    "cc" => "R",
-    "java" => "R",
-    "py" => "R",
-    "tex" => "R",
+    "c" => "S",
+    "cc" => "S",
+    "java" => "S",
+    "py" => "S",
+    "tex" => "S",
     "in" => ["00-\\d+-PPPP" => "L",
              "\\d+-\\d+-PPPP" => "R"],
     "ftest" => ["00-\\d+-PPPP" => "L",
