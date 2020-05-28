@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 04:04:25 EDT 2020
+    // Date:	Thu May 28 05:14:24 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -400,17 +400,14 @@
     	// Set to cause first element of EPM_DATA
 	// CHECKED-PROBLEMS to be compiled.
 
-    // Given the map produced by read_problems, return
-    // the rows of a table for pushing problems as a
-    // string.  The string has one segment for each
+    // Given a problem list in the form of elements
     //
-    //		PROBLEM => PROJECT
+    //		[TIME PROJECT PROBLEM]
     //
-    // mapping element, in the same order as these
-    // elements are in the map.  If PROJECT is ''
-    // the parent is unknown.
-    //
-    // The segment for one problem is:
+    // return the rows of a table for pushing problems
+    // as a string.  The string has one segment for each
+    // list element for which PROBLEM exists in users/
+    // UID.  The segment has the form:
     //
     //     <tr data-project='PROJECT'
     //         data-problem='PROBLEM'>
@@ -420,6 +417,7 @@
     //         <span class='problem'>
     //         PROBLEM &rArr; DESTINATION
     //         </span>
+    //	       <pre>  </pre>COMMENT
     //         </td>
     //         </tr>
     //
@@ -428,18 +426,44 @@
     //     <span class='selected-project'>
     //     Selected Project</span>
     //
-    // if PROJECT == '' and PROJECT otherwise.
+    // if PROJECT == '-' and the parent of PROBLEM does
+    // not exist, or is the parent if that exists and
+    // PROJECT == '-', or is PROJECT otherwise.  The
+    // COMMENT tells whether this is a re-push, change
+    // to a different parent, or creation of parent.
     //
-    function problems_to_push_rows ( $map )
+    function list_to_push_rows ( $list )
     {
+	$map = read_problems();
 	$r = '';
-        foreach ( $map as $problem => $project )
+	foreach ( $list as $items )
 	{
-	    $destination =
-	        ( $project == '' ?
-		  "<span class='selected-project'>" .
-		  "Selected Project</span>" :
-		  $project );
+	    list ( $time, $project, $problem ) = $items;
+	    if ( ! isset ( $map[$problem] ) ) continue;
+	    $parent = $map[$problem];
+	    $comment = '(create parent)';
+	    $destination = $project;
+	    if ( $project == $parent )
+	    {
+	        if ( $parent == '-' )
+		    $destination =
+			'<span class=' .
+			'"selected-project">' .
+		        'Selected Project</span>';
+		else
+		    $comment = '(re-push to parent)';
+	    }
+	    else if ( $project == '-' )
+	    {
+		$project = $parent;
+		$destination = $project;
+		$comment = '(re-push to parent)';
+	    }
+	    elseif ( $parent != '-' )
+		$comment = '(<mark>CHANGE</mark> to'
+		         . ' <mark>DIFFERENT</mark>'
+			 . ' parent)';
+
 	    $r .= <<<EOT
 	    <tr data-project='$project'
 	        data-problem='$problem'>
@@ -449,6 +473,7 @@
 	    <span class='problem'>
 	    $problem &rArr; $destination
 	    </span>
+	    <pre>  </pre>$comment
 	    </td>
 	    </tr>
 EOT;
@@ -472,7 +497,7 @@ EOT;
 	foreach ( read_problems()
 	          as $problem => $project )
 	{
-	    if ( $project == '' ) continue;
+	    if ( $project == '-' ) continue;
 	    $f = "users/$uid/$problem/"
 	       . "+parent+/+changes+";
 	    $time = @filemtime ( "$epm_data/$f" );
@@ -494,51 +519,6 @@ EOT;
 		       $project, $problem];
 	}
 	return $list;
-    }
-
-    // Given a $listname in the form 'PROJECT:BASENAME',
-    // where 'PROJECT:-' and '-:-' are allowed, make an
-    // $enabling_map from the named list, and then call
-    // read_problems and problems_to_push_rows to return
-    // a string or rows as per the latter function.
-    //
-    // If a PROBLEM appears in a list with more than one
-    // PROJECT, it will be given the project *AMBIGUOUS*
-    // in the $enabling_map, which effectively causes
-    // the problem to be ignored.  It is assumed that
-    // a PROBLEM will not appear twice in the same list
-    // with the same PROJECT.
-    //
-    function listname_to_push_rows ( $listname )
-    {
-	list ( $project, $basename ) =
-	    explode ( ':', $listname );
-	if ( $project != '-' )
-	{
-	    $enabling_map = [];
-	    if ( $basename != '-' )
-	        $list = read_file_list
-		    ( listname_to_filename
-		          ( $listname ) );
-	    else
-	        $list = read_project_list ( $project );
-
-	    foreach ( $list as $items )
-	    {
-		list ( $time, $project, $problem ) =
-		    $items;
-		if ( isset ( $enabling_map[$problem] ) )
-		    $enabling_map[$problem] =
-		        '*AMBIGUOUS*';
-		else
-		    $enabling_map[$problem] = $project;
-	    }
-	}
-	else
-	    $enabling_map = NULL;
-
-	return problems_to_push_rows
-	    ( read_problems ( $enabling_map ) );
     }
 
     // Given a $listname in the form 'PROJECT:BASENAME',
@@ -1610,7 +1590,8 @@ EOT;
     {
 	$push_help = HELP ( 'project-push' );
 
-	$rows = listname_to_push_rows ( $list );
+	$rows = list_to_push_rows
+	    ( listname_to_list ( $list ) );
 
 	$project_options = projects_to_options
 	    ( read_projects ( 'push' ) );
@@ -1702,7 +1683,7 @@ EOT;
 		// Click must turn box on.
 		//
 		checkbox.style.backgroundColor = on;
-		if ( row.dataset.project == ''
+		if ( row.dataset.project == '-'
 		     &&
 		     ++ push_counter == 1 )
 		    project_selector.style.visibility =
@@ -1713,7 +1694,7 @@ EOT;
 		// Click must turn box off.
 		//
 		checkbox.style.backgroundColor = off;
-		if ( row.dataset.project == ''
+		if ( row.dataset.project == '-'
 		     &&
 		     -- push_counter == 0 )
 		    project_selector.style.visibility =
@@ -1736,7 +1717,7 @@ EOT;
 		             .backgroundColor != on )
 		    continue;
 		checkbox.style.backgroundColor = off;
-		if ( row.dataset.project == ''
+		if ( row.dataset.project == '-'
 		     &&
 		     -- push_counter == 0 )
 		    project_selector.style.visibility =
@@ -1793,7 +1774,7 @@ EOT;
 		  == on );
 	    op = ( check_compile ? 
 		   'compile' : 'finish' );
-	    if ( project == '' )
+	    if ( project == '-' )
 	        project = selected_project;
 	    SEND ( op + '=push&problem=' + problem
 		      + '&project=' + project,
@@ -1933,9 +1914,9 @@ EOT;
 		  == on );
 	    op = ( check_compile ? 
 		   'compile' : 'finish' );
-	    if ( project == '' )
+	    if ( project == '-' )
 	        FAIL ( 'project for ' + problem +
-		       ' is \'\'' );
+		       ' is \'-\'' );
 	    SEND ( op + '=pull&problem=' + problem
 		      + '&project=' + project,
 		   check_compile ?

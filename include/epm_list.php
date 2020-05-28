@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 24 22:36:21 EDT 2020
+    // Date:	Thu May 28 04:16:42 EDT 2020
 
     // Functions for managing lists.
 
@@ -161,16 +161,11 @@
     }
 
     // Return a map from a user's own problems to the
-    // projects each is descended from, or '' if a
+    // projects each is descended from, or '-' if a
     // problem is not descended from a project.  Sort
     // the map by problems (keys) in natural order.
     //
-    // If $enabling_map is NOT NULL, any PROBLEM such
-    // that $enabling_map['PROBLEM'] is NOT set, or
-    // is set to a value that is neither '' not the
-    // project PROBLEM is descended from, is ignored.
-    //
-    function read_problems ( $enabling_map = NULL )
+    function read_problems()
     {
 	global $epm_data, $uid, $epm_name_re;
 
@@ -184,15 +179,6 @@
 	    if ( ! preg_match
 	               ( $epm_name_re, $problem ) )
 	        continue;
-	    $eproject = '';
-	    if ( isset ( $enabling_map ) )
-	    {
-	        if ( ! isset
-		          ( $enabling_map[$problem] ) )
-		    continue;
-		$eproject = $enabling_map[$problem];
-	    }
-
 	    $g = "$f/$problem/+parent+";
 	    $re = "/\/\.\.\/projects\/([^\/]+)\/"
 	        . "$problem\$/";
@@ -205,12 +191,10 @@
 		           ( $re, $s, $matches ) )
 		    ERROR ( "link $g value $s is" .
 		            " mal-formed" );
-		if (    $eproject == ''
-		     || $eproject == $matches[1] )
-		    $pmap[$problem] = $matches[1];
+		$pmap[$problem] = $matches[1];
 	    }
-	    elseif ( $eproject == '' )
-		$pmap[$problem] = '';
+	    else
+		$pmap[$problem] = '-';
 	}
 	ksort ( $pmap, SORT_NATURAL );
 	return $pmap;
