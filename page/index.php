@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 28 11:32:06 EDT 2020
+// Date:    Thu May 28 15:08:26 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -178,10 +178,11 @@ function HELP ( $item )
 }
 
 // Locks directory.  For LOCK_EX lock, stores microtime
-// into directory/+lock+ and returns the microtime.
-// For LOCK_SH lock, read directory/+lock+ and returns
-// its value.  In this case returns 0 if directory/
-// +lock+ does not exist.
+// into directory/+lock+ and returns the previous value
+// of the lock (0 if none).  For LOCK_SH lock, read
+// directory/+lock+ and returns its value (0 if there
+// is no lock).  The microtime is stored as a floating
+// point string.
 //
 // The lock is released by UNLOCK or on shutdown.
 //
@@ -199,18 +200,16 @@ function LOCK ( $dir, $type )
     $r = flock ( $epm_lock, $type );
     if ( $r === false )
         ERROR ( "cannot lock $f" );
+    $value = fread ( $epm_lock, 100 );
+    if ( $value == '' ) $value = '0';
+    elseif ( floatval ( $value ) == 0 )
+	ERROR ( "bad value `$value' read from $f" );
     if ( $type == LOCK_EX )
     {
         $time = strval ( microtime ( true ) );
 	fwrite ( $epm_lock, $time );
     }
-    else
-    {
-        $time = fread ( $epm_lock, 100 );
-	if ( floatval ( $time ) == 0 )
-	    ERROR ( "bad value `$time' read from $f" );
-    }
-    return $time;
+    return $value;
 }
 
 function UNLOCK()

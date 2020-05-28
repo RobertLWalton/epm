@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 05:14:24 EDT 2020
+    // Date:	Thu May 28 15:28:10 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -432,8 +432,10 @@
     // COMMENT tells whether this is a re-push, change
     // to a different parent, or creation of parent.
     //
-    function list_to_push_rows ( $list )
+    function list_to_push_rows ( $list, & $warnings )
     {
+        global $epm_data;
+
 	$map = read_problems();
 	$r = '';
 	foreach ( $list as $items )
@@ -463,6 +465,26 @@
 		$comment = '(<mark>CHANGE</mark> to'
 		         . ' <mark>DIFFERENT</mark>'
 			 . ' parent)';
+
+	    if ( $project != '-' )
+	    {
+		$d = "projects/$project/$problem";
+		if ( is_dir ( "$epm_data/$d" ) )
+		{
+		    $pmap = problem_permissions
+		         ( $project, $problem );
+		    if ( ! $pmap['owner'] )
+		    {
+		        $warnings[] =
+			    "$problem => $project" .
+			    " omitted because you" .
+			    " are not an owner of" .
+			    " the existing" .
+			    " $project $problem";
+			continue;
+		    }
+		}
+	    }
 
 	    $r .= <<<EOT
 	    <tr data-project='$project'
@@ -1376,7 +1398,12 @@ EOT;
     if ( $op == 'pull' )
 	$pull_rows = listname_to_pull_rows
 	    ( $list, $warnings );
-	// Must execute before $warnings is used.
+    elseif ( $op == 'push' )
+	$push_rows = list_to_push_rows
+	    ( listname_to_list ( $list ),
+	      $warnings );
+	// Must execute these before $warnings is used.
+
 
     if ( count ( $errors ) > 0 )
     {
@@ -1589,10 +1616,6 @@ EOT;
     if ( $op == 'push' )
     {
 	$push_help = HELP ( 'project-push' );
-
-	$rows = list_to_push_rows
-	    ( listname_to_list ( $list ) );
-
 	$project_options = projects_to_options
 	    ( read_projects ( 'push' ) );
 
@@ -1642,7 +1665,7 @@ EOT;
             <td style='text-align:right'>
             $push_help</td>
 	</tr>
-	$rows
+	$push_rows
 	</table>
 	</form>
 	</div>
