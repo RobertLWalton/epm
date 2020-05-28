@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 27 16:49:59 EDT 2020
+    // Date:	Thu May 28 04:04:25 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -204,6 +204,7 @@
     //	    projects/PROJECT/+actions+
     //	    projects/PROJECT/PROBLEM/+actions+
     //	    projects/PROJECT/PROBLEM/+changes+
+    //	    lists/+actions+
     //
     // The +changes+ files describe change to the files
     // within the directory containing the +changes+
@@ -211,10 +212,12 @@
     // descriptions.
     //
     // The +actions+ files contains lines each describ-
-    // ing an action.  When an action occures, its
+    // ing an action.  When an action occurs, its
     // action description line is written into the
     // +actions+ files of every directory involved in
-    // the action.
+    // the action.  This means that 4 +actions+ files
+    // are written for push and pull operations and 2
+    // +actions+ files are written for list operations.
     //
     // The following are the possible action description
     // lines:
@@ -241,13 +244,9 @@
     // Session Data
     // ------- ----
 
-    // Session data is in EPM_PROJECT as follows:
+    // Session data is in EPM_DATA as follows:
     //
-    //     EPM_PROJECT ID
-    //	   	32 hex digit random number used to
-    //		verify POSTs to this page.
-    //
-    //     EPM_PROJECT OP
+    //     EPM_DATA OP
     //		One of:
     //		    NULL
     //		    'push'
@@ -255,18 +254,18 @@
     //
     // During a push or pull operation:
     //
-    //	   EPM_PROJECT LIST
+    //	   EPM_DATA LIST
     //		Names current list for push or pull.
     //
-    //     EPM_PROJECT PROBLEM
+    //     EPM_DATA PROBLEM
     //		Name of problem being pushed or pulled.
     //
-    //     EPM_PROJECT PROJECT
+    //     EPM_DATA PROJECT
     //		Name of project into which problem is
     //		being pushed or from which it is being
     //		pulled.
     //
-    //     EPM_PROJECT COMMANDS
+    //     EPM_DATA COMMANDS
     //		List of commands to be executed by
     //		execute_commands to accomplish the
     //		current push/pull operation.  Commands
@@ -274,7 +273,7 @@
     //		the current directory and 06 the current
     //		mask.
     //
-    //     EPM_PROJECT CHANGES
+    //     EPM_DATA CHANGES
     //		String to be appended to +changes+ file
     //		after commands are executed.  Also
     //		displayed to user when change-approval
@@ -384,11 +383,11 @@
         // This last is only needed by merge function.
 
     if ( $epm_method == 'GET' )
-        $_SESSION['EPM_PROJECT'] = [
+        $_SESSION['EPM_DATA'] = [
 	    'OP' => NULL,
 	    'LIST' => NULL ];
 
-    $data = & $_SESSION['EPM_PROJECT'];
+    $data = & $_SESSION['EPM_DATA'];
     $op = $data['OP'];
     $list = $data['LIST'];
 
@@ -398,7 +397,7 @@
         // Set to list to be deleted.  Causes delete
 	// OK question.
     $compile_next = false;
-    	// Set to cause first element of EPM_PROJECT
+    	// Set to cause first element of EPM_DATA
 	// CHECKED-PROBLEMS to be compiled.
 
     // Given the map produced by read_problems, return
@@ -672,7 +671,7 @@ EOT;
 	return $r;
     }
 
-    // Compute EPM_PROJECT CHANGES, COMMANDS, PROJECT,
+    // Compute EPM_DATA CHANGES, COMMANDS, PROJECT,
     // and PROBLEM to be used to push $problem to
     // $project.  If $problem has been pulled, it is
     // and error if it has not been pulled from
@@ -832,7 +831,7 @@ EOT;
 	$data['COMMANDS'] = $commands;
     }
 
-    // Compute EPM_PROJECT CHANGES, COMMANDS, PROJECT,
+    // Compute EPM_DATA CHANGES, COMMANDS, PROJECT,
     // and PROBLEM to be used to pull $problem from
     // $project.  If $problem has been pulled, it is
     // and error if it has not been pulled from
@@ -987,7 +986,7 @@ EOT;
 	$data['COMMANDS'] = $commands;
     }
 
-    // Execute EPM_PROJECT COMMANDS.  Errors cause abort
+    // Execute EPM_DATA COMMANDS.  Errors cause abort
     // and append to $errors.
     //
     // The supported commands are:
@@ -1098,7 +1097,7 @@ EOT;
 	return $r;
     }
 
-    // Write EPM_PROJECT CHANGES to destination
+    // Write EPM_DATA CHANGES to destination
     // +changes+ file and push action item to
     // +actions+ files.
     //
@@ -1136,7 +1135,7 @@ EOT;
 	    ERROR ( "cannot write $f" );
     }
 
-    // Write EPM_PROJECT CHANGES to destination
+    // Write EPM_DATA CHANGES to destination
     // +changes+ file and action to source +actions+
     // files.
     //
