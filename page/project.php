@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 15:28:10 EDT 2020
+    // Date:	Thu May 28 15:39:42 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1119,18 +1119,33 @@ EOT;
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
+
 	$time = filemtime ( "$epm_data/$f" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
 	$time = strftime ( $epm_time_format, $time );
-	$action = "$time $uid push $project:$problem"
+	$action = "$time $uid push $project $problem"
 	        . PHP_EOL;
-	$f = "$d/+actions+";
+
+	$f = "projects/$project/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $action, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
+
+	$f = "projects/$project/$problem/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $action, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+
 	$f = "users/$uid/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $action, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+
+	$f = "users/$uid/$problem/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $action, FILE_APPEND );
 	if ( $r === false )
@@ -1155,18 +1170,33 @@ EOT;
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
+
 	$time = filemtime ( "$epm_data/$f" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
 	$time = strftime ( $epm_time_format, $time );
-	$action = "$time $uid pull $project:$problem"
+	$action = "$time $uid pull $project $problem"
 	        . PHP_EOL;
+
+	$g = "projects/$project/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$g", $action, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $g" );
+
 	$g = "projects/$project/$problem/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$g", $action, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $g" );
+
 	$g = "users/$uid/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$g", $action, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $g" );
+
+	$g = "users/$uid/$problem/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$g", $action, FILE_APPEND );
 	if ( $r === false )
