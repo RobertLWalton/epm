@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 17:34:18 EDT 2020
+    // Date:	Thu May 28 17:50:50 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -729,7 +729,8 @@ EOT;
 	    return;
 	}
 
-	$changes = "Changes to Push $problem by $uid ("
+	$changes = "Changes to Push $problem to"
+	         . " $project by $uid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
@@ -813,7 +814,7 @@ EOT;
 
 	    if ( $action == 'R' ) continue;
 	    if ( $action != 'L' )
-	        ERROR ( "bad value for" .
+	        ERROR ( "bad action `$action' for" .
 		        " \$push_file_map['$ext']" );
 
 	    $changes .= "link $fname to"
