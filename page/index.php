@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue May 26 22:26:18 EDT 2020
+// Date:    Thu May 28 11:32:06 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -176,6 +176,54 @@ function HELP ( $item )
 	   "\"height=800px,width=800px\")'>" .
 	   "?</button>";
 }
+
+// Locks directory.  For LOCK_EX lock, stores microtime
+// into directory/+lock+ and returns the microtime.
+// For LOCK_SH lock, read directory/+lock+ and returns
+// its value.  In this case returns 0 if directory/
+// +lock+ does not exist.
+//
+// The lock is released by UNLOCK or on shutdown.
+//
+$epm_lock = NULL;
+function LOCK ( $dir, $type )
+{
+    global $epm_data, $epm_lock;
+
+    if ( isset ( $epm_lock ) )
+        ERROR ( "double locking" );
+    $f = "$dir/+lock+";
+    $epm_lock = fopen ( "$epm_data/$f", 'w+' );
+    if ( $epm_lock === false )
+        ERROR ( "cannot open $f" );
+    $r = flock ( $epm_lock, $type );
+    if ( $r === false )
+        ERROR ( "cannot lock $f" );
+    if ( $type == LOCK_EX )
+    {
+        $time = strval ( microtime ( true ) );
+	fwrite ( $epm_lock, $time );
+    }
+    else
+    {
+        $time = fread ( $epm_lock, 100 );
+	if ( floatval ( $time ) == 0 )
+	    ERROR ( "bad value `$time' read from $f" );
+    }
+    return $time;
+}
+
+function UNLOCK()
+{
+    global $epm_lock;
+
+    if ( ! isset ( $epm_lock ) ) return;
+    flock ( $epm_lock, LOCK_UN );
+    $epm_lock = NULL;
+}
+register_shutdown_function ( 'UNLOCK' );
+
+
 
 // Check that we have not skipped a page.
 //

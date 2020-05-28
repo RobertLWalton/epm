@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 26 03:32:27 EDT 2020
+    // Date:	Thu May 28 11:41:22 EDT 2020
 
     // Edits problem option page.
 
@@ -27,18 +27,6 @@
         // These are needed to require epm_template.php.
 
     require "$epm_home/include/epm_template.php";
-
-    $lock_desc = NULL;
-    function shutdown ()
-    {
-        global $lock_desc;
-	if ( isset ( $lock_desc ) )
-	    flock ( $lock_desc, LOCK_UN );
-    }
-    register_shutdown_function ( 'shutdown' );
-    $lock_desc =
-	fopen ( "$epm_data/$probdir/+lock+", "w" );
-    flock ( $lock_desc, LOCK_EX );
 
     // Compute data for Template Commands in $template_
     // cache.

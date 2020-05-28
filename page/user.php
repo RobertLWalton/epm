@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 26 03:07:17 EDT 2020
+    // Date:	Thu May 28 11:41:32 EDT 2020
 
     // Display and edit user information in:
     //
@@ -99,25 +99,7 @@
     // if they match the emails recorded in the
     // UID.info file.
 
-    $lock_desc = NULL;
-    function shutdown ()
-    {
-	global $lock_desc;
-	if ( isset ( $lock_desc ) )
-	{
-	    flock ( $lock_desc, LOCK_UN );
-	    fclose ( $lock_desc );
-	}
-    }
-    register_shutdown_function ( 'shutdown' );
-
-    $f = "admin/+lock+";
-    $lock_desc = fopen ( "$epm_data/$f", "w" );
-    if ( $lock_desc === false )
-	ERROR ( "cannot open $f for writing" );
-    $r = flock ( $lock_desc, LOCK_EX );
-    if ( $r === false )
-	ERROR ( "cannot lock $f" );
+    LOCK ( admin, LOCK_EX );
 
     if ( $epm_method == 'GET' && ! $new_user )
     {

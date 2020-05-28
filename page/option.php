@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 23 14:16:31 EDT 2020
+    // Date:	Thu May 28 11:41:05 EDT 2020
 
     // Edits problem option page.
 
@@ -33,18 +33,6 @@
     require "$epm_home/include/epm_template.php";
     $_SESSION['EPM_PERMISSION']['option']['template'] =
         true;
-
-    $lock_desc = NULL;
-    function shutdown ()
-    {
-        global $lock_desc;
-	if ( isset ( $lock_desc ) )
-	    flock ( $lock_desc, LOCK_UN );
-    }
-    register_shutdown_function ( 'shutdown' );
-    $lock_desc =
-	fopen ( "$epm_data/$probdir/+lock+", "w" );
-    flock ( $lock_desc, LOCK_EX );
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.

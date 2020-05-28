@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri May 22 16:49:41 EDT 2020
+// Date:    Thu May 28 11:36:13 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -40,17 +40,6 @@ if ( ! isset ( $is_epm_test ) )
     // NOT driven by an http server.  Some functions,
     // notably move_uploaded_file, will not work
     // in this test script environment.
-
-$epm_lock = NULL;
-function unlock()
-{
-    global $epm_lock;
-    if ( ! isset ( $epm_lock ) ) return;
-    flock ( $epm_lock, LOCK_UN );
-    fclose ( $epm_lock );
-    $epm_lock = NULL;
-}
-register_shutdown_function ( 'unlock' );
 
 // Return true if process with $pid is still running,
 // and false otherwise.
@@ -1957,7 +1946,7 @@ function finish_run ( & $errors )
 {
     global $epm_data, $probdir, $uid, $problem,
            $epm_parent_re, $_SESSION,
-	   $epm_time_format, $epm_lock;
+	   $epm_time_format;
 
     $run = & $_SESSION['EPM_RUN'];
     $rundir = $run['DIR'];
@@ -2053,13 +2042,7 @@ function finish_run ( & $errors )
     else
 	$score = 'Undefined Score';
 
-    $f = "$d/+lock+";
-    $epm_lock = @fopen ( "$epm_data/$f", 'w' );
-    if ( $epm_lock === false )
-        ERROR ( "cannot open $f" );
-    $r = @flock ( $epm_lock, LOCK_EX );
-    if ( $r === false )
-        ERROR ( "cannot lock $f" );
+    LOCK ( $d, LOCK_EX );
 
     $action = "$time $uid submit $project:$runbase"
 	    . " $score" . PHP_EOL;

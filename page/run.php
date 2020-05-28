@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 05:47:10 EDT 2020
+    // Date:	Thu May 28 11:41:13 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -30,18 +30,6 @@
 	header ( "Location: /page/problem.php?id=$ID" );
 	exit;
     }
-
-    $lock_desc = NULL;
-    function shutdown ()
-    {
-        global $lock_desc;
-	if ( isset ( $lock_desc ) )
-	    flock ( $lock_desc, LOCK_UN );
-    }
-    register_shutdown_function ( 'shutdown' );
-    $lock_desc =
-	fopen ( "$epm_data/$probdir/+lock+", "w" );
-    flock ( $lock_desc, LOCK_EX );
 
     require "$epm_home/include/epm_make.php";
     load_file_caches();
