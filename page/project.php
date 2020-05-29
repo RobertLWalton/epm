@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 29 04:26:47 EDT 2020
+    // Date:	Fri May 29 13:55:40 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -278,6 +278,11 @@
     //		after commands are executed.  Also
     //		displayed to user when change-approval
     //		is required.
+    //
+    //	   EPM_DATA LOCK
+    //		Time returned by LOCK before compile
+    //		of projects/PROJECT/PROBLEM directory,
+    //		if it exists.
 
     // Non-XHTTP POSTs:
     // --------- -----
@@ -1237,7 +1242,31 @@ EOT;
 	}
         elseif ( isset ( $_POST['execute'] ) )
 	{
-	    execute_commands ( $errors );
+	    if ( ! isset ( $data['PROBLEM'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    elseif ( ! isset ( $data['PROJECT'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $problem = $data['PROBLEM'];
+	    $project = $data['PROJECT'];
+
+	    $d = "projects/$project/$problem";
+	    if ( is_dir ( "$epm_data/$d" ) )
+	    {
+		$lock_type = ( $op == 'push' ?
+		               LOCK_EX : LOCK_SH );
+		$lock = LOCK ( $d, $lock_type );
+		if ( $lock > $data['LOCK'] )
+		    $errors[] =
+		        "problem $project $problem" .
+			" was changed by a push" .
+			" during this $op" .
+			PHP_EOL .
+			"  so this $op has been" .
+			" cancelled";
+	    }
+
+	    if ( count ( $errors ) == 0 )
+		execute_commands ( $errors );
 	    if ( count ( $errors ) > 0 )
 	    {
 		echo "ERROR $ID\n";
@@ -1276,6 +1305,14 @@ EOT;
 	    if ( ! preg_match
 	               ( $epm_name_re, $project ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    $d = "projects/$project/$problem";
+	    if ( is_dir ( "$epm_data/$d" ) )
+	    {
+		$lock_type = ( $op == 'push' ?
+		               LOCK_EX : LOCK_SH );
+		$data['LOCK'] = LOCK ( $d, $lock_type );
+	    }
 
 	    if ( $op == 'push' )
 		compile_push_problem
