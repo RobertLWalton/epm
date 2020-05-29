@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Sun Mar  8 06:32:35 EDT 2020
+ * Date:	Fri May 29 16:08:02 EDT 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -74,9 +74,10 @@ char documentation [] =
 "    for T + 1 <= N <= T + 2 unless -cputime is\n"
 "    explicitly given.\n"
 "\f\n"
-"    There are also two other options:\n"
+"    There are also three other options:\n"
 "\n"
 "      -status STATUS-FILE\n"
+"      -score SCORE-FILE\n"
 "      -env ENV-PARAM\n"
 "\n"
 "    With a STATUS-FILE the status of the child proc-\n"
@@ -117,6 +118,12 @@ char documentation [] =
 "    COUNT do not match, or STATUS-FILE is empty,\n"
 "    re-read the file as a race condition is likely.\n"
 "\n"
+"    The SCORE-FILE if present is not written unless\n"
+"    `program ...' terminates with a signal or with\n"
+"    an exit code other than 0.  In this case a score\n"
+"    describing the reason for termination is written\n"
+"    to SCORE-FILE.\n"
+"\n"
 "    Without any -env options, the environment in\n"
 "    which `program ...' executes is empty.  There\n"
 "    can be zero or more `-env ENV-PARAM' options,\n"
@@ -141,10 +148,10 @@ char documentation [] =
 "    child and the real and effective user and group\n"
 "    IDs of the child are changed to those of the\n"
 "    `sandbox' account, as looked up in /etc/passwd.\n"
-"\n"
+"\f\n"
 "    Normally the `sandbox' user is not allowed to\n"
 "    log in and owns no useful files or directories.\n"
-"\f\n"
+"\n"
 "    The child's resource limits and environment are\n"
 "    set according to the options and defaults, and\n"
 "    the program is executed with the given argu-\n"
@@ -330,6 +337,7 @@ int main ( int argc, char ** argv )
     rlim_t max_value = RLIM_INFINITY;
 
     const char * status_file = NULL;
+    const char * score_file = NULL;
 
     int env_max_size = 100;
     char ** env =
@@ -374,6 +382,20 @@ int main ( int argc, char ** argv )
 		exit (1);
 	    }
 	    status_file = argv[index++];
+	    continue;
+	}
+        else if ( strcmp ( argv[index], "-score" )
+	     == 0 )
+	{
+	    ++ index;
+	    if ( index >= argc )
+	    {
+		fprintf ( stderr,
+			  "epm_sandbox: Too few"
+			  " arguments\n" );
+		exit (1);
+	    }
+	    score_file = argv[index++];
 	    continue;
 	}
         else if ( strcmp ( argv[index], "-env" )

@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 29 13:55:40 EDT 2020
+    // Date:	Fri May 29 14:11:35 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1255,14 +1255,16 @@ EOT;
 		$lock_type = ( $op == 'push' ?
 		               LOCK_EX : LOCK_SH );
 		$lock = LOCK ( $d, $lock_type );
-		if ( $lock > $data['LOCK'] )
+		if ( ! isset ( $data['LOCK'] )
+		     ||
+		     $lock > $data['LOCK'] )
 		    $errors[] =
 		        "problem $project $problem" .
 			" was changed by a push" .
 			" during this $op" .
 			PHP_EOL .
 			"  so this $op has been" .
-			" cancelled";
+			" cancelled; try again";
 	    }
 
 	    if ( count ( $errors ) == 0 )
