@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 17:50:50 EDT 2020
+    // Date:	Thu May 28 22:20:25 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -466,26 +466,6 @@
 		         . ' <mark>DIFFERENT</mark>'
 			 . ' parent)';
 
-	    if ( $project != '-' )
-	    {
-		$d = "projects/$project/$problem";
-		if ( is_dir ( "$epm_data/$d" ) )
-		{
-		    $pmap = problem_permissions
-		         ( $project, $problem );
-		    if ( ! $pmap['owner'] )
-		    {
-		        $warnings[] =
-			    "$problem => $project" .
-			    " omitted because you" .
-			    " are not an owner of" .
-			    " the existing" .
-			    " $project $problem";
-			continue;
-		    }
-		}
-	    }
-
 	    $r .= <<<EOT
 	    <tr data-project='$project'
 	        data-problem='$problem'>
@@ -681,68 +661,94 @@ EOT;
     // do not exist.
     //
     function compile_push_problem
-	( $project, $problem, & $errors )
+	( $project, $problem, & $warnings, & $errors )
     {
 	global $epm_data, $uid, $epm_filename_re,
-	       $epm_time_format, $data,
-	       $push_file_map;
+	       $epm_time_format, $epm_parent_re,
+	       $data, $push_file_map;
 
         $srcdir = "users/$uid/$problem";
 	$d = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$srcdir" ) )
 	{
-	    $errors[] = "$problem is not a problem";
+	    $errors[] =
+	        "you have no problem named $problem";
 	    return;
 	}
 	if ( ! is_dir ( "$epm_data/$d" ) )
 	{
-	    $errors[] = "$project is not a project";
+	    $errors[] =
+	        "there is no project named $project";
 	    return;
 	}
 	$desdir = "$d/$problem";
 	$g = "$srcdir/+parent+";
-	$new_push = true;
+	$change_parent = false;
 	if ( is_link ( "$epm_data/$g" ) )
 	{
-	    $new_push = false;
 	    $s = @readlink ( "$epm_data/$g" );
 	    if ( $s === false )
 		ERROR ( "cannot read link $g" );
-	    $sok = "../../../$desdir";
-	    if ( $s != $sok )
+	    if ( ! preg_match
+	             ( $epm_parent_re, $s, $matches ) )
+		ERROR
+		    ( "link $g value $s badly formed" );
+	    list ( $x, $parproj, $parprob ) =
+	        explode ( '/', $matches[1] );
+	    if ( $parprob != $problem )
+	        ERROR ( "problem illegally renamed:" .
+		        " $problem != $parprob" );
+	    if ( $parproj != $project )
 	    {
-	        $errors[] = "$g links to $s but should"
-		          . " link to $sok";
-		return;
-	    }
-	    if ( ! is_dir ( "$epm_data/$desdir" ) )
-	    {
-		$errors[] = "$desdir is not a"
-		          . " directory";
-		return;
+	        $change_parent = true;
+		$warnings[] =
+		    "changing project from" .
+		    " $problem => $parproj to" .
+		    "$problem => $project";
 	    }
 	}
-	elseif ( is_dir ( "$epm_data/$desdir" ) )
+	if ( is_dir ( "$epm_data/$desdir" ) )
 	{
-	    $errors[] = "$project already has a problem"
-	              . " named $problem";
-	    return;
+	    $pmap = problem_permissions
+		 ( $project, $problem );
+	    if ( ! $pmap['owner'] )
+	    {
+		$errors[] =
+		    "$problem => $project is not" .
+		    " possible because you are" .
+		    " not an owner of the existing" .
+		    " problem $project $problem";
+		return;
+	    }
+	    $new_push = false;
 	}
+	else
+	    $new_push = true;
 
 	$changes = "Changes to Push $problem to"
 	         . " $project by $uid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
+	if ( $change_parent )
+	{
+	    $changes .=
+	        "  remove old parent of $uid $problem" .
+		PHP_EOL;
+	    $commands[] = ['unlink', "$srcdir/+parent+"];
+	}
 	if ( $new_push )
 	{
-	    $changes .= "make $project/$problem"
+	    $changes .= "  make $project $problem"
 	              . " directory" . PHP_EOL;
 	    $commands[] = ['mkdir', $desdir, '0771'];
 	    $commands[] = ['mkdir', "$desdir/+solutions+",
 	                            '0770'];
 	    $commands[] = ['mkdir', "$desdir/+submits+",
 	                            '0770'];
+	    $changes .= "  make $uid the owner of the"
+	              . " $project $problem directory"
+		      . PHP_EOL;
 	    $commands[] = ['append', "$desdir/+perm+",
 	                             "owner $uid" .
 				     PHP_EOL];
@@ -785,9 +791,10 @@ EOT;
 	    if ( $action == 'S' )
 	    {
 		$h = "$desdir/+solutions+/$fname";
-		$changes .= "move $fname to $project/"
-		          . "$problem/+solutions+/$fname"
-			  . PHP_EOL;
+		$changes .=
+		    "  move $fname to from $uid" .
+		    " $problem to $project $problem" .
+		    " solutions" . PHP_EOL;
 		$commands[] =
 		    ['rename', "$srcdir/$fname",
 			       "$desdir/+solutions+/" .
@@ -804,9 +811,9 @@ EOT;
 		    continue;
 	    }
 
-	    $changes .= "move $fname to"
-	    	      . " $project/$problem/$fname"
-		      . PHP_EOL;
+	    $changes .=
+	        "  move $fname from $uid $problem to" .
+		" $project $problem" . PHP_EOL;
 	    $commands[] =
 	        ['rename', "$srcdir/$fname",
 		           "$desdir/$fname"];
@@ -817,9 +824,10 @@ EOT;
 	        ERROR ( "bad action `$action' for" .
 		        " \$push_file_map['$ext']" );
 
-	    $changes .= "link $fname to"
-	              . " $project/$problem/$fname"
-	              . PHP_EOL;
+	    $changes .=
+	        "  link $fname in $uid $problem to" .
+	        " $fname in $project $problem" .
+		PHP_EOL;
 	    $commands[] = ['link',
 	                   "../../../$desdir/$fname",
 	                   "$srcdir/$fname"];
@@ -828,19 +836,20 @@ EOT;
 	if ( is_readable
 	    ( "$epm_data/$srcdir/$fname" ) )
 	{
-	    $changes .= "merge $fname into"
-	    	      . " $project/$problem/$fname"
-		      . PHP_EOL;
+	    $changes .=
+	        "  merge $fname in $uid $problem" .
+		" into $fname in $project $problem" .
+		PHP_EOL;
 	    $commands[] =
 	        ['merge', "$srcdir/$fname",
 		          "$desdir/$fname"];
 		// Merge merges optn files.
 	}
-	if ( $new_push )
+	if ( $new_push || $change_parent )
 	{
-	    $changes .= "link +parent+ to"
-	              . " $project/$problem"
-	              . PHP_EOL;
+	    $changes .=
+	        "  make $project $problem the parent" .
+		" of $uid $problem" . PHP_EOL;
 	    $commands[] = ['link',
 	                   "../../../$desdir",
 	                   "$srcdir/+parent+"];
@@ -1013,6 +1022,8 @@ EOT;
     //
     // The supported commands are:
     //
+    //     ['unlink',$f] => unlink $f
+    //
     //     ['mkdir',$d, $mode] =>
     //		mkdir $epm_data/$d $mode true
     //
@@ -1040,7 +1051,10 @@ EOT;
 	foreach ( $commands as $command )
 	{
 	    $cop = $command[0];
-	    if ( $cop == 'mkdir' )
+	    if ( $cop == 'unlink' )
+	        $r = @unlink
+		         ( "$epm_data/{$command[1]}" );
+	    elseif ( $cop == 'mkdir' )
 	        $r = @mkdir
 		         ( "$epm_data/{$command[1]}",
 			   intval ( $command[2], 8 ),
@@ -1311,7 +1325,8 @@ EOT;
 
 	    if ( $op == 'push' )
 		compile_push_problem
-		    ( $project, $problem, $errors );
+		    ( $project, $problem,
+		      $warnings, $errors );
 	    else
 		compile_pull_problem
 		    ( $project, $problem,
