@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 22:20:25 EDT 2020
+    // Date:	Thu May 28 23:16:59 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -434,8 +434,6 @@
     //
     function list_to_push_rows ( $list, & $warnings )
     {
-        global $epm_data;
-
 	$map = read_problems();
 	$r = '';
 	foreach ( $list as $items )
@@ -483,56 +481,14 @@ EOT;
 	return $r;
     }
 
-    // Return a list containing the user's problems that
-    // have a parent.  List elements are of the form
-    //
-    //	    [TIME PROJECT PROBLEM]
-    //
-    // and the TIME is the modification time of the
-    // parents +changes+ file.  The list is sorted by
-    // TIME.
-    //
-    function problems_to_pull_list ()
-    {
-        global $epm_data, $uid, $epm_time_format;
-	$map = [];
-	foreach ( read_problems()
-	          as $problem => $project )
-	{
-	    if ( $project == '-' ) continue;
-	    $f = "users/$uid/$problem/"
-	       . "+parent+/+changes+";
-	    $time = @filemtime ( "$epm_data/$f" );
-	    if ( $time === false )
-	    {
-	        WARN ( "cannot stat $f" );
-		continue;
-	    }
-	    $map["$project:$problem"] = $time;
-	}
-	arsort ( $map, SORT_NUMERIC );
-	$list = [];
-	foreach ( $map as $key => $time )
-	{
-	    list ( $project, $problem ) =
-	        explode ( ':', $key );
-	    $list[] = [strftime ( $epm_time_format,
-	                          $time ),
-		       $project, $problem];
-	}
-	return $list;
-    }
-
-    // Given a $listname in the form 'PROJECT:BASENAME',
-    // where 'PROJECT:-' and '-:-' are allowed, get
-    // the list of elements
+    // Given a $list of items of the form
     //
     //	   [TIME PROJECT PROBLEM]
     //
-    // names and return as a string the rows of a table
-    // for pulling problems.  The string has one segment
-    // for each list element in the same order as the
-    // elements in the list.
+    // return as a string the rows of a table for
+    // pulling the problems listed.  The string has one
+    // segment for each list element in the same order
+    // as the elements in the list.
     //
     // The segment for one list element is:
     //
@@ -542,101 +498,72 @@ EOT;
     //         <span class='problem-checkbox'
     //               onclick='PULL(this)'>&nbsp;</span>
     //         <span class='problem'>
-    //         PROBLEM &lArr; PROJECT NOTE TIME
+    //         PROBLEM &lArr; PROJECT
+    //	       <pre>  </pre>COMMENT
     //         </span>
     //         </td>
     //         </tr>
     //
     // Here NOTE is one of:
     //
-    //	   (new)	if PROBLEM does not exist for
-    //			user
-    //     (re-pull)	if PROBLEM exists and has
-    //			PROJECT as its current parent
+    //	   (create UID PROBLEM)
+    //		if PROBLEM does not exist for user
+    //		and PROJECT != '-'
+    //     (re-pull)
+    //		if PROBLEM exists and has a parent and
+    //		PROJECT == '-'
+    //     (re-pull)
+    //		if PROBLEM exists and has a parent and
+    //		and the parent == PROJECT
+    //	   (pull into <mark>EXISTING</mark> UID PROBLEM)
+    //		if PROBLEM exists and has no parent and
+    //		PROJECT != '-'
+    //	   (<mark>CHANGE</mark> to<mark>DIFFERENT</mark>
+    //			parent)
+    //		if PROBLEM exists and has a parent that
+    //		is different from PROJECT
     //
     // If a list element refers to a PROBLEM that exists
-    // but has no parent, or has a parent incompatible
-    // with the PROJECT associated in the list element
-    // (where PROJECT == '-' is compatible with all
-    // projects), then a message is appended to
-    // $warnings and NO string segment is generated for
-    // the list element.
+    // but has no parent and PROJECT == '-', then a
+    // message is appended to $warnings and NO string
+    // segment is generated for the list element.
     //
-    function listname_to_pull_rows
-	    ( $listname, & $warnings )
+    function list_to_pull_rows ( $list, & $warnings )
     {
-        global $epm_data, $uid, $epm_parent_re;
+        global $uid;
 
-	list ( $project, $basename ) =
-	    explode ( ':', $listname );
-	if ( $project == '-' )
-	    $list = problems_to_pull_list();
-	elseif ( $basename == '-' )
-	    $list = read_project_list ( $project );
-	else
-	    $list = read_file_list
-		( listname_to_filename ( $listname ) );
-
+	$map = read_problems();
 	$r = '';
         foreach ( $list as $items )
 	{
 	    list ( $time, $project, $problem ) = $items;
-	    $f = "users/$uid/$problem";
-	    if ( is_dir ( "$epm_data/$f" ) )
+	    if ( $project == '-' )
 	    {
-		$g = "$f/+parent+";
-		if ( is_link ( "$epm_data/$g" ) )
-		{
-		    $parent = @readlink
-		        ( "$epm_data/$g" );
-		    if ( $parent === false )
-		        ERROR ( "cannot read link $g" );
-		    if ( ! preg_match ( $epm_parent_re,
-		                        $parent,
-					$matches ) )
-		        ERROR ( "link $g has" .
-			        " malformed value" .
-				" $parent" );
-		    $parent = $matches[1];
-		    $parts = explode ( '/', $parent );
-		    if ( $project == '-' )
-		        $project = $parts[1];
-		    $desired =
-		         "projects/$project/$problem";
-		    if ( $parent != $desired )
-		    {
-		        $warnings[] =
-			    "$problem has been" .
-			    " previously pulled from" .
-			    " $parent and this" .
-			    " conflicts with request" .
-			    " to pull from $desired";
-			continue;
-		    }
-		    else
-		        $note = '(re-pull)';
-		}
-		else
+		if ( ! isset ( $map[$problem] )
+		     ||
+		     $map[$problem] == '-' )
 		{
 		    $warnings[] =
-			"$problem already exists and" .
-			" has no parent and so cannot" .
-			" be pulled from" .
-			" $project/$problem";
+		        "cannot pull to $uid $problem" .
+			" as no project is specified";
 		    continue;
 		}
+		$project = $map[$problem];
+		$comment = "(re-pull)";
 	    }
-	    elseif ( $project == '-' )
-	    {
-		$warnings[] =
-		    "$problem in list has no" .
-		    " associated project";
-	        continue;
-	    }
-	    else
-	        $note = '(new)';
+	    elseif ( ! isset ( $map[$problem] ) )
+		$comment = "(create $uid problem)";
+	    elseif ( $project == $map[$problem] )
+		$comment = "(re-pull)";
+	    elseif ( '-' == $map[$problem] )
+		$comment =
+		    "(pull into <mark>EXISTING</mark>" .
+		    " $uid $problem)";
+            else
+		$comment = '(<mark>CHANGE</mark> to'
+		         . ' <mark>DIFFERENT</mark>'
+			 . ' parent)';
 
-	    $time = substr ( $time, 0, 10 );
 	    $r .= <<<EOT
 	    <tr data-project='$project'
 	        data-problem='$problem'>
@@ -644,8 +571,9 @@ EOT;
 	    <span class='problem-checkbox'
 	        onclick='PULL(this)'>&nbsp;</span>
 	    <span class='problem'>
-	    $problem &lArr; $project $note $time
+	    $problem &lArr; $project
 	    </span>
+	    <pre>  </pre>$comment
 	    </td>
 	    </tr>
 EOT;
@@ -1477,8 +1405,9 @@ EOT;
 <?php 
 
     if ( $op == 'pull' )
-	$pull_rows = listname_to_pull_rows
-	    ( $list, $warnings );
+	$pull_rows = list_to_pull_rows
+	    ( listname_to_list ( $list ),
+	      $warnings );
     elseif ( $op == 'push' )
 	$push_rows = list_to_push_rows
 	    ( listname_to_list ( $list ),
