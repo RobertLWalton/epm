@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 28 11:36:13 EDT 2020
+// Date:    Fri May 29 18:07:26 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -921,6 +921,8 @@ function get_exit_message
 	case 1:
 	    return 'Command Failed: see Error Output'
 	         . ' (*.*err) File(s)';
+	case 119:
+	    return 'Score File Written';
 	case 120:
 	    return 'Interpreter Failed While Exiting';
 	case 126:

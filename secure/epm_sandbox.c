@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Fri May 29 16:08:02 EDT 2020
+ * Date:	Fri May 29 18:00:00 EDT 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -329,6 +329,122 @@ int write_status
     ++ COUNT;
 }
 
+/* Write score file, assuming it exists.
+ */
+const char * score_file = NULL;
+int write_score ( char STATE, int EXITCODE, int SIGNAL )
+{
+    char score[1000] = "Undefined Score";
+    if ( STATE == 'E' ) switch ( EXITCODE )
+    {
+    case 1:
+	strcpy ( score,
+	         "Command Failed with Exit Code 1" );
+	break;
+    case 119:
+	strcpy ( score,
+	         "Score File Written" );
+	break;
+    case 120:
+	strcpy ( score,
+	         "Interpreter Failed While Exiting" );
+	break;
+    case 126:
+	strcpy ( score,
+	         "Invoked Command Could Not Execute" );
+	break;
+    case 127:
+	strcpy ( score,
+	         "Command Not Found" );
+	break;
+    case 128:
+	strcpy ( score,
+	         "Invalid Argument to Exit" );
+	break;
+    default:
+	sprintf ( score,
+	          "Command Failed with Exit Code %d",
+		  EXITCODE );
+    }
+    else switch ( SIGNAL )
+    {
+    case 24:
+    {
+        double time = cputime;
+	if ( SIG != 0 && T < time ) time = T;
+	sprintf ( score,
+	          "CPU Time Limit (%.3f sec) Exceeded",
+		  time );
+	break;
+    }
+    case 25:
+	sprintf ( score,
+	          "Output File Size Limit (%f kb)"
+		  " Exceeded",
+		  (double) filesize / 1024 );
+	break;
+    case 1:
+	strcpy ( score,
+	         "Terminated by Hangup Signal" );
+	break;
+    case 2:
+	strcpy ( score,
+	         "Terminated by Interrupt Signal" );
+	break;
+    case 3:
+	strcpy ( score,
+	         "Terminated by Quit Signal" );
+	break;
+    case 6:
+	strcpy ( score,
+	         "Terminated by Abort" );
+	break;
+    case 8:
+	strcpy ( score,
+	         "Terminated by Floating Point"
+		 " Exception" );
+	break;
+    case 9:
+	strcpy ( score,
+	         "Terminated by Kill Signal" );
+	break;
+    case 7:
+    case 10:
+    case 11:
+	strcpy ( score,
+	         "Terminated by Invalid Memory"
+		 " Reference" );
+	break;
+    case 13:
+	strcpy ( score,
+	         "Terminated by Broken Pipe" );
+	break;
+    case 14:
+	strcpy ( score,
+	         "Terminated by Alarm Timer" );
+	break;
+    case 15:
+	strcpy ( score,
+	         "Terminated by Termination Signal" );
+	break;
+    default:
+	sprintf ( score,
+	         "Command Failed with Signal %d",
+		 SIGNAL );
+    }
+
+    int fd = open ( score_file,
+                    O_WRONLY|O_CREAT|O_TRUNC,
+		    0640 );
+    if ( fd < 0 ) errno_exit ( "opening SCORE-FILE" );
+    if ( write ( fd, score, strlen ( score ) ) < 0 )
+	errno_exit ( "writing SCORE-FILE" );
+    if ( write ( fd, "\n", 1 ) < 0 )
+	errno_exit ( "writing SCORE-FILE" );
+    if ( close ( fd ) < 0 )
+	errno_exit ( "closing SCORE-FILE" );
+}
+
 
 /* Main program.
 */
@@ -337,7 +453,6 @@ int main ( int argc, char ** argv )
     rlim_t max_value = RLIM_INFINITY;
 
     const char * status_file = NULL;
-    const char * score_file = NULL;
 
     int env_max_size = 100;
     char ** env =
@@ -933,6 +1048,14 @@ int main ( int argc, char ** argv )
 		      " terminated with signal:"
 		      " %s\n",
 		      strsignal ( SIGNAL ) );
+
+	if ( score_file != NULL
+	     &&
+	     ( STATE == 'S' || EXITCODE != 0 ) )
+	{
+	    write_score ( STATE, EXITCODE, SIGNAL );
+	    exit ( 119 );
+	}
 
 	if ( signaled )
 	    exit ( 128 + SIGNAL );
