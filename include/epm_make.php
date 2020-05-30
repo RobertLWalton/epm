@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May 30 03:53:48 EDT 2020
+// Date:    Sat May 30 04:40:34 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1418,6 +1418,9 @@ function get_command_results ( $base, $dir, $wait = 0 )
 //		::D 0 DONE
 //	    and is less than 1 megabyte in size.
 //
+// Non-existant files are treated as empty (zero length)
+// files.
+//
 function execute_checks ( $checks, & $errors )
 {
     global $epm_data, $_SESSION;
@@ -1436,11 +1439,7 @@ function execute_checks ( $checks, & $errors )
 	$file = "$workdir/$matches[2]";
 
 	$size = @filesize ( "$epm_data/$file" );
-	if ( $size === false )
-	{
-	    $errors[] = "file $file does not exist";
-	    continue;
-	}
+	if ( $size === false ) $size = 0;
 
 	if ( $test == 'EMPTY' )
 	{
@@ -1458,11 +1457,7 @@ function execute_checks ( $checks, & $errors )
 
 	$contents = @file_get_contents
 	    ( "$epm_data/$file" );
-	if ( $contents === false )
-	{
-	    $errors[] = "file $file is not readable";
-	    continue;
-	}
+	if ( $contents === false ) $contents = '';
 
 	if ( $test == 'SUCCESS' )
 	{
@@ -1762,7 +1757,9 @@ function finish_make_file ( & $warnings, & $errors )
     elseif ( $r === true )
         $errors[] = "EPM SYSTEM_ERROR: $workbase.sh"
 	          . " did not finish in time";
-    elseif ( $r != ['D',0] )
+    elseif ( $r != ['D',0]
+             &&
+	     $r[1] != 119 ) // .score file written
     {
         $m = get_exit_message ( $r[1] );
         $errors[] = "command line {$r[0]} returned"
