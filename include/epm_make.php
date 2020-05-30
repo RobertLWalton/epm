@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri May 29 18:07:26 EDT 2020
+// Date:    Sat May 30 03:53:48 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1920,24 +1920,28 @@ function start_run
 // Then if there are no errors, moves the .rout file
 // into $probdir is $submit is false.
 //
-// If $submit is true and there are no errors, locks
-// project/$project, appends a line to
+// If $submit is true and there are no errors, copies
+// (not moves) .rout file to $probdir and appends an
+// action line to each of
 //
 //	projects/$project/+actions+
+//	projects/$project/$problem/+actions+
+//	users/$uid/+actions+
+//	users/$uid/$problem/+actions+
 //
-// copies .rout file to $probdir, and then moves .rout
-// file to
+// Then locks project/$project/$problem/+submits+ for
+// writing and moves .rout file to
 //
-//	projects/$project/+submit+/
+//	projects/$project/+submits+/
 //		 CCCCCC-$uid-$runbase.rout
 //
 // Here CCCCCC is the value of
 //
-//	projects/$project/+submit+/+count+
+//	projects/$project/+submits+/+count+
 //
 // which is an integer that is incremented by 1.  If
 // 
-//	projects/$project/+submit+
+//	projects/$project/+submits+
 //
 // does not exist, it is created and +count+ is
 // initialized to 0.  +count+ does not have superfluous
@@ -2044,10 +2048,21 @@ function finish_run ( & $errors )
     else
 	$score = 'Undefined Score';
 
-    LOCK ( $d, LOCK_EX );
+    if ( preg_match
+             ( '/(?m)^Maximum-Solution-Time:(.*)$/',
+	       $contents, $matches ) )
+	$stime = trim ( $matches[1] );
+    else
+	$stime = 'NAN';
 
-    $action = "$time $uid submit $project:$runbase"
-	    . " $score" . PHP_EOL;
+    $action = "$time $uid submit $project $runbase"
+	    . " $stime $score" . PHP_EOL;
+
+    $f = "projects/$project/+actions+";
+    $r = @file_put_contents
+	( "$epm_data/$f", $action, FILE_APPEND );
+    if ( $r === false )
+	ERROR ( "cannot write $f" );
     $f = "$d/+actions+";
     $r = @file_put_contents
 	( "$epm_data/$f", $action, FILE_APPEND );
@@ -2058,22 +2073,21 @@ function finish_run ( & $errors )
 	( "$epm_data/$f", $action, FILE_APPEND );
     if ( $r === false )
 	ERROR ( "cannot write $f" );
+    $f = "users/$uid/$problem/+actions+";
+    $r = @file_put_contents
+	( "$epm_data/$f", $action, FILE_APPEND );
+    if ( $r === false )
+	ERROR ( "cannot write $f" );
 
-    $d = "$d/+submit+";
+    $d = "$d/+submits+";
     $cf = "$d/+count+";
-    if ( ! is_dir ( "$epm_data/$d" ) )
-    {
-	if ( ! mkdir ( "$epm_data/$d", 0770 ) )
-	    ERROR ( "could not make directory $d" );
+    LOCK ( $d, LOCK_EX );
+    $count = @file_get_contents
+	( "$epm_data/$cf" );
+    if ( $count === false )
 	$count = 0;
-    }
-    else
-    {
-	$count = @file_get_contents
-	    ( "$epm_data/$cf" );
-	if ( $count === false )
-	    ERROR ( "could not read $cf" );
-    }
+	// $d is created when the project problem is
+	// created but $cf is not.
     $r = @file_put_contents
 	( "$epm_data/$cf", $count + 1);
     if ( $r === false )

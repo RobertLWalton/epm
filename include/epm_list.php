@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 04:16:42 EDT 2020
+    // Date:	Sat May 30 03:56:12 EDT 2020
 
     // Functions for managing lists.
 
@@ -82,7 +82,8 @@
 	}
     }
 
-    // Add project permissions to $pmap and return $pmap.
+    // Add project permissions to $pmap and return
+    // $pmap.
     //
     function project_permissions
 	    ( $project, & $pmap = NO_PERMISSIONS )
@@ -95,7 +96,8 @@
 	return $pmap;
     }
 
-    // Add problem permissions to $pmap and return $pmap.
+    // Add problem permissions to $pmap and return
+    // $pmap.
     //
     function problem_permissions
 	    ( $project, $problem,
@@ -264,7 +266,8 @@
 
 	$f = "users/$uid/+lists+/+favorites+";
 	$flist = read_file_list ( $f );
-	array_unshift ( $flist, [$time, '-', $basename] );
+	array_unshift
+	    ( $flist, [$time, '-', $basename] );
 	write_file_list ( $f, $flist );
 	    // We need to remove any previous
 	    // -:$basename in case list was deleted
@@ -747,7 +750,8 @@
 	    $time = @filemtime ( "$epm_data/$f" );
 	    if ( $time === false )
 	        ERROR ( "cannot stat $f" );
-	    $time = strftime ( $epm_time_format, $time );
+	    $time = strftime
+	        ( $epm_time_format, $time );
 	    $list[] = [$time, $project, '-'];
 	}
 	$f = "users/$uid/+lists+/+favorites+";

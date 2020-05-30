@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue May 26 16:21:39 EDT 2020
+// Date:    Sat May 30 03:56:40 EDT 2020
 
 // Functions to read user information.
 //
@@ -212,7 +212,8 @@ function read_actions ( $fname )
 	if ( $line == '' ) continue;
 	$line = preg_replace ( '/\s+/', ' ', $line );
 	$line = explode ( ' ', $line );
-	$value = implode ( ' ', array_slice ( $line, 5 ) );
+	$value = implode
+	    ( ' ', array_slice ( $line, 5 ) );
 	array_splice ( $line, 5, 1000, [$value] );
 	$r[] = $line;
     }

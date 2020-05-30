@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 29 14:11:35 EDT 2020
+    // Date:	Sat May 30 03:48:21 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -240,6 +240,10 @@
     // has added the list to their favorites, and sub
     // means user UID has removed the list from their
     // favorites.
+    //
+    // +actions+ logs are NOT protected by locking and
+    // it is possible for the writing of two lines to
+    // collide and produce a garbled line.
 
     // Session Data
     // ------- ----

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 28 15:08:26 EDT 2020
+// Date:    Sat May 30 03:30:08 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -184,15 +184,16 @@ function HELP ( $item )
 // is no lock).  The microtime is stored as a floating
 // point string.
 //
-// The lock is released by UNLOCK or on shutdown.
+// The lock is released by UNLOCK or on shutdown.  LOCK
+// also releases any previous lock (there can be at most
+// one lock).
 //
 $epm_lock = NULL;
 function LOCK ( $dir, $type )
 {
     global $epm_data, $epm_lock;
 
-    if ( isset ( $epm_lock ) )
-        ERROR ( "double locking" );
+    if ( isset ( $epm_lock ) ) UNLOCK();
     $f = "$dir/+lock+";
     $epm_lock = fopen ( "$epm_data/$f", 'w+' );
     if ( $epm_lock === false )
