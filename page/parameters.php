@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 28 17:41:53 EDT 2020
+// Date:    Sat May 30 16:20:58 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -162,6 +162,9 @@ $epm_parent_re =
     // Regular expression to target directory of
     // +parent+ link.  The first match is the
     // target directory relative to $epm_data.
+
+$epm_score_file_written = 119;
+    // epm_sandbox exit code if it writes score file.
 
 $upload_target_ext = [
     // If file YYYY.EEE is uploadable, then

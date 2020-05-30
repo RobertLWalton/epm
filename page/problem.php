@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 27 03:52:01 EDT 2020
+    // Date:	Sat May 30 16:02:55 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -571,7 +571,7 @@
 	background-color: var(--bg-green);
     }
     td.time {
-	color: var(--hl-red);
+	color: var(--hl-purple);
 	text-align: right;
 	padding-left: var(--indent);
     }

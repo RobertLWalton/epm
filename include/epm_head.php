@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 21 16:23:27 EDT 2020
+// Date:    Sat May 30 16:05:11 EDT 2020
 
 // HTML code included at the beginning of the <head>
 // section of each page.
@@ -52,8 +52,9 @@ echo "<title>$title</title>";
 	/* Highlight Colors
 	 */
 	--hl-orange: #FF6347;
-	--hl-purple: #CC00FF;
-	--hl-red: #FF003D;
+	--hl-purple: #CC00CC;
+	--hl-red: #FF0000;
+	--hl-blue: #0000FF;
     }
 
     .indented {

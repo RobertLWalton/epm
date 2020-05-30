@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May 30 05:01:40 EDT 2020
+// Date:    Sat May 30 15:37:56 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -916,12 +916,14 @@ function get_status ( $workdir, $sfile )
 function get_exit_message
 	( $code, $cputime = NULL, $filesize = NULL )
 {
+    global $epm_score_file_written;
+
     if ( $code <= 128 ) switch ( $code )
     {
 	case 1:
 	    return 'Command Failed: see Error Output'
 	         . ' (*.*err) File(s)';
-	case 119:
+	case $epm_score_file_written:
 	    return 'Score File Written';
 	case 120:
 	    return 'Interpreter Failed While Exiting';
@@ -1120,7 +1122,8 @@ function execute_commands_2 ( $base, $dir )
 //
 function get_commands_display ( & $display )
 {
-    global $epm_data, $_SESSION;
+    global $epm_data, $epm_score_file_written,
+           $_SESSION;
 
     $work = & $_SESSION['EPM_WORK'];
     $workdir = $work['DIR'];
@@ -1132,7 +1135,21 @@ function get_commands_display ( & $display )
     $r_line = NULL;
     $r_message = NULL;
 
-    if ( is_array ( $r ) && $r[0] != 'D' )
+    if ( $r === false )
+    {
+        $r_line = 1;
+	$r_message = "run $workbase.sh died for no good"
+	           . " reason, try again";
+    }
+    elseif ( is_array ( $r ) && $r[0] == 'B' )
+    {
+        $r_line = 1;
+	$r_message = "run $workbase.sh died during"
+	           . " startup, try again";
+    }
+    elseif (    is_array ( $r )
+             && $r[0] != 'D'
+	     && $r[1] != $epm_score_file_written )
     {
 	$r_line = $r[0];
 	$r_message = get_exit_message ( $r[1] );
@@ -1151,18 +1168,6 @@ function get_commands_display ( & $display )
 	    }
 	}
     }
-    elseif ( is_array ( $r ) && $r[0] == 'B' )
-    {
-        $r_line = 1;
-	$r_message = "run $workbase.sh died during"
-	           . " startup, try again";
-    }
-    elseif ( $r === false )
-    {
-        $r_line = 1;
-	$r_message = "run $workbase.sh died for no good"
-	           . " reason, try again";
-    }
 
     $display = "<table id='command_table'>";
     $c = @file_get_contents 
@@ -1174,11 +1179,6 @@ function get_commands_display ( & $display )
     $cont = 0;
     $stars = '';
     $messages = [];
-    if ( $r_line != NULL )
-    {
-        $stars = '*';
-	$messages[] = "$stars $r_message";
-    }
     foreach ( $c as $line )
     {
         if ( ! $cont
@@ -1199,13 +1199,8 @@ function get_commands_display ( & $display )
 	$hline = htmlspecialchars ( $line );
 	$display .= "<tr><td><pre>$hline</pre></td>";
 
-	if ( $n == $r_line )
-	    $display .=
-	        "<td class='time'><pre>*</pre></td>";
-		// Class causes right adjustment
-		// and red color.
-
-	elseif ( isset ( $map[$n] ) )
+	$mstars = [];
+	if ( isset ( $map[$n] ) )
 	{
 	    $display .= "<td class='time'>";
 	    $mentry = $map[$n];
@@ -1223,18 +1218,32 @@ function get_commands_display ( & $display )
 		    "{$mentry[2]}s</pre>";
 	    }
 	    elseif ( $state == 'S' )
-		$display .=
-		    "<pre>{$mentry[2]}s<pre>";
+		$display .= "<pre>{$mentry[2]}s<pre>";
 	    else
 	    {
 		$stars .= '*';
-		$display .=
-		    "<pre>{$mentry[2]}s<pre>" .
-		    "&nbsp<pre class='red'>" .
-		    "$stars<pre>";
+		$mstars[] = $stars;
 		$messages[] = "$stars {$mentry[4]}";
+		$display .= "<pre>{$mentry[2]}s<pre>";
 	    }
 	    $display .= "</td>";
+	}
+	elseif ( $n == $r_line )
+	    $display .= "<td></td>";
+	    // Because $mstars will not be empty.
+
+	if ( $n == $r_line )
+	{
+	    $stars .= '*';
+	    $mstars[] = $stars;
+	    $messages[] = "$stars $r_message";
+	}
+	if ( count ( $mstars ) > 0 )
+	{
+	    $mstars = implode ( ' ', $mstars );
+	    $display .=
+	        "<td><pre class='error-message'>" .
+		"$mstars<pre></td>";
 	}
 	$display .= "</tr>";
         $cont = preg_match ( '/^(|.*\h)\\\\$/', $line );
@@ -1718,7 +1727,8 @@ function start_make_file
 //
 function finish_make_file ( & $warnings, & $errors )
 {
-    global $_SESSION, $epm_data, $epm_file_maxsize;
+    global $_SESSION, $epm_data, $epm_file_maxsize,
+           $epm_score_file_written;
 
     $work = & $_SESSION['EPM_WORK'];
     if ( ! isset ( $work['CONTROL'] ) )
@@ -1761,7 +1771,7 @@ function finish_make_file ( & $warnings, & $errors )
 	          . " did not finish in time";
     elseif ( $r != ['D',0]
              &&
-	     $r[1] != 119 ) // .score file written
+	     $r[1] != $epm_score_file_written )
     {
         $m = get_exit_message ( $r[1] );
         $errors[] = "command line {$r[0]} returned"
