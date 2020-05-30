@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May 30 04:40:34 EDT 2020
+// Date:    Sat May 30 05:01:40 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1201,7 +1201,9 @@ function get_commands_display ( & $display )
 
 	if ( $n == $r_line )
 	    $display .=
-	        "<td><pre class='red'>*</pre></td>";
+	        "<td class='time'><pre>*</pre></td>";
+		// Class causes right adjustment
+		// and red color.
 
 	elseif ( isset ( $map[$n] ) )
 	{
