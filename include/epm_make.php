@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May 30 15:37:56 EDT 2020
+// Date:    Sun May 31 15:53:08 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1555,11 +1555,11 @@ function move_keep ( $keep, & $errors )
 //
 // This function begins by setting
 //
-//      $_SESSION['EPM_WORK'] = []
+//      $_SESSION['EPM_WORK'] = [] (aka EPM_WORK)
 //
 // and puts all warning messages in
 //
-//     $_SESSION['EPM_WORK']['WARNINGS']
+//     EPM_WORK WARNINGS
 //
 // Normally these warning messages are ignored if there
 // are errors, and returned by finish_make_file
@@ -1568,23 +1568,34 @@ function move_keep ( $keep, & $errors )
 // If there are no errors, this function finishes by
 // setting:
 //
-//     $_SESSION['EPM_WORK']['DIR'] to $dir
-//     $_SESSION['EPM_WORK']['BASE'] to $base
-//     $_SESSION['EPM_WORK']['MAP'] to the status map
-//	    initialized by compile_command
-//     $_SESSION['EPM_WORK']['RESULT'] to true
-//     $_SESSION['EPM_WORK']['CONTROL'] to the control
-//	    found by find_control (note this is unset
-//	    by finish_make_file)
-//     $_SESSION['EPM_WORK']['TEMPLATE'] to pretty_
-//	    template of template file name (for error
-//	    messages).
-//     $_SESSION['EPM_WORK']['KEPT'] to []
-//     $_SESSION['EPM_WORK']['SHOW'] to []
+//     EPM_WORK DIR to $dir
+//     EPM_WORK BASE to $base
+//     EPM_WORK MAP to the status map initialized by
+//         compile_command
+//     EPM_WORK RESULT to true
+//     EPM_WORK CONTROL to the control found by
+//         find_control (note this is unset by
+//         finish_make_file)
+//     EPM_WORK TEMPLATE to pretty_
+//	   template of template file name (for error
+//	   messages).
+//     EPM_WORK KEPT to []
+//     EPM_WORK SHOW to []
+//     EPM_WORK LOCK to $lock
+//
+// The $lock parameter should be the value of
+//
+//	LOCK ( "$probdir/+parent+", LOCK_... )
+//
+// if that directory exists, where the lock must be
+// acquired BEFORE load_file_caches is called.  If
+// the directory does not exist, $lock should be NULL.
+// The lock may be shared or exclusive.
 //
 function start_make_file
 	( $src, $des, $condition,
-	  $allow_local_optn, $workdir,
+	  $allow_local_optn,
+	  $lock, $workdir,
 	  $uploaded, $uploaded_tmp,
 	  & $errors )
 {
@@ -1682,6 +1693,7 @@ function start_make_file
     $work['TEMPLATE'] = pretty_template ( $control[0] );
     $work['KEPT'] = [];
     $work['SHOW'] = [];
+    $work['LOCK'] = $lock;
 }
 
 // Finish execution of a run started by start_make_file.
@@ -2125,14 +2137,15 @@ function finish_run ( & $errors )
 // Then calls start_make_file treating the uploaded file
 // name as the source file and computing the destination
 // file name by changing the uploaded file name exten-
-// sion to that designated by $upload_target_ext.
+// sion to that designated by $upload_target_ext.  The
+// $lock parameter is simply passed to start_make_file.
 //
 // Uploaded file name must match $epm_filename_re and
 // have an extension.  Uploaded file must not be larger
 // than $epm_upload_maxsize.
 //
 function process_upload
-	( $upload, $workdir, & $errors )
+	( $upload, $lock, $workdir, & $errors )
 {
     global $epm_data, $is_epm_test,
            $upload_target_ext, $epm_upload_maxsize,
@@ -2219,7 +2232,7 @@ function process_upload
 
     start_make_file
         ( $fname, $tname, "UPLOAD $fname",
-          true, $workdir,
+          true, $lock, $workdir,
 	  $fname, $ftmp_name,
 	  $errors );
 }

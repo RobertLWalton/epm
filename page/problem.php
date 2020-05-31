@@ -439,11 +439,17 @@
 	if ( preg_match ( '/\.ftest$/', $des ) )
 	    $make_ftest = $des;
 	else
+	{
+	    $d = "$prodir/+parent+";
+	    $lock = NULL;
+	    if ( is_dir ( "$epm_data/$d" ) )
+	        $lock = LOCK ( $d, LOCK_SH );
 	    start_make_file
 		( $src, $des, NULL /* no condition */,
-		  true, "$probdir/+work+",
+		  true, $lock, "$probdir/+work+",
 		  NULL, NULL /* no upload */,
 		  $errors );
+	}
     }
     elseif ( isset ( $_POST['make_ftest_yes'] ) )
     {
@@ -462,9 +468,13 @@
 			   ( $probdir ) ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
+	$d = "$prodir/+parent+";
+	$lock = NULL;
+	if ( is_dir ( "$epm_data/$d" ) )
+	    $lock = LOCK ( $d, LOCK_SH );
 	start_make_file
 	    ( $src, $des, NULL /* no condition */,
-	      true, "$probdir/+work+",
+	      true, $lock, "$probdir/+work+",
 	      NULL, NULL /* no upload */,
 	      $errors );
     }
@@ -478,10 +488,14 @@
 	if ( isset ( $_FILES['uploaded_file']
 	                     ['name'] ) )
 	{
-	    $upload_info = $_FILES['uploaded_file'];
+	    $d = "$prodir/+parent+";
+	    $lock = NULL;
+	    if ( is_dir ( "$epm_data/$d" ) )
+		$lock = LOCK ( $d, LOCK_SH );
 
 	    process_upload
-		( $upload_info, "$probdir/+work+",
+		( $_FILES['uploaded_file'],
+		  $lock, "$probdir/+work+",
 		  $errors );
 	}
 	else
