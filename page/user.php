@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 11:41:32 EDT 2020
+    // Date:	Sun May 31 15:09:35 EDT 2020
 
     // Display and edit user information in:
     //
@@ -99,7 +99,7 @@
     // if they match the emails recorded in the
     // UID.info file.
 
-    LOCK ( admin, LOCK_EX );
+    LOCK ( "admin", LOCK_EX );
 
     if ( $epm_method == 'GET' && ! $new_user )
     {

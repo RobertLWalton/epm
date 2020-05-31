@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 10:21:53 EDT 2020
+    // Date:	Sun May 31 15:10:44 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -672,15 +672,17 @@ EOT;
 	    $changes .=
 	        "  remove old parent of $uid $problem" .
 		PHP_EOL;
-	    $commands[] = ['unlink', "$srcdir/+parent+"];
+	    $commands[] =
+	        ['unlink', "$srcdir/+parent+"];
 	}
 	if ( $new_push )
 	{
 	    $changes .= "  make $project $problem"
 	              . " directory" . PHP_EOL;
 	    $commands[] = ['mkdir', $desdir, '0771'];
-	    $commands[] = ['mkdir', "$desdir/+solutions+",
-	                            '0770'];
+	    $commands[] = ['mkdir',
+	                   "$desdir/+solutions+",
+	                   '0770'];
 	    $commands[] = ['mkdir', "$desdir/+submits+",
 	                            '0770'];
 	    $changes .= "  make $uid the owner of the"
@@ -884,7 +886,8 @@ EOT;
 	    $changes .=
 	        "  remove old parent of $uid $problem" .
 		PHP_EOL;
-	    $commands[] = ['unlink', "$desdir/+parent+"];
+	    $commands[] =
+	        ['unlink', "$desdir/+parent+"];
 	}
 
 	$files = @scandir ( "$epm_data/$srcdir" );

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 10:21:07 EDT 2020
+    // Date:	Sun May 31 15:08:31 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -225,8 +225,16 @@
 	        ( $fname, PATHINFO_EXTENSION );
 	    if ( ! isset ( $display_file_type[$ext] ) )
 		continue;
-	    $map[$fname] =
-	        filemtime ( "$epm_data/$dir/$fname" );
+	    $f = "$dir/$fname";
+	    $mtime = @filemtime ( "$epm_data/$f" );
+	    if ( $mtime === false )
+	    {
+	        if ( is_link ( "$epm_data/$f" ) )
+		    WARN ( "dangling link $f" );
+		else
+		    WARN ( "stat failed for $f" );
+	    }
+	    else $map[$fname] = $mtime;
 	}
 	arsort ( $map, SORT_NUMERIC );
 	    // Note, keys cannot be floating point and
