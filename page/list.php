@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 03:58:03 EDT 2020
+    // Date:	Sun May 31 09:58:45 EDT 2020
 
     // Maintains problem lists.
 
@@ -582,21 +582,22 @@ EOT;
     }
     echo <<<EOT
     <div class='manage'>
+    <form method='GET'>
     <table style='width:100%'>
     <tr>
     <td>
     <strong>User:</strong>
-    <button type='button'
-    	   onclick='GOTO("user.php")'
+    <button type='submit'
+    	   formaction='user.php'
            title='Click to See User Profile'>
 	   $email</button>
     </td>
     <td>
     <strong>$goto</strong>
-    <button type='button' onclick='GOTO("project.php")'>
+    <button type='submit' formaction='project.php'>
     Project
     </button>
-    <button type='button' onclick='GOTO("problem.php")'>
+    <button type='submit' formaction='problem.php'>
     Problem
     </button>
     <strong>Page</strong>
@@ -606,6 +607,7 @@ EOT;
     $list_help</td>
     </tr>
     </table>
+    </form>
     </div>
 EOT;
     $data['ELEMENTS'] = [];

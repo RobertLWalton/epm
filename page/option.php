@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 04:03:08 EDT 2020
+    // Date:	Sun May 31 09:56:41 EDT 2020
 
     // Edits problem option page.
 
@@ -348,24 +348,25 @@
     $option_help = HELP ( 'option-page' );
     echo <<<EOT
     <div class='manage'>
+    <form method='GET'>
     <table style='width:100%'>
     <td>
     <strong>User:</strong>
-    <button type='button'
-    	   onclick='GOTO("user.php")'
+    <button type='submit'
+    	   formaction='user.php'
            title='Click to See User Profile'>
 	   $email</button>
     </td>
     <td style='padding-left:var(--indent)'>
     <strong>Go To</strong>
-    <button type='button'
-            onclick='GOTO("problem.php")'>Problem
+    <button type='submit'
+            formaction='problem.php'>Problem
     </button>
-    <button type='button'
-            onclick='GOTO("run.php")'>Run
+    <button type='submit'
+            formaction='run.php'>Run
     </button>
-    <button type='button'
-            onclick='GOTO("project.php")'>Project
+    <button type='submit'
+            formaction='project.php'>Project
     </button>
     <strong>Page</strong>
     <pre>   </pre>
@@ -379,6 +380,7 @@
     </td><td style='text-align:right'>
     $option_help</td>
     </table>
+    </form>
     <br>
     <form action='option.php' method='POST'
           onkeydown='return event.key != "Enter"'>

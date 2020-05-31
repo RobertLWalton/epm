@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 31 03:45:52 EDT 2020
+// Date:    Sun May 31 10:20:07 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -330,12 +330,13 @@ if ( ! isset ( $_POST['xhttp'] ) )
     //
     echo <<<EOT
     <script>
-    function GOTO ( page )
-    {
-        history.replaceState
-	    ( null, document.title, location.href );
-	location.assign ( '/page/' + page );
-    }
+    history.replaceState
+	( null, document.title, location.href );
+	// This causes the retry, back, and forward
+	// buttons to issue a GET to the current page
+	// and not a POST, even if a POST was the
+	// request that created the current version
+	// of the page.
     </script>
 EOT;
 

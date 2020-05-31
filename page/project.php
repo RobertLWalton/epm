@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 04:10:03 EDT 2020
+    // Date:	Sun May 31 10:21:53 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1514,9 +1514,6 @@ EOT;
 	echo <<<EOT
 
 	<div id='warn-response' style='display:none'>
-	<form>
-	<input type='hidden' id='id-warn'
-	       name='id' value='$ID'>
 	<table style='width:100%'>
 	<tr>
 	<td><strong>WARNINGS:</strong></td>
@@ -1528,22 +1525,17 @@ EOT;
 	<button type='button' onclick='WARNINGS_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
-	<button type='button'
-	        onclick='GOTO("project.php")'>
-	$cancel</button>
+	<form method='GET' action='project.php'>
+	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
 	$warnings_help</td>
 	</tr>
 	</table>
-	</form>
 	<pre id='warn-messages'></pre>
 	</div>
 
 	<div id='error-response' style='display:none'>
-	<form>
-	<input type='hidden' id='id-error'
-	       name='id' value='$ID'>
 	<table style='width:100%'>
 	<tr>
 	<td><strong>Errors:</strong></td>
@@ -1551,22 +1543,17 @@ EOT;
 	<button type='button' onclick='START_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
-	<button type='button'
-	        onclick='GOTO("project.php")'>
-	$cancel</button>
+	<form method='GET' action='project.php'>
+	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
 	$errors_help</td>
 	</tr>
 	</table>
-	</form>
 	<pre id='error-messages'></pre>
 	</div>
 
 	<div id='compile-response' style='display:none'>
-	<form>
-	<input type='hidden' id='id-compile'
-	       name='id' value='$ID'>
 	<table style='width:100%'>
 	<tr>
 	<td><strong>Proposed Actions:</strong></td>
@@ -1577,15 +1564,13 @@ EOT;
 	<button type='button' onclick='SKIP_TO_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
-	<button type='button'
-	        onclick='GOTO("project.php")'>
-	$cancel</button>
+	<form method='GET' action='project.php'>
+	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
 	$proposed_help</td>
 	</tr>
 	</table>
-	</form>
 	<pre id='compile-messages'></pre>
 	</div>
 EOT;
@@ -1594,6 +1579,7 @@ EOT;
     $project_help = HELP ( 'project-page' );
     echo <<<EOT
     <div class='manage'>
+    <form method='GET'>
     <table style='width:100%'>
     <tr>
 EOT;
@@ -1605,8 +1591,8 @@ EOT;
 	<td>
 	<div id='done-response' style='display:none'>
 	<strong>Done!</strong>
-	<button type='button'
-		onclick='GOTO("project.php")'>
+	<button type='submit'
+	        formaction='project.php'>
 		Continue</button>
 	<pre>    </pre>
 	</div>
@@ -1622,21 +1608,21 @@ EOT;
     	echo <<<EOT
 	<td>
 	<strong>User:</strong>
-	<button type='button'
-	       onclick='GOTO("user.php")'
-	       title='Click to See User Profile'>
-	       $email</button>
+	<button type='submit'
+	        formaction='user.php'
+	        title='Click to See User Profile'>
+	        $email</button>
 	</td>
 	<td>
 	<strong>Go To</strong>
-	<button type='button'
-		onclick='GOTO("problem.php")'>
+	<button type='submit'
+	        formaction='problem.php'>
 		Problem</button>
-	<button type='button'
-		onclick='GOTO("list.php")'>
+	<button type='submit'
+	        formaction='list.php'>
 		Edit Lists</button>
-	<button type='button'
-		onclick='GOTO("favorites.php")'>
+	<button type='submit'
+	        formaction='favorites.php'>
 		Edit Favorites</button>
 	<strong>Page</strong>
 EOT;
@@ -1646,6 +1632,7 @@ EOT;
     $project_help</td>
     </tr>
     </table>
+    </form>
 EOT;
     if ( $op == NULL )
     {
@@ -2035,12 +2022,6 @@ EOT;
 	var succeeded = 'green';
 	var failed = 'yellow';
 
-	var id_warn =
-	    document.getElementById('id-warn');
-	var id_error =
-	    document.getElementById('id-error');
-	var id_compile =
-	    document.getElementById('id-compile');
 	var id = document.getElementById('id');
 	var problem_rows =
 	    document.getElementById('problem-table')
@@ -2225,9 +2206,6 @@ EOT;
 			   ':\\n    ' +
 			   this.responseText );
 		message_sent = null;
-		id_warn.value = matches[2];
-		id_error.value = matches[2];
-		id_compile.value = matches[2];
 		id.value = matches[2];
 		callback ( matches[1], matches[3] );
 	    };

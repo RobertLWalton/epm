@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 03:42:31 EDT 2020
+    // Date:	Sun May 31 10:21:07 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -733,12 +733,13 @@
     $problem_page_help = HELP ( 'problem-page' );
     echo <<<EOT
     <div class='manage' id='manage'>
+    <form method='GET'>
     <table style='width:100%'>
     <tr>
     <td>
     <strong>User:</strong>
-    <button type='button'
-    	   onclick='GOTO("user.php")'
+    <button type='submit'
+    	   formaction='user.php'
            title='Click to See User Profile'>
 	   $email</button>
     </td>
@@ -747,21 +748,21 @@
 EOT;
     if ( isset ( $problem ) )
         echo <<<EOT
-	<button type='button'
-		onclick='GOTO("run.php")'>
+	<button type='submit'
+		formaction='run.php'>
 		Run</button>
-	<button type='button'
-		onclick='GOTO("option.php")'>
+	<button type='submit'
+		formaction='option.php'>
 		Option</button>
 EOT;
     echo <<<EOT
-    <button type='button'
-	    onclick='GOTO("project.php")'>
+    <button type='submit'
+	    formaction='project.php'>
 	    Project</button>
     <strong>Page</strong>
     </td><td style='text-align:right'>
     $problem_page_help</td>
-    </tr></table>
+    </tr></table></form>
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
 EOT;
