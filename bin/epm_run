@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat May  2 15:29:11 EDT 2020
+// Date:	Sun May 31 16:28:17 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -141,6 +141,11 @@ require "$epm_web/parameters.php";
 $probdir = "users/$uid/$problem";
 require "$epm_home/include/epm_make.php";
 
+$d = "$probdir/+parent+";
+$lock = NULL;
+if ( is_dir ( "$epm_data/$d" ) )
+    $lock = LOCK ( $d, LOCK_SH );
+
 load_file_caches();
 
 $rundata = $epm_data;
@@ -268,7 +273,7 @@ foreach ( $runin as $infile )
     start_make_file
 	( "$base.in", "$base.score",
 	   $submit ? 'SUBMIT': NULL,
-	   true, $workdir,
+	   true, $lock, $workdir,
 	   NULL, NULL /* no upload, upload_tmp */,
 	   $errors );
     if ( count ( $errors ) > 0 )

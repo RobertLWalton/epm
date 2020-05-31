@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 15:08:31 EDT 2020
+    // Date:	Sun May 31 16:27:49 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -440,7 +440,7 @@
 	    $make_ftest = $des;
 	else
 	{
-	    $d = "$prodir/+parent+";
+	    $d = "$probdir/+parent+";
 	    $lock = NULL;
 	    if ( is_dir ( "$epm_data/$d" ) )
 	        $lock = LOCK ( $d, LOCK_SH );
@@ -468,7 +468,7 @@
 			   ( $probdir ) ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-	$d = "$prodir/+parent+";
+	$d = "$probdir/+parent+";
 	$lock = NULL;
 	if ( is_dir ( "$epm_data/$d" ) )
 	    $lock = LOCK ( $d, LOCK_SH );
@@ -488,7 +488,7 @@
 	if ( isset ( $_FILES['uploaded_file']
 	                     ['name'] ) )
 	{
-	    $d = "$prodir/+parent+";
+	    $d = "$probdir/+parent+";
 	    $lock = NULL;
 	    if ( is_dir ( "$epm_data/$d" ) )
 		$lock = LOCK ( $d, LOCK_SH );

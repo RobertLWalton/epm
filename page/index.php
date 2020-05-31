@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 31 10:20:07 EDT 2020
+// Date:    Sun May 31 16:26:59 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -67,31 +67,6 @@ header ( 'Cache-Control: no-store' );
 function symbolic_link ( $target, $link )
 {
     return exec ( "ln -s $target $link 2>&1" ) == '';
-}
-
-if ( $epm_debug )
-{
-    $epm_debug_desc = fopen
-	( "$epm_data/debug.log", 'a' );
-    $epm_debug_base = pathinfo
-	( $epm_self, PATHINFO_BASENAME );
-
-    function DEBUG ( $message )
-    {
-	global $epm_debug_desc, $epm_debug_base;
-	fwrite ( $epm_debug_desc,
-	         "$epm_debug_base: $message" .
-		 PHP_EOL );
-	// There is NO programmatic way to flush
-	// the write buffer.  Best way is to
-	// open another window on the server,
-	// which tends to flush the buffers for
-	// previously opened windows.
-    }
-}
-else
-{
-    function DEBUG ( $message ) {}
 }
 
 function WARN ( $message )
@@ -178,53 +153,9 @@ function HELP ( $item )
 	   "?</button>";
 }
 
-// Locks directory.  For LOCK_EX lock, stores microtime
-// into directory/+lock+ and returns the previous value
-// of the lock (0 if none).  For LOCK_SH lock, read
-// directory/+lock+ and returns its value (0 if there
-// is no lock).  The microtime is stored as a floating
-// point string.
-//
-// The lock is released by UNLOCK or on shutdown.  LOCK
-// also releases any previous lock (there can be at most
-// one lock).
-//
-$epm_lock = NULL;
-function LOCK ( $dir, $type )
-{
-    global $epm_data, $epm_lock;
-
-    if ( isset ( $epm_lock ) ) UNLOCK();
-    $f = "$dir/+lock+";
-    $epm_lock = fopen ( "$epm_data/$f", 'w+' );
-    if ( $epm_lock === false )
-        ERROR ( "cannot open $f" );
-    $r = flock ( $epm_lock, $type );
-    if ( $r === false )
-        ERROR ( "cannot lock $f" );
-    $value = fread ( $epm_lock, 100 );
-    if ( $value == '' ) $value = '0';
-    elseif ( floatval ( $value ) == 0 )
-	ERROR ( "bad value `$value' read from $f" );
-    if ( $type == LOCK_EX )
-    {
-        $time = strval ( microtime ( true ) );
-	fwrite ( $epm_lock, $time );
-    }
-    return $value;
-}
-
-function UNLOCK()
-{
-    global $epm_lock;
-
-    if ( ! isset ( $epm_lock ) ) return;
-    flock ( $epm_lock, LOCK_UN );
-    $epm_lock = NULL;
-}
-register_shutdown_function ( 'UNLOCK' );
-
-
+// DEBUG, LOCK, and UNLOCK functions are in
+// parameters.php because they are shared with
+// bin/epm_run.
 
 // Check that we have not skipped a page.
 //
