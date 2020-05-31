@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 03:26:36 EDT 2020
+    // Date:	Sun May 31 03:42:31 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -733,16 +733,15 @@
     $problem_page_help = HELP ( 'problem-page' );
     echo <<<EOT
     <div class='manage' id='manage'>
-    <form method='GET'>
-    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
     <td>
     <label>
     <strong>User:</strong>
-    <input type='submit' value='$email'
-	   formaction='user.php'
+    <button type='button'
+    	   onclick='GOTO("user.php")'
            title='Click to See User Profile'>
+	   $email</button>
     </label>
     </td>
     <td>
@@ -765,7 +764,6 @@ EOT;
     </td><td style='text-align:right'>
     $problem_page_help</td>
     </tr></table>
-    </form>
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
 EOT;

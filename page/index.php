@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 31 03:03:01 EDT 2020
+// Date:    Sun May 31 03:45:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -271,16 +271,21 @@ if ( $epm_self == '/page/login.php'
 }
 elseif ( ! isset ( $epm_is_subwindow ) )
 {
-    // Check sequencing on everything BUT login.php GET
-    // and read-only subwindows.
+    // Update sequencing on everything BUT login.php GET
+    // and read-only subwindows.  Check on all POSTs
+    // not to read-only subwindows.
 
     $id_gen = & $_SESSION['EPM_ID_GEN'];
-    $ID = bin2hex ( $id_gen[0] );
-    if ( ! isset ( $_REQUEST['id'] ) )
-	WARN ( "$epm_self: no id, ID=$ID" );
-    elseif ( $_REQUEST['id'] != $ID )
-	WARN ( "$epm_self id = {$_REQUEST['id']}" .
-	       " != $ID = ID" );
+
+    if ( $epm_method == 'POST' )
+    {
+	$ID = bin2hex ( $id_gen[0] );
+	if ( ! isset ( $_REQUEST['id'] ) )
+	    WARN ( "$epm_self: no id, ID=$ID" );
+	elseif ( $_REQUEST['id'] != $ID )
+	    WARN ( "$epm_self id = {$_REQUEST['id']}" .
+		   " != $ID = ID" );
+    }
 
     $id_gen[0] = substr
         ( @openssl_encrypt
@@ -316,6 +321,13 @@ if ( isset ( $_SESSION['EPM_SESSION'] ) )
 }
 
 if ( ! isset ( $_POST['xhttp'] ) )
+    // This goes to the given page while resetting the
+    // current history so if you hit the back button you
+    // to get to the current history will produce a
+    // 'GET' to the current page, and NOT a 'POST' if
+    // that was the last thing you did on the current
+    // page.
+    //
     echo <<<EOT
     <script>
     function GOTO ( page )
