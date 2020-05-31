@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 30 03:48:21 EDT 2020
+    // Date:	Sun May 31 03:26:45 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2247,8 +2247,10 @@ EOT;
 		( "Content-Type",
 		  "application/x-www-form-urlencoded" );
 	    message_sent = message;
-	    LOG ( 'xhttp sent: ' + message );
-	    xhttp.send ( message + '&id=' + id.value );
+	    let data = message
+	             + '&xhttp=yes&id=' + id.value;
+	    LOG ( 'xhttp sent: ' + data );
+	    xhttp.send ( data );
 	}
 
 	</script>

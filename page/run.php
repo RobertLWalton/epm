@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 11:41:13 EDT 2020
+    // Date:	Sun May 31 03:26:54 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -594,13 +594,14 @@ EOT;
 	    ( "Content-Type",
 	      "application/x-www-form-urlencoded" );
 	REQUEST_IN_PROGRESS = true;
-	LOG ( 'xhttp sent: update' );
 	manage.style.display = 'none';
 	run_list.style.display = 'none';
 	    // These keep buttons from being clicked
 	    // while waiting for xhttp response and
 	    // its updated ID.
-	xhttp.send ( 'update=update&id=' + ID );
+	let data = 'update=update&xhttp=yes&id=' + ID;
+	LOG ( 'xhttp sent: ' + data );
+	xhttp.send ( data );
     }
     <?php
 	if ( $runresult === true )

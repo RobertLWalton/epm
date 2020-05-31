@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 22 05:50:34 EDT 2020
+    // Date:	Sun May 31 03:26:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -780,7 +780,7 @@ function SEND ( data, callback, error_message )
         ( "Content-Type",
 	  "application/x-www-form-urlencoded" );
     REQUEST_IN_PROGRESS = true;
-    data += '&id=' + ID;
+    data += '&xhttp=yes&id=' + ID;
     LOG ( 'xhttp sent: ' + data );
     xhttp.send ( data );
 }

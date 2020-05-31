@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 30 16:02:55 EDT 2020
+    // Date:	Sun May 31 03:26:36 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -652,7 +652,8 @@
 	DELETE_FILES.value = DELETE_LIST.toString();
     }
 </script>
-<body onunload='UNLOAD()'>
+
+<body>
 
 <?php 
 
@@ -749,16 +750,16 @@
 EOT;
     if ( isset ( $problem ) )
         echo <<<EOT
-	<button type='submit'
-		formaction='run.php'>
+	<button type='button'
+		onclick='GOTO("run.php")'>
 		Run</button>
-	<button type='submit'
-		formaction='option.php'>
+	<button type='button'
+		onclick='GOTO("option.php")'>
 		Option</button>
 EOT;
     echo <<<EOT
-    <button type='submit'
-	    formaction='project.php'>
+    <button type='button'
+	    onclick='GOTO("project.php")'>
 	    Project</button>
     <strong>Page</strong>
     </td><td style='text-align:right'>
@@ -1338,7 +1339,6 @@ EOT;
 	    ( "Content-Type",
 	      "application/x-www-form-urlencoded" );
 	REQUEST_IN_PROGRESS = true;
-	LOG ( 'xhttp sent: update' );
 	manage.style.display = 'none';
 	work_display.style.display = 'none';
 	problem_display.style.display = 'none';
@@ -1347,7 +1347,9 @@ EOT;
 	    // is the ID needs to be updated by the
 	    // response before a button is pressed.
 
-	xhttp.send ( 'update=update&id=' + ID );
+	let data = 'update=update&xhttp=yes&id=' + ID;
+	LOG ( 'xhttp sent: ' + data );
+	xhttp.send ( data );
     }
     <?php
 	if ( isset ( $_SESSION['EPM_WORK']['RESULT'] ) )

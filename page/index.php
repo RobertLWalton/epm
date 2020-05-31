@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May 30 03:30:08 EDT 2020
+// Date:    Sun May 31 03:03:01 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -143,6 +143,7 @@ function EPM_ERROR_HANDLER
     $m = "$class $errno $message" . PHP_EOL;
     foreach ( $stack as $line )
     {
+	if ( ! isset ( $line['file'] ) ) continue;
         $f = $line['file'];
 	if ( $f == '' ) continue;
 	if ( preg_match ( '#/index.php$#', $f ) )
@@ -313,5 +314,17 @@ if ( isset ( $_SESSION['EPM_SESSION'] ) )
              ( "$epm_data/{$epm_session[0]}" ) )
 	exit ( 'SESSION ABORTED BY LATER SESSION' );
 }
+
+if ( ! isset ( $_POST['xhttp'] ) )
+    echo <<<EOT
+    <script>
+    function GOTO ( page )
+    {
+        history.replaceState
+	    ( null, document.title, location.href );
+	location.assign ( '/page/' + page );
+    }
+    </script>
+EOT;
 
 ?>
