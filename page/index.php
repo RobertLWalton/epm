@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 31 16:26:59 EDT 2020
+// Date:    Sun May 31 17:47:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -246,9 +246,20 @@ if ( isset ( $_SESSION['EPM_SESSION'] ) )
 {
     $epm_session = & $_SESSION['EPM_SESSION'];
         // This is [S,S-MOD-TIME].
-    if ( $epm_session[1] != filemtime
-             ( "$epm_data/{$epm_session[0]}" ) )
-	exit ( 'SESSION ABORTED BY LATER SESSION' );
+    $our_time = $epm_session[1];
+    $cur_time = filemtime
+        ( "$epm_data/{$epm_session[0]}" );
+    if ( $our_time != $cur_time )
+    {
+        $our_time = strftime
+	    ( $epm_time_format, $our_time );
+        $cur_time = strftime
+	    ( $epm_time_format, $cur_time );
+	exit ( "THIS SESSION (started $our_time)" .
+	       " HAS BEEN ABORTED" . 
+	       " BY A LATER SESSION" .
+	       " (started $cur_time)" );
+    }
 }
 
 if ( ! isset ( $_POST['xhttp'] ) )
