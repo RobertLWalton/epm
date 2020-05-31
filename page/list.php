@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 20 17:06:06 EDT 2020
+    // Date:	Sun May 31 03:58:03 EDT 2020
 
     // Maintains problem lists.
 
@@ -585,28 +585,20 @@ EOT;
     <table style='width:100%'>
     <tr>
     <td>
-    <form>
-    <input type='hidden' name='id' value='$ID'>
-    <label>
     <strong>User:</strong>
-    <input type='submit' value='$email'
-	   formaction='user.php'
-	   formmethod='GET'
+    <button type='button'
+    	   onclick='GOTO("user.php")'
            title='Click to See User Profile'>
-    </label>
-    </form>
+	   $email</button>
     </td>
     <td>
     <strong>$goto</strong>
-    <form method='GET'>
-    <input type='hidden' name='id' value='$ID'>
-    <button type='submit' formaction='project.php'>
+    <button type='button' onclick='GOTO("project.php")'>
     Project
     </button>
-    <button type='submit' formaction='problem.php'>
+    <button type='button' onclick='GOTO("problem.php")'>
     Problem
     </button>
-    </form>
     <strong>Page</strong>
     </td>
     <td>

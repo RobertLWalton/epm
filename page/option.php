@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 11:41:05 EDT 2020
+    // Date:	Sun May 31 04:03:08 EDT 2020
 
     // Edits problem option page.
 
@@ -348,25 +348,24 @@
     $option_help = HELP ( 'option-page' );
     echo <<<EOT
     <div class='manage'>
-    <form method='GET' style='margin-bottom:0'>
-    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <td>
     <strong>User:</strong>
-    <input type='submit' value='$email'
-                    formaction='user.php'
-                    title='Click to See User Profile'>
+    <button type='button'
+    	   onclick='GOTO("user.php")'
+           title='Click to See User Profile'>
+	   $email</button>
     </td>
     <td style='padding-left:var(--indent)'>
     <strong>Go To</strong>
-    <button type='submit'
-            formaction='problem.php'>Problem
+    <button type='button'
+            onclick='GOTO("problem.php")'>Problem
     </button>
-    <button type='submit'
-            formaction='run.php'>Run
+    <button type='button'
+            onclick='GOTO("run.php")'>Run
     </button>
-    <button type='submit'
-            formaction='project.php'>Project
+    <button type='button'
+            onclick='GOTO("project.php")'>Project
     </button>
     <strong>Page</strong>
     <pre>   </pre>
@@ -380,7 +379,6 @@
     </td><td style='text-align:right'>
     $option_help</td>
     </table>
-    </form>
     <br>
     <form action='option.php' method='POST'
           onkeydown='return event.key != "Enter"'>

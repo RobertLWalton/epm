@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 03:26:45 EDT 2020
+    // Date:	Sun May 31 04:10:03 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -294,7 +294,7 @@
     // Non-XHTTP POSTs include id=value-of-ID derived
     // from including in each form:
     //
-    //	    <input type='hidden' id='id' name='id'
+    //	    <input type='hidden' name='id'
     //             value='ID-value'>
     //
     // Initially there is a project page used to select
@@ -1528,9 +1528,8 @@ EOT;
 	<button type='button' onclick='WARNINGS_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
-	<button type='submit' name='done' value='yes'
-	        formaction='project.php'
-		formmethod='GET'>
+	<button type='button'
+	        onclick='GOTO("project.php")'>
 	$cancel</button>
 	</td>
 	</td><td style='text-align:right'>
@@ -1552,9 +1551,8 @@ EOT;
 	<button type='button' onclick='START_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
-	<button type='submit' name='cancel' value='yes'
-	        formaction='project.php'
-		formmethod='GET'>
+	<button type='button'
+	        onclick='GOTO("project.php")'>
 	$cancel</button>
 	</td>
 	</td><td style='text-align:right'>
@@ -1579,9 +1577,8 @@ EOT;
 	<button type='button' onclick='SKIP_TO_NEXT()'>
 	Skip to Next</button>
 	<pre>    </pre>
-	<button type='submit' name='cancel' value='yes'
-	        formaction='project.php'
-		formmethod='GET'>
+	<button type='button'
+	        onclick='GOTO("project.php")'>
 	$cancel</button>
 	</td>
 	</td><td style='text-align:right'>
@@ -1597,9 +1594,6 @@ EOT;
     $project_help = HELP ( 'project-page' );
     echo <<<EOT
     <div class='manage'>
-    <form method='GET'>
-    <input type='hidden' id='id-header'
-           name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
 EOT;
@@ -1611,8 +1605,8 @@ EOT;
 	<td>
 	<div id='done-response' style='display:none'>
 	<strong>Done!</strong>
-	<button type='submit'
-		formaction='project.php'>
+	<button type='button'
+		onclick='GOTO("project.php")'>
 		Continue</button>
 	<pre>    </pre>
 	</div>
@@ -1627,23 +1621,22 @@ EOT;
     else
     	echo <<<EOT
 	<td>
-	<label>
 	<strong>User:</strong>
-	<input type='submit' value='$email'
-	       formaction='user.php'
+	<button type='button'
+	       onclick='GOTO("user.php")'
 	       title='Click to See User Profile'>
-	</label>
+	       $email</button>
 	</td>
 	<td>
 	<strong>Go To</strong>
-	<button type='submit'
-		formaction='problem.php'>
+	<button type='button'
+		onclick='GOTO("problem.php")'>
 		Problem</button>
-	<button type='submit'
-		formaction='list.php'>
+	<button type='button'
+		onclick='GOTO("list.php")'>
 		Edit Lists</button>
-	<button type='submit'
-		formaction='favorites.php'>
+	<button type='button'
+		onclick='GOTO("favorites.php")'>
 		Edit Favorites</button>
 	<strong>Page</strong>
 EOT;
@@ -1653,7 +1646,6 @@ EOT;
     $project_help</td>
     </tr>
     </table>
-    </form>
 EOT;
     if ( $op == NULL )
     {
@@ -2049,8 +2041,6 @@ EOT;
 	    document.getElementById('id-error');
 	var id_compile =
 	    document.getElementById('id-compile');
-	var id_header =
-	    document.getElementById('id-header');
 	var id = document.getElementById('id');
 	var problem_rows =
 	    document.getElementById('problem-table')
@@ -2238,7 +2228,6 @@ EOT;
 		id_warn.value = matches[2];
 		id_error.value = matches[2];
 		id_compile.value = matches[2];
-		id_header.value = matches[2];
 		id.value = matches[2];
 		callback ( matches[1], matches[3] );
 	    };

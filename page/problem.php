@@ -736,13 +736,11 @@
     <table style='width:100%'>
     <tr>
     <td>
-    <label>
     <strong>User:</strong>
     <button type='button'
     	   onclick='GOTO("user.php")'
            title='Click to See User Profile'>
 	   $email</button>
-    </label>
     </td>
     <td>
     <strong>Go To</strong>
