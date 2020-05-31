@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 31 15:53:08 EDT 2020
+// Date:    Sun May 31 17:05:17 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1739,12 +1739,28 @@ function start_make_file
 //
 function finish_make_file ( & $warnings, & $errors )
 {
-    global $_SESSION, $epm_data, $epm_file_maxsize,
-           $epm_score_file_written;
+    global $_SESSION, $probdir, $uid, $problem,
+           $epm_data,
+           $epm_file_maxsize, $epm_score_file_written;
 
     $work = & $_SESSION['EPM_WORK'];
     if ( ! isset ( $work['CONTROL'] ) )
         return;
+
+    $d = "$probdir/+parent+";
+    if ( is_dir ( "$epm_data/$d" ) )
+    {
+	$lock = LOCK ( $d, LOCK_SH );
+        if ( ! isset ( $work['LOCK'] )
+	     ||
+	     $lock > $work['LOCK'] )
+	{
+	    $errors[] = "parent of $uid $problem was"
+	              . " pushed during command"
+		      . " execution";
+	    return;
+	}
+    }
 
     $warnings = array_merge
         ( $warnings, $work['WARNINGS'] );

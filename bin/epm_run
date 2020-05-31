@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun May 31 16:28:17 EDT 2020
+// Date:	Sun May 31 17:17:34 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -141,10 +141,10 @@ require "$epm_web/parameters.php";
 $probdir = "users/$uid/$problem";
 require "$epm_home/include/epm_make.php";
 
-$d = "$probdir/+parent+";
+$pardir = "$probdir/+parent+";
 $lock = NULL;
-if ( is_dir ( "$epm_data/$d" ) )
-    $lock = LOCK ( $d, LOCK_SH );
+if ( is_dir ( "$epm_data/$pardir" ) )
+    $lock = LOCK ( $pardir, LOCK_SH );
 
 load_file_caches();
 
@@ -273,7 +273,7 @@ foreach ( $runin as $infile )
     start_make_file
 	( "$base.in", "$base.score",
 	   $submit ? 'SUBMIT': NULL,
-	   true, $lock, $workdir,
+	   true, NULL, $workdir,
 	   NULL, NULL /* no upload, upload_tmp */,
 	   $errors );
     if ( count ( $errors ) > 0 )
@@ -312,6 +312,21 @@ foreach ( $runin as $infile )
     }
 
     echo $lines[-1] . PHP_EOL;
+
+    if ( is_dir ( "$epm_data/$pardir" ) )
+    {
+        if ( ! isset ( $lock )
+	     ||
+	     $lock < LOCK ( $pardir, LOCK_SH ) )
+	{
+	    $errors[] = "parent of $uid $problem was"
+	              . " pushed during run";
+	    $first_failed = $base;
+	    $score = 'EPM Push Conflict Error';
+	    break;
+	}
+    }
+
     foreach ( $map as $key => $e )
     {
 	if ( $e[1] == 'X' ) continue;
