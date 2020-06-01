@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 28 11:41:22 EDT 2020
+    // Date:	Mon Jun  1 02:13:50 EDT 2020
 
     // Edits problem option page.
 
@@ -48,9 +48,9 @@
 	    --indent: 1.6vw;
 	}
     }
-    @media screen and ( min-width: 1200px ) {
+    @media screen and ( min-width: 1280px ) {
 	:root {
-	    width: 1200px;
+	    width: 1280px;
 
 	    --font-size: 16px;
 	    --large-font-size: 20px;

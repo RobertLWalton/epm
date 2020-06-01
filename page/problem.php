@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 00:59:47 EDT 2020
+    // Date:	Mon Jun  1 02:13:40 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -619,7 +619,7 @@
 	var x = screen.width - 1280;
 	var y = screen.height - 800;
 	show_window = window.open
-	    ( src, 'show_window',
+	    ( src, 'epm-view',
 	      'height=800px,width=1280px,' +
 	      'screenX=' + x + 'px,' +
 	      'screenY=' + y + 'px' );
