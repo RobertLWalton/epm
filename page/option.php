@@ -28,9 +28,9 @@
     if ( ! is_dir ( "$epm_data/$probdir" ) )
     {
 	// Some other session deleted the problem;
-	// let problem.php deal with it.
+	// let project.php deal with it.
 	//
-	header ( "Location: /page/problem.php" );
+	header ( "Location: /page/project.php" );
 	exit;
     }
 

@@ -2,32 +2,36 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 03:26:54 EDT 2020
+    // Date:	Mon Jun  1 18:41:28 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
-    {
-	header ( "Location: /page/problem.php?id=$ID" );
-	exit;
-    }
-
     // require "$epm_home/include/debug_info.php";
+
+    if ( ! isset ( $_REQUEST['problem'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to run.php" );
+    elseif ( ! isset ( $_SESSION['EPM_UID'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to run.php" );
+    elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to run.php" );
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
-    $problem = $_SESSION['EPM_PROBLEM'];
+    $problem = $_REQUEST['problem'];
     $probdir = "users/$uid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
     {
 	// Some other session deleted the problem;
-	// let problem.php deal with it.
+	// let project.php deal with it.
 	//
-	header ( "Location: /page/problem.php?id=$ID" );
+	header ( "Location: /page/project.php" );
 	exit;
     }
 
@@ -333,27 +337,33 @@
     $run_help = HELP ( 'run-page' );
     echo <<<EOT
     <div class='manage' id='manage'>
-    <form method='GET'>
-    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
     <td>
     <strong>User:</strong>
+    <form method='GET'>
     <input type='submit' value='$email'
            formaction='user.php'
            title='Click to See User Profile'>
+    </form>
     </td>
     <td style='padding-left:50px'>
     <strong>Go To</strong>
+    <form method='GET'>
+    <input type='hidden'
+           name='problem' value='$problem'>
     <button type='submit'
             formaction='problem.php'>Problem
     </button>
     <button type='submit'
-            formaction='project.php'>Project
-    </button>
-    <button type='submit'
             formaction='option.php'>Option
     </button>
+    </form>
+    <form method='GET'>
+    <button type='submit'
+            formaction='project.php'>Project
+    </button>
+    </form>
     <strong>Page</strong>
     </td>
     <td style='padding-left:50px'>
@@ -363,7 +373,6 @@
     <td style='text-align:right'>$run_help</td>
     </tr>
     </table>
-    </form>
     </div>
 EOT;
 
@@ -407,6 +416,8 @@ EOT;
 	<div class='run_list' id='run-list'>
     	<form action='run.php' method='POST'>
 	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden'
+	       name='problem' value='$problem'>
 	<table>
 EOT;
 	$td = [ 'run' => "<td>",
@@ -501,12 +512,18 @@ EOT;
 	    echo "<script>" .
 		 "TOGGLE('s_$rxxxN','$rxxxN')" .
 		 "</script>";
-?>
 
-<form action='run.php' method='POST' id='reload'>
-<input type='hidden' name='id' id='reload-id'>
-<input type='hidden' name='reload' value='reload'>
-</form>
+    echo <<<EOT
+    <form action='run.php' method='POST' id='reload'>
+    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden'
+           name='problem' value='$problem'>
+    <input type='hidden' name='id' id='reload-id'>
+    <input type='hidden' name='reload' value='reload'>
+    </form>
+EOT;
+
+?>
 
 <script>
     var LOG = function(message) {};
@@ -551,6 +568,7 @@ EOT;
     var reload_id =
         document.getElementById("reload-id");
     var ID = '<?php echo $ID; ?>';
+    var problem = '<?php echo $problem; ?>';
 
     function PROCESS_RESPONSE ( response )
     {
@@ -599,7 +617,8 @@ EOT;
 	    // These keep buttons from being clicked
 	    // while waiting for xhttp response and
 	    // its updated ID.
-	let data = 'update=update&xhttp=yes&id=' + ID;
+	let data = 'update=update&problem=' + problem
+	         + '&xhttp=yes&id=' + ID;
 	LOG ( 'xhttp sent: ' + data );
 	xhttp.send ( data );
     }
