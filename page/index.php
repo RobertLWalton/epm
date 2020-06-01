@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 31 17:47:52 EDT 2020
+// Date:    Mon Jun  1 01:23:12 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -262,7 +262,10 @@ if ( isset ( $_SESSION['EPM_SESSION'] ) )
     }
 }
 
-if ( ! isset ( $_POST['xhttp'] ) )
+if ( ! isset ( $_POST['xhttp'] )
+     &&
+     ! isset ( $epm_pdf ) )
+
     // This goes to the given page while resetting the
     // current history so if you hit the back button you
     // to get to the current history will produce a
