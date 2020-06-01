@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 02:52:19 EDT 2020
+    // Date:	Mon Jun  1 18:14:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -31,9 +31,8 @@
     //
     //     $_SESSION['EPM_PROBLEM'] current problem name
     //		or unset if none
-    //     $_SESSION['EPM_WORK'] information on last
-    //		group of commands run in +work+ sub-
-    //		directory
+    //	   $work = & $_SESSION['EPM_WORK'][$problem]
+    //		// set when epm_make.php loaded.
 
     // Set $problem to current problem, or NULL if none.
     // Also set $probdir to the problem directory if
@@ -131,8 +130,9 @@
 	     $prob != $_SESSION['EPM_PROBLEM'] )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
+	$problem = $_SESSION['EPM_PROBLEM'];
+	$_SESSION['EPM_WORK'][$problem] = [];
 	unset ( $_SESSION['EPM_PROBLEM'] );
-	$_SESSION['EPM_WORK'] = [];
 	$_SESSION['EPM_RUN'] = [];
 	$d = "$epm_data/$user_dir/$prob";
 	exec ( "rm -rf $d" );
@@ -155,7 +155,7 @@
     elseif ( isset ( $problem ) )
     {
 	$_SESSION['EPM_PROBLEM'] = $problem;
-	$_SESSION['EPM_WORK'] = [];
+	$work = [];
 	$_SESSION['EPM_RUN'] = [];
     }
 
@@ -166,17 +166,18 @@
 	{
 	    $errors[] = "problem $problem has been"
 	             . " deleted by another session";
+	    $work = [];
+	    $_SESSION['EPM_RUN'] = [];
 	    $probdir = NULL;
 	    $problem = NULL;
 	    unset ( $_SESSION['EPM_PROBLEM'] );
-	    $_SESSION['EPM_WORK'] = [];
-	    $_SESSION['EPM_RUN'] = [];
 	}
 	else
 	{
 	    require "$epm_home/include/epm_make.php";
         	// This can only be done if $problem
-		// and $probdir are both set.
+		// and $probdir are both set.  This
+		// sets $work.
 	}
     }
     else
@@ -525,7 +526,7 @@
     }
     elseif ( isset ( $_POST['reload'] )
              &&
-	     isset ( $_SESSION['EPM_WORK']['BASE'] ) )
+	     isset ( $work['BASE'] ) )
     {
         $post_processed = true;
 
@@ -548,8 +549,7 @@
 	    $r = update_workmap();
 	    if ( count ( $r ) > 0 )
 	    {
-		$workmap =
-		    & $_SESSION['EPM_WORK']['MAP'];
+		$workmap = & $work['MAP'];
 	        foreach ( $r as $n )
 		{
 		    $e = $workmap[$n];
@@ -565,7 +565,9 @@
     if ( ! $post_processed && $epm_method == 'POST' )
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
-    if ( isset ( $_SESSION['EPM_WORK']['CONTROL'] )
+    if ( isset ( $problem )
+         &&
+	 isset ( $work['CONTROL'] )
          &&
 	 update_work_results() !== true )
         finish_make_file ( $warnings, $errors );
@@ -870,11 +872,11 @@ EOT;
 	    // to click to show the file.
 	$display_list = [];
 
-	if ( isset ( $_SESSION['EPM_WORK']['DIR'] ) )
+	if ( isset ( $work['DIR'] ) )
 	{
-	    $workdir = $_SESSION['EPM_WORK']['DIR'];
-	    $result = $_SESSION['EPM_WORK']['RESULT'];
-	    $kept = $_SESSION['EPM_WORK']['KEPT'];
+	    $workdir = $work['DIR'];
+	    $result = $work['RESULT'];
+	    $kept = $work['KEPT'];
 	    if (    is_array ( $result )
 	         && $result == ['D',0] )
 	        $r = 'commands succeeded: ';
@@ -1226,9 +1228,9 @@ EOT;
 	    }
 	}
 
-	if ( isset ( $_SESSION['EPM_WORK']['SHOW'] ) )
+	if ( isset ( $work['SHOW'] ) )
 	{
-	    $show_files = $_SESSION['EPM_WORK']['SHOW'];
+	    $show_files = $work['SHOW'];
 	    $files = [];
 
 	    foreach ( $show_files as $fname )
@@ -1396,9 +1398,11 @@ EOT;
 	xhttp.send ( data );
     }
     <?php
-	if ( isset ( $_SESSION['EPM_WORK']['RESULT'] ) )
+	if ( isset ( $problem )
+	     &&
+	     isset ( $work['RESULT'] ) )
 	{
-	    $r = $_SESSION['EPM_WORK']['RESULT'];
+	    $r = $work['RESULT'];
 	    if ( $r === true )
 		echo "REQUEST_UPDATE();";
 	    if ( ! is_array ( $r ) || $r != ['D',0] )

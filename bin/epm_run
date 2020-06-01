@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun May 31 17:17:34 EDT 2020
+// Date:	Mon Jun  1 18:11:27 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -282,7 +282,7 @@ foreach ( $runin as $infile )
 	$score = 'EPM System Error';
 	break;
     }
-    $map = & $_SESSION['EPM_WORK']['MAP'];
+    $map = & $work['MAP'];
     $lines[] = $base;
     $count = count ( $lines );
     if ( $count > 10 ) $count = 10;

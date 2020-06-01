@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 31 17:05:17 EDT 2020
+// Date:    Mon Jun  1 17:27:28 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -31,6 +31,13 @@ if ( ! isset ( $problem ) )
     exit ( 'ACCESS ERROR: $problem not set' );
 if ( ! isset ( $probdir ) )
     exit ( 'ACCESS ERROR: $probdir not set' );
+
+if ( ! isset ( $_SESSION['EPM_WORK'][$problem] ) )
+    $_SESSION['EPM_WORK'][$problem] = [];
+$work = & $_SESSION['EPM_WORK'][$problem];
+if ( ! isset ( $_SESSION['EPM_RUN'][$problem] ) )
+    $_SESSION['EPM_RUN'][$problem] = [];
+$run = & $_SESSION['EPM_RUN'][$problem];
 
 require 'epm_template.php';
 
@@ -787,10 +794,10 @@ function compile_commands
     krsort ( $map, SORT_NUMERIC );
 }
 
-// Update the $_SESSION['EPM_WORK']['MAP'] status map by
-// reading status files in last-line-first order.
-// Return a list of keys whose time values have changed.
-// Inputs $_SESSION['EPM_WORK']['DIR'].
+// Update the $work['MAP'] status map by reading status
+// files in last-line-first order.  Return a list of
+// keys whose time values have changed.  Inputs
+// $work['DIR'].
 //
 // A status map is a map from command line numbers
 // sorted in last-line-number-first order to:
@@ -815,9 +822,8 @@ function compile_commands
 //
 function update_workmap ()
 {
-    global $_SESSION;
+    global $_SESSION, $work;
 
-    $work = & $_SESSION['EPM_WORK'];
     $workdir = $work['DIR'];
     $map = & $work['MAP'];
     $r = [];
@@ -837,8 +843,8 @@ function update_workmap ()
 }
 
 // Read epm_sandbox -status file $workdir/$sfile and
-// return value to store in $_SESSION['EPM_WORK']['MAP']
-// entry (but do not store it).
+// return value to store in $work['MAP'] entry (but
+// do not store it).
 //
 // If status file could not be read or was misformatted,
 // return NULL.  In the misformatted case, retries are
@@ -1122,10 +1128,9 @@ function execute_commands_2 ( $base, $dir )
 //
 function get_commands_display ( & $display )
 {
-    global $epm_data, $epm_score_file_written,
+    global $epm_data, $work, $epm_score_file_written,
            $_SESSION;
 
-    $work = & $_SESSION['EPM_WORK'];
     $workdir = $work['DIR'];
     $workbase = $work['BASE'];
     $map = & $work['MAP'];
@@ -1260,13 +1265,13 @@ function get_commands_display ( & $display )
 // Read $workdir/$workbase.shout and write the result so
 // far of running $workdir/$workbase.sh into
 //
-//	$_SESSION['EPM_WORK']['RESULT']
+//	$work['RESULT']
 //
 // Also return this result.
 //
-// If the value of $_SESSION['EPM_WORK']['RESULT']
-// already indicates the run is finished, this function
-// does nothing but return this value.
+// If the value of $work['RESULT'] already indicates the
+// run is finished, this function does nothing but
+// return this value.
 //
 // If the run is finished, the result is [n,code] where
 // n is the value of the variable $n in the shell script
@@ -1290,9 +1295,8 @@ function get_commands_display ( & $display )
 //
 function update_work_results ( $wait = 0 )
 {
-    global $epm_data, $_SESSION;
+    global $epm_data, $work, $_SESSION;
 
-    $work = & $_SESSION['EPM_WORK'];
     $workbase = $work['BASE'];
     $workdir = $work['DIR'];
     $result = $work['RESULT'];
@@ -1434,9 +1438,9 @@ function get_command_results ( $base, $dir, $wait = 0 )
 //
 function execute_checks ( $checks, & $errors )
 {
-    global $epm_data, $_SESSION;
+    global $epm_data, $work, $_SESSION;
 
-    $workdir = $_SESSION['EPM_WORK']['DIR'];
+    $workdir = $work['DIR'];
 
     foreach ( $checks as $check )
     {
@@ -1497,9 +1501,8 @@ function execute_checks ( $checks, & $errors )
 //
 function move_keep ( $keep, & $errors )
 {
-    global $epm_data, $probdir, $_SESSION;
+    global $epm_data, $probdir, $work, $_SESSION;
 
-    $work = & $_SESSION['EPM_WORK'];
     $workdir = $work['DIR'];
     $work['KEPT'] = [];
     $moved = & $work['KEPT'];
@@ -1555,11 +1558,11 @@ function move_keep ( $keep, & $errors )
 //
 // This function begins by setting
 //
-//      $_SESSION['EPM_WORK'] = [] (aka EPM_WORK)
+//      $work = []
 //
 // and puts all warning messages in
 //
-//     EPM_WORK WARNINGS
+//     $work['WARNINGS']
 //
 // Normally these warning messages are ignored if there
 // are errors, and returned by finish_make_file
@@ -1568,20 +1571,20 @@ function move_keep ( $keep, & $errors )
 // If there are no errors, this function finishes by
 // setting:
 //
-//     EPM_WORK DIR to $dir
-//     EPM_WORK BASE to $base
-//     EPM_WORK MAP to the status map initialized by
+//     $work['DIR'] to $dir
+//     $work['BASE'] to $base
+//     $work['MAP'] to the status map initialized by
 //         compile_command
-//     EPM_WORK RESULT to true
-//     EPM_WORK CONTROL to the control found by
+//     $work['RESULT'] to true
+//     $work['CONTROL'] to the control found by
 //         find_control (note this is unset by
 //         finish_make_file)
-//     EPM_WORK TEMPLATE to pretty_
+//     $work['TEMPLATE'] to pretty_
 //	   template of template file name (for error
 //	   messages).
-//     EPM_WORK KEPT to []
-//     EPM_WORK SHOW to []
-//     EPM_WORK LOCK to $lock
+//     $work['KEPT'] to []
+//     $work['SHOW'] to []
+//     $work['LOCK'] to $lock
 //
 // The $lock parameter should be the value of
 //
@@ -1600,10 +1603,9 @@ function start_make_file
 	  & $errors )
 {
     global $epm_data, $is_epm_test,
-           $problem, $probdir, $_SESSION;
+           $problem, $probdir, $work, $_SESSION;
 
-    $_SESSION['EPM_WORK'] = [];
-    $work = & $_SESSION['EPM_WORK'];
+    $work = [];
     $work['WARNINGS'] = [];
     $warnings = & $work['WARNINGS'];
 
@@ -1700,17 +1702,17 @@ function start_make_file
 //
 // This function requires that
 //
-//	$_SESSION['EPM_WORK']['BASE']
-//	$_SESSION['EPM_WORK']['DIR']
+//	$work['BASE']
+//	$work['DIR']
 //
 // be set and will do nothing if
 //
-//	$_SESSION['EPM_WORK']['CONTROL']
+//	$work['CONTROL']
 //
 // is not set.  Otherwise it unsets this last global
 // after getting its value.
 //
-// This function begins appending EPM_WORK WARNINGS to
+// This function begins appending $work['WARNINGS'] to
 // $warnings, and then deletes files larger than
 // $epm_file_maxsize and generates error messages for
 // each file so deleted.
@@ -1720,8 +1722,8 @@ function start_make_file
 // running, an error message is appended to $errors.
 //
 // Next files in control SHOW that are readable in
-// EPM_WORK DIR are appended to the file list in
-// EPM_WORK SHOW.  Note that readability is checked
+// $work['DIR'] are appended to the file list in
+// $work['SHOW'].  Note that readability is checked
 // before any files are moved to $probdir.
 //
 // Then if there have been errors and KEEP-ON-ERROR is
@@ -1730,20 +1732,19 @@ function start_make_file
 // Otherwise control CHECKs are run and if they do not
 // append error messages to $errors, the files in
 // control KEEP are moved to $probdir and appended to
-// the file list in EPM_WORK KEPT.
+// the file list in $work['KEPT'].
 // 
 // All file and directory names are relative to
 // $epm_data, except that only the last component
-// of a file name is listed in EPM_WORK SHOW and
-// EPM_WORK KEPT.
+// of a file name is listed in $work['SHOW'] and
+// $work['KEPT'].
 //
 function finish_make_file ( & $warnings, & $errors )
 {
     global $_SESSION, $probdir, $uid, $problem,
-           $epm_data,
+           $epm_data, $work,
            $epm_file_maxsize, $epm_score_file_written;
 
-    $work = & $_SESSION['EPM_WORK'];
     if ( ! isset ( $work['CONTROL'] ) )
         return;
 
@@ -1854,7 +1855,7 @@ function finish_make_file ( & $warnings, & $errors )
 // This function begins by setting
 //
 //      $_SESSION['EPM_RUN'] = []
-//      $_SESSION['EPM_WORK'] = []
+//      $work = []
 //	    -- this last to clear displays of work
 //             directory
 //
@@ -1869,11 +1870,11 @@ function start_run
 	( $workdir, $runfile, $rundir, $submit,
 	            & $errors )
 {
-    global $epm_data, $_SESSION,
+    global $epm_data, $work, $_SESSION,
            $local_file_cache, $remote_file_cache;
 
     $_SESSION['EPM_RUN'] = [];
-    $_SESSION['EPM_WORK'] = [];
+    $work = [];
     $run = & $_SESSION['EPM_RUN'];
 
     $errors_size = count ( $errors );
