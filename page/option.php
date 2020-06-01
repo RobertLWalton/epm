@@ -2,23 +2,27 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 02:13:22 EDT 2020
+    // Date:	Mon Jun  1 02:32:34 EDT 2020
 
     // Edits problem option page.
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
-    {
-	header ( "Location: /page/problem.php?id=$ID" );
-	exit;
-    }
-
     // require "$epm_home/include/debug_info.php";
 
-    $problem = $_SESSION['EPM_PROBLEM'];
-    $email = $_SESSION['EPM_EMAIL'];
+    if ( ! isset ( $_REQUEST['problem'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to option.php" );
+    elseif ( ! isset ( $_SESSION['EPM_UID'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to option.php" );
+    elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to option.php" );
+
     $uid = $_SESSION['EPM_UID'];
+    $email = $_SESSION['EPM_EMAIL'];
+    $problem = $_REQUEST['problem'];
     $probdir = "users/$uid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
@@ -26,7 +30,7 @@
 	// Some other session deleted the problem;
 	// let problem.php deal with it.
 	//
-	header ( "Location: /page/problem.php?id=$ID" );
+	header ( "Location: /page/problem.php" );
 	exit;
     }
 
@@ -348,17 +352,21 @@
     $option_help = HELP ( 'option-page' );
     echo <<<EOT
     <div class='manage'>
-    <form method='GET'>
     <table style='width:100%'>
     <td>
     <strong>User:</strong>
+    <form method='GET'>
     <button type='submit'
     	   formaction='user.php'
            title='Click to See User Profile'>
 	   $email</button>
+    </form>
     </td>
     <td style='padding-left:var(--indent)'>
     <strong>Go To</strong>
+    <form method='GET'>
+    <input type='hidden'
+           name='problem' value='$problem'>
     <button type='submit'
             formaction='problem.php'>Problem
     </button>
@@ -368,6 +376,7 @@
     <button type='submit'
             formaction='project.php'>Project
     </button>
+    </form>
     <strong>Page</strong>
     <pre>   </pre>
     <button type='button' onclick='TEMPLATE_WINDOW()'>
@@ -380,7 +389,6 @@
     </td><td style='text-align:right'>
     $option_help</td>
     </table>
-    </form>
     <br>
     <form action='option.php' method='POST'
           onkeydown='return event.key != "Enter"'>
@@ -388,6 +396,8 @@
 	       from triggering submit -->
     <!-- This form lasts till the end of the
          document -->
+    <input type='hidden'
+           name='problem' value='$problem'>
     <input type='hidden' name='id' value='$ID'>
     <div class='center'>
 EOT;

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 02:13:40 EDT 2020
+    // Date:	Mon Jun  1 02:52:19 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -761,42 +761,51 @@
     $problem_page_help = HELP ( 'problem-page' );
     echo <<<EOT
     <div class='manage' id='manage'>
-    <form method='GET'>
     <table style='width:100%'>
     <tr>
     <td>
     <strong>User:</strong>
+    <form method='GET'>
     <button type='submit'
     	   formaction='user.php'
            title='Click to See User Profile'>
 	   $email</button>
+    </form>
     </td>
     <td>
     <strong>Go To</strong>
 EOT;
     if ( isset ( $problem ) )
         echo <<<EOT
+	<form method='GET'>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
 	<button type='submit'
 		formaction='run.php'>
 		Run</button>
 	<button type='submit'
 		formaction='option.php'>
 		Option</button>
+	</form>
 EOT;
     echo <<<EOT
+    <form method='GET'>
     <button type='submit'
 	    formaction='project.php'>
 	    Project</button>
+    </form>
     <strong>Page</strong>
     </td><td style='text-align:right'>
     $problem_page_help</td>
-    </tr></table></form>
+    </tr></table>
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$current_problem</pre></b>
 EOT;
     if ( isset ( $problem ) )
         echo <<<EOT
 	<form action='problem.php' method='POST'>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
 	<input type='hidden' name='id' value='$ID'>
 	<button type='submit'
 	        name='delete_problem'
@@ -825,6 +834,8 @@ EOT;
 			.submit();
 		}
 	</script>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
 	       name='goto_problem' value=yes>
@@ -838,6 +849,8 @@ EOT;
     }
     echo <<<EOT
     <form action='problem.php' method='POST'>
+    <input type='hidden'
+	   name= 'problem' value='$problem'>
     <input type='hidden' name='id' value='$ID'>
     <pre>    </pre>
     <strong>or Create New Problem:</strong>
@@ -1048,6 +1061,8 @@ EOT;
 	<form action='problem.php' method='POST'
 	      enctype='multipart/form-data'
 	      id='upload-form'>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
 	<input type='hidden' name='id' value='$ID'>
         <label>
 	<strong>Upload a File:</strong>
@@ -1062,6 +1077,8 @@ EOT;
 	</form>
 	<pre>    </pre>
 	<form action='problem.php' method='POST'>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
 	<input type='hidden' name='id' value='$ID'>
 	<input id='delete_files'
 	       name='delete_files' value=''
@@ -1076,6 +1093,8 @@ EOT;
 	</table>
 	<div id='problems_body'>
 	<form action='problem.php' method='POST'>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
 	<input type='hidden' name='id' value='$ID'>
 EOT;
 	function MAKE ( $fbase, $sext, $dext )
