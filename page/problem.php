@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 16:27:49 EDT 2020
+    // Date:	Mon Jun  1 00:59:47 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -605,9 +605,15 @@
 
 <script>
     var show_window = null;
+    var problem =
+        <?php echo ( isset ( $problem ) ?
+                     "'$problem'" : 'null' ) ?>
 
     function NEW_WINDOW ( page, filename ) {
-	var src = '/page/' + page + '?filename='
+	var src = '/page/' + page
+	        + '?problem='
+	        + encodeURIComponent ( problem )
+		+ '&filename='
 		+ encodeURIComponent ( filename );
 	if ( show_window ) show_window.close();
 	var x = screen.width - 1280;

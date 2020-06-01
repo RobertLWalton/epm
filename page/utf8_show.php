@@ -38,17 +38,17 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_UID'];
-    $problem = $_SESSION['EPM_PROBLEM'];
-
-    $probdir = "users/$uid/$problem";
-
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
 	       $epm_method );
-    if ( ! isset ( $_GET['filename'] ) )
+    elseif ( ! isset ( $_GET['problem'] ) )
+	exit ( "ACCESS: illegal GET to utf8_show.php" );
+    elseif ( ! isset ( $_GET['filename'] ) )
 	exit ( "ACCESS: illegal GET to utf8_show.php" );
 
+    $uid = $_SESSION['EPM_UID'];
+    $problem = $_GET['problem'];
+    $probdir = "users/$uid/$problem";
     $filename = $_GET['filename'];
     $ext = pathinfo ( $filename, PATHINFO_EXTENSION );
     if ( ! isset ( $display_file_type[$ext] )
