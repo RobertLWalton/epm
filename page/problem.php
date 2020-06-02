@@ -558,47 +558,55 @@ EOT;
 
     if ( $delete_problem )
     {
-	echo "<div class='notices'>";
-	echo "<form method='POST'" .
-	     " style='display:inline'" .
-	     " action=problem.php>";
-	echo "<input type='hidden'" .
-	     " name='id' value='$ID'>";
-	echo "Do you really want to delete current" .
-	     " problem $problem?";
-	echo "&nbsp;&nbsp;<button type='submit'" .
-	     " name='delete_problem_yes'" .
-	     " value='$problem'>" .
-	     "YES</button>";
-	echo "&nbsp;&nbsp;<button type='submit'" .
-	     " name='delete_problem_no'" .
-	     " value='$problem'>" .
-	     "NO</button>";
-	echo "</form></div>";
+        echo <<<EOT
+	<div class='notices'>
+	<form method='POST'
+	      action=problem.php>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
+	<input type='hidden' name='id' value='$ID'>
+	Do you really want to delete current
+	       problem $problem?
+	<pre>   </pre>
+	<button type='submit'
+	        name='delete_problem_yes'
+	        value='$problem'>
+	     YES</button>
+	<pre>   </pre>
+	<button type='submit'
+	        name='delete_problem_no'
+	        value='$problem'>
+	     NO</button>
+	</form></div>
+EOT;
     }
     else if ( $make_ftest )
     {
         $fout = pathinfo ( $make_ftest,
 	                   PATHINFO_FILENAME )
 	      . ".fout";
-	echo "<div class='notices'>";
-	echo "<form method='POST'" .
-	     " style='display:inline'" .
-	     " action=problem.php>";
-	echo "<input type='hidden'" .
-	     " name='id' value='$ID'>";
-	echo "Do you really want to copy $fout to" .
-	     " $make_ftest (this will force score" .
-	     " to be `Completely Correct')?";
-	echo "&nbsp;&nbsp;<button type='submit'" .
-	     " name='make_ftest_yes'" .
-	     " value='$make_ftest'>" .
-	     "YES</button>";
-	echo "&nbsp;&nbsp;<button type='submit'" .
-	     " name='make_ftest_no'" .
-	     " value='$make_ftest'>" .
-	     "NO</button>";
-	echo "</form></div>";
+	echo <<<EOT
+	<div class='notices'>
+	<form method='POST'
+	      action=problem.php>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
+	<input type='hidden' name='id' value='$ID'>
+	Do you really want to copy $fout to
+	       $make_ftest (this will force score
+	       to be `Completely Correct')?
+	<pre>   </pre>
+	<button type='submit'
+	        name='make_ftest_yes'
+	        value='$make_ftest'>
+	     YES</button>
+	<pre>   </pre>
+	<button type='submit'
+	        name='make_ftest_no'
+	        value='$make_ftest'>
+	     NO</button>
+	</form></div>
+EOT;
     }
     if ( count ( $errors ) > 0 )
     {
