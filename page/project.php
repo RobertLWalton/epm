@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  2 12:15:01 EDT 2020
+    // Date:	Tue Jun  2 17:24:25 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -404,33 +404,23 @@
 	        [ 'LISTNAME' => NULL ];
     }
 
-    $data = & $_SESSION['EPM_DATA'];
-    $op = & $data['OP'];
-    $listname = & $_SESSION['EPM_PROJECT']['LISTNAME'];
-
-    $errors = [];    // Error messages to be shown.
-    $warnings = [];  // Warning messages to be shown.
-    $goto = NULL;    // Existing (or newly created)
-    		     // problem whose tab should be
-		     // created (or gone to).
-
-    if ( ! isset ( $op ) )
+    // Given a listname, return your problems that
+    // are in the list (i.e., that have PROJECT == '-')
+    // as an HTML <option> list.
+    //
+    function listname_to_problem_options ( $listname )
     {
-        $favorites = favorites_to_list ( 'pull|push' );
-	if ( isset ( $listname ) )
+	$r = '';
+	foreach ( listname_to_list ( $listname )
+		  as $item )
 	{
-	    $problem_options = '';
-	    foreach ( listname_to_list ( $listname )
-	              as $item )
-	    {
-	        list ( $time, $project, $problem ) =
-		    $item;
-		if ( $project == '-' )
-		    $problem_options .=
-		        "<option value='$problem'>" .
-			"$problem</option>";
-	    }
+	    list ( $time, $project, $problem ) =
+		$item;
+	    if ( $project == '-' )
+		$r .= "<option value='$problem'>"
+		    . "$problem</option>";
 	}
+	return $r;
     }
 
     // Given a problem list in the form of elements
@@ -1243,6 +1233,19 @@ EOT;
 	    ERROR ( "cannot write $g" );
     }
 
+    $data = & $_SESSION['EPM_DATA'];
+    $op = & $data['OP'];
+    $listname = & $_SESSION['EPM_PROJECT']['LISTNAME'];
+
+    $errors = [];    // Error messages to be shown.
+    $warnings = [];  // Warning messages to be shown.
+    $goto = NULL;    // Existing (or newly created)
+    		     // problem whose tab should be
+		     // created (or gone to).
+
+    if ( ! isset ( $op ) )
+        $favorites = favorites_to_list ( 'pull|push' );
+
     if ( $epm_method == 'POST' )
     {
         if ( isset ( $_POST['listname'] ) )
@@ -1271,7 +1274,10 @@ EOT;
 	}
         elseif ( isset ( $_POST['goto'] ) )
 	{
-	    $op = NULL;
+	    if ( isset ( $op ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $listname ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $problem = $_POST['goto'];
 	    if ( ! preg_match
 	               ( $epm_name_re, $problem ) )
@@ -1285,7 +1291,8 @@ EOT;
 	}
         elseif ( isset ( $_POST['create'] ) )
 	{
-	    $op = NULL;
+	    if ( isset ( $op ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $problem = trim ( $_POST['create'] );
 	    $d = "users/$uid/$problem";
 	    if ( $problem == '' )
@@ -1615,12 +1622,6 @@ EOT;
 	    echo "<pre>$e</pre><br>";
 	echo "<br></div></div>";
     }
-
-    if ( isset ( $goto ) )
-        echo <<<EOT
-	<script>
-	GOTO_PROBLEM ( '$goto' );
-	</script>
 EOT;
 
     if ( $op == 'push' || $op == 'pull' )
@@ -1789,6 +1790,10 @@ EOT;
 	</form>
 EOT;
 	if ( isset ( $listname ) )
+	{
+	    $problem_options =
+		listname_to_problem_options
+		    ( $listname );
 	    echo <<<EOT
 	    <strong>Go To Problem:</strong>
 	    <form method='POST' action='project.php'
@@ -1800,6 +1805,7 @@ EOT;
 	    $problem_options
 	    </select></form>
 EOT;
+        }
 	echo <<<EOT
 	<strong>or Create New Problem:</strong>
 	<form method='POST' action='project.php'
@@ -2171,6 +2177,19 @@ EOT;
 		form.submit();
 	    }
 	}
+
+	function GOTO_PROBLEM ( problem )
+	{
+	    let w = window.open
+	        (   '/page/problem.php?problem='
+		  + problem, problem, '' );
+	}
+	</script>
+EOT;
+    if ( isset ( $goto ) )
+        echo <<<EOT
+	<script>
+	GOTO_PROBLEM ( '$goto' );
 	</script>
 EOT;
     if ( isset ( $op ) )

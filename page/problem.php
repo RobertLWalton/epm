@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  2 12:51:00 EDT 2020
+    // Date:	Tue Jun  2 17:24:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1062,7 +1062,7 @@ EOT;
     <form action='problem.php'
 	  method='POST' id='reload'>
     <input type='hidden' name='id' id='reload-id'>
-    <input type='hidden' name='problem' id='$problem'>
+    <input type='hidden' name='problem' value='$problem'>
     <input type='hidden' name='reload' value='reload'>
     </form>
 EOT;
@@ -1197,7 +1197,8 @@ EOT;
 	    // is the ID needs to be updated by the
 	    // response before a button is pressed.
 
-	let data = 'update=update&xhttp=yes&id=' + ID;
+	let data = 'update=update&xhttp=yes&id=' + ID
+	         + '&problem=' + problem;
 	LOG ( 'xhttp sent: ' + data );
 	xhttp.send ( data );
     }

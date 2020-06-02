@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 22:28:45 EDT 2020
+    // Date:	Tue Jun  2 17:25:16 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -357,11 +357,6 @@
     </button>
     <button type='submit'
             formaction='option.php'>Option
-    </button>
-    </form>
-    <form method='GET'>
-    <button type='submit'
-            formaction='project.php'>Project
     </button>
     </form>
     <strong>Page</strong>
