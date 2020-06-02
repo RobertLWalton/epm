@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 26 16:46:59 EDT 2020
+    // Date:	Mon Jun  1 23:34:16 EDT 2020
 
     // Allows user and problem information to be viewed.
 
@@ -157,7 +157,6 @@ div.user {
     background-color: var(--bg-tan);
     padding-top: var(--pad);
 }
-
 div.profile {
     float: left;
 }
@@ -222,7 +221,8 @@ var LOG = function(message) {};
 
     $view_help = HELP ( 'view-page' );
     $user_options = users_to_options ( $users );
-    $listname_options = list_to_options ( $favorites );
+    $listname_options = list_to_options
+        ( $favorites, $listname );
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>

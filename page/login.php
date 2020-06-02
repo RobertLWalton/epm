@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 03:26:26 EDT 2020
+    // Date:	Mon Jun  1 23:10:49 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -132,7 +132,7 @@
     //    EPM_UID => UID, but not set by this
     //                    program for a new user.
     //
-    // Next page is page/problem.php if user is NOT new
+    // Next page is page/project.php if user is NOT new
     // and page/user.php otherwise.  In the case of a
     // new user, this last page determines UID and sets
     // EPM_UID.
@@ -167,7 +167,7 @@
     // The browser runs the protocol using javascript
     // XMLHttpRequest to POST requests.  When the
     // browser is notified of success, it is given
-    // a page to go to (page/problem.php or for new
+    // a page to go to (page/project.php or for new
     // users page/user.php).
     //
     // The protocol is:
@@ -503,7 +503,7 @@
 	    $next_page = 'user.php';
 	    if ( isset ( $data['UID'] ) )
 	    {
-		$next_page = 'problem.php';
+		$next_page = 'project.php';
 
 		$f = "/admin/users/{$data['UID']}" .
 		     "/session_id";

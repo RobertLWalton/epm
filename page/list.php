@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 09:58:45 EDT 2020
+    // Date:	Mon Jun  1 23:20:02 EDT 2020
 
     // Maintains problem lists.
 
@@ -612,7 +612,8 @@ EOT;
 EOT;
     $data['ELEMENTS'] = [];
     $elements = & $data['ELEMENTS'];
-    $options = list_to_options ( $favorites, $names );
+    $options = list_to_options
+        ( $favorites, NULL, $names );
     $upload_file_title = 'Selected List Description'
 		       . ' (.dsc) File to be Uploaded';
     foreach ( [0,1] as $J )

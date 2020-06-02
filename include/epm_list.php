@@ -778,12 +778,26 @@
     // However, if 'PROJECT:NAME' is listed in $exclude,
     // omit that option.
     //
-    function list_to_options ( $list, & $exclude = [] )
+    function list_to_options
+            ( $list, $select = NULL, & $exclude = [] )
     {
+	if ( isset ( $select ) )
+	    list ( $sproject, $sname ) =
+	        explode ( ':', $select );
+	else
+	{
+	    $sproject = NULL; $sname = NULL;
+	}
+
         $r = '';
 	foreach ( $list as $e )
 	{
 	    list ( $time, $project, $name ) = $e;
+	    $selected = '';
+	    if ( $project == $sproject
+	         &&
+		 $name == $sname )
+	        $selected = 'selected';
 	    $key = "$project:$name";
 	    if ( in_array ( $key, $exclude, true ) )
 	        continue;
@@ -793,7 +807,7 @@
 	    if ( $name == '-' )
 	        $name = 'Problems';
 	    $time = substr ( $time, 0, 10 );
-	    $r .= "<option value='$key'>"
+	    $r .= "<option value='$key' $selected>"
 	        . "$project $name $time"
 		. "</option>";
 	}
