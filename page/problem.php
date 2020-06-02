@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 18:14:29 EDT 2020
+    // Date:	Mon Jun  1 22:15:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -132,8 +132,8 @@
 	           " problem.php" );
 	$problem = $_SESSION['EPM_PROBLEM'];
 	$_SESSION['EPM_WORK'][$problem] = [];
+	$_SESSION['EPM_RUN'][$problem] = [];
 	unset ( $_SESSION['EPM_PROBLEM'] );
-	$_SESSION['EPM_RUN'] = [];
 	$d = "$epm_data/$user_dir/$prob";
 	exec ( "rm -rf $d" );
 	$deleted_problem = $prob;
@@ -156,7 +156,7 @@
     {
 	$_SESSION['EPM_PROBLEM'] = $problem;
 	$work = [];
-	$_SESSION['EPM_RUN'] = [];
+	$run  = [];
     }
 
     if ( isset ( $problem ) )
@@ -167,7 +167,7 @@
 	    $errors[] = "problem $problem has been"
 	             . " deleted by another session";
 	    $work = [];
-	    $_SESSION['EPM_RUN'] = [];
+	    $run  = [];
 	    $probdir = NULL;
 	    $problem = NULL;
 	    unset ( $_SESSION['EPM_PROBLEM'] );
@@ -518,7 +518,7 @@
 	start_run
 	    ( "$probdir/+work+", $f, "$probdir/+run+",
 	      false, $errors );
-        if ( isset ( $_SESSION['EPM_RUN']['RESULT'] ) )
+        if ( isset ( $run['RESULT'] ) )
 	{
 	    header ( "Location: /page/run.php?id=$ID" );
 	    exit;

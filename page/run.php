@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 18:41:28 EDT 2020
+    // Date:	Mon Jun  1 22:28:45 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -72,9 +72,9 @@
     // Do this after execute or submit but before
     // update and reload.
     //
-    if ( isset ( $_SESSION['EPM_RUN']['RESULT'] )
+    if ( isset ( $run['RESULT'] )
          &&
-	 $_SESSION['EPM_RUN']['RESULT'] === true
+	 $run['RESULT'] === true
          &&
 	 update_run_results() !== true )
     {
@@ -85,12 +85,12 @@
     $rundir = NULL;
     $runsubmit = NULL;
     $runresult = NULL;
-    if ( isset ( $_SESSION['EPM_RUN']['BASE'] ) )
+    if ( isset ( $run['BASE'] ) )
     {
-        $runbase = $_SESSION['EPM_RUN']['BASE'];
-        $rundir = $_SESSION['EPM_RUN']['DIR'];
-        $runsubmit = $_SESSION['EPM_RUN']['SUBMIT'];
-        $runresult = $_SESSION['EPM_RUN']['RESULT'];
+        $runbase = $run['BASE'];
+        $rundir = $run['DIR'];
+        $runsubmit = $run['SUBMIT'];
+        $runresult = $run['RESULT'];
     }
 
     if ( isset ( $_POST['reload'] )

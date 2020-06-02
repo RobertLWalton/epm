@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun  1 17:27:28 EDT 2020
+// Date:    Mon Jun  1 22:12:07 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1309,13 +1309,12 @@ function update_work_results ( $wait = 0 )
     return $result;
 }
 
-// Ditto but updates $_SESSION['EPM_RUN']['RESULT]' by
-// reading $rundir/$runbase.shout.
+// Ditto but updates $run['RESULT]' by reading
+// $rundir/$runbase.shout.
 //
 function update_run_results ( $wait = 0 )
 {
-    global $epm_data, $_SESSION;
-    $run = & $_SESSION['EPM_RUN'];
+    global $epm_data, $run, $_SESSION;
     $runbase = $run['BASE'];
     $rundir = $run['DIR'];
     $result = $run['RESULT'];
@@ -1854,28 +1853,27 @@ function finish_make_file ( & $warnings, & $errors )
 //
 // This function begins by setting
 //
-//      $_SESSION['EPM_RUN'] = []
+//      $run  = []
 //      $work = []
 //	    -- this last to clear displays of work
 //             directory
 //
 // If there are no errors, this function sets:
 //
-//     $_SESSION['EPM_RUN']['DIR'] to $rundir
-//     $_SESSION['EPM_RUN']['BASE'] to $runbase
-//     $_SESSION['EPM_RUN']['SUBMIT'] to $submit
-//     $_SESSION['EPM_RUN']['RESULT'] to true
+//     $run['DIR'] to $rundir
+//     $run['BASE'] to $runbase
+//     $run['SUBMIT'] to $submit
+//     $run['RESULT'] to true
 //
 function start_run
 	( $workdir, $runfile, $rundir, $submit,
 	            & $errors )
 {
-    global $epm_data, $work, $_SESSION,
+    global $epm_data, $work, $run, $_SESSION,
            $local_file_cache, $remote_file_cache;
 
-    $_SESSION['EPM_RUN'] = [];
+    $run  = [];
     $work = [];
-    $run = & $_SESSION['EPM_RUN'];
 
     $errors_size = count ( $errors );
 
@@ -1988,11 +1986,10 @@ function start_run
 //
 function finish_run ( & $errors )
 {
-    global $epm_data, $probdir, $uid, $problem,
+    global $epm_data, $probdir, $uid, $problem, $run,
            $epm_parent_re, $_SESSION,
 	   $epm_time_format;
 
-    $run = & $_SESSION['EPM_RUN'];
     $rundir = $run['DIR'];
     $runbase = $run['BASE'];
     $submit = $run['SUBMIT'];
