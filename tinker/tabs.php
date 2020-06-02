@@ -1,6 +1,9 @@
 <html>
 <body>
 
+<?php session_start(); ?>
+Session ID: <?php echo ( session_id() ); ?>
+<br>
 Current Window Name: <span id='window-name'></span>
 &nbsp; &nbsp;
 <span id='ping' style='color:red'></span>

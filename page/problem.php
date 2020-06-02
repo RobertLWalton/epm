@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 22:15:32 EDT 2020
+    // Date:	Tue Jun  2 12:51:00 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -14,193 +14,46 @@
 
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // if ( ! isset ( $_POST['update'] ) ) // xhttp
+    // if ( ! isset ( $_POST['xhttp'] ) )
     //     require "$epm_home/include/debug_info.php";
+
+    if ( ! isset ( $_REQUEST['problem'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to problem.php" );
+    elseif ( ! isset ( $_SESSION['EPM_UID'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to problem.php" );
+    elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to problem.php" );
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
+    $problem = $_REQUEST['problem'];
+    $probdir = "users/$uid/$problem";
 
-    $user_dir = "users/$uid";
-
-    $errors = [];    // Error messages to be shown.
-    $warnings = [];  // Warning messages to be shown.
-    $post_processed = false;
-    		     // Set true when POST recognized.
-
-    // The $_SESSION state particular to this page is:
-    //
-    //     $_SESSION['EPM_PROBLEM'] current problem name
-    //		or unset if none
-    //	   $work = & $_SESSION['EPM_WORK'][$problem]
-    //		// set when epm_make.php loaded.
-
-    // Set $problem to current problem, or NULL if none.
-    // Also set $probdir to the problem directory if
-    // $problem not NULL and the problem directory
-    // exists.  If $problem is not NULL but the problem
-    // directory does not exist, the problem has been
-    // deleted by another session (so set $problem and
-    // $probdir to NULL).
-    //
-    $problem = NULL;
-    $probdir = NULL;
-    $delete_problem = false;
-        // True to ask whether current problem is to be
-	// deleted.
-    $deleted_problem = NULL;
-        // Set to announce that $deleted_problem has
-	// been deleted.
-    if ( isset ( $_POST['new_problem'] ) )
+    if ( ! is_dir ( "$epm_data/$probdir" ) )
     {
-        $post_processed = true;
-        $problem = trim ( $_POST['new_problem'] );
-	$d = "$epm_data/$user_dir/$problem";
-	if ( $problem == '' )
-	{
-	    // User hit carriage return on empty
-	    // field.
-	    $problem = NULL;
-	}
-	elseif ( ! preg_match ( $epm_name_re,
-	                        $problem ) )
-	{
-	    $errors[] =
-	        "problem name $problem contains an" .
-		" illegal character or does not" .
-		" begin and end with a letter";
-	    $problem = NULL;
-	}
-	else
-	if ( is_dir ( "$d" ) )
-	{
-	    $errors[] =
-	        "trying to create $problem which" .
-		" already exists";
-	    $problem = NULL;
-	}
-	else
-	{
-	    $m = umask ( 06 );
-	    if ( ! @mkdir ( "$d", 0771, true ) )
-	    {
-		$errors[] =
-		    "trying to create $problem which" .
-		    " already exists";
-		$problem = NULL;
-	    }
-	    umask ( $m );
-	}
-    }
-    elseif ( isset ( $_POST['goto_problem'] )
-             &&
-             isset ( $_POST['selected_problem'] ) )
-    {
-        $post_processed = true;
-        $problem = trim ( $_POST['selected_problem'] );
-	if ( ! preg_match
-	           ( $epm_name_re , $problem ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	else
-	if ( ! is_dir
-	         ( "$epm_data/$user_dir/$problem" ) )
-	{
-	    $errors[] =
-	        "trying to select problem that no" .
-		" longer exists: $problem";
-	    $problem = NULL;
-	}
-    }
-    elseif ( isset ( $_POST['delete_problem'] ) )
-    {
-        $post_processed = true;
-	$prob = $_POST['delete_problem'];
-	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
-	     ||
-	     $prob != $_SESSION['EPM_PROBLEM'] )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	$delete_problem = true;
-    }
-    elseif ( isset ( $_POST['delete_problem_yes'] ) )
-    {
-        $post_processed = true;
-	$prob = $_POST['delete_problem_yes'];
-	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
-	     ||
-	     $prob != $_SESSION['EPM_PROBLEM'] )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
-	$problem = $_SESSION['EPM_PROBLEM'];
-	$_SESSION['EPM_WORK'][$problem] = [];
-	$_SESSION['EPM_RUN'][$problem] = [];
-	unset ( $_SESSION['EPM_PROBLEM'] );
-	$d = "$epm_data/$user_dir/$prob";
-	exec ( "rm -rf $d" );
-	$deleted_problem = $prob;
-    }
-    else if ( isset ( $_POST['delete_problem_no'] ) )
-    {
-        $post_processed = true;
-	$prob = $_POST['delete_problem_no'];
-	if ( ! isset ( $_SESSION['EPM_PROBLEM'] )
-	     ||
-	     $prob != $_SESSION['EPM_PROBLEM'] )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	// Some other session deleted the problem;
+	// let project.php deal with it.
+	//
+	header ( "Location: /page/project.php" );
+	exit;
     }
 
-    if (    ! isset ( $problem )
-         && isset ( $_SESSION['EPM_PROBLEM'] ) )
-        $problem = $_SESSION['EPM_PROBLEM'];
-    elseif ( isset ( $problem ) )
+    require "$epm_home/include/epm_make.php";
+    if ( $epm_method == 'GET' )
     {
-	$_SESSION['EPM_PROBLEM'] = $problem;
 	$work = [];
 	$run  = [];
     }
 
-    if ( isset ( $problem ) )
-    {
-	$probdir = "users/$uid/$problem";
-	if ( ! is_dir ( "$epm_data/$probdir" ) )
-	{
-	    $errors[] = "problem $problem has been"
-	             . " deleted by another session";
-	    $work = [];
-	    $run  = [];
-	    $probdir = NULL;
-	    $problem = NULL;
-	    unset ( $_SESSION['EPM_PROBLEM'] );
-	}
-	else
-	{
-	    require "$epm_home/include/epm_make.php";
-        	// This can only be done if $problem
-		// and $probdir are both set.  This
-		// sets $work.
-	}
-    }
-    else
-	$probdir = NULL;
-
-    // Set $problems to list of available problems.
+    // The $_SESSION state particular to this page is:
     //
-    $problems = [];
-
-    if ( ! is_dir ( "$epm_data/$user_dir" ) )
-    {
-        $m = umask ( 06 );
-	@mkdir ( "$epm_data/$user_dir", 0771, true );
-	umask ( $m );
-    }
-    $subdirs = @scandir ( "$epm_data/$user_dir" );
-    if ( $subdirs === false )
-         ERROR ( "cannot open $user_dir" );
-    foreach ( $subdirs as $subdir )
-    {
-	if ( preg_match ( $epm_name_re, $subdir ) )
-	    $problems[] = $subdir;
-    }
+    //	   $work = & $_SESSION['EPM_WORK'][$problem]
+    //		// set when epm_make.php loaded.
+    //	   $run = & $_SESSION['EPM_RUN'][$problem]
+    //		// set when epm_make.php loaded.
 
     // Return DISPLAYABLE problem file names, sorted
     // most recent first, that are in the given
@@ -383,20 +236,51 @@
 
     // Data Set by GET and POST Requests:
     //
+    $errors = [];    // Error messages to be shown.
+    $warnings = [];  // Warning messages to be shown.
     $make_ftest = NULL;
         // Set to ask if $make_ftest .ftest file should
 	// be made from .fout file.
+    $delete_problem = false;
+        // True to ask whether current problem is to be
+	// deleted.
 
-    // Remaining POSTs require $problem and $probdir
-    // to be non-NULL.
+    // Process POST requests.
     //
     if ( $epm_method != 'POST' ) /* Do Nothing */;
-    elseif ( ! isset ( $probdir ) )
-	/* Do Nothing */;
+    elseif ( isset ( $_POST['delete_problem'] ) )
+    {
+	$prob = $_POST['delete_problem'];
+	if ( $prob != $problem )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	$delete_problem = true;
+    }
+    elseif ( isset ( $_POST['delete_problem_yes'] ) )
+    {
+	$prob = $_POST['delete_problem_yes'];
+	if ( $prob != $problem )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	$work = [];
+	$run = [];
+	exec ( "rm -rf $epm_data/$probdir" );
+	echo <<<EOT
+	<html><body><script>
+	window.close();
+	</script></body></html>
+EOT;
+	exit;
+    }
+    elseif ( isset ( $_POST['delete_problem_no'] ) )
+    {
+	$prob = $_POST['delete_problem_no'];
+	if ( $prob != $problem )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+    }
     elseif ( isset ( $_POST['delete_files'] ) )
     {
-        $post_processed = true;
-
         // Process file deletions for other posts.
 	//
 	$files = $_POST['delete_files'];
@@ -417,13 +301,8 @@
 		$errors[] = "could not delete $g";
 	}
     }
-
-    if ( $epm_method != 'POST' ) /* Do Nothing */;
-    elseif ( ! isset ( $probdir ) )
-	/* Do Nothing */;
     elseif ( isset ( $_POST['make'] ) )
     {
-        $post_processed = true;
         $m = $_POST['make'];
 	if ( ! preg_match ( '/^([^:]+):([^:]+)$/', $m,
 	                    $matches ) )
@@ -454,7 +333,6 @@
     }
     elseif ( isset ( $_POST['make_ftest_yes'] ) )
     {
-        $post_processed = true;
         $m = $_POST['make_ftest_yes'];
 	$base = pathinfo ( $m, PATHINFO_FILENAME );
 	$ext = pathinfo ( $m, PATHINFO_EXTENSION );
@@ -481,11 +359,10 @@
     }
     elseif ( isset ( $_POST['make_ftest_no'] ) )
     {
-        $post_processed = true;
+	// Do nothing.
     }
     elseif ( isset ( $_POST['upload'] ) )
     {
-        $post_processed = true;
 	if ( isset ( $_FILES['uploaded_file']
 	                     ['name'] ) )
 	{
@@ -504,7 +381,6 @@
     }
     elseif ( isset ( $_POST['run'] ) )
     {
-        $post_processed = true;
         $f = $_POST['run'];
 	if ( ! preg_match ( '/\.run$/', $f ) )
 	    exit ( "ACCESS: illegal POST to" .
@@ -520,7 +396,8 @@
 	      false, $errors );
         if ( isset ( $run['RESULT'] ) )
 	{
-	    header ( "Location: /page/run.php?id=$ID" );
+	    header ( "Location: /page/run.php?" .
+	             "id=$ID&problem=$problem" );
 	    exit;
 	}
     }
@@ -528,13 +405,10 @@
              &&
 	     isset ( $work['BASE'] ) )
     {
-        $post_processed = true;
-
 	/* Do Nothing */
     }
     elseif ( isset ( $_POST['update'] ) )
     {
-        $post_processed = true;
 	$count = 0;
 	echo "ID $ID\n";
 	while ( true )
@@ -561,13 +435,10 @@
 	    $count += 1;
 	}
     }
-
-    if ( ! $post_processed && $epm_method == 'POST' )
+    else
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
-    if ( isset ( $problem )
-         &&
-	 isset ( $work['CONTROL'] )
+    if ( isset ( $work['CONTROL'] )
          &&
 	 update_work_results() !== true )
         finish_make_file ( $warnings, $errors );
@@ -607,9 +478,7 @@
 
 <script>
     var show_window = null;
-    var problem =
-        <?php echo ( isset ( $problem ) ?
-                     "'$problem'" : 'null' ) ?>
+    var problem = '<?php echo $problem; ?>';
 
     function NEW_WINDOW ( page, filename ) {
 	var src = '/page/' + page
@@ -707,13 +576,6 @@
 	     "NO</button>";
 	echo "</form></div>";
     }
-    else if ( isset ( $deleted_problem ) )
-    {
-	echo "<div class='notices'>";
-	echo "Problem $deleted_problem has been" .
-	     " deleted!<br>";
-	echo "</div>";
-    }
     else if ( $make_ftest )
     {
         $fout = pathinfo ( $make_ftest,
@@ -757,9 +619,6 @@
 	echo "<br></div></div>";
     }
 
-    $current_problem = ( isset ( $problem ) ?
-                                 $problem :
-			         "none selected" );
     $problem_page_help = HELP ( 'problem-page' );
     echo <<<EOT
     <div class='manage' id='manage'>
@@ -773,496 +632,441 @@
            title='Click to See User Profile'>
 	   $email</button>
     </form>
-    </td>
-    <td>
-    <strong>Go To</strong>
-EOT;
-    if ( isset ( $problem ) )
-        echo <<<EOT
-	<form method='GET'>
-	<input type='hidden'
-	       name= 'problem' value='$problem'>
-	<button type='submit'
-		formaction='run.php'>
-		Run</button>
-	<button type='submit'
-		formaction='option.php'>
-		Option</button>
-	</form>
-EOT;
-    echo <<<EOT
-    <form method='GET'>
+    </td><td>
+
+    <strong>Current Problem:</strong>&nbsp;
+    <pre class='problem'>$problem</pre></b>
+    <form action='problem.php' method='POST'>
+    <input type='hidden'
+	   name= 'problem' value='$problem'>
+    <input type='hidden' name='id' value='$ID'>
     <button type='submit'
-	    formaction='project.php'>
-	    Project</button>
+	    name='delete_problem'
+	    value='$problem'
+	    title='Delete Current Problem'>
+    Delete</button>
+    </form>
+
+    </td><td>
+    <strong>Go To</strong>
+    <form method='GET'>
+    <input type='hidden'
+	   name= 'problem' value='$problem'>
+    <button type='submit'
+	    formaction='run.php'>
+	    Run</button>
+    <button type='submit'
+	    formaction='option.php'>
+	    Option</button>
     </form>
     <strong>Page</strong>
     </td><td style='text-align:right'>
     $problem_page_help</td>
     </tr></table>
-    <strong>Current Problem:</strong>&nbsp;
-    <pre class='problem'>$current_problem</pre></b>
-EOT;
-    if ( isset ( $problem ) )
-        echo <<<EOT
-	<form action='problem.php' method='POST'>
-	<input type='hidden'
-	       name= 'problem' value='$problem'>
-	<input type='hidden' name='id' value='$ID'>
-	<button type='submit'
-	        name='delete_problem'
-	        value='$problem'
-		title='Delete Current Problem'>
-	Delete</button>
-	</form>
+    </div>
 EOT;
 
-    if ( count ( $problems ) > 0 )
+    $count = 0;
+    $show_map = [];
+	// $show_map[$fname] => id
+	// maps file name last component to the
+	// button id that identifies the button
+	// to click to show the file.
+    $display_list = [];
+
+    if ( isset ( $work['DIR'] ) )
     {
-	$options = '';
-	foreach ( $problems as $value )
-	    $options .= "<option value='$value'>" .
-		        "$value</option>";
+	$workdir = $work['DIR'];
+	$result = $work['RESULT'];
+	$kept = $work['KEPT'];
+	if (    is_array ( $result )
+	     && $result == ['D',0] )
+	    $r = 'commands succeeded: ';
+	elseif ( $result === true )
+	    $r = 'commands still running';
+		// Should never happen as 'update'
+		// POST exits above.
+	else
+	    $r = 'commands failed: ';
+	if ( $result === true )
+	    /* Do Nothing */;
+	elseif ( count ( $kept ) == 1 )
+	    $r .= '1 file kept';
+	else
+	    $r .= count ( $kept ) . ' files kept';
+	echo "<div class='command_display'>";
+	get_commands_display ( $display );
+	$commands_help =
+	    HELP ( 'problem-commands' );
 	echo <<<EOT
-	<pre>   </pre>
-	<strong>Go To Problem:</strong>
-	<form action='problem.php' method='POST'
-	      id='goto-problem'>
-	<script>function GOTO_PROBLEM()
-	        {
-		    console.log ( 'SUBMITTING' );
-	            document.getElementById
-		        ( 'goto-problem' )
-			.submit();
-		}
-	</script>
-	<input type='hidden'
-	       name= 'problem' value='$problem'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type='hidden'
-	       name='goto_problem' value=yes>
-        <select name='selected_problem' required
-		onclick='GOTO_PROBLEM()'>
-	        title='Problem to Go To'>
-	$options
-        </select>
-	</form>
+	<table style='width:100%'><tr>
+	<td>
+	<button type='button'
+		id='commands_button'
+		onclick='TOGGLE_BODY
+		     ("commands",
+		      "Commands Last Executed")'
+		title='Show Commands Last Executed'>
+		<pre id='commands_mark'>&darr;</pre>
+		</button>
+	<strong>Commands Last Executed:</strong>
+	&nbsp;
+	<pre>($r)</pre>
+	</td><td style='text-align:right'>
+	$commands_help</td>
+	</tr></table>
+	<div id='commands_body'
+	     style='display:none'>
 EOT;
+	echo "<div class='indented'>";
+	echo $display;
+	echo "</div>";
+	if ( count ( $kept ) > 0 )
+	{
+	    echo "<strong>Kept:</strong>";
+	    echo "<div class='indented'>";
+	    foreach ( $kept as $e )
+		echo "<pre>$e</pre><br>";
+	    echo "<br></div>";
+	}
+	echo "</div>";
+
+	$working_files =
+	    problem_file_names( $workdir );
+
+	if ( count ( $working_files ) > 0 )
+	{
+	    $working_help =
+		HELP ( 'problem-working' );
+	    echo <<<EOT
+	    <div class='work_display'
+		 id='work-display'>
+	    <table style='width:100%'><tr>
+	    <td>
+	    <button type='button'
+		id='working_button'
+		onclick='TOGGLE_BODY
+		     ("working",
+		      "Current Working Files")'
+		title='Show Current Working Files'>
+		<pre id='working_mark'>&darr;</pre>
+		</button>
+	    <strong>Working Files of Last Executed
+		Commands
+		(most recent first):</strong>
+	    </td><td style='text-align:right'>
+	    $working_help</td>
+	    </tr></table>
+	    <div id='working_body'
+		 style='display:none'>
+	    <table style='display:block'>
+EOT;
+
+	    foreach ( $working_files as $fname )
+	    {
+		$f = "$epm_data/$workdir/$fname";
+		if ( is_link ( $f ) )
+		    continue;
+
+		++ $count;
+		echo "<tr>";
+		echo "<td" .
+		     " style='text-align:right'>";
+		list ( $fext, $ftype, $fdisplay,
+		       $fshow, $fcomment )
+		    = file_info ( $workdir, $fname,
+				  $count,
+				  $display_list );
+
+		if ( $fshow )
+		{
+		    $show_map[$fname] =
+			"show$count";
+		    $fpage =
+			$display_file_map[$ftype];
+		    echo <<<EOT
+			<button type='button'
+			   id='show$count'
+			   title=
+			     'Show $fname at Right'
+			   onclick='NEW_WINDOW
+			      ("$fpage",
+			       "+work+/$fname")'>
+			 <pre id='file$count'
+			     >$fname</pre>
+			 </button></td>
+EOT;
+		}
+		else
+		{
+		    unset ( $show_map[$fname] );
+			// $fname is a working file
+			// so if an older version
+			// is a current file we
+			// do not want to show the
+			// older version.
+		    echo <<<EOT
+			<pre id='file$count'
+			    >$fname</pre>
+			</td>
+EOT;
+		}
+
+		if ( $fdisplay )
+		{
+		    $show_map[$fname] =
+			"file{$count}_button";
+		    echo <<<EOT
+			<td><button type='button'
+			     id=
+			       'file{$count}_button'
+			     onclick='TOGGLE_BODY
+				 ("file$count",
+				  "$fname Below")'
+			     title=
+			       'Show $fname Below'>
+			<pre id='file{$count}_mark'
+			    >&darr;</pre>
+			</button></td>
+EOT;
+		}
+		else
+		    echo "<td></td>";
+
+		echo "<td colspan='100'>" .
+		     "<pre>$fcomment</pre></td>";
+		echo "</tr>";
+	    }
+	    echo "</table></div>";
+	    echo "</div>";
+	}
     }
+
+    $current_problem_files_help =
+	HELP ( 'problem-marks' );
+
     echo <<<EOT
+    <div class='problem_display'
+	 id='problem-display'>
+    <table style='width:100%'>
+    <tr>
+    <td>
+    <button type='button'
+	    id='problems_button'
+	    onclick='TOGGLE_BODY
+		 ("problems",
+		  "Current Problem Files")'
+	    title='Hide Current Problem Files'>
+	    <pre id='problems_mark'>&uarr;</pre>
+	    </button>
+    <strong>Current Problem Files
+	(most recent first):</strong>
+    </td><td>
+    <form action='problem.php' method='POST'
+	  enctype='multipart/form-data'
+	  id='upload-form'>
+    <input type='hidden'
+	   name= 'problem' value='$problem'>
+    <input type='hidden' name='id' value='$ID'>
+    <label>
+    <strong>Upload a File:</strong>
+    <input type='hidden' name='MAX_FILE_SIZE'
+	   value='$epm_upload_maxsize'>
+    <input type='hidden' name='upload' value='yes'>
+    <input type='file' name='uploaded_file'
+	   onchange='document.getElementById
+		      ( "upload-form" ).submit()'
+	   title='File to Upload'>
+    </label>
+    </form>
+    <pre>    </pre>
     <form action='problem.php' method='POST'>
     <input type='hidden'
 	   name= 'problem' value='$problem'>
     <input type='hidden' name='id' value='$ID'>
-    <pre>    </pre>
-    <strong>or Create New Problem:</strong>
-    <input type="text" size="32" name="new_problem"
-           placeholder="New Problem Name" id="create">
+    <input id='delete_files'
+	   name='delete_files' value=''
+	   type='hidden'>
+    <input type="submit" name="execute_deletes"
+	   value=
+	     "Delete Over-Struck Files">
     </form>
-    </div>
+    </td><td style='text-align:right'>
+    $current_problem_files_help</td>
+    </tr>
+    </table>
+    <div id='problems_body'>
+    <form action='problem.php' method='POST'>
+    <input type='hidden'
+	   name= 'problem' value='$problem'>
+    <input type='hidden' name='id' value='$ID'>
 EOT;
-
-    if ( isset ( $probdir ) )
+    function MAKE ( $fbase, $sext, $dext )
     {
-        $count = 0;
-	$show_map = [];
-	    // $show_map[$fname] => id
-	    // maps file name last component to the
-	    // button id that identifies the button
-	    // to click to show the file.
-	$display_list = [];
+	echo "<td><button type='submit'" .
+	     " name='make'" .
+	     " title='Make $fbase.$dext" .
+	     " from $fbase.$sext'" .
+	     " value='$fbase.$sext:$fbase.$dext'>" .
+	     "&rArr;.$dext</button></td>";
+    }
+    echo "<table style='display:block'>";
+    foreach ( problem_file_names( $probdir )
+	      as $fname )
+    {
+	$count += 1;
+	echo "<tr>";
+	echo "<td style='text-align:right'>";
+	list ( $fext, $ftype,
+	       $fdisplay, $fshow, $fcomment )
+	    = file_info ( $probdir, $fname, $count,
+			  $display_list );
+	$fbase = pathinfo ( $fname, 
+			    PATHINFO_FILENAME );
 
-	if ( isset ( $work['DIR'] ) )
+	if ( $fshow )
 	{
-	    $workdir = $work['DIR'];
-	    $result = $work['RESULT'];
-	    $kept = $work['KEPT'];
-	    if (    is_array ( $result )
-	         && $result == ['D',0] )
-	        $r = 'commands succeeded: ';
-	    elseif ( $result === true )
-	        $r = 'commands still running';
-		    // Should never happen as 'update'
-		    // POST exits above.
-	    else
-	        $r = 'commands failed: ';
-	    if ( $result === true )
-	        /* Do Nothing */;
-	    elseif ( count ( $kept ) == 1 )
-	        $r .= '1 file kept';
-	    else
-		$r .= count ( $kept ) . ' files kept';
-	    echo "<div class='command_display'>";
-	    get_commands_display ( $display );
-	    $commands_help =
-	        HELP ( 'problem-commands' );
+	    $show_map[$fname] = "show$count";
+	    $fpage = $display_file_map[$ftype];
 	    echo <<<EOT
-	    <table style='width:100%'><tr>
-	    <td>
-	    <button type='button'
-	    	    id='commands_button'
-		    onclick='TOGGLE_BODY
-			 ("commands",
-			  "Commands Last Executed")'
-		    title='Show Commands Last Executed'>
-		    <pre id='commands_mark'>&darr;</pre>
-		    </button>
-	    <strong>Commands Last Executed:</strong>
-	    &nbsp;
-	    <pre>($r)</pre>
-	    </td><td style='text-align:right'>
-	    $commands_help</td>
-	    </tr></table>
-	    <div id='commands_body'
-	         style='display:none'>
-EOT;
-	    echo "<div class='indented'>";
-	    echo $display;
-	    echo "</div>";
-	    if ( count ( $kept ) > 0 )
-	    {
-		echo "<strong>Kept:</strong>";
-		echo "<div class='indented'>";
-		foreach ( $kept as $e )
-		    echo "<pre>$e</pre><br>";
-		echo "<br></div>";
-	    }
-	    echo "</div>";
-
-	    $working_files =
-	        problem_file_names( $workdir );
-
-	    if ( count ( $working_files ) > 0 )
-	    {
-		$working_help =
-		    HELP ( 'problem-working' );
-		echo <<<EOT
-		<div class='work_display'
-		     id='work-display'>
-		<table style='width:100%'><tr>
-		<td>
 		<button type='button'
-		    id='working_button'
-		    onclick='TOGGLE_BODY
-			 ("working",
-			  "Current Working Files")'
-		    title='Show Current Working Files'>
-		    <pre id='working_mark'>&darr;</pre>
-		    </button>
-		<strong>Working Files of Last Executed
-		    Commands
-		    (most recent first):</strong>
-	        </td><td style='text-align:right'>
-		$working_help</td>
-		</tr></table>
-		<div id='working_body'
-		     style='display:none'>
-		<table style='display:block'>
+		   id='show$count'
+		   title='Show $fname in Window at
+			  Right'
+		   onclick='NEW_WINDOW
+		      ("$fpage","$fname")'>
+		 <pre id='file$count'>$fname</pre>
+		 </button></td>
 EOT;
-
-		foreach ( $working_files as $fname )
-		{
-		    $f = "$epm_data/$workdir/$fname";
-		    if ( is_link ( $f ) )
-			continue;
-
-		    ++ $count;
-		    echo "<tr>";
-		    echo "<td" .
-		         " style='text-align:right'>";
-		    list ( $fext, $ftype, $fdisplay,
-		           $fshow, $fcomment )
-			= file_info ( $workdir, $fname,
-			              $count,
-				      $display_list );
-
-		    if ( $fshow )
-		    {
-			$show_map[$fname] =
-			    "show$count";
-			$fpage =
-			    $display_file_map[$ftype];
-			echo <<<EOT
-			    <button type='button'
-			       id='show$count'
-			       title=
-			         'Show $fname at Right'
-			       onclick='NEW_WINDOW
-				  ("$fpage",
-				   "+work+/$fname")'>
-			     <pre id='file$count'
-			         >$fname</pre>
-			     </button></td>
-EOT;
-		    }
-		    else
-		    {
-			unset ( $show_map[$fname] );
-			    // $fname is a working file
-			    // so if an older version
-			    // is a current file we
-			    // do not want to show the
-			    // older version.
-			echo <<<EOT
-			    <pre id='file$count'
-			        >$fname</pre>
-			    </td>
-EOT;
-		    }
-
-		    if ( $fdisplay )
-		    {
-			$show_map[$fname] =
-			    "file{$count}_button";
-			echo <<<EOT
-			    <td><button type='button'
-			         id=
-				   'file{$count}_button'
-				 onclick='TOGGLE_BODY
-				     ("file$count",
-				      "$fname Below")'
-				 title=
-				   'Show $fname Below'>
-			    <pre id='file{$count}_mark'
-			        >&darr;</pre>
-			    </button></td>
-EOT;
-		    }
-		    else
-			echo "<td></td>";
-
-		    echo "<td colspan='100'>" .
-			 "<pre>$fcomment</pre></td>";
-		    echo "</tr>";
-		}
-		echo "</table></div>";
-		echo "</div>";
-	    }
 	}
-
-	$current_problem_files_help =
-	    HELP ( 'problem-marks' );
-
-        echo <<<EOT
-	<div class='problem_display'
-	     id='problem-display'>
-	<table style='width:100%'>
-	<tr>
-	<td>
-	<button type='button'
-		id='problems_button'
-		onclick='TOGGLE_BODY
-		     ("problems",
-		      "Current Problem Files")'
-		title='Hide Current Problem Files'>
-		<pre id='problems_mark'>&uarr;</pre>
-		</button>
-	<strong>Current Problem Files
-	    (most recent first):</strong>
-	</td><td>
-	<form action='problem.php' method='POST'
-	      enctype='multipart/form-data'
-	      id='upload-form'>
-	<input type='hidden'
-	       name= 'problem' value='$problem'>
-	<input type='hidden' name='id' value='$ID'>
-        <label>
-	<strong>Upload a File:</strong>
-	<input type='hidden' name='MAX_FILE_SIZE'
-	       value='$epm_upload_maxsize'>
-	<input type='hidden' name='upload' value='yes'>
-	<input type='file' name='uploaded_file'
-	       onchange='document.getElementById
-	                  ( "upload-form" ).submit()'
-	       title='File to Upload'>
-	</label>
-	</form>
-	<pre>    </pre>
-	<form action='problem.php' method='POST'>
-	<input type='hidden'
-	       name= 'problem' value='$problem'>
-	<input type='hidden' name='id' value='$ID'>
-	<input id='delete_files'
-	       name='delete_files' value=''
-	       type='hidden'>
-	<input type="submit" name="execute_deletes"
-	       value=
-	         "Delete Over-Struck Files">
-	</form>
-	</td><td style='text-align:right'>
-	$current_problem_files_help</td>
-	</tr>
-	</table>
-	<div id='problems_body'>
-	<form action='problem.php' method='POST'>
-	<input type='hidden'
-	       name= 'problem' value='$problem'>
-	<input type='hidden' name='id' value='$ID'>
+	else
+	    echo <<<EOT
+		<pre id='file$count'>$fname</pre>
+		</td>
 EOT;
-	function MAKE ( $fbase, $sext, $dext )
+	if ( $fdisplay )
 	{
-	    echo "<td><button type='submit'" .
-		 " name='make'" .
-		 " title='Make $fbase.$dext" .
-		 " from $fbase.$sext'" .
-		 " value='$fbase.$sext:$fbase.$dext'>" .
-		 "&rArr;.$dext</button></td>";
-	}
-	echo "<table style='display:block'>";
-	foreach ( problem_file_names( $probdir )
-	          as $fname )
-	{
-	    $count += 1;
-	    echo "<tr>";
-	    echo "<td style='text-align:right'>";
-	    list ( $fext, $ftype,
-	           $fdisplay, $fshow, $fcomment )
-	        = file_info ( $probdir, $fname, $count,
-		              $display_list );
-	    $fbase = pathinfo ( $fname, 
-			        PATHINFO_FILENAME );
-
-	    if ( $fshow )
-	    {
-	        $show_map[$fname] = "show$count";
-	        $fpage = $display_file_map[$ftype];
-	        echo <<<EOT
-		    <button type='button'
-		       id='show$count'
-		       title='Show $fname in Window at
-		              Right'
-		       onclick='NEW_WINDOW
-		          ("$fpage","$fname")'>
-		     <pre id='file$count'>$fname</pre>
-		     </button></td>
-EOT;
-	    }
-	    else
-	        echo <<<EOT
-		    <pre id='file$count'>$fname</pre>
-		    </td>
-EOT;
-	    if ( $fdisplay )
-	    {
-	        $show_map[$fname] =
-		    "file{$count}_button";
-		echo <<<EOT
-		    <td><button type='button'
-		         id='file{$count}_button'
-			 onclick='TOGGLE_BODY
-			     ("file$count",
-			      "$fname Below")'
-			 title='Show $fname Below'>
-		    <pre id='file{$count}_mark'
-		        >&darr;</pre>
-		    </td>
-EOT;
-	    }
-	    else
-	        echo "<td></td>";
-
+	    $show_map[$fname] =
+		"file{$count}_button";
 	    echo <<<EOT
 		<td><button type='button'
-		     id='button$count'
-		     onclick='TOGGLE_DELETE
-			($count, "$fname")'
-		     title='Mark $fname For Deletion'>
-		<pre id='mark$count'>&Chi;</pre>
-		</button></td>
+		     id='file{$count}_button'
+		     onclick='TOGGLE_BODY
+			 ("file$count",
+			  "$fname Below")'
+		     title='Show $fname Below'>
+		<pre id='file{$count}_mark'
+		    >&darr;</pre>
+		</td>
 EOT;
-	    if ( $fext == 'in' )
-	    {
-	        MAKE ( $fbase, 'in', 'sin' );
-	        MAKE ( $fbase, 'in', 'sout' );
-	        MAKE ( $fbase, 'in', 'score' );
-	    }
-	    elseif ( $fext == 'sin' )
-	        MAKE ( $fbase, 'sin', 'dout' );
-	    elseif ( $fext == 'sout' )
-	    {
-	        MAKE ( $fbase, 'sout', 'fout' );
-	        MAKE ( $fbase, 'sout', 'score' );
-	    }
-	    elseif ( $fext == 'fout' )
-	    {
-	        MAKE ( $fbase, 'fout', 'score' );
-		echo "<td><button type='submit'" .
-		     " style='background-color:" .
-		             "var(--hl-orange)'" .
-		     " name='make'" .
-		     " title='Make $fbase.ftest" .
-		     " from $fname'" .
-		     " value='$fname:$fbase.ftest'>" .
-		     "&rArr;.ftest</button></td>";
-	    }
-	    elseif ( $fext == 'run' )
-	    {
-		echo "<td><button type='submit'" .
-		     " name='run'" .
-		     " value='$fname'>" .
-		     "Run</button></td>";
-	    }
-	    echo "<td colspan='100'>" .
-		 "<pre>$fcomment</pre></td>";
-	    echo "</tr>";
 	}
-	echo "</table></form></div></div>";
+	else
+	    echo "<td></td>";
 
-	if ( count ( $display_list ) > 0 )
-	{
-	    foreach ( $display_list as $triple )
-	    {
-		list ( $count, $fname, $fcontents ) =
-		    $triple;
-		$fcontents = htmlspecialchars
-		    ( $fcontents );
-		echo <<<EOT
-		<div style='display:none'
-		     id='file{$count}_body'
-		     class='file-name'>
-		<strong>$fname:</strong><br>
-		<div class='file-contents indented'>
-		<pre>$fcontents</pre>
-		</div></div>
+	echo <<<EOT
+	    <td><button type='button'
+		 id='button$count'
+		 onclick='TOGGLE_DELETE
+		    ($count, "$fname")'
+		 title='Mark $fname For Deletion'>
+	    <pre id='mark$count'>&Chi;</pre>
+	    </button></td>
 EOT;
-	    }
-	}
-
-	if ( isset ( $work['SHOW'] ) )
+	if ( $fext == 'in' )
 	{
-	    $show_files = $work['SHOW'];
-	    $files = [];
+	    MAKE ( $fbase, 'in', 'sin' );
+	    MAKE ( $fbase, 'in', 'sout' );
+	    MAKE ( $fbase, 'in', 'score' );
+	}
+	elseif ( $fext == 'sin' )
+	    MAKE ( $fbase, 'sin', 'dout' );
+	elseif ( $fext == 'sout' )
+	{
+	    MAKE ( $fbase, 'sout', 'fout' );
+	    MAKE ( $fbase, 'sout', 'score' );
+	}
+	elseif ( $fext == 'fout' )
+	{
+	    MAKE ( $fbase, 'fout', 'score' );
+	    echo "<td><button type='submit'" .
+		 " style='background-color:" .
+			 "var(--hl-orange)'" .
+		 " name='make'" .
+		 " title='Make $fbase.ftest" .
+		 " from $fname'" .
+		 " value='$fname:$fbase.ftest'>" .
+		 "&rArr;.ftest</button></td>";
+	}
+	elseif ( $fext == 'run' )
+	{
+	    echo "<td><button type='submit'" .
+		 " name='run'" .
+		 " value='$fname'>" .
+		 "Run</button></td>";
+	}
+	echo "<td colspan='100'>" .
+	     "<pre>$fcomment</pre></td>";
+	echo "</tr>";
+    }
+    echo "</table></form></div></div>";
 
-	    foreach ( $show_files as $fname )
-	    {
-	        if ( isset ( $show_map[$fname] ) )
-		    $files[] = $fname;
-	    }
-	    if ( count ( $files ) > 0 )
-	    {
-	        $id = $show_map[$files[0]];
-		echo "<script>document" .
-		     ".getElementById('$id')" .
-		     ".click();" .
-		     "</script>";
-	    }
-	    if ( count ( $files ) > 1 )
-	    {
-	        $id = $show_map[$files[1]];
-		echo "<script>document" .
-		     ".getElementById('$id')" .
-		     ".click();" .
-		     "</script>";
-	    }
+    if ( count ( $display_list ) > 0 )
+    {
+	foreach ( $display_list as $triple )
+	{
+	    list ( $count, $fname, $fcontents ) =
+		$triple;
+	    $fcontents = htmlspecialchars
+		( $fcontents );
+	    echo <<<EOT
+	    <div style='display:none'
+		 id='file{$count}_body'
+		 class='file-name'>
+	    <strong>$fname:</strong><br>
+	    <div class='file-contents indented'>
+	    <pre>$fcontents</pre>
+	    </div></div>
+EOT;
 	}
     }
-?>
 
-<form action='problem.php'
-      method='POST' id='reload'>
-<input type='hidden' name='id' id='reload-id'>
-<input type='hidden' name='reload' value='reload'>
-</form>
+    if ( isset ( $work['SHOW'] ) )
+    {
+	$show_files = $work['SHOW'];
+	$files = [];
+
+	foreach ( $show_files as $fname )
+	{
+	    if ( isset ( $show_map[$fname] ) )
+		$files[] = $fname;
+	}
+	if ( count ( $files ) > 0 )
+	{
+	    $id = $show_map[$files[0]];
+	    echo "<script>document" .
+		 ".getElementById('$id')" .
+		 ".click();" .
+		 "</script>";
+	}
+	if ( count ( $files ) > 1 )
+	{
+	    $id = $show_map[$files[1]];
+	    echo "<script>document" .
+		 ".getElementById('$id')" .
+		 ".click();" .
+		 "</script>";
+	}
+    }
+
+    echo <<<EOT
+    <form action='problem.php'
+	  method='POST' id='reload'>
+    <input type='hidden' name='id' id='reload-id'>
+    <input type='hidden' name='problem' id='$problem'>
+    <input type='hidden' name='reload' value='reload'>
+    </form>
+EOT;
+?>
 
 <script>
     var LOG = function(message) {};
