@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 30 03:56:12 EDT 2020
+    // Date:	Mon Jun  1 23:37:04 EDT 2020
 
     // Functions for managing lists.
 
@@ -776,7 +776,9 @@
     // the day, excluding the time of day).
     //
     // However, if 'PROJECT:NAME' is listed in $exclude,
-    // omit that option.
+    // omit that option.  Also if $select is not NULL
+    // but is 'PROJECT:NAME', add the `selected'
+    // attribute to the associated option.
     //
     function list_to_options
             ( $list, $select = NULL, & $exclude = [] )
