@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 23:13:05 EDT 2020
+    // Date:	Tue Jun  2 06:18:28 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -250,6 +250,10 @@
 
     // Session data is in EPM_DATA as follows:
     //
+    //     EPM_PROJECT LISTNAME
+    //		Name of selected problem list.
+    //		Preserved accross GETs of this page.
+    //
     //     EPM_DATA OP
     //		One of:
     //		    NULL
@@ -257,9 +261,6 @@
     //		    'pull'
     //
     // During a push or pull operation:
-    //
-    //	   EPM_DATA LIST
-    //		Names current list for push or pull.
     //
     //     EPM_DATA PROBLEM
     //		Name of problem being pushed or pulled.
@@ -294,32 +295,36 @@
     // Non-XHTTP POSTs include id=value-of-ID derived
     // from including in each form:
     //
-    //	    <input type='hidden' name='id'
-    //             value='ID-value'>
+    //	    <input type='hidden'
+    //		   name='id' value='ID-value'>
     //
     // Initially there is a project page used to select
-    // the operation to be performed: push/pull/edit.
+    // a problem LISTNAME and then either select an
+    // operation to be performed, push or pull, or
+    // create/reload a tab for a problem that either
+    // exists or is being created.
     //
     // Project Page POST:
     // ------- ---- ----
     //
-    //	    op='OPERATION' selected-list='SELECTED-LIST'
-    //		where OPERATION is 'push', 'pull, or
-    //		'edit' and SELECTED-LIST is selected
-    //		from <selection>... in the project page
-    //		and has the format PROJECT:BASENAME.
+    //      listname=LISTNAME
+    //		Set EPM_PROJECT LISTNAME.  LISTNAME has
+    //		the format PROJECT:BASENAME.
     //
-    //	    Response is one of 3 page layouts according
-    //      to the operation.
+    //	    op=OPERATION 
+    //		where OPERATION is 'push' or 'pull'.
+    //	        Response is one of 2 page layouts
+    //		according to the operation.
     //
-    // Push/Pull POST:
-    // --------- ----
-    //
-    //	    done='yes'
-    //		Return to project page.  Actions are
-    //		performed using XHTTP (cancel simply
-    //		sends done POST).
-
+    //	    goto=PROBLEM
+    //		Create a tab for the problem named
+    //		having the tab (window) name '<PROBLEM>'
+    //		and src problem.php?problem=PROBLEM.
+    //		Shift visibility to that tab.
+    //		
+    //	    create=PROBLEM
+    //		Create a problem with the given name
+    //		and then execute goto=PROBLEM.
 
     // XHTTP POSTS
     // ----- -------
@@ -392,22 +397,25 @@
         // This last is only needed by merge function.
 
     if ( $epm_method == 'GET' )
-        $_SESSION['EPM_DATA'] = [
-	    'OP' => NULL,
-	    'LIST' => NULL ];
+    {
+        $_SESSION['EPM_DATA'] = [ 'OP' => NULL ];
+	if ( ! isset ( $_SESSION['EPM_PROJECT'] ) )
+	    $_SESSION['EPM_PROJECT'] =
+	        [ 'LISTNAME' => NULL ];
+    }
 
     $data = & $_SESSION['EPM_DATA'];
-    $op = $data['OP'];
-    $list = $data['LIST'];
+    $op = & $data['OP'];
+    $listname = & $_SESSION['EPM_PROJECT']['LISTNAME'];
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $delete_list = NULL;
-        // Set to list to be deleted.  Causes delete
-	// OK question.
-    $compile_next = false;
-    	// Set to cause first element of EPM_DATA
-	// CHECKED-PROBLEMS to be compiled.
+    $goto = NULL;    // Existing (or newly created)
+    		     // problem whose tab should be
+		     // created (or gone to).
+
+    if ( ! isset ( $op ) )
+        $favorites = favorites_to_list ( 'pull|push' );
 
     // Given a problem list in the form of elements
     //
@@ -1221,26 +1229,83 @@ EOT;
 
     if ( $epm_method == 'POST' )
     {
-        if ( isset ( $_POST['op'] ) )
+        if ( isset ( $_POST['listname'] ) )
 	{
-	    if ( ! isset ( $_POST['selected-list'] ) )
+	    if ( isset ( $op ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $op = $_POST['op'];
-	    $list = $_POST['selected-list'];
-
-	    if ( ! in_array ( $op, ['push', 'pull'] ) )
+	    $new_listname = $_POST['listname'];
+	    if ( in_list ( $new_listname, $favorites )
+	         === NULL )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-
-	    $data['OP'] = $op;
-	    $data['LIST'] = $list;
+	    $listname = $new_listname;
+	}
+        elseif ( isset ( $_POST['op'] ) )
+	{
+	    $new_op = $_POST['op'];
+	    if ( ! in_array
+	               ( $new_op, ['push','pull'],
+		                  true ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $listname ) )
+	        $errors[] = "you must select problem"
+		          . " list BEFORE you push or"
+			  . " pull";
+	    else
+		$op = $new_op;
+	}
+        elseif ( isset ( $_POST['goto'] ) )
+	{
+	    $op = NULL;
+	    $problem = $_POST['goto'];
+	    if ( ! preg_match
+	               ( $epm_name_re, $problem ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $d = "users/$uid/$problem";
+	    if ( ! is_dir ( "$epm_data/$d" ) )
+	        $errors[] = "your $problem problem"
+		          . " no longer exists";
+	    else
+	    $goto = $problem;
+	}
+        elseif ( isset ( $_POST['create'] ) )
+	{
+	    $op = NULL;
+	    $problem = trim ( $_POST['create'] );
+	    $d = "users/$uid/$problem";
+	    if ( $problem == '' )
+	    {
+		// User hit carriage return on empty
+		// field.  Do nothing.
+	    }
+	    elseif ( ! preg_match ( $epm_name_re,
+				    $problem ) )
+		$errors[] =
+		    "problem name `$problem' contains" .
+		    " an illegal character or does" .
+		    " not begin and end with a letter";
+	    elseif ( is_dir ( "$epm_data/$d" ) )
+		$errors[] =
+		    "trying to create problem" .
+		    " `$problem' which already exists";
+	    else
+	    {
+		$m = umask ( 06 );
+		if ( ! @mkdir ( "$d", 0771, true ) )
+		{
+		    $errors[] =
+			"trying to create problem" .
+			" `$problem' which already" .
+			" exists";
+		}
+		else
+		    $goto = $problem;
+		umask ( $m );
+	    }
 	}
 	elseif ( ! isset ( $op ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-        elseif ( isset ( $_POST['cancel'] ) )
-	{
-	    $op = NULL;
-	    $data['OP'] = $op;
-	}
+	// From here on we are processing POSTs
+	// occuring during push/pull ops.
         elseif ( isset ( $_POST['send-changes'] ) )
 	{
 	    echo "COMPILED $ID\n";
@@ -1367,6 +1432,8 @@ EOT;
 	    echo "DONE $ID\n";
 	    exit;
 	}
+	else
+	    exit ( 'UNACCEPTABLE HTTP POST' );
     }
 
 ?>
@@ -1478,14 +1545,13 @@ EOT;
 
     if ( $op == 'pull' )
 	$pull_rows = list_to_pull_rows
-	    ( listname_to_list ( $list ),
+	    ( listname_to_list ( $listname ),
 	      $warnings );
     elseif ( $op == 'push' )
 	$push_rows = list_to_push_rows
-	    ( listname_to_list ( $list ),
+	    ( listname_to_list ( $listname ),
 	      $warnings );
 	// Must execute these before $warnings is used.
-
 
     if ( count ( $errors ) > 0 )
     {
@@ -1505,6 +1571,13 @@ EOT;
 	    echo "<pre>$e</pre><br>";
 	echo "<br></div></div>";
     }
+
+    if ( isset ( $goto ) )
+        echo <<<EOT
+	<script>
+	GOTO_PROBLEM ( '$goto' );
+	</script>
+EOT;
 
     if ( $op == 'push' || $op == 'pull' )
     {
@@ -1586,7 +1659,8 @@ EOT;
     <table style='width:100%'>
     <tr>
 EOT;
-    if ( $op == 'push' || $op == 'pull' )
+
+    if ( isset ( $op ) )
     	echo <<<EOT
 	<td>
 	<strong>User: $email</strong>
@@ -1619,9 +1693,6 @@ EOT;
 	<td>
 	<strong>Go To</strong>
 	<button type='submit'
-	        formaction='problem.php'>
-		Problem</button>
-	<button type='submit'
 	        formaction='list.php'>
 		Edit Lists</button>
 	<button type='submit'
@@ -1639,25 +1710,29 @@ EOT;
 EOT;
     if ( $op == NULL )
     {
-	$options = list_to_options
-	    ( favorites_to_list ( 'pull|push' ) );
+	$listname_options = list_to_options
+	    ( $favorites, $listname );
 	$push_title = 'Push Problems in Selected'
 	            . ' List to Projects';
 	$pull_title = 'Pull Problems in Selected'
 	            . ' List from Projects';
 	$select_title = 'Lists of'
-	              . ' Problems to Push or Pull';
+	              . ' Problems to Push or Pull'
+		      . ' or Go To';
         echo <<<EOT
+	<strong>Select List:</strong>
+	<form method='POST' action='project.php'
+	      id='listname-form'>
+	<input type='hidden' name='id' value='$ID'>
+	<select name='listname'
+		onclick='document.getElementById
+			    ("listname-form").submit()'>
+	$listname_options
+	</select></form>
+	<strong>and</strong>
 	<form method='POST'>
 	<input type='hidden' id='id'
 	       name='id' value='$ID'>
-	<label>
-	<strong>Select List:</strong>
-	<select name='selected-list'
-	        title='$select_title'>
-	$options
-	</select>
-	<strong>and</strong>
 	<button type='submit' name='op' value='push'
 	        title='$push_title'>
 	Push
@@ -1667,7 +1742,6 @@ EOT;
 	        title='$pull_title'>
 	Pull
 	</button>
-	</label>
 	</form>
 EOT;
     }
@@ -1696,9 +1770,11 @@ EOT;
 	        <input type='button'
 	               onclick='RESET_PUSH()'
 		       value='Reset'>
-		<input type='submit'
-	               name='cancel'
-		       value='Cancel'></td>
+		<button type='submit'
+		        formmethod='GET'
+		        formaction='project.php'>
+                        Cancel</button>
+	    </td>
 	    <td id='project-selector'
 	        style='visibility:hidden'>
 	    <label class='select-project'>
@@ -1891,9 +1967,11 @@ EOT;
 	        <input type='button'
 	               onclick='RESET_PULL()'
 		       value='Reset'>
-		<input type='submit'
-	               name='cancel'
-		       value='Cancel'></td>
+		<button type='submit'
+		        formmethod='GET'
+		        formaction='project.php'>
+                        Cancel</button>
+	    </td>
 	    <td>
             <td style='text-align:right'>
             $pull_help</td>
@@ -2012,7 +2090,7 @@ EOT;
 EOT;
     }
 
-    if ( $op == 'push' || $op == 'pull' )
+    if ( isset ( $op ) )
     {
         $check_proposed =
 	    ( $op == 'push' ? 'on' : 'off' );

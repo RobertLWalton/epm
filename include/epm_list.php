@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 23:37:04 EDT 2020
+    // Date:	Tue Jun  2 06:08:06 EDT 2020
 
     // Functions for managing lists.
 
@@ -757,6 +757,27 @@
 	$f = "users/$uid/+lists+/+favorites+";
 	write_file_list ( $f, $list );
 	return $list;
+    }
+
+    // If $name is in list, return its $list entry,
+    // else return NULL.  $name has the form
+    // PROJECT:PROBLEM (or OWNER:BASENAME).  List
+    // entries have the form [TIME, PROJECT, PROBLEM].
+    //
+    function in_list ( $name, $list )
+    {
+        list ( $project, $problem ) =
+            explode ( ':', $name );
+	foreach ( $list as $item )
+	{
+	    list ( $time, $lproject, $lproblem )
+	        = $item;
+	    if ( $project == $lproject
+	         &&
+		 $problem == $lproblem )
+	        return $item;
+	}
+	return NULL;
     }
 
     // Given a list of elements of the form
