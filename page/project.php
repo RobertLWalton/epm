@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  2 06:18:28 EDT 2020
+    // Date:	Tue Jun  2 12:15:01 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -387,7 +387,7 @@
     
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -415,7 +415,23 @@
 		     // created (or gone to).
 
     if ( ! isset ( $op ) )
+    {
         $favorites = favorites_to_list ( 'pull|push' );
+	if ( isset ( $listname ) )
+	{
+	    $problem_options = '';
+	    foreach ( listname_to_list ( $listname )
+	              as $item )
+	    {
+	        list ( $time, $project, $problem ) =
+		    $item;
+		if ( $project == '-' )
+		    $problem_options .=
+		        "<option value='$problem'>" .
+			"$problem</option>";
+	    }
+	}
+    }
 
     // Given a problem list in the form of elements
     //
@@ -1290,7 +1306,8 @@ EOT;
 	    else
 	    {
 		$m = umask ( 06 );
-		if ( ! @mkdir ( "$d", 0771, true ) )
+		if ( ! @mkdir ( "$epm_data/$d",
+		                0771, true ) )
 		{
 		    $errors[] =
 			"trying to create problem" .
@@ -1298,7 +1315,34 @@ EOT;
 			" exists";
 		}
 		else
+		{
 		    $goto = $problem;
+		    $time = @filemtime
+		        ( "$epm_data/$d" );
+		    if ( $time === false )
+		        ERROR ( "cannot stat $d" );
+		    $time = strftime
+		        ( $epm_time_format, $time );
+		    $action = "$time $uid create"
+		            . " $uid $problem"
+			    . PHP_EOL;
+
+		    umask ( $m );
+
+		    $f = "users/$uid/+actions+";
+		    $r = @file_put_contents
+			( "$epm_data/$f", $action,
+			  FILE_APPEND );
+		    if ( $r === false )
+			ERROR ( "cannot write $f" );
+
+		    $f = "$d/+actions+";
+		    $r = @file_put_contents
+			( "$epm_data/$f", $action,
+			  FILE_APPEND );
+		    if ( $r === false )
+			ERROR ( "cannot write $f" );
+		}
 		umask ( $m );
 	    }
 	}
@@ -1744,6 +1788,30 @@ EOT;
 	</button>
 	</form>
 EOT;
+	if ( isset ( $listname ) )
+	    echo <<<EOT
+	    <strong>Go To Problem:</strong>
+	    <form method='POST' action='project.php'
+		  id='goto-form'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <select name='goto'
+		    onclick='document.getElementById
+				("goto-form").submit()'>
+	    $problem_options
+	    </select></form>
+EOT;
+	echo <<<EOT
+	<strong>or Create New Problem:</strong>
+	<form method='POST' action='project.php'
+	      id='create-form'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type="text" size="32"
+	       placeholder="New Problem Name"
+	       title="New Problem Name"
+	       name='create'
+	       onkeydown='KEYDOWN("create-form")'>
+	</form>
+EOT;
     }
     echo <<<EOT
     </div>
@@ -2090,6 +2158,21 @@ EOT;
 EOT;
     }
 
+    if ( ! isset ( $op ) )
+        echo <<<EOT
+	<script>
+	function KEYDOWN ( form_id )
+	{
+	    if ( event.code === 'Enter' )
+	    {
+		event.preventDefault();
+		let form = document.getElementById
+		    ( form_id );
+		form.submit();
+	    }
+	}
+	</script>
+EOT;
     if ( isset ( $op ) )
     {
         $check_proposed =
