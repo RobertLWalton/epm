@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun  1 01:23:12 EDT 2020
+// Date:    Wed Jun  3 04:10:51 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -32,6 +32,9 @@ if ( $epm_method != 'GET'
      $epm_method != 'POST' )
     exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
 
+// Redirect GETs to this page using either of its names
+// to login.php.
+//
 if ( $epm_self == "/index.php"
      ||
      $epm_self == '/page/index.php' )
@@ -39,9 +42,6 @@ if ( $epm_self == "/index.php"
     if ( $epm_message == 'POST' )
 	exit ( "UNACCEPTABLE HTTP POST" );
 
-    // Redirect GETs to this page using either of
-    // its names to login.php.
-    //
     header ( "Location: /page/login.php" );
     exit;
 }
@@ -56,6 +56,19 @@ session_start();
 clearstatcache();
 umask ( 07 );
 header ( 'Cache-Control: no-store' );
+
+// Check that we have not skipped proper login.
+//
+if ( ! isset ( $_SESSION['EPM_BID'] )
+     &&
+     $epm_self != "/page/login.php" )
+    exit ( 'UNACCEPTABLE HTTP GET/POST' );
+else if ( ! isset ( $_SESSION['EPM_UID'] )
+	  &&
+	  $epm_self != "/page/login.php"
+	  &&
+	  $epm_self != "/page/user.php" )
+    exit ( 'UNACCEPTABLE HTTP GET/POST' );
 
 // First functions that most pages need defined.
 
@@ -157,19 +170,6 @@ function HELP ( $item )
 // parameters.php because they are shared with
 // bin/epm_run.
 
-// Check that we have not skipped a page.
-//
-if ( ! isset ( $_SESSION['EPM_BID'] )
-     &&
-     $epm_self != "/page/login.php" )
-    exit ( 'UNACCEPTABLE HTTP GET/POST' );
-else if ( ! isset ( $_SESSION['EPM_UID'] )
-	  &&
-	  $epm_self != "/page/login.php"
-	  &&
-	  $epm_self != "/page/user.php" )
-    exit ( 'UNACCEPTABLE HTTP GET/POST' );
-
 // Enforce session GET/POST request sequencing.
 //
 // The requests of a session are sequenced using $ID
@@ -180,7 +180,8 @@ if ( $epm_self == '/page/login.php'
      &&
      $epm_method == 'GET' )
 {
-    // Initialize session sequencing on login.php GET.
+    // Initialize session on login.php GET.
+    // Previous session data is deleted.
 
     session_unset();
 
