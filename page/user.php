@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 11:23:39 EDT 2020
+    // Date:	Thu Jun  4 18:22:04 EDT 2020
 
     // Display and edit user information in:
     //
@@ -564,6 +564,8 @@ EOT;
 		Finish Editing</button>
 EOT;
     else
+    {
+        $view = VIEW ( 'view.php', 'View' );
     	echo <<<EOT
 	<button type="submit"
 		name='edit' value='profile'>
@@ -576,11 +578,10 @@ EOT;
 	<button type="submit"
 		formaction="project.php"
 		formmethod='GET'>Project</button>
-	<button type="submit"
-		formaction="view.php"
-		formmethod='GET'>View</button>
+	$view
 	<strong>Page</strong>
 EOT;
+    }
     echo <<<EOT
     </td>
     <td style='text-align:right'>$user_help</td>

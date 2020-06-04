@@ -2,16 +2,16 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 23:34:16 EDT 2020
+    // Date:	Thu Jun  4 17:46:44 EDT 2020
 
     // Allows user and problem information to be viewed.
 
     // Session Data
     // ------- ----
 
-    // Session data is in EPM_DATA as follows:
+    // Session data is in EPM_VIEW as follows:
     //
-    //	   EPM_DATA LISTNAME
+    //	   EPM_VIEW LISTNAME
     //		Current problem listname.
 
     // POST:
@@ -26,13 +26,33 @@
     //
     //	    listname=PROJECT:BASENAME
 
-    $epm_page_type = '+view+';
+    if ( $_SERVER['REQUEST_METHOD'] == 'GET' )
+        $epm_page_type = '+init+';
+    else
+        $epm_page_type = '+view+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // require "$epm_home/include/debug_info.php";
+    // if ( ! isset ( $_POST['xhttp'] ) )
+    //     require "$epm_home/include/debug_info.php";
+
+    if ( ! isset ( $_SESSION['EPM_UID'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to view.php" );
+    elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to view.php" );
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
+
+    if ( $epm_method == 'GET' )
+    {
+        require "$epm_home/include/epm_random.php";
+        $_SESSION['EPM_ID_GEN']['+view+'] =
+	    init_id_gen();
+	$ID = bin2hex
+	    ( $_SESSION['EPM_ID_GEN']['+view+'][0] );
+    }
 
     require "$epm_home/include/epm_user.php";
     require "$epm_home/include/epm_list.php";
@@ -66,13 +86,10 @@
 	return $r;
     }
 
-    if ( $epm_method == 'GET' )
-        $_SESSION['EPM_DATA'] = [ 'LISTNAME' => NULL ];
-    elseif ( ! isset ( $_SESSION['EPM_DATA'] ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-
-    $data = & $_SESSION['EPM_DATA'];
-    $listname = $data['LISTNAME'];
+    
+    if ( ! isset ( $_SESSION['EPM_VIEW'] ) )
+        $_SESSION['EPM_VIEW'] = [ 'LISTNAME' => NULL ];
+    $listname = & $_SESSION['EPM_VIEW']['LISTNAME'];
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -90,10 +107,10 @@
     {
         if ( isset ( $_POST['listname'] ) )
 	{
-	    $listname = $_POST['listname'];
+	    $new_listname = $_POST['listname'];
 	    list ( $project, $basename ) =
-	        explode ( ':', $listname );
-	    if ( "$project:$basename" != $listname )
+	        explode ( ':', $new_listname );
+	    if ( "$project:$basename" != $new_listname )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $found = false;
 	    foreach ( $favorites as $item )
@@ -107,8 +124,8 @@
 	    }
 	    if ( ! $found )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $listname = $new_listname;
 	    $list = listname_to_list ( $listname );
-	    $data['LISTNAME'] = $listname;
 	}
         elseif ( isset ( $_POST['user'] ) )
 	{
@@ -149,6 +166,23 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
+
+@media screen and ( max-width: 1279px ) {
+    :root {
+	--font-size: 1.4vw;
+	--large-font-size: 1.6vw;
+	--indent: 1.6vw;
+    }
+}
+@media screen and ( min-width: 1280px ) {
+    :root {
+	width: 1280px;
+
+	--font-size: 16px;
+	--large-font-size: 20px;
+	--indent: 20px;
+    }
+}
 
 div.select {
     background-color: var(--bg-green);
@@ -229,29 +263,14 @@ var LOG = function(message) {};
     <table style='width:100%'>
     <tr>
     <td>
-    <form>
-    <input type='hidden' name='id' value='$ID'>
-    <label>
-    <strong>User:</strong>
-    <input type='submit' value='$email'
-	   formaction='user.php'
-	   formmethod='GET'
-           title='Click to See User Profile'>
-    </label>
-    </form>
+    <strong>User:&nbsp;$email</strong>
     </td>
     <td>
-    <strong>Go To</strong>
     <form method='GET'>
-    <input type='hidden' name='id' value='$ID'>
-    <button type='submit' formaction='project.php'>
-    Project
-    </button>
-    <button type='submit' formaction='problem.php'>
-    Problem
+    <button type='submit' formaction='template.php'>
+    View Templates
     </button>
     </form>
-    <strong>Page</strong>
     </td>
     <td>
     </td><td style='text-align:right'>

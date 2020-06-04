@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun  4 03:37:51 EDT 2020
+// Date:    Thu Jun  4 17:52:25 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -152,18 +152,32 @@ function EPM_ERROR_HANDLER
 
 set_error_handler ( 'EPM_ERROR_HANDLER' );
 
-// Returns HTML for a help button that goes to the
-// specified item in the help.html file.  Within
-// HTML call this with:
+// Returns HTML for a help button that creates the
+// +help+ window and goes to the specified item in
+// the help.html file with that window.
 //
 function HELP ( $item )
 {
     return "<button type='button'" .
            " onclick='window.open(" .
 	   "\"/page/help.html#$item\"," .
-	   "\"EPM HELP\"," .
+	   "\"+help+\"," .
 	   "\"height=800px,width=800px\")'>" .
 	   "?</button>";
+}
+
+// Returns HTML for a view button with given name
+// and page (relative to /page/) that creates the
+// +view+ window loads into the given page.
+//
+function VIEW ( $page, $name )
+{
+    return "<button type='button'" .
+           " onclick='window.open(" .
+	   "\"/page/$page\"," .
+	   "\"+view+\"," .
+	   "\"height=800px,width=1280px\")'>" .
+	   "$name</button>";
 }
 
 // DEBUG, LOCK, and UNLOCK functions are in
@@ -176,9 +190,9 @@ function HELP ( $item )
 // which steps through pseudo-random sequence numbers.
 // A request out of sequence is rejected.
 //
-if ( $epm_page_type == '+problem+'
-     ||
-     $epm_page_type == '+main+' )
+if ( in_array ( $epm_page_type,
+                ['+problem+','+main+','+view+'],
+		true ) )
 {
     if ( $epm_page_type == '+problem+' )
     {
@@ -187,7 +201,7 @@ if ( $epm_page_type == '+problem+'
 	$id_type = $_REQUEST['problem'];
     }
     else
-        $id_type = '+main+';
+        $id_type = $epm_page_type;
     if ( ! isset ( $_SESSION['EPM_ID_GEN']
 			    [$id_type] ) )
 	exit ( 'UNACCEPTABLE HTTP GET/POST' );

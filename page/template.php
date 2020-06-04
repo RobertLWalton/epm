@@ -2,24 +2,26 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 02:13:50 EDT 2020
+    // Date:	Thu Jun  4 18:21:51 EDT 2020
 
     // Edits problem option page.
 
-    $epm_page_type = '+view+';
+    $epm_page_type = '+init+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+        // This page does no POSTing.
+
+    // require "$epm_home/include/debug_info.php";
+
 
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
 	       $epm_method );
-    if ( isset ( $_GET['superpage'] )
-         &&
-	 ! isset ( $_SESSION['EPM_PERMISSION']
-	                    [$_GET['superpage']]
-			    ['template'] ) )
-        exit ( 'UNACCEPTABLE HTTP GET' );
-
-    // require "$epm_home/include/debug_info.php";
+    elseif ( ! isset ( $_SESSION['EPM_UID'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to template.php" );
+    elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
+	exit ( "ACCESS: illegal $epm_method" .
+	       " to template.php" );
 
     $email = $_SESSION['EPM_EMAIL'];
     $uid = $_SESSION['EPM_UID'];
@@ -40,7 +42,7 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
-    @media screen and ( max-width: 1199px ) {
+    @media screen and ( max-width: 1279px ) {
 	:root {
 	    --font-size: 1.4vw;
 	    --large-font-size: 1.6vw;
@@ -113,14 +115,31 @@
 
     $template_help = HELP ( 'template-page' );
     echo <<<EOT
-    <div class='toc'>
-    <table style='width:100%'><tr>
-    <td style='width:10%'></td>
-    <td style='width:80%;text-align:center'>
-    <h2>Template Viewer</h2></td>
-    <td style='width:10%;text-align:right'>
+    <div class='manage'>
+    <table style='width:100%'>
+    <tr>
+    <td>
+    <strong>User:&nbsp;$email</strong>
+    </td>
+    <td>
+    <form method='GET'>
+    <strong>Go To:</strong>
+    <button type='submit' formaction='view.php'>
+    View
+    </button>
+    <strong>Page</strong>
+    </form>
+    </td>
+    <td style='text-align:right'>
     $template_help</td>
+    </tr>
+
+    <tr>
+    <td colspan='3' style='text-align:center'>
+    <h2>Template Viewer</h2></td>
     </tr></table>
+    </div>
+    <div class='toc'>
 EOT;
     $tcount = 0;
     $description = "";
