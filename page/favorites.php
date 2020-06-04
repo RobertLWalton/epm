@@ -50,6 +50,7 @@
     //
     //		reset	Just reload page as per GET.
 
+    $epm_page_type = '+main+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";

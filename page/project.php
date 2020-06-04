@@ -384,10 +384,10 @@
     //		and error-messages and compiled-changes
     //		are similar.
 
-    
+    $epm_page_type = '+main+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -1622,7 +1622,6 @@ EOT;
 	    echo "<pre>$e</pre><br>";
 	echo "<br></div></div>";
     }
-EOT;
 
     if ( $op == 'push' || $op == 'pull' )
     {

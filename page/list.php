@@ -87,6 +87,7 @@
     //  * Should be sent ONLY if list J is writable.
     // ** Should be sent ONLY if list J is read-only.
 
+    $epm_page_type = '+main+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";

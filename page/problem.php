@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  2 17:24:12 EDT 2020
+    // Date:	Thu Jun  4 03:40:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -12,6 +12,10 @@
     // Selects EPM user problem.  Displays and uploads
     // problem files.
 
+    if ( $_SERVER['REQUEST_METHOD'] == 'GET' )
+        $epm_page_type = '+init+';
+    else
+        $epm_page_type = '+problem+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // if ( ! isset ( $_POST['xhttp'] ) )
@@ -46,6 +50,11 @@
     {
 	$work = [];
 	$run  = [];
+        require "$epm_home/include/epm_random.php";
+        $_SESSION['EPM_ID_GEN'][$problem] =
+	    init_id_gen();
+	$ID = bin2hex
+	    ( $_SESSION['EPM_ID_GEN'][$problem][0] );
     }
 
     // The $_SESSION state particular to this page is:

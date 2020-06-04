@@ -7,6 +7,7 @@
     // Starts and monitors problem runs and displays
     // results.
 
+    $epm_page_type = '+problem+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";

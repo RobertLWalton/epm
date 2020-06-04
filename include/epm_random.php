@@ -2,7 +2,7 @@
 
     // File:	epm_random.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun  3 21:26:43 EDT 2020
+    // Date:	Thu Jun  4 05:23:12 EDT 2020
 
     // Rarely used functions for generating random
     // numbers.
@@ -37,17 +37,19 @@
         global $epm_data;
 
         $f = 'admin/+random+';
-	$first_time = ! file_exists ( "$epm_data/$f" );
 
-	$wdesc = @fopen ( "$epm_data/$f", 'w+' );
+	$first_time = ! file_exists ( "$epm_data/$f" );
+	    // Compute this before fopen of $f.
+
+	$wdesc = @fopen
+	    ( "$epm_data/$f",
+	      ( $first_time ? 'wb' : 'r+b' ) );
 	if ( $wdesc === false )
 	    exit ( "cannot create $f" );
 	$r = @flock ( $wdesc, LOCK_EX );
 	if ( $r === false )
 	    exit ( "cannot lock $f" );
 
-	$g = $f;
-	$rdesc = $wdesc;
 	if ( $first_time )
 	{
 	    $rdesc = @fopen ( '/dev/random', 'r' );
@@ -55,24 +57,34 @@
 	        exit ( 'cannot open /dev/random for' .
 		       ' reading' );
 	    $g = '/dev/random';
+	    $data = @fread ( $rdesc, 32 );
+	    fclose ( $rdesc );
+	}
+	else
+	{
+	    $data = @fread ( $wdesc, 32 );
+	    $r = @fseek ( $wdesc, 0 );
+	    if ( $r === false )
+		exit ( "cannot seek to beginning of" .
+		       " $f" );
+	    $g = $f;
 	}
 
-	$data = @fread ( $rdesc, 32 );
-	if ( $data === false )
+	if ( $data === false
+	     ||
+	     strlen ( $data ) != 32 )
 	    exit ( "cannot read 32 bytes from $g" );
-
-	if ( $first_time ) fclose ( $rdesc );
 
 	$utime = microtime();
 	$addend = (int) ( $utime[0] * (1 << 16) );
 	$addend = $addend + ( $addend >> 8 );
-	$last_byte = unpack
+	$last_byte = (int) unpack
 	    ( 'C', substr ( $data, 31, 1 ) );
 	$last_byte = ( $last_byte + $addend ) & 0xFF;
 	$data = substr ( $data, 0, 31 )
 	      . pack ( 'C', $last_byte );
 	
-	$iv = bin2hex
+	$iv = hex2bin
 	    ( '00000000000000000000000000000000' );
 	$encrypted = @openssl_encrypt
 	      ( substr ( $data, 16, 16 ),
@@ -87,13 +99,9 @@
 	    // last 16 of which are an encryption of the
 	    // first 16.
 
-	$r = @fseek ( $wdesc, 0 );
-	if ( $r === false )
-	    exit ( "cannot seek to beginning of $f" );
-	$r = $fwrite ( $wdesc, $data, 32 );
-	if ( $r === false )
-	    exit ( "cannot write to $f" );
-	flock ( $wdesc, LOCK_UN );
+	$r = @fwrite ( $wdesc, $data, 32 );
+	if ( $r != 32  )
+	    exit ( "cannot write 32 bytes to $f" );
 	fclose ( $wdesc );
 
 	return substr ( $data, 16, 16 );
@@ -111,11 +119,11 @@
     //
     function init_id_gen()
     {
-	$iv = bin2hex
+	$iv = hex2bin
 	    ( '00000000000000000000000000000000' );
-        return = [ random_16_bytes(),
-	           random_16_bytes(),
-		   $iv ];
+        return [ random_16_bytes(),
+	         random_16_bytes(),
+		 $iv ];
     }
 
     // Delay by calling usleep until $sec seconds after
@@ -139,6 +147,5 @@
 	if ( $elapsed >= $sec ) return;
 	usleep ( ( $sec - $elapsed ) * 1000000 );
 	return;
-    }
     }
 ?>

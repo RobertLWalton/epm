@@ -30,6 +30,7 @@
     // account and emails other than the login email
     // to be deleted.
 
+    $epm_page_type = '+main+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";

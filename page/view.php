@@ -26,6 +26,7 @@
     //
     //	    listname=PROJECT:BASENAME
 
+    $epm_page_type = '+view+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jun  3 04:10:51 EDT 2020
+// Date:    Thu Jun  4 03:37:51 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -176,48 +176,29 @@ function HELP ( $item )
 // which steps through pseudo-random sequence numbers.
 // A request out of sequence is rejected.
 //
-if ( $epm_self == '/page/login.php'
-     &&
-     $epm_method == 'GET' )
+if ( $epm_page_type == '+problem+'
+     ||
+     $epm_page_type == '+main+' )
 {
-    // Initialize session on login.php GET.
-    // Previous session data is deleted.
-
-    session_unset();
-
-    $_SESSION['EPM_ID_GEN'] =
-        [ random_bytes ( 16 ), random_bytes ( 16 ),
-	  bin2hex
-	      ( '00000000000000000000000000000000' )];
-    $ID = bin2hex ( $_SESSION['EPM_ID_GEN'][0] );
-
-    $_SESSION['EPM_IPADDR'] = $_SERVER['REMOTE_ADDR'];
-    $_SESSION['EPM_SESSION_TIME'] =
-        strftime ( $epm_time_format,
-	           $_SERVER['REQUEST_TIME'] );
-    file_put_contents (
-        "$epm_data/error.log",
-	"NEW_SESSION {$_SESSION['EPM_SESSION_TIME']}" .
-	" {$_SESSION['EPM_IPADDR']}" . PHP_EOL,
-	FILE_APPEND );
-}
-elseif ( ! isset ( $epm_is_subwindow ) )
-{
-    // Update sequencing on everything BUT login.php GET
-    // and read-only subwindows.  Check on all POSTs
-    // not to read-only subwindows.
-
-    $id_gen = & $_SESSION['EPM_ID_GEN'];
-
-    if ( $epm_method == 'POST' )
+    if ( $epm_page_type == '+problem+' )
     {
-	$ID = bin2hex ( $id_gen[0] );
-	if ( ! isset ( $_REQUEST['id'] ) )
-	    WARN ( "$epm_self: no id, ID=$ID" );
-	elseif ( $_REQUEST['id'] != $ID )
-	    WARN ( "$epm_self id = {$_REQUEST['id']}" .
-		   " != $ID = ID" );
+        if ( ! isset ( $_REQUEST['problem'] ) )
+	    exit ( 'UNACCEPTABLE HTTP GET/POST' );
+	$id_type = $_REQUEST['problem'];
     }
+    else
+        $id_type = '+main+';
+    if ( ! isset ( $_SESSION['EPM_ID_GEN']
+			    [$id_type] ) )
+	exit ( 'UNACCEPTABLE HTTP GET/POST' );
+    $id_gen = & $_SESSION['EPM_ID_GEN'][$id_type];
+
+    $ID = bin2hex ( $id_gen[0] );
+    if ( ! isset ( $_REQUEST['id'] ) )
+	WARN ( "$epm_self: no id, ID=$ID" );
+    elseif ( $_REQUEST['id'] != $ID )
+	WARN ( "$epm_self id = {$_REQUEST['id']}" .
+	       " != $ID = ID" );
 
     $id_gen[0] = substr
         ( @openssl_encrypt

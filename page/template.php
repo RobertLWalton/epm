@@ -6,8 +6,7 @@
 
     // Edits problem option page.
 
-    if ( isset ( $_GET['superpage'] ) )
-	$epm_is_subwindow = true;
+    $epm_page_type = '+view+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     if ( $epm_method != 'GET' )
@@ -112,37 +111,6 @@
 
 <?php 
 
-    if ( ! $epm_is_subwindow )
-	echo <<<EOT
-	<div class='manage'>
-	<form method='GET' style='margin-bottom:0'>
-	<input type='hidden' name='id' value='$ID'>
-	<table style='width:100%'><tr>
-	<td>
-	<strong>User:</strong> <input type='submit'
-	                value='$email'
-			formaction='user.php'
-			title='click to see user
-			       profile'>
-	</td>
-	<td style='padding-left:20px'>
-	<strong>Go To:</strong>
-	<button type='submit'
-		formaction='problem.php'>Problem Page
-	</button>
-	&nbsp;&nbsp;
-	<button type='submit'
-		formaction='run.php'>Run Page
-	</button>
-	&nbsp;&nbsp;
-	<button type='submit'
-		formaction='option.php'>Option Page
-	</button>
-	</td>
-	</tr></table>
-	</form>
-	</div>
-EOT;
     $template_help = HELP ( 'template-page' );
     echo <<<EOT
     <div class='toc'>

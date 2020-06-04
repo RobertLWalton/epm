@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 23:10:49 EDT 2020
+    // Date:	Thu Jun  4 03:40:31 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -228,7 +228,32 @@
     // session with the same EMAIL will use the same
     // CNUM, so as not to confuse the user.
 
+    if ( $_SERVER['REQUEST_METHOD'] == 'GET' )
+        $epm_page_type = '+init+';
+    else
+        $epm_page_type = '+main+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+    if ( $epm_method == 'GET' )
+    {
+        require "$epm_home/include/epm_random.php";
+        $_SESSION['EPM_ID_GEN']['+main+'] =
+	    init_id_gen();
+	$ID = bin2hex
+	    ( $_SESSION['EPM_ID_GEN']['+main+'][0] );
+
+	$_SESSION['EPM_SESSION_TIME'] =
+	    strftime ( $epm_time_format,
+	               $_SERVER['REQUEST_TIME'] );
+	$_SESSION['EPM_IPADDR'] =
+	    $_SERVER['REMOTE_ADDR'];
+
+	file_put_contents
+	    ( "$epm_data/error.log",
+	      'NEW_SESSION ' .
+	      $_SESSION['EPM_SESSION_TIME'] . ' ' .
+	      $_SESSION['EPM_IPADDR'] . PHP_EOL,
+	      FILE_APPEND );
+    }
 
     // require "$epm_home/include/debug_info.php";
     // if ( ! isset ( $_POST['op'] )

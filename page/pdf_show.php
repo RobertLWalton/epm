@@ -9,7 +9,7 @@
     // problem directory or a temporary in its
     // +work+ subdirectory.
 
-    $epm_is_subwindow = true;
+    $epm_page_type = '+view+';
     $epm_pdf = true;
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 

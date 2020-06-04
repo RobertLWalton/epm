@@ -6,6 +6,7 @@
 
     // Edits problem option page.
 
+    $epm_page_type = '+problem+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
     // require "$epm_home/include/debug_info.php";
