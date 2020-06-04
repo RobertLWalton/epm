@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 31 15:09:35 EDT 2020
+    // Date:	Thu Jun  4 11:23:39 EDT 2020
 
     // Display and edit user information in:
     //
@@ -573,9 +573,6 @@ EOT;
 		Edit Emails</button>
 	</td><td>
 	<strong>Go To</strong>
-	<button type="submit"
-		formaction="problem.php"
-		formmethod='GET'>Problem</button>
 	<button type="submit"
 		formaction="project.php"
 		formmethod='GET'>Project</button>

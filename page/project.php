@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  2 17:24:25 EDT 2020
+    // Date:	Thu Jun  4 11:23:26 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1700,6 +1700,7 @@ EOT;
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
+    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
 EOT;

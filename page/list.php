@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 23:20:02 EDT 2020
+    // Date:	Thu Jun  4 16:32:54 EDT 2020
 
     // Maintains problem lists.
 
@@ -574,18 +574,13 @@ EOT;
     }
 
     $list_help = HELP ( 'list-page' );
-    switch ( $writable_count )
-    {
-    case 0: $goto = 'Go To'; break;
-    case 1: $goto = 'Cancel Edit and Go To'; break;
-    case 2: $goto = 'Cancel Both Edits and Go To';
-            break;
-    }
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
+    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
-    <tr>
+
+    <tr id='not-edited' style='width:100%'>
     <td>
     <strong>User:</strong>
     <button type='submit'
@@ -594,12 +589,12 @@ EOT;
 	   $email</button>
     </td>
     <td>
-    <strong>$goto</strong>
+    <strong>Go To</strong>
     <button type='submit' formaction='project.php'>
     Project
     </button>
-    <button type='submit' formaction='problem.php'>
-    Problem
+    <button type='submit' formaction='favorites.php'>
+    Edit Favorites
     </button>
     <strong>Page</strong>
     </td>
@@ -607,6 +602,18 @@ EOT;
     </td><td style='text-align:right'>
     $list_help</td>
     </tr>
+
+    <tr id='edited' style='width:100%;display:none'>
+    <td>
+    <strong>User:&nbsp;$email</strong>
+    </td>
+    <td>
+    </td>
+    <td>
+    </td><td style='text-align:right'>
+    $list_help</td>
+    </tr>
+
     </table>
     </form>
     </div>
@@ -683,11 +690,11 @@ EOT;
 	            onclick='SUBMIT("save","$J")'>
 	    SAVE</button>
 	    <button type='button'
-	            onclick='SUBMIT("finish","$J")'>
-	    FINISH</button>
-	    <button type='button'
 	            onclick='SUBMIT("reset","$J")'>
 	    RESET</button>
+	    <button type='button'
+	            onclick='SUBMIT("finish","$J")'>
+	    FINISH</button>
 	    <button type='button'
 	            onclick='SUBMIT("cancel","$J")'>
 	    CANCEL</button>
@@ -756,6 +763,9 @@ EOT;
 ?>
 
 <script>
+let edited = document.getElementById ( 'edited' );
+let not_edited = document.getElementById
+    ( 'not-edited' );
 let submit_form = document.getElementById
     ( 'submit-form' );
 let op_in = document.getElementById ( 'op' );
@@ -864,6 +874,9 @@ function CHECK ( event )
     let tbody = tr.parentElement;
     let table = tbody.parentElement;
     let div = table.parentElement;
+    let writable = div.dataset.writable;
+    if ( writable == 'no' ) return;
+
     if ( checkbox.style.backgroundColor == on )
     {
 	checkbox.style.backgroundColor = off;
@@ -896,6 +909,8 @@ function CHECK ( event )
 	    div.insertBefore ( table, next );
 	}
     }
+    edited.style.display = 'table-row';
+    not_edited.style.display = 'none';
 }
 
 var dragsrc = null;
@@ -967,7 +982,10 @@ function DROP ( event )
 	     &&
 	     BOX(target).style.backgroundColor != on )
 	    BOX(src).style.backgroundColor = off;
-	}
+
+	edited.style.display = 'table-row';
+	not_edited.style.display = 'none';
+    }
     else
     {
 	div.insertBefore ( src, next );
@@ -978,6 +996,9 @@ function DROP ( event )
 	             BOX(target).style.backgroundColor
 		  != on )
 	    BOX(src).style.backgroundColor = off;
+
+	edited.style.display = 'table-row';
+	not_edited.style.display = 'none';
     }
 }
 
