@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 21 04:44:28 EDT 2020
+    // Date:	Thu Jun  4 16:50:27 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -29,7 +29,7 @@
 
     // POST:
     //
-    // Each post may update the +favorites+ file and
+    // Each post may save the +favorites+ file and
     // has the following values:
     //
     //	   indices=INDICES
@@ -42,11 +42,7 @@
     //	    op=OPERATION
     //		OPERATION is one of:
     //
-    //		update	Update +favorites+ from INDICES
-    //
-    //		finish	Ditto and go to project.php
-    //
-    //		cancel	Just go to project.php
+    //		save	Update +favorites+ from INDICES
     //
     //		reset	Just reload page as per GET.
 
@@ -80,12 +76,11 @@
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
         $op = $_POST['op'];
-	if ( ! in_array ( $op, ['update','finish',
-	                        'cancel','reset'],
+	if ( ! in_array ( $op, ['save','reset'],
 			       true ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
-	if ( $op == 'finish' || $op == 'update' )
+	if ( $op == 'save' )
 	{
 	    $list = $data['LIST'];
 	    $count = count ( $list );
@@ -105,12 +100,6 @@
 	    write_file_list
 		( "users/$uid/+lists+/+favorites+",
 		  $flist );
-	}
-	if ( $op == 'finish' || $op == 'cancel' )
-	{
-	    header ( 'Location: /page/project.php' .
-	             "?id=$ID" );
-	    exit;
 	}
     }
 
@@ -272,33 +261,47 @@ var LOG = function(message) {};
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
-    <tr>
+
+    <tr id='not-edited' style='width:100%'>
+    <form method='GET'>
     <td>
-    <form>
     <input type='hidden' name='id' value='$ID'>
     <label>
     <strong>User:</strong>
     <input type='submit' value='$email'
 	   formaction='user.php'
-	   formmethod='GET'
            title='Click to See User Profile'>
     </label>
+    </td>
+    <td>
+    <strong>Go To</strong>
+    <button type='submit' formaction='project.php'>
+    Project
+    </button>
+    <button type='submit' formaction='list.php'>
+    Edit Lists
+    </button>
+    <strong>Page</strong>
+    </td>
     </form>
     </td>
     <td>
+    </td><td style='text-align:right'>
+    $favorites_help</td>
+    </tr>
+
+    <tr id='edited' style='width:100%;display:none'>
+    <td>
+    <input type='hidden' name='id' value='$ID'>
+    <strong>User:&nbsp;$email</strong>
+    </td>
+    <td>
     <button type='button'
-	    onclick='SUBMIT("update")'>
-	    Update</button>
-    <button type='button'
-	    onclick='SUBMIT("finish")'>
-	    Finish</button>
-    <button type='button'
-	    onclick='SUBMIT("cancel")'>
-	    Cancel</button>
+	    onclick='SUBMIT("save")'>
+	    SAVE</button>
     <button type='button'
 	    onclick='SUBMIT("reset")'>
-	    Reset</button>
-
+	    RESET</button>
     <form method='POST' action='favorites.php'
 	  id='submit-form'>
     <input type='hidden' name='id' value='$ID'>
@@ -311,6 +314,7 @@ var LOG = function(message) {};
     </td><td style='text-align:right'>
     $favorites_help</td>
     </tr>
+
     </table>
     </div>
 
@@ -376,6 +380,9 @@ EOT;
 
     <script>
 
+    let edited = document.getElementById ( 'edited' );
+    let not_edited = document.getElementById
+	( 'not-edited' );
     let lists = document.getElementById ( 'lists' );
     let off = 'transparent';
     let on = 'black';
@@ -433,6 +440,8 @@ function BOX ( div )
 		      != on )
 		src_box.style.backgroundColor = off;
 	}
+	edited.style.display = 'table-row';
+	not_edited.style.display = 'none';
     }
 
     function CHECK ( event, c )
@@ -477,6 +486,9 @@ function BOX ( div )
 		div.insertBefore ( src, next );
 	    }
 	}
+
+	edited.style.display = 'table-row';
+	not_edited.style.display = 'none';
     }
 
     function SUBMIT ( op )
