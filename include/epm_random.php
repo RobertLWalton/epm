@@ -2,7 +2,7 @@
 
     // File:	epm_random.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun  3 13:46:38 EDT 2020
+    // Date:	Wed Jun  3 21:26:43 EDT 2020
 
     // Rarely used functions for generating random
     // numbers.
@@ -20,8 +20,7 @@
     //
     // Errors cause exit with error message.  None
     // are likely if the EPM server is not completely
-    // broken.  This function is designed to be called
-    // before most EPM page initialization occurs.
+    // broken.
     //
     // The data stored in admin/+random+ consists
     // of a 16-byte random binary `key' that is never
@@ -66,12 +65,12 @@
 
 	$utime = microtime();
 	$addend = (int) ( $utime[0] * (1 << 16) );
-	$addend = $r3 + ( $r3 >> 8 );
+	$addend = $addend + ( $addend >> 8 );
 	$last_byte = unpack
-	    ( 'C', substr ( $r1, 31, 1 ) );
+	    ( 'C', substr ( $data, 31, 1 ) );
 	$last_byte = ( $last_byte + $addend ) & 0xFF;
 	$data = substr ( $data, 0, 31 )
-	    . pack ( 'C', $last_byte );
+	      . pack ( 'C', $last_byte );
 	
 	$iv = bin2hex
 	    ( '00000000000000000000000000000000' );
@@ -90,10 +89,10 @@
 
 	$r = @fseek ( $wdesc, 0 );
 	if ( $r === false )
-	    exit ( "cannot seek beginning of $f" );
+	    exit ( "cannot seek to beginning of $f" );
 	$r = $fwrite ( $wdesc, $data, 32 );
 	if ( $r === false )
-	    exit ( "cannot write $f" );
+	    exit ( "cannot write to $f" );
 	flock ( $wdesc, LOCK_UN );
 	fclose ( $wdesc );
 
