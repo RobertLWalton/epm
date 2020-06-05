@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun  5 06:22:13 EDT 2020
+// Date:    Fri Jun  5 18:08:02 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -570,7 +570,7 @@ function find_control
     return NULL;
 }
 
-// Find the .shout file in directory $dir and cancel
+// Find the .shout file in directory $dir and abort
 // any running shell script outputting to that file.
 // If the script is still running, sends a HUP signal
 // to the process group and checks that the group
@@ -585,7 +585,7 @@ function find_control
 //      needed KILL signal to kill ....sh
 //      failed to kill ....sh with KILL signal
 
-function cancel_dir ( $dir )
+function abort_dir ( $dir )
 {
     global $epm_data;
     $d = "$epm_data/$dir";
@@ -649,7 +649,7 @@ function cleanup_dir ( $dir, & $warnings )
 {
     global $epm_data;
 
-    $m = cancel_dir ( $dir );
+    $m = abort_dir ( $dir );
     if ( $m != '' ) $warnings[] = $m;
 
     $d = "$epm_data/$dir";
@@ -1533,7 +1533,8 @@ function execute_checks ( $checks, & $errors )
 // $probdir.  A list of the files moved is placed in
 // EPM_WORK KEPT.  All file names consist of just the
 // last component, with no directory part names.  Error
-// messages are appended to $errors.
+// messages are appended to $errors.  If files are
+// actually moved, $probdir/+altered+ is touched.
 //
 function move_keep ( $keep, & $errors )
 {
@@ -1561,6 +1562,8 @@ function move_keep ( $keep, & $errors )
 	}
 	$moved[] = $fname;
     }
+    if ( count ( $moved ) > 0 )
+	touch ( "$epm_data/$probdir/+altered+" );
 }
 
 // Starts commands and to make file $des from file $src.
@@ -1621,6 +1624,9 @@ function move_keep ( $keep, & $errors )
 //     $work['KEPT'] to []
 //     $work['SHOW'] to []
 //     $work['LOCK'] to $lock
+//     $work['ALTERED'] to filemtime of
+//			$probdir/+altered+, or 0 if
+//			that file does not exist
 //
 // The $lock parameter should be the value of
 //
@@ -1648,6 +1654,11 @@ function start_make_file
     $control = NULL;
     $workbase = NULL;
     $errors_size = count ( $errors );
+
+    $altered = @filemtime
+        ( "$epm_data/$probdir/+altered+" );
+    if ( $altered === false ) $altered = 0;
+    while ( time() <= $altered ) /* wait */;
 
     load_argument_map
 	( $allow_local_optn, $errors );
@@ -1732,6 +1743,7 @@ function start_make_file
     $work['KEPT'] = [];
     $work['SHOW'] = [];
     $work['LOCK'] = $lock;
+    $work['ALTERED'] = $altered;
 }
 
 // Finish execution of a run started by start_make_file.
@@ -1797,6 +1809,17 @@ function finish_make_file ( & $warnings, & $errors )
 		      . " execution";
 	    return;
 	}
+    }
+
+    $altered = @filemtime
+        ( "$epm_data/$probdir/+altered+" );
+    if ( $altered === false ) $altered = 0;
+    if ( $altered > $work['ALTERED'] )
+    {
+	$errors[] = "$uid $problem was altered by"
+		  . " another page during command"
+		  . " execution";
+	return;
     }
 
     $warnings = array_merge
