@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun  5 03:02:56 EDT 2020
+    // Date:	Fri Jun  5 03:19:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -488,7 +488,6 @@ EOT;
 </style>
 
 <script>
-    var show_window = null;
     var problem = '<?php echo $problem; ?>';
 
     function NEW_WINDOW ( page, filename ) {
@@ -497,15 +496,9 @@ EOT;
 	        + encodeURIComponent ( problem )
 		+ '&filename='
 		+ encodeURIComponent ( filename );
-	if ( show_window ) show_window.close();
-	var x = screen.width - 1280;
-	var y = screen.height - 800;
-	show_window = window.open
-	    ( src, 'epm-view',
-	      'height=800px,width=1280px,' +
-	      'screenX=' + x + 'px,' +
-	      'screenY=' + y + 'px' );
-	// show_window.focus() does not work.
+	window.open
+	    ( src, '+view+',
+	      'height=800px,width=1280px' );
     }
 
     function TOGGLE_BODY ( name, thing )
