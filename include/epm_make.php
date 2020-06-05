@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun  5 18:08:02 EDT 2020
+// Date:    Fri Jun  5 18:36:05 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1817,8 +1817,8 @@ function finish_make_file ( & $warnings, & $errors )
     if ( $altered > $work['ALTERED'] )
     {
 	$errors[] = "$uid $problem was altered by"
-		  . " another page during command"
-		  . " execution";
+		  . " another one of your windows"
+		  . " during command execution";
 	return;
     }
 
