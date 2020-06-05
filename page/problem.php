@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun  5 02:03:36 EDT 2020
+    // Date:	Fri Jun  5 03:02:56 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -644,13 +644,7 @@ EOT;
     <table style='width:100%'>
     <tr>
     <td>
-    <strong>User:</strong>
-    <form method='GET'>
-    <button type='submit'
-    	   formaction='user.php'
-           title='Click to See User Profile'>
-	   $email</button>
-    </form>
+    <strong>User:&nbsp;$email</strong>
     </td><td>
 
     <strong>Current Problem:</strong>&nbsp;

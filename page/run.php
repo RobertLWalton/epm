@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun  5 02:07:04 EDT 2020
+    // Date:	Fri Jun  5 03:02:44 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -341,12 +341,7 @@
     <table style='width:100%'>
     <tr>
     <td>
-    <strong>User:</strong>
-    <form method='GET'>
-    <input type='submit' value='$email'
-           formaction='user.php'
-           title='Click to See User Profile'>
-    </form>
+    <strong>User:&nbsp;$email</strong>
     </td>
     <td style='padding-left:50px'>
     <strong>Go To</strong>

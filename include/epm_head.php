@@ -2,14 +2,17 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May 30 16:05:11 EDT 2020
+// Date:    Fri Jun  5 03:09:21 EDT 2020
 
 // HTML code included at the beginning of the <head>
 // section of each page.
 
 $title = pathinfo ( $epm_self, PATHINFO_FILENAME );
 $title = ucfirst ( $title);
-$title = "EPM $title Page";
+if ( isset ( $problem ) )
+    $title = "EPM $problem $title Page";
+else
+    $title = "EPM $title Page";
 
 echo "<title>$title</title>";
 

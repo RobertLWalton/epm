@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun  5 02:11:27 EDT 2020
+    // Date:	Fri Jun  5 03:04:29 EDT 2020
 
     // Edits problem option page.
 
@@ -334,27 +334,17 @@
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
+    <td style='width:30%;text-align:left'>
+    <strong>User:&nbsp;$email</strong>
+    </td>
 EOT;
     if ( $edit )
         echo <<<EOT
-	<td style='width:30%;text-align:left'>
-	<strong>User:&nbsp;$email</strong>
-	</td>
 	<td style='width:25%'>
 	</td>
 EOT;
     else
     	echo <<<EOT
-	<td style='width:30%;text-align:left'>
-	<strong>User:</strong>
-	<form method='GET'>
-	<button type='submit'
-	       formaction='user.php'
-	       title='Click to See User Profile'>
-	       $email</button>
-	</form>
-	</td>
-
 	<td style='width:25%'>
 	<strong>Go To</strong>
 	<form method='GET'>
