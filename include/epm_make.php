@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun  1 22:12:07 EDT 2020
+// Date:    Fri Jun  5 06:22:13 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -570,6 +570,69 @@ function find_control
     return NULL;
 }
 
+// Find the .shout file in directory $dir and cancel
+// any running shell script outputting to that file.
+// If the script is still running, sends a HUP signal
+// to the process group and checks that the group
+// leader is no longer running.  Returns '' if all
+// this works of if there is no .shout file.
+//
+// Otherwise returns a non-empty string message
+// explaining what went wrong.  Possibilities are
+//
+//	....sh did not start properly
+//		(i.e., no pid found in ....shout)
+//      needed KILL signal to kill ....sh
+//      failed to kill ....sh with KILL signal
+
+function cancel_dir ( $dir )
+{
+    global $epm_data;
+    $d = "$epm_data/$dir";
+    $c = @scandir ( $d );
+    if ( $c === false ) return '';
+
+    $basename = NULL;
+    foreach ( $c as $fname )
+    {
+	if ( preg_match ( '/^(.+)\.shout$/',
+			  $fname, $matches ) )
+	{
+	    $basename = $matches[1];
+	    break;
+	}
+    }
+    if ( ! isset ( $basename ) ) return '';
+
+    $c = @file_get_contents ( "$d/$basename.shout" );
+    if ( $c === false
+	 ||
+	 ! preg_match ( '/^(\d+) PID\n/',
+			$c, $matches ) )
+	return "$dir/$basename.sh did not" .
+	       " start properly";
+
+    $pid = $matches[1];
+    if ( ! is_running ( $pid ) ) return '';
+    exec ( "kill -s HUP -$pid >/dev/null 2>&1" );
+    $time = microtime ( true ) + 0.5;
+    while ( microtime ( true ) < $time )
+    {
+        usleep ( 100000 );
+	if ( ! is_running ( $pid ) ) return '';
+    }
+    exec ( "kill -s KILL -$pid >/dev/null 2>&1" );
+    while ( microtime ( true ) < $time )
+    {
+        usleep ( 100000 );
+	if ( ! is_running ( $pid ) )
+	    return "needed KILL signal to kill" .
+	           " $dir/$basename.sh";
+    }
+    return "failed to kill $dir/$basename.sh" .
+           " (pid = $pid) with KILL signal";
+}
+
 // Clean up a working or run directory.  For each .shout
 // file, finds its PID and if that is still running,
 // kills it with SIGKILL.  Then executes rm -rf on the
@@ -585,37 +648,11 @@ function find_control
 function cleanup_dir ( $dir, & $warnings )
 {
     global $epm_data;
+
+    $m = cancel_dir ( $dir );
+    if ( $m != '' ) $warnings[] = $m;
+
     $d = "$epm_data/$dir";
-    $c = @scandir ( $d );
-    if ( $c !== false )
-    {
-	foreach ( $c as $fname )
-	{
-	    if ( ! preg_match ( '/^(.+)\.shout$/',
-	                        $fname ) )
-	        continue;
-	    $base = pathinfo
-		( $fname, PATHINFO_FILENAME );
-
-	    $fc = @file_get_contents ( "$d/$fname" );
-	    if ( $fc === false 
-	         ||
-	         ! preg_match ( '/^(\d+) PID\n/',
-	                        $fc, $matches ) )
-	    {
-		$warnings[] = "$dir/$base.sh did not"
-		            . " start properly";
-		continue;
-	    }
-	    $pid = $matches[1];
-	    if ( ! is_running ( $pid ) )
-	        continue;
-	    exec ( "kill -s KILL -$pid" .
-	           "    >/dev/null 2>&1" );
-	    $warnings[] = "killed $dir/$base.sh";
-	}
-    }
-
     if ( file_exists ( $d ) )
     {
         exec ( "rm -rf $d" );
