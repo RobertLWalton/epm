@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  2 17:26:05 EDT 2020
+    // Date:	Fri Jun  5 02:11:27 EDT 2020
 
     // Edits problem option page.
 
@@ -302,27 +302,6 @@
 	ITEM.style.backgroundColor = '#FFBF80';
     }
 
-    var template_window = null;
-
-    function TEMPLATE_WINDOW ( ) {
-	var src = '/page/template.php?superpage=option';
-	if ( template_window ) template_window.close();
-	var x = screen.width - 1280;
-	var y = screen.height - 800;
-	w = window.open
-	    ( src, 'epm-view',
-	      'height=800px,width=1280px,' +
-	      'screenX=' + x + 'px,' +
-	      'screenY=' + y + 'px' );
-    }
-
-    function UNLOAD () {
-	if ( template_window != null
-	     &&
-	     ! template_window.closed )
-	    template_window.close()
-    }
-
 </script>
 
 </head>
@@ -351,43 +330,59 @@
     }
 
     $option_help = HELP ( 'option-page' );
+    $templates = VIEW ( 'template.php', 'View Templates' );
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
-    <td>
-    <strong>User:</strong>
-    <form method='GET'>
-    <button type='submit'
-    	   formaction='user.php'
-           title='Click to See User Profile'>
-	   $email</button>
-    </form>
+EOT;
+    if ( $edit )
+        echo <<<EOT
+	<td style='width:30%;text-align:left'>
+	<strong>User:&nbsp;$email</strong>
+	</td>
+	<td style='width:25%'>
+	</td>
+EOT;
+    else
+    	echo <<<EOT
+	<td style='width:30%;text-align:left'>
+	<strong>User:</strong>
+	<form method='GET'>
+	<button type='submit'
+	       formaction='user.php'
+	       title='Click to See User Profile'>
+	       $email</button>
+	</form>
+	</td>
+
+	<td style='width:25%'>
+	<strong>Go To</strong>
+	<form method='GET'>
+	<input type='hidden'
+	       name='problem' value='$problem'>
+	<input type='hidden' name='id' value='$ID'>
+	<button type='submit'
+		formaction='problem.php'>Problem
+	</button>
+	<button type='submit'
+		formaction='run.php'>Run
+	</button>
+	</form>
+	<strong>Page</strong>
+	</td>
+EOT;
+    echo <<<EOT
+    <td style='width=15%''>
+    $templates
     </td>
-    <td style='padding-left:var(--indent)'>
-    <strong>Go To</strong>
-    <form method='GET'>
-    <input type='hidden'
-           name='problem' value='$problem'>
-    <button type='submit'
-            formaction='problem.php'>Problem
-    </button>
-    <button type='submit'
-            formaction='run.php'>Run
-    </button>
-    </form>
-    <strong>Page</strong>
-    <pre>   </pre>
-    <button type='button' onclick='TEMPLATE_WINDOW()'>
-        Show Templates
-    </button>
-    </td>
-    <td style='padding-left:var(--indent)'>
+    <td style='text-align:right;width=30%'>
     <strong>Current Problem:</strong>&nbsp;
-    <pre class='problem'>$problem</pre></b>
-    </td><td style='text-align:right'>
+    <pre class='problem'>$problem</pre>
+    <pre>   </pre>
     $option_help</td>
     </table>
-    <br>
+    </div>
+
     <form action='option.php' method='POST'
           onkeydown='return event.key != "Enter"'>
 	  <!-- onkeydown keeps text area enter key
@@ -397,27 +392,31 @@
     <input type='hidden'
            name='problem' value='$problem'>
     <input type='hidden' name='id' value='$ID'>
-    <div class='center'>
+    <div class='center manage'>
 EOT;
     if ( $edit )
-        echo "<button type='submit'" .
-	     " name='update' value='update'>" .
-	     "Update Options</button>" .
-	     "<pre>    </pre>" .
-             "<button type='submit'" .
-	     " name='cancel' value='cancel'>" .
-	     "Cancel Edit</button>" .
-	     "<pre>    </pre>" .
-             "<button type='submit'" .
-	     " name='reset-all' value='reset-all'>" .
-	     "Reset All to Inherited Values</button>";
+        echo <<<EOT
+	<button type='submit'
+	        name='update' value='update'>
+	    Update Options</button>
+	<pre>    </pre>
+        <button type='submit'
+	        name='cancel' value='cancel'>
+	    Cancel Edit</button>
+	<pre>    </pre>
+        <button type='submit'
+	        name='reset-all' value='reset-all'>
+	    Reset All to Inherited Values</button>
+EOT;
     else
-        echo "<button type='submit' name='edit'" .
-	     " value='edit'>Edit Options</button>";
+        echo <<<EOT
+	<button type='submit' name='edit'
+	        value='edit'>Edit Options</button>
+EOT;
 
     $values_help = HELP ( 'option-numbers' );
     echo <<<EOT
-    </div></div>
+    </div>
     <div class='values'>
     <table style='width:100%'><tr>
     <td>

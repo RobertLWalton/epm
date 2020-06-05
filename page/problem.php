@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 03:40:43 EDT 2020
+    // Date:	Fri Jun  5 02:03:36 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -12,7 +12,9 @@
     // Selects EPM user problem.  Displays and uploads
     // problem files.
 
-    if ( $_SERVER['REQUEST_METHOD'] == 'GET' )
+    if ( $_SERVER['REQUEST_METHOD'] == 'GET'
+         &&
+	 ! isset ( $_SERVER['id'] ) )
         $epm_page_type = '+init+';
     else
         $epm_page_type = '+problem+';
@@ -46,7 +48,7 @@
     }
 
     require "$epm_home/include/epm_make.php";
-    if ( $epm_method == 'GET' )
+    if ( $epm_page_type == '+init+' )
     {
 	$work = [];
 	$run  = [];
@@ -669,6 +671,7 @@ EOT;
     <form method='GET'>
     <input type='hidden'
 	   name= 'problem' value='$problem'>
+    <input type='hidden' name='id' value='$ID'>
     <button type='submit'
 	    formaction='run.php'>
 	    Run</button>

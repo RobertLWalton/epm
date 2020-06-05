@@ -565,7 +565,8 @@ EOT;
 EOT;
     else
     {
-        $view = VIEW ( 'view.php', 'View' );
+        $view = VIEW ( 'view.php',
+	               'View Users and Problems' );
     	echo <<<EOT
 	<button type="submit"
 		name='edit' value='profile'>
@@ -578,8 +579,9 @@ EOT;
 	<button type="submit"
 		formaction="project.php"
 		formmethod='GET'>Project</button>
-	$view
 	<strong>Page</strong>
+	<pre>   </pre>
+	$view
 EOT;
     }
     echo <<<EOT

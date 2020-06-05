@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  2 17:25:16 EDT 2020
+    // Date:	Fri Jun  5 02:07:04 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -353,6 +353,7 @@
     <form method='GET'>
     <input type='hidden'
            name='problem' value='$problem'>
+    <input type='hidden' name='id' value='$ID'>
     <button type='submit'
             formaction='problem.php'>Problem
     </button>

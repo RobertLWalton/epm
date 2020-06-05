@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 18:21:51 EDT 2020
+    // Date:	Fri Jun  5 02:53:12 EDT 2020
 
     // Edits problem option page.
 
@@ -123,11 +123,9 @@
     </td>
     <td>
     <form method='GET'>
-    <strong>Go To:</strong>
     <button type='submit' formaction='view.php'>
-    View
+    View Users and Problems
     </button>
-    <strong>Page</strong>
     </form>
     </td>
     <td style='text-align:right'>
