@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun  4 17:52:25 EDT 2020
+// Date:    Sat Jun  6 09:18:43 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -278,6 +278,24 @@ if ( ! isset ( $_POST['xhttp'] )
 	// and not a POST, even if a POST was the
 	// request that created the current version
 	// of the page.
+
+    function AUX_WINDOW ( name, page )
+    {
+	var x = screen.width - 1280;
+	var y = screen.height - 800;
+	if ( name == 'help' ) y = 0;
+	window.open
+	    ( page, name,
+	      'height=800px,width=1280px,' +
+	      'screenX=' + x + 'px,' +
+	      'screenY=' + y + 'px' );
+    }
+
+    function HELP ( reference )
+    {
+        AUX_WINDOW ( 'help',
+	             '/page/help.html#' + reference );
+    }
     </script>
 EOT;
 

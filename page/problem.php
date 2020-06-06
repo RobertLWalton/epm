@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun  5 03:19:11 EDT 2020
+    // Date:	Sat Jun  6 09:36:50 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -496,9 +496,8 @@ EOT;
 	        + encodeURIComponent ( problem )
 		+ '&filename='
 		+ encodeURIComponent ( filename );
-	window.open
-	    ( src, '+view+',
-	      'height=800px,width=1280px' );
+	console.log ( 'SRC ' + src );
+	AUX_WINDOW ( 'view', src );
     }
 
     function TOGGLE_BODY ( name, thing )
@@ -631,7 +630,6 @@ EOT;
 	echo "<br></div></div>";
     }
 
-    $problem_page_help = HELP ( 'problem-page' );
     echo <<<EOT
     <div class='manage' id='manage'>
     <table style='width:100%'>
@@ -668,7 +666,10 @@ EOT;
     </form>
     <strong>Page</strong>
     </td><td style='text-align:right'>
-    $problem_page_help</td>
+    <button type='button'
+            onclick='HELP("problem-page")'>
+	?</button>
+    </td>
     </tr></table>
     </div>
 EOT;
@@ -703,8 +704,6 @@ EOT;
 	    $r .= count ( $kept ) . ' files kept';
 	echo "<div class='command_display'>";
 	get_commands_display ( $display );
-	$commands_help =
-	    HELP ( 'problem-commands' );
 	echo <<<EOT
 	<table style='width:100%'><tr>
 	<td>
@@ -720,7 +719,10 @@ EOT;
 	&nbsp;
 	<pre>($r)</pre>
 	</td><td style='text-align:right'>
-	$commands_help</td>
+	<button type='button'
+		onclick='HELP( "problem-commands")'>
+	    ?</button>
+	</td>
 	</tr></table>
 	<div id='commands_body'
 	     style='display:none'>
@@ -743,8 +745,6 @@ EOT;
 
 	if ( count ( $working_files ) > 0 )
 	{
-	    $working_help =
-		HELP ( 'problem-working' );
 	    echo <<<EOT
 	    <div class='work_display'
 		 id='work-display'>
@@ -762,7 +762,10 @@ EOT;
 		Commands
 		(most recent first):</strong>
 	    </td><td style='text-align:right'>
-	    $working_help</td>
+	    <button type='button'
+		    onclick='HELP("problem-working")'>
+		?</button>
+	    </td>
 	    </tr></table>
 	    <div id='working_body'
 		 style='display:none'>
@@ -849,9 +852,6 @@ EOT;
 	}
     }
 
-    $current_problem_files_help =
-	HELP ( 'problem-marks' );
-
     echo <<<EOT
     <div class='problem_display'
 	 id='problem-display'>
@@ -899,7 +899,10 @@ EOT;
 	     "Delete Over-Struck Files">
     </form>
     </td><td style='text-align:right'>
-    $current_problem_files_help</td>
+    <button type='button'
+            onclick='HELP("problem-marks")'>
+	?</button>
+    </td>
     </tr>
     </table>
     <div id='problems_body'>
