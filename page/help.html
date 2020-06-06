@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu May 21 16:43:02 EDT 2020
+Date:	Sat Jun  6 15:42:08 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -41,7 +41,10 @@ font-size: 18pt;
 strong {
 font-size: 16pt;
 }
-table, td, a {
+a[name] {
+    font-weight: bold;
+}
+table, td, a, li {
 font-size: 16pt;
 }
 p {
@@ -142,27 +145,43 @@ vertical-align: top;
 
 <p>The <b>login page</b> manages login using email addresses to
 identify a user and confirmation numbers to create tickets for
-the user in the user's browser.
-</p>
-
-<a name="login-email"><h2>User Email Address</h2></a>
+the user in the user's browser.  Once you have logged in, an
+EPM server session is attached to your browser and your user ID
+and browser ticket ID is attached to the session.
 <p>
-Your <b>email address</b> serves as your account name,
-and also as the place to which confirmation numbers
-will be sent.
+Your session is allocated:
+<ul>
+<li> A <a name="main-tab">main tab</a> for non-problem-specific
+actions.  This is allocated on login and after login is
+loaded with the <a href="#project-page">Project Page</a>.
+<li> A <a name="problem-tab">problem tab</a> for each of your
+problems.
+<li> A <a name="view-window">view popup window</a> for read-only
+views of files and information.
+<li> A <a name="help-window">help popup window</a> for this
+help page.
+</ul>
 <p>
-If you are making a new account, enter an appropriate
-email address.
+To change
+the user ID and ticket ID of a session you must explicitly log out,
+and then you must log back in.  Logging out will orphan any
+problem tabs and view windows that you have and you should close
+them.
 <p>
-You can have up to 3 email addresses associated with
-your account.  Its a good idea to have at least 2,
-in case one is not working when you need it.
-<p>
-An account is on an <a name='EPM-server'><b>EPM server</b></a>.
+An account is on an <a name='EPM-server'>EPM server</a>.
 EPM servers are named
 by the document root URL used to access them, and EPM servers with
 different names are independent of each other (even
 if they are running on the same computer).
+</p>
+
+<a name="login-email"><h2>User Email Address</h2></a>
+<p>
+You can have up to 3 <b>email addresses</b> that map to your
+user ID, and hence to your account on the EPM server.
+<p>
+If you are making a new account, enter an appropriate
+email address.
 </p>
 
 <a name="browser-ticket"><h2>Browser Ticket</h2></a>
@@ -171,24 +190,25 @@ A browser <b>ticket</b> is stored in the browser local memory
 and enables a user to log in by giving only the email
 address associated with ticket.  There is a separate
 ticket for each <a href='#EPM-server'>EPM server</a>,
-each email address of an account on that server, and each browser.
+each browser, and
+each email address of an account on the EPM server.
 <p>
 A ticket is created using a
-<a name='confirmation-number'><b>confirmation number</b></a> sent to
+<a name='confirmation-number'>confirmation number</a> sent to
 the email address by the EPM server and copied from the email
 into the browser by the user.  A ticket
 expires after a certain interval: 2 days for the first ticket,
 7 days for the second ticket, and 30 days for each
 ticket thereafter.  In counting tickets, only <b>expired tickets</b>
 are counted, so if you keep getting tickets before the previous
-one expires, all your tickets will expire in the same number of days.
+one expires, these will not change your ticket expiration time.
 <p>
 A confirmation number is only used during ticket creation, and
 cannot be used to create more than one ticket.  It is not saved
 by the EPM server or browser.
 <p>
 The `<b>Get New Ticket</b>' button removes the ticket for the
-entered email address and <a href='#EPM-server'>EPM server name</a>
+entered email address and EPM server
 from the browser and returns to the initial
 login page.
 <p>
