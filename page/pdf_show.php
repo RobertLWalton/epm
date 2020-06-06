@@ -2,14 +2,14 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  1 01:01:58 EDT 2020
+    // Date:	Sat Jun  6 05:53:38 EDT 2020
 
     // Show the PDF file $_GET['filename'] for
     // problem $_GET['problem'].  File may be in
     // problem directory or a temporary in its
     // +work+ subdirectory.
 
-    $epm_page_type = '+view+';
+    $epm_page_type = '+init+';
     $epm_pdf = true;
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
@@ -18,6 +18,8 @@
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
 	       $epm_method );
+    elseif ( ! isset ( $_SESSION['EPM_UID'] ) )
+	exit ( "ACCESS: illegal GET to pdf_show.php" );
     elseif ( ! isset ( $_GET['problem'] ) )
 	exit ( "ACCESS: illegal GET to pdf_show.php" );
     elseif ( ! isset ( $_GET['filename'] ) )
