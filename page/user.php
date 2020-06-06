@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 04:50:19 EDT 2020
+    // Date:	Sat Jun  6 10:17:22 EDT 2020
 
     // Display and edit user information in:
     //
@@ -528,7 +528,6 @@ EOT;
 	</div>
 EOT;
 
-    $user_help = HELP ( 'user-page' );
     echo <<<EOT
     <div class='manage'>
     <form method='POST' action='user.php'>
@@ -536,8 +535,7 @@ EOT;
     <table style='width:100%'>
     <tr>
     <td>
-    <strong>Your User Email Addresses and Profile
-    </strong>
+    <strong>Your Info</strong>
 EOT;
     if ( $edit == 'profile' )
     {
@@ -565,8 +563,6 @@ EOT;
 EOT;
     else
     {
-        $view = VIEW ( 'view.php',
-	               'View Users and Problems' );
     	echo <<<EOT
 	<button type="submit"
 		name='edit' value='profile'>
@@ -581,7 +577,9 @@ EOT;
 		formmethod='GET'>Project</button>
 	<strong>Page</strong>
 	<pre>   </pre>
-	$view
+	<button type='button'
+		onclick='AUX_WINDOW("view","view.php")'>
+	    View Users, Projects, and Problems</button>
 EOT;
     }
     echo <<<EOT
@@ -597,7 +595,10 @@ EOT;
 	<pre>   </pre>
 EOT;
     echo <<<EOT
-    $user_help</td>
+    <button type='button'
+            onclick='HELP("user-page")'>
+	?</button>
+    </td>
     </tr>
     </table>
     </form>
