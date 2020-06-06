@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Jun  1 18:11:27 EDT 2020
+// Date:	Sat Jun  6 16:13:08 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -145,6 +145,10 @@ $pardir = "$probdir/+parent+";
 $lock = NULL;
 if ( is_dir ( "$epm_data/$pardir" ) )
     $lock = LOCK ( $pardir, LOCK_SH );
+
+$altered = filemtime ( "$epm_data/$probdir/+altered+" );
+if ( $altered === false ) $altered = 0;
+while ( time() <= $altered ) usleep ( 100000 );
 
 load_file_caches();
 
@@ -327,6 +331,18 @@ foreach ( $runin as $infile )
 	}
     }
 
+    $atime = filemtime ( "$epm_data/$probdir/+altered+" );
+    if ( $atime === false ) $atime = 0;
+    if ( $atime > $altered )
+    {
+	$errors[] = "$uid $problem was altered by"
+		  . " another one of your tabs"
+		  . " during run execution";
+	$first_failed = $base;
+	$score = 'EPM Tab Conflict Error';
+	break;
+    }
+
     foreach ( $map as $key => $e )
     {
 	if ( $e[1] == 'X' ) continue;
@@ -344,7 +360,18 @@ foreach ( $runin as $infile )
 	$score = 'Program Crashed';
 	break;
     }
-    elseif ( $r != ['D',0] )
+    elseif ( is_array ( $r ) && $r[0] == 'B' )
+    {
+        $errors[] = "$base.sh died during startup";
+	$first_failed = $base;
+	$score = 'EPM System Error';
+	break;
+    }
+    elseif (    is_array ( $r )
+	     && $r[1] != $epm_score_file_written
+             && $r[1] != 0 )
+	     // We assume that if $r[0] != 'D' then
+	     // we will have $r[1] != 0.
     {
         $score = get_exit_message ( $r[1] );
         $errors[] = "$base failed with exit code"

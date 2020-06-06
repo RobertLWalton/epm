@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun  5 18:36:05 EDT 2020
+// Date:    Sat Jun  6 16:16:20 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1658,7 +1658,7 @@ function start_make_file
     $altered = @filemtime
         ( "$epm_data/$probdir/+altered+" );
     if ( $altered === false ) $altered = 0;
-    while ( time() <= $altered ) /* wait */;
+    while ( time() <= $altered ) usleep ( 100000 );
 
     load_argument_map
 	( $allow_local_optn, $errors );
@@ -1817,7 +1817,7 @@ function finish_make_file ( & $warnings, & $errors )
     if ( $altered > $work['ALTERED'] )
     {
 	$errors[] = "$uid $problem was altered by"
-		  . " another one of your windows"
+		  . " another one of your tabs"
 		  . " during command execution";
 	return;
     }
