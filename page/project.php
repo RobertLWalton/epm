@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 11:23:26 EDT 2020
+    // Date:	Sat Jun  6 09:50:24 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1628,9 +1628,6 @@ EOT;
 	$cancel = ( $op == 'push' ?
 		    'Cancel Pushing' :
 		    'Cancel Pulling' );
-	$warnings_help = HELP ( 'project-warnings' );
-	$errors_help = HELP ( 'project-errors' );
-	$proposed_help = HELP ( 'project-execute' );
 	echo <<<EOT
 
 	<div id='warn-response' style='display:none'>
@@ -1649,7 +1646,10 @@ EOT;
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
-	$warnings_help</td>
+	<button type='button'
+		onclick='HELP("project-warnings")'>
+	    ?</button>
+	</td>
 	</tr>
 	</table>
 	<pre id='warn-messages'></pre>
@@ -1667,7 +1667,10 @@ EOT;
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
-	$errors_help</td>
+	<button type='button'
+		onclick='HELP("project-errors")'>
+	    ?</button>
+	</td>
 	</tr>
 	</table>
 	<pre id='error-messages'></pre>
@@ -1688,7 +1691,10 @@ EOT;
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
-	$proposed_help</td>
+	<button type='button'
+		onclick='HELP("project-execute")'>
+	    ?</button>
+	</td>
 	</tr>
 	</table>
 	<pre id='compile-messages'></pre>
@@ -1696,7 +1702,6 @@ EOT;
 EOT;
     }
 
-    $project_help = HELP ( 'project-page' );
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
@@ -1748,7 +1753,10 @@ EOT;
     echo <<<EOT
     </td>
     <td style='text-align:right'>
-    $project_help</td>
+    <button type='button'
+            onclick='HELP("project-page")'>
+	?</button>
+    </td>
     </tr>
     </table>
     </form>
@@ -1824,7 +1832,6 @@ EOT;
 EOT;
     if ( $op == 'push' )
     {
-	$push_help = HELP ( 'project-push' );
 	$project_options = projects_to_options
 	    ( read_projects ( 'push' ) );
 
@@ -1859,7 +1866,10 @@ EOT;
 	    </td>
 	    <td>
             <td style='text-align:right'>
-            $push_help</td>
+	    <button type='button'
+		    onclick='HELP("project-push")'>
+		?</button>
+            </td>
 	</tr>
 	<tr id='post-submit' style='display:none'>
 	    <th id='post-submit'
@@ -1874,7 +1884,10 @@ EOT;
 	    </span></strong></td>
 	    <td>
             <td style='text-align:right'>
-            $push_help</td>
+	    <button type='button'
+		    onclick='HELP("project-push")'>
+		?</button>
+            </td>
 	</tr>
 	$push_rows
 	</table>
@@ -2023,8 +2036,6 @@ EOT;
 
     if ( $op == 'pull' )
     {
-	$pull_help = HELP ( 'project-pull' );
-
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
@@ -2048,7 +2059,10 @@ EOT;
 	    </td>
 	    <td>
             <td style='text-align:right'>
-            $pull_help</td>
+	    <button type='button'
+		    onclick='HELP("project-pull")'>
+		?</button>
+            </td>
 	</tr>
 	<tr id='post-submit' style='display:none'>
 	    <th id='post-submit'
@@ -2057,7 +2071,10 @@ EOT;
 		        (selected are being pulled)
 		    </strong></th>
             <td style='text-align:right'>
-            $pull_help</td>
+	    <button type='button'
+		    onclick='HELP("project-pull")'>
+		?</button>
+            </td>
 	</tr>
 	$pull_rows
 	</table>
