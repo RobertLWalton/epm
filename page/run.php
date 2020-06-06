@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun  5 03:02:44 EDT 2020
+    // Date:	Sat Jun  6 14:34:59 EDT 2020
 
     // Starts and monitors problem runs and displays
     // results.
@@ -335,7 +335,6 @@
 	echo "<br></div></div>" . PHP_EOL;
     }
 
-    $run_help = HELP ( 'run-page' );
     echo <<<EOT
     <div class='manage' id='manage'>
     <table style='width:100%'>
@@ -362,7 +361,11 @@
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$problem</pre></b>
     </td>
-    <td style='text-align:right'>$run_help</td>
+    <td style='text-align:right'>
+    <button type='button'
+            onclick='HELP("run-page")'>
+	?</button>
+    </td>
     </tr>
     </table>
     </div>

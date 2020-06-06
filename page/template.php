@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun  5 02:53:12 EDT 2020
+    // Date:	Sat Jun  6 14:40:10 EDT 2020
 
     // Edits problem option page.
 
@@ -113,7 +113,6 @@
 
 <?php 
 
-    $template_help = HELP ( 'template-page' );
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
@@ -129,7 +128,10 @@
     </form>
     </td>
     <td style='text-align:right'>
-    $template_help</td>
+    <button type='button'
+            onclick='HELP("template-page")'>
+	?</button>
+    </td>
     </tr>
 
     <tr>

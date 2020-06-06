@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun  6 14:13:22 EDT 2020
+// Date:    Sat Jun  6 14:46:43 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -152,34 +152,6 @@ function EPM_ERROR_HANDLER
 
 set_error_handler ( 'EPM_ERROR_HANDLER' );
 
-// Returns HTML for a help button that creates the
-// +help+ window and goes to the specified item in
-// the help.html file with that window.
-//
-function HELP ( $item )
-{
-    return "<button type='button'" .
-           " onclick='window.open(" .
-	   "\"/page/help.html#$item\"," .
-	   "\"+help+\"," .
-	   "\"height=800px,width=800px\")'>" .
-	   "?</button>";
-}
-
-// Returns HTML for a view button with given name
-// and page (relative to /page/) that creates the
-// +view+ window loads into the given page.
-//
-function VIEW ( $page, $name )
-{
-    return "<button type='button'" .
-           " onclick='window.open(" .
-	   "\"/page/$page\"," .
-	   "\"+view+\"," .
-	   "\"height=800px,width=1280px\")'>" .
-	   "$name</button>";
-}
-
 // DEBUG, LOCK, and UNLOCK functions are in
 // parameters.php because they are shared with
 // bin/epm_run.
@@ -279,6 +251,8 @@ if ( ! isset ( $_POST['xhttp'] )
 	// request that created the current version
 	// of the page.
 
+    // See HELP and VIEW below.
+    //
     function AUX_WINDOW ( name, page, x, y, w, h )
     {
 	if ( x < 0 ) x += screen.width;
@@ -291,12 +265,16 @@ if ( ! isset ( $_POST['xhttp'] )
 	      'screenY=' + y + 'px' );
     }
 
+    // Launches 'help' window in upper right corner.
+    //
     function HELP ( reference )
     {
         AUX_WINDOW ( 'help',
 	             '/page/help.html#' + reference,
 		     -800, 0, 800, 800 );
     }
+    // Launches 'view' window in lower right corner.
+    //
     function VIEW ( page )
     {
         AUX_WINDOW ( 'view',

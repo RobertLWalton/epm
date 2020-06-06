@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 17:46:44 EDT 2020
+    // Date:	Sat Jun  6 14:42:38 EDT 2020
 
     // Allows user and problem information to be viewed.
 
@@ -254,7 +254,6 @@ var LOG = function(message) {};
 	echo "<br></div></div>";
     }
 
-    $view_help = HELP ( 'view-page' );
     $user_options = users_to_options ( $users );
     $listname_options = list_to_options
         ( $favorites, $listname );
@@ -274,7 +273,10 @@ var LOG = function(message) {};
     </td>
     <td>
     </td><td style='text-align:right'>
-    $view_help</td>
+    <button type='button'
+            onclick='HELP("view-page")'>
+	?</button>
+    </td>
     </tr>
     </table>
     </div>
