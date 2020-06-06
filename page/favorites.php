@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 16:50:27 EDT 2020
+    // Date:	Sat Jun  6 14:16:54 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -257,7 +257,6 @@ var LOG = function(message) {};
 	echo "<br></div></div>";
     }
 
-    $favorites_help = HELP ( 'favorites-page' );
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
@@ -287,7 +286,10 @@ var LOG = function(message) {};
     </td>
     <td>
     </td><td style='text-align:right'>
-    $favorites_help</td>
+    <button type='button'
+            onclick='HELP("favorites-page")'>
+	?</button>
+    </td>
     </tr>
 
     <tr id='edited' style='width:100%;display:none'>
@@ -312,7 +314,10 @@ var LOG = function(message) {};
     </td>
     <td>
     </td><td style='text-align:right'>
-    $favorites_help</td>
+    <button type='button'
+            onclick='HELP("favorites-page")'>
+	?</button>
+    </td>
     </tr>
 
     </table>

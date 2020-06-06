@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun  5 03:04:29 EDT 2020
+    // Date:	Sat Jun  6 14:28:00 EDT 2020
 
     // Edits problem option page.
 
@@ -329,8 +329,6 @@
 	echo "<br></div></div>";
     }
 
-    $option_help = HELP ( 'option-page' );
-    $templates = VIEW ( 'template.php', 'View Templates' );
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
@@ -363,13 +361,18 @@ EOT;
 EOT;
     echo <<<EOT
     <td style='width=15%''>
-    $templates
+    <button type='button'
+            onclick='VIEW("template.php")'>
+    View Templates</button>
     </td>
     <td style='text-align:right;width=30%'>
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$problem</pre>
     <pre>   </pre>
-    $option_help</td>
+    <button type='button'
+            onclick='HELP("option-page")'>
+	?</button>
+    </td>
     </table>
     </div>
 
@@ -404,7 +407,6 @@ EOT;
 	        value='edit'>Edit Options</button>
 EOT;
 
-    $values_help = HELP ( 'option-numbers' );
     echo <<<EOT
     </div>
     <div class='values'>
@@ -420,7 +422,10 @@ EOT;
     &nbsp;
     <strong>Number Options:</strong>
     </td><td style='text-align:right'>
-    $values_help</td>
+    <button type='button'
+            onclick='HELP("option-numbers")'>
+	?</button>
+    </td>
     </tr></table>
     <div class='indented' id='values_body'>
     <table>
@@ -471,7 +476,6 @@ EOT;
     }
     echo "</table></div></div>";
 
-    $arguments_help = HELP ( 'option-arguments' );
     echo <<<EOT
     <br>
     <div class='arguments'>
@@ -488,7 +492,10 @@ EOT;
     &nbsp;
     <strong>Argument Options:</strong>
     </td><td style='text-align:right'>
-    $arguments_help</td>
+    <button type='button'
+            onclick='HELP("option-arguments")'>
+	?</button>
+    </td>
     </tr></table>
     <div class='indented' id='arguments_body'>
     <table>

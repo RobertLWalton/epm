@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 16:32:54 EDT 2020
+    // Date:	Sat Jun  6 14:19:29 EDT 2020
 
     // Maintains problem lists.
 
@@ -573,7 +573,6 @@ EOT;
 	echo "<br></div></div>";
     }
 
-    $list_help = HELP ( 'list-page' );
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
@@ -600,7 +599,10 @@ EOT;
     </td>
     <td>
     </td><td style='text-align:right'>
-    $list_help</td>
+    <button type='button'
+            onclick='HELP("list-page")'>
+	?</button>
+    </td>
     </tr>
 
     <tr id='edited' style='width:100%;display:none'>
@@ -611,7 +613,10 @@ EOT;
     </td>
     <td>
     </td><td style='text-align:right'>
-    $list_help</td>
+    <button type='button'
+            onclick='HELP("list-page")'>
+	?</button>
+    </td>
     </tr>
 
     </table>
