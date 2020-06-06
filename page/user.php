@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 10:17:22 EDT 2020
+    // Date:	Sat Jun  6 14:14:57 EDT 2020
 
     // Display and edit user information in:
     //
@@ -578,7 +578,7 @@ EOT;
 	<strong>Page</strong>
 	<pre>   </pre>
 	<button type='button'
-		onclick='AUX_WINDOW("view","view.php")'>
+		onclick='VIEW("view.php")'>
 	    View Users, Projects, and Problems</button>
 EOT;
     }
