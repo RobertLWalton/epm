@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 18:22:04 EDT 2020
+    // Date:	Sat Jun  6 04:50:19 EDT 2020
 
     // Display and edit user information in:
     //
@@ -586,7 +586,18 @@ EOT;
     }
     echo <<<EOT
     </td>
-    <td style='text-align:right'>$user_help</td>
+    <td style='text-align:right'>
+EOT;
+    if ( ! isset ( $edit ) )
+	echo <<<EOT
+	<button type="submit"
+		formmethod= 'GET'
+	        formaction='logout.php'>
+	    Logout</button>
+	<pre>   </pre>
+EOT;
+    echo <<<EOT
+    $user_help</td>
     </tr>
     </table>
     </form>

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 03:40:31 EDT 2020
+    // Date:	Sat Jun  6 03:55:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -138,7 +138,7 @@
     // EPM_UID.
     //
     // During the execution of the browser identifica-
-    // tion protocol, $_SESSION['EPM_LOGIN_DATA']
+    // tion protocol, $_SESSION['EPM_DATA']
     // is used to hold BID, EMAIL, KEYA, KEYB, CTIME,
     // CNUM, UID, FTIME, TCOUNT, TTIME, ECOUNT, and
     // ETIME.  During the protocol the browser stores
@@ -233,6 +233,8 @@
     else
         $epm_page_type = '+main+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+    // require "$epm_home/include/debug_info.php";
+
     if ( $epm_method == 'GET' )
     {
         require "$epm_home/include/epm_random.php";
@@ -240,6 +242,12 @@
 	    init_id_gen();
 	$ID = bin2hex
 	    ( $_SESSION['EPM_ID_GEN']['+main+'][0] );
+
+	if ( isset ( $_SESSION['EPM_UID'] ) )
+	{
+	    header ( "location: project.php?id=$ID" );
+	    exit;
+	}
 
 	$_SESSION['EPM_SESSION_TIME'] =
 	    strftime ( $epm_time_format,
@@ -255,15 +263,9 @@
 	      FILE_APPEND );
     }
 
-    // require "$epm_home/include/debug_info.php";
-    // if ( ! isset ( $_POST['op'] )
-    //      &&				// xhttp
-    //      ! isset ( $_POST['value'] ) )
-    //     require "$epm_home/include/debug_info.php";
-
-    if ( ! isset ( $_SESSION['EPM_LOGIN_DATA'] ) )
-	$_SESSION['EPM_LOGIN_DATA'] = [];
-    $data = & $_SESSION['EPM_LOGIN_DATA'];
+    if ( ! isset ( $_SESSION['EPM_DATA'] ) )
+	$_SESSION['EPM_DATA'] = [];
+    $data = & $_SESSION['EPM_DATA'];
     $STIME = $_SESSION['EPM_SESSION_TIME'];
 
     // Reply to POST from xhttp.
@@ -608,7 +610,7 @@
 	    if ( $r === false )
 		ERROR ( "could not write login.log" );
 
-	    unset ( $_SESSION['EPM_LOGIN_DATA'] );
+	    unset ( $_SESSION['EPM_DATA'] );
 	    reply ( "DONE $next_page" );
 	}
     }
