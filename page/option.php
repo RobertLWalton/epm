@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 20:43:12 EDT 2020
+    // Date:	Sun Jun  7 10:16:27 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -164,6 +164,7 @@
 		if ( $r === false )
 		    ERROR ( "cannot write $f" );
 	    }
+	    touch ( "$epm_data/$probdir/+altered+" );
 	}
     }
     elseif ( isset ( $_POST['cancel'] ) )
@@ -172,6 +173,7 @@
     {
 	$f = "$probdir/$problem.optn";
 	@unlink ( "$epm_data/$f" );
+	touch ( "$epm_data/$probdir/+altered+" );
 	$optmap = $inherited;
     }
 ?>
