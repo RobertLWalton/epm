@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Jun  6 15:42:08 EDT 2020
+Date:	Sun Jun  7 03:50:07 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -154,19 +154,26 @@ Your session is allocated:
 <li> A <a name="main-tab">main tab</a> for non-problem-specific
 actions.  This is allocated on login and after login is
 loaded with the <a href="#project-page">Project Page</a>.
+You should NOT close this tab while you are logged in.
 <li> A <a name="problem-tab">problem tab</a> for each of your
 problems.
+These are created using the <a href="#project-page">Project Page</a>.
 <li> A <a name="view-window">view popup window</a> for read-only
 views of files and information.
 <li> A <a name="help-window">help popup window</a> for this
-help page.
+help page and the User Guide page.
 </ul>
+<p>
+If you close the main tab by mistake, create a new tab and load
+it with the EPM server URL (that you used for logging in).
+Do NOT attempt to use an analogous method to create any other
+tabs or popup windows for your login session; use the buttons
+that create these instead.
 <p>
 To change
 the user ID and ticket ID of a session you must explicitly log out,
-and then you must log back in.  Logging out will orphan any
-problem tabs and view windows that you have and you should close
-them.
+and then you must log back in.  Logging out should close any
+problem tabs and popup windows that you have.
 <p>
 An account is on an <a name='EPM-server'>EPM server</a>.
 EPM servers are named
@@ -179,9 +186,13 @@ if they are running on the same computer).
 <p>
 You can have up to 3 <b>email addresses</b> that map to your
 user ID, and hence to your account on the EPM server.
+Confirmation numbers will be sent to these email addresses
+in order to create <a href="#browser-ticket">Browser Tickets</a>.
 <p>
 If you are making a new account, enter an appropriate
-email address.
+email address.  You will be routed to the
+<a href="#user-page">User Page</a> to complete the process
+of establishing a new account.
 </p>
 
 <a name="browser-ticket"><h2>Browser Ticket</h2></a>
