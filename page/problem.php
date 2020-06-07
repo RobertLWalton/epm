@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun  7 04:54:55 EDT 2020
+    // Date:	Sun Jun  7 16:11:42 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -421,9 +421,16 @@ EOT;
     {
 	$count = 0;
 	echo "ID $ID\n";
+	$r = update_work_results ( 0 );
+	if (    $r === true
+	     && $_POST['update'] == 'abort' )
+	{
+	    abort_dir ( $work['DIR'] );
+	    usleep ( 100000 ); // 0.1 second
+	    $r = update_work_results ( 0 );
+	}
 	while ( true )
 	{
-	    $r = update_work_results ( 0 );
 	    if ( $r !== true || $count == 50 )
 	    			// 5 seconds
 	    {
@@ -443,6 +450,7 @@ EOT;
 	    }
 	    usleep ( 100000 ); // 0.1 second
 	    $count += 1;
+	    $r = update_work_results ( 0 );
 	}
     }
     else
@@ -716,6 +724,13 @@ EOT;
 	<strong>Commands Last Executed:</strong>
 	&nbsp;
 	<pre>($r)</pre>
+	<pre>   </pre>
+	<div id='abort-switch' class='abort-switch'
+	     style='visibility:hidden;display:inline'>
+	<div id='abort-checkbox' class='checkbox'
+	     onclick='ABORT_CLICK()'></div>
+	<strong style='color:red'>Abort</strong>
+	</div>
 	</td><td style='text-align:right'>
 	<button type='button'
 		onclick='HELP( "problem-commands")'>
@@ -1114,14 +1129,29 @@ EOT;
 	    ( function () { alert ( message ); } );
     }
 
-    var reload = document.getElementById("reload");
-    var reload_id =
+    let reload = document.getElementById("reload");
+    let reload_id =
         document.getElementById("reload-id");
-    var manage = document.getElementById("manage");
-    var work_display =
+    let manage = document.getElementById("manage");
+    let work_display =
         document.getElementById("work-display");
-    var problem_display =
+    let problem_display =
         document.getElementById("problem-display");
+    let abort_switch =
+        document.getElementById("abort-switch");
+    let abort_checkbox =
+        document.getElementById("abort-checkbox");
+    let on = 'black';
+    let off = 'transparent';
+
+    function ABORT_CLICK()
+    {
+        if (    abort_checkbox.style.backgroundColor
+	     == on )
+	    abort_checkbox.style.backgroundColor = off;
+	else
+	    abort_checkbox.style.backgroundColor = on;
+    }
 
     function PROCESS_RESPONSE ( response )
     {
@@ -1204,9 +1234,16 @@ EOT;
 	    // while an xhttp response is pending,
 	    // is the ID needs to be updated by the
 	    // response before a button is pressed.
+	abort_switch.style.visibility = 'visible';
+	    // This permits abort.
 
-	let data = 'update=update&xhttp=yes&id=' + ID
-	         + '&problem=' + problem;
+	let abort =
+	    (    abort_checkbox.style.backgroundColor
+	      == on );
+	var data = ( abort ? 'update=abort' :
+	                     'update=yes' );
+	data = data + '&xhttp=yes&id=' + ID
+	     + '&problem=' + problem;
 	LOG ( 'xhttp sent: ' + data );
 	xhttp.send ( data );
     }
