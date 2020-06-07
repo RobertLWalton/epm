@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jun  7 03:50:07 EDT 2020
+Date:	Sun Jun  7 12:36:17 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -171,7 +171,7 @@ tabs or popup windows for your login session; use the buttons
 that create these instead.
 <p>
 To change
-the user ID and ticket ID of a session you must explicitly log out,
+the user ID of a session you must explicitly log out,
 and then you must log back in.  Logging out should close any
 problem tabs and popup windows that you have.
 <p>
@@ -190,7 +190,8 @@ Confirmation numbers will be sent to these email addresses
 in order to create <a href="#browser-ticket">Browser Tickets</a>.
 <p>
 If you are making a new account, enter an appropriate
-email address.  You will be routed to the
+email address.  After entering the confirmation number sent
+to that address, you will be routed to the
 <a href="#user-page">User Page</a> to complete the process
 of establishing a new account.
 </p>
@@ -211,19 +212,21 @@ into the browser by the user.  A ticket
 expires after a certain interval: 2 days for the first ticket,
 7 days for the second ticket, and 30 days for each
 ticket thereafter.  In counting tickets, only <b>expired tickets</b>
-are counted, so if you keep getting tickets before the previous
-one expires, these will not change your ticket expiration time.
+are counted, so if you get a new ticket before the previous
+one expires, the new ticket will not change your ticket expiration time.
 <p>
 A confirmation number is only used during ticket creation, and
 cannot be used to create more than one ticket.  It is not saved
 by the EPM server or browser.
 <p>
-The `<b>Get New Ticket</b>' button removes the ticket for the
+During confirmation the
+`<b>Get New Ticket</b>' button removes the ticket for the
 entered email address and EPM server
 from the browser and returns to the initial
 login page.
 <p>
-The `<b>Delete All Tickets</b>' button removes the <u>all</u>
+During confirmation the
+`<b>Delete All Tickets</b>' button removes the <u>all</u>
 tickets for the current EPM server from the browser and returns
 to the initial login page.
 </p>
@@ -248,15 +251,20 @@ appears on the user page.
 A short name by which you will be known.
 Must consist of letters, digits, underline(_), and dash(-),
 begin and end with a letter, and have at least 4 characters.
+For privacy, you may wish to choose an ID that is NOT
+part of your e-mail address.
 <li><strong>Full Name</strong>:<p class='list'>
 Your full name, so that you can be looked up on the web.
 <li><strong>Organization</strong>:<p class='list'>
-The organization you are associated with, so you can be
+An organization you are associated with, so you can be
 looked up in the context of this organization.
-Can be `Self', but only if you really have no organization.
+If you are not closely associated with an organization,
+such as a university, you may use an organization
+such as the ACM or if nothing more limited is available, Facebook.
 <li><strong>Location</strong>:<p class='list'>
 The location of your organization, e.g., town, state, and
-country.
+country, or if the organization is nebulous, like the ACM
+or Facebook, your own location.
 <li><strong>Email Addresses</strong>:<p class='list'>
 You must have one or more email addresses associated with
 your account.  You use these to log into the account.
