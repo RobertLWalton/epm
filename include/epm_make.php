@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun  6 21:21:38 EDT 2020
+// Date:    Sun Jun  7 17:13:59 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -615,6 +615,8 @@ function abort_dir ( $dir )
     $pid = $matches[1];
     if ( ! is_running ( $pid ) ) return '';
     exec ( "kill -s HUP -$pid >/dev/null 2>&1" );
+        // For some reason sending QUIT instead of HUP
+	// does not work.
     $time = microtime ( true ) + 0.5;
     while ( microtime ( true ) < $time )
     {
@@ -805,6 +807,9 @@ function compile_commands
     $map = [];   // Runmap.
     $n = 0;      // Line count
     $cont = 0;   // Next line is continuation.
+    $r .= "trap 'exit 129' HUP" . PHP_EOL;
+                 // If we do not do this, sending HUP
+		 // returns exit code 0.
     $r .= "trap 'echo ::\$n \$? DONE' EXIT" . PHP_EOL;
     $r .= "n=B; echo $$ PID" . PHP_EOL;
     $r .= "n=B; set -e" . PHP_EOL;
