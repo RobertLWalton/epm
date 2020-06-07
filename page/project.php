@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun  7 05:25:19 EDT 2020
+    // Date:	Sun Jun  7 09:49:56 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -288,6 +288,11 @@
     //		Time returned by LOCK before compile
     //		of projects/PROJECT/PROBLEM directory,
     //		if it exists.
+    //
+    //	   EPM_DATA ALTERED
+    //		Filemtime of users/UID/PROBLEM/+altered+
+    //		before compile, or 0 if file does not
+    //		exist.
 
     // Non-XHTTP POSTs:
     // --------- -----
@@ -1389,6 +1394,13 @@ EOT;
 			"  so this $op has been" .
 			" cancelled; try again";
 	    }
+	    $f = "users/$uid/$problem/+altered+";
+	    $altered = filemtime ( "$epm_data/$f" );
+	    if ( $altered === false ) $altered = 0;
+	    if ( $altered > $data['ALTERED'] )
+		$errors[] = "$uid $problem was altered"
+			  . " by another one of your"
+			  . " tabs during this $op";
 
 	    if ( count ( $errors ) == 0 )
 		execute_commands ( $errors );
@@ -1438,6 +1450,10 @@ EOT;
 		               LOCK_EX : LOCK_SH );
 		$data['LOCK'] = LOCK ( $d, $lock_type );
 	    }
+	    $f = "users/$uid/$problem/+altered+";
+	    $altered = filemtime ( "$epm_data/$f" );
+	    if ( $altered === false ) $altered = 0;
+	    $data['ALTERED'] = $altered;
 
 	    if ( $op == 'push' )
 		compile_push_problem
