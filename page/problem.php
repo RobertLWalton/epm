@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 20:43:27 EDT 2020
+    // Date:	Sun Jun  7 04:54:55 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -396,8 +396,13 @@ EOT;
 			   ( $probdir ) ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
+	$d = "$probdir/+parent+";
+	$lock = NULL;
+	if ( is_dir ( "$epm_data/$d" ) )
+	    $lock = LOCK ( $d, LOCK_SH );
 	start_run
-	    ( "$probdir/+work+", $f, "$probdir/+run+",
+	    ( "$probdir/+work+", $f,
+	      $lock, "$probdir/+run+",
 	      false, $errors );
         if ( isset ( $run['RESULT'] ) )
 	{
