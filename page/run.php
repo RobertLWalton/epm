@@ -2,7 +2,12 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 14:34:59 EDT 2020
+    // Date:	Sat Jun  6 20:43:39 EDT 2020
+
+    // The authors have placed EPM (its files and the
+    // content of these files) in the public domain;
+    // they make no warranty and accept no liability
+    // for EPM.
 
     // Starts and monitors problem runs and displays
     // results.
@@ -28,13 +33,7 @@
     $probdir = "users/$uid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
-    {
-	// Some other session deleted the problem;
-	// let project.php deal with it.
-	//
-	header ( "Location: /page/project.php" );
-	exit;
-    }
+        exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_make.php";
     load_file_caches();
@@ -51,8 +50,12 @@
 	     ! preg_match ( '/\.run$/', $f ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " run.php" );
+	$d = "$probdir/+parent+";
+	$lock = NULL;
+	if ( is_dir ( "$epm_data/$d" ) )
+	    $lock = LOCK ( $d, LOCK_SH );
 	start_run ( "$probdir/+work+", $f,
-	            "$probdir/+run+", false,
+	            $lock, "$probdir/+run+", false,
 	            $errors );
 	$post_processed = true;
     }
@@ -64,8 +67,12 @@
 	     ! preg_match ( '/\.run$/', $f ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " run.php" );
+	$d = "$probdir/+parent+";
+	$lock = NULL;
+	if ( is_dir ( "$epm_data/$d" ) )
+	    $lock = LOCK ( $d, LOCK_SH );
 	start_run ( "$probdir/+work+", $f,
-	            "$probdir/+run+", true,
+	            $lock, "$probdir/+run+", true,
 	            $errors );
 	$post_processed = true;
     }

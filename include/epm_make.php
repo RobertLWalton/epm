@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun  6 16:16:20 EDT 2020
+// Date:    Sat Jun  6 21:21:38 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1924,9 +1924,22 @@ function finish_make_file ( & $warnings, & $errors )
 //     $run['BASE'] to $runbase
 //     $run['SUBMIT'] to $submit
 //     $run['RESULT'] to true
+//     $run['LOCK'] to $lock
+//     $run['ALTERED'] to filemtime of
+//		       $probdir/+altered+, or 0 if
+//		       that file does not exist
+//
+// The $lock parameter should be the value of
+//
+//	LOCK ( "$probdir/+parent+", LOCK_... )
+//
+// if that directory exists, where the lock must be
+// acquired BEFORE load_file_caches is called.  If
+// the directory does not exist, $lock should be NULL.
+// The lock may be shared or exclusive.
 //
 function start_run
-	( $workdir, $runfile, $rundir, $submit,
+	( $workdir, $runfile, $lock, $rundir, $submit,
 	            & $errors )
 {
     global $epm_data, $work, $run, $_SESSION,
@@ -1936,6 +1949,11 @@ function start_run
     $work = [];
 
     $errors_size = count ( $errors );
+
+    $altered = @filemtime
+        ( "$epm_data/$probdir/+altered+" );
+    if ( $altered === false ) $altered = 0;
+    while ( time() <= $altered ) usleep ( 100000 );
 
     load_file_caches();
 
@@ -2006,6 +2024,8 @@ function start_run
     $run['BASE'] = $runbase;
     $run['SUBMIT'] = $submit;
     $run['RESULT'] = true;
+    $run['LOCK'] = $lock;
+    $run['ALTERED'] = $altered;
 }
  
 // Finish run started by start_run.  Before calling
@@ -2059,6 +2079,31 @@ function finish_run ( & $errors )
         ERROR ( "finish_run called with 'true'" .
 	        " session EPM_RUN RESULT" );
 
+    $d = "$probdir/+parent+";
+    if ( is_dir ( "$epm_data/$d" ) )
+    {
+	$lock = LOCK ( $d, LOCK_SH );
+        if ( ! isset ( $run['LOCK'] )
+	     ||
+	     $lock > $run['LOCK'] )
+	{
+	    $errors[] = "parent of $uid $problem was"
+	              . " pushed during run execution";
+	    return;
+	}
+    }
+
+    $altered = @filemtime
+        ( "$epm_data/$probdir/+altered+" );
+    if ( $altered === false ) $altered = 0;
+    if ( $altered > $run['ALTERED'] )
+    {
+	$errors[] = "$uid $problem was altered by"
+		  . " another one of your tabs"
+		  . " during run execution";
+	return;
+    }
+
     if ( $result === false )
     {
         $errors[] = "$rundir/$runbase.sh died";
@@ -2102,6 +2147,9 @@ function finish_run ( & $errors )
 	    WARN ( $e );
 	    $errors[] = "EPM SYSTEM ERROR: $e";
 	}
+	else
+	    touch
+		( "$epm_data/$probdir/+altered+" );
 	return;
     }
 

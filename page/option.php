@@ -2,7 +2,12 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 14:28:00 EDT 2020
+    // Date:	Sat Jun  6 20:43:12 EDT 2020
+
+    // The authors have placed EPM (its files and the
+    // content of these files) in the public domain;
+    // they make no warranty and accept no liability
+    // for EPM.
 
     // Edits problem option page.
 
@@ -27,13 +32,7 @@
     $probdir = "users/$uid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
-    {
-	// Some other session deleted the problem;
-	// let project.php deal with it.
-	//
-	header ( "Location: /page/project.php" );
-	exit;
-    }
+        exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_template.php";
     $_SESSION['EPM_PERMISSION']['option']['template'] =

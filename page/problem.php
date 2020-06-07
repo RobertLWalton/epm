@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 14:13:36 EDT 2020
+    // Date:	Sat Jun  6 20:43:27 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -39,13 +39,7 @@
     $probdir = "users/$uid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
-    {
-	// Some other session deleted the problem;
-	// let project.php deal with it.
-	//
-	header ( "Location: /page/project.php" );
-	exit;
-    }
+        exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_make.php";
     if ( $epm_page_type == '+init+' )
