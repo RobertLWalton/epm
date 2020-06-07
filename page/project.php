@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 09:50:24 EDT 2020
+    // Date:	Sun Jun  7 05:25:19 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1803,7 +1803,9 @@ EOT;
 		listname_to_problem_options
 		    ( $listname );
 	    echo <<<EOT
-	    <strong>Go To Problem:</strong>
+	    <strong>or Create Tab for Problem:</strong>
+EOT;
+	    if ( $problem_options != '' ) echo <<<EOT
 	    <form method='POST' action='project.php'
 		  id='goto-form'>
 	    <input type='hidden' name='id' value='$ID'>
@@ -1813,9 +1815,14 @@ EOT;
 	    $problem_options
 	    </select></form>
 EOT;
+	    else echo <<<EOT
+	    selected list contains none of
+	          <mark>Your</mark> problems
+EOT;
         }
 	echo <<<EOT
-	<strong>or Create New Problem:</strong>
+	<br>
+	<strong>Create New Problem:</strong>
 	<form method='POST' action='project.php'
 	      id='create-form'>
 	<input type='hidden' name='id' value='$ID'>
