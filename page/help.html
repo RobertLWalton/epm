@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jun  7 12:36:17 EDT 2020
+Date:	Sun Jun  7 12:55:10 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -106,6 +106,15 @@ vertical-align: top;
 </ul>
 <li><a href="#user-page">User Page</a>
 
+<li><a href="#project-page">Project Page
+<ul>
+<li><a href="#project-pull">Pulling Problems</a>
+<li><a href="#project-push">Pushing Problems</a>
+<li><a href="#problem-lists">Problem Lists</a>
+<li><a href="#favorites-page">Favorites Page</a>
+<li><a href="#problem-list-descriptions">Problem List Descriptions</a>
+</ul>
+
 <li><a href="#problem-page">Problem Page</a>
 <ul>
 <li><a href="#problem-names">Problem Names</a>
@@ -125,15 +134,6 @@ vertical-align: top;
 </ul>
 
 <li><a href="#template-page">Template Page
-
-<li><a href="#project-page">Project Page
-<ul>
-<li><a href="#project-pull">Pulling Problems</a>
-<li><a href="#project-push">Pushing Problems</a>
-<li><a href="#problem-lists">Problem Lists</a>
-<li><a href="#favorites-page">Favorites Page</a>
-<li><a href="#problem-list-descriptions">Problem List Descriptions</a>
-</ul>
 
 
 </ul>
@@ -273,6 +273,179 @@ one of them.
 </ul>
 </p>
 
+
+<a name="project-page"><h1>Project Page</h1></a>
+<p>
+A project is a collection of problems which may be solved
+by EPM users.  Before solving a problem in a project, a user pulls
+the problem.  If a user writes their own new problem, the user
+may push that problem to a project so other users can pull the
+problem.
+<p>
+Two builtin projects are `<href name='demos'>demos</a>',
+which contains demonstration
+problems, and `<a href name='public'>public</a>',
+into which anyone may push problems
+they have developed.
+<p>
+The project page lets you pull problems you want to solve
+from projects and push problems you have written to projects.
+The problems to be pushed or pulled are choosen from a list
+of problems, and this
+page also allows you to create and edit such lists.
+<p>
+The first thing you must do is select a problem list.
+One of the builtin problem lists is labelled `Your Problems' and is simply
+a list of all your problems.  For each project from which
+you are permitted to push or pull problems, there is
+a builtin problem list named `PROJECT-NAME Problems' (e.g., `demos Problems'
+and `public Problems').  All the other problem lists
+are created by users like yourself
+(see <a href='#problem-lists'>Problem Lists</a>).
+<p>
+The list selector on this page contains a list of problem lists
+called your `Favorites' list.
+The `<a href='#favorites-page'>Favorites Page</a>'
+allows you to edit this `Favorites' list.  If they are not in your
+`Favorites' list, the `Your Problems' list and various
+`PROJECT-NAME Problems' lists are added to the end of the list selector.
+<p>
+You will likely not have access to all projects.  You will be
+able to pull problems from `demos', but NOT push problems to it.
+You will be able to both pull problems from and push problems to `public'.
+Projects you have no access to will not be visible on the
+Projects Page.
+See the <a href='#admin-page'>Admin Page</a> for more details.
+<p>
+To pull or push problems, select a list of problems and click `Pull'
+or `Push'.  For lists, see <a href='#creating-lists'>Creating Lists</a>.
+</p>
+
+
+<a name="project-pull"><h2>Pulling Problems</h2></a>
+<p>
+If you want to solve a problem that someone else has written,
+you must pull the problem from a project.
+<p>
+To pull problems, select a problems list and click `Pull'.
+Then check the ovals for the problems you want to pull.
+Lastly, click submit.  If all of the problems pull successfully,
+the pulled problem ovals will turn green, a `Done!' message
+will appear, and you will be given a choice whether
+to `Continue' with the Project Page or go to another page.
+<p>
+Checked problems are pulled in the order they appear in the list.
+If there is an error or warning pulling a problem, 
+messages will be displayed and you will be given a choice
+on how to proceed.  You can skip to the next problem or cancel
+all pulling.  For warnings, you can ignore the warning and
+execute the pull actions.
+<p>
+If you want to see the actions that will be taken to pull
+a problem, check the `Check Proposed Actions' button before
+you `Submit'.  You will be shown the proposed actions and
+asked whether or not to execute them or skip to the next
+problem or cancel all pulling.  The problem's oval will become
+red while you are deciding what to do about the actions.
+<p>
+At the end a problem's oval will be green if it was successfully
+pulled, yellow if there were errors while executing the pull
+actions for the problem, and white if no pull actions were executed
+for the problem.
+</p>
+
+<a name="project-push"><h2>Pushing Problems</h2></a>
+<p>
+If you have written your own problem, you can make it
+available for others to solve by pushing the problem
+into a project, such as the <a href='#public'>public</a>
+project.  Then others can <a href='#project-pull'>pull</a>
+your problem from the `public' project and try to solve it.
+<p>
+To push problems, select a problems list and click `Push'.
+Then check the ovals for the problems you want to push.
+Lastly, click submit.
+<p>
+Checked problems are pushed in the order they appear in the list.
+For each, you will be given a list of the actions that will be
+taken if the problem is to be pushed, and asked whether to
+execute the actions, skip the problem, or cancel all pushing.
+While you are deciding, the oval of the problem being processed
+is red.
+<p>
+If you do not want to see the list of actions before they
+are executed, click the `Check Proposed Actions' oval to turn
+it off.
+<p>
+If there is an error or warning pushing a problem, 
+messages will be displayed and you will be given a choice
+on how to proceed.  You can skip to the next problem or cancel
+all pushing.  For warnings, you can ignore the warning and
+execute the push actions.
+<p>
+When all of the problems to be pushed have been processed,
+a `Done!' message
+will appear, and you will be given a choice whether
+to `Continue' with the Project Page or go to another page.
+<p>
+At the end a problem's oval will be green if it was successfully
+pushed, yellow if there were errors while executing the push
+actions for the problem, and white if no push actions were executed
+for the problem.
+</p>
+
+<a name="problem-lists"><h2>Problem Lists</h2></a>
+<p>
+You can create a problem list of your own by typing its name into
+the `New Problem List Name' box in either the Project Page or its
+`Edit List' subpage, or by uploading a list description on
+the project page
+(see <a href=#problem-list-descriptions>Problem List Descriptions</a>).
+<p>
+When it is created the list is added to the beginning of the
+Favorites list
+(see <a href=#favorites-page>Favorites Page</a>).
+and can be edited by clicking `Edit List'.  However, before you
+edit your new list, edit a list from which you are going to copy
+problems
+TBD
+
+</p>
+
+<a name="favorites-page"><h2>Favorites Page</h2></a>
+<p>
+The `Favorites' list is a list of those problem lists
+you find most interesting, in order of interest.
+This Favorites Page is a sub-page of the Project Page
+that allows you to edit the Favorites list.
+<p>
+This Favorites Page displays all the lists that can be on the
+Favorites list, each with an oval that is checked
+for those problem lists that are on the Favorites list.
+The checked lists are in the order that they appear in
+the Favorites list.  Lists created by users may also have an
+attached description created by their author.
+<p>
+If you click on a oval it toggles between checked and
+unchecked.  In either case
+its list is moved to the boundary between checked and unchecked
+lists, so the checked lists are always above the unchecked
+lists.
+<p>
+You can change the order of lists by dragging a list
+to a second list below which you want the first list to be.
+To move a list to the top, drag it to the `Favorites' title
+line.
+<p>
+Changes you make are not recorded until you click `Update'
+or `Finish'.  Clicking `Reset' or `Cancel' restores Favorites
+to its previous state.  `Finish' and `Cancel' return to the Projects Page.
+
+</p>
+
+<a name="problem-list-descriptions"><h2>List Descriptions</h2></a>
+<p>
+</p>
 
 <a name="problem-page"><h1>Problem Page</h1></a>
 
@@ -690,179 +863,6 @@ template must have the `UPLOAD PPPP.cc' condition.
 As another example, a template used when a .run file is submitted
 must have the `SUBMIT' condition.
 Most of the time only templates with no conditions are selected.
-</p>
-
-<a name="project-page"><h1>Project Page</h1></a>
-<p>
-A project is a collection of problems which may be solved
-by EPM users.  Before solving a problem in a project, a user pulls
-the problem.  If a user writes their own new problem, the user
-may push that problem to a project so other users can pull the
-problem.
-<p>
-Two builtin projects are `<href name='demos'>demos</a>',
-which contains demonstration
-problems, and `<a href name='public'>public</a>',
-into which anyone may push problems
-they have developed.
-<p>
-The project page lets you pull problems you want to solve
-from projects and push problems you have written to projects.
-The problems to be pushed or pulled are choosen from a list
-of problems, and this
-page also allows you to create and edit such lists.
-<p>
-The first thing you must do is select a problem list.
-One of the builtin problem lists is labelled `Your Problems' and is simply
-a list of all your problems.  For each project from which
-you are permitted to push or pull problems, there is
-a builtin problem list named `PROJECT-NAME Problems' (e.g., `demos Problems'
-and `public Problems').  All the other problem lists
-are created by users like yourself
-(see <a href='#problem-lists'>Problem Lists</a>).
-<p>
-The list selector on this page contains a list of problem lists
-called your `Favorites' list.
-The `<a href='#favorites-page'>Favorites Page</a>'
-allows you to edit this `Favorites' list.  If they are not in your
-`Favorites' list, the `Your Problems' list and various
-`PROJECT-NAME Problems' lists are added to the end of the list selector.
-<p>
-You will likely not have access to all projects.  You will be
-able to pull problems from `demos', but NOT push problems to it.
-You will be able to both pull problems from and push problems to `public'.
-Projects you have no access to will not be visible on the
-Projects Page.
-See the <a href='#admin-page'>Admin Page</a> for more details.
-<p>
-To pull or push problems, select a list of problems and click `Pull'
-or `Push'.  For lists, see <a href='#creating-lists'>Creating Lists</a>.
-</p>
-
-
-<a name="project-pull"><h2>Pulling Problems</h2></a>
-<p>
-If you want to solve a problem that someone else has written,
-you must pull the problem from a project.
-<p>
-To pull problems, select a problems list and click `Pull'.
-Then check the ovals for the problems you want to pull.
-Lastly, click submit.  If all of the problems pull successfully,
-the pulled problem ovals will turn green, a `Done!' message
-will appear, and you will be given a choice whether
-to `Continue' with the Project Page or go to another page.
-<p>
-Checked problems are pulled in the order they appear in the list.
-If there is an error or warning pulling a problem, 
-messages will be displayed and you will be given a choice
-on how to proceed.  You can skip to the next problem or cancel
-all pulling.  For warnings, you can ignore the warning and
-execute the pull actions.
-<p>
-If you want to see the actions that will be taken to pull
-a problem, check the `Check Proposed Actions' button before
-you `Submit'.  You will be shown the proposed actions and
-asked whether or not to execute them or skip to the next
-problem or cancel all pulling.  The problem's oval will become
-red while you are deciding what to do about the actions.
-<p>
-At the end a problem's oval will be green if it was successfully
-pulled, yellow if there were errors while executing the pull
-actions for the problem, and white if no pull actions were executed
-for the problem.
-</p>
-
-<a name="project-push"><h2>Pushing Problems</h2></a>
-<p>
-If you have written your own problem, you can make it
-available for others to solve by pushing the problem
-into a project, such as the <a href='#public'>public</a>
-project.  Then others can <a href='#project-pull'>pull</a>
-your problem from the `public' project and try to solve it.
-<p>
-To push problems, select a problems list and click `Push'.
-Then check the ovals for the problems you want to push.
-Lastly, click submit.
-<p>
-Checked problems are pushed in the order they appear in the list.
-For each, you will be given a list of the actions that will be
-taken if the problem is to be pushed, and asked whether to
-execute the actions, skip the problem, or cancel all pushing.
-While you are deciding, the oval of the problem being processed
-is red.
-<p>
-If you do not want to see the list of actions before they
-are executed, click the `Check Proposed Actions' oval to turn
-it off.
-<p>
-If there is an error or warning pushing a problem, 
-messages will be displayed and you will be given a choice
-on how to proceed.  You can skip to the next problem or cancel
-all pushing.  For warnings, you can ignore the warning and
-execute the push actions.
-<p>
-When all of the problems to be pushed have been processed,
-a `Done!' message
-will appear, and you will be given a choice whether
-to `Continue' with the Project Page or go to another page.
-<p>
-At the end a problem's oval will be green if it was successfully
-pushed, yellow if there were errors while executing the push
-actions for the problem, and white if no push actions were executed
-for the problem.
-</p>
-
-<a name="problem-lists"><h2>Problem Lists</h2></a>
-<p>
-You can create a problem list of your own by typing its name into
-the `New Problem List Name' box in either the Project Page or its
-`Edit List' subpage, or by uploading a list description on
-the project page
-(see <a href=#problem-list-descriptions>Problem List Descriptions</a>).
-<p>
-When it is created the list is added to the beginning of the
-Favorites list
-(see <a href=#favorites-page>Favorites Page</a>).
-and can be edited by clicking `Edit List'.  However, before you
-edit your new list, edit a list from which you are going to copy
-problems
-TBD
-
-</p>
-
-<a name="favorites-page"><h2>Favorites Page</h2></a>
-<p>
-The `Favorites' list is a list of those problem lists
-you find most interesting, in order of interest.
-This Favorites Page is a sub-page of the Project Page
-that allows you to edit the Favorites list.
-<p>
-This Favorites Page displays all the lists that can be on the
-Favorites list, each with an oval that is checked
-for those problem lists that are on the Favorites list.
-The checked lists are in the order that they appear in
-the Favorites list.  Lists created by users may also have an
-attached description created by their author.
-<p>
-If you click on a oval it toggles between checked and
-unchecked.  In either case
-its list is moved to the boundary between checked and unchecked
-lists, so the checked lists are always above the unchecked
-lists.
-<p>
-You can change the order of lists by dragging a list
-to a second list below which you want the first list to be.
-To move a list to the top, drag it to the `Favorites' title
-line.
-<p>
-Changes you make are not recorded until you click `Update'
-or `Finish'.  Clicking `Reset' or `Cancel' restores Favorites
-to its previous state.  `Finish' and `Cancel' return to the Projects Page.
-
-</p>
-
-<a name="problem-list-descriptions"><h2>List Descriptions</h2></a>
-<p>
 </p>
 
 </div>
