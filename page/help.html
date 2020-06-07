@@ -99,14 +99,14 @@ vertical-align: top;
 <div id='toc' style='display:none'>
 <ul>
 
-<li><a href="#login-page">Login Page</a>
+<li><a href="#login-page">Login Page</a> [main]
 <ul>
 <li><a href="#login-email">User Email Address</a>
 <li><a href="#browser-ticket">Browser Ticket</a>
 </ul>
-<li><a href="#user-page">User Page</a>
+<li><a href="#user-page">User Page</a> [main]
 
-<li><a href="#project-page">Project Page
+<li><a href="#project-page">Project Page</a> [main]
 <ul>
 <li><a href="#project-pull">Pulling Problems</a>
 <li><a href="#project-push">Pushing Problems</a>
@@ -115,7 +115,7 @@ vertical-align: top;
 <li><a href="#problem-list-descriptions">Problem List Descriptions</a>
 </ul>
 
-<li><a href="#problem-page">Problem Page</a>
+<li><a href="#problem-page">Problem Page</a> [problem]
 <ul>
 <li><a href="#problem-names">Problem Names</a>
 <li><a href="#problem-marks">Problem Marks</a>
@@ -125,15 +125,15 @@ vertical-align: top;
 <li><a href="#problem-working">Working Files of Last Executed Commands</a>
 </ul>
 
-<li><a href="#run-page">Run Page</a>
+<li><a href="#run-page">Run Page</a> [problem]
 
-<li><a href="#option-page">Option Page</a>
+<li><a href="#option-page">Option Page</a> [problem]
 <ul>
 <li><a href="#option-numbers">Number Options</a>
 <li><a href="#option-arguments">Argument Options</a>
 </ul>
 
-<li><a href="#template-page">Template Page
+<li><a href="#template-page">Template Page</a> [view]
 
 
 </ul>
@@ -158,11 +158,18 @@ You should NOT close this tab while you are logged in.
 <li> A <a name="problem-tab">problem tab</a> for each of your
 problems.
 These are created using the <a href="#project-page">Project Page</a>.
+There can be at most one problem tab for each of your problems.
 <li> A <a name="view-window">view popup window</a> for read-only
 views of files and information.
 <li> A <a name="help-window">help popup window</a> for this
 help page and the User Guide page.
 </ul>
+<p>
+EPM consists of a set of pages, such as the Login Page and the
+Project Page.  Each of these is assigned to a tab or window.
+The Table of Contents gives the tab or window of each page in []
+brackets after the entry for the page; for example, after the Login
+Page one sees [main], indicating that the Login Page runs in the `main' tab.
 <p>
 If you close the main tab by mistake, create a new tab and load
 it with the EPM server URL (that you used for logging in).
@@ -278,49 +285,85 @@ one of them.
 <p>
 A project is a collection of problems which may be solved
 by EPM users.  Before solving a problem in a project, a user pulls
-the problem.  If a user writes their own new problem, the user
-may push that problem to a project so other users can pull the
-problem.
+the problem.  A use may also write their own new problem that does
+not belong to any project, and when done, the user
+may elect to push that problem to a project so other users can pull the
+problem and try to solve it.
 <p>
-Two builtin projects are `<href name='demos'>demos</a>',
+Two builtin projects are `<a name='demos'>demos</a>',
 which contains demonstration
-problems, and `<a href name='public'>public</a>',
+problems, and `<a name='public'>public</a>',
 into which anyone may push problems
 they have developed.
 <p>
-The project page lets you pull problems you want to solve
-from projects and push problems you have written to projects.
-The problems to be pushed or pulled are choosen from a list
-of problems, and this
-page also allows you to create and edit such lists.
+The project page lets you:
+<ul>
+<li> pull a problem you want to solve from a project
+<li> create a new problem of your own that is not in a project
+<li> create a problem tab for any of your own problems
+     <br>
+     (whether they have been pulled or created by you)
+<li> push a problem you have written into a project
+</ul>
 <p>
-The first thing you must do is select a problem list.
-One of the builtin problem lists is labelled `Your Problems' and is simply
-a list of all your problems.  For each project from which
-you are permitted to push or pull problems, there is
-a builtin problem list named `PROJECT-NAME Problems' (e.g., `demos Problems'
-and `public Problems').  All the other problem lists
-are created by users like yourself
-(see <a href='#problem-lists'>Problem Lists</a>).
+To pull a problem from a project, first select the problem
+list of the project, which will have a name such as
+`public Problems' or `demos Problems'.  Then click the
+<b>Pull</b> button, check the problems you wish to pull (each problem
+has a check box), and click
+the <b>Submit</b> button.  Details are at
+<a href="#project-pull">Pulling Problems</a>.
 <p>
-The list selector on this page contains a list of problem lists
-called your `Favorites' list.
-The `<a href='#favorites-page'>Favorites Page</a>'
-allows you to edit this `Favorites' list.  If they are not in your
-`Favorites' list, the `Your Problems' list and various
-`PROJECT-NAME Problems' lists are added to the end of the list selector.
+To creat a tab for one of your own problems, first
+select a problem list that contains the desired problem,
+such as the `Your Problems' list that contains all your
+problems.  Then select the problem from the
+`<b>Create Tab for Problem</b>' list.
+<p>
+To create a new problem of your own, simply type its name
+into the `<b>Create a New Problem</b>' box.  The name
+must consist of letters, digits, underline(_), and dash(-) and
+begin and end with a letter.  If you plan to publish
+this problem in a project, you should choose a name distinct
+from other problem names in already in the project.
+<p>
+You should understand that when you create a problem of
+your own, the master copies of the problem files remain on
+your own computer.  These files are uploaded to the EPM
+server, but the uploaded copies may not
+be preserved, and cannot be downloaded.
+<p>
+Pushing problems is done in a manner similar to pulling
+them: see <a href="#project-push">Pushing Problems</a>
+for details.
+<p>
+When you pull or push a problem, the problem ends up in
+both a directory private to you, as `Your' problem, and
+in a directory within a project.  The project problem
+directory is known as the <a name='parent'>parent</a>
+of your problem directory.  You problem directory will
+then contain symbolic links to files in its parent.
+However, solution program files are only in your problem
+directory, and NOT in its parent.
+<p>
+You can make your own problem lists, and publish them
+so others can use them.  To do this click the
+`<b>Edit Lists</b>' button on the Projects Page.  See
+<a href='#problem-lists'>Problem Lists</a> for details.
+<p>
+The list of problem lists on the Projects Page is known
+as the Favorites List.  This Favorites List can be edited to include or
+exclude various problem lists by clicking the
+`<b>Edit Favorites</b>' button on the Projects Page.
+See <a href='#favorites-page'>Favorites Page</a> for
+details.
 <p>
 You will likely not have access to all projects.  You will be
 able to pull problems from `demos', but NOT push problems to it.
 You will be able to both pull problems from and push problems to `public'.
 Projects you have no access to will not be visible on the
 Projects Page.
-See the <a href='#admin-page'>Admin Page</a> for more details.
-<p>
-To pull or push problems, select a list of problems and click `Pull'
-or `Push'.  For lists, see <a href='#creating-lists'>Creating Lists</a>.
 </p>
-
 
 <a name="project-pull"><h2>Pulling Problems</h2></a>
 <p>
