@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 03:31:40 EDT 2020
+    // Date:	Mon Jun  8 05:58:57 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -14,7 +14,7 @@
 
     if ( $_SERVER['REQUEST_METHOD'] == 'GET'
          &&
-	 ! isset ( $_SERVER['id'] ) )
+	 ! isset ( $_GET['id'] ) )
         $epm_page_type = '+init+';
     else
         $epm_page_type = '+problem+';
@@ -431,12 +431,13 @@ EOT;
 	}
 	while ( true )
 	{
-	    if ( $r !== true || $count == 50 )
+	    if ( $r !== true || $count == 10 )
 	    			// 5 seconds
 	    {
 	        echo "RELOAD\n";
 		exit;
 	    }
+	    usleep ( 500000 ); // 0.5 second
 	    $r = update_workmap();
 	    if ( count ( $r ) > 0 )
 	    {
@@ -448,7 +449,6 @@ EOT;
 		}
 		exit;
 	    }
-	    usleep ( 100000 ); // 0.1 second
 	    $count += 1;
 	    $r = update_work_results ( 0 );
 	}

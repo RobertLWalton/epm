@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 05:10:01 EDT 2020
+    // Date:	Mon Jun  8 05:54:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -123,9 +123,6 @@
 	    usleep ( 100000 ); // 0.1 second
 	    if ( update_run_results ( 0 ) !== true )
 	    {
-		$run['RESULT'] = true;
-		    // This causes finish_run to
-		    // execute on reload.
 		echo "$ID\$RELOAD";
 		exit;
 	    }
