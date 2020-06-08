@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 13:58:14 EDT 2020
+    // Date:	Mon Jun  8 17:00:11 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1615,6 +1615,8 @@ EOT;
 	      $warnings );
 	// Must execute these before $warnings is used.
 
+    $id_list = [];  // List of places to store ID.
+
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
@@ -1713,10 +1715,12 @@ EOT;
 EOT;
     }
 
+    $id_list[] = "'id1'";
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
-    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' id='id1'
+           name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
 EOT;
@@ -1783,11 +1787,13 @@ EOT;
 	$select_title = 'Lists of'
 	              . ' Problems to Push or Pull'
 		      . ' or Go To';
+	$id_list[] = "'id2','id3'";
         echo <<<EOT
 	<strong>Select List:</strong>
 	<form method='POST' action='project.php'
 	      id='listname-form'>
-	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' id='id2'
+	       name='id' value='$ID'>
 	<select name='listname'
 		onclick='document.getElementById
 			    ("listname-form").submit()'>
@@ -1795,7 +1801,7 @@ EOT;
 	</select></form>
 	<strong>and</strong>
 	<form method='POST'>
-	<input type='hidden' id='id'
+	<input type='hidden' id='id3'
 	       name='id' value='$ID'>
 	<button type='submit' name='op' value='push'
 	        title='$push_title'>
@@ -1813,13 +1819,15 @@ EOT;
 	    $problem_options =
 		listname_to_problem_options
 		    ( $listname );
+	    $id_list[] = "'id4'";
 	    echo <<<EOT
 	    <strong>or Create Tab for Problem:</strong>
 EOT;
 	    if ( $problem_options != '' ) echo <<<EOT
 	    <form method='POST' action='project.php'
 		  id='goto-form'>
-	    <input type='hidden' name='id' value='$ID'>
+	    <input type='hidden' id='id4'
+	           name='id' value='$ID'>
 	    <select name='goto'
 		    onclick='document.getElementById
 				("goto-form").submit()'>
@@ -1831,12 +1839,14 @@ EOT;
 	          <mark>Your</mark> problems
 EOT;
         }
+	$id_list[] = "'id5'";
 	echo <<<EOT
 	<br>
 	<strong>Create New Problem:</strong>
 	<form method='POST' action='project.php'
 	      id='create-form'>
-	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' id='id5'
+	       name='id' value='$ID'>
 	<input type="text" size="32"
 	       placeholder="New Problem Name"
 	       title="New Problem Name"
@@ -1853,10 +1863,11 @@ EOT;
 	$project_options = projects_to_options
 	    ( read_projects ( 'push' ) );
 
+	$id_list[] = "'id6'";
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
-	<input type='hidden' id='id'
+	<input type='hidden' id='id6'
 	       name='id' value='$ID'>
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
@@ -2054,10 +2065,11 @@ EOT;
 
     if ( $op == 'pull' )
     {
+	$id_list[] = "'id7'";
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
-	<input type='hidden' id='id'
+	<input type='hidden' id='id7'
 	       name='id' value='$ID'>
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
@@ -2231,6 +2243,7 @@ EOT;
     {
         $check_proposed =
 	    ( $op == 'push' ? 'on' : 'off' );
+	$ids = implode ( ',', $id_list );
         echo <<<EOT
 	<script>
 
@@ -2385,6 +2398,12 @@ EOT;
 	    SEND ( 'execute', DONE_RESPONSE );
 	}
 
+	let id_list = [$ids];
+
+	for ( var i = 0; i < id_list.length; ++ i )
+	    id_list[i] = document.getElementById
+	        ( id_list[i] );
+
 	var xhttp = new XMLHttpRequest();
 	var message_sent = null;
 	var response_re = /^(\S+) (\S+)\s([^]*)$/;
@@ -2424,7 +2443,10 @@ EOT;
 			   ':\\n    ' +
 			   this.responseText );
 		message_sent = null;
-		id.value = matches[2];
+		let ID = matches[2];
+		for ( var i = 0; i < id_list.length;
+		                 ++ i )
+		    id_list[i].value = ID;
 		callback ( matches[1], matches[3] );
 	    };
 	    xhttp.open ( 'POST', "project.php", true );
@@ -2433,7 +2455,8 @@ EOT;
 		  "application/x-www-form-urlencoded" );
 	    message_sent = message;
 	    let data = message
-	             + '&xhttp=yes&id=' + id.value;
+	             + '&xhttp=yes&id='
+		     + id_list[0].value;
 	    LOG ( 'xhttp sent: ' + data );
 	    xhttp.send ( data );
 	}
