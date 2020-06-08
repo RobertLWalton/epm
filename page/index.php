@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun  7 03:47:16 EDT 2020
+// Date:    Mon Jun  8 15:09:27 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -181,9 +181,15 @@ if ( in_array ( $epm_page_type,
 
     $ID = bin2hex ( $id_gen[0] );
     if ( ! isset ( $_REQUEST['id'] ) )
+    {
+        WARN ( "$php_self is missing ID" )
 	exit ( 'missing ID' );
+    }
     elseif ( $_REQUEST['id'] != $ID )
-        exit ( 'page orphaned' );
+    {
+	header ( "Location: /page/orphan.html" );
+        exit;
+    }
 
     $id_gen[0] = substr
         ( @openssl_encrypt
