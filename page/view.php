@@ -32,8 +32,7 @@
         $epm_page_type = '+view+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // if ( ! isset ( $_POST['xhttp'] ) )
-    //     require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     if ( ! isset ( $_SESSION['EPM_UID'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
