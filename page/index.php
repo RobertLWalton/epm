@@ -182,7 +182,7 @@ if ( in_array ( $epm_page_type,
     $ID = bin2hex ( $id_gen[0] );
     if ( ! isset ( $_REQUEST['id'] ) )
     {
-        WARN ( "$php_self is missing ID" )
+        WARN ( "$php_self is missing ID" );
 	exit ( 'missing ID' );
     }
     elseif ( $_REQUEST['id'] != $ID )
