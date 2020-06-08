@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 17:00:11 EDT 2020
+    // Date:	Mon Jun  8 17:18:00 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1615,8 +1615,6 @@ EOT;
 	      $warnings );
 	// Must execute these before $warnings is used.
 
-    $id_list = [];  // List of places to store ID.
-
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
@@ -1715,7 +1713,6 @@ EOT;
 EOT;
     }
 
-    $id_list[] = "'id1'";
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
@@ -1787,7 +1784,6 @@ EOT;
 	$select_title = 'Lists of'
 	              . ' Problems to Push or Pull'
 		      . ' or Go To';
-	$id_list[] = "'id2','id3'";
         echo <<<EOT
 	<strong>Select List:</strong>
 	<form method='POST' action='project.php'
@@ -1819,7 +1815,6 @@ EOT;
 	    $problem_options =
 		listname_to_problem_options
 		    ( $listname );
-	    $id_list[] = "'id4'";
 	    echo <<<EOT
 	    <strong>or Create Tab for Problem:</strong>
 EOT;
@@ -1839,7 +1834,6 @@ EOT;
 	          <mark>Your</mark> problems
 EOT;
         }
-	$id_list[] = "'id5'";
 	echo <<<EOT
 	<br>
 	<strong>Create New Problem:</strong>
@@ -1863,7 +1857,6 @@ EOT;
 	$project_options = projects_to_options
 	    ( read_projects ( 'push' ) );
 
-	$id_list[] = "'id6'";
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
@@ -2065,7 +2058,6 @@ EOT;
 
     if ( $op == 'pull' )
     {
-	$id_list[] = "'id7'";
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
@@ -2243,7 +2235,6 @@ EOT;
     {
         $check_proposed =
 	    ( $op == 'push' ? 'on' : 'off' );
-	$ids = implode ( ',', $id_list );
         echo <<<EOT
 	<script>
 
@@ -2398,11 +2389,15 @@ EOT;
 	    SEND ( 'execute', DONE_RESPONSE );
 	}
 
-	let id_list = [$ids];
-
-	for ( var i = 0; i < id_list.length; ++ i )
-	    id_list[i] = document.getElementById
-	        ( id_list[i] );
+	let ids =
+	    [ document.getElementById ( 'id1' ),
+	      document.getElementById ( 'id2' ),
+	      document.getElementById ( 'id3' ),
+	      document.getElementById ( 'id4' ),
+	      document.getElementById ( 'id5' ),
+	      document.getElementById ( 'id6' ),
+	      document.getElementById ( 'id7' ) ];
+	      // Some of these may be null
 
 	var xhttp = new XMLHttpRequest();
 	var message_sent = null;
@@ -2444,9 +2439,11 @@ EOT;
 			   this.responseText );
 		message_sent = null;
 		let ID = matches[2];
-		for ( var i = 0; i < id_list.length;
-		                 ++ i )
-		    id_list[i].value = ID;
+		for ( var i = 0; i < ids.length; ++ i )
+		{
+		    if ( ids[i] == null ) continue;
+		    ids[i].value = ID;
+		}
 		callback ( matches[1], matches[3] );
 	    };
 	    xhttp.open ( 'POST', "project.php", true );
@@ -2456,7 +2453,7 @@ EOT;
 	    message_sent = message;
 	    let data = message
 	             + '&xhttp=yes&id='
-		     + id_list[0].value;
+		     + ids[0].value;
 	    LOG ( 'xhttp sent: ' + data );
 	    xhttp.send ( data );
 	}

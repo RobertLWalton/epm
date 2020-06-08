@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 05:54:58 EDT 2020
+    // Date:	Mon Jun  8 17:09:51 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -366,7 +366,8 @@
     <form method='GET'>
     <input type='hidden'
            name='problem' value='$problem'>
-    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' id='id1'
+           name='id' value='$ID'>
     <button type='submit'
             formaction='problem.php'>Problem
     </button>
@@ -447,7 +448,8 @@ EOT;
     	echo <<<EOT
 	<div class='run_list' id='run-list'>
     	<form action='run.php' method='POST'>
-	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' id='id2'
+	       name='id' value='$ID'>
 	<input type='hidden'
 	       name='problem' value='$problem'>
 	<table>
@@ -547,10 +549,10 @@ EOT;
 
     echo <<<EOT
     <form action='run.php' method='POST' id='reload'>
-    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' id='id3'
+           name='id' value='$ID'>
     <input type='hidden'
            name='problem' value='$problem'>
-    <input type='hidden' name='id' id='reload-id'>
     <input type='hidden' name='reload' value='reload'>
     </form>
 EOT;
@@ -626,13 +628,23 @@ EOT;
 	}
     }
 
+    let ids = [ document.getElementById ( 'id1' ),
+                document.getElementById ( 'id2' ),
+                document.getElementById ( 'id3' )];
+		// Some of these may be null.
+
     function PROCESS_RESPONSE ( response )
     {
 	item = response.trim().split ( '$' );
 	ID = item[0];
+	for ( var i = 0; i < ids.length; ++ i )
+	{
+	    if ( ids[i] == null ) continue;
+	    ids[i].value = ID;
+	}
+
         if ( item[1].trim() == 'RELOAD' )
 	{
-	    reload_id.value = ID;
 	    reload.submit();
 	    return;
 	}
