@@ -1948,7 +1948,8 @@ function start_run
 	            & $errors )
 {
     global $epm_data, $work, $run, $_SESSION,
-           $local_file_cache, $remote_file_cache;
+           $local_file_cache, $remote_file_cache,
+	   $probdir;
 
     $run  = [];
     $work = [];

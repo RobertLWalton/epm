@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 04:17:56 EDT 2020
+    // Date:	Mon Jun  8 05:10:01 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -123,6 +123,9 @@
 	    usleep ( 100000 ); // 0.1 second
 	    if ( update_run_results ( 0 ) !== true )
 	    {
+		$run['RESULT'] = true;
+		    // This causes finish_run to
+		    // execute on reload.
 		echo "$ID\$RELOAD";
 		exit;
 	    }
@@ -420,10 +423,20 @@ EOT;
 	elseif ( $runresult !== true
 	         &&
 		 $runresult != ['D',0] )
+	{
+	    $rerrsize = filesize
+	        ( "$epm_data/$rundir/$runbase.rerr" );
+	    $rerrexists = ( $rerrsize !== false
+	                    &&
+			    $rerrsize > 0 );
+	    $r = ( $rerrexists ?
+	           '; see .rerr file' : '' );
+	    $m = get_exit_message ( $runresult[1] );
 	    echo "<br><pre class='red'>Run Terminated" .
 	         " Prematurely With Exit Code" .
-		 " {$runresult[1]};" .
-		 " see .rerr file<pre>" .  PHP_EOL;
+		 " {$runresult[1]}; $m$r</pre>" .
+		 PHP_EOL;
+	}
 	echo "</div>" . PHP_EOL;
     }
 
