@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 03:39:02 EDT 2020
+    // Date:	Mon Jun  8 13:58:14 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1502,6 +1502,9 @@ EOT;
 	else
 	    exit ( 'UNACCEPTABLE HTTP POST' );
     }
+
+    unset ( $problem );
+        // Causes bad title in epm_head.php if left set.
 
 ?>
 
