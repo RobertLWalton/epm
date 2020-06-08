@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 17:18:00 EDT 2020
+    // Date:	Mon Jun  8 17:24:23 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -2238,13 +2238,14 @@ EOT;
         echo <<<EOT
 	<script>
 
+	ID = '$ID';
+
 	let off = 'white';
 	let on = 'black';
 	let running = 'red';
 	let succeeded = 'green';
 	let failed = 'yellow';
 
-	let id = document.getElementById('id');
 	let problem_rows =
 	    document.getElementById('problem-table')
 	            .rows;
@@ -2438,7 +2439,7 @@ EOT;
 			   ':\\n    ' +
 			   this.responseText );
 		message_sent = null;
-		let ID = matches[2];
+		ID = matches[2];
 		for ( var i = 0; i < ids.length; ++ i )
 		{
 		    if ( ids[i] == null ) continue;
@@ -2452,8 +2453,7 @@ EOT;
 		  "application/x-www-form-urlencoded" );
 	    message_sent = message;
 	    let data = message
-	             + '&xhttp=yes&id='
-		     + ids[0].value;
+	             + '&xhttp=yes&id=' + ID;
 	    LOG ( 'xhttp sent: ' + data );
 	    xhttp.send ( data );
 	}
