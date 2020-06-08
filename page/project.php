@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 17:24:23 EDT 2020
+    // Date:	Mon Jun  8 18:19:57 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1729,11 +1729,19 @@ EOT;
 	</td>
 	<td>
 	<div id='done-response' style='display:none'>
-	<strong>Done!</strong>
+	<strong style='color:red'>Done!</strong>
+	<pre>    </pre>
+	<strong>Go To:</strong>
 	<button type='submit'
 	        formaction='project.php'>
-		Continue</button>
-	<pre>    </pre>
+		Project</button>
+	<button type='submit'
+	        formaction='list.php'>
+		Edit Lists</button>
+	<button type='submit'
+	        formaction='favorites.php'>
+		Edit Favorites</button>
+	<strong>Page</strong>
 	</div>
 	<div id='check-proposed-display'
 	     style='display:none'>
