@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 20:43:39 EDT 2020
+    // Date:	Mon Jun  8 04:17:56 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -117,18 +117,26 @@
 	    echo "$ID\$RELOAD";
 	    exit;
 	}
-	else
+	elseif ( $_POST['update'] == 'abort' )
 	{
-	    usleep ( 500000 );
-	    $f = "$rundir/$runbase.stat";
-	    $contents = @file_get_contents
-	        ( "$epm_data/$f" );
-	    if ( $contents !== false )
-	        echo "$ID\$$contents";
-	    else
-	        echo "$ID\$(no status available)";
-	    exit;
+	    abort_dir ( $run['DIR'] );
+	    usleep ( 100000 ); // 0.1 second
+	    if ( update_run_results ( 0 ) !== true )
+	    {
+		echo "$ID\$RELOAD";
+		exit;
+	    }
 	}
+
+	usleep ( 500000 );
+	$f = "$rundir/$runbase.stat";
+	$contents = @file_get_contents
+	    ( "$epm_data/$f" );
+	if ( $contents !== false )
+	    echo "$ID\$$contents";
+	else
+	    echo "$ID\$(no status available)";
+	exit;
     }
 
     if ( $epm_method == 'POST' && ! $post_processed )
@@ -297,6 +305,10 @@
 	background-color: var(--bg-green);
 	margin-left: var(--indent);
     }
+    div.abort-switch {
+        display: inline-block;
+	width: calc(10*var(--large-font-size));
+    }
 </style>
 
 <script>
@@ -391,6 +403,14 @@ EOT;
 	echo <<<EOT
 	<div class='run'>
 	<strong>$h&nbsp;-&nbsp;$runbase.run:</strong>
+	<pre>    </pre>
+	<div id='abort-switch' class='abort-switch'
+	     style='visibility:hidden'>
+	<div id='abort-checkbox' class='checkbox'
+	     onclick='ABORT_CLICK()'></div>
+	<strong id='abort-label' style='color:red'>
+	     Abort</strong>
+	</div>
 	<div class='indented'>
 	<pre id='status'>$c</pre>
 EOT;
@@ -564,13 +584,37 @@ EOT;
 	    ( function () { alert ( message ); } );
     }
 
-    var manage = document.getElementById("manage");
-    var run_list = document.getElementById("run-list");
-    var reload = document.getElementById("reload");
-    var reload_id =
+    let manage = document.getElementById("manage");
+    let run_list = document.getElementById("run-list");
+    let reload = document.getElementById("reload");
+    let reload_id =
         document.getElementById("reload-id");
+    let problem = '<?php echo $problem; ?>';
+    let abort_switch =
+        document.getElementById("abort-switch");
+    let abort_checkbox =
+        document.getElementById("abort-checkbox");
+    let abort_label =
+        document.getElementById("abort-label");
+    let on = 'black';
+    let off = 'white';
+
     var ID = '<?php echo $ID; ?>';
-    var problem = '<?php echo $problem; ?>';
+
+    function ABORT_CLICK()
+    {
+        if (    abort_checkbox.style.backgroundColor
+	     == on )
+	{
+	    abort_checkbox.style.backgroundColor = off;
+	    abort_label.innerText = 'Abort';
+	}
+	else
+	{
+	    abort_checkbox.style.backgroundColor = on;
+	    abort_label.innerText = 'Aborting';
+	}
+    }
 
     function PROCESS_RESPONSE ( response )
     {
@@ -619,8 +663,16 @@ EOT;
 	    // These keep buttons from being clicked
 	    // while waiting for xhttp response and
 	    // its updated ID.
-	let data = 'update=update&problem=' + problem
-	         + '&xhttp=yes&id=' + ID;
+	abort_switch.style.visibility = 'visible';
+	    // This permits abort.
+
+	let abort =
+	    (    abort_checkbox.style.backgroundColor
+	      == on );
+	var data = ( abort ? 'update=abort' :
+	                     'update=yes' );
+	data = data + '&xhttp=yes&id=' + ID
+	     + '&problem=' + problem;
 	LOG ( 'xhttp sent: ' + data );
 	xhttp.send ( data );
     }
