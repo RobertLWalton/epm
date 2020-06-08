@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun  7 16:11:42 EDT 2020
+    // Date:	Mon Jun  8 03:31:40 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -491,6 +491,10 @@ EOT;
     pre.error-message {
 	color: var(--hl-red);
     }
+    div.abort-switch {
+        display: inline-block;
+	width: calc(10*var(--large-font-size));
+    }
 
 </style>
 
@@ -726,10 +730,11 @@ EOT;
 	<pre>($r)</pre>
 	<pre>   </pre>
 	<div id='abort-switch' class='abort-switch'
-	     style='visibility:hidden;display:inline'>
+	     style='visibility:hidden'>
 	<div id='abort-checkbox' class='checkbox'
 	     onclick='ABORT_CLICK()'></div>
-	<strong style='color:red'>Abort</strong>
+	<strong id='abort-label' style='color:red'>
+	     Abort</strong>
 	</div>
 	</td><td style='text-align:right'>
 	<button type='button'
@@ -1141,16 +1146,24 @@ EOT;
         document.getElementById("abort-switch");
     let abort_checkbox =
         document.getElementById("abort-checkbox");
+    let abort_label =
+        document.getElementById("abort-label");
     let on = 'black';
-    let off = 'transparent';
+    let off = 'white';
 
     function ABORT_CLICK()
     {
         if (    abort_checkbox.style.backgroundColor
 	     == on )
+	{
 	    abort_checkbox.style.backgroundColor = off;
+	    abort_label.innerText = 'Abort';
+	}
 	else
+	{
 	    abort_checkbox.style.backgroundColor = on;
+	    abort_label.innerText = 'Aborting';
+	}
     }
 
     function PROCESS_RESPONSE ( response )

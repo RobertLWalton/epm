@@ -107,6 +107,8 @@ echo "<title>$title</title>";
 	display: inline-block;
 	border: 2px solid black;
 	border-radius: var(--radius);
+	background-color: white;
+	cursor: crosshair;
     }
     .terms {
 	font-size: var(--large-font-size);
