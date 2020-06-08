@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 14:19:29 EDT 2020
+    // Date:	Mon Jun  8 03:42:36 EDT 2020
 
     // Maintains problem lists.
 
@@ -170,7 +170,7 @@
     //		<tr>
     //		<td style='width:10%;text-align:left'>
     //		<div class='checkbox'
-    //		      onclick='CHECK(event)'>
+    //		     onclick='CHECK(event)'>
     //		</div></td>
     //		<td style='width:80%;text-align:center'>
     //		$project $problem $time</td>
@@ -209,7 +209,7 @@
     	    <tr>
     	    <td style='width:10%;text-align:left'>
     	    <div class='checkbox'
-    	          onclick='CHECK(event)'>
+    	         onclick='CHECK(event)'>
 	    </div></td>
     	    <td style='width:80%;text-align:center'>
     	    $project $problem $time</td>
@@ -780,7 +780,7 @@ let indices_in = document.getElementById ( 'indices' );
 let name_in = document.getElementById ( 'name' );
 
 let on = 'black';
-let off = 'transparent';
+let off = 'white';
 
 function BOX ( table )
 {

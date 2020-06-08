@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 14:16:54 EDT 2020
+    // Date:	Mon Jun  8 03:41:02 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -330,7 +330,7 @@ var LOG = function(message) {};
 	 ondragover='ALLOWDROP(event)'>
          Favorites</div>
 EOT;
-    $off = 'transparent';
+    $off = 'white';
     $on = 'black';
     $c = -1;
     foreach ( $list as $e )
@@ -389,7 +389,7 @@ EOT;
     let not_edited = document.getElementById
 	( 'not-edited' );
     let lists = document.getElementById ( 'lists' );
-    let off = 'transparent';
+    let off = 'white';
     let on = 'black';
 
     let submit_form = document.getElementById
