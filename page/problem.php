@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 05:58:57 EDT 2020
+    // Date:	Mon Jun  8 12:57:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -42,16 +42,6 @@
         exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_make.php";
-    if ( $epm_page_type == '+init+' )
-    {
-	$work = [];
-	$run  = [];
-        require "$epm_home/include/epm_random.php";
-        $_SESSION['EPM_ID_GEN'][$problem] =
-	    init_id_gen();
-	$ID = bin2hex
-	    ( $_SESSION['EPM_ID_GEN'][$problem][0] );
-    }
 
     // The $_SESSION state particular to this page is:
     //
@@ -249,6 +239,42 @@
     $delete_problem = false;
         // True to ask whether current problem is to be
 	// deleted.
+
+    if ( $epm_page_type == '+init+' )
+    {
+        if ( isset ( $work['DIR'] )
+	     &&
+	     ( ! isset ( $work['RESULT'] )
+	       ||
+	       $work['RESULT'] === true ) )
+	{
+	    $m = abort_dir ( $work['DIR'] );
+	    if ( $m != '' ) $warnings[] = $m;
+	}
+        if ( isset ( $run['DIR'] )
+	     &&
+	     ( ! isset ( $run['RESULT'] )
+	       ||
+	       $run['RESULT'] === true ) )
+	{
+	    $m = abort_dir ( $run['DIR'] );
+	    if ( $m != '' ) $warnings[] = $m;
+	}
+
+	if ( count ( $warnings ) > 0 )
+	    usleep ( 3000000 ); // 3 seconds
+	    // Let orphaned tab into schedule so it
+	    // can process any last update POST and/or
+	    // receive orphaned response
+	$work = [];
+	$run = [];
+
+        require "$epm_home/include/epm_random.php";
+        $_SESSION['EPM_ID_GEN'][$problem] =
+	    init_id_gen();
+	$ID = bin2hex
+	    ( $_SESSION['EPM_ID_GEN'][$problem][0] );
+    }
 
     // Process POST requests.
     //

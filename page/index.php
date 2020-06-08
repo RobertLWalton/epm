@@ -181,10 +181,9 @@ if ( in_array ( $epm_page_type,
 
     $ID = bin2hex ( $id_gen[0] );
     if ( ! isset ( $_REQUEST['id'] ) )
-	WARN ( "$epm_self: no id, ID=$ID" );
+	exit ( 'missing ID' );
     elseif ( $_REQUEST['id'] != $ID )
-	WARN ( "$epm_self id = {$_REQUEST['id']}" .
-	       " != $ID = ID" );
+        exit ( 'page orphaned' );
 
     $id_gen[0] = substr
         ( @openssl_encrypt

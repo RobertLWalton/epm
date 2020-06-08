@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun  7 17:13:59 EDT 2020
+// Date:    Mon Jun  8 12:56:34 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -574,16 +574,21 @@ function find_control
 // any running shell script outputting to that file.
 // If the script is still running, sends a HUP signal
 // to the process group and checks that the group
-// leader is no longer running.  Returns '' if all
-// this works of if there is no .shout file.
+// leader is no longer running.  If it is still
+// running, sends a KILL signal and checks.  If
+// still running, returns.  Checks delay as long as
+// 0.5 seconds to see if process dies.
 //
-// Otherwise returns a non-empty string message
-// explaining what went wrong.  Possibilities are
+// If ....shout does not exist or exists and has
+// pid and pid is not initially running, returns ''.
+// Otherwise returns a non-empty string message which
+// is one of following:
 //
 //	....sh did not start properly
 //		(i.e., no pid found in ....shout)
-//      needed KILL signal to kill ....sh
-//      failed to kill ....sh with KILL signal
+//      ....sh killed by SIGHUP
+//      ....sh killed by SIGKILL
+//      failed to kill ....sh (pid ...) with SIGKILL
 
 function abort_dir ( $dir )
 {
@@ -621,25 +626,25 @@ function abort_dir ( $dir )
     while ( microtime ( true ) < $time )
     {
         usleep ( 100000 );
-	if ( ! is_running ( $pid ) ) return '';
+	if ( ! is_running ( $pid ) )
+	    return "$dir/$basename.sh killed by SIGHUP";
     }
     exec ( "kill -s KILL -$pid >/dev/null 2>&1" );
     while ( microtime ( true ) < $time )
     {
         usleep ( 100000 );
 	if ( ! is_running ( $pid ) )
-	    return "needed KILL signal to kill" .
-	           " $dir/$basename.sh";
+	    return
+	        "$dir/$basename.sh killed by SIGKILL";
     }
     return "failed to kill $dir/$basename.sh" .
-           " (pid = $pid) with KILL signal";
+           " (pid $pid) with SIGKILL";
 }
 
-// Clean up a working or run directory.  For each .shout
-// file, finds its PID and if that is still running,
-// kills it with SIGKILL.  Then executes rm -rf on the
-// directory.  Lastly, creates a new directory under the
-// same name.
+// Clean up a working or run directory.  Calls abort_dir
+// to kill any process with a .shout file.  Then
+// executes rm -rf on the directory.  Lastly, creates a
+// new directory under the same name.
 //
 // Directory name is relative to epm_data.
 //
@@ -1615,8 +1620,9 @@ function move_keep ( $keep, & $errors )
 // If there are no errors, this function finishes by
 // setting:
 //
-//     $work['DIR'] to $dir
-//     $work['BASE'] to $base
+//     $work['DIR'] to $workdir
+//     $work['BASE'] to $workbase
+//		the basename of $des
 //     $work['MAP'] to the status map initialized by
 //         compile_command
 //     $work['RESULT'] to true
