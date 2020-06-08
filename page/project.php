@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun  7 09:49:56 EDT 2020
+    // Date:	Mon Jun  8 03:39:02 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -440,8 +440,8 @@
     //     <tr data-project='PROJECT'
     //         data-problem='PROBLEM'>
     //         <td>
-    //         <span class='problem-checkbox'
-    //               onclick='PUSH(this)'>&nbsp;</span>
+    //         <div class='checkbox'
+    //              onclick='PUSH(this)'></div>
     //         <span class='problem'>
     //         PROBLEM &rArr; DESTINATION
     //         </span>
@@ -496,8 +496,8 @@
 	    <tr data-project='$project'
 	        data-problem='$problem'>
 	    <td>
-	    <span class='problem-checkbox'
-	        onclick='PUSH(this)'>&nbsp;</span>
+	    <div class='checkbox'
+	        onclick='PUSH(this)'></div>
 	    <span class='problem'>
 	    $problem &rArr; $destination
 	    </span>
@@ -523,8 +523,8 @@ EOT;
     //     <tr data-project='PROJECT'
     //         data-problem='PROBLEM'>
     //         <td>
-    //         <span class='problem-checkbox'
-    //               onclick='PULL(this)'>&nbsp;</span>
+    //         <div class='checkbox'
+    //              onclick='PULL(this)'></div>
     //         <span class='problem'>
     //         PROBLEM &lArr; PROJECT
     //	       <pre>  </pre>COMMENT
@@ -596,8 +596,8 @@ EOT;
 	    <tr data-project='$project'
 	        data-problem='$problem'>
 	    <td>
-	    <span class='problem-checkbox'
-	        onclick='PULL(this)'>&nbsp;</span>
+	    <div class='checkbox'
+	         onclick='PULL(this)'></div>
 	    <span class='problem'>
 	    $problem &lArr; $project
 	    </span>
@@ -1524,14 +1524,6 @@ EOT;
     div.push-pull-list, div.edit-list {
 	background-color: #F2D9D9;
     }
-    span.problem-checkbox {
-        height: 15px;
-        width: 30px;
-	display: inline-block;
-	margin-right: 3px;
-	border: 1px solid;
-	border-radius: 7.5px;
-    }
     span.selected-project {
 	color: red;
 	display:inline-block;
@@ -1741,9 +1733,9 @@ EOT;
 	</div>
 	<div id='check-proposed-display'
 	     style='display:none'>
-	<span class='problem-checkbox'
-	      id='check-proposed'
-	      onclick='CHECK(this)'>&nbsp;</span>
+	<div class='checkbox'
+	     id='check-proposed'
+	     onclick='CHECK(this)'></div>
 	<strong>Check Proposed Actions</strong>
 	</div>
 EOT;
@@ -2239,24 +2231,24 @@ EOT;
         echo <<<EOT
 	<script>
 
-	var off = 'transparent';
-	var on = 'black';
-	var running = 'red';
-	var succeeded = 'green';
-	var failed = 'yellow';
+	let off = 'white';
+	let on = 'black';
+	let running = 'red';
+	let succeeded = 'green';
+	let failed = 'yellow';
 
-	var id = document.getElementById('id');
-	var problem_rows =
+	let id = document.getElementById('id');
+	let problem_rows =
 	    document.getElementById('problem-table')
 	            .rows;
-	var pre_submit =
+	let pre_submit =
 	    document.getElementById('pre-submit');
-	var post_submit =
+	let post_submit =
 	    document.getElementById('post-submit');
-	var check_proposed_display =
+	let check_proposed_display =
 	    document.getElementById
 	        ('check-proposed-display');
-	var check_proposed =
+	let check_proposed =
 	    document.getElementById('check-proposed');
 	check_proposed.style.backgroundColor =
 	    $check_proposed;
