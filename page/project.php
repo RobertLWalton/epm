@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  9 04:24:01 EDT 2020
+    // Date:	Tue Jun  9 04:37:43 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1637,8 +1637,8 @@ EOT;
     if ( isset ( $op ) )
     {
 	$cancel = ( $op == 'push' ?
-		    'Cancel Pushing' :
-		    'Cancel Pulling' );
+		    'Cancel All Pushing' :
+		    'Cancel All Pulling' );
 	echo <<<EOT
 
 	<div id='warn-response' style='display:none'>
@@ -1794,7 +1794,7 @@ EOT;
 	              . ' Problems to Push or Pull'
 		      . ' or Go To';
         echo <<<EOT
-	<strong>Select List:</strong>
+	<strong>Select Problem List:</strong>
 	<form method='POST' action='project.php'
 	      id='listname-form'>
 	<input type='hidden' id='id2'
