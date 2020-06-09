@@ -1,0 +1,96 @@
+#! /bin/php
+<?php
+
+// File:	epm_javac
+// Author:	Robert L Walton <walton@acm.org>
+// Date:	Tue Jun  9 13:50:56 EDT 2020
+
+$document = <<<'EOT'
+epm_javac JAVAC-OPTION ... SOURCE.java
+
+Epm_javac does what javac does, except that it does
+the following to allow a public class name in
+SOURCE.java to NOT match the filename SOURCE.
+
+First, SOURCE.java is checked to find a line
+matching
+
+	public class CLASS ...
+
+with arbitrary spacing.  Then the following is
+executed:
+
+	ln -s SOURCE.java CLASS.java
+	javac JAVA-OPTION ... CLASS.java
+	rm CLASS.java
+	mv CLASS.class SOURCE.class
+
+If there are no errors, standard output and standard
+error should both be empty.
+
+EOT;
+
+if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
+{
+    echo $document;
+    exit ( 0 );
+}
+
+function printerr ( $message )
+{
+    fprintf ( STDERR, '%s', $message . PHP_EOL );
+}
+function fatal ( $message )
+{
+    printerr ( $message );
+    exit ( 1 );
+}
+
+// Do what PHP symlink should do, but PHP symlink is
+// known to fail sometimes for no good reason (see
+// comments on PHP documentation site; this behavior has
+// also been observed in EPM testing).
+//
+function symbolic_link ( $target, $link )
+{
+    return exec ( "ln -s $target $link 2>&1" ) == '';
+}
+
+$last = $argv[$argc-1];
+if ( ! preg_match ( '/^(\S+)\.java$/', $last,
+                                       $matches ) )
+    fatal ( "$last does not have form *.java" );
+$SOURCE = $matches[1];
+$source = @file_get_contents ( $last );
+if ( $source === false )
+    fatal ( "cannot read $last" );
+$re =
+  '/(?m)^\s*public\s+class\s+([a-zA-Z]\w*)($|[^w])/';
+if ( ! preg_match ( $re, $source, $matches ) )
+    fatal ( "$last does not contain line beginning:" .
+            PHP_EOL . "    public class CLASS ..." );
+$CLASS = $matches[1];
+
+if ( ! symbolic_link ( "$SOURCE.java", "$CLASS.java" ) )
+    fatal ( "cannot ln -s $SOURCE.java $CLASS.java" );
+
+$command = $argv;
+$command[0] = 'javac';
+$command[$argc-1] = "$CLASS.java";
+$command = implode ( ' ', $command );
+$pipes = [];
+$p = proc_open
+    ( $command, [0 => STDIN, 1 => STDOUT, 2 => STDERR ],
+                $pipes );
+$c = proc_close ( $p );
+
+unlink ( "$CLASS.java" );
+if ( file_exists  ( "$CLASS.class" )
+     &&
+     ! rename ( "$CLASS.class", "$SOURCE.class" ) )
+    fatal ( "cannot mv $CLASS.class $SOURCE.class" );
+
+exit ( 0 );
+
+?>
+

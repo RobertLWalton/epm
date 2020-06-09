@@ -1,0 +1,15 @@
+{
+
+"COMMANDS": ["g++ $GXXFLAGS $GPPFLAGS -o YYYY-PPPP \\",
+             "    YYYY-PPPP.cc $LIBRARIES \\",
+	     "    > YYYY-PPPP.cout 2> YYYY-PPPP.cerr",
+             "chmod o+x YYYY-PPPP"],
+"CONDITION": "UPLOAD YYYY-PPPP.cc",
+
+"KEEP":    ["YYYY-PPPP", "YYYY-PPPP.cc"],
+"SHOW":    ["YYYY-PPPP.cerr","YYYY-PPPP.cout",
+            "YYYY-PPPP.cc"],
+"CHECKS":  ["EMPTY YYYY-PPPP.cerr",
+            "EMPTY YYYY-PPPP.cout"]
+}
+

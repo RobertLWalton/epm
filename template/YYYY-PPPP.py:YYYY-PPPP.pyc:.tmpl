@@ -1,0 +1,14 @@
+{
+
+"COMMANDS": ["python3 -m py_compile YYYY-PPPP.py \\",
+             "    > YYYY-PPPP.cout 2> YYYY-PPPP.cerr",
+             "mv -f __pycache__/*.pyc YYYY-PPPP.pyc"],
+"CONDITION": "UPLOAD YYYY-PPPP.py",
+"KEEP":    ["YYYY-PPPP.pyc", "YYYY-PPPP.py"],
+"SHOW":    ["YYYY-PPPP.cerr","YYYY-PPPP.cout",
+            "YYYY-PPPP.py"],
+"CHECKS":  ["EMPTY YYYY-PPPP.cerr",
+            "EMPTY YYYY-PPPP.cout"]
+}
+
+
