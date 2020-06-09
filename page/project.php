@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 18:19:57 EDT 2020
+    // Date:	Tue Jun  9 04:24:01 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1634,7 +1634,7 @@ EOT;
 	echo "<br></div></div>";
     }
 
-    if ( $op == 'push' || $op == 'pull' )
+    if ( isset ( $op ) )
     {
 	$cancel = ( $op == 'push' ?
 		    'Cancel Pushing' :
@@ -1713,64 +1713,42 @@ EOT;
 EOT;
     }
 
+    $display = ( isset ( $op ) ? 'none' : 'table-row' );
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
     <input type='hidden' id='id1'
            name='id' value='$ID'>
     <table style='width:100%'>
-    <tr>
-EOT;
 
-    if ( isset ( $op ) )
-    	echo <<<EOT
-	<td>
-	<strong>User: $email</strong>
-	</td>
-	<td>
-	<div id='done-response' style='display:none'>
-	<strong style='color:red'>Done!</strong>
-	<pre>    </pre>
-	<strong>Go To:</strong>
-	<button type='submit'
-	        formaction='project.php'>
-		Project</button>
-	<button type='submit'
-	        formaction='list.php'>
-		Edit Lists</button>
-	<button type='submit'
-	        formaction='favorites.php'>
-		Edit Favorites</button>
-	<strong>Page</strong>
-	</div>
-	<div id='check-proposed-display'
-	     style='display:none'>
-	<div class='checkbox'
-	     id='check-proposed'
-	     onclick='CHECK(this)'></div>
-	<strong>Check Proposed Actions</strong>
-	</div>
-EOT;
-    else
-    	echo <<<EOT
-	<td>
-	<strong>User:</strong>
-	<button type='submit'
-	        formaction='user.php'
-	        title='Click to See User Profile'>
-	        $email</button>
-	</td>
-	<td>
-	<strong>Go To</strong>
-	<button type='submit'
-	        formaction='list.php'>
-		Edit Lists</button>
-	<button type='submit'
-	        formaction='favorites.php'>
-		Edit Favorites</button>
-	<strong>Page</strong>
-EOT;
-    echo <<<EOT
+    <tr id='goto-row' style='display:$display'>
+    <td>
+    <strong>User:</strong>
+    <button type='submit'
+	    formaction='user.php'
+	    title='Click to See User Profile'>
+	    $email</button>
+    </td>
+    <td>
+
+    <div id='done-response' style='display:none'>
+    <strong style='color:red'>Done!</strong>
+    <pre>    </pre>
+    <strong>Go To:</strong>
+    <button type='submit'
+	    formaction='project.php'>
+	    Project</button>
+    </div>
+    <div id='not-done-response' style='display:inline'>
+    <strong>Go To</strong>
+    </div>
+    <button type='submit'
+	    formaction='list.php'>
+	    Edit Lists</button>
+    <button type='submit'
+	    formaction='favorites.php'>
+	    Edit Favorites</button>
+    <strong>Page</strong>
     </td>
     <td style='text-align:right'>
     <button type='button'
@@ -1778,6 +1756,29 @@ EOT;
 	?</button>
     </td>
     </tr>
+EOT;
+
+    if ( isset ( $op ) )
+    	echo <<<EOT
+	<tr id='check-row'>
+	<td>
+	<strong>User: $email</strong>
+	</td>
+	<td>
+	<div class='checkbox'
+	     id='check-proposed'
+	     onclick='CHECK(this)'></div>
+	<strong>Check Proposed Actions</strong>
+	</td>
+	<td style='text-align:right'>
+	<button type='button'
+		onclick='HELP("project-page")'>
+	    ?</button>
+	</td>
+	</tr>
+EOT;
+
+    echo <<<EOT
     </table>
     </form>
 EOT;
@@ -2038,9 +2039,10 @@ EOT;
 	    }
 	    if ( current_row >= problem_rows.length )
 	    {
-	        check_proposed_display.style.display =
-		    'none';
+	        goto_row.style.display = 'table-row';
+	        check_row.style.display = 'none';
 	        done_response.style.display = 'inline';
+	        not_done_response.style.display = 'none';
 		return;
 	    }
 	    checkbox.style.backgroundColor =
@@ -2184,9 +2186,10 @@ EOT;
 	    }
 	    if ( current_row >= problem_rows.length )
 	    {
-	        check_proposed_display.style.display =
-		    'none';
+	        goto_row.style.display = 'table-row';
+	        check_row.style.display = 'none';
 	        done_response.style.display = 'inline';
+	        not_done_response.style.display = 'none';
 		return;
 	    }
 	    checkbox.style.backgroundColor =
@@ -2261,14 +2264,10 @@ EOT;
 	    document.getElementById('pre-submit');
 	let post_submit =
 	    document.getElementById('post-submit');
-	let check_proposed_display =
-	    document.getElementById
-	        ('check-proposed-display');
 	let check_proposed =
 	    document.getElementById('check-proposed');
 	check_proposed.style.backgroundColor =
 	    $check_proposed;
-	check_proposed_display.style.display = 'inline';
 
 	var compile_response =
 	    document.getElementById
@@ -2288,9 +2287,18 @@ EOT;
 	var error_messages =
 	    document.getElementById
 	        ('error-messages');
+	var goto_row =
+	    document.getElementById
+	        ('goto-row');
+	var check_row =
+	    document.getElementById
+	        ('check-row');
 	var done_response =
 	    document.getElementById
 	        ('done-response');
+	var not_done_response =
+	    document.getElementById
+	        ('not-done-response');
 
 	var submit = false;
 	var current_row = -1;
