@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun  9 04:33:44 EDT 2020
+Date:	Tue Jun  9 05:14:48 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -97,6 +97,7 @@ vertical-align: top;
 </div>
 
 <div id='toc' style='display:none'>
+<div style='width:50%;float:left'>
 <ul>
 
 <li><a href="#login-page">Login Page</a> [main]
@@ -110,9 +111,6 @@ vertical-align: top;
 <ul>
 <li><a href="#project-pull">Pulling Problems</a>
 <li><a href="#project-push">Pushing Problems</a>
-<li><a href="#problem-lists">Problem Lists</a>
-<li><a href="#favorites-page">Favorites Page</a>
-<li><a href="#problem-list-descriptions">Problem List Descriptions</a>
 </ul>
 
 <li><a href="#problem-page">Problem Page</a> [problem]
@@ -133,10 +131,22 @@ vertical-align: top;
 <li><a href="#option-arguments">Argument Options</a>
 </ul>
 
+</ul>
+</div>
+
+<div style='width:50%;float:left'>
+<ul>
+
 <li><a href="#template-page">Template Page</a> [view]
 
+<li><a href="#list-page">List Page</a> [main]
+<ul>
+<li><a href="#list-descriptions">List Descriptions</a>
+</ul>
+<li><a href="#favorites-page">Favorites Page</a> [main]
 
 </ul>
+</div>
 </div>
 
 <div id='text'>
@@ -349,7 +359,7 @@ directory, and NOT in its parent.
 You can make your own problem lists, and publish them
 so others can use them.  To do this click the
 `<b>Edit Lists</b>' button on the Projects Page.  See
-<a href='#problem-lists'>Problem Lists</a> for details.
+<a href='#list-page'>List Page</a> for details.
 <p>
 The list of problem lists on the Projects Page is known
 as the Favorites List.  This Favorites List can be edited to include or
@@ -436,59 +446,6 @@ At the end a problem's oval will be green if it was successfully
 pushed, yellow if there were errors while executing the push
 actions for the problem, and white if no push actions were executed
 for the problem.
-</p>
-
-<a name="problem-lists"><h2>Problem Lists</h2></a>
-<p>
-You can create a problem list of your own by typing its name into
-the `New Problem List Name' box in either the Project Page or its
-`Edit List' subpage, or by uploading a list description on
-the project page
-(see <a href=#problem-list-descriptions>Problem List Descriptions</a>).
-<p>
-When it is created the list is added to the beginning of the
-Favorites list
-(see <a href=#favorites-page>Favorites Page</a>).
-and can be edited by clicking `Edit List'.  However, before you
-edit your new list, edit a list from which you are going to copy
-problems
-TBD
-
-</p>
-
-<a name="favorites-page"><h2>Favorites Page</h2></a>
-<p>
-The `Favorites' list is a list of those problem lists
-you find most interesting, in order of interest.
-This Favorites Page is a sub-page of the Project Page
-that allows you to edit the Favorites list.
-<p>
-This Favorites Page displays all the lists that can be on the
-Favorites list, each with an oval that is checked
-for those problem lists that are on the Favorites list.
-The checked lists are in the order that they appear in
-the Favorites list.  Lists created by users may also have an
-attached description created by their author.
-<p>
-If you click on a oval it toggles between checked and
-unchecked.  In either case
-its list is moved to the boundary between checked and unchecked
-lists, so the checked lists are always above the unchecked
-lists.
-<p>
-You can change the order of lists by dragging a list
-to a second list below which you want the first list to be.
-To move a list to the top, drag it to the `Favorites' title
-line.
-<p>
-Changes you make are not recorded until you click `Update'
-or `Finish'.  Clicking `Reset' or `Cancel' restores Favorites
-to its previous state.  `Finish' and `Cancel' return to the Projects Page.
-
-</p>
-
-<a name="problem-list-descriptions"><h2>List Descriptions</h2></a>
-<p>
 </p>
 
 <a name="problem-page"><h1>Problem Page</h1></a>
@@ -907,6 +864,59 @@ template must have the `UPLOAD PPPP.cc' condition.
 As another example, a template used when a .run file is submitted
 must have the `SUBMIT' condition.
 Most of the time only templates with no conditions are selected.
+</p>
+
+<a name="list-page"><h1>List Page</h1></a>
+<p>
+You can create a problem list of your own by typing its name into
+the `New Problem List Name' box in either the Project Page or its
+`Edit List' subpage, or by uploading a list description on
+the project page
+(see <a href=#list-descriptions>List Descriptions</a>).
+<p>
+When it is created the list is added to the beginning of the
+Favorites list
+(see <a href=#favorites-page>Favorites Page</a>).
+and can be edited by clicking `Edit List'.  However, before you
+edit your new list, edit a list from which you are going to copy
+problems
+TBD
+
+</p>
+
+<a name="list-descriptions"><h2>List Descriptions</h2></a>
+<p>
+</p>
+
+<a name="favorites-page"><h1>Favorites Page</h1></a>
+<p>
+The `Favorites' list is a list of those problem lists
+you find most interesting, in order of interest.
+This Favorites Page is a sub-page of the Project Page
+that allows you to edit the Favorites list.
+<p>
+This Favorites Page displays all the lists that can be on the
+Favorites list, each with an oval that is checked
+for those problem lists that are on the Favorites list.
+The checked lists are in the order that they appear in
+the Favorites list.  Lists created by users may also have an
+attached description created by their author.
+<p>
+If you click on a oval it toggles between checked and
+unchecked.  In either case
+its list is moved to the boundary between checked and unchecked
+lists, so the checked lists are always above the unchecked
+lists.
+<p>
+You can change the order of lists by dragging a list
+to a second list below which you want the first list to be.
+To move a list to the top, drag it to the `Favorites' title
+line.
+<p>
+Changes you make are not recorded until you click `Update'
+or `Finish'.  Clicking `Reset' or `Cancel' restores Favorites
+to its previous state.  `Finish' and `Cancel' return to the Projects Page.
+
 </p>
 
 </div>
