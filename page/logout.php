@@ -2,20 +2,78 @@
 
     // File:	logout.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun  7 03:46:18 EDT 2020
+    // Date:	Tue Jun  9 15:37:07 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
     // they make no warranty and accept no liability
     // for EPM.
 
-    $epm_page_type = '+init+';
+    $epm_page_type = '+main+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+
+    // Return true if process with $pid is still
+    // running, and false otherwise.
+    //
+    function is_running ( $pid )
+    {
+	exec ( "kill -s 0 $pid 2>/dev/null",
+	       $kill_output, $kill_status );
+	//
+	// Sending signal 0 does not actually send a
+	// signal but returns status 0 if the process is
+	// still running and status non-0 otherwise.
+	// Note that the posix_kill function is not
+	// available in vanilla PHP.
+
+	return ( $kill_status == 0 );
+    }
+
+    // For each problem background process still
+    // running, put a warning message in $warnings and
+    // its PID in $pids.
+    //
+    $warnings = [];
+    $pids = [];
+    foreach ( ['EPM_RUN','EPM_WORK'] as $type )
+    {
+	if ( ! isset ( $_SESSION[$type] ) )
+	    continue;
+	foreach ( $_SESSION[$type]
+		  as $problem => $value )
+	{
+	    if ( ! isset ( $value['RESULT'] ) )
+		continue;
+	    if ( $value['RESULT'] !== true )
+		continue;
+	    if ( ! isset ( $value['DIR'] ) )
+		continue;
+	    if ( ! isset ( $value['BASE'] ) )
+		continue;
+	    $dir = $value['DIR'];
+	    $base = $value['BASE'];
+	    $c = @file_get_contents
+		( "$epm_data/$dir/$base.shout" );
+	    if ( $c === false ) continue;
+	    if ( ! preg_match ( '/^(\d+) PID\n/',
+				$c, $matches ) )
+		continue;
+	    $pid = $matches[1];
+	    if ( ! is_running ( $pid ) )
+	        continue;
+	    $warnings[] = "$base.sh is still running";
+	    $pids[] = $pid;
+	}
+    }
 
     if ( isset ( $_GET['answer'] )
 	 &&
 	 $_GET['answer'] == 'YES' )
     {
+        foreach ( $pids as $pid )
+	    exec ( "kill -s KILL -$pid" .
+	           " >/dev/null 2>&1" );
+	if ( count ( $pids ) > 0 ) usleep ( 1000000 );
 	session_unset();
 	header ( "Location: /page/login.php" );
 	exit;
@@ -32,6 +90,18 @@ button.marked {
 </style>
 </head>
 <body>
+
+<?php
+    if ( count ( $warnings ) > 0 )
+    {
+	echo "<div class='warnings'>";
+	echo "<strong>Warnings:</strong>";
+	echo "<div class='indented'>";
+	foreach ( $warnings as $e )
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
+    }
+?>
 
 <div class='manage'>
 <table style='width:100%'>
