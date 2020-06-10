@@ -305,6 +305,29 @@
 	    ( $_SESSION['EPM_ID_GEN'][$problem][0] );
     }
 
+    // Process file deletions for other posts.
+    //
+    if ( isset ( $_POST['delete_files'] ) )
+    {
+	$files = $_POST['delete_files'];
+	$files = explode ( ',', $files );
+	$fnames = problem_file_names ( $probdir );
+	foreach ( $files as $f )
+	{
+	    if ( $f == '' ) continue;
+	    if ( ! in_array ( $f, $fnames, true ) )
+		exit ( "ACCESS: illegal POST to" .
+		       " problem.php" );
+	}
+	foreach ( $files as $f )
+	{
+	    if ( $f == '' ) continue;
+	    $g = "$probdir/$f";
+	    if ( ! @unlink ( "$epm_data/$g" ) )
+		$errors[] = "could not delete $g";
+	}
+    }
+
     // Process POST requests.
     //
     if ( $epm_method != 'POST' ) /* Do Nothing */;
@@ -338,28 +361,6 @@ EOT;
 	if ( $prob != $problem )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-    }
-    elseif ( isset ( $_POST['delete_files'] ) )
-    {
-        // Process file deletions for other posts.
-	//
-	$files = $_POST['delete_files'];
-	$files = explode ( ',', $files );
-	$fnames = problem_file_names ( $probdir );
-	foreach ( $files as $f )
-	{
-	    if ( $f == '' ) continue;
-	    if ( ! in_array ( $f, $fnames, true ) )
-		exit ( "ACCESS: illegal POST to" .
-		       " problem.php" );
-	}
-	foreach ( $files as $f )
-	{
-	    if ( $f == '' ) continue;
-	    $g = "$probdir/$f";
-	    if ( ! unlink ( "$epm_data/$g" ) )
-		$errors[] = "could not delete $g";
-	}
     }
     elseif ( isset ( $_POST['make'] ) )
     {
@@ -530,6 +531,10 @@ EOT;
 	    $r = update_work_results ( 0 );
 	}
     }
+    elseif ( isset ( $_POST['delete_files'] ) )
+    {
+    	// Work was done above.
+    }
     else
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
@@ -609,6 +614,8 @@ EOT;
 	}
     }
 
+    let delete_files =
+        document.getElementsByName ( 'delete_files' );
     var DELETE_LIST = [];
 
     function TOGGLE_DELETE ( count, fname )
@@ -637,9 +644,9 @@ EOT;
 	                   " For Deletion";
 	    FILE.style.textDecoration = 'none';
 	}
-	var DELETE_FILES = document.getElementById
-			       ("delete_files");
-	DELETE_FILES.value = DELETE_LIST.toString();
+	for ( var j = 0; j < delete_files.length; ++ j )
+	    delete_files[j].value =
+		DELETE_LIST.toString();
     }
 </script>
 
@@ -980,6 +987,7 @@ EOT;
     <strong>Upload a File:</strong>
     <input type='hidden' name='MAX_FILE_SIZE'
 	   value='$epm_upload_maxsize'>
+    <input type='hidden' name='delete_files' value=''>
     <input type='hidden' name='upload' value='yes'>
     <input type='file' name='uploaded_file'
 	   onchange='document.getElementById
@@ -993,9 +1001,7 @@ EOT;
 	   name= 'problem' value='$problem'>
     <input type='hidden' id='id6'
            name='id' value='$ID'>
-    <input id='delete_files'
-	   name='delete_files' value=''
-	   type='hidden'>
+    <input type='hidden' name='delete_files' value=''>
     <input type="submit" name="execute_deletes"
 	   value=
 	     "Delete Over-Struck Files">
@@ -1013,6 +1019,7 @@ EOT;
 	   name= 'problem' value='$problem'>
     <input type='hidden' id='id7'
            name='id' value='$ID'>
+    <input type='hidden' name='delete_files' value=''>
 EOT;
     function MAKE ( $fbase, $sext, $dext )
     {
