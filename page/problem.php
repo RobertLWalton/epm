@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 17:25:10 EDT 2020
+    // Date:	Tue Jun  9 22:10:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -116,6 +116,13 @@
     //    the file has >= $min_display_lines
     //	  the file is not displayed in FILE-COMMENT
     //
+    // FILE-LINKABLE is true iff
+    //
+    //	  the file has extension '', 'class', or 'pyc'
+    //    the file is not a link
+    //    the file basename is not PPPP, generate-PPPP,
+    //        filter-PPPP, or monitor-PPPP
+    //
     // and FILE-COMMENT is:
     //
     //	   (Empty) iff the file is empty
@@ -157,6 +164,7 @@
 	$flines = NULL;
 	$fdisplay = false;
 	$fshow = false;
+	$flinkable = false;
 	if (    $ftype == 'utf8'
 	     && isset ( $fsize ) )
 	{
@@ -224,9 +232,22 @@
 	        $fcomment .=
 		    " (Linked from {$matches[1]})";
 	}
+	elseif ( in_array ( $fext, ['','class','pyc'],
+	                           true ) )
+	{
+	    $fbase = pathinfo
+	        ( $fname, PATHINFO_FILENAME );
+	    $flinkable = ! in_array
+	        ( $fbase, [ $problem,
+		            "generate-$problem",
+			    "filter-$problem",
+			    "monitor-$problem" ],
+		          true );
+	}
 
 	return [ $fext, $ftype,
-	         $fdisplay, $fshow, $fcomment ];
+	         $fdisplay, $fshow, $flinkable,
+		 $fcomment ];
     }
 
     // Data Set by GET and POST Requests:
@@ -831,7 +852,7 @@ EOT;
 		echo "<td" .
 		     " style='text-align:right'>";
 		list ( $fext, $ftype, $fdisplay,
-		       $fshow, $fcomment )
+		       $fshow, $flinkable, $fcomment )
 		    = file_info ( $workdir, $fname,
 				  $count,
 				  $display_list );
@@ -979,7 +1000,8 @@ EOT;
 	echo "<tr>";
 	echo "<td style='text-align:right'>";
 	list ( $fext, $ftype,
-	       $fdisplay, $fshow, $fcomment )
+	       $fdisplay, $fshow, $flinkable,
+	       $fcomment )
 	    = file_info ( $probdir, $fname, $count,
 			  $display_list );
 	$fbase = pathinfo ( $fname, 
