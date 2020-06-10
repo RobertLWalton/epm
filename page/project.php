@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun 10 09:37:46 EDT 2020
+    // Date:	Wed Jun 10 13:55:05 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1662,6 +1662,8 @@ EOT;
 	Skip to Next</button>
 	<pre>    </pre>
 	<form method='GET' action='project.php'>
+	<input type='hidden' id='id1'
+               name='id' value='$ID'>
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
@@ -1683,6 +1685,8 @@ EOT;
 	Skip to Next</button>
 	<pre>    </pre>
 	<form method='GET' action='project.php'>
+	<input type='hidden' id='id2'
+               name='id' value='$ID'>
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
@@ -1707,6 +1711,8 @@ EOT;
 	Skip to Next</button>
 	<pre>    </pre>
 	<form method='GET' action='project.php'>
+	<input type='hidden' id='id3'
+               name='id' value='$ID'>
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
@@ -1725,7 +1731,7 @@ EOT;
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
-    <input type='hidden' id='id1'
+    <input type='hidden' id='id4'
            name='id' value='$ID'>
     <table style='width:100%'>
 
@@ -1805,7 +1811,7 @@ EOT;
 	<strong>Selected Problem List:</strong>
 	<form method='POST' action='project.php'
 	      id='listname-form'>
-	<input type='hidden' id='id2'
+	<input type='hidden' id='id5'
 	       name='id' value='$ID'>
 	<select name='listname'
 		onclick='document.getElementById
@@ -1814,7 +1820,7 @@ EOT;
 	</select></form>
 	<strong>and</strong>
 	<form method='POST'>
-	<input type='hidden' id='id3'
+	<input type='hidden' id='id6'
 	       name='id' value='$ID'>
 	<button type='submit' name='op' value='push'
 	        title='$push_title'>
@@ -1838,7 +1844,7 @@ EOT;
 	    if ( $problem_options != '' ) echo <<<EOT
 	    <form method='POST' action='project.php'
 		  id='goto-form'>
-	    <input type='hidden' id='id4'
+	    <input type='hidden' id='id7'
 	           name='id' value='$ID'>
 	    <select name='goto'
 		    onclick='document.getElementById
@@ -1856,7 +1862,7 @@ EOT;
 	<strong>Create New Problem:</strong>
 	<form method='POST' action='project.php'
 	      id='create-form'>
-	<input type='hidden' id='id5'
+	<input type='hidden' id='id8'
 	       name='id' value='$ID'>
 	<input type="text" size="32"
 	       placeholder="New Problem Name"
@@ -1877,7 +1883,7 @@ EOT;
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
-	<input type='hidden' id='id6'
+	<input type='hidden' id='id9'
 	       name='id' value='$ID'>
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
@@ -2079,7 +2085,7 @@ EOT;
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
-	<input type='hidden' id='id7'
+	<input type='hidden' id='id10'
 	       name='id' value='$ID'>
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
@@ -2414,14 +2420,18 @@ EOT;
 	    SEND ( 'execute', DONE_RESPONSE );
 	}
 
-	let ids =
+	let ids = document.getElementsByName ( 'id' );
+	let obsolete =
 	    [ document.getElementById ( 'id1' ),
 	      document.getElementById ( 'id2' ),
 	      document.getElementById ( 'id3' ),
 	      document.getElementById ( 'id4' ),
 	      document.getElementById ( 'id5' ),
 	      document.getElementById ( 'id6' ),
-	      document.getElementById ( 'id7' ) ];
+	      document.getElementById ( 'id7' ),
+	      document.getElementById ( 'id8' ),
+	      document.getElementById ( 'id9' ),
+	      document.getElementById ( 'id10' ) ];
 	      // Some of these may be null
 
 	var xhttp = new XMLHttpRequest();
@@ -2466,7 +2476,7 @@ EOT;
 		ID = matches[2];
 		for ( var i = 0; i < ids.length; ++ i )
 		{
-		    if ( ids[i] == null ) continue;
+		    // if ( ids[i] == null ) continue;
 		    ids[i].value = ID;
 		}
 		callback ( matches[1], matches[3] );

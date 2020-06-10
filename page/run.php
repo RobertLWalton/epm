@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 17:09:51 EDT 2020
+    // Date:	Wed Jun 10 13:55:14 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -628,7 +628,8 @@ EOT;
 	}
     }
 
-    let ids = [ document.getElementById ( 'id1' ),
+    let ids = document.getElementsByName ( 'id' );
+    let obsolete = [ document.getElementById ( 'id1' ),
                 document.getElementById ( 'id2' ),
                 document.getElementById ( 'id3' )];
 		// Some of these may be null.
@@ -639,7 +640,7 @@ EOT;
 	ID = item[0];
 	for ( var i = 0; i < ids.length; ++ i )
 	{
-	    if ( ids[i] == null ) continue;
+	    // if ( ids[i] == null ) continue;
 	    ids[i].value = ID;
 	}
 

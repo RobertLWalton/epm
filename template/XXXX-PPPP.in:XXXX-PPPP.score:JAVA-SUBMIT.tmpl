@@ -1,5 +1,6 @@
 {
 
+"CONDITION": "SUBMIT",
 "COMMANDS": ["chmod o+r . PPPP.class",
              "epm_sandbox $GSARGS $GSPACE \\",
              "    -status XXXX-PPPP.g1stat generate_PPPP \\",
@@ -21,16 +22,9 @@
 	     "    XXXX-PPPP.fout XXXX-PPPP.ftest \\",
 	     "    > XXXX-PPPP.score 2> XXXX-PPPP.scerr"],
 
-"LOCAL-REQUIRES":
-	["PPPP.class","XXXX-PPPP.in", "XXXX-PPPP.ftest"],
-"REQUIRES":["generate_PPPP", "filter_PPPP"],
-"CREATABLE":["generate_PPPP", "filter_PPPP"],
-"CHECKS":  ["EMPTY XXXX-PPPP.g1err", "EMPTY XXXX-PPPP.serr",
-            "EMPTY XXXX-PPPP.g2err", "EMPTY XXXX-PPPP.ferr",
-            "EMPTY XXXX-PPPP.scerr"],
-"KEEP":    ["XXXX-PPPP.score"],
-"SHOW":    ["XXXX-PPPP.g1err","XXXX-PPPP.scerr",
-            "XXXX-PPPP.g2err", "XXXX-PPPP.ferr",
-            "XXXX-PPPP.scerr", "XXXX-PPPP.score"]
+"LOCAL-REQUIRES": ["PPPP.class"],
+"REMOTE-REQUIRES": ["XXXX-PPPP.in", "XXXX-PPPP.ftest",
+                    "generate_PPPP", "filter_PPPP"],
 
 }
+
