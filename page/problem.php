@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  9 22:47:19 EDT 2020
+    // Date:	Wed Jun 10 03:32:07 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -20,8 +20,7 @@
         $epm_page_type = '+problem+';
     require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
 
-    // if ( ! isset ( $_POST['xhttp'] ) )
-    //     require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     if ( ! isset ( $_REQUEST['problem'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
@@ -120,8 +119,8 @@
     //
     //	  the file has extension '', 'class', or 'pyc'
     //    the file is not a link
-    //    the file basename is not PPPP, generate-PPPP,
-    //        filter-PPPP, or monitor-PPPP
+    //    the file basename has the form *-PPPP
+    //		(which includes -generate-PPPP, etc.)
     //
     // and FILE-COMMENT is:
     //
@@ -151,6 +150,7 @@
     {
         global $epm_data, $problem, $display_file_type,
 	       $display_file_map, $epm_file_maxsize,
+	       $epm_filename_re,
 	       $max_display_lines, $min_display_lines;
 
 	$fext = pathinfo ( $fname, 
@@ -217,7 +217,17 @@
 	else
 	{
 	    if ( is_link ( $f ) )
-		$fcomment = "Link to $ftype";
+	    {
+	        $target = @readlink ( $f );
+		if ( $target === false )
+		    ERROR ( "cannot read link" .
+		            " $dir/$fname" );
+		if ( preg_match ( $epm_filename_re,
+		                  $target ) )
+		    $fcomment = "Link to $target";
+		else
+		    $fcomment = "Link to $ftype";
+	    }
 	    else 
 		$fcomment = $ftype;
 	}
@@ -237,12 +247,10 @@
 	{
 	    $fbase = pathinfo
 	        ( $fname, PATHINFO_FILENAME );
-	    $flinkable = ! in_array
-	        ( $fbase, [ $problem,
-		            "generate-$problem",
-			    "filter-$problem",
-			    "monitor-$problem" ],
-		          true );
+	    if ( preg_match ( "/-$problem\$/",
+	                      $fbase ) )
+	        $flinkable = true;
+		// preg_match does not return `true'.
 	}
 
 	return [ $fext, $ftype,
@@ -341,7 +349,7 @@ EOT;
 	foreach ( $files as $f )
 	{
 	    if ( $f == '' ) continue;
-	    if ( ! in_array ( $f, $fnames ) )
+	    if ( ! in_array ( $f, $fnames, true ) )
 		exit ( "ACCESS: illegal POST to" .
 		       " problem.php" );
 	}
@@ -363,9 +371,8 @@ EOT;
 	$src = $matches[1];
 	$des = $matches[2];
 		 	    
-	if ( ! in_array
-		 ( $src, problem_file_names
-			   ( $probdir ) ) )
+	$fnames = problem_file_names ( $probdir );
+	if ( ! in_array ( $src, $fnames, true ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	if ( preg_match ( '/\.ftest$/', $des ) )
@@ -394,9 +401,8 @@ EOT;
 	$src = "$base.fout";
 	$des = "$base.ftest";
 		 	    
-	if ( ! in_array
-		 ( $src, problem_file_names
-			   ( $probdir ) ) )
+	$fnames = problem_file_names ( $probdir );
+	if ( ! in_array ( $src, $fnames, true ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	$d = "$probdir/+parent+";
@@ -431,6 +437,31 @@ EOT;
 	else
 	    $errors[] = "no file selected for upload";
     }
+    elseif ( isset ( $_POST['link'] ) )
+    {
+        $to = $_POST['link'];
+	$fnames = problem_file_names ( $probdir );
+	if ( ! in_array ( $to, $fnames, true ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	$ext = pathinfo ( $to, PATHINFO_EXTENSION );
+	if ( ! in_array ( $ext, ['','class','pyc'],
+	                        true ) )
+	    exit ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	if ( $ext != '' ) $ext = ".$ext";
+	$base = pathinfo ( $to, PATHINFO_FILENAME );
+	$from = "$problem";
+	$re = "/-(generate|filter|monitor)-$problem\$/";
+	if ( preg_match ( $re, $base, $matches ) )
+	    $from = "{$matches[1]}-$problem";
+	foreach ( ['','.class','.pyc'] as $uext )
+	    @unlink ( "$epm_data/$probdir/$from$uext" );
+	if ( ! symbolic_link
+	           ( $to,
+		     "$epm_data/$probdir/$from$ext" ) )
+	    ERROR ( "cannot link $from$ext to $to" );
+    }
     elseif ( isset ( $_POST['run'] ) )
     {
         $f = $_POST['run'];
@@ -438,9 +469,8 @@ EOT;
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 		 	    
-	if ( ! in_array
-		 ( $f, problem_file_names
-			   ( $probdir ) ) )
+	$fnames = problem_file_names ( $probdir );
+	if ( ! in_array ( $f, $fnames, true ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	$d = "$probdir/+parent+";
@@ -1058,23 +1088,20 @@ EOT;
 EOT;
 	if ( $flinkable )
 	{
-	    foreach ( ['solution','generate',
-	               'filter','monitor'] as $t )
-	    {
-	        if ( $t == 'solution' )
-		    $link = $problem;
-		else
-		    $link = "$t-$problem";
-		if ( $fext != '' )
-		    $link .= '.' . $fext;
-		$label = substr ( $t, 0, 3 );
+	    $ext = ( $fext != '' ? ".$fext" : $fext );
+	    $base = pathinfo
+	        ( $fname, PATHINFO_FILENAME );
+	    $link = "$problem$ext";
+	    $re = '/-(generate|filter|monitor)'
+	        . "-$problem\$/";
+	    if ( preg_match ( $re, $base, $matches ) )
+		$link = "{$matches[1]}-$problem$ext";
 
-		echo "<button type='submit'" .
-		     " name='link'" .
-		     " title='Link $link to $fname'" .
-		     " value='$fname:$t'>" .
-		     "&lArr;$label</button>";
-	    }
+	    echo "<button type='submit'" .
+		 " name='link'" .
+		 " title='Link $link to $fname'" .
+		 " value='$fname'>" .
+		 "Link</button>";
 	}
 	elseif ( $fext == 'in' )
 	{
