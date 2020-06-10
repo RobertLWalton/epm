@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Jun 10 14:53:31 EDT 2020
+Date:	Wed Jun 10 16:01:20 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -40,6 +40,11 @@ font-size: 18pt;
 }
 strong {
 font-size: 16pt;
+}
+pre {
+    display:inline;
+    font-size: 16pt;
+    font-family: monospace;
 }
 a[name] {
     font-weight: bold;
@@ -542,11 +547,16 @@ If a file has been pushed to or pulled from a
 <a href='#project-page'>project</a>, the
 file itself is not in your problem directory, but is
 in the project's problem directory and is linked to your problem
-directory.  These are marked by `(Linked from PROJECT-NAME)' at
-the end of the file's line.
+directory.  These are marked by `(Linked to PROJECT)' at
+the end of the file's line.  None of these files are executable.
 <p>
-Public binary files may be linked into your problem directory.
-These are marked as `Link to ...'.
+Executable files may be links in your problem directory.
+If they are links to EPM system files (such as epm_generate)
+they are marked as `Link to FILE-TYPE'.  If they are links to
+other files in your problem directory, they are marked as
+`Link to FILE-NAME'.  This last only happens when you provide
+multiple solutions to a problem: see <a href="#multiple-solutions">
+Multiple Solutions</a> for details.
 </p>
 
 <a name="file-extensions"><h2>File Extensions</h2></a>
@@ -556,8 +566,37 @@ and purpose.  In the following PPPP denotes the problem name
 and XXXX denotes some other part of the name: for example,
 the name XXXX-PPPP.in matches the name `00-001-reverser.in'
 if XXXX is 00-001 and PPPP is `reverser'.
-
-
+<p>
+When a problem is pulled from a project, many of these files
+of these files are supplied by the problem
+<a href="#parent">parent</a>.  The pull may make links in your
+problem directory to these files in the parent directory, or
+the commands that make files from other files may read these
+files directly from the parent directory.
+<p>
+The general scheme for producing a XXXX-PPPP.score file
+containing a score from a XXXX-PPPP.in test case input file and
+an executable solution PPPP is:
+<pre style='display:block;font-size:14pt;margin-left:28px'>
+generate-PPPP &lt;XXXX-PPPP.in &gt;XXXX-PPPP.sin
+PPPP &lt;XXXX-PPPP.in &gt;XXXX-PPPP.sout
+filter-PPPP &lt;XXXX-PPPP.sin 3&lt;XXXX-PPPP.sout &gt;XXXX-PPPP.fout
+epm_score XXXX-PPPP.fout XXXX-PPPP.ftest &gt;XXXX-PPPP.score
+</pre>
+<p>
+The <b>generate-PPPP</b> program takes the .in test case
+input file and produces the .sin solution input file that is
+input to the solution program <b>PPPP</b> to produce
+the .sout solution output file.  Then both the solution output
+and solution input file are input to the <b>filter-PPPP</b>
+program to produce the .fout filtered solution output.  Lastly the
+<b>epm_score</b> program compares the .fout
+filtered solution output to the .ftest test filtered
+solution output provided by the judge to produce the .score file.
+The actual commands used to execute all this are more complex
+because the generate, solution, and filter programs are run in sandboxes,
+as they are or may be uploaded.
+<p>
 <!-- &#8209; is no-breaking hyphen -->
 <div class='indented'>
 <strong>Files That Are Uploaded:</strong><br>
@@ -567,8 +606,10 @@ if XXXX is 00-001 and PPPP is `reverser'.
 <tr><td>PPPP.py</td><td>PYTHON Program Source File</td></tr>
 <tr><td>PPPP.java</td><td>JAVA Program Source File</td></tr>
 <tr><td>PPPP.tex</td><td>LATEX Document Source File</td></tr>
-<tr><td>XXXX&#8209;PPPP.in</td><td>Solution Input File</td></tr>
-<tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files</td></tr>
+<tr><td>XXXX&#8209;PPPP.in</td><td>Test Case Input File;
+                    may be supplied by parent</td></tr>
+<tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files;
+                    may be supplied by parent</td></tr>
 </table>
 <br>
 <strong>Files Made During Upload:</strong><br>
@@ -580,7 +621,8 @@ if XXXX is 00-001 and PPPP is `reverser'.
 <tr><td>PPPP.class</td><td>JAVA Program Binary File,
                      made from PPPP.java file</td></tr>
 <tr><td>PPPP.pdf</td><td>Document PDF File,
-                     made from PPPP.tex file</td></tr>
+                     made from PPPP.tex file;
+                     may be supplied by parent</td></tr>
 <tr><td>PPPP.tout</td><td>LATEX output file listing errors,
                      some just informative,
                      made from PPPP.tex file</td></tr>
@@ -590,11 +632,21 @@ if XXXX is 00-001 and PPPP is `reverser'.
 		     </td></tr>
 </table>
 <br>
+<strong>Files Created When Making Other Files:</strong><br>
+<table class='extension'>
+<tr><td>generate&#8209;PPPP<pre>  </pre></td><td>
+                     Generate Program executable;
+		     may be supplied by parent</td></tr>
+<tr><td>filter&#8209;PPPP</td><td>Filter Program executable;
+                     may be supplied by parent</td></tr>
+</table>
+<br>
 <strong>Files Made From Other Files (Not During Upload):</strong><br>
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
-                     made from XXXX&#8209;PPPP.in file
-		     by generate program</td></tr>
+                     made from XXXX&#8209;PPPP.in test case input file
+		     by generate program;
+		     may be supplied by parent</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.in file
 		     by generate program and compiled solution
@@ -612,7 +664,8 @@ if XXXX is 00-001 and PPPP is `reverser'.
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
                      made from XXXX&#8209;PPPP.fout file
-		     by simple copying (WARNING: affects scoring)
+		     by simple copying (WARNING: affects scoring);
+		     may be supplied by parent
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.score</td><td>Scoring Output File,
                      made from XXXX&#8209;PPPP.fout
