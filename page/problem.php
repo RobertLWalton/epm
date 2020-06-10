@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun 10 13:54:54 EDT 2020
+    // Date:	Wed Jun 10 15:53:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -240,7 +240,7 @@
 	    if (    $r !== false
 	         && preg_match ( $re, $r, $matches ) )
 	        $fcomment .=
-		    " (Linked from {$matches[1]})";
+		    " (Linked to {$matches[1]})";
 	}
 	elseif ( in_array ( $fext, ['','class','pyc'],
 	                           true ) )
@@ -1178,13 +1178,16 @@ EOT;
 	    if ( isset ( $show_map[$fname] ) )
 		$files[] = $fname;
 	}
-	if ( count ( $files ) > 0 )
+	if ( count ( $files ) > 0
+	     &&
+	     ! $work['SHOWN'] )
 	{
 	    $id = $show_map[$files[0]];
 	    echo "<script>document" .
 		 ".getElementById('$id')" .
 		 ".click();" .
 		 "</script>";
+	     $work['SHOWN'] = true;
 	}
 	if ( count ( $files ) > 1 )
 	{

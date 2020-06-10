@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun  8 12:56:34 EDT 2020
+// Date:    Wed Jun 10 15:56:28 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1634,6 +1634,7 @@ function move_keep ( $keep, & $errors )
 //	   messages).
 //     $work['KEPT'] to []
 //     $work['SHOW'] to []
+//     $work['SHOWN'] to false
 //     $work['LOCK'] to $lock
 //     $work['ALTERED'] to filemtime of
 //			$probdir/+altered+, or 0 if
@@ -1753,6 +1754,7 @@ function start_make_file
     $work['TEMPLATE'] = pretty_template ( $control[0] );
     $work['KEPT'] = [];
     $work['SHOW'] = [];
+    $work['SHOWN'] = false;
     $work['LOCK'] = $lock;
     $work['ALTERED'] = $altered;
 }
