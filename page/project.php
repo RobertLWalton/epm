@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  9 04:37:43 EDT 2020
+    // Date:	Wed Jun 10 09:37:46 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1249,7 +1249,15 @@ EOT;
 		     // created (or gone to).
 
     if ( ! isset ( $op ) )
+    {
         $favorites = favorites_to_list ( 'pull|push' );
+	if ( ! isset ( $listname ) )
+	{
+	    list ( $time, $proj, $base ) =
+	        $favorites[0];
+	    $listname = "$proj:$base";
+	}
+    }
 
     if ( $epm_method == 'POST' )
     {
@@ -1794,7 +1802,7 @@ EOT;
 	              . ' Problems to Push or Pull'
 		      . ' or Go To';
         echo <<<EOT
-	<strong>Select Problem List:</strong>
+	<strong>Selected Problem List:</strong>
 	<form method='POST' action='project.php'
 	      id='listname-form'>
 	<input type='hidden' id='id2'

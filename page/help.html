@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun  9 05:14:48 EDT 2020
+Date:	Wed Jun 10 09:37:58 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -451,11 +451,26 @@ for the problem.
 <a name="problem-page"><h1>Problem Page</h1></a>
 
 <p>
-At any given time you need to have a <b>current problem</b> you are working on.
-The <b>problem page</b> allows you to create problems, select an
-existing problem, and manage the current problem.
+The Project Page, which runs in the <a href="#main-tab">main tab</a>,
+can be used to create a <a href="#problem-tab">problem tab</a>
+containing the Problem Page for each of your problems.
+The Problem Page performs common operations for a problem.
+At any given time a problem tab contains either the Problem Page,
+or the <a href="#run-page">Run Page</a>
+which executes problem submissions and sample runs, or the
+<a href="#option-page">Option Page</a> which can be used to
+edit execution options.
+<p>
+You can have problem tabs for several different problems
+at one time.  However two different problem tabs must be for
+different problems.
+<p>
+The Problem and Run Pages in a problem tab
+may run background jobs that take a while to execute, and
+while a background job is running for a problem, you cannot
+do anything else with the problem.  But you can work on a
+DIFFERENT problem, which will be in a different tab.
 </p>
-
 
 <a name="problem-names"><h2>Problem Names</h2></a>
 <p>
@@ -471,7 +486,7 @@ In addition, it must begin and end with a letter.
 On the problem page:
 <table style='margin-left:20px' class='top-align'>
 <tr><td>&darr;</td><td>means `show below'</td></tr>
-<tr><td>&uarr;</td><td>means `hide'</td></tr>
+<tr><td>&uarr;</td><td>means `hide' (don't `show below')</td></tr>
 <tr><td>&Chi;</td><td>means `toggle overstrike of file name';
 overstuck files are deleted when you `Delete Over-Struck Files'
 or upload or make a new file</td></tr>

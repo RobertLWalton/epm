@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun 10 03:32:07 EDT 2020
+    // Date:	Wed Jun 10 10:04:04 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -626,7 +626,8 @@ EOT;
 	    DELETE_LIST.push ( fname );
 	    BUTTON.title = "Cancel " + fname +
 	                   " Deletion Mark";
-	    FILE.style = 'text-decoration:line-through';
+	    FILE.style.textDecoration =
+	        'line-through red wavy';
 
 	}
 	else
@@ -634,7 +635,7 @@ EOT;
 	    DELETE_LIST.splice ( i, 1 );
 	    BUTTON.title = "Mark " + fname +
 	                   " For Deletion";
-	    FILE.style = 'text-decoration:';
+	    FILE.style.textDecoration = 'none';
 	}
 	var DELETE_FILES = document.getElementById
 			       ("delete_files");
