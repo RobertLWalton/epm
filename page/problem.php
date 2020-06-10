@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  9 22:10:12 EDT 2020
+    // Date:	Tue Jun  9 22:47:19 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -985,12 +985,12 @@ EOT;
 EOT;
     function MAKE ( $fbase, $sext, $dext )
     {
-	echo "<td><button type='submit'" .
+	echo "<button type='submit'" .
 	     " name='make'" .
 	     " title='Make $fbase.$dext" .
 	     " from $fbase.$sext'" .
 	     " value='$fbase.$sext:$fbase.$dext'>" .
-	     "&rArr;.$dext</button></td>";
+	     "&rArr;.$dext</button>";
     }
     echo "<table style='display:block'>";
     foreach ( problem_file_names( $probdir )
@@ -1054,8 +1054,29 @@ EOT;
 		 title='Mark $fname For Deletion'>
 	    <pre id='mark$count'>&Chi;</pre>
 	    </button></td>
+	    <td colspan='100'>
 EOT;
-	if ( $fext == 'in' )
+	if ( $flinkable )
+	{
+	    foreach ( ['solution','generate',
+	               'filter','monitor'] as $t )
+	    {
+	        if ( $t == 'solution' )
+		    $link = $problem;
+		else
+		    $link = "$t-$problem";
+		if ( $fext != '' )
+		    $link .= '.' . $fext;
+		$label = substr ( $t, 0, 3 );
+
+		echo "<button type='submit'" .
+		     " name='link'" .
+		     " title='Link $link to $fname'" .
+		     " value='$fname:$t'>" .
+		     "&lArr;$label</button>";
+	    }
+	}
+	elseif ( $fext == 'in' )
 	{
 	    MAKE ( $fbase, 'in', 'sin' );
 	    MAKE ( $fbase, 'in', 'sout' );
@@ -1082,14 +1103,13 @@ EOT;
 	}
 	elseif ( $fext == 'run' )
 	{
-	    echo "<td><button type='submit'" .
+	    echo "<button type='submit'" .
 		 " name='run'" .
 		 " value='$fname'>" .
-		 "Run</button></td>";
+		 "Run</button>";
 	}
-	echo "<td colspan='100'>" .
-	     "<pre>$fcomment</pre></td>";
-	echo "</tr>";
+	echo "<pre>  $fcomment</pre>";
+	echo "</td></tr>";
     }
     echo "</table></form></div></div>";
 
