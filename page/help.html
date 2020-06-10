@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Jun 10 09:37:58 EDT 2020
+Date:	Wed Jun 10 14:05:47 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -461,15 +461,15 @@ which executes problem submissions and sample runs, or the
 <a href="#option-page">Option Page</a> which can be used to
 edit execution options.
 <p>
-You can have problem tabs for several different problems
+You can have several problem tabs
 at one time.  However two different problem tabs must be for
 different problems.
 <p>
 The Problem and Run Pages in a problem tab
 may run background jobs that take a while to execute, and
 while a background job is running for a problem, you cannot
-do anything else with the problem.  But you can work on a
-DIFFERENT problem, which will be in a different tab.
+do anything else with that problem.  But you can work on a
+DIFFERENT problem, which will be in a different problem tab.
 </p>
 
 <a name="problem-names"><h2>Problem Names</h2></a>
@@ -487,19 +487,20 @@ On the problem page:
 <table style='margin-left:20px' class='top-align'>
 <tr><td>&darr;</td><td>means `show below'</td></tr>
 <tr><td>&uarr;</td><td>means `hide' (don't `show below')</td></tr>
-<tr><td>&Chi;</td><td>means `toggle overstrike of file name';
+<tr><td><pre>&Chi;</pre></td><td>means `toggle overstrike of file name';
 overstuck files are deleted when you `Delete Over-Struck Files'
 or upload or make a new file</td></tr>
-<tr><td>&rArr;</td><td>means `make a new file with given extension from the file named on the same line'</td></tr>
+<tr><td>&rArr;</td><td>means `make a new file with given extension from the file named at the beginning of the line'</td></tr>
 </table>
 </p>
 
 <a name="current-problem-files"><h2>Current Problem Files</h2></a>
 <p>
 The <b>current problem files</b> are the files that you have uploaded
-or made for the problem.  These files are stored in your problem
+or made for the problem, plus links to other files.
+These files and links are stored in your problem
 directory and can be viewed, used, or deleted.  They are displayed
-in the `Current Problem File' table, one line per file.
+in the `Current Problem File' table, one line per file or link.
 <p>
 Current problem <a name='file-names'><b>file names</b></a> must have particular
 <a href='#file-extensions'>extensions</a> that specify their role within
@@ -509,6 +510,13 @@ underline(<pre.inline>_</pre>), must begin with a letter or digit, and must
 end with the <a href='#problem-name'>problem name</a>, which if it is
 preceded by anything must be preceded by a
 dash(<pre.inline>-</pre>).
+<p>
+Link names follow the same rules as file names, and furthermore
+each link name has the same extension as the file to which it is
+linked.  For example, files imported from the
+<a href="#parent">parent</a> of a problem are actually links
+in your problem directory to the actual file in the parent directory.
+In general links are treated and talked about as if they were files.
 <p>
 Clicking on a file name, if it is a button,
 will show the file with line numbers
