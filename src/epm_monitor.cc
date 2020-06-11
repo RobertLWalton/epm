@@ -2,7 +2,7 @@
 //
 // File:	epm_monitor.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Jun 11 08:31:20 EDT 2020
+// Date:	Thu Jun 11 13:49:53 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -98,10 +98,16 @@ class outbuf : public streambuf
     {
 	if ( eof ) return -1;
         size_t s = pptr() - buffer;
-	ssize_t r = write ( fd, buffer, s );
-	if ( r <= 0 )
+	if ( s > 0 )
 	{
-	    eof = true; return -1;
+	    // For some reason there is a problem
+	    // with writing 0 bytes.
+	    //
+	    ssize_t r = write ( fd, buffer, s );
+	    if ( r <= 0 )
+	    {
+		eof = true; return -1;
+	    }
 	}
 	setp ( buffer, buffer + 4096 );
 	return 0;
@@ -110,6 +116,9 @@ class outbuf : public streambuf
     {
     	if ( sync() < 0 ) return EOF;
 	buffer[0] = c;
+	pbump ( 1 );
+	    // The C++ documentation incorrectly states
+	    // that this need not be done.
 	return buffer[0];
     }
 };
@@ -296,7 +305,9 @@ void * copy ( void * )
 {
     for ( int i = 0; i < input.size(); ++ i )
         to << input[i] << endl;
-    if ( ! to ) cerr << "ERROR on to stream" << endl;
+    if ( ! to )
+        cerr << "ERROR copying lines to subprocess"
+	     << endl;
     toBUF.close();
     pthread_exit ( NULL );
 }
