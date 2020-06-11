@@ -2,22 +2,32 @@
 //
 // File:	epm_monitor.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Jun 10 21:49:11 EDT 2020
+// Date:	Thu Jun 11 08:31:20 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
 // for this program.
 
-// Begin TEMPLATE for monitor program input/output.
+// You can copy the following code into any monitor.
 
 #include <streambuf>
 #include <iostream>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 extern "C" {
 #include <unistd.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <errno.h>
 }
 using std::streambuf;
 using std::istream;
 using std::ostream;
+using std::cin;
+using std::cout;
+using std::cerr;
+using std::endl;
  
 // Class for reading from file descriptor.
 //
@@ -37,6 +47,10 @@ class inbuf : public streambuf
         setg ( buffer, buffer, buffer );
 	eof = false;
 	fd = _fd;
+    }
+    int close ( void )
+    {
+        return ::close ( fd );
     }
 
   protected:
@@ -71,6 +85,11 @@ class outbuf : public streambuf
 	eof = false;
 	fd = _fd;
     }
+    int close ( void )
+    {
+	sync();
+        return ::close ( fd );
+    }
 
   protected:
 
@@ -79,8 +98,8 @@ class outbuf : public streambuf
     {
 	if ( eof ) return -1;
         size_t s = pptr() - buffer;
-	ssize_t s = write ( fd, buffer, s );
-	if ( s <= 0 )
+	ssize_t r = write ( fd, buffer, s );
+	if ( r <= 0 )
 	{
 	    eof = true; return -1;
 	}
@@ -172,10 +191,10 @@ void syserror ( const char * action )
 const char * subprogram_name; // Save of argv[0] by
 			      // start_subprocess.
 pid_t subprocess;	// PID of subprocess.
-tobuf outBUF;
-istream to ( & toBUF ); // Stream for writing to
+outbuf toBUF;
+ostream to ( & toBUF ); // Stream for writing to
 			// subprocess input.
-frombuf inBUF;
+inbuf fromBUF;
 istream from ( & fromBUF ); // Stream for reading from
 			    // subprocess output.
 
@@ -203,59 +222,196 @@ void start_subprocess ( char * const * argv )
 	execvp ( argv[0], argv );
 	syserror ( "EXECUTING SUBPROCESS" );
     }
-    fromBuf.setfd ( outfd[0] );
-    toBuf.setfd ( infd[1] );
+    fromBUF.setfd ( outfd[0] );
+    toBUF.setfd ( infd[1] );
     close ( outfd[1] );
     close ( infd[0] );
 }
-
-// End TEMPLATE for generate/filter program input.
-
-using std::cout;
-using std::endl;
-
-#ifndef NAME
-#    error "Program name NAME not set."
-#endif
-
-#ifndef FD
-#    error "Input file descriptor FD not set."
-#endif
+void stop_subprocess ( void )
+{
+    toBUF.close();
+    fromBUF.close();
+    kill ( subprocess, SIGKILL );
+}
+
+// The reminder of this code will need to be replaced
+// for monitors other than this.
 
 char documentation [] =
-"%s\n"
+"epm_monitor [-trace] [--] COMMAND...\n"
 "\n"
-"    Copies from file descriptor %d to file descrip-\n"
-"    tor 1 removing comments from lines.  A line\n"
-"    beginning with !!** is a comment line and is\n"
-"    deleted (not copied).  Any character sequence\n"
-"    of the form [**...**] within a line is a com-\n"
-"    ment and is deleted.  These last comments\n"
-"    CANNOT be nested: once [** is recognized as the\n"
-"    start of a comment, the next **] terminates the\n"
-"    comment, even if the comment contains other [**\n"
-"    sequences, and if there is no **] following a\n"
-"    in a line, then the [** does not begin a com-\n"
-"    ment.\n"
+"    Executes COMMAND... as subprocess, passing\n"
+"    standard input less comment lines on to this\n"
+"    subprocess input, and copying subprocess output\n"
+"    to the standard output.\n"
+"\n"
+"    The -- option is only needed if COMMAND begins\n"
+"    with `-'.\n"
+"\n"
+"    More specifically, begins by reading the entire\n"
+"    standard input up to an end-of-file, copying\n"
+"    lines beginning with `!!' to the standard out-\n"
+"    put, and buffering other lines.  If -trace is\n"
+"    given, other lines are copied to the standard\n"
+"    output with the preface `!!>>'.  An input line\n"
+"    beginning with `!!' not followed by `##' will\n"
+"    trigger a warning message to the standard\n"
+"    error.\n"
+"\n"
+"    Then this program establishes a thread that\n"
+"    copies the buffered input lines to the subpro-\n"
+"    cess standard input, throttling when the sub-\n"
+"    process pauses to compute or write output.\n"
+"\n"
+"    Lastly this program copies the subprocess stand-\n"
+"    ard output to the standard output of this pro-\n"
+"    gram.  If any line of this output begins with\n"
+"    `!!' not followed by `**', this program writes\n"
+"    a warning to its standard error.\n"
+"\n"
+"    Note that the epm_score scoring program ignores\n"
+"    all lines beginning with `!!'.\n"
 ;
 
-# define quote(x) str(x)
-# define str(x) #x
+#include <string>
+#include <vector>
+using std::string;
+using std::vector;
 
 // Main program.
 //
+bool trace = false;    // Trace option.
+int line_number = 0;   // Line number in output.
+int in_bad_count = 0;  // Count bad input comments.
+int in_bad_first;      // First bad input comment
+		       // line number.
+int out_bad_count = 0; // Count bad output comments.
+int out_bad_first;     // First bad output comment
+		       // line number.
+vector<string> input;  // Non-comment input lines.
+// Function to run in thread copying input to the
+// subprocess.
+//
+void * copy ( void * )
+{
+    for ( int i = 0; i < input.size(); ++ i )
+        to << input[i] << endl;
+    if ( ! to ) cerr << "ERROR on to stream" << endl;
+    toBUF.close();
+    pthread_exit ( NULL );
+}
+
 int main ( int argc, char ** argv )
 {
-    if ( argc > 1 )
+    // Process options.
+
+    while ( true )
     {
-	fprintf ( stderr,
-	          documentation, quote(NAME), FD );
-	return 0;
+        ++ argv, -- argc;
+        if ( argc < 1
+	     ||
+	     strncmp ( "-doc", argv[0], 4 ) == 0 )
+	{
+	    // Any -doc* option prints documentation
+	    // and exits with no error.
+	    //
+	    FILE * out = popen ( "less -F", "w" );
+	    fputs ( documentation, out );
+	    pclose ( out );
+	    exit ( 0 );
+	}
+        else if ( strcmp ( "-trace", argv[0] ) == 0 )
+	    trace = true;
+	else if ( strcmp ( "--", argv[0] ) == 0 )
+	{
+	    ++ argv, -- argc;
+	    break;
+	}
+	else if ( argv[0][0] == '-' )
+	{
+	    cerr << "ERROR: cannot understand "
+	         << argv[0] << endl;
+	    exit ( 1 );
+	}
+	else
+	    break;
+
     }
 
-    inBUF.setfd ( FD );
-    while ( get_line() ) cout << line << endl;
+    // Read input.
+    //
+    input.clear();
+    string line;
+    while ( getline ( cin, line ) )
+    {
+	const char * p = line.c_str();
+	if ( p[0] != '!' || p[1] != '!' )
+	{
+	    input.push_back ( line );
+	    if ( trace )
+	    {
+	        cout << "!!>>" << line << endl;
+		++ line_number;
+	    }
+	}
+	else
+	{
+	    cout << line << endl;
+	    ++ line_number;
+	    if ( p[2] != '#' || p[3] != '#' )
+	    {
+	        if ( in_bad_count ++ == 0 )
+		    in_bad_first = line_number;
+	    }
+	}
+    }
+    if ( cin.bad() || line.size() != 0 )
+        cerr << "WARNING: input did not end properly"
+	        " (e.g., with a line feed)" << endl;
 
+    if ( in_bad_count > 0 )
+        cerr << "WARNING: input contains "
+	     << in_bad_count << " illegal comments;"
+	     << endl
+	     << "         the first is at output line "
+	     << in_bad_first << endl;
+
+    // Start subprocess.
+    //
+    start_subprocess ( argv );
+
+    // Create input copying thread.
+    //
+    pthread_t thread;
+    if (   pthread_create ( & thread, NULL, copy, NULL )
+         < 0 )
+        syserror ( "pthread_create" );
+
+    // Copy subprocess output to standard output.
+    //
+    while ( getline ( from, line ) )
+    {
+        cout << line << endl;
+	++ line_number;
+	const char * p = line.c_str();
+	if ( p[0] != '!' || p[1] != '!' ) continue;
+	if ( p[2] == '*' && p[3] == '!' ) continue;
+	if ( out_bad_count ++ == 0 )
+	    out_bad_first = line_number;
+    }
+    if ( from.bad() || line.size() != 0 )
+        cerr << "WARNING: output did not end properly"
+	        " (e.g., with a line feed)" << endl;
+    if ( out_bad_count > 0 )
+        cerr << "WARNING: output contains "
+	     << out_bad_count << " illegal comments;"
+	     << endl
+	     << "         the first is at output line "
+	     << out_bad_first << endl;
+
+    // Cleanup.
+    //
+    stop_subprocess();
     return 0;
 }
 
