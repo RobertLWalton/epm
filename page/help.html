@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Jun 10 16:01:20 EDT 2020
+Date:	Thu Jun 11 03:26:17 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -92,6 +92,10 @@ vertical-align: top;
 	title='Show/Hide Table of Contents'>
 	<span id='toc-mark'>&darr;</span></button>
 <strong>Table of Contents</strong>
+</td>
+<td>
+<button type='button' onclick='BACK()'><b>&#8678;</b></button>
+<button type='button' onclick='FORWARD()'><b>&#8680;</b></button>
 </td>
 <td style='text-align:right'>
 <strong>Other Documents:</strong>
@@ -1024,8 +1028,42 @@ function CLICK_TOC()
     text.style.display = 'block';
     toc_mark.innerHTML = '&darr;';
 }
-
 toc.addEventListener ( 'click', CLICK_TOC );
+
+var history_list = [];
+var index = 0;
+function A_CLICK ( event )
+{
+    let a = event.target;
+    if ( a.tagName != 'A' ) return;
+    if ( a.href == '' ) return;
+    while ( index != 0 )
+    {
+        history_list.pop();
+	++ index;
+    }
+    history_list.push ( a );
+}
+document.addEventListener ( 'click', A_CLICK );
+
+function BACK()
+{
+    if ( index + history_list.length <= 0 ) return;
+    -- index;
+    history_list[index + history_list.length].focus();
+}
+function FORWARD()
+{
+    if ( index >= 0 ) return;
+    if ( index == -1 )
+	history_list[index + history_list.length].click();
+    else
+    {
+	++ index;
+	history_list[index + history_list.length].focus();
+    }
+}
+    
 </script>
 
 </body>
