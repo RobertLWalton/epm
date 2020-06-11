@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 11 14:35:30 EDT 2020
+// Date:    Thu Jun 11 16:06:52 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2396,7 +2396,8 @@ function create_file
 	return true;
     }
 
-    if ( preg_match ( "/^(generate|filter)_$problem\$/",
+    $file_re = 'generate|filter|monitor';
+    if ( preg_match ( "/^($file_re)_$problem\$/",
                       $filename, $matches ) )
     {
 	$b = $matches[1];

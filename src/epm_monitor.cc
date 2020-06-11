@@ -2,7 +2,7 @@
 //
 // File:	epm_monitor.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Jun 11 13:49:53 EDT 2020
+// Date:	Thu Jun 11 17:18:52 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -18,6 +18,7 @@
 extern "C" {
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <errno.h>
 }
@@ -236,11 +237,25 @@ void start_subprocess ( char * const * argv )
     close ( outfd[1] );
     close ( infd[0] );
 }
-void stop_subprocess ( void )
+int subprocess_exit ( void )
 {
     toBUF.close();
-    fromBUF.close();
-    kill ( subprocess, SIGKILL );
+    int status;
+    pid_t r = waitpid ( subprocess, & status, 0 );
+    if ( r < 0 )
+    {
+        kill ( subprocess, SIGKILL );
+	return 128 + SIGKILL;
+    }
+    if ( WIFEXITED ( status ) )
+        return WEXITSTATUS ( status );
+    else if ( WIFSIGNALED ( status ) )
+        return 128 + WTERMSIG ( status );
+    else
+    {
+        kill ( subprocess, SIGKILL );
+	return 128 + SIGKILL;
+    }
 }
 
 // The reminder of this code will need to be replaced
@@ -422,7 +437,6 @@ int main ( int argc, char ** argv )
 
     // Cleanup.
     //
-    stop_subprocess();
-    return 0;
+    exit ( subprocess_exit() );
 }
 

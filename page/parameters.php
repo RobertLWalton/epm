@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun May 31 16:27:09 EDT 2020
+// Date:    Thu Jun 11 17:31:37 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -209,6 +209,7 @@ $display_file_type = [
     "test" => "utf8",
     "ftest" => "utf8",
     "cout" => "utf8",
+    "mout" => "utf8",
     "sout" => "utf8",
     "dout" => "utf8",
     "fout" => "utf8",
@@ -218,7 +219,7 @@ $display_file_type = [
     "gerr" => "utf8",
     "g1err" => "utf8",
     "g2err" => "utf8",
-    "err" => "utf8",
+    "merr" => "utf8",
     "serr" => "utf8",
     "derr" => "utf8",
     "ferr" => "utf8",
