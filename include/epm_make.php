@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jun 10 15:56:28 EDT 2020
+// Date:    Thu Jun 11 14:35:30 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2092,6 +2092,12 @@ function finish_run ( & $errors )
     if ( $result === true )
         ERROR ( "finish_run called with 'true'" .
 	        " session EPM_RUN RESULT" );
+    if ( $submit )
+        cleanup_dir ( "$probdir/+work+", $discard );
+	// Be sure nothing is left to look at after
+	// run except $rundir stuff.  This is here
+	// in case bin/epm_run failed before it could
+	// do it.
 
     $d = "$probdir/+parent+";
     if ( is_dir ( "$epm_data/$d" ) )

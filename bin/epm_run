@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jun  6 16:13:08 EDT 2020
+// Date:	Thu Jun 11 14:26:43 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -399,6 +399,9 @@ foreach ( $runin as $infile )
 	break;
     }
 }
+
+cleanup_dir ( $workdir, $discard );
+
 if ( count ( $errors ) > 0 )
 {
     echo "Errors While Processing $first_failed" .
