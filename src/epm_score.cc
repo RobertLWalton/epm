@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Mar  7 05:08:41 EST 2020
+// Date:	Thu Jun 11 15:15:36 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -38,10 +38,11 @@ char const ILLEGAL = '?';
 char documentation [] =
 "epm_score [options] output_file test_file\n"
 "\n"
-"    The output_file is the filtered problem solu-\n"
-"    tion output and the test_file is the filtered\n"
-"    judge's solution output.  In the simplest case\n"
-"    the filter simply removes comments.\n"
+"    The output_file is the problem monitor output\n"
+"    and the test_file is the judge's monitor output.\n"
+"    These files may contain comment lines that begin\n"
+"    with `!!' and are skipped and thus ignored by\n"
+"    epm_score.\n"
 "\n"
 "    This program outputs a summary score line, fol-\n"
 "    lowed by descriptions of any errors found in the\n"
@@ -63,20 +64,23 @@ char documentation [] =
 "\n"
 "    To find errors, file lines are parsed into\n"
 "    tokens, and sucessive tokens of pairs of non-\n"
-"    blank lines are matched.  A token is a word, a\n"
-"    number, or a separator.   White-space is not\n"
-"    part of any token, but the last column of each\n"
-"    token is recorded and may be used to require the\n"
-"    output_file to have the same spacing as the\n"
-"    test_file.\n"
+"    blank lines are matched.  Lines begining with\n"
+"    `!!' are treated as comments which are skipped\n"
+"    and thus ignored.\n"
 "\n"
+"    A token is a word, a number, or a separator.\n"
+"    White-space is not part of any token, but the\n"
+"    last column of each token is recorded and may\n"
+"    be used to require the output_file to have the\n"
+"    same spacing as the test_file.\n"
+"\f\n"
 "    A word is just a string of ASCII letters.  A\n"
 "    number is a string with the syntax:\n"
 "\n"
 "        number ::= integer | float\n"
 "\n"
 "        integer ::= sign? digit+\n"
-"\f\n"
+"\n"
 "        float ::= integer fraction exponent?\n"
 "                | sign? fraction exponent?\n"
 "                | integer decimal-point exponent?\n"
@@ -105,7 +109,7 @@ char documentation [] =
 "    tokens being preferred at each point.  When com-\n"
 "    paring tokens, the type of the test token\n"
 "    determines the type of output token expected.\n"
-"\n"
+"\f\n"
 "    The types of errors detected are:\n"
 "\n"
 "        Incorrect Output Errors:\n"
@@ -114,7 +118,7 @@ char documentation [] =
 "            Superfluous Lines at End of Output\n"
 "            Tokens Missing from End of Line\n"
 "            Extra Tokens at End of Line\n"
-"\f\n"
+"\n"
 "            Token is Not a Number\n"
 "            Token is Not a Word\n"
 "            Token is Not a Separator\n"
@@ -142,7 +146,7 @@ char documentation [] =
 "    The error types marked with * are ignored by\n"
 "    default, while all other error types are not\n"
 "    ignorable.\n"
-"\n"
+"\f\n"
 "    Information about the first L error types\n"
 "    discovered, in order of discovery, is printed.\n"
 "    This includes details of the first instance of\n"
@@ -153,7 +157,7 @@ char documentation [] =
 "\n"
 "    -limit L\n"
 "        Reset the error type limit to L.\n"
-"\f\n"
+"\n"
 "    -blank\n"
 "        Do NOT ignore `Superflous Blank Line' and\n"
 "        `Missing Blank Line' errors.\n"
@@ -177,7 +181,7 @@ char documentation [] =
 "        The -integer option below separately requi-\n"
 "        es the output token to be an integer when\n"
 "        the test token is an integer.\n"
-"\n"
+"\f\n"
 "    -places\n"
 "        Do NOT ignore `Number has Wrong Number of\n"
 "        Decimal Places' errors.  The number of\n"
@@ -190,7 +194,7 @@ char documentation [] =
 "        errors.  This means that if the test token\n"
 "        is an integer, the output token must be an\n"
 "        integer.\n"
-"\f\n"
+"\n"
 "        When both `-integer' and `-float A R' are\n"
 "        given, care must be taken that all test\n"
 "        number tokens that are to be compared using\n"
@@ -212,7 +216,7 @@ char documentation [] =
 "    -case\n"
 "        Do NOT ignore `Word Letter Cases do Not\n"
 "        Match' errors.\n"
-"\n"
+"\f\n"
 "    -column\n"
 "        Do NOT ignore `Token End Columns are Not\n"
 "        Equal' errors.  When computing the column\n"
@@ -226,7 +230,7 @@ char documentation [] =
 "    To compare numbers otherwise, they are convert-\n"
 "    ed to IEEE 64 bit numbers.  It is possible that\n"
 "    a converted number will be an infinity.\n"
-"\f\n"
+"\n"
 "    The relative difference between two numbers x\n"
 "    and y is:\n"
 "\n"
@@ -373,8 +377,10 @@ void open_files ( const char * output_file_name,
     }
 }
 
-// Get next line.  If end of file, set at_end and clear
-// is_blank.  If called when file is at_end, to nothing.
+// Get next line.  Skip lines beginning with `!!'.  If
+// end of file, set at_end and clear is_blank.  If
+// called when file is at_end, to nothing.
+//
 // If file not at_end, set token type to NO_TOKEN,
 // set is_blank, and initialize start, end, and column
 // to 0.  Information about illegal character is also
@@ -383,17 +389,24 @@ void open_files ( const char * output_file_name,
 void get_line ( file & f )
 {
     if ( f.at_end ) return;
-    if ( ! getline ( f.stream, f.line ) )
-         f.at_end = true, f.is_blank = false;
+    const char * p;
+    while ( true )
+    {
+	p = NULL;
+	if ( ! getline ( f.stream, f.line ) ) break;
+	++ f.line_number;
+        p = f.line.c_str();
+	if ( p[0] != '!' || p[1] != '!' ) break;
+    }
+
+    if ( p == NULL )
+	f.at_end = true, f.is_blank = false;
     else
     {
-	++ f.line_number;
-
         // We do a fast scan to check for illegal
 	// characters before replacing any, as
 	// replacement may take time.
 	//
-        const char * p = f.line.c_str();
 	f.is_blank = true;
 	bool has_illegal = false;
 	while ( ! has_illegal && * p )
