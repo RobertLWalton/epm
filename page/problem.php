@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun 10 15:53:23 EDT 2020
+    // Date:	Fri Jun 12 15:22:21 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -131,8 +131,10 @@
     //	   (Lines ###) iff the above do not apply and
     //         the file is UTF8 with ### lines
     //
-    //     If in addition the file is linked from
-    //     PROJECT, `(Linked from PROJECT)' is appended.
+    //     If in addition the file is linked,
+    //     `(Link to ...)' is appended, where ...
+    //	   is a project name, local file name, or
+    //     `default'.
     //
     // If FILE-DISPLAY is set to true, the element
     //
@@ -150,7 +152,7 @@
     {
         global $epm_data, $problem, $display_file_type,
 	       $display_file_map, $epm_file_maxsize,
-	       $epm_filename_re,
+	       $epm_filename_re, $linkable_ext,
 	       $max_display_lines, $min_display_lines;
 
 	$fext = pathinfo ( $fname, 
@@ -215,42 +217,38 @@
 	    $fshow = true;
 	}
 	else
-	{
-	    if ( is_link ( $f ) )
-	    {
-	        $target = @readlink ( $f );
-		if ( $target === false )
-		    ERROR ( "cannot read link" .
-		            " $dir/$fname" );
-		if ( preg_match ( $epm_filename_re,
-		                  $target ) )
-		    $fcomment = "Link to $target";
-		else
-		    $fcomment = "Link to $ftype";
-	    }
-	    else 
-		$fcomment = $ftype;
-	}
+	    $fcomment = $ftype;
+
 
 	if ( is_link ( $f ) )
 	{
-	    $r = @readlink ( $f );
+	    $t = @readlink ( $f );
+	    if ( $t === false )
+		ERROR ( "cannot read link" .
+			" $dir/$fname" );
 	    $re = "#^\.\./\.\./\.\./projects/"
 	        . "([^/]+)/$problem/$fname\$#";
-	    if (    $r !== false
-	         && preg_match ( $re, $r, $matches ) )
+	    if ( preg_match ( $re, $t, $matches ) )
 	        $fcomment .=
-		    " (Linked to {$matches[1]})";
+		    " (Link to {$matches[1]} project)";
+	    elseif ( preg_match ( $epm_filename_re,
+		                  $t ) )
+		$fcomment .= " (Link to $t)";
+	    else
+		$fcomment .= " (Link to default)";
 	}
-	elseif ( in_array ( $fext, ['','class','pyc'],
+	elseif ( in_array ( $fext, $linkable_ext,
 	                           true ) )
 	{
 	    $fbase = pathinfo
 	        ( $fname, PATHINFO_FILENAME );
+	    $re = '/^(generate|filter|monitor)-'
+	        . "$problem\$/";
 	    if ( preg_match ( "/-$problem\$/",
-	                      $fbase ) )
+	                      $fbase )
+		 &&
+		 ! preg_match ( $re, $fbase ) )
 	        $flinkable = true;
-		// preg_match does not return `true'.
 	}
 
 	return [ $fext, $ftype,
@@ -446,18 +444,26 @@ EOT;
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
 	$ext = pathinfo ( $to, PATHINFO_EXTENSION );
-	if ( ! in_array ( $ext, ['','class','pyc'],
+	if ( ! in_array ( $ext, $linkable_ext,
 	                        true ) )
 	    exit ( "ACCESS: illegal POST to" .
 	           " problem.php" );
-	if ( $ext != '' ) $ext = ".$ext";
+
 	$base = pathinfo ( $to, PATHINFO_FILENAME );
 	$from = "$problem";
 	$re = "/-(generate|filter|monitor)-$problem\$/";
 	if ( preg_match ( $re, $base, $matches ) )
 	    $from = "{$matches[1]}-$problem";
-	foreach ( ['','.class','.pyc'] as $uext )
-	    @unlink ( "$epm_data/$probdir/$from$uext" );
+
+	if ( in_array ( $ext, $executable_ext, true ) )
+	    foreach ( $executable_ext as $uext )
+	    {
+		if ( $uext != '' ) $uext = ".$uext";
+		@unlink
+		    ( "$epm_data/$probdir/$from$uext" );
+	    }
+
+	if ( $ext != '' ) $ext = ".$ext";
 	if ( ! symbolic_link
 	           ( $to,
 		     "$epm_data/$probdir/$from$ext" ) )
@@ -1204,7 +1210,8 @@ EOT;
 	  method='POST' id='reload'>
     <input type='hidden' id='id8'
            name='id' value='$ID'>
-    <input type='hidden' name='problem' value='$problem'>
+    <input type='hidden'
+           name='problem' value='$problem'>
     <input type='hidden' name='reload' value='reload'>
     </form>
 EOT;

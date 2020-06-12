@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Jun 11 03:26:17 EDT 2020
+Date:	Fri Jun 12 14:24:53 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -42,9 +42,15 @@ strong {
 font-size: 16pt;
 }
 pre {
-    display:inline;
+    display: inline;
     font-size: 16pt;
     font-family: monospace;
+}
+span.notemark {
+    display: inline;
+    font-size: 16pt;
+    font-family: monospace;
+    color:red;
 }
 a[name] {
     font-weight: bold;
@@ -599,7 +605,10 @@ filtered solution output to the .ftest test filtered
 solution output provided by the judge to produce the .score file.
 The actual commands used to execute all this are more complex
 because the generate, solution, and filter programs are run in sandboxes,
-as they are or may be uploaded.
+as they are or may be uploaded.  The solution program is of course
+provided by the problem solver, but the generate and filter
+programs are provided by the problem setter (the person who
+creates the problem).
 <p>
 <!-- &#8209; is no-breaking hyphen -->
 <div class='indented'>
@@ -649,8 +658,7 @@ as they are or may be uploaded.
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
                      made from XXXX&#8209;PPPP.in test case input file
-		     by generate program;
-		     may be supplied by parent</td></tr>
+		     by generate program</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.in file
 		     by generate program and compiled solution
@@ -667,7 +675,8 @@ as they are or may be uploaded.
 		     by filter program
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
-                     made from XXXX&#8209;PPPP.fout file
+                     made by the problem setter
+		     from XXXX&#8209;PPPP.fout file
 		     by simple copying (WARNING: affects scoring);
 		     may be supplied by parent
 		     </td></tr>
@@ -686,8 +695,8 @@ as they are or may be uploaded.
 <tr><td>XXXX&#8209;PPPP.rout</td><td>Run output file,
                      made from XXXX&#8209;PPPP.run
 		     and other files by the scoring and other
-		     programs,
-		     that summarizes .score files made from
+		     programs;
+		     summarizes .score files made from
 		     .in files listed in the .run file
 		     </td></tr>
 </table>
@@ -740,6 +749,10 @@ command lines.
 If a command line fails, this is indicated along with a failure
 message (but not for debugging runs that make .dout files which
 contain their own failure messages, if any).
+The indications take the form of footnotes marked by
+<span class='notemark'>*</span>,
+<span class='notemark'>**</span>,
+<span class='notemark'>***</span>, etc.
 </p>
 
 <a name="problem-working"><h2>Working Files of Last Executed Commands</h2></a>

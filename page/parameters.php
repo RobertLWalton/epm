@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 11 17:31:37 EDT 2020
+// Date:    Fri Jun 12 15:22:00 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -267,6 +267,17 @@ $push_file_map = [
     "" => [ "generate_PPPP" => "R",
             "filter_PPPP" => "R" ]
 ];
+
+$executable_ext = ['','class','pyc'];
+    // Extensions of executable files.
+
+$linkable_ext = ['','c','cc','class','java','pyc','py'];
+    // If EEE is a $linkable_ext then files with
+    // a name of the form YYYY-PPPP.EEE can be the
+    // targets of a link PPPP.EEE, and similarly files
+    // with names YYYY-ZZZZ-PPPP.EEE can be targets of
+    // ZZZZ-PPPP.EEE if ZZZZ is `generate', `filter',
+    // or `monitor'.
 
 // The following are functions shared with bin/epm_run
 // and others.  They are not parameters and should not
