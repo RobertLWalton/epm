@@ -2,7 +2,7 @@
 //
 // File:	epm_monitor.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Jun 11 17:18:52 EDT 2020
+// Date:	Thu Jun 11 22:48:27 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -19,7 +19,9 @@ extern "C" {
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <errno.h>
 }
 using std::streambuf;
@@ -43,7 +45,7 @@ class inbuf : public streambuf
 
   public:
 
-    void setfd ( int _fd )
+    inbuf ( int _fd )
     {
         setg ( buffer, buffer, buffer );
 	eof = false;
@@ -80,7 +82,7 @@ class outbuf : public streambuf
 
   public:
 
-    void setfd ( int _fd )
+    outbuf ( int _fd )
     {
         setp ( buffer, buffer );
 	eof = false;
@@ -123,6 +125,23 @@ class outbuf : public streambuf
 	return buffer[0];
     }
 };
+
+outbuf toBUF ( 4 );
+ostream to ( & toBUF ); // Stream for writing to
+                        // subprocess input.
+inbuf fromBUF ( 3 );
+istream from ( & fromBUF ); // Stream for reading from
+                            // subprocess output.
+
+// Error function for OS system calls.
+//
+void syserror ( const char * action )
+{
+    cerr << "ERROR " << action << ": "
+         << strerror ( errno ) << endl;
+    exit ( 1 );
+}
+
 
 // Random Number Generator
 // ------ ------ ---------
@@ -178,123 +197,61 @@ template <typename T> inline void shuffle
     }
 }
 
-// Subprocess Management
-// --------- ----------
-
-// Error function for OS system calls.  Write to cerr to
-// generate `program crashed' score.
-//
-void syserror ( const char * action )
-{
-    cerr << "ERROR " << action << ": "
-         << strerror ( errno ) << endl;
-    exit ( 1 );
-}
-
-// Establish subprocess.  The subprocess executes the
-// command in argv (which normally equals argv + 1
-// from `main').
-//
-// There is no ANSI compatible way to connect pipes
-// and iostreams, so we have to use cstdio.
-//
-const char * subprogram_name; // Save of argv[0] by
-			      // start_subprocess.
-pid_t subprocess;	// PID of subprocess.
-outbuf toBUF;
-ostream to ( & toBUF ); // Stream for writing to
-			// subprocess input.
-inbuf fromBUF;
-istream from ( & fromBUF ); // Stream for reading from
-			    // subprocess output.
-
-void start_subprocess ( char * const * argv )
-{
-    subprogram_name = argv[0];
-
-    int infd[2],	// Input to subprocess.
-	outfd[2];	// Output from subprocess.
-    if ( pipe ( infd ) < 0 )
-	syserror ( "OPENING PIPE" );
-    if ( pipe ( outfd ) < 0 )
-	syserror ( "OPENING PIPE" );
-
-    subprocess = fork ();
-    if ( subprocess < 0 ) syserror ( "FORKING" );
-    if ( subprocess == 0 )
-    {
-	dup2 ( infd[0], 0 );
-	dup2 ( outfd[1], 1 );
-	close ( infd[0] );
-	close ( infd[1] );
-	close ( outfd[0] );
-	close ( outfd[1] );
-	execvp ( argv[0], argv );
-	syserror ( "EXECUTING SUBPROCESS" );
-    }
-    fromBUF.setfd ( outfd[0] );
-    toBUF.setfd ( infd[1] );
-    close ( outfd[1] );
-    close ( infd[0] );
-}
-int subprocess_exit ( void )
-{
-    toBUF.close();
-    int status;
-    pid_t r = waitpid ( subprocess, & status, 0 );
-    if ( r < 0 )
-    {
-        kill ( subprocess, SIGKILL );
-	return 128 + SIGKILL;
-    }
-    if ( WIFEXITED ( status ) )
-        return WEXITSTATUS ( status );
-    else if ( WIFSIGNALED ( status ) )
-        return 128 + WTERMSIG ( status );
-    else
-    {
-        kill ( subprocess, SIGKILL );
-	return 128 + SIGKILL;
-    }
-}
-
 // The reminder of this code will need to be replaced
 // for monitors other than this.
 
 char documentation [] =
-"epm_monitor [-trace] [--] COMMAND...\n"
+"epm_monitor [-trace] 4>SOL-INPUT 3< SOL-OUTPUT \n"
 "\n"
-"    Executes COMMAND... as subprocess, passing\n"
-"    standard input less comment lines on to this\n"
-"    subprocess input, and copying subprocess output\n"
-"    to the standard output.\n"
+"    Assumes SOL-OUTPUT is a fifo connected to the\n"
+"    solution program standard output and SOL-INPUT\n"
+"    is a fifo connected to the solution program\n"
+"    standard input.  This monitor program copies its\n"
+"    standard input to the solution input, removing\n"
+"    comment lines as it does so.  This monitor prog-\n"
+"    also copies the solution standard output to the\n"
+"    standard output of the monitor program.\n"
 "\n"
-"    The -- option is only needed if COMMAND begins\n"
-"    with `-'.\n"
-"\n"
-"    More specifically, begins by reading the entire\n"
-"    standard input up to an end-of-file, copying\n"
-"    lines beginning with `!!' to the standard out-\n"
-"    put, and buffering other lines.  If -trace is\n"
-"    given, other lines are copied to the standard\n"
-"    output with the preface `!!>>'.  An input line\n"
-"    beginning with `!!' not followed by `##' will\n"
+"    More specifically, the monitor program begins\n"
+"    by reading its entire standard input up to an\n"
+"    end-of-file, copying lines beginning with `!!' \n"
+"    to the monitor program standard output, and buf-\n"
+"    fering other lines.  If -trace is given, these\n"
+"    other lines are copied to the standard output\n"
+"    with the preface `!!>>'.  An input line begin-\n"
+"    ning with `!!' that is not followed by `##' will\n"
 "    trigger a warning message to the standard\n"
 "    error.\n"
 "\n"
-"    Then this program establishes a thread that\n"
-"    copies the buffered input lines to the subpro-\n"
-"    cess standard input, throttling when the sub-\n"
-"    process pauses to compute or write output.\n"
+"    Then the monitor program establishes a thread\n"
+"    that copies the buffered input lines to the solu-\n"
+"    tion standard input, throttling when the solu-\n"
+"    tion pauses to compute or write output.\n"
 "\n"
-"    Lastly this program copies the subprocess stand-\n"
-"    ard output to the standard output of this pro-\n"
-"    gram.  If any line of this output begins with\n"
-"    `!!' not followed by `**', this program writes\n"
-"    a warning to its standard error.\n"
+"    Lastly the monitor program copies the solution\n"
+"    standard output to the monitor standard output.\n"
+"    If any line of this output begins with `!!' not\n"
+"    followed by `**', the monitor writes a warning\n"
+"    to its standard error.\n"
 "\n"
 "    Note that the epm_score scoring program ignores\n"
 "    all lines beginning with `!!'.\n"
+"\f\n"
+"    Note also that when opening named fifos, order\n"
+"    matters.  Thus given pipes named IN and OUT,\n"
+"\n"
+"        cat <IN >OUT &\n"
+"        epm_monitor >IN <OUT\n"
+"\n"
+"   works because the IN fifo is opened first by\n"
+"   BOTH processes, but\n"
+"\n"
+"        cat <IN >OUT &\n"
+"        epm_monitor <OUT >IN\n"
+"\n"
+"   hangs up because each process begins by opening\n"
+"   a DIFFERENT fifo, so each process gets hung up\n"
+"   waiting for the other end of these fifos to open.\n"
 ;
 
 #include <string>
@@ -331,12 +288,10 @@ int main ( int argc, char ** argv )
 {
     // Process options.
 
-    while ( true )
+    while ( argc >= 2 )
     {
         ++ argv, -- argc;
-        if ( argc < 1
-	     ||
-	     strncmp ( "-doc", argv[0], 4 ) == 0 )
+        if ( strncmp ( "-doc", argv[0], 4 ) == 0 )
 	{
 	    // Any -doc* option prints documentation
 	    // and exits with no error.
@@ -348,20 +303,14 @@ int main ( int argc, char ** argv )
 	}
         else if ( strcmp ( "-trace", argv[0] ) == 0 )
 	    trace = true;
-	else if ( strcmp ( "--", argv[0] ) == 0 )
-	{
-	    ++ argv, -- argc;
-	    break;
-	}
 	else if ( argv[0][0] == '-' )
 	{
 	    cerr << "ERROR: cannot understand "
-	         << argv[0] << endl;
+	         << argv[0] << " " << argv[0][0] << endl;
 	    exit ( 1 );
 	}
 	else
 	    break;
-
     }
 
     // Read input.
@@ -402,10 +351,6 @@ int main ( int argc, char ** argv )
 	     << "         the first is at output line "
 	     << in_bad_first << endl;
 
-    // Start subprocess.
-    //
-    start_subprocess ( argv );
-
     // Create input copying thread.
     //
     pthread_t thread;
@@ -437,6 +382,7 @@ int main ( int argc, char ** argv )
 
     // Cleanup.
     //
-    exit ( subprocess_exit() );
+    fromBUF.close();
+    exit ( 0 );
 }
 
