@@ -1,28 +1,31 @@
 {
 
-"COMMANDS": ["touch XXXX-PPPP.sstat XXXX-PPPP.score",
-             "chmod o+w XXXX-PPPP.sstat XXXX-PPPP.score",
+"COMMANDS": ["mkfifo XXXX-PPPP.sin XXXX-PPPP.sout",
+	     "epm_sandbox $SSARGS $SSTIME $SSPACE \\",
+	     "    -score XXXX-PPPP.score \\",
+	     "    -status XXXX-PPPP.sstat PPPP $DARGS \\",
+	     "    < XXXX-PPPP.sin > XXXX-PPPP.sout \\",
+	     "    2> XXXX-PPPP.serr &",
+             "pid=$!
              "epm_sandbox $GSARGS $GSPACE \\",
-	     "    -env PATH=.:/usr/sbin \\",
              "    -status XXXX-PPPP.mstat monitor_PPPP \\",
-	     "       epm_sandbox $SSARGS $SSTIME $SSPACE \\",
-	     "           -score XXXX-PPPP.score \\",
-	     "           -status XXXX-PPPP.sstat PPPP $DARGS \\",
-	     "    < XXXX-PPPP.in 2> XXXX-PPPP.merr \\",
-	     "    > XXXX-PPPP.mout",
-             "chmod o-w XXXX-PPPP.sstat XXXX-PPPP.score",
+	     "    3< XXXX-PPPP.sout 4> XXXX-PPPP.sin \\",
+	     "    < XXXX-PPPP.in > XXXX-PPPP.fout \\",
+	     "    2> XXXX-PPPP.ferr",
+             "wait $pid",
              "epm_score $SCORING-ARGS \\",
-	     "    XXXX-PPPP.mout XXXX-PPPP.ftest \\",
+	     "    XXXX-PPPP.fout XXXX-PPPP.ftest \\",
 	     "    > XXXX-PPPP.score 2> XXXX-PPPP.scerr"],
 
 "LOCAL-REQUIRES":
 	["PPPP","XXXX-PPPP.in", "XXXX-PPPP.ftest"],
 "REQUIRES":["monitor_PPPP"],
 "CREATABLE":["monitor_PPPP"],
-"CHECKS":  ["EMPTY XXXX-PPPP.merr",
+"CHECKS":  ["EMPTY XXXX-PPPP.serr",
+            "EMPTY XXXX-PPPP.ferr"],
             "EMPTY XXXX-PPPP.scerr"],
 "KEEP":    ["XXXX-PPPP.score"],
-"SHOW":    ["XXXX-PPPP.merr",
-            "XXXX-PPPP.scerr", "XXXX-PPPP.score"]
+"SHOW":    ["XXXX-PPPP.score","XXXX-PPPP.serr",
+            "XXXX-PPPP.ferr", "XXXX-PPPP.scerr"]
 
 }
