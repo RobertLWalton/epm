@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Fri Jun 12 14:24:53 EDT 2020
+Date:	Fri Jun 12 17:05:02 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -37,6 +37,9 @@ text-decoration: underline;
 }
 h2 {
 font-size: 18pt;
+}
+h3 {
+font-size: 16pt;
 }
 strong {
 font-size: 16pt;
@@ -560,9 +563,13 @@ in the project's problem directory and is linked to your problem
 directory.  These are marked by `(Linked to PROJECT)' at
 the end of the file's line.  None of these files are executable.
 <p>
-Executable files may be links in your problem directory.
-If they are links to EPM system files (such as epm_generate)
-they are marked as `Link to FILE-TYPE'.  If they are links to
+Executable files and source files for executables
+may be links in your problem directory.
+If they are links to a project <a href="#parent">parent</a>
+directory file they are marked `Link to PROJECT-NAME project'.
+If they are links to default EPM system files
+(such as epm_default_generate)
+they are marked as `Link to default'.  If they are links to
 other files in your problem directory, they are marked as
 `Link to FILE-NAME'.  This last only happens when you provide
 multiple solutions to a problem: see <a href="#multiple-solutions">
@@ -594,11 +601,13 @@ filter-PPPP &lt;XXXX-PPPP.sin 3&lt;XXXX-PPPP.sout &gt;XXXX-PPPP.fout
 epm_score XXXX-PPPP.fout XXXX-PPPP.ftest &gt;XXXX-PPPP.score
 </pre>
 <p>
-The <b>generate-PPPP</b> program takes the .in test case
+The <a href="#generate-and-filter">generate-PPPP</a>
+program takes the .in test case
 input file and produces the .sin solution input file that is
 input to the solution program <b>PPPP</b> to produce
 the .sout solution output file.  Then both the solution output
-and solution input file are input to the <b>filter-PPPP</b>
+and solution input file are input to the
+<a href="#generate-and-filter">filter-PPPP</a>
 program to produce the .fout filtered solution output.  Lastly the
 <b>epm_score</b> program compares the .fout
 filtered solution output to the .ftest test filtered
@@ -648,9 +657,12 @@ creates the problem).
 <strong>Files Created When Making Other Files:</strong><br>
 <table class='extension'>
 <tr><td>generate&#8209;PPPP<pre>  </pre></td><td>
-                     Generate Program executable;
+                     <a href="#generate-and-filter">
+		     Generate Program</a> executable;
 		     may be supplied by parent</td></tr>
-<tr><td>filter&#8209;PPPP</td><td>Filter Program executable;
+<tr><td>filter&#8209;PPPP</td><td>
+                     <a href="#generate-and-filter">
+                     Filter Program<a> executable;
                      may be supplied by parent</td></tr>
 </table>
 <br>
@@ -737,6 +749,88 @@ creates the problem).
 
 </div>
 </p>
+
+<a name="generate-and-filter"><h3>Generate and Filter Programs</h3></a>
+<p>
+The generate, filter, monitor, and scoring programs all follow
+the conventions that a line beginning `!!' is special, that
+a .in input file a line beginning `!!##' is a comment line and
+is removed so the solution never sees it,
+and that .sout solution output lines beginning `!!**' are
+comment lines that may be used for debugging output.
+<p>
+Other lines beginning with `!!' should only be used in .in input
+files with generate programs that understand how to interpret them.
+<p>
+The default generate program simply copies its input to its output
+removing lines beginning `!!##', which are considered comment lines.
+If you are writting your own problem, you may write a generate
+program (e.g., generate-PPPP.cc) that treats lines beginning with
+`!!<some-leter>' as instructions to generate a sequence of
+input lines, typically using a pseudo-random number generated
+built into the generate program (so it cannot be changed later)
+and seeded by a number in the input instruction line.
+<p>
+For example, `!!L SEED M N' could generate a line containing
+M numbers randomly choosen in the range [1,N] with SEED being
+the pseudo-random number generator seed.  Here `L' is the literal
+letter L, and SEED, M, and N are natural number parameters.
+<p>
+The default filter program simply copies solution output
+(which it gets from file descriptor 3) to its standard output.
+The solution output can contain comments beginning `!!**'.
+If you are writting your own problem, you may write a filter
+program (e.g., filter-PPPP.cc) that computes data from the
+solution input (output of the generate program) and the
+solution output and replaces part of the solution output
+with lines it produces.
+<p>
+For example, if the solution is supposed to produce a shortest path
+in a graph, then the filter might check that the answer
+is in fact a graph path, and replace the answer by the length
+of the path.  The filter reads the solution input from its
+standard input, file descriptor 0, to construct the graph, and
+reads the solution input from file descriptor 3.
+<p>
+The epm_score scoring program treats any line beginning with
+`!!' as a comment line, which it ignores.  If the default
+generate program sees a line beginning with `!!' but NOT
+`!!##', it treats it as a comment line and removes it,
+but also issues a warning message on to its standard error
+file.  Similarly if the default filter program sees a
+solution output line beginning with `!!' but NOT `!!**',
+it outputs the line but issues a warning message.
+</p>
+
+<a name="multiple-solutions"><h3>Multiple Solutions</h3></a>
+<p>
+If you are writting in the C language, so that normally you
+would provide a solution PPPP.c, you may provide multiple
+solutions named YYYY-PPPP.c, for various YYYY.  Then
+after upload you will have files YYYY-PPPP and YYYY-PPPP.c
+with `Link' buttons after them.  Clicking a `Link' button
+for YYYY-PPPP will create a link PPPP&nbsp;&rarr;&nbsp;YYYY-PPPP,
+and similarly the `Link' button for
+for YYYY-PPPP.c will create a link PPPP.c&nbsp;&rarr;&nbsp;YYYY-PPPP.c.
+This last is only useful if you are making something that
+requires the source file, such as a .dout debugging file.
+<p>
+Other source languages behave similarly.
+<p>
+When a link is being created to an executable solution file, all
+executable solution files are first deleted automatically.
+This is a convenience feature, as if you have several executable
+solutions for different programming languages, you cannot
+make .score files and other files made with solution executables.
+However this does not apply to solution source files: e.g.,
+you can have PPPP.c and PPPP.java at the same time.
+<p>
+When choosing names YYYY-PPPP.c for your solutions, you must
+avoid having YYYY end in `-generate', `-filter', or `-monitor',
+as such files are treated not as solutions but as generate,
+filter, or monitor programs.
+</p>
+
 <a name="problem-commands"><h2>Commands Last Executed</h2></a>
 <p>
 This section displays the UNIX/POSIX/LINUX commands last executed
