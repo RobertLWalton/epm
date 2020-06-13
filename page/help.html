@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Jun 13 04:41:04 EDT 2020
+Date:	Sat Jun 13 05:18:58 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -1070,20 +1070,66 @@ Most of the time only templates with no conditions are selected.
 
 <a name="list-page"><h1>List Page</h1></a>
 <p>
-You can create a problem list of your own by typing its name into
-the `New Problem List Name' box in either the Project Page or its
-`Edit List' subpage, or by uploading a list description on
-the project page
-(see <a href=#list-descriptions>List Descriptions</a>).
+A problem list is just a list of problems that are either
+your problems or are project problems.  The `Your Problems'
+list is automatically created and lists all of your problems
+(including those pulled from or pushed to a project).
+The `public Problems' list is automatically created and lists
+all problems in the <a href='#public'>public</a> project.
+It is an example of a project problem list.
 <p>
+The automatically created lists an get too long to be useful,
+so you can create shorter lists of your own, and publish them
+so others can use them.
+<p>
+The list of problem lists can also become too long, so
+you have a `favorites list' that is a list of the problem lists
+you are interested in.  The favorites list can be edited via
+the <a href=#favorites-page>Favorites Page</a>.  When you
+are asked to select a problem list, the list of problem lists
+presented for selection is always the favorites list.
+The favorites list is initialized to include `Your Problems'
+and the automatically created problem lists of all project
+from which you are allowed to pull problems.
+<p>
+The List Page allows you to view and edit two problem lists
+(colored tan and blue).  Two lists are allowed because you
+may want to move problems from one to the other.
+<p>
+To create a problem list of your own, type its name into
+either of the two `New Problem List Name' boxes on the List Page.
 When it is created the list is added to the beginning of the
-Favorites list
-(see <a href=#favorites-page>Favorites Page</a>).
-and can be edited by clicking `Edit List'.  However, before you
-edit your new list, edit a list from which you are going to copy
-problems
-TBD
-
+favorites list.
+<p>
+You can select either a tan or blue list by creating a new
+list or selecting a list.  Once selected, if the list is your
+list, you can reorder the list by dragging problems to the
+location just above where you want to drop them.  You can
+remove problems from the list and un-remove them by clicking
+the oval next to the problem.
+<p>
+If you have selected two problem lists, you can drag a problem
+from one list to the other.
+<p>
+Lists that are not your own cannot be changed.  If you drag
+a problem from such a list to a list of your own, the problem
+will be copied to the target list.
+<p>
+If you drag a problem from one of your own lists to another of
+your own lists, the problem will be moved; that is, it will be
+removed from its source list while being added to its destination
+list.  If, however, you hold down the control key while dragging
+the list, it will be copied and not moved; that is, the problem
+will be left in the source list while being added to the destination
+list.
+<p>
+After editing one of your own list you must `SAVE' it.  `FINSH'
+will also save the list and de-select the list so you
+can select another list.  `CANCEL' will de-select the list without
+saving it.  RESET will reset the list to its state before
+you changed it, and DELETE will delete the list completely.
+<p>
+TBD: Publish
 </p>
 
 <a name="list-descriptions"><h2>List Descriptions</h2></a>
