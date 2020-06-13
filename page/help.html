@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Fri Jun 12 22:02:33 EDT 2020
+Date:	Sat Jun 13 04:41:04 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -936,7 +936,7 @@ for a submit.
 
 <p>The <b>Option Page</b> shows the options given to
 commands that perform compilations and computations,
-and allows you to edit these within limits.
+and allows you to edit these options within limits.
 <p>
 For example, the allowed maximum size of the virtual memory
 when a problem solution program is executing is an
@@ -948,16 +948,18 @@ and <a href='#option-arguments'>arguments</a>.  Numbers are substituted
 into arguments, and arguments are substituted into the commands
 used to make one file from another file.
 These commands are specified by templates, which  can be
-displayed by clicking the `Show Templates' button to display
+displayed by clicking the `View Templates' button to display
 the <a href='#template-page'>Template Page</a> in a separate window.
 <p>
 There are two values for each option: an <b>inherited value</b>
 and a <b>local value</b>.  The inherited value is set by
-the <a href='#ancestors'><b>ancestors</b></a> of the current problem,
-and cannot be changed (without changing the options files in the
-ancestors).  The local value, when given, replaces the inherited value.
+the <a href='#parent'>parent</a> of the current problem,
+and cannot be changed (without pushing a new options files to the
+parent).  The local value, when given, overrides the inherited value.
 In displays, local values are colored green and inherited values
 are colored tan.
+Note that parent .run file submissions use only inherited option values,
+whereas current problem .run file runs use local overrides.
 <p>
 As with other pages, clicking on a &uarr; will hide a section
 of the page and clicking on a &darr; will display the section.
@@ -1013,7 +1015,7 @@ the option value is inherited, even if the box is colored green
 A <b>Template</b> supplies the commands used to make one
 file from another file.
 Templates can be displayed in a separate
-window by clicking the `Show Templates' button on
+window by clicking the `View Templates' button on
 the <a href='#option-page'>Option Page</a>.
 <p>
 An index of all the available templates is displayed at the top
@@ -1039,18 +1041,20 @@ is selected if there is a binary file with no extension
 (for C or C++);
 another is selected if there is a binary file with the .class
 extension (for JAVA); and a third is selected if there is a binary
-file with the .py extension (for PYTHON).
+file with the .pyc extension (for PYTHON).
 Files which are required to use a
 template are call the <b>required files</b> of the template.
 <p>
-Some required files may be <b>creatable</b>.  There are automatically
+A template allows some required files to be <b>creatable</b>.
+These are automatically
 created from defaults if they do not exist.  For example, the
 generate_PPPP program will be created from a default that does
 nothing but strip comments from a .in file to make a .sin file.
 <p>
-Some required files are required to be <b>local</b>, that is, not
-in an ancestor of the current problem.  Others are required to be
-<b>remote</b>, that is, they <u>must</u> be in an ancestor of the
+A template requires some files to be <b>local</b>, that is, not
+in the <a href='#parent'>parent</a> of the current problem.
+Other files are required to be
+<b>remote</b>, that is, they <u>must</u> be in the parent of the
 current problem (i.e., in a project).
 Lastly many required files can be either local or
 remote.  When a creatable file is created, it is always created
