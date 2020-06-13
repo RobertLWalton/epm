@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 13 12:59:32 EDT 2020
+    // Date:	Sat Jun 13 13:32:27 EDT 2020
 
     // Allows user and problem information to be viewed.
 
@@ -82,7 +82,8 @@
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
     $user = NULL;    // UID for 'user' POST.
-    $project = NULL; // Project for 'problem' POST.
+    $project = NULL; // Project for 'project' or
+    		     // 'problem' POST.
     $problem = NULL; // Problem for 'problem' POST.
 
     $favorites = favorites_to_list ( 'pull|push' );
@@ -122,10 +123,15 @@
         elseif ( isset ( $_POST['user'] ) )
 	{
 	    $user = $_POST['user'];
-	    if ( ! preg_match ( $epm_name_re, $user ) )
+	    if ( ! in_array ( $user, $users,
+	                      true ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $d = "admin/users/$user";
-	    if ( ! is_dir ( "$epm_data/$d" ) )
+	}
+        elseif ( isset ( $_POST['project'] ) )
+	{
+	    $project = $_POST['project'];
+	    if ( ! in_array ( $project, $projects,
+	                      true ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	}
         elseif ( isset ( $_POST['problem'] ) )
@@ -207,9 +213,11 @@ div.changes {
     background-color: var(--bg-blue);
     padding-top: var(--pad);
 }
-div.changes table {
+div.actions {
+    background-color: var(--bg-violet);
+    padding-top: var(--pad);
 }
-div.changes td {
+div.changes td, div.actions td {
     padding-left: var(--font-size);
 }
 
@@ -365,6 +373,9 @@ EOT;
 	$f = "admin/users/$user/+changes+";
 	$change_rows = actions_to_rows
 	    ( read_actions ( "$f" ) );
+	$g = "users/$user/+actions+";
+	$action_rows = actions_to_rows
+	    ( read_actions ( "$g" ) );
         echo <<<EOT
 	<div class='user'>
 
@@ -409,8 +420,58 @@ EOT;
 	<table>
 	$change_rows
 	</table>
-	<div>
-	<div>
+	</div>
+	</div>
+
+	<div class='actions'>
+	<table style='width:100%'><tr>
+	<td>
+	<button type='button'
+	    id='user_actions_button'
+	    onclick='TOGGLE_BODY
+		 ("user_actions",
+		  "User Actions")'
+	    title='Show User Actions'>
+	    <pre id='user_actions_mark'>&darr;</pre>
+	    </button>
+	<strong>Actions of $uid
+	        (most recent first):</strong>
+	</td><td style='text-align:right'>
+	<button type='button'
+		onclick='HELP("user-actions")'>
+	    ?</button>
+	</td>
+	</tr></table>
+	<div id='user_actions_body' style='display:none'>
+	<table>
+	$action_rows
+	</table>
+	</div>
+	</div>
+EOT;
+    }
+
+    if ( isset ( $project ) )
+    {
+	$g = "projects/$project/+actions+";
+	$action_rows = actions_to_rows
+	    ( read_actions ( "$g" ) );
+        echo <<<EOT
+	<div class='actions'>
+	<table style='width:100%'><tr>
+	<td>
+	<strong>Actions on $project Project
+	        (most recent first):</strong>
+	</td><td style='text-align:right'>
+	<button type='button'
+		onclick='HELP("project-actions")'>
+	    ?</button>
+	</td>
+	</tr></table>
+	<table>
+	$action_rows
+	</table>
+	</div>
 EOT;
     }
 

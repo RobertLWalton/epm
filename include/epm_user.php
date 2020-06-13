@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May 30 03:56:40 EDT 2020
+// Date:    Sat Jun 13 13:03:16 EDT 2020
 
 // Functions to read user information.
 //
@@ -148,12 +148,30 @@ EOT;
 // format:
 //
 //	[TIME, UID, 'info', KEY, OP, VALUE]
+//	[TIME, UID, 'push', PROJECT, PROBLEM]
+//	[TIME, UID, 'pull', PROJECT, PROBLEM]
+//	[TIME, UID, 'create', UID, PROBLEM]
+//	[TIME, UID, 'submit', PROJECT, RUNBASE,
+//			      STIME, SCORE...]
 //
-// where KEY is the UID.info element changed, OP is '='
-// to reset the element to VALUE, '+' to add VALUE to
-// the element list, '-' to subtract VALUE from the
-// element list.  If KEY is 'email', a VALUE of the
-// form XXX@YYY is replaced by ...@YYY.
+// For 'info':
+//
+//     KEY is the UID.info element changed
+//     OP is '=' to reset the element to VALUE,
+//           '+' to add VALUE to the element list,
+//           '-' to subtract VALUE from the element
+//               list
+//     If KEY is 'email', a VALUE of the form
+//     XXX@YYY is replaced by ...@YYY.
+//
+// For 'submit':
+//
+//     RUNBASE.run is the run file name
+//     STIME is the maximum solution CPU time for any
+//           run file test case
+//     SCORE... is the run score and may have multiple
+//              elements that should be separated by
+///             single spaces
 //
 function actions_to_rows ( $actions )
 {
@@ -182,6 +200,23 @@ function actions_to_rows ( $actions )
 		$a = "remove $value from $key";
 	    else
 		$a = "unknown operation $op";
+	}
+	else if ( $type == 'pull' )
+	    $a = "pull {$items[4]} from {$items[3]}";
+	else if ( $type == 'push' )
+	    $a = "push {$items[4]} to {$items[3]}";
+	else if ( $type == 'create' )
+	    $a = "created her/his own problem"
+	       . " {$items[3]}";
+	else if ( $type == 'submit' )
+	{
+	    $project = $items[3];
+	    $runbase = $items[4];
+	    $cpu_time = $items[5];
+	    $score = implode
+	        ( ' ', array_slice ( $items, 6 ) );
+	    $a = "submit $runbase.run in $project"
+	       . "  $cpu_time $score";
 	}
 	else
 	    $a = "unknown action type $type";

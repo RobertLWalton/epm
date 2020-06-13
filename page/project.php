@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 13 12:26:41 EDT 2020
+    // Date:	Sat Jun 13 13:19:01 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1343,7 +1343,7 @@ EOT;
 		    $time = strftime
 		        ( $epm_time_format, $time );
 		    $action = "$time $uid create"
-		            . " $uid $problem"
+		            . " $problem"
 			    . PHP_EOL;
 
 		    umask ( $m );
