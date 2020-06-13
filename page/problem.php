@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun 12 15:22:21 EDT 2020
+    // Date:	Fri Jun 12 21:56:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -668,8 +668,7 @@ EOT;
 	      action=problem.php>
 	<input type='hidden'
 	       name= 'problem' value='$problem'>
-	<input type='hidden' id='id1'
-	       name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	Do you really want to delete current
 	       problem $problem?
 	<pre>   </pre>
@@ -696,8 +695,7 @@ EOT;
 	      action=problem.php>
 	<input type='hidden'
 	       name= 'problem' value='$problem'>
-	<input type='hidden' id='id2'
-	       name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	Do you really want to copy $fout to
 	       $make_ftest (this will force score
 	       to be `Completely Correct')?
@@ -746,8 +744,7 @@ EOT;
     <form action='problem.php' method='POST'>
     <input type='hidden'
 	   name= 'problem' value='$problem'>
-    <input type='hidden' id='id3'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <button type='submit'
 	    name='delete_problem'
 	    value='$problem'
@@ -760,8 +757,7 @@ EOT;
     <form method='GET'>
     <input type='hidden'
 	   name= 'problem' value='$problem'>
-    <input type='hidden' id='id4'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <button type='submit'
 	    formaction='run.php'>
 	    Run</button>
@@ -987,8 +983,7 @@ EOT;
 	  id='upload-form'>
     <input type='hidden'
 	   name= 'problem' value='$problem'>
-    <input type='hidden' id='id5'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <label>
     <strong>Upload a File:</strong>
     <input type='hidden' name='MAX_FILE_SIZE'
@@ -1005,8 +1000,7 @@ EOT;
     <form action='problem.php' method='POST'>
     <input type='hidden'
 	   name= 'problem' value='$problem'>
-    <input type='hidden' id='id6'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='delete_files' value=''>
     <input type="submit" name="execute_deletes"
 	   value=
@@ -1023,8 +1017,7 @@ EOT;
     <form action='problem.php' method='POST'>
     <input type='hidden'
 	   name= 'problem' value='$problem'>
-    <input type='hidden' id='id7'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='delete_files' value=''>
 EOT;
     function MAKE ( $fbase, $sext, $dext )
@@ -1133,14 +1126,14 @@ EOT;
 	elseif ( $fext == 'fout' )
 	{
 	    MAKE ( $fbase, 'fout', 'score' );
-	    echo "<td><button type='submit'" .
+	    echo "<button type='submit'" .
 		 " style='background-color:" .
 			 "var(--hl-orange)'" .
 		 " name='make'" .
 		 " title='Make $fbase.ftest" .
 		 " from $fname'" .
 		 " value='$fname:$fbase.ftest'>" .
-		 "&rArr;.ftest</button></td>";
+		 "&rArr;.ftest</button>";
 	}
 	elseif ( $fext == 'run' )
 	{
@@ -1208,8 +1201,7 @@ EOT;
     echo <<<EOT
     <form action='problem.php'
 	  method='POST' id='reload'>
-    <input type='hidden' id='id8'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <input type='hidden'
            name='problem' value='$problem'>
     <input type='hidden' name='reload' value='reload'>
@@ -1286,16 +1278,6 @@ EOT;
     }
 
     let ids = document.getElementsByName ( 'id' );
-    let obsolete =
-	[ document.getElementById ( 'id1' ),
-	  document.getElementById ( 'id2' ),
-	  document.getElementById ( 'id3' ),
-	  document.getElementById ( 'id4' ),
-	  document.getElementById ( 'id5' ),
-	  document.getElementById ( 'id6' ),
-	  document.getElementById ( 'id7' ),
-	  document.getElementById ( 'id8' ) ];
-	  // Some of these may be null
 
     function PROCESS_RESPONSE ( response )
     {

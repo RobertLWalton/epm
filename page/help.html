@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Fri Jun 12 17:05:02 EDT 2020
+Date:	Fri Jun 12 22:02:33 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -139,6 +139,8 @@ vertical-align: top;
 <li><a href="#file-extensions">File Extensions</a>
 <li><a href="#problem-commands">Commands Last Executed</a>
 <li><a href="#problem-working">Working Files of Last Executed Commands</a>
+<li><a href="#generate-and-filter">Generate and Filter Programs</a>
+<li><a href="#multiple-solutions">Multiple Solutions</a>
 </ul>
 
 <li><a href="#run-page">Run Page</a> [problem]
@@ -750,7 +752,7 @@ creates the problem).
 </div>
 </p>
 
-<a name="generate-and-filter"><h3>Generate and Filter Programs</h3></a>
+<a name="generate-and-filter"><h2>Generate and Filter Programs</h2></a>
 <p>
 The generate, filter, monitor, and scoring programs all follow
 the conventions that a line beginning `!!' is special, that
@@ -802,7 +804,7 @@ solution output line beginning with `!!' but NOT `!!**',
 it outputs the line but issues a warning message.
 </p>
 
-<a name="multiple-solutions"><h3>Multiple Solutions</h3></a>
+<a name="multiple-solutions"><h2>Multiple Solutions</h2></a>
 <p>
 If you are writting in the C language, so that normally you
 would provide a solution PPPP.c, you may provide multiple
@@ -870,17 +872,30 @@ or when a .run file is run.
 If you click a <b>Run</b> button on the problem page, the associated
 .run file will be run and the page will switch to the Run Page where
 the results will be displayed.
+<p> The Run page displays both .run files that are listed on
+the Problem Page, and may be `Run', and .run files that are only
+in the <a href="#parent">parent</a> of the current problem, and may
+only be `Submit'ed.
 <p>
 A <a name='.run-file'>.run file</a> is just a list of .in files
 from which .score files may be computed.  A .run file can be uploaded
 on the <a href="#problem-page">Problem Page</a>,
 and pushed along with other files to a project
 by the <a href="#project-page">Project Page</a>.
+When a project is pulled, most .run files are left in the problem's
+parent and can only be `submitted', but sample run files are linked
+from the problem's own directory to the parent, and can only be `run'.
+The exact differences between a run and a submit are described at the end
+of this section.
 <p>
-During a run and after it is over a line is displayed for each .in
-file giving its base name and the CPU execution
-times of various sub-computations
-needed to compute the .score file.  These times are marked
+Both runs and submits are referred to as `run's.
+A run produces for each .in file an associated .score file.
+During the run, and after it is over, the Run Page displays for each
+.in/.score pair a line giving the .in/.score files'
+common base name and the CPU execution
+times for the various sub-computations
+needed to compute the .score file from the .in file.
+These times are marked
 as follows:
 </p>
 <div class='indented'>
@@ -898,27 +913,23 @@ the associated run output, or .rout file is given.
 If there is also a non-empty run error, or .rerr
 file, it is also listed.  These files can be displayed with the &darr; button.
 <p>
-A .rout run output file gives the `Score' for the run, and if not
+A run's .rout output file gives the `Score' for the run, and if not
 `Completely Correct', gives the name of the first failed test case.
-Also given are the maximum CPU execution times over all input files
+Also given are the maximum CPU execution times over all .in files
 of the generate, solution, and filter programs.
 <p>
-If a .run file is not in your directory,
-it has a `Submit' button, and submitting
-it will run it (compute .score files from all the .in files) and
-record the results in its .rout file that is both copied into your
-problem directory and also into an administrative directory that
-maintains a history of your submissions and allows every user
-to see them.  This computation will not use any local files in
-your problem directory except your solution binary.
-<p>
-If a .run file is in your directory,
-it has a `Run' button, and running it will compute the .rout
-file in your problem directory and NOT copy it into administrative
-directories, so in this case other users cannot see the .rout file.
-For problems you have pulled from a project, the sample .run file
-is linked into your directory, and so can be run in this manner
-without other users seeing the results.
+The differences between a `Run' of a
+a .run file in your directory and a `Submit' of a .run file
+in the parent of your directory are as follows.  During a
+submit, all files used are in the parent, and not your local
+directory, except for your solution executable.  During a run,
+files in your local directory override those in the parent.
+After a submit, the .rout file is recorded as a submit
+result in the parent (project) problem directory, where every user
+can view it (using the View Page).  After a run, the .rout file
+is only recorded in your problem directory where only you can
+view it.  The .rout file is also recorded in your problem directory
+for a submit.
 </p>
 
 <a name="option-page"><h1>Option Page</h1></a>
