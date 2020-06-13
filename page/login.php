@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 14:22:35 EDT 2020
+    // Date:	Sat Jun 13 16:43:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -185,7 +185,7 @@
     //     * Send 'op=MANUAL&value=EMAIL'
     //     * Receive one of:
     //           'BAD_EMAIL': FAIL
-    //                        reload login.php
+    //           'BLOCKED_EMAIL': FAIL
     //           'NEW BID EKEYA EKEYB CTIME' where
     //                    EKEYA, EKEYB are KEYA, KEYB
     //                    encrypted using CNUM.
@@ -196,12 +196,13 @@
     // AUTO_ID:
     //     * AUTO_RETRY += 1
     //     * If AUTO_RETRY > 2: FAIL
-    //                          reload login.php
     //     * Send 'op=AUTO&value=BID'
     //	   * Receive one of:
     //           'EXPIRED BID EKEYA EKEYB CTIME':
     //		     MANUAL = yes
     //               go to EXPIRED
+    //           'BLOCKED_EMAIL':
+    //		     FAIL
     //           'FAIL':  (means BID not recognized)
     //               go to AUTO_ID
     //		 'SHAKE HANDSHAKE':
@@ -275,6 +276,34 @@
         global $ID;
 	echo ( "$ID $reply" );
 	exit;
+    }
+
+    // Check admin/+blocking+ file to determine whether
+    // email is blocked.
+    //
+    function is_blocked ( $email )
+    {
+        global $epm_data;
+	$f = 'admin/+blocking+';
+	$c = @file_get_contents ( "$epm_data/$f" );
+	if ( $c === false ) return false;
+	$c = explode ( "\n", $c );
+	$line_re = '/^(\+|\-)\s+(\S+)$/';
+	foreach ( $c as $line )
+	{
+	    $line = trim ( $line );
+	    if ( $line == '' ) continue;
+	    if ( ! preg_match
+	               ( $line_re, $line, $matches ) )
+	        ERROR ( "bad $f line: $line" );
+	    $sign = $matches[1];
+	    $re   = $matches[2];
+	    $r = preg_match ( "/^($re)\$/", $email );
+	    if ( $r === false )
+	        ERROR ( "bad $f RE: $line" );
+	    if ( $r == 0 ) continue;
+	    return ( $sign == '-' );
+	}
     }
 
     // $data['UID'] is set iff EMAIL-FILE exists and
@@ -419,6 +448,8 @@
 		      ( $email,
 			FILTER_VALIDATE_EMAIL ) )
 	    reply ( 'BAD_EMAIL' );
+	elseif ( is_blocked ( $email ) )
+	    reply ( 'BLOCKED_EMAIL' );
 	else
 	    new_ticket_reply ( $email, 'NEW' );
     }
@@ -448,6 +479,8 @@
 		ERROR ( "$bfile value '$c' badly" .
 			" formatted" );
 	    $email = $items[0];
+	    if ( is_blocked ( $email ) )
+	        reply ( 'BLOCKED_EMAIL' );
 	    $ctime = strtotime ( $items[3] );
 	    if ( ! isset ( $data['EMAIL'] )
 		 ||
@@ -739,26 +772,6 @@ var show_email = document.getElementById("show_email");
 var get_cnum = document.getElementById("get_cnum");
 var cnum_in = document.getElementById("cnum_in");
 
-function FAIL ( message )
-{
-    // Alert must be scheduled as separate task.
-    //
-    LOG ( "call to FAIL: " + message );
-<?php
-    if ( $epm_debug )
-        echo <<<'EOT'
-	    setTimeout ( function () {
-		alert ( message );
-		window.location.reload ( true );
-	    });
-EOT;
-    else
-        echo <<<'EOT'
-	    throw "CALL TO FAIL: " + message;
-EOT;
-?>
-}
-
 function RESET_EMAIL()
 {
     storage.removeItem ( EMAIL );
@@ -778,7 +791,17 @@ function ALERT ( message )
     setTimeout ( function () { alert ( message ); } );
 }
 
+function FAIL ( message )
+{
+    LOG ( "call to FAIL: " + message );
+    setTimeout ( function () {
+        alert ( message );
+    } );
+    window.location.reload ( true );
+}
+
 var REQUEST_IN_PROGRESS = false;
+var RESPONSE = '';  // Saved here for error messages.
 function SEND ( data, callback, error_message )
 {
     xhttp.onreadystatechange = function() {
@@ -798,7 +821,8 @@ function SEND ( data, callback, error_message )
 	REQUEST_IN_PROGRESS = false;
 	LOG ( 'xhttp response: '
 	      + this.responseText );
-	item = this.responseText.trim().split ( ' ' );
+	RESPONSE = this.responseText;
+	item = RESPONSE.trim().split ( ' ' );
 	ID = item.shift();
 	if ( ID == undefined )
 	    FAIL ( 'empty response' );
@@ -812,6 +836,11 @@ function SEND ( data, callback, error_message )
     data += '&xhttp=yes&id=' + ID;
     LOG ( 'xhttp sent: ' + data );
     xhttp.send ( data );
+}
+function MALFORMED_RESPONSE ( when )
+{
+    FAIL ( "malformed response `" + RESPONSE +
+           "' " + when );
 }
 
 var IMPORTKEY, ENCRYPT, DECRYPT;
@@ -1000,11 +1029,13 @@ function MANUAL_RESPONSE ( item )
     if ( item[0] == 'BAD_EMAIL' )
         FAIL ( EMAIL +
 	       ' is not a valid email address' );
+    else if ( item[0] == 'BLOCKED_EMAIL' )
+        FAIL ( EMAIL + ' is blocked' );
     else if ( item[0] != 'NEW'
 	      ||
 	      item.length != 5 )
-        FAIL ( 'Response from server on sending '
-	       + EMAIL + ' to server is malformed' );
+        MALFORMED_RESPONSE
+	    ( 'after sending ' + EMAIL + ' to server' );
     else
     {
 	BID = item[1];
@@ -1107,9 +1138,8 @@ function AUTO_RESPONSE ( item )
     {
 	storage.removeItem ( EMAIL );
         if ( item.length != 5 )
-	    FAIL ( 'bad response from server during'
-	           + ' handshake; re-confirmation'
-		   + ' required' );
+	    MALFORMED_RESPONSE
+		( 'to handshake initiation' );
 	BID   = item[1];
 	EKEYA = item[2];
 	EKEYB = item[3];
@@ -1125,6 +1155,8 @@ function AUTO_RESPONSE ( item )
 	      + ' server; re-confirmation required' );
 	GOT_EMAIL ( EMAIL );
     }
+    else if ( item[0] == 'BLOCKED_EMAIL' )
+        FAIL ( EMAIL + ' is blocked' );
     else if ( item[0] == 'SHAKE'
               &&
 	      item.length == 2 )
@@ -1133,8 +1165,8 @@ function AUTO_RESPONSE ( item )
 	IMPORTKEY ( KEYA, GOT_KEYA_FOR_SHAKE );
     }
     else
-        FAIL ( 'Response from server on initiating'
-	       + ' handshake is malformed' );
+	MALFORMED_RESPONSE
+	    ( 'to handshake initiation' );
 }
 
 function GOT_KEYA_FOR_SHAKE ( cryptokey )
@@ -1216,8 +1248,8 @@ function SHAKE_RESPONSE ( item )
 	}
     }
     else
-        FAIL ( 'Response from server ending handshake'
-	       + ' is malformed' );
+	MALFORMED_RESPONSE
+	    ( 'to handshake completion' );
 }
     
 </script>
