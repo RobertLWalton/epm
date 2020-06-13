@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun 10 13:55:05 EDT 2020
+    // Date:	Sat Jun 13 12:26:41 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -38,8 +38,7 @@
     //
     // The single `projects' directory, and each
     // projects/PROJECT/PROBLEM directory, also con-
-    // tains a +perm+ file all of whose lines have the
-    // `owner' type.
+    // tains a +perm+ file.
     //
     // A user with `owner' permissions for a directory
     // can perform all operations on the directory and
@@ -1662,8 +1661,7 @@ EOT;
 	Skip to Next</button>
 	<pre>    </pre>
 	<form method='GET' action='project.php'>
-	<input type='hidden' id='id1'
-               name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
@@ -1685,8 +1683,7 @@ EOT;
 	Skip to Next</button>
 	<pre>    </pre>
 	<form method='GET' action='project.php'>
-	<input type='hidden' id='id2'
-               name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
@@ -1711,8 +1708,7 @@ EOT;
 	Skip to Next</button>
 	<pre>    </pre>
 	<form method='GET' action='project.php'>
-	<input type='hidden' id='id3'
-               name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<button type='submit'>$cancel</button></form>
 	</td>
 	</td><td style='text-align:right'>
@@ -1731,8 +1727,7 @@ EOT;
     echo <<<EOT
     <div class='manage'>
     <form method='GET'>
-    <input type='hidden' id='id4'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
 
     <tr id='goto-row' style='display:$display'>
@@ -1811,8 +1806,7 @@ EOT;
 	<strong>Selected Problem List:</strong>
 	<form method='POST' action='project.php'
 	      id='listname-form'>
-	<input type='hidden' id='id5'
-	       name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<select name='listname'
 		onclick='document.getElementById
 			    ("listname-form").submit()'>
@@ -1820,8 +1814,7 @@ EOT;
 	</select></form>
 	<strong>and</strong>
 	<form method='POST'>
-	<input type='hidden' id='id6'
-	       name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<button type='submit' name='op' value='push'
 	        title='$push_title'>
 	Push
@@ -1844,8 +1837,7 @@ EOT;
 	    if ( $problem_options != '' ) echo <<<EOT
 	    <form method='POST' action='project.php'
 		  id='goto-form'>
-	    <input type='hidden' id='id7'
-	           name='id' value='$ID'>
+	    <input type='hidden' name='id' value='$ID'>
 	    <select name='goto'
 		    onclick='document.getElementById
 				("goto-form").submit()'>
@@ -1862,8 +1854,7 @@ EOT;
 	<strong>Create New Problem:</strong>
 	<form method='POST' action='project.php'
 	      id='create-form'>
-	<input type='hidden' id='id8'
-	       name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<input type="text" size="32"
 	       placeholder="New Problem Name"
 	       title="New Problem Name"
@@ -1877,14 +1868,13 @@ EOT;
 EOT;
     if ( $op == 'push' )
     {
-	$project_options = projects_to_options
+	$project_options = values_to_options
 	    ( read_projects ( 'push' ) );
 
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
-	<input type='hidden' id='id9'
-	       name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
@@ -2056,7 +2046,8 @@ EOT;
 	        goto_row.style.display = 'table-row';
 	        check_row.style.display = 'none';
 	        done_response.style.display = 'inline';
-	        not_done_response.style.display = 'none';
+	        not_done_response.style.display =
+		    'none';
 		return;
 	    }
 	    checkbox.style.backgroundColor =
@@ -2085,8 +2076,7 @@ EOT;
 	echo <<<EOT
 	<div class='push-pull-list'>
 	<form method='POST'>
-	<input type='hidden' id='id10'
-	       name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
@@ -2203,7 +2193,8 @@ EOT;
 	        goto_row.style.display = 'table-row';
 	        check_row.style.display = 'none';
 	        done_response.style.display = 'inline';
-	        not_done_response.style.display = 'none';
+	        not_done_response.style.display =
+		    'none';
 		return;
 	    }
 	    checkbox.style.backgroundColor =
@@ -2421,18 +2412,6 @@ EOT;
 	}
 
 	let ids = document.getElementsByName ( 'id' );
-	let obsolete =
-	    [ document.getElementById ( 'id1' ),
-	      document.getElementById ( 'id2' ),
-	      document.getElementById ( 'id3' ),
-	      document.getElementById ( 'id4' ),
-	      document.getElementById ( 'id5' ),
-	      document.getElementById ( 'id6' ),
-	      document.getElementById ( 'id7' ),
-	      document.getElementById ( 'id8' ),
-	      document.getElementById ( 'id9' ),
-	      document.getElementById ( 'id10' ) ];
-	      // Some of these may be null
 
 	var xhttp = new XMLHttpRequest();
 	var message_sent = null;

@@ -163,9 +163,7 @@ function actions_to_rows ( $actions )
         $time = $items[0];
         $user = $items[1];
         $type = $items[2];
-        if ( $items[2] != 'info' )
-	    $a = "unknown action type $type";
-	else
+	if ( $type == 'info' )
 	{
 	    $key = $items[3];
 	    $op = $items[4];
@@ -185,6 +183,9 @@ function actions_to_rows ( $actions )
 	    else
 		$a = "unknown operation $op";
 	}
+	else
+	    $a = "unknown action type $type";
+
 	$r .= "<tr><td>$time</td><td>$user</td>"
 	    . "<td>$a</td></tr>";
     }

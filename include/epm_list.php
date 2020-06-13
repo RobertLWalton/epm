@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  2 06:08:06 EDT 2020
+    // Date:	Sat Jun 13 12:37:59 EDT 2020
 
     // Functions for managing lists.
 
@@ -144,20 +144,20 @@
 	return $projects;
     }
 
-    // Given a list of PROJECTs return a string whose
+    // Given a list of VALUEs return a string whose
     // segments have the form
     //
-    //	    <option value='PROJECT'>
-    //      $project
+    //	    <option value='VALUE'>
+    //      VALUE
     //      </option>
     //
-    function projects_to_options ( $list )
+    function values_to_options ( $list )
     {
 	$r = '';
-	foreach ( $list as $project )
+	foreach ( $list as $value )
 	{
-	    $r .= "<option value='$project'>"
-		. "$project</option>";
+	    $r .= "<option value='$value'>"
+		. "$value</option>";
 	}
 	return $r;
     }

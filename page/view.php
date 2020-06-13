@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 14:42:38 EDT 2020
+    // Date:	Sat Jun 13 12:59:32 EDT 2020
 
     // Allows user and problem information to be viewed.
 
@@ -75,17 +75,6 @@
 	return $r;
     }
 
-    // Return HTML of options from list of users.
-    //
-    function users_to_options ( $users )
-    {
-	$r = '';
-	foreach ( $users as $u )
-	    $r .= "<option value='$u'>$u</option>";
-	return $r;
-    }
-
-    
     if ( ! isset ( $_SESSION['EPM_VIEW'] ) )
         $_SESSION['EPM_VIEW'] = [ 'LISTNAME' => NULL ];
     $listname = & $_SESSION['EPM_VIEW']['LISTNAME'];
@@ -97,9 +86,13 @@
     $problem = NULL; // Problem for 'problem' POST.
 
     $favorites = favorites_to_list ( 'pull|push' );
-    $list = NULL;
-    if ( isset ( $listname ) )
-        $list = listname_to_list ( $listname );
+    if ( ! isset ( $listname ) )
+    {
+        list ( $time, $proj, $base ) = $favorites[0];
+	$listname = "$proj:$base";
+    }
+    $list = listname_to_list ( $listname );
+    $projects = read_projects ( 'pull|push' );
     $users = read_users();
 
     if ( $epm_method == 'POST' )
@@ -227,6 +220,28 @@ var LOG = function(message) {};
 <?php if ( $epm_debug )
           echo "LOG = console.log;" . PHP_EOL ?>
 
+function TOGGLE_BODY ( name, thing )
+{
+    var BUTTON = document.getElementById
+	    ( name + '_button' );
+    var MARK = document.getElementById
+	    ( name + '_mark' );
+    var BODY = document.getElementById
+	    ( name + '_body' );
+    if ( BODY.style.display == 'none' )
+    {
+	MARK.innerHTML = "&uarr;";
+	BUTTON.title = "Hide " + thing;
+	BODY.style.display = 'block';
+    }
+    else
+    {
+	MARK.innerHTML = "&darr;";
+	BUTTON.title = "Show " + thing;
+	BODY.style.display = 'none';
+    }
+}
+
 </script>
 
 </head>
@@ -253,7 +268,8 @@ var LOG = function(message) {};
 	echo "<br></div></div>";
     }
 
-    $user_options = users_to_options ( $users );
+    $user_options = values_to_options ( $users );
+    $project_options = values_to_options ( $projects );
     $listname_options = list_to_options
         ( $favorites, $listname );
     echo <<<EOT
@@ -291,6 +307,18 @@ var LOG = function(message) {};
 	                ("user-form").submit()'>
     $user_options
     </select></form>
+
+    <strong>or Project</strong>
+    <form method='POST' action='view.php'
+          id='project-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <select name='project'
+            onclick='document.getElementById
+	                ("project-form").submit()'>
+    $project_options
+    </select></form>
+
+    <br>
 
     <strong>or Problem List</strong>
     <form method='POST' action='view.php'
@@ -359,11 +387,29 @@ EOT;
 	</div>
 
 	<div class='changes'>
+	<table style='width:100%'><tr>
+	<td>
+	<button type='button'
+	    id='user_info_button'
+	    onclick='TOGGLE_BODY
+		 ("user_info",
+		  "Changes to User Information")'
+	    title='Show Changes to User Information'>
+	    <pre id='user_info_mark'>&darr;</pre>
+	    </button>
 	<strong>Changes to $uid Profile and Emails
 	        (most recent first):</strong>
+	</td><td style='text-align:right'>
+	<button type='button'
+		onclick='HELP("changes-to-user-info")'>
+	    ?</button>
+	</td>
+	</tr></table>
+	<div id='user_info_body' style='display:none'>
 	<table>
 	$change_rows
 	</table>
+	<div>
 	<div>
 EOT;
     }
