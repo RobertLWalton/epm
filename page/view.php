@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 13 13:32:27 EDT 2020
+    // Date:	Sat Jun 13 14:17:24 EDT 2020
 
     // Allows user and problem information to be viewed.
 
@@ -101,15 +101,15 @@
         if ( isset ( $_POST['listname'] ) )
 	{
 	    $new_listname = $_POST['listname'];
-	    list ( $project, $basename ) =
+	    list ( $proj, $basename ) =
 	        explode ( ':', $new_listname );
-	    if ( "$project:$basename" != $new_listname )
+	    if ( "$proj:$basename" != $new_listname )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $found = false;
 	    foreach ( $favorites as $item )
 	    {
 	        list ( $time, $p, $b ) = $item;
-		if ( $p == $project && $b == $basename )
+		if ( $p == $proj && $b == $basename )
 		{
 		    $found = true;
 		    break;
@@ -250,6 +250,28 @@ function TOGGLE_BODY ( name, thing )
     }
 }
 
+let on = 'black';
+let off = 'white';
+function INCLUDE ( checkbox, c )
+{
+    var onoff = checkbox.style.backgroundColor;
+    var display;
+    if ( onoff == on )
+    {
+        onoff = off;
+	display = 'none';
+    }
+    else
+    {
+        onoff = on;
+	display = 'table-row';
+    }
+    checkbox.style.backgroundColor = onoff;
+    var rows = document.getElementsByClassName ( c );
+    for ( var i = 0; i < rows.length; ++ i )
+        rows[i].style.display = display;
+}
+
 </script>
 
 </head>
@@ -325,6 +347,26 @@ function TOGGLE_BODY ( name, thing )
 	                ("project-form").submit()'>
     $project_options
     </select></form>
+    <pre>     </pre>
+    <strong>Include Action Types:</strong>
+    <pre> </pre>
+    <div class='checkbox'
+         style='background-color:black'
+	 onclick='INCLUDE(this,"submit")'></div>
+    <strong>submit</strong>
+    <div class='checkbox'
+         style='background-color:black'
+	 onclick='INCLUDE(this,"push")'></div>
+    <strong>push</strong>
+    <div class='checkbox'
+         style='background-color:black'
+	 onclick='INCLUDE(this,"pull")'></div>
+    <strong>pull</strong>
+    <div class='checkbox'
+         style='background-color:black'
+	 onclick='INCLUDE(this,"create")'></div>
+    <strong>create</strong>
+
 
     <br>
 
@@ -408,7 +450,7 @@ EOT;
 	    title='Show Changes to User Information'>
 	    <pre id='user_info_mark'>&darr;</pre>
 	    </button>
-	<strong>Changes to $uid Profile and Emails
+	<strong>Actions Changing $uid Profile and Emails
 	        (most recent first):</strong>
 	</td><td style='text-align:right'>
 	<button type='button'
@@ -451,7 +493,7 @@ EOT;
 EOT;
     }
 
-    if ( isset ( $project ) )
+    if ( isset ( $project ) && ! isset ( $problem ) )
     {
 	$g = "projects/$project/+actions+";
 	$action_rows = actions_to_rows
@@ -465,6 +507,34 @@ EOT;
 	</td><td style='text-align:right'>
 	<button type='button'
 		onclick='HELP("project-actions")'>
+	    ?</button>
+	</td>
+	</tr></table>
+	<table>
+	$action_rows
+	</table>
+	</div>
+EOT;
+    }
+
+    if ( isset ( $project ) && isset ( $problem ) )
+    {
+	if ( $project == '-' )
+	    $f = "users/$uid/$problem/+actions+";
+	else
+	    $f = "projects/$project/$problem/+actions+";
+	$action_rows = actions_to_rows
+	    ( read_actions ( "$f" ) );
+	if ( $project == '-' ) $project = '<i>Your</i>';
+        echo <<<EOT
+	<div class='actions'>
+	<table style='width:100%'><tr>
+	<td>
+	<strong>Actions on $project $problem
+	        (most recent first):</strong>
+	</td><td style='text-align:right'>
+	<button type='button'
+		onclick='HELP("problem-actions")'>
 	    ?</button>
 	</td>
 	</tr></table>

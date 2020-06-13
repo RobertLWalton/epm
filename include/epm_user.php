@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 13 13:03:16 EDT 2020
+// Date:    Sat Jun 13 14:34:22 EDT 2020
 
 // Functions to read user information.
 //
@@ -221,7 +221,9 @@ function actions_to_rows ( $actions )
 	else
 	    $a = "unknown action type $type";
 
-	$r .= "<tr><td>$time</td><td>$user</td>"
+	$r .= "<tr class='$type'>"
+	    . "<td>$time</td>"
+	    . "<td>$user</td>"
 	    . "<td>$a</td></tr>";
     }
     return $r;
