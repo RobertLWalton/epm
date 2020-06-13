@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Jun 13 09:53:38 EDT 2020
+Date:	Sat Jun 13 10:31:21 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -1140,14 +1140,14 @@ If you have a list of your own named XXXX, then when you have
 selected this list for editing, you may upload
 a list description file named XXXX.dsc which contains a
 description of your list.  This description is then visible
-whenever the list is edited or is being considered for addition
+whenever the list is being considered for addition
 to someone's favorites list.
 <p>
 Description files contain paragraphs separated by blank lines.
 There are two kinds of paragraphs: non-indented and indented.
 A non-indented paragraph becomes a &lt;p&gt; HTML paragraph, and
 is set with variable width font and automatic line breaks.
-An indented paragraph becomes a &lt;pre&gt; HTML paragraph and is
+An indented paragraph becomes a &lt;pre&gt; HTML paragraph, and is
 set with fixed width font and line breaks just where they
 are in the .dsc file.  For indented paragraphs you may use
 one or more tabs at the very beginning of a line, but nowhere
@@ -1155,22 +1155,26 @@ else.
 <p>
 A list description file may NOT contain the characters
 &lt; or &gt;, but may contain &amp;...;' representations
-of characters.
+of characters; e.g., &amp;lt; for &lt;.
 </p>
 
 <a name="favorites-page"><h1>Favorites Page</h1></a>
 <p>
 The `Favorites' list is a list of those problem lists
 you find most interesting, in order of interest.
-This Favorites Page is a sub-page of the Project Page
-that allows you to edit the Favorites list.
+Whenever you are asked to select a problem list, it is
+the favorites list that is given as the list of available problem
+lists.
 <p>
-This Favorites Page displays all the lists that can be on the
-Favorites list, each with an oval that is checked
-for those problem lists that are on the Favorites list.
-The checked lists are in the order that they appear in
+This Favorites Page allows you to edit the favorites list.
+It displays all the lists that can be on the
+Favorites list, each with an oval that is black
+for those problem lists that are on the Favorites list,
+and white for other lists.
+The black oval lists are in the order that they appear in
 the Favorites list.  Lists created by users may also have an
-attached description created by their author.
+attached description created by their author and displayed just
+after the list name.
 <p>
 If you click on a oval it toggles between checked and
 unchecked.  In either case
