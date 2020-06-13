@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Jun 13 05:18:58 EDT 2020
+Date:	Sat Jun 13 09:53:38 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -1089,12 +1089,12 @@ the <a href=#favorites-page>Favorites Page</a>.  When you
 are asked to select a problem list, the list of problem lists
 presented for selection is always the favorites list.
 The favorites list is initialized to include `Your Problems'
-and the automatically created problem lists of all project
+and the automatically created problem lists of all projects
 from which you are allowed to pull problems.
 <p>
 The List Page allows you to view and edit two problem lists
-(colored tan and blue).  Two lists are allowed because you
-may want to move problems from one to the other.
+(colored tan and blue).  Two lists are allowed so you can
+move problems from one to the other.
 <p>
 To create a problem list of your own, type its name into
 either of the two `New Problem List Name' boxes on the List Page.
@@ -1106,14 +1106,16 @@ list or selecting a list.  Once selected, if the list is your
 list, you can reorder the list by dragging problems to the
 location just above where you want to drop them.  You can
 remove problems from the list and un-remove them by clicking
-the oval next to the problem.
+the oval next to the problem.  The problems with black ovals
+are in the list, and those with white ovals have been removed
+(but could be put back in by clicking their ovals).
 <p>
 If you have selected two problem lists, you can drag a problem
 from one list to the other.
 <p>
 Lists that are not your own cannot be changed.  If you drag
 a problem from such a list to a list of your own, the problem
-will be copied to the target list.
+will be copied to the destination list.
 <p>
 If you drag a problem from one of your own lists to another of
 your own lists, the problem will be moved; that is, it will be
@@ -1123,17 +1125,37 @@ the list, it will be copied and not moved; that is, the problem
 will be left in the source list while being added to the destination
 list.
 <p>
-After editing one of your own list you must `SAVE' it.  `FINSH'
+After editing a list of your own, you must `SAVE' it.  `FINSH'
 will also save the list and de-select the list so you
 can select another list.  `CANCEL' will de-select the list without
 saving it.  RESET will reset the list to its state before
 you changed it, and DELETE will delete the list completely.
 <p>
-TBD: Publish
+TBD: Publishing lists
 </p>
 
 <a name="list-descriptions"><h2>List Descriptions</h2></a>
 <p>
+If you have a list of your own named XXXX, then when you have
+selected this list for editing, you may upload
+a list description file named XXXX.dsc which contains a
+description of your list.  This description is then visible
+whenever the list is edited or is being considered for addition
+to someone's favorites list.
+<p>
+Description files contain paragraphs separated by blank lines.
+There are two kinds of paragraphs: non-indented and indented.
+A non-indented paragraph becomes a &lt;p&gt; HTML paragraph, and
+is set with variable width font and automatic line breaks.
+An indented paragraph becomes a &lt;pre&gt; HTML paragraph and is
+set with fixed width font and line breaks just where they
+are in the .dsc file.  For indented paragraphs you may use
+one or more tabs at the very beginning of a line, but nowhere
+else.
+<p>
+A list description file may NOT contain the characters
+&lt; or &gt;, but may contain &amp;...;' representations
+of characters.
 </p>
 
 <a name="favorites-page"><h1>Favorites Page</h1></a>
