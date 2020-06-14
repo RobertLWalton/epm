@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun  8 15:09:27 EDT 2020
+// Date:    Sat Jun 13 22:03:46 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -77,9 +77,12 @@ else if ( ! isset ( $_SESSION['EPM_UID'] )
 // comments on PHP documentation site; this behavior has
 // also been observed in EPM testing).
 //
+// Also unlink $link before remaking it (as per
+// ln -snf).
+//
 function symbolic_link ( $target, $link )
 {
-    return exec ( "ln -s $target $link 2>&1" ) == '';
+    return exec ( "ln -snf $target $link 2>&1" ) == '';
 }
 
 function WARN ( $message )

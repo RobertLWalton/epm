@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 13 13:19:01 EDT 2020
+    // Date:	Sat Jun 13 22:04:11 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -608,12 +608,49 @@ EOT;
 	return $r;
     }
 
+    // Get the value produced for $fname by
+    // $push_file_map.  Return '' if there is no such
+    // value. 
+    //
+    function get_action ( $problem, $fname )
+    {
+        global $push_file_map;
+
+	$ext = pathinfo ( $fname, PATHINFO_EXTENSION );
+	if ( ! isset ( $push_file_map[$ext] ) )
+	    return '';
+	$amap = $push_file_map[$ext];
+	if ( is_array ( $amap ) )
+	{
+	    $base = pathinfo
+		( $fname, PATHINFO_FILENAME );
+	    $action = NULL;
+	    foreach ( $amap as $re => $act )
+	    {
+		$re = preg_replace
+		    ( '/PPPP/', $problem, $re );
+		if ( ! preg_match
+			   ( "/^($re)\$/", $base ) )
+		    continue;
+		$action = $act;
+		break;
+	    }
+	    if ( ! isset ( $action ) ) return '';
+	}
+	else
+	    $action = $amap;
+	if ( ! in_array ( $action, ['R','L','S'],
+				   true ) )
+	    ERROR ( "bad action `$action' for" .
+		    " \$push_file_map['$ext']" );
+	return $action;
+    }
+
     // Compute EPM_DATA CHANGES, COMMANDS, PROJECT,
     // and PROBLEM to be used to push $problem to
-    // $project.  If $problem has been pulled, it is
-    // and error if it has not been pulled from
-    // $project.  It is an error if $problem or $project
-    // do not exist.
+    // $project.  If $problem has a parent, it is an
+    // error if the parent is not $project.  It is an
+    // error if $problem or $project do not exist.
     //
     function compile_push_problem
 	( $project, $problem, & $warnings, & $errors )
@@ -637,7 +674,6 @@ EOT;
 	    return;
 	}
 	$desdir = "$d/$problem";
-	$change_parent = false;
 	$g = "$srcdir/+parent+";
 	if ( is_link ( "$epm_data/$g" ) )
 	{
@@ -655,11 +691,10 @@ EOT;
 		        " $problem != $parprob" );
 	    if ( $parproj != $project )
 	    {
-	        $change_parent = true;
-		$warnings[] =
-		    "changing parent from" .
-		    " $problem => $parproj to" .
-		    " $problem => $project";
+	        $errors[] = "problem already has a"
+		          . " parent in a different"
+			  . " project ($parproj)";
+		return;
 	    }
 	}
 	if ( is_dir ( "$epm_data/$desdir" ) )
@@ -685,14 +720,7 @@ EOT;
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
-	if ( $change_parent )
-	{
-	    $changes .=
-	        "  remove old parent of $uid $problem" .
-		PHP_EOL;
-	    $commands[] =
-	        ['unlink', "$srcdir/+parent+"];
-	}
+	$desmap = [];
 	if ( $new_push )
 	{
 	    $changes .= "  make $project $problem"
@@ -709,7 +737,27 @@ EOT;
 	    $commands[] = ['append', "$desdir/+perm+",
 	                             "owner $uid" .
 				     PHP_EOL];
+	    $changes .=
+	        "  make $project $problem the parent" .
+		" of $uid $problem" . PHP_EOL;
+	    $commands[] = ['link',
+	                   "../../../$desdir",
+	                   "$srcdir/+parent+"];
 	}
+	else
+	{
+	    $files = @scandir ( "$epm_data/$desdir" );
+	    if ( $files === false )
+		ERROR ( "cannot read $desdir" );
+	    foreach ( $files as $fname )
+	    {
+		if ( ! preg_match
+			   ( $epm_filename_re, $fname ) )
+		    continue;
+		$desmap[$fname] = true;
+	    }
+	}
+
 	$files = @scandir ( "$epm_data/$srcdir" );
 	if ( $files === false )
 	    ERROR ( "cannot read $srcdir" );
@@ -718,76 +766,44 @@ EOT;
 	    if ( ! preg_match
 	               ( $epm_filename_re, $fname ) )
 	        continue;
-	    $ext = pathinfo
-	        ( $fname, PATHINFO_EXTENSION );
-	    if ( ! isset ( $push_file_map[$ext] ) )
-	        continue;
-	    $amap = $push_file_map[$ext];
-	    if ( is_array ( $amap ) )
-	    {
-		$base = pathinfo
-		    ( $fname, PATHINFO_FILENAME );
-	        $action = NULL;
-		foreach ( $amap as $re => $act )
-		{
-		    $re = preg_replace
-		        ( '/PPPP/', $problem, $re );
-		    if ( ! preg_match
-		               ( "/^($re)\$/", $base ) )
-		        continue;
-		    $action = $act;
-		    break;
-		}
-		if ( ! isset ( $action ) )
-		    continue;
-	    }
-	    else
-	        $action = $amap;
+	    $action = get_action ( $problem, $fname );
+	    if ( $action == '' ) continue;
 
-	    $g = "$srcdir/$fname";
 	    if ( $action == 'S' )
 	    {
-		$h = "$desdir/+solutions+/$fname";
-		$changes .=
-		    "  move $fname to from $uid" .
-		    " $problem to $project $problem" .
-		    " solutions" . PHP_EOL;
-		$commands[] =
-		    ['rename', "$srcdir/$fname",
-			       "$desdir/+solutions+/" .
-			       "$fname"];
-		continue;
+		$t = "+solutions+/$fname";
+		$s = " solutions";
 	    }
-	    $h = "$desdir/$fname";
-	    if ( is_link ( "$epm_data/$g" ) )
+	    else
 	    {
-	        $link = @readlink ( "$epm_data/$g" );
-		if ( $link === false )
-		    ERROR ( "cannot read link $g" );
-		if ( $link == "../../../$h" )
+	        $t = $fname;
+		$s = '';
+	    }
+	    $f = "$srcdir/$fname";
+	    if ( is_link ( "$epm_data/$f" ) )
+	    {
+	        $lnk = @readlink ( "$epm_data/$f" );
+		if ( $lnk === false )
+		    ERROR ( "cannot read link $f" );
+		if ( $lnk == "+parent+/$t" )
 		    continue;
 	    }
 
 	    $changes .=
 	        "  move $fname from $uid $problem to" .
-		" $project $problem" . PHP_EOL;
+		" $project $problem$s" . PHP_EOL;
 	    $commands[] =
 	        ['rename', "$srcdir/$fname",
-		           "$desdir/$fname"];
+		           "$desdir/$t"];
 		    // This will also move a link.
-
-	    if ( $action == 'R' ) continue;
-	    if ( $action != 'L' )
-	        ERROR ( "bad action `$action' for" .
-		        " \$push_file_map['$ext']" );
-
 	    $changes .=
 	        "  link $fname in $uid $problem to" .
-	        " $fname in $project $problem" .
+	        " $fname in $project $problem$s" .
 		PHP_EOL;
 	    $commands[] = ['link',
-	                   "../../../$desdir/$fname",
+	                   "+parent+/$t",
 	                   "$srcdir/$fname"];
+	    unset ( $desmap[$fname] );
 	}
 	$fname = "$problem.optn";
 	if ( is_readable
@@ -802,14 +818,31 @@ EOT;
 		          "$desdir/$fname"];
 		// Merge merges optn files.
 	}
-	if ( $new_push || $change_parent )
+	foreach ( $desmap as $fname => $value )
 	{
+	    $action = get_action ( $problem, $fname );
+	    if ( $action == '' ) continue;
+
+	    if ( $action == 'S' )
+	    {
+		$t = "+solutions+/$fname";
+		$s = " solutions";
+	    }
+	    else
+	    {
+	        $t = $fname;
+		$s = '';
+	    }
+	    $warnings[] = "if you continue $problem"
+	                . " will be removed from"
+			. " $project $problem$s;";
+	    $warnings[] = "to avoid this pull the"
+	                . " problem first";
 	    $changes .=
-	        "  make $project $problem the parent" .
-		" of $uid $problem" . PHP_EOL;
-	    $commands[] = ['link',
-	                   "../../../$desdir",
-	                   "$srcdir/+parent+"];
+	        "  remove $fname from $project" .
+		" $problem$s" .  PHP_EOL;
+	    $commands[] = ['unlink',
+	                   "../../../$desdir/$t"];
 	}
 	if ( count ( $commands ) == 0 )
 	    $changes = '';
