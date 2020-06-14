@@ -1,7 +1,6 @@
-// Educational Problem Manager Default Generate/Filter
-// Program
+// Educational Problem Manager Default Generate Program
 //
-// File:	epm_cat.cc
+// File:	epm_generate.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
 // Date:	Sun Dec 22 21:10:48 EST 2019
 //
@@ -9,123 +8,52 @@
 // domain; they make no warranty and accept no liability
 // for this program.
 
-// Begin TEMPLATE for generate/filter program input.
+// TEMPLATE for generate program.
 
-#include <streambuf>
 #include <iostream>
 #include <string>
-#include <cstring>
 #include <cstdio>
-extern "C" {
-#include <unistd.h>
-}
-using std::streambuf;
-using std::istream;
+#include <cstring>
+using std::cin;
+using std::cout;
+using std::cerr;
+using std::endl;
 using std::string;
+
+int line_number = 0;
+int bad_comments = 0;    // Number of bad comment lines.
+int bad_first;           // First bad comment line.
  
-// Class for reading from file descriptor.
-//
-// putback is not supported.  Read errors are treated
-// as end-of-file.
-//
-class inbuf : public streambuf
-{
-    char buffer[4096];
-    bool eof;
-    int fd;
-
-  public:
-
-    void setfd ( int _fd )
-    {
-        setg ( buffer, buffer, buffer );
-	eof = false;
-	fd = _fd;
-    }
-
-  protected:
-
-    virtual int underflow ( void )
-    {
-
-	if ( eof ) return EOF;
-	ssize_t c = read ( fd, buffer, 4096 );
-	if ( c <= 0 )
-	{
-	    eof = true; return EOF;
-	}
-	setg ( buffer, buffer, buffer + c );
-    }
-};
-
-inbuf inBUF;
-istream in ( & inBUF );
-
 // Get next line into `line', deleting comments.
 // Return true on success and false on EOF.
 //
 string line;
 bool get_line ( void )
 {
-    while ( getline ( in, line ) )
+    while ( getline ( cin, line ) )
     {
+        ++ line_number;
 	const char * p = line.c_str();
-	if ( strncmp ( p, "!!**", 4 ) == 0 ) continue;
-	const char * bp = strstr ( p, "[**" );
-	if ( bp == NULL ) return true;
-	const char * ep = strstr ( bp + 3, "**]" );
-	if ( ep == NULL ) return true;
-	char buffer[line.size() + 1];
-	char * q = buffer;
-	while ( true )
+	if ( strncmp ( p, "!!##", 4 ) == 0 ) continue;
+	if ( strncmp ( p, "!!", 2 ) == 0 )
 	{
-	    strncpy ( q, p, bp - p );
-	    q += bp - p;
-	    p = ep + 3;
-	    bp = strstr ( p, "[**" );
-	    if ( bp == NULL ) break;
-	    ep = strstr ( bp + 3, "**]" );
-	    if ( ep == NULL ) break;
+	    if ( bad_comments ++ == 0 )
+	        bad_first = line_number;
+	    continue;
 	}
-	strcpy ( q, p );
-	line = buffer;
 	return true;
     }
     return false;
 }
 
-// End TEMPLATE for generate/filter program input.
-
-using std::cout;
-using std::endl;
-
-#ifndef NAME
-#    error "Program name NAME not set."
-#endif
-
-#ifndef FD
-#    error "Input file descriptor FD not set."
-#endif
-
 char documentation [] =
-"%s\n"
-"\n"
-"    Copies from file descriptor %d to file descrip-\n"
-"    tor 1 removing comments from lines.  A line\n"
-"    beginning with !!** is a comment line and is\n"
-"    deleted (not copied).  Any character sequence\n"
-"    of the form [**...**] within a line is a com-\n"
-"    ment and is deleted.  These last comments\n"
-"    CANNOT be nested: once [** is recognized as the\n"
-"    start of a comment, the next **] terminates the\n"
-"    comment, even if the comment contains other [**\n"
-"    sequences, and if there is no **] following a\n"
-"    in a line, then the [** does not begin a com-\n"
-"    ment.\n"
+"    Copies standard input to standard output,\n"
+"    removing lines the begin with `!!'.  Such\n"
+"    lines that do NOT begin with `!!##' are\n"
+"    considered to be bad comment lines, and cause\n"
+"    a warning message to be output on the standard\n"
+"    error.\n"
 ;
-
-# define quote(x) str(x)
-# define str(x) #x
 
 // Main program.
 //
@@ -133,13 +61,18 @@ int main ( int argc, char ** argv )
 {
     if ( argc > 1 )
     {
-	fprintf ( stderr,
-	          documentation, quote(NAME), FD );
+	FILE * out = popen ( "less -F", "w" );
+	fputs ( documentation, out );
+	pclose ( out );
 	return 0;
     }
 
-    inBUF.setfd ( FD );
     while ( get_line() ) cout << line << endl;
+
+    if ( bad_comments > 0 )
+        cerr << "WARNING: there were " << bad_comments
+	     << " bad comment lines, the first being "
+	     << " line " << bad_first << endl;
 
     return 0;
 }

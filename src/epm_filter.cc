@@ -1,15 +1,14 @@
-// Educational Problem Manager Default Generate/Filter
-// Program
+// Educational Problem Manager Default Filter Program
 //
-// File:	epm_cat.cc
+// File:	epm_filter.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 22 21:10:48 EST 2019
+// Date:	Sun Jun 14 01:56:39 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
 // for this program.
 
-// Begin TEMPLATE for generate/filter program input.
+// TEMPLATE for filter program.
 
 #include <streambuf>
 #include <iostream>
@@ -19,6 +18,9 @@
 extern "C" {
 #include <unistd.h>
 }
+using std::cout;
+using std::cerr;
+using std::endl;
 using std::streambuf;
 using std::istream;
 using std::string;
@@ -36,7 +38,7 @@ class inbuf : public streambuf
 
   public:
 
-    void setfd ( int _fd )
+    inbuf ( int _fd )
     {
         setg ( buffer, buffer, buffer );
 	eof = false;
@@ -55,13 +57,18 @@ class inbuf : public streambuf
 	    eof = true; return EOF;
 	}
 	setg ( buffer, buffer, buffer + c );
+	return buffer[0];
     }
 };
 
-inbuf inBUF;
+inbuf inBUF ( 3 );
 istream in ( & inBUF );
 
-// Get next line into `line', deleting comments.
+int line_number = 0;
+int bad_comments = 0;    // Number of bad comment lines.
+int bad_first;           // First bad comment line.
+ 
+// Get next line into `line', identifying bad comments.
 // Return true on success and false on EOF.
 //
 string line;
@@ -69,63 +76,27 @@ bool get_line ( void )
 {
     while ( getline ( in, line ) )
     {
+        ++ line_number;
 	const char * p = line.c_str();
-	if ( strncmp ( p, "!!**", 4 ) == 0 ) continue;
-	const char * bp = strstr ( p, "[**" );
-	if ( bp == NULL ) return true;
-	const char * ep = strstr ( bp + 3, "**]" );
-	if ( ep == NULL ) return true;
-	char buffer[line.size() + 1];
-	char * q = buffer;
-	while ( true )
+	if ( strncmp ( p, "!!", 2 ) == 0
+	     &&
+	     strncmp ( p, "!!##", 4 ) != 0 )
 	{
-	    strncpy ( q, p, bp - p );
-	    q += bp - p;
-	    p = ep + 3;
-	    bp = strstr ( p, "[**" );
-	    if ( bp == NULL ) break;
-	    ep = strstr ( bp + 3, "**]" );
-	    if ( ep == NULL ) break;
+	    if ( bad_comments ++ == 0 )
+	        bad_first = line_number;
 	}
-	strcpy ( q, p );
-	line = buffer;
 	return true;
     }
     return false;
 }
 
-// End TEMPLATE for generate/filter program input.
-
-using std::cout;
-using std::endl;
-
-#ifndef NAME
-#    error "Program name NAME not set."
-#endif
-
-#ifndef FD
-#    error "Input file descriptor FD not set."
-#endif
-
 char documentation [] =
-"%s\n"
-"\n"
-"    Copies from file descriptor %d to file descrip-\n"
-"    tor 1 removing comments from lines.  A line\n"
-"    beginning with !!** is a comment line and is\n"
-"    deleted (not copied).  Any character sequence\n"
-"    of the form [**...**] within a line is a com-\n"
-"    ment and is deleted.  These last comments\n"
-"    CANNOT be nested: once [** is recognized as the\n"
-"    start of a comment, the next **] terminates the\n"
-"    comment, even if the comment contains other [**\n"
-"    sequences, and if there is no **] following a\n"
-"    in a line, then the [** does not begin a com-\n"
-"    ment.\n"
+"    Copies from file descriptor 2 to standard out-\n"
+"    put, counting bad comment lines, which begin\n"
+"    with `!!' NOT followed by `**'.  Bad comment\n"
+"    lines cause a warning message to be output on\n"
+"    the standard error.\n"
 ;
-
-# define quote(x) str(x)
-# define str(x) #x
 
 // Main program.
 //
@@ -133,13 +104,18 @@ int main ( int argc, char ** argv )
 {
     if ( argc > 1 )
     {
-	fprintf ( stderr,
-	          documentation, quote(NAME), FD );
+	FILE * out = popen ( "less -F", "w" );
+	fputs ( documentation, out );
+	pclose ( out );
 	return 0;
     }
 
-    inBUF.setfd ( FD );
     while ( get_line() ) cout << line << endl;
+
+    if ( bad_comments > 0 )
+        cerr << "WARNING: there were " << bad_comments
+	     << " bad comment lines, the first being "
+	     << " line " << bad_first << endl;
 
     return 0;
 }
