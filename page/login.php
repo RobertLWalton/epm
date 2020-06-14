@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 14 13:53:29 EDT 2020
+    // Date:	Sun Jun 14 16:33:59 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -752,6 +752,16 @@ Please <input type='text' size='40' id='cnum_in'
        placeholder='Enter Confirmation Number'>
 </div>
 
+
+<?php
+    $f = "admin/motd.html";
+    if ( file_exists ( "$epm_data/$f" ) )
+    {
+	echo "<div class='terms'>";
+        include "$epm_data/$f";
+	echo "</div>";
+    }
+?>
 <div class='terms'>
 <?php require "$epm_home/include/epm_terms.html"; ?>
 </div>

@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun  5 03:09:21 EDT 2020
+// Date:    Sun Jun 14 16:33:07 EDT 2020
 
 // HTML code included at the beginning of the <head>
 // section of each page.
@@ -112,7 +112,6 @@ echo "<title>$title</title>";
     }
     .terms {
 	font-size: var(--large-font-size);
-        height: calc(8*var(--large-font-size));
 	width: calc(100%-var(--pad));
 	background-color: var(--bg-orange);
 	border: var(--pad) solid red;
