@@ -2,7 +2,7 @@
 //
 // File:	epm_filter.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Jun 14 01:56:39 EDT 2020
+// Date:	Sun Jun 14 05:58:18 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -80,7 +80,7 @@ bool get_line ( void )
 	const char * p = line.c_str();
 	if ( strncmp ( p, "!!", 2 ) == 0
 	     &&
-	     strncmp ( p, "!!##", 4 ) != 0 )
+	     strncmp ( p, "!!**", 4 ) != 0 )
 	{
 	    if ( bad_comments ++ == 0 )
 	        bad_first = line_number;
@@ -91,7 +91,7 @@ bool get_line ( void )
 }
 
 char documentation [] =
-"    Copies from file descriptor 2 to standard out-\n"
+"    Copies from file descriptor 3 to standard out-\n"
 "    put, counting bad comment lines, which begin\n"
 "    with `!!' NOT followed by `**'.  Bad comment\n"
 "    lines cause a warning message to be output on\n"
@@ -114,7 +114,7 @@ int main ( int argc, char ** argv )
 
     if ( bad_comments > 0 )
         cerr << "WARNING: there were " << bad_comments
-	     << " bad comment lines, the first being "
+	     << " bad comment lines, the first being"
 	     << " line " << bad_first << endl;
 
     return 0;

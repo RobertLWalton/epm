@@ -2,7 +2,7 @@
 //
 // File:	epm_generate.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 22 21:10:48 EST 2019
+// Date:	Sun Jun 14 05:54:45 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -71,7 +71,7 @@ int main ( int argc, char ** argv )
 
     if ( bad_comments > 0 )
         cerr << "WARNING: there were " << bad_comments
-	     << " bad comment lines, the first being "
+	     << " bad comment lines, the first being"
 	     << " line " << bad_first << endl;
 
     return 0;
