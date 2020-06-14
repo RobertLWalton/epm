@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Jun 13 10:31:21 EDT 2020
+Date:	Sun Jun 14 15:22:29 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -398,7 +398,18 @@ Projects Page.
 <a name="project-pull"><h2>Pulling Problems</h2></a>
 <p>
 If you want to solve a problem that someone else has written,
-you must pull the problem from a project.
+you must pull the problem from a project.  Pulling a problem
+creates a local directory for the problem, that is, your own
+private local directory for the problem, and then creates links
+in this directory to files in the project problem directory.
+Only some files are linked in this manner.  You have to upload
+a executable solution to your local directory to do things
+like making score files.
+<p>
+Note that if you wrote and pushed the problem, so the project
+problem is yours and not someone else's, all the project problem
+files will be linked into your local directory, rather than
+just those you should have to try to solve the problem.
 <p>
 To pull problems, select a problems list and click `<b>Pull</b>'.
 Then check the ovals for the problems you want to pull.
@@ -436,6 +447,35 @@ available for others to solve by pushing the problem
 into a project, such as the <a href='#public'>public</a>
 project.  Then others can <a href='#project-pull'>pull</a>
 your problem from the `public' project and try to solve it.
+<p>
+To push a problem to a project you must have `push' permission
+for the project.  You may re-push a problem you have previously
+pushed in order to update it.  To re-push you must have `owner'
+permission for the project problem.  When you initially push a problem,
+and thereby create the project problem, you are made the sole
+owner of the project problem.
+<p>
+When you push a problem, files in your local problem directory
+are moved to its parent project problem directory and links are
+made in your local problem directory to these moved files.
+One consequence of this is that all runs you do for the problem
+will be local, and you will not be able to submit the problem.
+However your local runs give results identical to submissions
+(they just are not recorded as submissions), as long
+as you have not replaced any local links by updated files.
+If you do replace local links by updated files, you may want
+to re-push after you have finished testing the updates.
+<p>
+If you delete a file link in your local problem directory
+whose target is a file the parent directory, executions are likely to still
+work as in most cases a file will be taken from either the
+local directory or the parent, with the local directory
+peferred for non-submissions, and the parent version required
+for non-solution executables for submissions.
+If you delete a local problem directory link of a .run file,
+you will find that you an now submit the file.  If you
+want to restore local links you have deleted, you may do
+so by pulling the problem.
 <p>
 To push problems, select a problems list and click `<b>Push</b>'.
 Then check the ovals for the problems you want to push and
