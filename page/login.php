@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 13 16:43:12 EDT 2020
+    // Date:	Sun Jun 14 13:53:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -730,7 +730,7 @@ EOT;
 </td></tr></table>
 <br>
 <button type='button'
-        onclick="window.location.reload(true)">
+        onclick="location.reload(true)">
 Change Email Address
 </button>
 <pre>   </pre>
@@ -775,13 +775,13 @@ var cnum_in = document.getElementById("cnum_in");
 function RESET_EMAIL()
 {
     storage.removeItem ( EMAIL );
-    window.location.reload ( true );
+    location.reload ( true );
 }
 
 function RESET_BROWSER()
 {
     storage.clear();
-    window.location.reload ( true );
+    location.reload ( true );
 }
 
 function ALERT ( message )
@@ -796,8 +796,8 @@ function FAIL ( message )
     LOG ( "call to FAIL: " + message );
     setTimeout ( function () {
         alert ( message );
+	location.reload();
     } );
-    window.location.reload ( true );
 }
 
 var REQUEST_IN_PROGRESS = false;

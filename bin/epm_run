@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Jun 11 14:26:43 EDT 2020
+// Date:	Sun Jun 14 14:14:36 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -146,7 +146,8 @@ $lock = NULL;
 if ( is_dir ( "$epm_data/$pardir" ) )
     $lock = LOCK ( $pardir, LOCK_SH );
 
-$altered = filemtime ( "$epm_data/$probdir/+altered+" );
+$altered = @filemtime
+    ( "$epm_data/$probdir/+altered+" );
 if ( $altered === false ) $altered = 0;
 while ( time() <= $altered ) usleep ( 100000 );
 
@@ -331,7 +332,8 @@ foreach ( $runin as $infile )
 	}
     }
 
-    $atime = filemtime ( "$epm_data/$probdir/+altered+" );
+    $atime = @filemtime
+        ( "$epm_data/$probdir/+altered+" );
     if ( $atime === false ) $atime = 0;
     if ( $atime > $altered )
     {

@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun 10 13:55:14 EDT 2020
+    // Date:	Sun Jun 14 13:42:00 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -572,21 +572,12 @@ EOT;
 	// Alert must be scheduled as separate task.
 	//
 	LOG ( "call to FAIL: " + message );
-    <?php
-	if ( $epm_debug )
-	    echo <<<'EOT'
-		setTimeout ( function () {
-		    alert ( message );
-		    window.location.reload ( true );
-		});
-EOT;
-	else
-	    echo <<<'EOT'
-		throw "CALL TO FAIL: " + message;
-EOT;
-    ?>
+	setTimeout ( function () {
+	    alert ( message );
+	    window.close();
+	    location.assign ( '/page/illegal.html' );
+	});
     }
-
 
     function ALERT ( message )
     {
@@ -634,6 +625,7 @@ EOT;
                 document.getElementById ( 'id3' )];
 		// Some of these may be null.
 
+    var RESPONSE = ''; // Saved here for error messages.
     function PROCESS_RESPONSE ( response )
     {
 	item = response.trim().split ( '$' );
@@ -672,9 +664,9 @@ EOT;
 		       + ' update request' );
 
 	    REQUEST_IN_PROGRESS = false;
-	    LOG ( 'xhttp response: '
-		  + this.responseText );
-	    PROCESS_RESPONSE ( this.responseText );
+	    RESPONSE = this.responseText;
+	    LOG ( 'xhttp response: ' + RESPONSE );
+	    PROCESS_RESPONSE ( RESPONSE );
 	};
 	xhttp.open ( 'POST', "run.php", true );
 	xhttp.setRequestHeader

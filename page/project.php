@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 14 01:11:02 EDT 2020
+    // Date:	Sun Jun 14 13:58:57 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -713,7 +713,21 @@ EOT;
 	    $new_push = false;
 	}
 	else
+	{
+	    $pmap = project_permissions ( $project );
+	    if ( ! $pmap['push'] )
+	    {
+		$errors[] =
+		    "$problem => $project is not" .
+		    " possible because you do not" .
+		    " have push permissions";
+		$errors[] = "    for the $project" .
+		    " project, and problem $project" .
+		    " $problem does not exist yet";
+		return;
+	    }
 	    $new_push = true;
+	}
 
 	$changes = "Changes to Push $uid $problem to"
 	         . " $project $problem by $uid ("
@@ -883,22 +897,9 @@ EOT;
 	              . " a problem named $problem";
 	    return;
 	}
-	$pmap = problem_permissions
-	     ( $project, $problem );
-	if ( ! $pmap['pull'] )
-	{
-	    $errors[] =
-		"$problem <= $project is not" .
-		" possible because you do not have" .
-		" `pull' permission for" .
-		" problem $project $problem";
-	    return;
-	}
 
-	$new_pull = ! is_dir ( "$epm_data/$desdir" );
-	$change_parent = false;
 	$g = "$desdir/+parent+";
-	if ( ! $new_pull && is_link ( "$epm_data/$g" ) )
+	if ( is_link ( "$epm_data/$g" ) )
 	{
 	    $s = @readlink ( "$epm_data/$g" );
 	    if ( $s === false )
@@ -914,13 +915,26 @@ EOT;
 		        " $problem != $parprob" );
 	    if ( $parproj != $project )
 	    {
-	        $change_parent = true;
-		$warnings[] =
-		    "changing parent from" .
-		    " $problem <= $parproj to" .
-		    " $problem <= $project";
+	        $errors[] = "problem already has a"
+		          . " parent in a different"
+			  . " project ($parproj)";
+		return;
 	    }
 	}
+	$pmap = problem_permissions
+	     ( $project, $problem );
+	if ( ! $pmap['pull'] )
+	{
+	    $errors[] =
+		"$problem <= $project is not" .
+		" possible because you do not have" .
+		" `pull' permission for" .
+		" problem $project $problem";
+	    return;
+	}
+	$is_owner = $pmap['owner'];
+
+	$new_pull = ! is_dir ( "$epm_data/$desdir" );
 
 	$changes = "Changes to Pull $uid $problem from"
 	         . " $project $problem by $uid ("
@@ -933,14 +947,12 @@ EOT;
 	    $changes .= "  make problem $uid $problem"
 	              . " directory" . PHP_EOL;
 	    $commands[] = ['mkdir', $desdir, '0771'];
-	}
-	elseif ( $change_parent )
-	{
 	    $changes .=
-	        "  remove old parent of $uid $problem" .
-		PHP_EOL;
-	    $commands[] =
-	        ['unlink', "$desdir/+parent+"];
+	        "  make $project $problem the parent" .
+		" of $uid $problem" . PHP_EOL;
+	    $commands[] = ['link',
+	                   "../../../$srcdir",
+	                   "$desdir/+parent+"];
 	}
 
 	$files = @scandir ( "$epm_data/$srcdir" );
@@ -953,40 +965,31 @@ EOT;
 	        continue;
 	    $ext = pathinfo
 	        ( $fname, PATHINFO_EXTENSION );
-	    if ( ! isset ( $push_file_map[$ext] ) )
+            $action = get_action ( $problem, $fname );
+	    if ( $action == '' ) continue;
+
+	    if ( $action != 'L' && ! $is_owner )
 	        continue;
-	    $amap = $push_file_map[$ext];
-	    if ( is_array ( $amap ) )
+
+	    if ( $action == 'S' )
 	    {
-		$base = pathinfo
-		    ( $fname, PATHINFO_FILENAME );
-	        $action = NULL;
-		foreach ( $amap as $re => $act )
-		{
-		    $re = preg_replace
-		        ( '/PPPP/', $problem, $re );
-		    if ( ! preg_match
-		               ( "/^($re)\$/", $base ) )
-		        continue;
-		    $action = $act;
-		    break;
-		}
-		if ( ! isset ( $action ) )
-		    continue;
+		$t = "+solutions+/$fname";
+		$s = " solutions";
 	    }
 	    else
-	        $action = $amap;
+	    {
+	        $t = $fname;
+		$s = '';
+	    }
 
-	    if ( $action != 'L' ) continue;
-
-	    $g = "$srcdir/$fname";
+	    $g = "$srcdir/$t";
 	    $h = "$desdir/$fname";
 	    if ( is_link ( "$epm_data/$h" ) )
 	    {
 	        $link = @readlink ( "$epm_data/$h" );
 		if ( $link === false )
 		    ERROR ( "cannot read link $h" );
-		if ( $link != "../../../$g" )
+		if ( $link != "+parent+/$t" )
 		    $warnings[] =
 		        "existing $h will not be" .
 			" altered; delete and re-run" .
@@ -1003,10 +1006,10 @@ EOT;
 
 	    $changes .=
 	        "  link $fname in $uid $problem to" .
-	        " $fname in $project $problem" .
+	        " $fname in $project $problem$s" .
 		PHP_EOL;
 	    $commands[] = ['link',
-	                   "../../../$srcdir/$fname",
+	                   "+parent+/$t",
 	                   "$desdir/$fname"];
 	}
 	$f = "$desdir/$problem.optn";
@@ -1018,15 +1021,6 @@ EOT;
 		PHP_EOL .
 		"  use Options Page to revert to" .
 		" inherited options if desired";
-	}
-	if ( $new_pull || $change_parent )
-	{
-	    $changes .=
-	        "  make $project $problem the parent" .
-		" of $uid $problem" . PHP_EOL;
-	    $commands[] = ['link',
-	                   "../../../$srcdir",
-	                   "$desdir/+parent+"];
 	}
 	if ( count ( $commands ) == 0 )
 	    $changes = '';
@@ -1189,7 +1183,7 @@ EOT;
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
 
-	$time = filemtime ( "$epm_data/$f" );
+	$time = @filemtime ( "$epm_data/$f" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
 	$time = strftime ( $epm_time_format, $time );
@@ -1240,7 +1234,7 @@ EOT;
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
 
-	$time = filemtime ( "$epm_data/$f" );
+	$time = @filemtime ( "$epm_data/$f" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
 	$time = strftime ( $epm_time_format, $time );
@@ -1437,7 +1431,7 @@ EOT;
 			" cancelled; try again";
 	    }
 	    $f = "users/$uid/$problem/+altered+";
-	    $altered = filemtime ( "$epm_data/$f" );
+	    $altered = @filemtime ( "$epm_data/$f" );
 	    if ( $altered === false ) $altered = 0;
 	    if ( $altered > $data['ALTERED'] )
 		$errors[] = "$uid $problem was altered"
@@ -1477,6 +1471,9 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $problem = $_POST['problem'];
 	    $project = $_POST['project'];
+	    if ( $project == '-' )
+	        ERROR ( "compile or finish project" .
+		        " is `-'" );
 
 	    if ( ! preg_match
 	               ( $epm_name_re, $problem ) )
@@ -1493,7 +1490,7 @@ EOT;
 		$data['LOCK'] = LOCK ( $d, $lock_type );
 	    }
 	    $f = "users/$uid/$problem/+altered+";
-	    $altered = filemtime ( "$epm_data/$f" );
+	    $altered = @filemtime ( "$epm_data/$f" );
 	    if ( $altered === false ) $altered = 0;
 	    $data['ALTERED'] = $altered;
 
@@ -1627,20 +1624,12 @@ function FAIL ( message )
     // Alert must be scheduled as separate task.
     //
     LOG ( "call to FAIL: " + message );
-<?php
-    if ( $epm_debug )
-        echo <<<'EOT'
-	    setTimeout ( function () {
-		alert ( message );
-		window.location.reload ( true );
-	    });
-EOT;
-    else
-        echo <<<'EOT'
-	    throw "CALL TO FAIL: " + message;
-EOT;
-?>
+    setTimeout ( function () {
+	alert ( message );
+	location.assign ( '/page/login.php' );
+    });
 }
+
 </script>
 
 </head>
@@ -2240,9 +2229,6 @@ EOT;
 		  == on );
 	    op = ( check_compile ? 
 		   'compile' : 'finish' );
-	    if ( project == '-' )
-	        FAIL ( 'project for ' + problem +
-		       ' is \'-\'' );
 	    SEND ( op + '=pull&problem=' + problem
 		      + '&project=' + project,
 		   check_compile ?
