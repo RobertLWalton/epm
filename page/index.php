@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 13 22:03:46 EDT 2020
+// Date:    Sun Jun 14 14:41:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -186,10 +186,14 @@ if ( in_array ( $epm_page_type,
     if ( ! isset ( $_REQUEST['id'] ) )
     {
         WARN ( "$php_self is missing ID" );
-	exit ( 'missing ID' );
+	exit ( 'UNACCEPTABLE HTTP REQUEST:' .
+	       ' missing ID' );
     }
     elseif ( $_REQUEST['id'] != $ID )
     {
+	if ( isset ( $_POST['xhttp'] ) )
+	    exit ( 'this tab is orphaned;' .
+	           ' close this tab' );
 	header ( "Location: /page/orphan.html" );
         exit;
     }
