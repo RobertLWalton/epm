@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 13 22:04:11 EDT 2020
+    // Date:	Sun Jun 14 01:11:02 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -786,7 +786,10 @@ EOT;
 		if ( $lnk === false )
 		    ERROR ( "cannot read link $f" );
 		if ( $lnk == "+parent+/$t" )
+		{
+		    unset ( $desmap[$fname] );
 		    continue;
+		}
 	    }
 
 	    $changes .=
@@ -833,7 +836,7 @@ EOT;
 	        $t = $fname;
 		$s = '';
 	    }
-	    $warnings[] = "if you continue $problem"
+	    $warnings[] = "if you continue $fname"
 	                . " will be removed from"
 			. " $project $problem$s;";
 	    $warnings[] = "to avoid this pull the"
@@ -841,8 +844,7 @@ EOT;
 	    $changes .=
 	        "  remove $fname from $project" .
 		" $problem$s" .  PHP_EOL;
-	    $commands[] = ['unlink',
-	                   "../../../$desdir/$t"];
+	    $commands[] = ['unlink', "$desdir/$t"];
 	}
 	if ( count ( $commands ) == 0 )
 	    $changes = '';

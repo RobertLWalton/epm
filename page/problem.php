@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun 12 21:56:12 EDT 2020
+    // Date:	Sun Jun 14 01:10:41 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -41,6 +41,20 @@
         exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_make.php";
+
+    $parent = NULL;
+    $d = "$probdir/+parent+";
+    if ( is_link ( "$epm_data/$d" ) )
+    {
+	$t = @readlink ( "$epm_data/$d" );
+	if ( $t === false )
+	    ERROR ( "cannot read link $d" );
+	$re = "#^\.\./\.\./\.\./projects/"
+	    . "([^/]+)/$problem\$#";
+	if ( ! preg_match ( $re, $t, $matches ) )
+	    ERROR ( "link $d has bad target $t" );
+	$parent = $matches[1];
+    }
 
     // The $_SESSION state particular to this page is:
     //
@@ -150,7 +164,8 @@
     function file_info
             ( $dir, $fname, $count, & $display_list )
     {
-        global $epm_data, $problem, $display_file_type,
+        global $epm_data, $problem, $parent,
+	       $display_file_type,
 	       $display_file_map, $epm_file_maxsize,
 	       $epm_filename_re, $linkable_ext,
 	       $max_display_lines, $min_display_lines;
@@ -226,11 +241,22 @@
 	    if ( $t === false )
 		ERROR ( "cannot read link" .
 			" $dir/$fname" );
-	    $re = "#^\.\./\.\./\.\./projects/"
-	        . "([^/]+)/$problem/$fname\$#";
-	    if ( preg_match ( $re, $t, $matches ) )
+	    if ( $t == "+parent+/$fname" )
+	    {
+	        if ( ! isset ( $parent ) )
+		    ERROR ( "bad link $t" );
 	        $fcomment .=
-		    " (Link to {$matches[1]} project)";
+		    " (Link to $parent project)";
+	    }
+	    elseif
+	        ( $t == "+parent+/+solutions+/$fname" )
+	    {
+	        if ( ! isset ( $parent ) )
+		    ERROR ( "bad link $t" );
+	        $fcomment .=
+		    " (Link to $parent project" .
+		    " solutions)";
+	    }
 	    elseif ( preg_match ( $epm_filename_re,
 		                  $t ) )
 		$fcomment .= " (Link to $t)";
