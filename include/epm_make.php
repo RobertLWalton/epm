@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 15 03:16:46 EDT 2020
+// Date:    Mon Jun 15 03:39:15 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2404,13 +2404,14 @@ function create_file
     {
 	$b = $matches[1];
 	if ( ! symbolic_link
-	           ( "/usr/bin/epm_default_$b", $f ) )
+	           ( "../../../bin/epm_default_$b",
+		     $f ) )
 	    ERROR ( "create_file: cannot symbolically" .
 		    " link $filename to" .
-		    " /usr/bin/epm_default_$b" );
+		    " ../../../bin/epm_default_$b" );
 	$warnings[] =
 	    "$filename was created by linking to" .
-	    " /usr/bin/epm_default_$b";
+	    " ../../../bin/epm_default_$b";
 	return true;
     }
     else
