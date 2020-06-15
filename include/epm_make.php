@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 11 16:06:52 EDT 2020
+// Date:    Mon Jun 15 03:16:46 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1069,6 +1069,7 @@ function execute_commands ( $base, $dir, $errors )
     $r .= "export EPM_UID=$uid" . PHP_EOL;
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
     $r .= "export EPM_DIR=$dir" . PHP_EOL;
+    $r .= "export BIN=$epm_home/bin" . PHP_EOL;
     $r .= "exec 0<&-" . PHP_EOL;
     $r .= "exec 1<&-" . PHP_EOL;
     $r .= "exec 2<&-" . PHP_EOL;
@@ -1144,6 +1145,7 @@ function execute_commands_2 ( $base, $dir )
     $env['EPM_UID'] = $uid;
     $env['EPM_PROBLEM'] = $problem;
     $env['EPM_DIR'] = $dir;
+    $env['BIN'] = "$epm_home/bin";
 
     $cmd = "bash $base.sh";
     $process = proc_open
@@ -2023,7 +2025,7 @@ function start_run
 
     $runbase = pathinfo ( $runfile, PATHINFO_FILENAME );
 
-    $commands = [ '${EPM_HOME}/bin/epm_run' .
+    $commands = [ '$BIN/epm_run' .
     		  ($submit ? ' -s' : '' ) . ' \\',
                   "    $runfile" .
 		  " $workdir $runbase.stat \\",

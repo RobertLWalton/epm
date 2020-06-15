@@ -2,7 +2,7 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Tue Nov 26 09:52:53 EST 2019
+# Date:		Mon Jun 15 03:31:21 EDT 2020
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
@@ -15,7 +15,8 @@
 #
 .SUFFIXES:
 
-SECURE_BIN=/usr/sbin
+SECURE_BIN=../bin
+# SECURE_BIN=/usr/sbin
 
 all: epm_sandbox
 

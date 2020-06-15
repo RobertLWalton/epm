@@ -2,13 +2,13 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Sun Jun 14 01:54:41 EDT 2020
+# Date:		Mon Jun 15 03:07:06 EDT 2020
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
 # for this program.
 
-INSTALL_BIN = /usr/bin
+INSTALL_BIN = ../bin
 
 # Kill all implicit rules
 #
@@ -40,7 +40,6 @@ install:	epm_score \
                 epm_default_generate \
                 epm_default_filter \
                 epm_default_monitor
-	test `id -un` = root
 	test -d ${INSTALL_BIN}
 	test -w ${INSTALL_BIN}
 	rm -f ${INSTALL_BIN}/epm_score
