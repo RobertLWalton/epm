@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun Jun 14 14:14:36 EDT 2020
+// Date:	Sun Jun 14 23:32:22 EDT 2020
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
@@ -289,9 +289,10 @@ foreach ( $runin as $infile )
     }
     $map = & $work['MAP'];
     $lines[] = $base;
-    $count = count ( $lines );
+    $end = count ( $lines );
+    $last_line = & $lines[$end-1];
+    $count = $end;
     if ( $count > 10 ) $count = 10;
-    $r = NULL;
     while ( true )
     {
         $r = update_work_results();
@@ -304,19 +305,19 @@ foreach ( $runin as $infile )
 	                 $matches );
 	    $line .= " {$matches[1]}:{$e[2]}s";
 	}
-	$lines[-1] = $line;
+	$last_line = $line;
 	if ( isset ( $statfile ) )
 	{
 	    $status = "";
 	    for ( $i = 1; $i <= $count; $i += 1 )
-		$status .= $lines[-$i] . PHP_EOL;
+		$status .= $lines[$end-$i] . PHP_EOL;
 	    file_put_contents ( $statfile, $status );
 	}
 	if ( $r !== true ) break;
 	usleep ( 500000 );
     }
 
-    echo $lines[-1] . PHP_EOL;
+    echo $last_line . PHP_EOL;
 
     if ( is_dir ( "$epm_data/$pardir" ) )
     {
