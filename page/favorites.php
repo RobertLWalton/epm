@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 03:41:02 EDT 2020
+    // Date:	Mon Jun 15 12:29:55 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -104,28 +104,38 @@
     }
 
     // Build $inmap containing list of all lists
-    // in the form PROJECT:BASENAME => TIME.  Lists
-    // of problems with BASENAME = '-' are first.
+    // in the forms:
     //
-
+    //		-:- => TIME,
+    //		PROJECT:- => TIME,
+    //		-:BASENAME => TIME,
+    //		USER:BASENAME => TIME,
+    //
+    // in the order indicated.  TIME is the mtime
+    // of the user's +actions+ file for -:-, the PROJECT
+    // directory for PROJECT:-, and the list itself
+    // for the other cases.
+    // 
     $inmap = [];
-    $time = strftime ( $epm_time_format );
+    $time = @filemtime
+        ( "$epm_data/users/$uid/+actions+" );
+    if ( $time === false ) $time = time();
+    $time = strftime ( $epm_time_format, $time );
     $inmap["-:-"] = $time;
-    $projects = read_projects ( 'list|push|pull' );
+    $projects = read_projects ( 'push|pull' );
     foreach ( $projects as $project )
-        $inmap["$project:-"] = $time;
-
-    // Add .list files in $dirname using $project
-    // as project name.
-    //
-    function append_listnames
-	    ( & $inmap, $project, $dirname )
     {
-	global $epm_data, $epm_time_format;
-
-        $fnames = @scandir ( "$epm_data/$dirname" );
-	if ( $fnames === false ) return;
-	foreach ( $fnames as $fname )
+        $time = @filemtime
+	    ( "$epm_data/projects/$project" );
+	if ( $time === false )
+	    ERROR ( "cannot stat projects/$project" );
+	$time = strftime ( $epm_time_format, $time );
+        $inmap["$project:-"] = $time;
+    }
+    $d = "users/$uid/+lists+";
+    $fnames = @scandir ( "$epm_data/$d" );
+    if ( $fnames !== false )
+        foreach ( $fnames as $fname )
 	{
 	    $ext = pathinfo
 	        ( $fname, PATHINFO_EXTENSION );
@@ -133,38 +143,47 @@
 	    $basename = pathinfo
 	        ( $fname, PATHINFO_FILENAME );
 	    $time = @filemtime
-	        ( "$epm_data/$dirname/$fname" );
+	        ( "$epm_data/$d/$fname" );
 	    if ( $time === false )
-	        $time = time();
-	    $inmap["$project:$basename"] =
+		ERROR ( "cannot stat $d/$fname" );
+	    $inmap["-:$basename"] =
 	        strftime ( $epm_time_format, $time );
 	}
-    }
-    append_listnames
-        ( $inmap, '-', "users/$uid/+lists+" );
-    foreach ( $projects as $project )
-        append_listnames
-	    ( $inmap, $project,
-	      "/projects/$project/+lists+" );
+    $d = "lists";
+    $fnames = @scandir ( "$epm_data/$d" );
+    if ( $fnames !== false )
+        foreach ( $fnames as $fname )
+	{
+	    $re = '/^([^:\.]+):([^:\.]+)\.list$/';
+	    if ( ! preg_match ( $re, $fname,
+	                         $matches ) )
+	        continue;
+	    $user = $matches[1];
+	    $basename = $matches[2];
+	    $time = @filemtime
+	        ( "$epm_data/$d/$fname" );
+	    if ( $time === false )
+		ERROR ( "cannot stat $d/$fname" );
+	    $inmap["$user:$basename"] =
+	        strftime ( $epm_time_format, $time );
+	}
 
-    $favorites = read_file_list
-        ( "users/$uid/+lists+/+favorites+" );
+    $favorites = favorites_to_list ( 'pull|push' );
 
     // Build $fmap containing list of all lists
-    // in the form PROJECT:BASENAME => TIME.  The
+    // in the form NAME:BASENAME => TIME.  The
     // first elements are taken from the +favorites+
     // file, excluding names of lists that no longer
     // exist.  There are $fcount such elements, and
     // these will be marked initially as being in the
-    // `Favorites'.  TIMEs are mod times of the list
-    // files, taken from $inmap.
+    // `Favorites'.  TIMEs are taken from $inmap.
     //
     $fmap = [];
     $fcount = 0;
     foreach ( $favorites as $e )
     {
-        list ( $time, $project, $basename ) = $e;
-	$key = "$project:$basename";
+        list ( $time, $name, $basename ) = $e;
+	$key = "$name:$basename";
 	if ( ! isset ( $inmap[$key] ) ) continue;
 	$fmap[$key] = $inmap[$key];
 	++ $fcount;
@@ -179,9 +198,9 @@
     $list = & $data['LIST'];
     foreach ( $fmap as $key => $time )
     {
-        list ( $project, $basename ) =
+        list ( $name, $basename ) =
 	    explode ( ':', $key );
-	$list[] = [$time, $project, $basename];
+	$list[] = [$time, $name, $basename];
     }
 
 ?>
@@ -336,15 +355,15 @@ EOT;
     foreach ( $list as $e )
     {
         ++ $c;
-        list ( $time, $project, $basename ) = $e;
-	$listname = "$project:$basename";
+        list ( $time, $name, $basename ) = $e;
+	$listname = "$name:$basename";
 	$filename = listname_to_filename ( $listname );
 	$description = '';
 	if ( isset ( $filename ) )
 	    $description = read_list_description
 	        ( $filename );
-	if ( $project == '-' )
-	    $project = '<i>Your</i>';
+	if ( $name == '-' )
+	    $name = '<i>Your</i>';
 	if ( $basename == '-' )
 	    $basename = '<i>Problems<i>';
 	$time = substr ( $time, 0, 10 );
@@ -366,7 +385,7 @@ EOT;
 	      style='background-color:$switch'>
 	      </div></td>
 	<td style='width:80%;text-align:center'>
-	    $project $basename $time</td>
+	    $name $basename $time</td>
 	</tr></table>
 EOT;
         if ( $description != '' )

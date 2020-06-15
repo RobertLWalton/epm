@@ -90,7 +90,7 @@
     //
     // that contains symbolic links of the form:
     //
-    //	    OWNER-NAME.list =>
+    //	    OWNER:NAME.list =>
     //		users/OWNER/+lists+/NAME.list
     //
     // which make particular indices visible to users.

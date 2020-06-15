@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 12 15:22:00 EDT 2020
+// Date:    Mon Jun 15 12:26:35 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -139,11 +139,11 @@ $epm_time_format = "%FT%T%z";
     // Format for times, as per strftime.
 
 $epm_name_re =
-    '/^[A-Za-z][-_A-Za-z0-9]*[A-Za-z]$/';
+    '/^[A-Za-z][-_A-Za-z0-9]*[A-Za-z0-9]$/';
     // Regular expression matching only legal EPM
     // names, which have only letters, digits,
-    // underline(_), and dash(-), and begin and end
-    // with a letter.
+    // underline(_), and dash(-), begin with a letter,
+    // and end with a letter or digit.
 
 $epm_filename_re =
     '/^[A-Za-z0-9](|[-_A-Za-z0-9]*[A-Za-z0-9])' .
