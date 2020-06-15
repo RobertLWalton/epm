@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 13 12:37:59 EDT 2020
+    // Date:	Mon Jun 15 12:50:48 EDT 2020
 
     // Functions for managing lists.
 
@@ -612,8 +612,9 @@
     //	    [TIME PROJECT PROBLEM]
     //
     // where TIME is the modification time of the
-    // PROBLEM's +changes+ file.  List elements
-    // are sorted most recent TIME first.
+    // PROBLEM's +changes+ file if that exists, or
+    // of the PROBLEM's directory otherwise.  List
+    // elements are sorted most recent TIME first.
     //
     function read_project_list ( $project )
     {
@@ -636,10 +637,8 @@
 	    $f = "$d/$problem/+changes+";
 	    $time = @filemtime ( "$epm_data/$f" );
 	    if ( $time === false )
-	    {
-	        WARN ( "cannot stat $f" );
-		continue;
-	    }
+		$time = @filemtime ( "$epm_data/$d" );
+		// For problems copied from repository.
 	    $map[$problem] = $time;
 	}
 	arsort ( $map, SORT_NUMERIC );
