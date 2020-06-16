@@ -1,10 +1,10 @@
 {
 
 "COMMANDS": ["$BIN/epm_sandbox $GSARGS $GSPACE \\",
-             "    -status XXXX-PPPP.gstat generate_PPPP \\",
+             "    -status XXXX-PPPP.gstat generate-PPPP \\",
              "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
 	     "  $BIN/epm_sandbox $FSARGS $FSPACE \\",
-             "    -status XXXX-PPPP.fstat filter_PPPP \\",
+             "    -status XXXX-PPPP.fstat filter-PPPP \\",
 	     "    3< XXXX-PPPP.sout > XXXX-PPPP.fout \\",
 	     "    2> XXXX-PPPP.ferr",
              "$BIN/epm_score $SCORING-ARGS \\",
@@ -13,8 +13,8 @@
 
 "LOCAL-REQUIRES":["XXXX-PPPP.in", "XXXX-PPPP.sout",
                   "XXXX-PPPP.ftest"],
-"REQUIRES":["generate_PPPP", "filter_PPPP"],
-"CREATABLE": ["generate_PPPP", "filter_PPPP"],
+"REQUIRES":["generate-PPPP", "filter-PPPP"],
+"CREATABLE": ["generate-PPPP", "filter-PPPP"],
 "CHECKS":  ["EMPTY XXXX-PPPP.gerr", "EMPTY XXXX-PPPP.ferr",
             "EMPTY XXXX-PPPP.scerr"],
 "KEEP":    ["XXXX-PPPP.score"],

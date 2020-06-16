@@ -3,7 +3,7 @@
 
 "COMMANDS": ["chmod o+r PPPP.pyc",
              "$BIN/epm_sandbox $GSARGS $GSPACE \\",
-             "    -status XXXX-PPPP.gstat generate_PPPP \\",
+             "    -status XXXX-PPPP.gstat generate-PPPP \\",
 	     "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
 	     "  $BIN/epm_sandbox $SSARGS $SSTIME $SSPACE \\",
 	     "    -status XXXX-PPPP.sstat python3 \\",
@@ -12,8 +12,8 @@
 	     "chmod o-r PPPP.pyc"],
 
 "LOCAL-REQUIRES": ["XXXX-PPPP.in", "PPPP.pyc"],
-"REQUIRES": ["generate_PPPP"],
-"CREATABLE": ["generate_PPPP"],
+"REQUIRES": ["generate-PPPP"],
+"CREATABLE": ["generate-PPPP"],
 "KEEP":    ["XXXX-PPPP.sout"],
 "SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.serr", "XXXX-PPPP.sout"]
 

@@ -2,7 +2,7 @@
 
 "COMMANDS": ["chmod o+r . PPPP.class",
              "$BIN/epm_sandbox $GSARGS $GSPACE \\",
-             "    -status XXXX-PPPP.g1stat generate_PPPP \\",
+             "    -status XXXX-PPPP.g1stat generate-PPPP \\",
 	     "    < XXXX-PPPP.in 2> XXXX-PPPP.g1err | \\",
 	     "  $BIN/epm_sandbox $SSARGS $SSTIME \\",
 	     "    -score XXXX-PPPP.score \\",
@@ -11,10 +11,10 @@
 	     "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
 	     "chmod o-r . PPPP.class",
              "$BIN/epm_sandbox $GSARGS $GSPACE \\",
-             "    -status XXXX-PPPP.g2stat generate_PPPP \\",
+             "    -status XXXX-PPPP.g2stat generate-PPPP \\",
              "    < XXXX-PPPP.in 2> XXXX-PPPP.g2err | \\",
 	     "  $BIN/epm_sandbox $FSARGS $FSPACE \\",
-             "    -status XXXX-PPPP.fstat filter_PPPP \\",
+             "    -status XXXX-PPPP.fstat filter-PPPP \\",
 	     "    3< XXXX-PPPP.sout > XXXX-PPPP.fout \\",
 	     "    2> XXXX-PPPP.ferr",
              "$BIN/epm_score $SCORING-ARGS \\",
@@ -23,8 +23,8 @@
 
 "LOCAL-REQUIRES":
 	["PPPP.class","XXXX-PPPP.in", "XXXX-PPPP.ftest"],
-"REQUIRES":["generate_PPPP", "filter_PPPP"],
-"CREATABLE":["generate_PPPP", "filter_PPPP"],
+"REQUIRES":["generate-PPPP", "filter-PPPP"],
+"CREATABLE":["generate-PPPP", "filter-PPPP"],
 "CHECKS":  ["EMPTY XXXX-PPPP.g1err", "EMPTY XXXX-PPPP.serr",
             "EMPTY XXXX-PPPP.g2err", "EMPTY XXXX-PPPP.ferr",
             "EMPTY XXXX-PPPP.scerr"],

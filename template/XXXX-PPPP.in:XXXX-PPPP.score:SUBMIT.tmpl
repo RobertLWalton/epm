@@ -2,17 +2,17 @@
 
 "CONDITION": "SUBMIT",
 "COMMANDS": [ "$BIN/epm_sandbox $GSARGS $GSPACE \\",
-             "    -status XXXX-PPPP.g1stat generate_PPPP \\",
+             "    -status XXXX-PPPP.g1stat generate-PPPP \\",
 	     "    < XXXX-PPPP.in 2> XXXX-PPPP.g1err | \\",
 	     "  $BIN/epm_sandbox $SSARGS $SSTIME $SSPACE \\",
 	     "    -score XXXX-PPPP.score \\",
 	     "    -status XXXX-PPPP.sstat PPPP $DARGS \\",
 	     "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
              "$BIN/epm_sandbox $GSARGS $GSPACE \\",
-             "    -status XXXX-PPPP.g2stat generate_PPPP \\",
+             "    -status XXXX-PPPP.g2stat generate-PPPP \\",
              "    < XXXX-PPPP.in 2> XXXX-PPPP.g2err | \\",
 	     "  $BIN/epm_sandbox $FSARGS $FSPACE \\",
-             "    -status XXXX-PPPP.fstat filter_PPPP \\",
+             "    -status XXXX-PPPP.fstat filter-PPPP \\",
 	     "    3< XXXX-PPPP.sout > XXXX-PPPP.fout \\",
 	     "    2> XXXX-PPPP.ferr",
              "$BIN/epm_score $SCORING-ARGS \\",
@@ -22,5 +22,5 @@
 "LOCAL-REQUIRES": ["PPPP"],
 "REMOTE-REQUIRES":
 	["XXXX-PPPP.in", "XXXX-PPPP.ftest",
-         "generate_PPPP", "filter_PPPP"]
+         "generate-PPPP", "filter-PPPP"]
 }

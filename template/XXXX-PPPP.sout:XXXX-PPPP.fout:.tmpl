@@ -1,16 +1,16 @@
 {
 
 "COMMANDS": ["$BIN/epm_sandbox $GSARGS $GSPACE \\",
-             "    -status XXXX-PPPP.gstat generate_PPPP \\",
+             "    -status XXXX-PPPP.gstat generate-PPPP \\",
              "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
 	     "  $BIN/epm_sandbox $FSARGS $FSPACE \\",
-             "    -status XXXX-PPPP.fstat filter_PPPP \\",
+             "    -status XXXX-PPPP.fstat filter-PPPP \\",
 	     "    3< XXXX-PPPP.sout > XXXX-PPPP.fout \\",
 	     "    2> XXXX-PPPP.ferr"],
 
 "LOCAL-REQUIRES": ["XXXX-PPPP.in", "XXXX-PPPP.sout"],
-"REQUIRES":  ["generate_PPPP", "filter_PPPP"],
-"CREATABLE": ["generate_PPPP", "filter_PPPP"],
+"REQUIRES":  ["generate-PPPP", "filter-PPPP"],
+"CREATABLE": ["generate-PPPP", "filter-PPPP"],
 "KEEP":    ["XXXX-PPPP.fout"],
 "SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.ferr",
             "XXXX-PPPP.fout"]
