@@ -20,6 +20,11 @@ all: epm_score epm_default_generate epm_default_filter \
 epm_score:	epm_score.cc
 	g++ -O3 -o epm_score epm_score.cc
 
+epm_display:	epm_display.cc
+	g++ -I /usr/include/cairo \
+	    -O3 -o epm_display \
+	    epm_display.cc -lcairo
+
 epm_default_monitor:	epm_monitor.cc
 	g++ -O3 -pthread -o epm_default_monitor \
 	    epm_monitor.cc

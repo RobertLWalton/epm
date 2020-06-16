@@ -264,8 +264,8 @@ $push_file_map = [
                 "\\d+-\\d+-PPPP" => "R"],
     "run" => ["sample-PPPP" => "L", ".*-PPPP" =>"R"],
     "pdf" => [ "PPPP" => "L" ],
-    "" => [ "generate_PPPP" => "R",
-            "filter_PPPP" => "R" ]
+    "" => [ "generate-PPPP" => "R",
+            "filter-PPPP" => "R" ]
 ];
 
 $executable_ext = ['','class','pyc'];
