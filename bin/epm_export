@@ -1,0 +1,36 @@
+#! /bin/bash
+#
+# File:		epm_export
+# Author:	Bob Walton (walton@acm.org)
+# Date:		Wed Jun 17 16:25:08 EDT 2020
+
+n=''
+case "$1" in
+( "" ) echo "epm_export [-n] SOURCE DESTINATION"
+       exit 0;;
+( -n ) n='-n'; shift;;
+esac
+
+echo rsync -avc $n "$@"
+rsync -avc $n \
+      --exclude=+perm+ --exclude=+actions+ \
+      --exclude=+changes+ --exclude=+lock+ \
+      --exclude=+submits+ \
+      "$@"
+
+if [ -n "$n" ]; then exit 0; fi
+
+for d in `find "$1" -name '+submits+' -printf '%P '`;
+do
+    if [ ! -f "$2/$d/+count+" ]
+    then
+	mkdir -p "$2/$d"
+	echo -n 0 > "$2/$d/+count+"
+	echo made "$2/$d/+count+"
+    fi
+done
+
+
+
+
+
