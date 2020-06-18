@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun 15 12:50:48 EDT 2020
+    // Date:	Thu Jun 18 05:47:15 EDT 2020
 
     // Functions for managing lists.
 
@@ -338,6 +338,60 @@
 	$f = "users/$uid/+lists+/+favorites+";
 	delete_from_file_list
 	    ( $f, $project, $basename );
+    }
+
+    // Publish the named list, or append to $errors
+    // if its already published.
+    //
+    function publish_list ( $listname, & $errors )
+    {
+        global $epm_data, $uid;
+
+        list ( $project, $basename ) =
+	    explode ( ':', $listname );
+	if ( $project != '-'
+	     ||
+	     $basename == '-' )
+	    ERROR ( "publish_list called with" .
+	            " $listname" );
+	$f = "users/$uid/+lists+/$basename.list";
+	$g = "lists/$uid-$basename.list";
+	if ( is_link ( "$epm_data/$g" ) )
+	{
+	    $errors[] = "Your $basename is already"
+	              . " published";
+	    return;
+	}
+	@mkdir ( "$epm_data/lists" );
+	if ( ! symbolic_link ( "../$f",
+	                       "$epm_data/$g" ) )
+	    ERROR ( "cannot make link $g" );
+    }
+
+    // Unpublish the named list, or append to $errors
+    // if its already unpublished.
+    //
+    function unpublish_list ( $listname, & $errors )
+    {
+        global $epm_data, $uid;
+
+        list ( $project, $basename ) =
+	    explode ( ':', $listname );
+	if ( $project != '-'
+	     ||
+	     $basename == '-' )
+	    ERROR ( "unpublish_list called with" .
+	            " $listname" );
+	$f = "users/$uid/+lists+/$basename.list";
+	$g = "lists/$uid-$basename.list";
+	if ( ! is_link ( "$epm_data/$g" ) )
+	{
+	    $errors[] = "Your $basename is already"
+	              . " unpublished";
+	    return;
+	}
+	if ( ! unlink ( "$epm_data/$g" ) )
+	    ERROR ( "cannot unlink $g" );
     }
 
     // Return the lines from the list with the given

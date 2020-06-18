@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 02:10:41 EDT 2020
+    // Date:	Thu Jun 18 05:19:08 EDT 2020
 
     // Maintains problem lists.
 
@@ -335,7 +335,8 @@ EOT;
 	if ( ! in_array ( $op, ['save','finish','reset',
 	                        'cancel','delete',
 				'select','new',
-				'dsc'], true ) )
+				'dsc', 'publish',
+				'unpublish'], true ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$J = $_POST['list'];
 	if ( ! in_array ( $J, [0,1] ) )
@@ -386,6 +387,14 @@ EOT;
 		$favorites = favorites_to_list
 		    ( 'pull|push' );
 	    }
+	}
+	elseif ( $op == 'publish' )
+	{
+	    publish_list ( $names[$J], $errors );
+	}
+	elseif ( $op == 'unpublish' )
+	{
+	    unpublish_list ( $names[$J], $errors );
 	}
 	elseif ( $op == 'dsc' )
 	{
@@ -637,6 +646,7 @@ EOT;
     {
         $name = $names[$J];
 	$writable = 'no';
+	$published = NULL;
 	$pname = 'No List Selected';
 	$description = '';
 	$lines = '';
@@ -663,6 +673,11 @@ EOT;
 		   . "$basename.list";
 		$description = read_list_description
 		    ( $f );
+		$g = "lists/$uid-$basename.list";
+		if ( file_exists ( "$epm_data/$g" ) )
+		    $published = 'yes';
+		else
+		    $published = 'no';
 	    }
 	    $pname = "$project $basename";
 	}
@@ -711,7 +726,22 @@ EOT;
 	    <button type='button'
 	            onclick='DELETE("$J")'>
 	    DELETE</button>
-
+EOT;
+	    if ( $published == 'no' )
+	        echo <<<EOT
+		<button type='button'
+			onclick=
+			  'SUBMIT("publish","$J")'>
+		PUBLISH</button>
+EOT;
+	    elseif ( $published == 'yes' )
+	        echo <<<EOT
+		<button type='button'
+			onclick=
+			  'SUBMIT("unpublish","$J")'>
+		UNPUBLISH</button>
+EOT;
+	    echo <<<EOT
 	    <br>
 
 	    <form method='POST' action='list.php'
