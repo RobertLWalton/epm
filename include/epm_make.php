@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jun 17 22:30:23 EDT 2020
+// Date:    Thu Jun 18 02:56:20 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -1943,6 +1943,7 @@ function finish_make_file ( & $warnings, & $errors )
 //     $run['ALTERED'] to filemtime of
 //		       $probdir/+altered+, or 0 if
 //		       that file does not exist
+//     $run['FINISHED'] false
 //
 // The $lock parameter should be the value of
 //
@@ -2042,11 +2043,15 @@ function start_run
     $run['RESULT'] = true;
     $run['LOCK'] = $lock;
     $run['ALTERED'] = $altered;
+    $run['FINISHED'] = false;
 }
  
 // Finish run started by start_run.  Before calling
 // this, update_run_results must return a value other
 // that true.
+//
+// This function begins setting $run['FINISHED'] to
+// true;
 //
 // Checks for errors, including non-empty .rerr file.
 // Then if there are no errors, moves the .rout file
@@ -2080,7 +2085,7 @@ function start_run
 // high order 0's, but when used in a file name it is
 // expanded to 6 digits.
 //
-function finish_run ( & $errors )
+function finish_run ( & $warnings, & $errors )
 {
     global $epm_data, $probdir, $uid, $problem, $run,
            $epm_parent_re, $_SESSION,
@@ -2094,6 +2099,12 @@ function finish_run ( & $errors )
     if ( $result === true )
         ERROR ( "finish_run called with 'true'" .
 	        " session EPM_RUN RESULT" );
+    if ( $run['FINISHED'] )
+        ERROR ( "finish_run called with 'true'" .
+	        " session EPM_RUN FINISHED" );
+
+    $run['FINISHED'] = true;
+
     if ( $submit )
         cleanup_dir ( "$probdir/+work+", $discard );
 	// Be sure nothing is left to look at after
@@ -2220,6 +2231,13 @@ function finish_run ( & $errors )
     else
 	$stime = 'NAN';
 
+    if ( preg_match
+             ( '/(?m)^First-Failed-Test-Case:(.*)$/',
+	       $contents, $matches ) )
+	$failed_case = trim ( $matches[1] );
+    else
+	$failed_case = NULL;
+
     $action = "$time $uid submit $project $runbase"
 	    . " $stime $score" . PHP_EOL;
 
@@ -2243,6 +2261,22 @@ function finish_run ( & $errors )
 	( "$epm_data/$f", $action, FILE_APPEND );
     if ( $r === false )
 	ERROR ( "cannot write $f" );
+
+    if ( isset ( $failed_case ) )
+    {
+        foreach ( ['in','ftest'] as $ext )
+	{
+	    $f = "$failed_case.$ext";
+	    $g = "$probdir/$f";
+	    if ( file_exists ( "$epm_data/$g" ) )
+	        continue;
+	    if ( ! symbolic_link ( "+parent+/$f",
+	                           "$epm_data/$g" ) )
+		$errors[] = "cannot link $f to parent";
+	    else
+		$warnings[] = "linked $f to parent";
+	}
+    }
 
     $d = "$d/+submits+";
     $cf = "$d/+count+";

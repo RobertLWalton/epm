@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 02:15:03 EDT 2020
+    // Date:	Thu Jun 18 02:40:49 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -80,13 +80,17 @@
     // Do this after execute or submit but before
     // update and reload.
     //
-    if ( isset ( $run['RESULT'] )
-         &&
-	 $run['RESULT'] === true
-         &&
-	 update_run_results() !== true )
+    if ( isset ( $run['RESULT'] ) )
     {
-        finish_run ( $errors );
+	if ( $run['RESULT'] === true )
+	    update_run_results();
+
+	if ( $run['RESULT'] !== true
+	     &&
+	     ! $run['FINISHED']
+	     &&
+	     ! isset ( $_POST['xhttp'] ) )
+	    finish_run ( $warnings, $errors );
     }
 
     $runbase = NULL;
