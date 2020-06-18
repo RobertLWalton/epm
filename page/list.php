@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun 17 23:07:21 EDT 2020
+    // Date:	Thu Jun 18 02:10:41 EDT 2020
 
     // Maintains problem lists.
 
@@ -482,8 +482,12 @@ EOT;
                          div.list1 .problem {
         background-color: var(--bg-blue);
     }
-
+    div.delete-header {
+        background-color: var(--bg-yellow);
+	padding: var(--large-font-size) 0px;
+    }
     div.read-only-header, div.writable-header,
+    			  div.delete-header,
                           div.list-name,
 			  div.dsc-header {
         text-align: center;
@@ -622,19 +626,6 @@ EOT;
     </table>
     </form>
     </div>
-    <div id='delete-display'
-         class='notices' style='display:none'>
-    <strong>Do you really want to delete
-            <span id='delete-pname'></span>?</strong>
-    <form method='POST' action='list.php'>
-    <input type='hidden' name='id' value='$ID'>
-    <input id='delete-list' type='hidden' name='delete'>
-    <button type='submit' name='answer' value='YES'>
-        YES</button>
-    <button type='submit' name='answer' value='NO'>
-        NO</button>
-    </form>
-    </div>
 EOT;
     $data['ELEMENTS'] = [];
     $elements = & $data['ELEMENTS'];
@@ -703,7 +694,8 @@ EOT;
 	if ( $writable == 'yes' )
 	{
 	    echo <<<EOT
-	    <div class='writable-header list-header'>
+	    <div id='write-header-$J'
+	         class='writable-header list-header'>
 	    <button type='button'
 	            onclick='SUBMIT("save","$J")'>
 	    SAVE</button>
@@ -717,7 +709,7 @@ EOT;
 	            onclick='SUBMIT("cancel","$J")'>
 	    CANCEL</button>
 	    <button type='button'
-	            onclick='DELETE("$name","$pname")'>
+	            onclick='DELETE("$J")'>
 	    DELETE</button>
 
 	    <br>
@@ -742,6 +734,18 @@ EOT;
 		   title="$upload_file_title">
 	    </label>
 	    </form>
+	    </div>
+	    <div id='delete-header-$J'
+		 class='delete-header'
+		 style='display:none'>
+	    <strong>Do you really want to delete
+	            $pname?</strong>
+	    <button type='button'
+	            onclick='SUBMIT("delete","$J")'>
+		YES</button>
+	    <button type='button'
+	            onclick='DELETE_NO("$J")'>
+		NO</button>
 	    </div>
 EOT;
 	}
@@ -781,17 +785,23 @@ EOT;
 ?>
 
 <script>
-let delete_display = document.getElementById
-    ( "delete-display" );
-let delete_list = document.getElementById
-    ( "delete-pname" );
-let delete_act = document.getElementById
-    ( "delete-list" );
-function DELETE ( list, pname )
+function DELETE ( J )
 {
-    delete_pname.innerText = pname;
-    delete_list.value = list;
-    delete_display = 'block';
+    let write_header = document.getElementById
+        ( "write-header-" + J );
+    let delete_header = document.getElementById
+        ( "delete-header-" + J );
+    write_header.style.display = 'none';
+    delete_header.style.display = 'block';
+}
+function DELETE_NO ( J )
+{
+    let write_header = document.getElementById
+        ( "write-header-" + J );
+    let delete_header = document.getElementById
+        ( "delete-header-" + J );
+    write_header.style.display = 'block';
+    delete_header.style.display = 'none';
 }
 
 let edited = document.getElementById ( 'edited' );
