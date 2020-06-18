@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 14 13:42:00 EDT 2020
+    // Date:	Thu Jun 18 02:15:03 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -366,8 +366,7 @@
     <form method='GET'>
     <input type='hidden'
            name='problem' value='$problem'>
-    <input type='hidden' id='id1'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <button type='submit'
             formaction='problem.php'>Problem
     </button>
@@ -448,8 +447,7 @@ EOT;
     	echo <<<EOT
 	<div class='run_list' id='run-list'>
     	<form action='run.php' method='POST'>
-	<input type='hidden' id='id2'
-	       name='id' value='$ID'>
+	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
 	       name='problem' value='$problem'>
 	<table>
@@ -549,8 +547,7 @@ EOT;
 
     echo <<<EOT
     <form action='run.php' method='POST' id='reload'>
-    <input type='hidden' id='id3'
-           name='id' value='$ID'>
+    <input type='hidden' name='id' value='$ID'>
     <input type='hidden'
            name='problem' value='$problem'>
     <input type='hidden' name='reload' value='reload'>
@@ -620,10 +617,6 @@ EOT;
     }
 
     let ids = document.getElementsByName ( 'id' );
-    let obsolete = [ document.getElementById ( 'id1' ),
-                document.getElementById ( 'id2' ),
-                document.getElementById ( 'id3' )];
-		// Some of these may be null.
 
     var RESPONSE = ''; // Saved here for error messages.
     function PROCESS_RESPONSE ( response )
