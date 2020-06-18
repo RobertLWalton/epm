@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jun 16 05:26:26 EDT 2020
+// Date:    Wed Jun 17 22:30:23 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2246,6 +2246,7 @@ function finish_run ( & $errors )
 
     $d = "$d/+submits+";
     $cf = "$d/+count+";
+    @mkdir ( "$epm_data/$d", 0770 );
     LOCK ( $d, LOCK_EX );
     $count = @file_get_contents
 	( "$epm_data/$cf" );
