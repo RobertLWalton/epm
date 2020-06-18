@@ -2,7 +2,7 @@
 
 // File:    epm_maint.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 18 09:17:11 EDT 2020
+// Date:    Thu Jun 18 17:48:39 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -24,11 +24,17 @@ if ( ! isset ( $epm_data ) )
 if ( ! isset ( $epm_home ) )
     exit ( 'ACCESS ERROR: $epm_home not set' );
 
+// Regular expression that matches names of the form
+// SPECIAL-PROBLEM.
+//
+$spec_re = implode ( "|", $epm_specials );
+$spec_re = "/^($spec_re)-[^\.]+\$/";
+
 // Function to set the modes of the files and
 // subdirectories in a directory, recursively.
 // Most get the mode 0660.  Directories and
-// files with names of the form SPECIAL-PROBLEM
-// get the mode 0771.
+// files with names matching $re get the mode
+// $dmode.  Links are ignored.
 //
 // If a file mode is being changed, a message to that
 // effect is written to the standard output.
@@ -36,12 +42,11 @@ if ( ! isset ( $epm_home ) )
 // If $dryrun is true, no actual mode changes are done
 // but the messages are written anyway.
 //
-function set_modes ( $d, $dryrun = false )
+function set_modes
+	( $d, $dryrun = false,
+	  $re = NULL, $dmode = 0770 )
 {
     global $epm_data, $epm_specials;
-
-    $spec_re = implode ( "|", $epm_specials );
-    $spec_re = "/^($spec_re)-[^\.]+\$/";
 
     $files = @scandir ( "$epm_data/$d" );
     if ( $files === false )
@@ -57,10 +62,10 @@ function set_modes ( $d, $dryrun = false )
 	if ( is_dir ( "$epm_data/$f" ) )
 	{
 	    set_modes ( $f, $dryrun );
-	    $m = 0771;
+	    $m = $dmode;
 	}
 	elseif ( preg_match ( $spec_re, $fname ) )
-	    $m = 0771;
+	    $m = $dmode;
 	else
 	    $m = 0660;
 
@@ -72,12 +77,15 @@ function set_modes ( $d, $dryrun = false )
 	}
 	$mode = $mode & 0777;
 	if ( $mode == $m ) continue;
-	echo ( "set mode $f = $m" );
+
+	$action = sprintf ( "change mode of %s from" .
+	                    " %04o to %04o",
+			    $f, $mode, $m );
+	echo ( $action );
 	if ( $dryrun ) continue;
 	$r = @chmod ( "$epm_data/$f", $m );
 	if ( $r === false )
-	    ERROR
-		( "cannot change mode of $f to $m" );
+	    ERROR ( "cannot $action" );
     }
 }
 
@@ -190,5 +198,5 @@ function init_problem
 	    ERROR ( "could not $action" );
     }
 
-    set_modes ( $d3, $dryrun );
+    set_modes ( $d3, $dryrun, $spec_re, 0771 );
 }
