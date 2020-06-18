@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  8 03:42:36 EDT 2020
+    // Date:	Wed Jun 17 23:07:21 EDT 2020
 
     // Maintains problem lists.
 
@@ -622,6 +622,19 @@ EOT;
     </table>
     </form>
     </div>
+    <div id='delete-display'
+         class='notices' style='display:none'>
+    <strong>Do you really want to delete
+            <span id='delete-pname'></span>?</strong>
+    <form method='POST' action='list.php'>
+    <input type='hidden' name='id' value='$ID'>
+    <input id='delete-list' type='hidden' name='delete'>
+    <button type='submit' name='answer' value='YES'>
+        YES</button>
+    <button type='submit' name='answer' value='NO'>
+        NO</button>
+    </form>
+    </div>
 EOT;
     $data['ELEMENTS'] = [];
     $elements = & $data['ELEMENTS'];
@@ -704,7 +717,7 @@ EOT;
 	            onclick='SUBMIT("cancel","$J")'>
 	    CANCEL</button>
 	    <button type='button'
-	            onclick='SUBMIT("delete","$J")'>
+	            onclick='DELETE("$name","$pname")'>
 	    DELETE</button>
 
 	    <br>
@@ -768,6 +781,19 @@ EOT;
 ?>
 
 <script>
+let delete_display = document.getElementById
+    ( "delete-display" );
+let delete_list = document.getElementById
+    ( "delete-pname" );
+let delete_act = document.getElementById
+    ( "delete-list" );
+function DELETE ( list, pname )
+{
+    delete_pname.innerText = pname;
+    delete_list.value = list;
+    delete_display = 'block';
+}
+
 let edited = document.getElementById ( 'edited' );
 let not_edited = document.getElementById
     ( 'not-edited' );
