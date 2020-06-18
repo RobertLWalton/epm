@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 14 13:58:57 EDT 2020
+    // Date:	Thu Jun 18 13:24:59 EDT 2020
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
@@ -1621,13 +1621,8 @@ var LOG = function(message) {};
 
 function FAIL ( message )
 {
-    // Alert must be scheduled as separate task.
-    //
-    LOG ( "call to FAIL: " + message );
-    setTimeout ( function () {
-	alert ( message );
-	location.assign ( '/page/login.php' );
-    });
+    alert ( message );
+    location.assign ( '/page/login.php' );
 }
 
 </script>

@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 14 13:40:26 EDT 2020
+    // Date:	Thu Jun 18 13:23:56 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1246,22 +1246,9 @@ EOT;
 
     function FAIL ( message )
     {
-	// Alert must be scheduled as separate task.
-	//
-	LOG ( "call to FAIL: " + message );
-	setTimeout ( function () {
-	    alert ( message );
-	    window.close();
-	    location.assign ( '/page/illegal.html' );
-	});
-    }
-
-    function ALERT ( message )
-    {
-	// Alert must be scheduled as separate task.
-	//
-	setTimeout
-	    ( function () { alert ( message ); } );
+	alert ( message );
+	window.close();
+	location.assign ( '/page/illegal.html' );
     }
 
     let reload = document.getElementById("reload");

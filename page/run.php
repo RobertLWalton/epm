@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 02:40:49 EDT 2020
+    // Date:	Thu Jun 18 13:23:09 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -570,14 +570,9 @@ EOT;
 
     function FAIL ( message )
     {
-	// Alert must be scheduled as separate task.
-	//
-	LOG ( "call to FAIL: " + message );
-	setTimeout ( function () {
-	    alert ( message );
-	    window.close();
-	    location.assign ( '/page/illegal.html' );
-	});
+	alert ( message );
+	window.close();
+	location.assign ( '/page/illegal.html' );
     }
 
     function ALERT ( message )
@@ -623,8 +618,12 @@ EOT;
     let ids = document.getElementsByName ( 'id' );
 
     var RESPONSE = ''; // Saved here for error messages.
+    let response_re = /^[a-fA-F0-9]{32}\$[^$]*$/;
     function PROCESS_RESPONSE ( response )
     {
+        if ( ! response_re.test ( response ) )
+	    FAIL ( 'Bad response: ' + response );
+
 	item = response.trim().split ( '$' );
 	ID = item[0];
 	for ( var i = 0; i < ids.length; ++ i )

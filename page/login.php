@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 14 16:33:59 EDT 2020
+    // Date:	Thu Jun 18 13:32:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -803,11 +803,8 @@ function ALERT ( message )
 
 function FAIL ( message )
 {
-    LOG ( "call to FAIL: " + message );
-    setTimeout ( function () {
-        alert ( message );
-	location.reload();
-    } );
+    alert ( message );
+    location.reload();
 }
 
 var REQUEST_IN_PROGRESS = false;
