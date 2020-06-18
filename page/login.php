@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 13:32:43 EDT 2020
+    // Date:	Thu Jun 18 13:41:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -416,16 +416,19 @@
 	@mkdir ( "$epm_data/projects", 0771 );
 
 	if ( ! is_dir ( "$epm_data/admin" ) )
-	     ERROR
-		 ( 'cannot make admin directory' );
+	    ERROR
+		( 'cannot make admin directory' );
 
 	if ( ! is_dir ( "$epm_data/users" ) )
-	     ERROR
-		 ( 'cannot make users directory' );
+	    ERROR
+		( 'cannot make users directory' );
 
 	if ( ! is_dir ( "$epm_data/projects" ) )
-	     ERROR
-		 ( 'cannot make projects directory' );
+	    ERROR
+		( 'cannot make projects directory' );
+	if ( ! symbolic_link ( "$epm_home/bin",
+	                       "$epm_data/bin" ) )
+	     ERROR ( 'cannot make bin link' );
 
 	umask ( $m );
     }
