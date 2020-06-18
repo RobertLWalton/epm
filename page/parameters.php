@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 15 12:26:35 EDT 2020
+// Date:    Thu Jun 18 17:04:06 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -162,6 +162,11 @@ $epm_parent_re =
     // Regular expression to target directory of
     // +parent+ link.  The first match is the
     // target directory relative to $epm_data.
+
+$epm_specials =
+    ['generate','filter','display','monitor'];
+    // Files with names SPECIAL-PROBLEM are executable
+    // that perform SPECIAL actions for PROBLEM.
 
 $epm_score_file_written = 119;
     // epm_sandbox exit code if it writes score file.
