@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 05:19:08 EDT 2020
+    // Date:	Thu Jun 18 09:14:38 EDT 2020
 
     // Maintains problem lists.
 
@@ -673,7 +673,7 @@ EOT;
 		   . "$basename.list";
 		$description = read_list_description
 		    ( $f );
-		$g = "lists/$uid-$basename.list";
+		$g = "lists/$uid:$basename.list";
 		if ( file_exists ( "$epm_data/$g" ) )
 		    $published = 'yes';
 		else

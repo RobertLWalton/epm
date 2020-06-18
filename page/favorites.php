@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun 15 12:29:55 EDT 2020
+    // Date:	Thu Jun 18 09:16:45 EDT 2020
 
     // Maintains favorites list of problem lists.
 
@@ -159,6 +159,7 @@
 	                         $matches ) )
 	        continue;
 	    $user = $matches[1];
+	    if ( $user == $uid ) continue;
 	    $basename = $matches[2];
 	    $time = @filemtime
 	        ( "$epm_data/$d/$fname" );

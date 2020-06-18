@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 05:47:15 EDT 2020
+    // Date:	Thu Jun 18 09:13:00 EDT 2020
 
     // Functions for managing lists.
 
@@ -355,7 +355,7 @@
 	    ERROR ( "publish_list called with" .
 	            " $listname" );
 	$f = "users/$uid/+lists+/$basename.list";
-	$g = "lists/$uid-$basename.list";
+	$g = "lists/$uid:$basename.list";
 	if ( is_link ( "$epm_data/$g" ) )
 	{
 	    $errors[] = "Your $basename is already"
@@ -383,7 +383,7 @@
 	    ERROR ( "unpublish_list called with" .
 	            " $listname" );
 	$f = "users/$uid/+lists+/$basename.list";
-	$g = "lists/$uid-$basename.list";
+	$g = "lists/$uid:$basename.list";
 	if ( ! is_link ( "$epm_data/$g" ) )
 	{
 	    $errors[] = "Your $basename is already"

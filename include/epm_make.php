@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 18 02:56:20 EDT 2020
+// Date:    Thu Jun 18 09:17:11 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -2070,7 +2070,7 @@ function start_run
 // writing and moves .rout file to
 //
 //	projects/$project/+submits+/
-//		 CCCCCC-$uid-$runbase.rout
+//		 CCCCCC:$uid:$runbase.rout
 //
 // Here CCCCCC is the value of
 //
@@ -2294,7 +2294,7 @@ function finish_run ( & $warnings, & $errors )
 	ERROR ( "could not write $cf" );
     $count = sprintf ( '%06d', $count );
 
-    $f = "$d/$count-$uid-$runbase.rout";
+    $f = "$d/$count:$uid:$runbase.rout";
 
     if ( ! rename ( "$epm_data/$rout",
                     "$epm_data/$f" ) )
