@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 18 17:04:06 EDT 2020
+// Date:    Fri Jun 19 17:25:12 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -94,6 +94,15 @@ $epm_home = dirname ( $epm_web );
     //   This is only a test setting; reset this to H
     //   above (and UNLIKE the test setting, be sure
     //   sure H is not a descendant of R).
+
+$epm_library = $epm_home . '/../epm_public';
+    // This is the project library from which projects
+    // and problems may be imported and to which they
+    // may be exported.  It is generally under git.
+    //
+    // WARNING:
+    //   This is only a test setting.  Reset this to
+    //   the location of the project library.
 
 $epm_session_name = "EPM_859036254367";
     // Reset 12 digit number to NON-PUBLIC, SITE-

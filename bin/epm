@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Jun 19 12:37:17 EDT 2020
+// Date:	Fri Jun 19 17:21:40 EDT 2020
 
 $document = <<<'EOT'
 epm [-n] init project [problem]
@@ -12,6 +12,7 @@ epm [-n] init -admin
 epm [-n] init -all
 epm [-n] import [project [problem]]
 epm [-n] export [project [problem]]
+epm [-n] setup webdirectory
 
 This program is intended to be run inside the $epm_data
 directory tree.  It searches the current director and
@@ -39,22 +40,14 @@ function scrub_dir ( $dir )
     $parent = pathinfo ( $dir, PATHINFO_DIRNAME );
     $base = pathinfo ( $dir, PATHINFO_BASENAME );
     if ( $parent == $dir ) return $dir;
-    elseif ( $base == '..' )
-    {
-        $grandparent = pathinfo
-	    ( $parent, PATHINFO_DIRNAME );
-        return scrub_dir ( $grandparent );
-    }
+    $parent = scrub_dir ( $parent );
+
+    if ( $base == '..' )
+        return pathinfo ( $parent, PATHINFO_DIRNAME );
     elseif ( $base == '.' )
-        return scrub_dir ( $parent );
+        return $parent;
     else
-    {
-        $parent = scrub_dir ( $parent );
-	if ( $parent == '/' )
-	    return '/' . $base;
-	else
-	    return $parent . '/' . $base;
-    }
+	return $parent . '/' . $base;
 }
 
 $dir = getcwd();
@@ -83,6 +76,7 @@ require "$epm_web/parameters.php";
 $epm_web = scrub_dir ( $epm_web );
 $epm_data = scrub_dir ( $epm_data );
 $epm_home = scrub_dir ( $epm_home );
+$epm_library = scrub_dir ( $epm_library );
 
 $dir = scrub_dir ( $dir );
 if ( $dir != $epm_data )
@@ -111,6 +105,7 @@ if ( $argc < 3 || preg_match ( '/^-doc/', $argv[1] ) )
 echo ( '$epm_web = ' . $epm_web . PHP_EOL );
 echo ( '$epm_home = ' . $epm_home . PHP_EOL );
 echo ( '$epm_data = ' . $epm_data . PHP_EOL );
+echo ( '$epm_library = ' . $epm_library . PHP_EOL );
 
 require "$epm_home/include/epm_maint.php";
 
@@ -133,6 +128,17 @@ if ( $op == 'init' )
         init_projects ( $dryrun );
     else
         init_project ( $argv[2], $dryrun );
+}
+elseif ( $op == 'export' )
+{
+    if ( $argc < 3 ) ERROR ( 'too few arguments' );
+    if ( $argc > 4 ) ERROR ( 'too many arguments' );
+    if ( $argc == 4 )
+        export_problem ( $argv[2], $argv[3], $dryrun );
+    elseif ( $argv[2] == '-projects' )
+        export_projects ( $dryrun );
+    else
+        export_project ( $argv[2], $dryrun );
 }
 
 

@@ -2,7 +2,7 @@
 
 // File:    epm_maint.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 19 12:36:39 EDT 2020
+// Date:    Fri Jun 19 17:04:11 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -284,4 +284,24 @@ function init_admin ( $dryrun = false )
 
     set_dir_mode ( $d1, 0770, $dryrun );
     set_modes ( $d1, $dryrun );
+}
+
+function export_problem
+    ( $project, $problem, $dryrun = false )
+{
+    global $epm_data, $epm_library, $epm_specials;
+    $dir = "projects/$project/$problem";
+    if ( ! is_dir ( "$epm_data/$dir" ) )
+        ERROR ( "$dir is not a directory" );
+    $opt = ( $dryrun ? '-n' : '' );
+    foreach ( $epm_specials as $spec )
+        $opt .= " --include '$spec-$problem.*'"
+              . " --exclude $spec-$problem";
+    $opt .= " --include +solutions+"
+          . " --exclude '+*+'";
+    $command = "rsync $opt -av --delete"
+             . " $epm_data/$dir/ $epm_library/$dir/";
+    passthru ( $command, $r );
+    if ( $r != 0 )
+        ERROR ( "rsync returned exit code $r" );
 }
