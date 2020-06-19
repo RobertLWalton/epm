@@ -118,6 +118,11 @@ function init_problem
     $d2 = "$d1/$project";
     $d3 = "$d2/$problem";
     $d4 = "$d3/+solutions+";
+    if ( ! is_dir ( "$epm_data/$d2" ) )
+    {
+        ERROR ( "$d2 is not a directory" );
+	return;
+    }
     if ( ! is_dir ( "$epm_data/$d3" ) )
     {
         ERROR ( "$d3 is not a directory" );
@@ -174,7 +179,7 @@ function init_problem
 	    if ( in_array ( $spec, $defaults, true ) )
 	    {
 		$action = "symbolically link $f to"
-		        . " default" );
+		        . " default";
 		$command = "ln -s ../../../default/"
 		         . "epm_default_$spec"
 			 . " $epm_data/$f";

@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Jun 19 04:13:44 EDT 2020
+// Date:	Fri Jun 19 09:55:58 EDT 2020
 
 $document = <<<'EOT'
 epm [-n] init project [problem]
@@ -30,8 +30,31 @@ EOT;
 function ERROR ( $message )
 {
     fprintf ( STDERR, '%s',
-              "epm ERROR: $message" . PHP_EOL );
+              "ERROR: epm: $message" . PHP_EOL );
     exit ( 1 );
+}
+
+function scrub_dir ( $dir )
+{
+    $parent = pathinfo ( $dir, PATHINFO_DIRNAME );
+    $base = pathinfo ( $dir, PATHINFO_BASENAME );
+    if ( $parent == $dir ) return $dir;
+    elseif ( $base == '..' )
+    {
+        $grandparent = pathinfo
+	    ( $parent, PATHINFO_DIRNAME );
+        return scrub_dir ( $grandparent );
+    }
+    elseif ( $base == '.' )
+        return scrub_dir ( $parent );
+    else
+    {
+        $parent = scrub_dir ( $parent );
+	if ( $parent == '/' )
+	    return '/' . $base;
+	else
+	    return $parent . '/' . $base;
+    }
 }
 
 $dir = getcwd();
@@ -57,9 +80,19 @@ if ( $epm_web[0] != '/' )
 $epm_self = 'epm';
 require "$epm_web/parameters.php";
 
-echo ( "WEB $epm_web" . PHP_EOL );
-exit;
+$epm_web = scrub_dir ( $epm_web );
+$epm_data = scrub_dir ( $epm_data );
+$epm_home = scrub_dir ( $epm_home );
 
+$dir = scrub_dir ( $dir );
+if ( $dir != $epm_data )
+    ERROR
+        ( '$epm_data defined in +web+/parameters.php' .
+	  PHP_EOL .
+          '    is not the ancestor of the current' .
+	  ' working directory' .
+	  PHP_EOL .
+	  '    that contains +web+' );
 
 $dryrun = false;
 if ( $argc >= 2 && $argv[1] == '-n' )
@@ -75,11 +108,30 @@ if ( $argc < 3 || preg_match ( '/^-doc/', $argv[1] ) )
     exit ( 0 );
 }
 
+echo ( '$epm_web = ' . $epm_web . PHP_EOL );
+echo ( '$epm_home = ' . $epm_home . PHP_EOL );
+echo ( '$epm_data = ' . $epm_data . PHP_EOL );
+
+require "$epm_home/include/epm_maint.php";
+
 $op = $argv[1];
 if ( ! in_array ( $op, ['init','import','export'],
                        true ) )
     ERROR ( "cannot understand $op" );
 
+if ( $op == 'init' )
+{
+    if ( $argc < 3 ) ERROR ( 'too few arguments' );
+    if ( $argc > 4 ) ERROR ( 'too many arguments' );
+    if ( $argc == 4 )
+        init_problem ( $argv[2], $argv[3], $dryrun );
+    elseif ( $argv[2] == '-admin' )
+        init_admin ( $dryrun );
+    elseif ( $argv[2] == '-all' )
+        init_all ( $dryrun );
+    else
+        init_project ( $argv[2], $dryrun );
+}
 
 
 exit ( 0 );
