@@ -2,7 +2,7 @@
 
 // File:    epm_maint.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 18 21:30:40 EDT 2020
+// Date:    Fri Jun 19 12:36:39 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -48,6 +48,8 @@ function set_modes ( $d, $dryrun = false, $re = NULL )
     }
     foreach ( $files as $fname )
     {
+	if ( $fname[0] == '.' ) continue;
+
 	$f = "$d/$fname";
         if ( is_link ( "$epm_data/$f" ) )
 	    continue;
@@ -59,7 +61,7 @@ function set_modes ( $d, $dryrun = false, $re = NULL )
 	elseif ( ! isset ( $re ) )
 	    $m = 0660;
 	elseif ( preg_match ( $re, $fname ) )
-	    $m = $dmode;
+	    $m = 0771;
 	else
 	    $m = 0660;
 
@@ -72,7 +74,7 @@ function set_modes ( $d, $dryrun = false, $re = NULL )
 	$mode = $mode & 0777;
 	if ( $mode == $m ) continue;
 
-	$action = sprintf ( "change mode of %s from" .
+	$action = sprintf ( "changing mode of %s from" .
 	                    " %04o to %04o",
 			    $f, $mode, $m );
 	echo ( $action . PHP_EOL );
@@ -81,6 +83,32 @@ function set_modes ( $d, $dryrun = false, $re = NULL )
 	if ( $r === false )
 	    ERROR ( "cannot $action" );
     }
+}
+
+// Set the mode of directory $dir to $m.
+//
+function set_dir_mode ( $dir, $m, $dryrun = false )
+{
+    global $epm_data;
+
+    $mode = @fileperms ( "$epm_data/$dir" );
+    if ( $mode === false )
+    {
+	ERROR ( "cannot read mode of $dir" );
+	return;
+    }
+    $mode = $mode & 0777;
+    if ( $mode == $m ) return;
+
+    $action = sprintf ( "changing mode of %s from" .
+			" %04o to %04o",
+			$dir, $mode, $m );
+    echo ( $action . PHP_EOL );
+    if ( $dryrun ) return;
+
+    $r = @chmod ( "$epm_data/$dir", $m );
+    if ( $r === false )
+	ERROR ( "cannot $action" );
 }
 
 // Function to init a project problem directory.
@@ -130,28 +158,10 @@ function init_problem
     }
 
     foreach ( [$d1,$d2,$d3] as $d )
-    {
-	$mode = @fileperms ( "$epm_data/$d" );
-	if ( $mode === false )
-	{
-	    ERROR ( "cannot read mode of $d" );
-	    continue;
-	}
-	$mode = $mode & 0777;
-	if ( $mode == $m ) continue;
-
-	$action = sprintf ( "change mode of %s from" .
-	                    " %04o to %04o",
-			    $d, $mode, $m );
-	echo ( $action . PHP_EOL );
-	if ( $dryrun ) continue;
-	$r = @chmod ( "$epm_data/$d", $m );
-	if ( $r === false )
-	    ERROR ( "cannot $action" );
-    }
+        set_dir_mode ( $d, 0771, $dryrun );
 
     $defaults = ['generate', 'filter'];
-    foreach ( $epm_special as $spec )
+    foreach ( $epm_specials as $spec )
     {
 	$f = "$d3/$spec-$problem";
 	if ( is_link ( "$epm_data/$f" ) )
@@ -185,7 +195,7 @@ function init_problem
 			 . " $epm_data/$f";
 	    }
 	    else
-	        ERROR ( "cannot make $f" );
+	        continue;
 	}
 
 	if ( ! isset ( $action ) ) continue;
@@ -204,4 +214,74 @@ function init_problem
     $spec_re = "/^($spec_re)-$problem\$/";
 
     set_modes ( $d3, $dryrun, $spec_re, 0771 );
+}
+
+// Function to init all the problems in a project.
+//
+function init_project ( $project, $dryrun = false )
+{
+    global $epm_data, $epm_name_re;
+
+    $d1 = "projects";
+    $d2 = "$d1/$project";
+    if ( ! is_dir ( "$epm_data/$d2" ) )
+    {
+        ERROR ( "$d2 is not a directory" );
+	return;
+    }
+    set_dir_mode ( $d1, 0771, $dryrun );
+    set_dir_mode ( $d2, 0771, $dryrun );
+
+    $dirs = @scandir ( "$epm_data/$d2" );
+    if ( $dirs === false )
+        ERROR ( "cannot read $d2" );
+    foreach ( $dirs as $problem )
+    {
+        if ( ! preg_match ( $epm_name_re, $problem ) )
+	    continue;
+	init_problem ( $project, $problem, $dryrun );
+    }
+}
+
+// Function to init all projects.
+//
+function init_projects ( $dryrun = false )
+{
+    global $epm_data, $epm_name_re;
+
+    $d1 = "projects";
+    if ( ! is_dir ( "$epm_data/$d1" ) )
+    {
+        ERROR ( "$d1 is not a directory" );
+	return;
+    }
+
+    set_dir_mode ( $d1, 0771, $dryrun );
+
+    $dirs = @scandir ( "$epm_data/$d1" );
+    if ( $dirs === false )
+        ERROR ( "cannot read $d1" );
+    foreach ( $dirs as $project )
+    {
+        if ( ! preg_match ( $epm_name_re, $project ) )
+	    continue;
+	init_project ( $project, $dryrun );
+    }
+}
+
+// Function to init admin files and directories.
+//
+function init_admin ( $dryrun = false )
+{
+    global $epm_data;
+
+    $d1 = "admin";
+    if ( ! is_dir ( "$epm_data/$d1" ) )
+    {
+        ERROR ( "$d1 is not a directory" );
+	return;
+    }
+
+    set_dir_mode ( $d1, 0770, $dryrun );
+    set_modes ( $d1, $dryrun );
 }

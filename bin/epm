@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Jun 19 09:55:58 EDT 2020
+// Date:	Fri Jun 19 12:37:17 EDT 2020
 
 $document = <<<'EOT'
 epm [-n] init project [problem]
@@ -129,6 +129,8 @@ if ( $op == 'init' )
         init_admin ( $dryrun );
     elseif ( $argv[2] == '-all' )
         init_all ( $dryrun );
+    elseif ( $argv[2] == '-projects' )
+        init_projects ( $dryrun );
     else
         init_project ( $argv[2], $dryrun );
 }

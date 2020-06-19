@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 18 09:17:11 EDT 2020
+// Date:    Fri Jun 19 12:32:26 EDT 2020
 
 // Functions used to make files from other files.
 //
@@ -303,6 +303,13 @@ function load_argument_map
 //
 $local_file_cache = NULL;
 $remote_file_cache = NULL;
+function reload_file_caches()
+{
+    global $local_file_cache, $remote_file_cache;
+    $local_file_cache = NULL;
+    $remote_file_cache = NULL;
+    load_file_caches();
+}
 function load_file_caches()
 {
     global $epm_data, $problem, $probdir,
