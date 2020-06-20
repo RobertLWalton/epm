@@ -1,6 +1,6 @@
 <?php
 
-// File:    epm_maint.php
+// File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
 // Date:    Sat Jun 20 04:57:37 EDT 2020
 
@@ -408,4 +408,24 @@ function import_project ( $project, $dryrun = false )
 	    continue;
 	import_problem ( $project, $problem, $dryrun );
     }
+}
+
+// If $dir is not a directory, make it.  Directory names
+// are relative to $epm_data.
+//
+function make_dir ( $dir, $dryrun )
+{
+    global $epm_data;
+    if ( is_dir ( "$epm_data/$dir" ) ) return;
+    echo ( "making directory $dir" . PHP_EOL );
+    if ( $dryrun ) return;
+    if ( ! mkdir ( "$epm_data/$dir" ) )
+        ERROR ( "cannot make directory $dir" );
+}
+
+// Function to set up contents of $epm_data.
+//
+function setup ( $dryrun )
+{
+    make_dir ( 'admin', $dryrun );
 }

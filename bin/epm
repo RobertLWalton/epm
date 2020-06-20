@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jun 20 13:59:22 EDT 2020
+// Date:	Sat Jun 20 14:19:46 EDT 2020
 
 $document = <<<'EOT'
 epm print [webdirectory]
@@ -16,14 +16,20 @@ epm [-n] export [project [problem]]
 epm [-n] setup webdirectory
 
 This program is intended to be run inside the $epm_data
-directory tree.  It searches the current director and
-its ancestors for a directory D containing the link
-+web+.  It then sets $epm_web to the absolute name of
-the directory pointed at, sets $php_self to 'epm', and
-loads $epm_web/parameters.php.
+directory tree unless webdirectory is specified.
 
-This program then loads $epm_home/include/epm_maint.php
-and executes the functions as indicated.
+If webdirectory is NOT specified, this program searches
+the current directory and its ancestors for a directory
+D containing the link +web+.  It then sets $epm_web to
+the absolute name of the directory pointed at.
+
+Next it sets $php_self to 'epm', loads
+
+    $epm_web/parameters.php
+    $epm_home/include/epm_maintenance.php
+
+and executes the functions as indicated.  Actions taken
+are described on the standard output.
 
 The -n option indicates a dry run.
 
@@ -34,6 +40,18 @@ function ERROR ( $message )
     fprintf ( STDERR, '%s',
               "ERROR: epm: $message" . PHP_EOL );
     exit ( 1 );
+}
+
+echo ( 'epm ' .
+       implode ( ' ', array_slice ( $argv, 1 ) ) .
+       PHP_EOL );
+
+$dryrun = false;
+if ( $argc >= 2 && $argv[1] == '-n' )
+{
+    $dryrun = true;
+    array_shift ( $argv );
+    -- $argc;
 }
 
 if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
@@ -47,14 +65,10 @@ if ( ! in_array ( $op, ['print','init','import',
                         'export','setup'], true ) )
     ERROR ( "cannot understand $op" );
 
-$dryrun = false;
-if ( $argc >= 2 && $argv[1] == '-n' )
-{
-    $dryrun = true;
-    array_shift ( $argv );
-    -- $argc;
-}
-
+// Return directory name with components equal to `.'
+// and `..' removed (the latter removing the previous
+// component).
+//
 function scrub_dir ( $dir )
 {
     $parent = pathinfo ( $dir, PATHINFO_DIRNAME );
@@ -124,7 +138,7 @@ if ( isset ( $dir )
 	  PHP_EOL .
 	  '    that contains +web+' );
 
-require "$epm_home/include/epm_maint.php";
+require "$epm_home/include/epm_maintenance.php";
 
 if ( $op == 'print' )
 {
@@ -171,6 +185,12 @@ elseif ( $op == 'import' )
     else
         import_project ( $argv[2], $dryrun );
 }
+elseif ( $op == 'setup' )
+{
+    setup ( $dryrun );
+}
+
+if ( $dryrun ) echo ( "Dry Run" . PHP_EOL );
 
 
 exit ( 0 );
