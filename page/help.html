@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Fri Jun 19 14:09:35 EDT 2020
+Date:	Sat Jun 20 03:44:08 EDT 2020
 -->
 
 <title>EPM Help Page</title>
@@ -61,7 +61,7 @@ a[name] {
 table, td, a, li {
 font-size: 16pt;
 }
-p {
+p, dl {
 margin-left: 10px;
 font-size: 16pt;
 }
@@ -164,6 +164,12 @@ vertical-align: top;
 <li><a href="#list-descriptions">List Descriptions</a>
 </ul>
 <li><a href="#favorites-page">Favorites Page</a> [main]
+
+<li><a href="#view-page">View Page</a> [view]
+
+<li><a href="#conflicts">Conflicts</a>
+
+<li><a href="#deficiencies">Deficiencies</a>
 
 </ul>
 </div>
@@ -966,7 +972,8 @@ directory, except for your solution executable.  During a run,
 files in your local directory override those in the parent.
 After a submit, the .rout file is recorded as a submit
 result in the parent (project) problem directory, where every user
-can view it (using the View Page).  After a run, the .rout file
+can view it (using the <a href='#view-page'>View Page</a>).
+After a run, the .rout file
 is only recorded in your problem directory where only you can
 view it.  The .rout file is also recorded in your problem directory
 for a submit.
@@ -1240,8 +1247,81 @@ Changes you make are not recorded until you click `SAVE'.
 Clicking `RESET' restores Favorites to its previous state.
 You must then use one of these two buttons to get the `Go To ... Page'
 buttons to reappear.
-
 </p>
+
+<a name="view-page"><h1>View Page</h1></a>
+<p>
+The View Page allows you to see information about all users
+(not yet yourself), all project, and all problems.
+<p>
+To view information about a user select the user.
+<p>
+To view information about a project select the project.
+<p>
+To view information about a problem, first select a problem
+list, and then select a problem from that list.
+<p>
+Much of the information is in the form of action lists.
+You can exclude actions of particular types from these lists
+by clicking the `Include Action Types' ovals to turn
+white any action types you want to exclude.
+<p>
+The actions are generally self explanatory.  For the submit
+actions, the 3 decimal digit number followed immediately
+by `s' is the maximum solution execution time in seconds.
+</p>
+
+<a name="conflicts"><h1>Conflicts</h1></a>
+<dl>
+
+<dt>Multiple Sessions</dt>
+<dd>If you are logged in on one browser and you log in on a second
+browser, your first login session will be aborted.  This is a
+form of automatic logout.  You should get a message when you
+try to use the aborted session.  The purpose of this is to
+prevent two sessions for the same user stepping on each others toes.</dd>
+<dt>IP Address Changes</dt>
+<dd>If your browser changes its IP address while you are
+logged in, your session will become unusable, unless the
+server is secure (uses SSL and certificates) and has been
+set to not check IP addresses.</dd>
+<dt>Multiple Logins (Main Tabs) in the Same Session</dt>
+<dd>If you log in using a fresh browser tab and you are already
+logged using another tab on the same browser, your other login
+will become orphaned and unusable.</dd>
+<dt>Multiple Tabs for the Same Problem</dt>
+<dd>You should NOT open a problem tab by using a URL in a new tab.
+If you do and there is already another tab for the same problem,
+this other tab will become orphaned and unusable.  Always use
+the Project Page selector to create a problem window.</dd>
+
+</dl>
+
+<a name="deficiencies"><h1>Deficiencies</h1></a>
+<dl>
+<dt>Moving Problems Between Projects</dt>
+<dd>There is not yet an Admin Page which will allows you to
+    move a problem to a different project if you own the
+    problem and have push permissions on its new project.</dd>
+
+<dt>Permission Changes</dt>
+<dd>There is not yet an Admin Page which will allows you to
+    change the permissions of a problem you own or project
+    that you own.
+
+<dt>New Project Creation</dt>
+<dd>There is not yet an Admin Page which will allows permitted
+    users to create projects and set their permissions.
+
+<dt>Score Board</dt>
+<dd>There is not yet any scoreboard.</dd>
+
+<dt>No Automatic Contest Start</dt>
+<dd>There is not yet a system for automatically starting
+    a contest by reseting its project's permissions at a
+    specified time.</dd>
+
+</dl>
 
 </div>
 

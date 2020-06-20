@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 13 14:17:24 EDT 2020
+    // Date:	Sat Jun 20 04:23:08 EDT 2020
 
     // Allows user and problem information to be viewed.
 
@@ -452,10 +452,6 @@ EOT;
 	    </button>
 	<strong>Actions Changing $uid Profile and Emails
 	        (most recent first):</strong>
-	</td><td style='text-align:right'>
-	<button type='button'
-		onclick='HELP("changes-to-user-info")'>
-	    ?</button>
 	</td>
 	</tr></table>
 	<div id='user_info_body' style='display:none'>
@@ -478,10 +474,6 @@ EOT;
 	    </button>
 	<strong>Actions of $uid
 	        (most recent first):</strong>
-	</td><td style='text-align:right'>
-	<button type='button'
-		onclick='HELP("user-actions")'>
-	    ?</button>
 	</td>
 	</tr></table>
 	<div id='user_actions_body' style='display:none'>
@@ -504,10 +496,6 @@ EOT;
 	<td>
 	<strong>Actions on $project Project
 	        (most recent first):</strong>
-	</td><td style='text-align:right'>
-	<button type='button'
-		onclick='HELP("project-actions")'>
-	    ?</button>
 	</td>
 	</tr></table>
 	<table>
@@ -532,10 +520,6 @@ EOT;
 	<td>
 	<strong>Actions on $project $problem
 	        (most recent first):</strong>
-	</td><td style='text-align:right'>
-	<button type='button'
-		onclick='HELP("problem-actions")'>
-	    ?</button>
 	</td>
 	</tr></table>
 	<table>
