@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 19 17:25:12 EDT 2020
+// Date:    Sat Jun 20 03:31:36 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -107,6 +107,11 @@ $epm_library = $epm_home . '/../epm_public';
 $epm_session_name = "EPM_859036254367";
     // Reset 12 digit number to NON-PUBLIC, SITE-
     // SPECIFIC 12 digit random number.
+
+$epm_check_ipaddr = true;
+    // If true a session is not allowed to change its
+    // IP address.  Set to true if server is not a
+    // secure server (running SSL with a certificate).
 
 $epm_debug = preg_match
     ( '/(login|user|problem|run|project|list)/',

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 14 14:41:52 EDT 2020
+// Date:    Sat Jun 20 03:40:00 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -155,6 +155,49 @@ function EPM_ERROR_HANDLER
 
 set_error_handler ( 'EPM_ERROR_HANDLER' );
 
+// A session cannot change its IP address if
+// $epm_check_ipaddr is true (see parameters.php).
+//
+if ( $epm_check_ipaddr
+     &&
+     isset ( $_SESSION['EPM_IPADDR'] )
+     &&
+        $_SESSION['EPM_IPADDR']
+     != $_SERVER['REMOTE_ADDR'] )
+    exit ( "UNACCEPTABLE HTTP $epm_method: IP" );
+
+// Each user can have only one session at a time.  When
+// started, each session for a user aborts the previous
+// session for the user.  As there is no way to know
+// when a session has ended, there is no way to know if
+// this session has aborted a previous session.  The
+// previous session finds out here that it has been
+// aborted.
+//
+// When a session EPM_UID is set, the session_id is
+// written to S = "admin/users/UID/session_id"
+// and the mod-time of S identifies the session.
+//
+if ( isset ( $_SESSION['EPM_SESSION'] ) )
+{
+    $epm_session = & $_SESSION['EPM_SESSION'];
+        // This is [S,S-MOD-TIME].
+    $our_time = $epm_session[1];
+    $cur_time = filemtime
+        ( "$epm_data/{$epm_session[0]}" );
+    if ( $our_time != $cur_time )
+    {
+        $our_time = strftime
+	    ( $epm_time_format, $our_time );
+        $cur_time = strftime
+	    ( $epm_time_format, $cur_time );
+	exit ( "THIS SESSION (started $our_time)" .
+	       " HAS BEEN ABORTED" . 
+	       " BY A LATER SESSION" .
+	       " (started $cur_time)" );
+    }
+}
+
 // DEBUG, LOCK, and UNLOCK functions are in
 // parameters.php because they are shared with
 // bin/epm_run.
@@ -208,38 +251,6 @@ if ( in_array ( $epm_page_type,
 	// last 16 of which are an encryption of the
 	// first 16.
     $ID = bin2hex ( $id_gen[0] );
-}
-
-// Each user can have only one session at a time.  When
-// started, each session for a user aborts the previous
-// session for the user.  As there is no way to know
-// when a session has ended, there is no way to know if
-// this session has aborted a previous session.  The
-// previous session finds out here that it has been
-// aborted.
-//
-// When a session EPM_UID is set, the session_id is
-// written to S = "admin/users/UID/session_id"
-// and the mod-time of S identifies the session.
-//
-if ( isset ( $_SESSION['EPM_SESSION'] ) )
-{
-    $epm_session = & $_SESSION['EPM_SESSION'];
-        // This is [S,S-MOD-TIME].
-    $our_time = $epm_session[1];
-    $cur_time = filemtime
-        ( "$epm_data/{$epm_session[0]}" );
-    if ( $our_time != $cur_time )
-    {
-        $our_time = strftime
-	    ( $epm_time_format, $our_time );
-        $cur_time = strftime
-	    ( $epm_time_format, $cur_time );
-	exit ( "THIS SESSION (started $our_time)" .
-	       " HAS BEEN ABORTED" . 
-	       " BY A LATER SESSION" .
-	       " (started $cur_time)" );
-    }
 }
 
 if ( ! isset ( $_POST['xhttp'] )

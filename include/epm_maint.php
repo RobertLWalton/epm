@@ -2,7 +2,7 @@
 
 // File:    epm_maint.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 19 22:37:50 EDT 2020
+// Date:    Sat Jun 20 03:23:44 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -338,6 +338,11 @@ function import_problem
           . " --exclude '+*+'";
     $command = "rsync $opt -av --delete"
              . " $epm_library/$dir/ $epm_data/$dir/";
+	// It is necessary to have the excludes
+	// because we have the --delete; with the
+	// excludes rsync will NOT delete excluded
+	// files (which are not in the library).
+
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
