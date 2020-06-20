@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Jun 19 17:21:40 EDT 2020
+// Date:	Fri Jun 19 22:37:35 EDT 2020
 
 $document = <<<'EOT'
 epm [-n] init project [problem]
@@ -139,6 +139,17 @@ elseif ( $op == 'export' )
         export_projects ( $dryrun );
     else
         export_project ( $argv[2], $dryrun );
+}
+elseif ( $op == 'import' )
+{
+    if ( $argc < 3 ) ERROR ( 'too few arguments' );
+    if ( $argc > 4 ) ERROR ( 'too many arguments' );
+    if ( $argc == 4 )
+        import_problem ( $argv[2], $argv[3], $dryrun );
+    elseif ( $argv[2] == '-projects' )
+        import_projects ( $dryrun );
+    else
+        import_project ( $argv[2], $dryrun );
 }
 
 

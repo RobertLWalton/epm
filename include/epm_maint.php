@@ -2,7 +2,7 @@
 
 // File:    epm_maint.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 19 17:04:11 EDT 2020
+// Date:    Fri Jun 19 22:37:50 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -286,13 +286,20 @@ function init_admin ( $dryrun = false )
     set_modes ( $d1, $dryrun );
 }
 
+// Function to sync $epm_library to $epm_data problem.
+//
 function export_problem
     ( $project, $problem, $dryrun = false )
 {
     global $epm_data, $epm_library, $epm_specials;
-    $dir = "projects/$project/$problem";
+    $dir = "projects/$project";
+    if ( ! is_dir ( "$epm_library/$dir" ) )
+        ERROR ( "$dir is not a \$epm_library" .
+	        " directory" );
+    $dir = "$dir/$problem";
     if ( ! is_dir ( "$epm_data/$dir" ) )
-        ERROR ( "$dir is not a directory" );
+        ERROR ( "$dir is not a \$epm_data directory" );
+
     $opt = ( $dryrun ? '-n' : '' );
     foreach ( $epm_specials as $spec )
         $opt .= " --include '$spec-$problem.*'"
@@ -304,4 +311,37 @@ function export_problem
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
+    else
+        echo "done exporting $project $problem" .
+	     PHP_EOL;
+}
+
+// Function to sync $epm_data to $epm_library problem.
+//
+function import_problem
+    ( $project, $problem, $dryrun = false )
+{
+    global $epm_data, $epm_library, $epm_specials;
+    $dir = "projects/$project";
+    if ( ! is_dir ( "$epm_data/$dir" ) )
+        ERROR ( "$dir is not a \$epm_data directory" );
+    $dir = "$dir/$problem";
+    if ( ! is_dir ( "$epm_library/$dir" ) )
+        ERROR ( "$dir is not a \$epm_library" .
+	        " directory" );
+
+    $opt = ( $dryrun ? '-n' : '' );
+    foreach ( $epm_specials as $spec )
+        $opt .= " --include '$spec-$problem.*'"
+              . " --exclude $spec-$problem";
+    $opt .= " --include +solutions+"
+          . " --exclude '+*+'";
+    $command = "rsync $opt -av --delete"
+             . " $epm_library/$dir/ $epm_data/$dir/";
+    passthru ( $command, $r );
+    if ( $r != 0 )
+        ERROR ( "rsync returned exit code $r" );
+    else
+        echo "done importing $project $problem" .
+	     PHP_EOL;
 }
