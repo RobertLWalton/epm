@@ -3,9 +3,10 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jun 20 11:39:07 EDT 2020
+// Date:	Sat Jun 20 13:59:22 EDT 2020
 
 $document = <<<'EOT'
+epm print [webdirectory]
 epm [-n] init project [problem]
 epm [-n] init -projects
 epm [-n] init -admin
@@ -35,6 +36,25 @@ function ERROR ( $message )
     exit ( 1 );
 }
 
+if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
+{
+    echo $document;
+    exit ( 0 );
+}
+
+$op = $argv[1];
+if ( ! in_array ( $op, ['print','init','import',
+                        'export','setup'], true ) )
+    ERROR ( "cannot understand $op" );
+
+$dryrun = false;
+if ( $argc >= 2 && $argv[1] == '-n' )
+{
+    $dryrun = true;
+    array_shift ( $argv );
+    -- $argc;
+}
+
 function scrub_dir ( $dir )
 {
     $parent = pathinfo ( $dir, PATHINFO_DIRNAME );
@@ -52,37 +72,50 @@ function scrub_dir ( $dir )
 	return $parent . '/' . $base;
 }
 
-$dir = getcwd();
-if ( $dir === false )
-    ERROR ( "cannot get current working directory" );
-
-while ( true )
+if ( $op == 'print' && $argc >= 3 )
+    $epm_web = $argv[2];
+elseif ( $op == 'setup' )
 {
-    if ( is_dir ( "$dir/+web+" ) )
-        break;
-    $parent = pathinfo ( $dir, PATHINFO_DIRNAME );
-    if ( $parent == $dir )
-        ERROR ( "cannot find +web+" );
-    $dir = $parent;
+    if ( $argc < 3 ) ERROR ( 'too few arguments' );
+    if ( $argc > 3 ) ERROR ( 'too many arguments' );
+    $epm_web = $argv[2];
 }
+else
+{
+    $dir = getcwd();
+    if ( $dir === false )
+	ERROR ( "cannot get current working" .
+	        " directory" );
 
-$epm_web = @readlink ( "$dir/+web+" );
-if ( $epm_web === false )
-    ERROR ( "cannot read link $dir/+web+" );
-if ( $epm_web[0] != '/' )
-    $epm_web = "$dir/$epm_web";
+    while ( true )
+    {
+	if ( is_dir ( "$dir/+web+" ) )
+	    break;
+	$parent = pathinfo ( $dir, PATHINFO_DIRNAME );
+	if ( $parent == $dir )
+	    ERROR ( "cannot find +web+" );
+	$dir = $parent;
+    }
+
+    $epm_web = @readlink ( "$dir/+web+" );
+    if ( $epm_web === false )
+	ERROR ( "cannot read link $dir/+web+" );
+    if ( $epm_web[0] != '/' )
+	$epm_web = "$dir/$epm_web";
+}
 
 $epm_self = 'epm';
 require "$epm_web/parameters.php";
-require "$epm_data/admin/maintenance_parameters.php";
+require "$epm_web/maintenance_parameters.php";
 
 $epm_web = scrub_dir ( $epm_web );
 $epm_data = scrub_dir ( $epm_data );
 $epm_home = scrub_dir ( $epm_home );
 $epm_library = scrub_dir ( $epm_library );
 
-$dir = scrub_dir ( $dir );
-if ( $dir != $epm_data )
+if ( isset ( $dir )
+     &&
+     scrub_dir ( $dir ) != $epm_data )
     ERROR
         ( '$epm_data defined in +web+/parameters.php' .
 	  PHP_EOL .
@@ -91,33 +124,17 @@ if ( $dir != $epm_data )
 	  PHP_EOL .
 	  '    that contains +web+' );
 
-$dryrun = false;
-if ( $argc >= 2 && $argv[1] == '-n' )
-{
-    $dryrun = true;
-    array_shift ( $argv );
-    -- $argc;
-}
-
-if ( $argc < 3 || preg_match ( '/^-doc/', $argv[1] ) )
-{
-    echo $document;
-    exit ( 0 );
-}
-
-echo ( '$epm_web = ' . $epm_web . PHP_EOL );
-echo ( '$epm_home = ' . $epm_home . PHP_EOL );
-echo ( '$epm_data = ' . $epm_data . PHP_EOL );
-echo ( '$epm_library = ' . $epm_library . PHP_EOL );
-
 require "$epm_home/include/epm_maint.php";
 
-$op = $argv[1];
-if ( ! in_array ( $op, ['init','import','export'],
-                       true ) )
-    ERROR ( "cannot understand $op" );
-
-if ( $op == 'init' )
+if ( $op == 'print' )
+{
+    if ( $argc > 3 ) ERROR ( 'too many arguments' );
+    echo ( '$epm_web = ' . $epm_web . PHP_EOL );
+    echo ( '$epm_home = ' . $epm_home . PHP_EOL );
+    echo ( '$epm_data = ' . $epm_data . PHP_EOL );
+    echo ( '$epm_library = ' . $epm_library . PHP_EOL );
+}
+elseif ( $op == 'init' )
 {
     if ( $argc < 3 ) ERROR ( 'too few arguments' );
     if ( $argc > 4 ) ERROR ( 'too many arguments' );
