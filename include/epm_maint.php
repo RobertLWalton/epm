@@ -2,7 +2,7 @@
 
 // File:    epm_maint.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 20 03:23:44 EDT 2020
+// Date:    Sat Jun 20 04:57:37 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -316,6 +316,35 @@ function export_problem
 	     PHP_EOL;
 }
 
+// Function to sync $epm_library to $epm_data project.
+//
+function export_project ( $project, $dryrun = false )
+{
+    global $epm_data, $epm_library, $epm_name_re;
+
+    $d1 = "projects";
+    $d2 = "$d1/$project";
+    if ( ! is_dir ( "$epm_data/$d2" ) )
+    {
+        ERROR ( "$d2 is not a \$epm_data directory" );
+	return;
+    }
+    if ( ! is_dir ( "$epm_library/$d2" )
+         &&
+         ! mkdir ( "$epm_library/$d2", 0770, true ) )
+	ERROR ( "cannot make $d2 in \$epm_library" );
+
+    $dirs = @scandir ( "$epm_data/$d2" );
+    if ( $dirs === false )
+        ERROR ( "cannot read $d2 in \$epm_data" );
+    foreach ( $dirs as $problem )
+    {
+        if ( ! preg_match ( $epm_name_re, $problem ) )
+	    continue;
+	export_problem ( $project, $problem, $dryrun );
+    }
+}
+
 // Function to sync $epm_data to $epm_library problem.
 //
 function import_problem
@@ -349,4 +378,34 @@ function import_problem
     else
         echo "done importing $project $problem" .
 	     PHP_EOL;
+}
+
+// Function to sync $epm_data to $epm_library project.
+//
+function import_project ( $project, $dryrun = false )
+{
+    global $epm_data, $epm_library, $epm_name_re;
+
+    $d1 = "projects";
+    $d2 = "$d1/$project";
+    if ( ! is_dir ( "$epm_library/$d2" ) )
+    {
+        ERROR ( "$d2 is not a \$epm_library" .
+	        " directory" );
+	return;
+    }
+    if ( ! is_dir ( "$epm_data/$d2" )
+         &&
+         ! mkdir ( "$epm_data/$d2", 0770, true ) )
+	ERROR ( "cannot make $d2 in \$epm_data" );
+
+    $dirs = @scandir ( "$epm_library/$d2" );
+    if ( $dirs === false )
+        ERROR ( "cannot read $d2 from \$epm_library" );
+    foreach ( $dirs as $problem )
+    {
+        if ( ! preg_match ( $epm_name_re, $problem ) )
+	    continue;
+	import_problem ( $project, $problem, $dryrun );
+    }
 }
