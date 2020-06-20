@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 20 04:57:37 EDT 2020
+// Date:    Sat Jun 20 15:17:04 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -160,7 +160,6 @@ function init_problem
     foreach ( [$d1,$d2,$d3] as $d )
         set_dir_mode ( $d, 0771, $dryrun );
 
-    $defaults = ['generate', 'filter'];
     foreach ( $epm_specials as $spec )
     {
 	$f = "$d3/$spec-$problem";
@@ -170,8 +169,6 @@ function init_problem
 	    continue;
 	$gc = "$d4/$spec-$problem.c";
 	$gcc = "$d4/$spec-$problem.cc";
-	$command = NULL;
-	$action = NULL;
 	if ( file_exists ( "$epm_data/$gcc" ) )
 	{
 	    $action = "compile $f from C++";
@@ -185,20 +182,30 @@ function init_problem
 		              "$epm_data/$gcc";
 	}
 	else
-	{
-	    if ( in_array ( $spec, $defaults, true ) )
-	    {
-		$action = "symbolically link $f to"
-		        . " default";
-		$command = "ln -s ../../../default/"
-		         . "epm_default_$spec"
-			 . " $epm_data/$f";
-	    }
-	    else
-	        continue;
-	}
+	    continue;
 
-	if ( ! isset ( $action ) ) continue;
+	echo ( $action . PHP_EOL );
+	if ( $dryrun ) continue;
+
+	passthru ( $command, $r );
+	if ( $r != 0 )
+	    ERROR ( "could not $action" );
+    }
+
+    $f = "$epm_data/$d3/monitor-$problem";
+    if ( ! file_exists ( "$epm_data/$f" ) )
+        foreach ( ['generate', 'filter'] as $spec )
+    {
+	$f = "$d3/$spec-$problem";
+	if ( is_link ( "$epm_data/$f" ) )
+	    continue;
+	if ( file_exists ( "$epm_data/$f" ) )
+	    continue;
+	$action = "symbolically link $f to default";
+	$command = "ln -s ../../../default/"
+		 . "epm_default_$spec"
+		 . " $epm_data/$f";
+
 	echo ( $action . PHP_EOL );
 	if ( $dryrun ) continue;
 
@@ -413,19 +420,55 @@ function import_project ( $project, $dryrun = false )
 // If $dir is not a directory, make it.  Directory names
 // are relative to $epm_data.
 //
-function make_dir ( $dir, $dryrun )
+function make_dir ( $dir, $mode, $dryrun )
 {
     global $epm_data;
     if ( is_dir ( "$epm_data/$dir" ) ) return;
     echo ( "making directory $dir" . PHP_EOL );
     if ( $dryrun ) return;
-    if ( ! mkdir ( "$epm_data/$dir" ) )
+    if ( ! mkdir ( "$epm_data/$dir", $mode ) )
         ERROR ( "cannot make directory $dir" );
+}
+
+// If $from is not a symbolic link, make it.  $from is
+// relative to $epm_data, but $to can be absolute or
+// relative to $from.
+//
+function make_link ( $to, $from, $dryrun )
+{
+    global $epm_data;
+    if ( is_link ( "$epm_data/$from" ) ) return;
+    echo ( "making link $from => $to" . PHP_EOL );
+    if ( $dryrun ) return;
+    if ( exec ( "ln -snf $target $link 2>&1" ) != '' )
+        ERROR ( "cannot make link $from => $to" );
+	// PHP symlink fails sometimes so we dare not
+	// use it.  -snf will unlink $from if it exists
+	// before linking it.
 }
 
 // Function to set up contents of $epm_data.
 //
 function setup ( $dryrun )
 {
-    make_dir ( 'admin', $dryrun );
+    global $epm_home, $epm_web;
+
+    $m = umask ( 06 );
+    make_dir ( '.', 0771, $dryrun );
+    make_dir ( 'admin', 0770, $dryrun );
+    make_dir ( 'admin/email', 0770, $dryrun );
+    make_dir ( 'admin/browser', 0770, $dryrun );
+    make_dir ( 'admin/users', 0770, $dryrun );
+    make_dir ( 'users', 0771, $dryrun );
+    make_dir ( 'projects', 0771, $dryrun );
+
+    make_link ( "$epm_home/default", 'default',
+                $dryrun );
+    make_link ( $epm_web, '+web+', $dryrun );
+    make_link ( "$epm_home/page", '+web+/page',
+                $dryrun );
+    make_link ( 'page/index.php', '+web+/index.php',
+                $dryrun );
+
+    umask ( $m );
 }
