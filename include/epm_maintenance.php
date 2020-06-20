@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 20 15:17:04 EDT 2020
+// Date:    Sat Jun 20 17:33:04 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -447,20 +447,67 @@ function make_link ( $to, $from, $dryrun )
 	// before linking it.
 }
 
+// Copy file directory from $epm_home/setup/$dir to
+// $epm_data/$dir.  Make destination directory if
+// necessary with mode 0770.  If the destination of a
+// file to be copied exists, do not copy the file.
+// If the destination is a dangling link, unlink it
+// and copy.  Mode of copied files is 0660.  Copy
+// is recursive in directory trees.
+//
+function copy_dir ( $dir, $dryrun )
+{
+    global $epm_home, $epm_data;
+    $srcdir = "$epm_home/setup/$dir";
+    $desdir = "$epm_data/$dir";
+    $files = @scandir ( $srcdir );
+    if ( $files === false )
+        ERROR ( "cannot read setup/$dir" );
+    if ( ! is_dir ( $desdir ) )
+        make_dir ( $dir, 0770, $dryrun );
+    foreach ( $files as $fname )
+    {
+        if ( $fname[0] == '.' ) continue;
+	if ( is_dir ( "$srcdir/$fname" ) )
+	{
+	    copy_dir ( "$dir/$fname", $dryrun );
+	    continue;
+	}
+	elseif ( file_exists ( "$desdir/$fname" ) )
+	    continue;
+	elseif ( is_link ( "$desdir/$fname" ) )
+	{
+	    echo ( "unlinking $dir/$fname" . PHP_EOL );
+	    if ( ! $dryrun )
+	        @unlink ( "$desdir/$fname" );
+	}
+	$action = "copying setup/$dir/$fname to"
+	        . " $dir/$fname";
+	echo ( $action . PHP_EOL );
+	if ( $dryrun ) continue;
+	if ( ! copy ( $srcdir/$fname, $desdir/$fname ) )
+	    ERROR ( "cannot $action" );
+	if ( ! chmod ( $desdir/$fname, 0660 ) )
+	    ERROR ( "cannot change mode of" .
+	            " $dir/$fname to 0660" );
+    }
+}
+
 // Function to set up contents of $epm_data.
 //
 function setup ( $dryrun )
 {
-    global $epm_home, $epm_web;
+    global $epm_home, $epm_web, $epm_data;
 
     $m = umask ( 06 );
     make_dir ( '.', 0771, $dryrun );
-    make_dir ( 'admin', 0770, $dryrun );
-    make_dir ( 'admin/email', 0770, $dryrun );
-    make_dir ( 'admin/browser', 0770, $dryrun );
-    make_dir ( 'admin/users', 0770, $dryrun );
     make_dir ( 'users', 0771, $dryrun );
     make_dir ( 'projects', 0771, $dryrun );
+    make_dir ( 'projects/public', 0771, $dryrun );
+    make_dir ( 'projects/demos', 0771, $dryrun );
+    umask ( $m );
+
+    copy_dir ( '.', $dryrun );
 
     make_link ( "$epm_home/default", 'default',
                 $dryrun );
@@ -469,6 +516,4 @@ function setup ( $dryrun )
                 $dryrun );
     make_link ( 'page/index.php', '+web+/index.php',
                 $dryrun );
-
-    umask ( $m );
 }
