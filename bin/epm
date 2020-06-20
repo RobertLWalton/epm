@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jun 20 05:07:48 EDT 2020
+// Date:	Sat Jun 20 11:39:07 EDT 2020
 
 $document = <<<'EOT'
 epm [-n] init project [problem]
@@ -74,6 +74,7 @@ if ( $epm_web[0] != '/' )
 
 $epm_self = 'epm';
 require "$epm_web/parameters.php";
+require "$epm_data/admin/maintenance_parameters.php";
 
 $epm_web = scrub_dir ( $epm_web );
 $epm_data = scrub_dir ( $epm_data );
