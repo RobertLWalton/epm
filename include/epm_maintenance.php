@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 20 17:33:04 EDT 2020
+// Date:    Sun Jun 21 00:18:33 EDT 2020
 
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
@@ -417,13 +417,31 @@ function import_project ( $project, $dryrun = false )
     }
 }
 
-// If $dir is not a directory, make it.  Directory names
-// are relative to $epm_data.
+// If $dir is not a directory, make it.  If $dir is a
+// directory, set its mode.  Directory names are
+// relative to $epm_data.
 //
 function make_dir ( $dir, $mode, $dryrun )
 {
     global $epm_data;
-    if ( is_dir ( "$epm_data/$dir" ) ) return;
+    if ( is_dir ( "$epm_data/$dir" ) )
+    {
+        $m = @fileperms ( "$epm_data/$dir" );
+	if ( $m == false )
+	    ERROR ( "cannot stat $dir" );
+	$m = $m & 0777;
+	if ( $m == $mode ) return;
+        $action = sprintf
+	    ( "changing mode of directory %s" .
+	      " from %04o to %04o",
+	      $dir, $m, $mode );
+	echo ( $action . PHP_EOL );
+	if ( $dryrun ) return;
+	if ( ! chmod ( "$epm_data/$dir", $mode ) )
+	    ERROR ( "cannot $action" );
+	return;
+    }
+
     echo ( "making directory $dir" . PHP_EOL );
     if ( $dryrun ) return;
     if ( ! mkdir ( "$epm_data/$dir", $mode ) )
@@ -485,9 +503,10 @@ function copy_dir ( $dir, $dryrun )
 	        . " $dir/$fname";
 	echo ( $action . PHP_EOL );
 	if ( $dryrun ) continue;
-	if ( ! copy ( $srcdir/$fname, $desdir/$fname ) )
+	if ( ! copy ( "$srcdir/$fname",
+	              "$desdir/$fname" ) )
 	    ERROR ( "cannot $action" );
-	if ( ! chmod ( $desdir/$fname, 0660 ) )
+	if ( ! chmod ( "$desdir/$fname", 0660 ) )
 	    ERROR ( "cannot change mode of" .
 	            " $dir/$fname to 0660" );
     }
@@ -499,15 +518,18 @@ function setup ( $dryrun )
 {
     global $epm_home, $epm_web, $epm_data;
 
+    // Copy recursively from $epm_home/setup.
+    //
+    copy_dir ( '.', $dryrun );
+
+    // Be sure 0771 directories have the right mode.
+    //
     $m = umask ( 06 );
     make_dir ( '.', 0771, $dryrun );
-    make_dir ( 'users', 0771, $dryrun );
     make_dir ( 'projects', 0771, $dryrun );
     make_dir ( 'projects/public', 0771, $dryrun );
     make_dir ( 'projects/demos', 0771, $dryrun );
     umask ( $m );
-
-    copy_dir ( '.', $dryrun );
 
     make_link ( "$epm_home/default", 'default',
                 $dryrun );
