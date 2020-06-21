@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 13:23:56 EDT 2020
+    // Date:	Sun Jun 21 17:09:31 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -777,6 +777,11 @@ EOT;
 	    title='Delete Current Problem'>
     Delete</button>
     </form>
+
+    </td><td>
+    <button type='button'
+	    onclick='VIEW("downloads/index.html")'>
+	Downloads</button>
 
     </td><td>
     <strong>Go To</strong>
