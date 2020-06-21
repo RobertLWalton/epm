@@ -3,10 +3,10 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu May  7 06:04:20 EDT 2020
+Date:	Sun Jun 21 04:56:58 EDT 2020
 -->
 
-<title>EPM Guide</title>
+<title>EPM User Guide</title>
 
 <style>
 :root {
@@ -38,13 +38,30 @@ text-decoration: underline;
 h2 {
 font-size: 18pt;
 }
+h3 {
+font-size: 16pt;
+}
 strong {
 font-size: 16pt;
 }
-table, td, a {
+pre {
+    display: inline;
+    font-size: 16pt;
+    font-family: monospace;
+}
+span.notemark {
+    display: inline;
+    font-size: 16pt;
+    font-family: monospace;
+    color:red;
+}
+a[name] {
+    font-weight: bold;
+}
+table, td, a, li {
 font-size: 16pt;
 }
-p {
+p, dl {
 margin-left: 10px;
 font-size: 16pt;
 }
@@ -85,49 +102,113 @@ vertical-align: top;
 	<span id='toc-mark'>&darr;</span></button>
 <strong>Table of Contents</strong>
 </td>
+<td>
+<button type='button' onclick='BACK()'><b>&#8678;</b></button>
+<button type='button' onclick='FORWARD()'><b>&#8680;</b></button>
+</td>
 <td style='text-align:right'>
 <strong>Other Documents:</strong>
-<a href="/page/help.html">Help</a>
+<a href='/page/help.html'>Help</a>
 </td>
 </tr>
 </table>
 </div>
 
 <div id='toc' style='display:none'>
+<div style='width:50%;float:left'>
 <ul>
 
-<li><a href="#getting-started">Getting Started</a><br>
-<ul>
-<li><a href="#logging-in">Logging In</a><br>
-<li><a href="#solving-problems">Solving Problems</a><br>
-<li><a href="#writing-problems">Writing Problems</a><br>
-</ul>
+<li><a href="#getting-started">Getting Started</a>
+
+<li><a href="#solving-a-problem">Solving a Problem</a>
+
+<li><a href="#creating-a-problem">Creating a Problem</a>
+
 
 </ul>
 </div>
 
+<div style='width:50%;float:left'>
+<ul>
+
+
+</ul>
+</div>
+</div>
+
 <div id='text'>
 
-<a name="logging-in"><h1>Getting Started</h1></a>
-
+<a name="getting-started"><h1>Getting Started</h1></a>
 <p>
-TBD
+To open an account, all you need is an e-mail address.
+Open a tab using the EPM server URL you want to access,
+and enter your e-mail address.
+<p>
+You will be e-mailed a confirmation number which you must
+enter into your browser.  The browser will then be given
+a `ticket' valid for 7 days, provided you enter the
+additional information required to establish a new account.
+<p>
+Note that most of this additional information will be visible to other
+users of the EPM server.  The exception is the non-domain
+part of your e-mail addresses, which will NOT be visible.
+<p>
+After you have logged in, go to the Project Page.  When
+you log in the next time, you will be automatically sent
+to the Project Page.
+<p>
+The buttons marked ? access the Help Page, which has
+detailed documentation for various pages and parts of pages.
 </p>
 
-<a name="logging-in"><h2>Logging In</h2></a>
+<a name="solving-a-problem"><h1>Solving a Problem</h1></a>
+<p>
+To solve a problem, you first want to `pull' the problem
+from a project.  Go to the Project Page and select
+the problem list you want to pull the problem from.
+For example, select `demos Problems'.  Then click the
+`Pull' button.
+<p>
+Next click the oval of the problem you want to pull.
+For example, click the `reverser' oval, which will turn
+black.  Next click the `Submit' button.  The black oval
+should turn green indicating success, and `Done!' should
+appear.
+<p>
+Now go back to the Project page and select the `Your Problems'
+problem list.  This was empty but now has `reverser' in it.
+In the `Create Tab for Problem' selector, select `reverser'.
+A new `reverser Problem Page' tab will be created.  You now
+have two tabs, the one just created and the original
+`Project Page' tab.
+<p>
+Go to the `reverser Problem Page' tab and click on `reveser.pdf'
+to see the problem specification.
+<p>
+You can write your own solution, or you can click on
+`Downloads' to get a window with demos problems solutions of
+various kinds.  You need to get a solution on your own
+computer, at which point you use `Upload a File' to
+upload it to your reverser problem.  When it is uploaded
+it is compiled, and if there are compilation errors, error
+messages will be displayed and the solution will NOT
+be entered into your EPM problem directory.
+If there are no errors, your solution and its executable
+file will be entered into your problem directory, or
+`kept'.
 <p>
 TBD
+<p>
+Next go to the Run Page.
+
+use `Upload a File'
+to upload a solution.  You can find solutions to deby clicking
+the `View Downloads' page
+</p>
+<a name="creating-a-problem"><h1>Creating a Problem</h1></a>
+<p>
 </p>
 
-<a name="solving-problems"><h2>Solving Problems</h2></a>
-<p>
-TBD
-</p>
-
-<a name="writing-problems"><h2>Writing Problems</h2></a>
-<p>
-TBD
-</p>
 
 </div>
 
@@ -158,10 +239,43 @@ function CLICK_TOC()
     text.style.display = 'block';
     toc_mark.innerHTML = '&darr;';
 }
-
 toc.addEventListener ( 'click', CLICK_TOC );
+
+var history_list = [];
+var index = 0;
+function A_CLICK ( event )
+{
+    let a = event.target;
+    if ( a.tagName != 'A' ) return;
+    if ( a.href == '' ) return;
+    while ( index != 0 )
+    {
+        history_list.pop();
+	++ index;
+    }
+    history_list.push ( a );
+}
+document.addEventListener ( 'click', A_CLICK );
+
+function BACK()
+{
+    if ( index + history_list.length <= 0 ) return;
+    -- index;
+    history_list[index + history_list.length].focus();
+}
+function FORWARD()
+{
+    if ( index >= 0 ) return;
+    if ( index == -1 )
+	history_list[index + history_list.length].click();
+    else
+    {
+	++ index;
+	history_list[index + history_list.length].focus();
+    }
+}
+    
 </script>
 
 </body>
 </html>
-

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 20 22:08:16 EDT 2020
+    // Date:	Sun Jun 21 05:09:44 EDT 2020
 
     // Display and edit user information in:
     //
@@ -334,6 +334,7 @@
 	    @mkdir ( "$epm_data/admin", 0770 );
 	    @mkdir ( "$epm_data/admin/users", 0770 );
 	    @mkdir ( "$epm_data/admin/users/$uid",
+	             0770 );
 	    @mkdir ( "$epm_data/admin/email", 0770 );
 	    $m = umask ( 06 );
 	    @mkdir ( "$epm_data/users", 0771 );
