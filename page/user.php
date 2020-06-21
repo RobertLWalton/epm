@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 14 14:12:19 EDT 2020
+    // Date:	Sat Jun 20 22:08:16 EDT 2020
 
     // Display and edit user information in:
     //
@@ -331,11 +331,16 @@
 	    $edit = 'profile';
 	elseif ( $new_user )
 	{
-	    $d = "admin/users/$uid";
-	    if ( ! mkdir ( "$epm_data/$d", 0770,
-	                   true ) )
-	        ERROR ( "cannot make $d" );
+	    @mkdir ( "$epm_data/admin", 0770 );
+	    @mkdir ( "$epm_data/admin/users", 0770 );
+	    @mkdir ( "$epm_data/admin/users/$uid",
+	    @mkdir ( "$epm_data/admin/email", 0770 );
+	    $m = umask ( 06 );
+	    @mkdir ( "$epm_data/users", 0771 );
+	    @mkdir ( "$epm_data/users/$uid", 0771 );
+	    umask ( $m );
 
+	    $d = "admin/users/$uid";
 	    $re = rawurlencode ( $email );
 	    $f = "admin/email/$re";
 	    if ( file_exists ( "$epm_data/$f" ) )

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 13:41:44 EDT 2020
+    // Date:	Sat Jun 20 22:33:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -398,41 +398,6 @@
 	        " {$data['CTIME']}" );
     }
 
-    // Create admin and users directories if they do not
-    // exist.
-    //
-    if ( ! is_dir ( "$epm_data/admin" ) )
-    {
-        $m = umask ( 06 );
-
-	if ( ! is_dir ( $epm_data ) )
-	    @mkdir ( $epm_data, 0771 );
-
-	@mkdir ( "$epm_data/admin", 0770 );
-	@mkdir ( "$epm_data/admin/email", 0770 );
-	@mkdir ( "$epm_data/admin/browser", 0770 );
-	@mkdir ( "$epm_data/admin/users", 0770 );
-	@mkdir ( "$epm_data/users", 0771 );
-	@mkdir ( "$epm_data/projects", 0771 );
-
-	if ( ! is_dir ( "$epm_data/admin" ) )
-	    ERROR
-		( 'cannot make admin directory' );
-
-	if ( ! is_dir ( "$epm_data/users" ) )
-	    ERROR
-		( 'cannot make users directory' );
-
-	if ( ! is_dir ( "$epm_data/projects" ) )
-	    ERROR
-		( 'cannot make projects directory' );
-	if ( ! symbolic_link ( "$epm_home/bin",
-	                       "$epm_data/bin" ) )
-	     ERROR ( 'cannot make bin link' );
-
-	umask ( $m );
-    }
-
     $op = NULL;
     if ( isset ( $_POST['op'] ) )
 	$op = $_POST['op'];
@@ -568,6 +533,9 @@
 	    {
 		$next_page = 'project.php';
 
+		// If $data['UID'] exists, so does
+		// /admin/users/{$data['UID']}
+		//
 		$f = "/admin/users/{$data['UID']}" .
 		     "/session_id";
 		$r = file_put_contents
@@ -583,6 +551,9 @@
 
 		if ( isset ( $data['CNUM'] ) )
 		{
+		    @mkdir ( "$epm_data/admin", 0770 );
+		    @mkdir ( "$epm_data/admin/email",
+		             0770 );
 		    $efile = "admin/email/"
 			   . rawurlencode
 			       ( $data['EMAIL'] );
@@ -605,6 +576,9 @@
 
 	    if ( isset ( $data['CNUM'] ) )
 	    {
+		@mkdir ( "$epm_data/admin", 0770 );
+		@mkdir ( "$epm_data/admin/browser",
+		         0770 );
 		$bfile = "admin/browser/"
 		       . $data['BID'];
 		$items = [ $data['EMAIL'],
