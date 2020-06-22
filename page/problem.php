@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 21 17:09:31 EDT 2020
+    // Date:	Mon Jun 22 17:54:15 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -131,7 +131,7 @@
     //
     // FILE-LINKABLE is true iff
     //
-    //	  the file has extension '', 'class', or 'pyc'
+    //	  the file has extension in $linkable_ext
     //    the file is not a link
     //    the file basename has the form *-PPPP
     //		(which includes -generate-PPPP, etc.)
@@ -1053,12 +1053,14 @@ EOT;
 EOT;
     function MAKE ( $fbase, $sext, $dext )
     {
+	if ( $sext != '' ) $sext = ".$sext";
+	if ( $dext != '' ) $dext = ".$dext";
 	echo "<button type='submit'" .
 	     " name='make'" .
-	     " title='Make $fbase.$dext" .
-	     " from $fbase.$sext'" .
-	     " value='$fbase.$sext:$fbase.$dext'>" .
-	     "&rArr;.$dext</button>";
+	     " title='Make $fbase$dext" .
+	     " from $fbase$sext'" .
+	     " value='$fbase$sext:$fbase$dext'>" .
+	     "&rArr;$dext</button>";
     }
     echo "<table style='display:block'>";
     foreach ( problem_file_names( $probdir )
@@ -1172,6 +1174,13 @@ EOT;
 		 " name='run'" .
 		 " value='$fname'>" .
 		 "Run</button>";
+	}
+	elseif ( $fext == '' )
+	{
+	    $re = '/^(generate|filter|monitor)'
+	        . "-$problem\$/";
+	    if ( preg_match ( $re, $fbase ) )
+		MAKE ( $fbase, '', 'txt' );
 	}
 	echo "<pre>  $fcomment</pre>";
 	echo "</td></tr>";
