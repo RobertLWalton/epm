@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jun 21 04:56:58 EDT 2020
+Date:	Mon Jun 22 05:14:06 EDT 2020
 -->
 
 <title>EPM User Guide</title>
@@ -141,7 +141,7 @@ vertical-align: top;
 <a name="getting-started"><h1>Getting Started</h1></a>
 <p>
 To open an account, all you need is an e-mail address.
-Open a tab using the EPM server URL you want to access,
+Open a tab using the URL of the EPM server you want to access,
 and enter your e-mail address.
 <p>
 You will be e-mailed a confirmation number which you must
@@ -182,14 +182,14 @@ A new `reverser Problem Page' tab will be created.  You now
 have two tabs, the one just created and the original
 `Project Page' tab.
 <p>
-Go to the `reverser Problem Page' tab and click on `reveser.pdf'
+Go to the `reverser Problem Page' tab and click on `reverser.pdf'
 to see the problem specification.
 <p>
 You can write your own solution, or you can click on
 `Downloads' to get a window with demos problems solutions of
 various kinds.  You need to get a solution on your own
 computer, at which point you use `Upload a File' to
-upload it to your reverser problem.  When it is uploaded
+upload the solution to your reverser problem.  When it is uploaded
 it is compiled, and if there are compilation errors, error
 messages will be displayed and the solution will NOT
 be entered into your EPM problem directory.
@@ -197,14 +197,75 @@ If there are no errors, your solution and its executable
 file will be entered into your problem directory, or
 `kept'.
 <p>
-TBD
+You can see more detail about what happened during the
+compilation by clicking the downward arrow buttons
+on the `Commands Last Executed' and `Working Files ...'
+sections.  Working files are files output by the commands
+that were NOT kept, and are more likely to be of interest when
+the commands fail and there are no kept files.
 <p>
-Next go to the Run Page.
-
-use `Upload a File'
-to upload a solution.  You can find solutions to deby clicking
-the `View Downloads' page
+Each file in your problem directory has a line in the
+`Current Problem Files' section of the Project Page,
+and each working file from the last executed command has
+a line in the `Working Files ...' section.
+After a set of commands execute, one or two files, either
+kept or working,
+are automatically shown, but you can show
+any of your problem directory files or working files that
+are ASCII text or pdf by clicking either the file name if
+it is a button, or the downward arrow after the file name.
+An exception is a very short one-line file whose entire contents is displayed
+in { } brackets at the end of its line.
+<p>
+Lines for files with names of the form `00-*-reverser.in'
+are inputs for sample test cases.  If you click on the
+`=>.score' button for such a line, the score of the
+test case will be computed in the `00-*-reverser.score'
+file.
+<p>
+In general the operations you perform consists of
+making one file from another file, and typically the two
+file names are identical but for their extensions.
+In addition to making the .score file you can also make
+a .sin solution input file, a .sout solution output file,
+and a .fout filtered solution output file.  For the
+`reverser' problem
+the .sin file is identical to the .in file with comments
+removed, and the .fout file is identical to the .sout file.
+<p>
+After the scores for the sample test cases are all
+`Completely Correct', the problem can be submitted by
+going to the `Run Page'. On this page if you click
+on the `Run' button of the `sample-reverser.run' line
+all the sample test cases will be run and the result
+will be placed in the `sample-reverser.rout' (run output)
+file.  If instead you click on the `Submit' button
+on the `submit-reverser.run' line, all the test cases,
+including the hidden judge' test cases with names
+of the form `01-*-reverser.in', will be run and the
+total result will be displayed in the `submit-reverser.rout'
+file.
+<p>
+If there is an error in a test case during a `Submit',
+the test case .in and .fout files will be linked into
+your Problems Page so you can debug the test case as
+you would a sample test case.
+<p>
+If you have downloaded a solution from the `Downloads Page',
+you may wish to use it to see what happens when a solution
+has errors.  If you look at a `reverser' solution, you will see that
+it has a section where different types of errors
+can be easily introduced either by defining a single macro
+or by changing the value of a single variable.  If you use
+this to introduce an error in the solution, then you can
+try using the erroneous solution to produce
+`.score' files on the `reverser Problem Page' or `.rout' files
+on the `reverser Run Page'.
+<p>
+More detailed information is available in the Help Page
+accessed by the `?' buttons.
 </p>
+
 <a name="creating-a-problem"><h1>Creating a Problem</h1></a>
 <p>
 </p>
