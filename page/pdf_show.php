@@ -4,6 +4,10 @@
     // Author:	Robert L Walton <walton@acm.org>
     // Date:	Sat Jun  6 05:53:38 EDT 2020
 
+    // The authors have this file in the public domain;
+    // they make no warranty and accept no liability for
+    // this file.
+
     // Show the PDF file $_GET['filename'] for
     // problem $_GET['problem'].  File may be in
     // problem directory or a temporary in its

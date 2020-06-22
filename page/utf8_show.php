@@ -4,6 +4,11 @@
     // Author:	Robert L Walton <walton@acm.org>
     // Date:	Sat Jun  6 05:52:34 EDT 2020
 
+    // The authors have placed EPM (its files and the
+    // content of these files) in the public domain;
+    // they make no warranty and accept no liability
+    // for EPM.
+
     // Show the UTF-8 file $_GET['filename'].
     // Filename is relative to problem directory.
 

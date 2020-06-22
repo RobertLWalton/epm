@@ -4,6 +4,11 @@
 // Author:  Robert L Walton <walton@acm.org>
 // Date:    Tue May  5 02:55:11 EDT 2020
 
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain;
+// they make no warranty and accept no liability
+// for EPM.
+
 // Functions used to read templates and option files.
 // Required by epm_make.php.
 //

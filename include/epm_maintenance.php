@@ -4,6 +4,11 @@
 // Author:  Robert L Walton <walton@acm.org>
 // Date:    Sun Jun 21 00:18:33 EDT 2020
 
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain;
+// they make no warranty and accept no liability
+// for EPM.
+
 // Functions used to maintain directories and their
 // contents.  Used by $epm_home/bin programs and
 // by $epm_home/page/login.php.

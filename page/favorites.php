@@ -2,7 +2,12 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 09:16:45 EDT 2020
+    // Date:	Mon Jun 22 15:56:39 EDT 2020
+
+    // The authors have placed EPM (its files and the
+    // content of these files) in the public domain;
+    // they make no warranty and accept no liability
+    // for EPM.
 
     // Maintains favorites list of problem lists.
 

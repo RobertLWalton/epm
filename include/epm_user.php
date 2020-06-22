@@ -4,6 +4,11 @@
 // Author:  Robert L Walton <walton@acm.org>
 // Date:    Sat Jun 13 14:34:22 EDT 2020
 
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain;
+// they make no warranty and accept no liability
+// for EPM.
+
 // Functions to read user information.
 //
 // WARNING: No error message may contain the value of

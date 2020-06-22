@@ -2,7 +2,12 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 14 16:33:07 EDT 2020
+// Date:    Mon Jun 22 16:00:33 EDT 2020
+
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain;
+// they make no warranty and accept no liability
+// for EPM.
 
 // HTML code included at the beginning of the <head>
 // section of each page.

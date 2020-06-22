@@ -4,6 +4,11 @@
     // Author:	Robert L Walton <walton@acm.org>
     // Date:	Thu Jun 18 09:13:00 EDT 2020
 
+    // The authors have placed EPM (its files and the
+    // content of these files) in the public domain;
+    // they make no warranty and accept no liability
+    // for EPM.
+
     // Functions for managing lists.
 
     if ( ! isset ( $epm_data ) )

@@ -1,0 +1,97 @@
+\documentclass[12pt]{article}
+\usepackage{times}
+\begin{document}
+\newcommand{\problem}[1]{\underline{\Large \bf #1}}
+\renewcommand{\section}[1]{\bigskip\underline{\bf #1}\\}
+\newcommand{\header}[1]{\underline{\bf #1}}
+\setlength{\parindent}{0.0in}
+\setlength{\parskip}{1ex}
+
+\problem{Word Order Reverser}
+
+Thompson Tommy is a well known pop poet who specializes
+in word-reversed poetry.  This is poetry in which the
+words in each line are presented in reverse order, but
+the punctuation is left in place.
+
+For example, one of his poems is
+\begin{center}\begin{tabular}{l}
+moon! full the oh! \\
+swoon to me leads \\
+loon a of song the for! \\
+\end{tabular}\end{center}
+
+Not everyone can stomach this, and you have been asked
+to write a translator which will render Thompson Tommy's
+poems readable.
+
+
+\section{Input}
+
+You are being asked to translate a sequence of lines,
+each no longer than 80 characters.  To make things
+easier, all letters are lower case.  There may be blank
+lines.  Input ends with an end of file.
+
+
+\section{Output}
+
+For each line output that line exactly as is but with
+word substitutions, and only word substitutions.  The
+last word is substituted for the first, the next to last
+for the second, and so forth, until the first is substi-
+tuted for the last.  Only words are to be substituted;
+spaces and punctuation are to be left as is.  A word is
+defined as a sequence of lower case letters, containing
+NO non-letters.  A blank line translates to a blank
+line.
+
+\begin{center}
+\begin{tabular}{l|l}
+\begin{minipage}{2.5in}
+\header{Sample Input}
+\begin{verbatim}
+moon! full the oh!
+swoon to me leads
+loon a of song the for!
+
+george there, hi!
+phil there, bye!
+is it, switch friend
+
+**   rung+is-bell^the   !!
+**   sung+is-song^the   !!
+**      fun++++what     !!
+\end{verbatim}
+\end{minipage}\hspace*{0.2in}
+&
+\hspace*{0.2in}\begin{minipage}{2.5in}
+\header{Sample Output}
+\begin{verbatim}
+oh! the full moon!
+leads me to swoon
+for the song of a loon!
+
+hi there, george!
+bye there, phil!
+friend switch, it is
+
+**   the+bell-is^rung   !!
+**   the+song-is^sung   !!
+**      what++++fun     !!
+\end{verbatim}
+\end{minipage}
+\end{tabular}
+\end{center}
+
+\bigskip
+
+\begin{tabular}{ll}
+Author:	      & Bob Walton $<$walton@seas.harvard.edu$>$ \\
+Date:         & Sat Dec  1 22:26:28 EST 2012
+\end{tabular}
+
+The authors have placed this problem in the public domain;
+they make no warranty and accept no liability for this problem.
+
+\end{document}

@@ -5,6 +5,11 @@
 // Author:	Robert L Walton <walton@acm.org>
 // Date:	Sat Jun 20 14:19:46 EDT 2020
 
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain;
+// they make no warranty and accept no liability
+// for EPM.
+
 $document = <<<'EOT'
 epm print [webdirectory]
 epm [-n] init project [problem]
