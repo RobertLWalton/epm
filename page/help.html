@@ -30,6 +30,13 @@ div.header {
     overflow: auto;
     height: 95%;
 }
+#flow {
+    border: 1px black solid;
+    width: 600px;
+    padding: 0;
+    margin: auto;
+    display: block;
+}
 
 h1 {
 font-size: 20pt;
@@ -188,7 +195,97 @@ Problem development is mostly a matter of creating
 test case input and output in a form suitable for automatic
 scoring, and then debugging the problem solution and specification
 against the test cases.
+<p>
+The following diagram specifies the data flow used to score
+a test case for a problem named PPPP.  For simple problems,
+generate-PPPP simply copies its input to its output removing
+comments, and filter-PPPP simply copies its input to its
+output (epm_score ignores comments).  In more complex cases
+generate-PPPP uses commands from the .in file to generate
+.sin solution input using a pseudo-random number generator,
+and filter-PPPP analyzes the .sin and .sout files to produce
+a summary used in scoring (e.g., it might read a graph from .sin
+and check that a path in .sout is in fact a path in the graph,
+outputting the path length if it is and an error message otherwise).
 </p>
+<p>
+<canvas id='flow' class='flow' width='600px' height='450'>
+</p>
+<script>
+const flow = document.getElementById ( 'flow' );
+const context = flow.getContext ( '2d' );
+context.lineWidth = '2';
+// Draw vector of given length from (x,y) in direction
+// (dx,dy) where |dx|,|dy| = 0 or 1.
+// Direction of arrow right part is
+//    (txx*dx + txy+dy, tyx*dx + tyy*dy )
+const root = Math.sqrt ( 2 );
+const len = 5;
+const txx = - len * root;
+const txy = - len * root;
+const tyx = + len * root;
+const tyy = - len * root;
+function vector ( x, y, dx, dy, length )
+{
+    context.beginPath();
+    context.moveTo ( x, y );
+    x += dx * length;
+    y += dy * length;
+    context.lineTo ( x, y );
+    const ox = txx*dx + txy*dy;
+    const oy = tyx*dx + tyy*dy;
+    context.lineTo ( x+ox, y+oy );
+    context.moveTo ( x, y );
+    context.lineTo ( x-oy, y+ox );
+    context.stroke();
+}
+function line ( x, y, dx, dy, length )
+{
+    context.beginPath();
+    context.moveTo ( x, y );
+    x += dx * length;
+    y += dy * length;
+    context.lineTo ( x, y );
+    context.stroke();
+}
+
+context.font = 'bold 20px serif';
+context.fillText ( '.in test case input file', 60, 30 );
+vector ( 150, 35, 0, 1, 25 );
+line ( 250, 25, 1, 0, 150 );
+vector ( 400, 25, 0, 1, 35 );
+context.font = '20px monospace';
+context.fillText ( 'generate-PPPP', 90, 80 );
+context.fillText ( 'generate-PPPP', 340, 80 );
+vector ( 150, 85, 0, 1, 25 );
+line ( 400, 85, 0, 1, 190 );
+context.font = 'bold 20px serif';
+context.fillText ( '.sin solution input file', 60, 130 );
+vector ( 150, 135, 0, 1, 25 );
+context.font = '20px monospace';
+context.fillText ( 'PPPP (solution)', 70, 180 );
+vector ( 150, 185, 0, 1, 25 );
+context.font = 'bold 20px serif';
+context.fillText ( '.sout solution output file', 50, 230 );
+vector ( 150, 235, 0, 1, 25 );
+context.font = '20px monospace';
+context.fillText ( 'filter-PPPP', 90, 280 );
+vector ( 400, 275, -1, 0, 160 );
+vector ( 150, 285, 0, 1, 25 );
+context.font = 'bold 20px serif';
+context.fillText ( '.fout filtered output file', 50, 330 );
+vector ( 150, 335, 0, 1, 25 );
+context.font = '20px monospace';
+context.fillText ( 'epm_score', 100, 380 );
+context.font = 'bold 20px serif';
+context.fillText ( "judge's .ftest filtered", 350, 380 );
+context.fillText ( "output file", 390, 400 );
+vector ( 340, 375, -1, 0, 120 );
+vector ( 150, 385, 0, 1, 25 );
+context.font = 'bold 20px serif';
+context.fillText ( '.score file', 115, 430 );
+
+</script>
 
 <a name="login-page"><h1>Login Page</h1></a>
 
