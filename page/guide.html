@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun 23 01:33:54 EDT 2020
+Date:	Tue Jun 23 04:30:21 EDT 2020
 -->
 
 <title>EPM User Guide</title>
@@ -442,21 +442,25 @@ compares the .fout and .ftest files.
 Next you should proceed to make more sample input files with
 names of the form `00-001-PPPP.in', `00-002-PPPP.in', etc.
 The `00-' at the beginning of the file name specifies that
-it is a sample input, that will be give to all users who
+it is sample input, that will be give to all users who
 try to solve the problem.   Names beginning `01-', `02-',
 etc are judging inputs that are hidden from users who are
 trying to solve the problem.
 <p>
 When you have all your sample inputs, make a `sample-PPPP.run'
 file that just lists the names of your .in sample input files,
-one name per line.  Then upload it.  It will be checked by
-checking that all the .in input files it names exist and
+one name per line.  Then upload it.  Upon uploading it will be
+checked to be sure that all the .in input files it names exist and
 all their associated .ftest files exist.
 <p>
 On the `sample-PPPP.run' line there is a `Run' button.  If
 you click it, the tab will switch to the Run Page and
 the .run file will be run.  The results will be displayed
 in a `sample-PPPP.rout' file.
+<p>
+Next make the judge's hidden data `01-000-PPPP.in', etc.,
+and make a `submit-PPPP.run' file that list ALL the .in files,
+both sample and judge's hidden.
 
 </p>
 

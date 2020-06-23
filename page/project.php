@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 13:24:59 EDT 2020
+    // Date:	Tue Jun 23 04:37:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -576,7 +576,7 @@ EOT;
 		     $map[$problem] == '-' )
 		{
 		    $warnings[] =
-		        "cannot pull to $uid $problem" .
+		        "cannot pull $uid $problem" .
 			" as no project is specified";
 		    continue;
 		}
