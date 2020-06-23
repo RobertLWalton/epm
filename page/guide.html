@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Jun 22 14:27:16 EDT 2020
+Date:	Tue Jun 23 00:55:09 EDT 2020
 -->
 
 <title>EPM User Guide</title>
@@ -378,6 +378,63 @@ accessed by the `?' buttons.
 
 <a name="creating-a-problem"><h1>Creating a Problem</h1></a>
 <p>
+To create a problem you start with a problem name.  Try to
+choose a name that is not, and likly will not, be the name
+of some project problem, as your problem name will become
+embedded in all your problem file names.  We will let
+PPPP stand for the problem name in what follows.
+<p>
+To create a problem you start with a solution, that is,
+a program written in C, C++, JAVA, or PYTHON that will
+solve the problem.  It is also well to start with a problem
+specification written in LATEX.
+<p>
+You can create the problem on the Projects Page by typing
+its name into the `New Problem Name' box.  This will create
+a tab for the new problem.
+<p>
+From the new problem tab you can go to the `Downloads' Page.
+There you will find sample solutions, a sample problem
+specification, and a template for writting problem specifications
+in LATEX.
+<p>When you have written your PPPP.c, PPPP.cc, PPPP.java, or PPPP.py
+solution file, upload it into
+the new problem tab, and it will compile.  Debug it until
+it has no compilation errors.
+<p>
+Similarly when you have written your PPPP.tex problem specification
+file, upload it.  It will be compiled by pdflatex.  Debug it
+until it has no errors.
+<p>
+The next step is to make a sample input file named `00-000-PPPP.in'.
+Upload it, and it will be run through your solution to produce
+the `00-000-PPPP.sout' solution output file.  If there are no
+detected errors in this, the .in and .sout files will be kept.
+<p>
+Note that for the moment we are ignoring the possibility of
+having special generate-PPPP and filter-PPPP programs for the
+problem.  The system will automatically
+supply default versions of these which just copy their input
+to their output (though the default generate-PPPP removes comments).
+<p>
+Read your `00-000-PPPP.sout' file and see if it is correct.  When
+you think it is, on its line click `=>.fout' to make the
+filtered output file `00-000-PPPP.fout', and then on the line
+for that file click on `=>.ftest' to make the `00-000-PPPP.ftest'
+file that is the judge's test data by simply copying the
+`00-000-PPPP.fout' file.
+<p>
+At this point you can click the `=>.score' button on the
+`00-000-PPPP.in' file and it will score your sample input.
+Of course the score will necessarily be `Completely Correct',
+since your .ftest file is a copy of your .fout file.
+<p>
+So how do you know your code is correct?  We, the best way is
+to put debugging statements in your code that output extra
+information.  Any line your code outputs that begins with
+`!!**' is treated as a comment line and ignored, so you can
+output as much debugging information as you like in these lines.
+These debugging comment lines will appear in the .sout file.
 </p>
 
 
