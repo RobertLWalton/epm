@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun 23 00:55:09 EDT 2020
+Date:	Tue Jun 23 01:33:54 EDT 2020
 -->
 
 <title>EPM User Guide</title>
@@ -427,14 +427,37 @@ file that is the judge's test data by simply copying the
 At this point you can click the `=>.score' button on the
 `00-000-PPPP.in' file and it will score your sample input.
 Of course the score will necessarily be `Completely Correct',
-since your .ftest file is a copy of your .fout file.
+since your .ftest file is a copy of your .fout file, and
+the score is computed by comparing these two files.
 <p>
-So how do you know your code is correct?  We, the best way is
+So how do you know your code is correct?  Well, the best way is
 to put debugging statements in your code that output extra
-information.  Any line your code outputs that begins with
+information.  Any output line that begins with
 `!!**' is treated as a comment line and ignored, so you can
 output as much debugging information as you like in these lines.
-These debugging comment lines will appear in the .sout file.
+These debugging comment lines will appear in the .sout file and
+.fout file and will be ignored by the epm_score program that
+compares the .fout and .ftest files.
+<p>
+Next you should proceed to make more sample input files with
+names of the form `00-001-PPPP.in', `00-002-PPPP.in', etc.
+The `00-' at the beginning of the file name specifies that
+it is a sample input, that will be give to all users who
+try to solve the problem.   Names beginning `01-', `02-',
+etc are judging inputs that are hidden from users who are
+trying to solve the problem.
+<p>
+When you have all your sample inputs, make a `sample-PPPP.run'
+file that just lists the names of your .in sample input files,
+one name per line.  Then upload it.  It will be checked by
+checking that all the .in input files it names exist and
+all their associated .ftest files exist.
+<p>
+On the `sample-PPPP.run' line there is a `Run' button.  If
+you click it, the tab will switch to the Run Page and
+the .run file will be run.  The results will be displayed
+in a `sample-PPPP.rout' file.
+
 </p>
 
 
