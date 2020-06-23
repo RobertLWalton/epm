@@ -383,23 +383,31 @@ EOT;
 	    /* Do Nothing */;
 	elseif ( $op == 'cancel' )
 	    $names[$J] = '';
-	elseif ( $op == 'delete' )
+	elseif ( $op == 'delete'
+	         ||
+		 $op == 'publish'
+		 ||
+		 $op == 'unpublish' )
 	{
-	    delete_list ( $names[$J], $errors, true );
-	    if ( count ( $errors ) == 0 )
+	    list ( $user, $name ) =
+	        explode ( ':', $names[$J] );
+	    if ( $user != '-' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    if ( $op == 'delete' )
 	    {
-		$names[$J] = '';
-		$favorites = favorites_to_list
-		    ( 'pull|push' );
+		delete_list ( $name, $errors, true );
+		if ( count ( $errors ) == 0 )
+		{
+		    $names[$J] = '';
+		    $favorites = favorites_to_list
+			( 'pull|push' );
+		}
 	    }
-	}
-	elseif ( $op == 'publish' )
-	{
-	    publish_list ( $names[$J], $errors );
-	}
-	elseif ( $op == 'unpublish' )
-	{
-	    unpublish_list ( $names[$J], $errors );
+	    elseif ( $op == 'publish' )
+		publish_list ( $name, $errors );
+	    elseif ( $op == 'unpublish' )
+		unpublish_list ( $name, $errors );
 	}
 	elseif ( $op == 'dsc' )
 	{

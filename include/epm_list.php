@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun 18 09:13:00 EDT 2020
+    // Date:	Tue Jun 23 13:35:17 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -10,6 +10,37 @@
     // for EPM.
 
     // Functions for managing lists.
+
+    // List names have the form:
+    //
+    //	-:-		List of Your Problems
+    //  -:NAME  	Your NAME list
+    //  PROJECT:-	List of PROJECT Problems
+    //  USER:NAME	Published NAME list of USER
+    //  +favorites+	Your favorites list.
+    //
+    // Problem names have the form:
+    //
+    //  -:PROBLEM		Your PROBLEM
+    //  PROJECT:PROBLEM		PROJECT PROBLEM
+    //
+    // Generic names (other than +favorites+) have the
+    // form:
+    //
+    //  ROOT:LEAF
+    //
+    // Problem and favorites lists consist of lines
+    // each of the form:
+    //
+    //		TIME ROOT LEAF
+    //
+    // optionally followed, for problem lists, by a
+    // blank line followed by a description.
+    //
+    // Internal representation of lists consists of
+    // a list with elements of the form:
+    //
+    //		[TIME, ROOT, LEAF]
 
     if ( ! isset ( $epm_data ) )
 	exit ( 'ACCESS ERROR: $epm_data not set' );
@@ -207,56 +238,48 @@
 	return $pmap;
     }
 
-    // Given a list name of one of the forms:
-    //
-    //		-:-
-    //		PROJECT:-
-    //		PROJECT:BASENAME
-    //		+favorites+
-    //
-    // return the file name of the list relative to
-    // $epm_data, or return NULL if the name is of
-    // the form -:- or PROJECT:-.
+    // Given a list name return the file name of the
+    // list relative to $epm_data, or return NULL if
+    // the name is of the form -:- or PROJECT:-.
     //
     function listname_to_filename ( $listname )
     {
         global $uid;
 
-	if ( preg_match ( '/\+.+\+/', $listname ) )
+	if ( $listname[0] == '+' )
 	    return "users/$uid/+lists+/$listname";
 
-        list ( $project, $basename ) =
+        list ( $user, $name ) =
 	    explode ( ':', $listname );
-	if ( $basename == '-' ) return NULL;
-
-	if ( $project == '-' )
-	    $d = "users/$uid";
+	if ( $name == '-' )
+	    return NULL;
+	elseif ( $user == '-' )
+	    return "users/$uid/+lists+/$name.list";
 	else
-	    $d = "projects/$project";
-	return "$d/+lists+/{$basename}.list";
+	    return "lists/$user:$name.list";
     }
 
-    // Given a basename make a new empty file for the
-    // listname '-:basename' and add its name to the
+    // Given a name make a new empty file for the
+    // listname '-:name' and add its name to the
     // beginning of +favorites+ using the current
     // time as the TIME value.  If there are errors
     // append to $errors.
     //
-    function make_new_list ( $basename, & $errors )
+    function make_new_list ( $name, & $errors )
     {
         global $epm_data, $uid, $epm_name_re,
 	       $epm_time_format;
 
-	if ( ! preg_match ( $epm_name_re, $basename ) )
+	if ( ! preg_match ( $epm_name_re, $name ) )
 	{
-	   $errors[] = "$basename is badly formed"
+	   $errors[] = "$name is badly formed"
 	             . " list name";
 	   return;
 	}
-	$f = "users/$uid/+lists+/$basename.list";
+	$f = "users/$uid/+lists+/$name.list";
 	if ( file_exists ( "$epm_data/$f" ) )
 	{
-	   $errors[] = "the $basename list already"
+	   $errors[] = "the $name list already"
 	             . " exists";
 	   return;
 	}
@@ -272,10 +295,10 @@
 	$f = "users/$uid/+lists+/+favorites+";
 	$flist = read_file_list ( $f );
 	array_unshift
-	    ( $flist, [$time, '-', $basename] );
+	    ( $flist, [$time, '-', $name] );
 	write_file_list ( $f, $flist );
 	    // We need to remove any previous
-	    // -:$basename in case list was deleted
+	    // -:$name in case list was deleted
 	    // and then re-created.
     }
 
@@ -284,86 +307,43 @@
     // errors and return.
     //
     function delete_list
-            ( $listname, & $errors, $execute )
+            ( $name, & $errors, $execute )
     {
         global $epm_data, $uid;
 
-        list ( $project, $basename ) =
-	    explode ( ':', $listname );
-	$pname = ( $project == '-' ?
-	           'Your' : $project );
-	if ( $basename == '-' )
+        $f = "users/$uid/+lists+/$name.list";
+	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
-	    $errors[] = "cannot delete $pname Problems";
+	    $errors[] = "you have no list named"
+		      . " $name";
 	    return;
-	}
-
-        $f = "users/$uid/+lists+/$basename.list";
-	if ( $project == '-' )
-	{
-	    if ( ! file_exists ( "$epm_data/$f" ) )
-	    {
-	        $errors[] = "you have no list named"
-		          . " $basename";
-	        return;
-	    }
-	}
-	else
-	{
-	    $g = "projects/$project/+lists+/"
-	       . "$basename.list";
-	    if ( ! is_link ( "$epm_data/$g" ) )
-	    {
-	        $errors[] = "there is no list"
-		          . " `$pname $basename'";
-	        return;
-	    }
-	    $n = @readlink ( "$epm_data/$g" );
-	    if ( $n === false )
-	        ERROR ( "cannot read link $g" );
-	    $re = '#^\.\./\.\./\.\./users/([^/]+)/#';
-	    if ( ! preg_match ( $re, $n, $matches ) )
-	        ERROR ( "$n read from link $g is" .
-		        " badly formed" );
-	    if ( $uid != $matches[1] )
-	    {
-	        $errors[] = "list `$pname $basename'"
-		          . " belongs to {$matches[1]}"
-			  . " and not to you";
-	        return;
-	    }
-
-	    $f = $g;
 	}
 
 	if ( ! $execute ) return;
 
 	unlink ( "$epm_data/$f" );
 
+	$g = "lists/$uid:$name.list";
+	if ( is_link ( "$epm_data/$g" ) )
+	    unlink ( "$epm_data/$g" );
+
 	$f = "users/$uid/+lists+/+favorites+";
 	delete_from_file_list
-	    ( $f, $project, $basename );
+	    ( $f, '-', $name );
     }
 
     // Publish the named list, or append to $errors
     // if its already published.
     //
-    function publish_list ( $listname, & $errors )
+    function publish_list ( $name, & $errors )
     {
         global $epm_data, $uid;
 
-        list ( $project, $basename ) =
-	    explode ( ':', $listname );
-	if ( $project != '-'
-	     ||
-	     $basename == '-' )
-	    ERROR ( "publish_list called with" .
-	            " $listname" );
-	$f = "users/$uid/+lists+/$basename.list";
-	$g = "lists/$uid:$basename.list";
+	$f = "users/$uid/+lists+/$name.list";
+	$g = "lists/$uid:$name.list";
 	if ( is_link ( "$epm_data/$g" ) )
 	{
-	    $errors[] = "Your $basename is already"
+	    $errors[] = "Your $name is already"
 	              . " published";
 	    return;
 	}
@@ -376,22 +356,15 @@
     // Unpublish the named list, or append to $errors
     // if its already unpublished.
     //
-    function unpublish_list ( $listname, & $errors )
+    function unpublish_list ( $name, & $errors )
     {
         global $epm_data, $uid;
 
-        list ( $project, $basename ) =
-	    explode ( ':', $listname );
-	if ( $project != '-'
-	     ||
-	     $basename == '-' )
-	    ERROR ( "unpublish_list called with" .
-	            " $listname" );
-	$f = "users/$uid/+lists+/$basename.list";
-	$g = "lists/$uid:$basename.list";
+	$f = "users/$uid/+lists+/$name.list";
+	$g = "lists/$uid:$name.list";
 	if ( ! is_link ( "$epm_data/$g" ) )
 	{
-	    $errors[] = "Your $basename is already"
+	    $errors[] = "Your $name is already"
 	              . " unpublished";
 	    return;
 	}
@@ -403,12 +376,12 @@
     // $filename in the form of a list of elements each
     // of the form
     //
-    //	    [TIME PROJECT PROBLEM]
+    //	    [TIME ROOT LEAF]
     //
-    // where PROJECT may be `-'.  Reading stops with the
-    // first blank line.  If the file does not exist, []
-    // is returned.  Line formatting errors are fatal.
-    // Lines with duplicate PROJECT:PROBLEM are fatal.
+    // Reading stops with the first blank line.  If the
+    // file does not exist, [] is returned.  Line
+    // formatting errors are fatal.  Lines with
+    // duplicate ROOT:LEAF are fatal.
     //
     function read_file_list ( $filename )
     {
@@ -431,9 +404,9 @@
 		if ( count ( $items ) != 3 )
 		    ERROR ( "badly formatted line" .
 			    " '$line' in $filename" );
-		list ( $time, $project, $problem ) =
+		list ( $time, $root, $leaf ) =
 		    $items;
-		$key = "$project:$problem";
+		$key = "$root:$leaf";
 		if ( isset ( $map[$key] ) )
 		    ERROR ( "line '$line' duplicates" .
 			    " line '{$map[$key]}' in" .
@@ -447,14 +420,14 @@
 
     // Write a list of elements of the form
     //
-    //	    [TIME PROJECT NAME]
+    //	    [TIME ROOT LEAF]
     //
     // to the named file, preserving any part of the
-    // file that is after its first blank line.  Each
-    // element becomes one line consisting of the
+    // file that is at or after its first blank line.
+    // Each element becomes one line consisting of the
     // element members separated by 2 single spaces.
     //
-    // If a PROJECT:NAME occurs several times, only the
+    // If a ROOT:LEAR occurs several times, only the
     // first is kept, but the output TIME is the latest
     // of the associated TIMEs.
     //
@@ -465,8 +438,8 @@
 	$map = [];
 	foreach ( $list as $items )
 	{
-	    list ( $time, $project, $name ) = $items;
-	    $key = "$project:$name";
+	    list ( $time, $root, $leaf ) = $items;
+	    $key = "$root:$leaf";
 	    if ( isset ( $map[$key] ) )
 	    {
 	        $time2 = $map[$key];
@@ -482,9 +455,9 @@
 	$lines = [];
 	foreach ( $keys as $key )
 	{
-	    list ( $project, $name ) =
+	    list ( $root, $leaf ) =
 	        explode ( ':', $key );
-	    $lines[] = "{$map[$key]} $project $name";
+	    $lines[] = "{$map[$key]} $root $leaf";
 	}
 
 	$c = @file_get_contents
@@ -533,19 +506,19 @@
 	    ERROR ( "cannot write $filename" );
     }
 
-    // Delete all lines `TIME $project $basename' from
+    // Delete all lines `TIME $root $leaf' from
     // list with given $filename.
     //
     function delete_from_file_list
-	    ( $filename, $project, $basename )
+	    ( $filename, $root, $leaf )
     {
 	$list = read_file_list ( $filename );
 	$changed = false;
 	$out = [];
 	foreach ( $list as $e )
 	{
-	    if (    $e[1] == $project
-	         && $e[2] == $basename )
+	    if (    $e[1] == $root
+	         && $e[2] == $leaf )
 	        $changed = true;
 	    else
 	        $out[] = $e;
@@ -817,22 +790,22 @@
 	return $list;
     }
 
-    // If $name is in list, return its $list entry,
-    // else return NULL.  $name has the form
-    // PROJECT:PROBLEM (or OWNER:BASENAME).  List
-    // entries have the form [TIME, PROJECT, PROBLEM].
+    // If $key is in list, return its $list entry,
+    // else return NULL.  $key has the form
+    // ROOT:LEAF.  List entries have the form
+    // [TIME, ROOT, LEAF].
     //
-    function in_list ( $name, $list )
+    function in_list ( $key, $list )
     {
-        list ( $project, $problem ) =
-            explode ( ':', $name );
+        list ( $root, $leaf ) =
+            explode ( ':', $key );
 	foreach ( $list as $item )
 	{
-	    list ( $time, $lproject, $lproblem )
+	    list ( $time, $list_root, $list_leaf )
 	        = $item;
-	    if ( $project == $lproject
+	    if ( $root == $list_root
 	         &&
-		 $problem == $lproblem )
+		 $leaf == $list_leaf )
 	        return $item;
 	}
 	return NULL;
@@ -840,56 +813,58 @@
 
     // Given a list of elements of the form
     //
-    //		[TIME PROJECT NAME]
+    //		[TIME ROOT LEAF]
     //
     // return a string whose segments have the form
     //
-    //	    <option value='PROJECT:NAME'>
-    //      $project $name $time
+    //	    <option value='ROOT:LEAF'>
+    //      $root $leaf $time
     //      </option>
     //
-    // where $project is PROJECT unless that is `-', in
-    // which case it is `Your', $name is NAME unless
+    // where $root is ROOT unless that is `-', in
+    // which case it is `Your', $leaf is LEAF unless
     // that is `-', in which case it is `Problems', and
     // $time is the first 10 characters of TIME (i.e.,
     // the day, excluding the time of day).
     //
-    // However, if 'PROJECT:NAME' is listed in $exclude,
+    // However, if 'ROOT:LEAF' is listed in $exclude,
     // omit that option.  Also if $select is not NULL
-    // but is 'PROJECT:NAME', add the `selected'
+    // but is 'ROOT:LEAF', add the `selected'
     // attribute to the associated option.
     //
     function list_to_options
             ( $list, $select = NULL, & $exclude = [] )
     {
 	if ( isset ( $select ) )
-	    list ( $sproject, $sname ) =
+	    list ( $sroot, $sleaf ) =
 	        explode ( ':', $select );
 	else
 	{
-	    $sproject = NULL; $sname = NULL;
+	    $sroot = NULL; $sleaf = NULL;
 	}
 
         $r = '';
 	foreach ( $list as $e )
 	{
-	    list ( $time, $project, $name ) = $e;
-	    $selected = '';
-	    if ( $project == $sproject
-	         &&
-		 $name == $sname )
-	        $selected = 'selected';
-	    $key = "$project:$name";
+	    list ( $time, $root, $leaf ) = $e;
+
+	    $key = "$root:$leaf";
 	    if ( in_array ( $key, $exclude, true ) )
 	        continue;
 
-	    if ( $project == '-' )
-	        $project = 'Your';
-	    if ( $name == '-' )
-	        $name = 'Problems';
+	    $selected = '';
+	    if ( $root == $sroot
+	         &&
+		 $leaf == $sleaf )
+	        $selected = 'selected';
+
+	    if ( $root == '-' )
+	        $root = 'Your';
+	    if ( $leaf == '-' )
+	        $leaf = 'Problems';
 	    $time = substr ( $time, 0, 10 );
 	    $r .= "<option value='$key' $selected>"
-	        . "$project $name $time"
+	        . "$root $leaf $time"
 		. "</option>";
 	}
 	return $r;
