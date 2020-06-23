@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun 23 04:30:21 EDT 2020
+Date:	Tue Jun 23 09:49:17 EDT 2020
 -->
 
 <title>EPM User Guide</title>
@@ -413,7 +413,9 @@ detected errors in this, the .in and .sout files will be kept.
 <p>
 Note that for the moment we are ignoring the possibility of
 having special generate-PPPP and filter-PPPP programs for the
-problem.  The system will automatically
+problem (see the diagram in the
+<a href="#introductory-note">Introductory Note</a>).
+The system will automatically
 supply default versions of these which just copy their input
 to their output (though the default generate-PPPP removes comments).
 <p>
@@ -421,8 +423,8 @@ Read your `00-000-PPPP.sout' file and see if it is correct.  When
 you think it is, on its line click `=>.fout' to make the
 filtered output file `00-000-PPPP.fout', and then on the line
 for that file click on `=>.ftest' to make the `00-000-PPPP.ftest'
-file that is the judge's test data by simply copying the
-`00-000-PPPP.fout' file.
+file that is the judge's test data.  The .ftest file is
+made by simply copying the .fout file.
 <p>
 At this point you can click the `=>.score' button on the
 `00-000-PPPP.in' file and it will score your sample input.
@@ -442,7 +444,7 @@ compares the .fout and .ftest files.
 Next you should proceed to make more sample input files with
 names of the form `00-001-PPPP.in', `00-002-PPPP.in', etc.
 The `00-' at the beginning of the file name specifies that
-it is sample input, that will be give to all users who
+it is sample input that will be give to all users who
 try to solve the problem.   Names beginning `01-', `02-',
 etc are judging inputs that are hidden from users who are
 trying to solve the problem.
