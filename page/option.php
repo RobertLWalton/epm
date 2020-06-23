@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun  7 10:16:27 EDT 2020
+    // Date:	Mon Jun 22 20:47:48 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -478,7 +478,6 @@ EOT;
     echo "</table></div></div>";
 
     echo <<<EOT
-    <br>
     <div class='arguments'>
     <table style='width:100%'><tr>
     <td>
