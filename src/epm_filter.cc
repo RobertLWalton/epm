@@ -2,28 +2,52 @@
 //
 // File:	epm_filter.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Jun 14 05:58:18 EDT 2020
+// Date:	Tue Jun 23 14:58:14 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
 // for this program.
 
-// TEMPLATE for filter program.
+// TEMPLATE for filter program from epm_filter.cc.
 
 #include <streambuf>
 #include <iostream>
 #include <string>
-#include <cstring>
+#include <sstream>
+#include <iomanip>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cstdarg>
+#include <cassert>
 extern "C" {
 #include <unistd.h>
 }
+using std::cin;
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::streambuf;
 using std::istream;
 using std::string;
+using std::istringstream;
+using std::ws;
+
+#define FOR0(i,n) for ( int i = 0; i < (n); ++ i )
+#define FOR1(i,n) for ( int i = 1; i <= (n); ++ i )
+
+bool debug = false;
+# define dout if ( debug ) cout
+
+int line_number = 0;
+void error ( const char * format... )
+{
+    va_list args;
+    va_start ( args, format );
+    cout << "ERROR: line: " << line_number << ": ";
+    vprintf ( format, args );
+    cout << endl;
+}
  
 // Class for reading from file descriptor.
 //
@@ -61,47 +85,47 @@ class inbuf : public streambuf
     }
 };
 
-inbuf inBUF ( 3 );
-istream in ( & inBUF );
 
-int line_number = 0;
-int bad_comments = 0;    // Number of bad comment lines.
-int bad_first;           // First bad comment line.
- 
-// Get next line into `line', identifying bad comments.
-// Return true on success and false on EOF.
+// Stream for reading solution output.
 //
-string line;
-bool get_line ( void )
-{
-    while ( getline ( in, line ) )
-    {
-        ++ line_number;
-	const char * p = line.c_str();
-	if ( strncmp ( p, "!!", 2 ) == 0
-	     &&
-	     strncmp ( p, "!!**", 4 ) != 0 )
-	{
-	    if ( bad_comments ++ == 0 )
-	        bad_first = line_number;
-	}
-	return true;
-    }
-    return false;
-}
+inbuf inBUF ( 3 );
+istream out ( & inBUF );
 
+
 char documentation [] =
-"    Copies from file descriptor 3 to standard out-\n"
-"    put, counting bad comment lines, which begin\n"
-"    with `!!' NOT followed by `**'.  Bad comment\n"
-"    lines cause a warning message to be output on\n"
-"    the standard error.\n"
+"epm_default_filter\n"
+"\n"
+"    Reads solution output from file descriptor 3\n"
+"    and copies it to the standard output.\n"
+"\n"
+"    Lines that begin with `!!**' are considered to\n"
+"    be comment lines.\n"
+"\n"
+"    Other lines beginning with `!!' are considered\n"
+"    to be bad comment lines and cause a warning\n"
+"    message to be output on the standard error.\n"
+"\n"
+"    All comment lines are written to the standard\n"
+"    output, as epm_score ignores them.\n"
 ;
+
+// Put functions, data, and parameters that aid in
+// processing the solution input or output here.
 
 // Main program.
 //
+int bad_comments = 0;    // Number of bad comment lines.
+int bad_first;           // First bad comment line.
+string line;
+//
 int main ( int argc, char ** argv )
 {
+    if (    argc > 1
+         && strncmp ( argv[1], "-deb", 4 ) == 0 )
+    {
+        debug = true;
+	-- argc, ++ argv;
+    }
     if ( argc > 1 )
     {
 	FILE * out = popen ( "less -F", "w" );
@@ -110,12 +134,68 @@ int main ( int argc, char ** argv )
 	return 0;
     }
 
-    while ( get_line() ) cout << line << endl;
+    // Put code to initialize problem computation here.
+
+ 
+    // Read input.  You may assume it has integrity to
+    // the extent that the problem generate program
+    // checks input integrity.
+    //
+    // while ( cin >> ... )
+    // {
+    //     // Check input ranges; you can use asserts
+    //     // here as problem solvers have no control
+    //     // over this input stream.
+    //     //
+    //     assert ( ................... );
+    //     ..................................
+    // }
+
+    // Get and check output.
+    //
+    string line;
+    while ( getline ( out, line ) )
+    {
+        ++ line_number;
+	const char * p = line.c_str();
+	if ( strncmp ( p, "!!**", 4 ) == 0 )
+	{
+	    cout << line << endl;  // Omit if you like.
+	    continue;
+	}
+	else if ( strncmp ( p, "!!", 2 ) == 0 )
+	{
+	    if ( bad_comments ++ == 0 )
+	        bad_first = line_number;
+	    cout << line << endl;  // Omit if you like.
+	    continue;
+	}
+
+	istringstream in ( line );
+
+	// in >> ... >> ws;
+	// if ( in.fail() || ! in.eof() )
+	// {
+	//     error ( "badly formated .sout line" );
+	//     continue;
+	// }
+	// if ( ... < ... || ... > ... )
+	// {
+	//     error ( "cx out of range" );
+	//     continue;
+	// }
+
+	// Delete or replace the following for
+	// non-default filters.
+	//
+	cout << line << endl;
+    }
 
     if ( bad_comments > 0 )
         cerr << "WARNING: there were " << bad_comments
 	     << " bad comment lines, the first being"
 	     << " line " << bad_first << endl;
 
+    
     return 0;
 }

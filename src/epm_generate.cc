@@ -2,7 +2,7 @@
 //
 // File:	epm_generate.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Jun 20 05:18:15 EDT 2020
+// Date:	Tue Jun 23 14:53:45 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -106,6 +106,8 @@ template <typename T> inline void shuffle
 }
 
 char documentation [] =
+"epm_default_generate\n"
+"\n"
 "    Copies standard input to standard output,\n"
 "    removing lines the begin with `!!'.\n"
 "\n"
