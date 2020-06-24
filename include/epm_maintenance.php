@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 21 00:18:33 EDT 2020
+// Date:    Wed Jun 24 15:07:31 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -357,6 +357,34 @@ function export_project ( $project, $dryrun = false )
     }
 }
 
+// Function to sync $epm_library to $epm_data projects.
+//
+function export_projects ( $dryrun = false )
+{
+    global $epm_data, $epm_library, $epm_name_re;
+
+    $d1 = "projects";
+    if ( ! is_dir ( "$epm_data/$d1" ) )
+    {
+        ERROR ( "$d1 is not a \$epm_data directory" );
+	return;
+    }
+    if ( ! is_dir ( "$epm_library/$d1" )
+         &&
+         ! mkdir ( "$epm_library/$d1", 0770, true ) )
+	ERROR ( "cannot make $d1 in \$epm_library" );
+
+    $dirs = @scandir ( "$epm_data/$d1" );
+    if ( $dirs === false )
+        ERROR ( "cannot read $d1 in \$epm_data" );
+    foreach ( $dirs as $project )
+    {
+        if ( ! preg_match ( $epm_name_re, $project ) )
+	    continue;
+	export_project ( $project, $dryrun );
+    }
+}
+
 // Function to sync $epm_data to $epm_library problem.
 //
 function import_problem
@@ -388,8 +416,13 @@ function import_problem
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
     else
+    {
+        $d = "projects/$project/$problem";
+        if ( ! chmod ( $d, 0771 ) )
+	    ERROR ( "cannot chmod $d to 0771" );
         echo "done importing $project $problem" .
 	     PHP_EOL;
+    }
 }
 
 // Function to sync $epm_data to $epm_library project.
@@ -406,10 +439,12 @@ function import_project ( $project, $dryrun = false )
 	        " directory" );
 	return;
     }
+    $m = umask ( 06 );
     if ( ! is_dir ( "$epm_data/$d2" )
          &&
-         ! mkdir ( "$epm_data/$d2", 0770, true ) )
+         ! mkdir ( "$epm_data/$d2", 0771, true ) )
 	ERROR ( "cannot make $d2 in \$epm_data" );
+    umask ( $m );
 
     $dirs = @scandir ( "$epm_library/$d2" );
     if ( $dirs === false )
@@ -419,6 +454,37 @@ function import_project ( $project, $dryrun = false )
         if ( ! preg_match ( $epm_name_re, $problem ) )
 	    continue;
 	import_problem ( $project, $problem, $dryrun );
+    }
+}
+
+// Function to sync $epm_data to $epm_library projects.
+//
+function import_projects ( $dryrun = false )
+{
+    global $epm_data, $epm_library, $epm_name_re;
+
+    $d1 = "projects";
+    if ( ! is_dir ( "$epm_library/$d1" ) )
+    {
+        ERROR ( "$d1 is not a \$epm_library" .
+	        " directory" );
+	return;
+    }
+    $m = umask ( 06 );
+    if ( ! is_dir ( "$epm_data/$d1" )
+         &&
+         ! mkdir ( "$epm_data/$d1", 0771, true ) )
+	ERROR ( "cannot make $d1 in \$epm_data" );
+    umask ( $m );
+
+    $dirs = @scandir ( "$epm_library/$d1" );
+    if ( $dirs === false )
+        ERROR ( "cannot read $d1 from \$epm_library" );
+    foreach ( $dirs as $project )
+    {
+        if ( ! preg_match ( $epm_name_re, $project ) )
+	    continue;
+	import_project ( $project, $dryrun );
     }
 }
 
