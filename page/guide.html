@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun 23 09:49:17 EDT 2020
+Date:	Wed Jun 24 16:57:10 EDT 2020
 -->
 
 <title>EPM User Guide</title>
@@ -395,7 +395,7 @@ a tab for the new problem.
 <p>
 From the new problem tab you can go to the `Downloads' Page.
 There you will find sample solutions, a sample problem
-specification, and a template for writting problem specifications
+specification, and a template for writing problem specifications
 in LATEX.
 <p>When you have written your PPPP.c, PPPP.cc, PPPP.java, or PPPP.py
 solution file, upload it into
@@ -460,10 +460,25 @@ you click it, the tab will switch to the Run Page and
 the .run file will be run.  The results will be displayed
 in a `sample-PPPP.rout' file.
 <p>
-Next make the judge's hidden data `01-000-PPPP.in', etc.,
-and make a `submit-PPPP.run' file that list ALL the .in files,
-both sample and judge's hidden.
-
+Next make the judge's hidden data `01-000-PPPP.in', etc.
+Often judge's data has larger test cases that must be
+generated randomly.  To do this, you must write a
+`generate-PPPP' program in C or C++.  There is a template
+and an example on the `Downloads Page'.  If you look at
+other problems that have non-default generate programs,
+you can see what they do by clicking the `=>.txt' button
+on their `generate-...' lines.
+<p>
+You may also need to make a `filter-PPPP' program, again
+writing in C or C++.  There is a template and example on
+the `Downloads Page', and you can see what other problems
+do by clicking the `=>.txt' button on their `filter-...'
+lines.
+<p>
+After you have finished making judge's .in and .ftest files,
+make a `submit-PPPP.run' file that lists ALL the .in files,
+both sample and judge's hidden.  Test this last using its
+`Run' button.
 </p>
 
 
