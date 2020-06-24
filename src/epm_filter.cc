@@ -2,7 +2,7 @@
 //
 // File:	epm_filter.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Jun 24 04:12:44 EDT 2020
+// Date:	Wed Jun 24 14:22:23 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -93,7 +93,7 @@ istream out ( & inBUF );
 
 
 char documentation [] =
-"epm_default_filter\n"
+"epm_default_filter [-doc]\n"
 "\n"
 "    Reads solution output from file descriptor 3\n"
 "    and copies it to the standard output.\n"

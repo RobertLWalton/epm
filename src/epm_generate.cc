@@ -2,7 +2,7 @@
 //
 // File:	epm_generate.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Jun 23 14:53:45 EDT 2020
+// Date:	Wed Jun 24 14:20:26 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -106,23 +106,23 @@ template <typename T> inline void shuffle
 }
 
 char documentation [] =
-"epm_default_generate\n"
+"epm_default_generate [-doc]\n"
 "\n"
 "    Copies standard input to standard output,\n"
 "    removing lines the begin with `!!'.\n"
 "\n"
 "    Lines that begin with `!!##' are considered to\n"
 "    be comment lines.\n"
-// "\n"
-// "    A line of the form:\n"
-// "\n"
-// "        !R seed k .........\n"
-// "\n"
-// "    denotes k ...\n"
 "\n"
 "    Other lines beginning with `!!' are considered\n"
 "    to be bad comment lines and cause a warning\n"
 "    message to be output on the standard error.\n"
+// "\n"
+// "    A non-comment line of the form:\n"
+// "\n"
+// "        !R seed k .........\n"
+// "\n"
+// "    denotes k ...\n"
 ;
 
 // Problem specific generate functions:
