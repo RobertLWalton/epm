@@ -1,8 +1,8 @@
-// Educational Problem Manager Default Filter Program
+// Filter Valuable Circle Problem Data
 //
-// File:	epm_filter.cc
+// File:	filter-valuable.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Jun 24 04:12:44 EDT 2020
+// Date:	Wed Jun 24 04:09:23 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -93,10 +93,13 @@ istream out ( & inBUF );
 
 
 char documentation [] =
-"epm_default_filter\n"
+"filter-valuable\n"
 "\n"
-"    Reads solution output from file descriptor 3\n"
-"    and copies it to the standard output.\n"
+"    Reads solution input from standard input and\n"
+"    solution output from file descriptor 3.  Then\n"
+"    computes value of solution circle and outputs\n"
+"    it.  If solution circle is invalid, outputs\n"
+"    error messages instead.\n"
 "\n"
 "    Lines that begin with `!!**' are considered to\n"
 "    be comment lines.\n"
@@ -109,8 +112,61 @@ char documentation [] =
 "    output, as epm_score ignores them.\n"
 ;
 
-// Put functions, data, and parameters that aid in
-// processing the solution input or output here.
+# include <algorithm>
+# include <vector>
+# include <utility>
+# include <cmath>
+using std::max;
+using std::min;
+using std::pair;
+using std::vector;
+using std::make_pair;
+
+const int MAX_N = 1000;
+const int MAX_XY = 1000;
+const int MAX_V = 1e6;
+
+// Internal coordinates are [0,2*MAX_XY].
+// External coordinates are [-MAX_XY,+MAX_XY].
+
+// Input Data
+//
+int n;
+long long value[2*MAX_XY+1][2*MAX_XY+1];
+    // value[x][y] is value at (x,y)
+
+// Computed Data:
+// //
+vector<pair<int,int> > offsets[3*MAX_XY];
+    // offsets[r] is the list of offsets from a
+    // circle center of radius r that give valid
+    // point coordinates.
+
+// This code adapted from solution of Daniel Chiu.
+//
+void compute_offsets() {
+    for (int i=0;i<=2*MAX_XY;i++) {
+        for (int j=i+1;j<=2*MAX_XY;j++) {
+            int c = (int) sqrt(i*i+j*j);
+            for (int k=max(c-2,0);k<=c+2;k++)
+	    {
+	        if (i*i+j*j!=k*k) continue;
+
+		offsets[k].push_back(make_pair(i,j));
+		offsets[k].push_back(make_pair(i,-j));
+		offsets[k].push_back(make_pair(j,i));
+		offsets[k].push_back(make_pair(-j,i));
+
+		if ( i == 0 ) continue;
+
+		offsets[k].push_back(make_pair(-i,j));
+		offsets[k].push_back(make_pair(-i,-j));
+		offsets[k].push_back(make_pair(j,-i));
+		offsets[k].push_back(make_pair(-j,-i));
+	    }
+        }
+    }
+}
 
 // Main program.
 //
@@ -134,22 +190,24 @@ int main ( int argc, char ** argv )
 	return 0;
     }
 
-    // Put code to initialize problem computation here.
+    compute_offsets();
 
+    FOR0(x,2*MAX_XY+1) FOR0(y,2*MAX_XY+1)
+	value[x][y] = 0;
  
     // Read input.  You may assume it has integrity to
     // the extent that the problem generate program
     // checks input integrity.
     //
-    // while ( cin >> ... )
-    // {
-    //     // Check input ranges; you can use asserts
-    //     // here as problem solvers have no control
-    //     // over this input stream.
-    //     //
-    //     assert ( ................... );
-    //     ..................................
-    // }
+    int x, y, v;
+    while ( cin >> x >> y >> v )
+    {
+        assert ( - MAX_XY <= x && x <= MAX_XY );
+        assert ( - MAX_XY <= y && y <= MAX_XY );
+        assert ( 1 <= v && v <= MAX_V );
+	assert ( value[x+MAX_XY][y+MAX_XY] == 0 );
+	value[x+MAX_XY][y+MAX_XY] = v;
+    }
 
     // Get and check output.
     //
@@ -173,22 +231,44 @@ int main ( int argc, char ** argv )
 
 	istringstream in ( line );
 
-	// in >> ... >> ws;
-	// if ( in.fail() || ! in.eof() )
-	// {
-	//     error ( "badly formated .sout line" );
-	//     continue;
-	// }
-	// if ( ... < ... || ... > ... )
-	// {
-	//     error ( "cx out of range" );
-	//     continue;
-	// }
+	int cx, cy, r;
+	in >> cx >> cy >> r >> ws;
+	if ( in.fail() || ! in.eof() )
+	{
+	    error ( "badly formated .sout line" );
+	    continue;
+	}
+	if ( cx < - MAX_XY || cx > + MAX_XY )
+	{
+	    error ( "cx out of range" );
+	    continue;
+	}
+	if ( cy < - MAX_XY || cy > + MAX_XY )
+	{
+	    error ( "cy out of range" );
+	    continue;
+	}
+	if ( r < 1 || r >= 3*MAX_XY )
+	{
+	    error ( "r out of range" );
+	    continue;
+	}
 
-	// Delete or replace the following for
-	// non-default filters.
-	//
-	cout << line << endl;
+	long long v = 0;
+	FOR0 ( i, offsets[r].size() )
+	{
+	    pair<int,int> offset = offsets[r][i];
+	    int x = cx + offset.first;
+	    int y = cy + offset.second;
+	    if ( x < - MAX_XY ) continue;
+	    if ( x > + MAX_XY ) continue;
+	    if ( y < - MAX_XY ) continue;
+	    if ( y > + MAX_XY ) continue;
+	    x += MAX_XY;
+	    y += MAX_XY;
+	    v += value[x][y];
+	}
+	cout << v << endl;
     }
 
     if ( bad_comments > 0 )
