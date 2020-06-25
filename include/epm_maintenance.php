@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 25 04:06:28 EDT 2020
+// Date:    Thu Jun 25 04:54:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -616,11 +616,32 @@ function setup ( $dryrun )
     make_link ( 'page/index.php', '+web+/index.php',
                 $dryrun );
 
-    echo ( "installing EPM src files" . PHP_EOL );
     $n = ( $dryrun ? '-n' : '' );
+
+    echo ( "installing epm/src files" . PHP_EOL );
     $command = "cd $epm_home/src; make $n install";
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "make returned exit code $r" );
-
+    echo ( "making epm/secure/epm_sandbox" . PHP_EOL );
+    $command =
+        "cd $epm_home/secure; make $n epm_sandbox";
+    passthru ( $command, $r );
+    if ( $r != 0 )
+        ERROR ( "make returned exit code $r" );
+    echo ( "checking epm_sandbox installation" .
+           PHP_EOL );
+    $src = "$epm_home/secure/epm_sandbox";
+    $des = "$epm_home/bin/epm_sandbox";
+    if ( file_exists ( $src ) )
+    {
+	exec ( "cmp -s $src $des", $nothing, $r );
+	if ( $r != 0 )
+	{
+	    echo ( "NOTICE: as su root you must" .
+	           PHP_EOL .
+		   "    cd $epm_home/secure;" .
+		   " make install" . PHP_EOL );
+	}
+    }
 }
