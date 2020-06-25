@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 25 04:54:52 EDT 2020
+// Date:    Thu Jun 25 15:22:28 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -644,4 +644,152 @@ function setup ( $dryrun )
 		   " make install" . PHP_EOL );
 	}
     }
+}
+
+// Compute backup list.  This is a list of items of
+// the form:
+//
+//	[BASE,NUMBER]
+//
+// where the backup is named BASE-LEVEL.tgz and NUMBER
+// n indicates this it the n'th child of the latest
+// level 0 backup.  NUMBER is 0 for level 0 backups.
+//
+// The list is sorted in BASE order, so if NUMBER is n
+// then the n'th list entry before the current entry is
+// the level 0 parent of the current entry, if the
+// current entry is a child.
+//
+// NUMBER is -1 if a child has no parent, which should
+// not happen but might.
+//
+function backup_list ( & $list )
+{
+    global $epm_backup;
+
+    $list = [];
+    $files = scandir ( $epm_backup );
+    if ( $files === false )
+        ERROR ( 'cannot read $epm_backup' );
+    sort ( $files, SORT_STRING );
+    $number = -1;
+    foreach ( $files as $file )
+    {
+        if ( ! preg_match ( '/^(.*)-(0|1)\.tgz$/',
+	                    $file, $matches ) )
+	    continue;
+	$base = $matches[1];
+	$level = $matches[2];
+	if ( $level == '0' )
+	    $number = 0;
+	elseif ( $number != -1 )
+	    ++ $number;
+	$list[] = [$base,$number];
+    }
+    return $list;
+}
+
+function clean_backups ( $dryrun, & $list = NULL )
+{
+    global $epm_backup, $epm_backup_round;
+
+    if ( ! isset ( $list ) ) backup_list ( $list );
+
+    $c = count ( $list );
+    if ( $c <= $epm_backup_round ) return;
+
+    $c = $c - $epm_backup_round;
+    // We would like to delete first $c $list elements.
+    list ( $base, $number ) = $list[$c];
+    $c = $c - $number;
+    // Now we can delete delete $c element.
+    if ( $c <= 0 ) return;
+    $commands = [];
+    $i = 0;
+    while ( $i < $c )
+    {
+        list ( $base, $number ) = $list[$i];
+	$l = ( $number == 0 ? '0' : '1' );
+	$commands[] = "rm -f $base-$l.tgz";
+	if ( $l == '0' )
+	    $commands[] = "rm -f $base-$l.snar";
+    }
+    foreach ( $commands as $command )
+    {
+	echo ( $command . PHP_EOL );
+	if ( $dryrun ) continue;
+	passthru ( "cd $epm_backup; $command", $r );
+	if ( $r != 0 )
+	    ERROR ( "last command returned $r" );
+    }
+
+    array_splice ( $list, 0, $c );
+}
+
+
+function backup ( $dryrun )
+{
+    global $epm_backup, $epm_backup_name,
+           $epm_time_format;
+
+    backup_list ( $list );
+
+    $time = strftime ( $epm_time_format );
+    $base = "$epm_backup_name-$time";
+    $commands = [];
+    $len = count ( $list );
+    if ( $len == 0 )
+    {
+        $pbase = NULL;
+	$cbase = NULL;
+	$number = 0;
+    }
+    else
+    {
+	list ( $pbase, $number ) = $list[$len-1];
+	if ( $number > 0 )
+	{
+	    $cbase = $pbase;
+	    list ( $pbase, $zero ) =
+	        $list[$len-1-$number];
+	    ++ $number;
+	}
+    }
+
+    if ( $number > 1 )
+    {
+	$p = "$pbase-0.tgz";
+	$psize = filesize ( "$epm_backup/$p" );
+	if ( $psize == false )
+	    ERROR ( "cannot stat $p" );
+	$c = "$cbase-1.tgz";
+	$csize = filesize ( "$epm_backup/$c" );
+	if ( $csize == false )
+	    ERROR ( "cannot stat $c" );
+	if ( $csize >= $psize )
+	    $number = 0;
+    }
+
+    if ( $number != 0 )
+	$commands[] = [ $epm_backup,
+	                "cp -p $pbase-0.snar" .
+			" $base-0.snar" ];
+    $d = $epm_backup;
+    $l = ( $number == 0 ? '0' : '1' );
+    $commands[] = [ $epm_data,
+		    "tgz -zc -g $d/$base-$l.snar" .
+		    " -f $d/$base-$l.tgz ." ];
+    if ( $number != 0 )
+	$commands[] = [ $epm_backup,
+	                "rm $base-1.snar" ];
+    foreach ( $commands as $e )
+    {
+        list ( $d, $command ) = $e;
+	echo ( $command . PHP_EOL );
+	if ( $dryrun ) continue;
+	passthru ( "cd $d; $command", $r );
+	if ( $r != 0 )
+	    ERROR ( "last command returned $r" );
+    }
+    $list[] = [$base,$number];
 }

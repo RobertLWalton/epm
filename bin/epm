@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jun 20 14:19:46 EDT 2020
+// Date:	Thu Jun 25 17:38:27 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -19,6 +19,7 @@ epm [-n] init -all
 epm [-n] import [project [problem]]
 epm [-n] export [project [problem]]
 epm [-n] setup webdirectory
+epm [-n] backup [webdirectory]
 
 This program is intended to be run inside the $epm_data
 directory tree unless webdirectory is specified.
@@ -67,7 +68,8 @@ if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
 
 $op = $argv[1];
 if ( ! in_array ( $op, ['print','init','import',
-                        'export','setup'], true ) )
+                        'export','setup', 'backup'],
+		       true ) )
     ERROR ( "cannot understand $op" );
 
 // Return directory name with components equal to `.'
@@ -96,6 +98,11 @@ if ( $op == 'print' && $argc >= 3 )
 elseif ( $op == 'setup' )
 {
     if ( $argc < 3 ) ERROR ( 'too few arguments' );
+    if ( $argc > 3 ) ERROR ( 'too many arguments' );
+    $epm_web = $argv[2];
+}
+elseif ( $op == 'backup' && $argc >= 3 )
+{
     if ( $argc > 3 ) ERROR ( 'too many arguments' );
     $epm_web = $argv[2];
 }
@@ -131,6 +138,7 @@ $epm_web = scrub_dir ( $epm_web );
 $epm_data = scrub_dir ( $epm_data );
 $epm_home = scrub_dir ( $epm_home );
 $epm_library = scrub_dir ( $epm_library );
+$epm_backup = scrub_dir ( $epm_backup );
 
 if ( isset ( $dir )
      &&
@@ -152,6 +160,7 @@ if ( $op == 'print' )
     echo ( '$epm_home = ' . $epm_home . PHP_EOL );
     echo ( '$epm_data = ' . $epm_data . PHP_EOL );
     echo ( '$epm_library = ' . $epm_library . PHP_EOL );
+    echo ( '$epm_backup = ' . $epm_backup . PHP_EOL );
 }
 elseif ( $op == 'init' )
 {
@@ -193,6 +202,10 @@ elseif ( $op == 'import' )
 elseif ( $op == 'setup' )
 {
     setup ( $dryrun );
+}
+elseif ( $op == 'backup' )
+{
+    backup ( $dryrun );
 }
 
 if ( $dryrun ) echo ( "Dry Run" . PHP_EOL );
