@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jun 24 15:07:31 EDT 2020
+// Date:    Thu Jun 25 04:06:28 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -319,6 +319,7 @@ function export_problem
     $opt .= " --include +solutions+"
           . " --exclude '+*+'";
     $command = "rsync $opt -av --delete"
+             . " --info=STATS0,FLIST0"
              . " $epm_data/$dir/ $epm_library/$dir/";
     passthru ( $command, $r );
     if ( $r != 0 )
@@ -406,6 +407,7 @@ function import_problem
     $opt .= " --include +solutions+"
           . " --exclude '+*+'";
     $command = "rsync $opt -av --delete"
+             . " --info=STATS0,FLIST0"
              . " $epm_library/$dir/ $epm_data/$dir/";
 	// It is necessary to have the excludes
 	// because we have the --delete; with the
@@ -549,11 +551,13 @@ function copy_dir ( $dir, $dryrun )
     global $epm_home, $epm_data;
     $srcdir = "$epm_home/setup/$dir";
     $desdir = "$epm_data/$dir";
+
+    if ( ! is_dir ( $desdir ) )
+        make_dir ( $dir, 0770, $dryrun );
+
     $files = @scandir ( $srcdir );
     if ( $files === false )
         ERROR ( "cannot read setup/$dir" );
-    if ( ! is_dir ( $desdir ) )
-        make_dir ( $dir, 0770, $dryrun );
     foreach ( $files as $fname )
     {
         if ( $fname[0] == '.' ) continue;
@@ -567,8 +571,10 @@ function copy_dir ( $dir, $dryrun )
 	elseif ( is_link ( "$desdir/$fname" ) )
 	{
 	    echo ( "unlinking $dir/$fname" . PHP_EOL );
-	    if ( ! $dryrun )
-	        @unlink ( "$desdir/$fname" );
+	    if ( ! $dryrun
+	         &&
+	         ! unlink ( "$desdir/$fname" ) )
+		ERROR ( "cannot unlink $dir/$fname" );
 	}
 	$action = "copying setup/$dir/$fname to"
 	        . " $dir/$fname";
@@ -609,4 +615,12 @@ function setup ( $dryrun )
                 $dryrun );
     make_link ( 'page/index.php', '+web+/index.php',
                 $dryrun );
+
+    echo ( "installing EPM src files" . PHP_EOL );
+    $n = ( $dryrun ? '-n' : '' );
+    $command = "cd $epm_home/src; make $n install";
+    passthru ( $command, $r );
+    if ( $r != 0 )
+        ERROR ( "make returned exit code $r" );
+
 }
