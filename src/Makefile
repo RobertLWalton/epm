@@ -2,14 +2,14 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Thu Jun 18 14:44:26 EDT 2020
+# Date:		Wed Jun 24 23:09:31 EDT 2020
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
 # for this program.
 
-INSTALL_BIN = ../bin
-INSTALL_DEFAULT = ../default
+BIN = ../bin
+DEFAULT = ../default
 
 # Kill all implicit rules
 #
@@ -43,27 +43,40 @@ clean:
 	      epm_default_generate \
 	      epm_default_filter
 
-install:	epm_score \
-                epm_display \
-                epm_default_generate \
-                epm_default_filter
-	test -d ${INSTALL_BIN}
-	test -w ${INSTALL_BIN}
-	test -d ${INSTALL_DEFAULT}
-	test -w ${INSTALL_DEFAULT}
-	rm -f ${INSTALL_BIN}/epm_score
-	rm -f ${INSTALL_BIN}/epm_display
-	rm -f ${INSTALL_DEFAULT}/epm_default_generate
-	rm -f ${INSTALL_DEFAULT}/epm_default_filter
-	cp epm_score ${INSTALL_BIN}
-	cp epm_display ${INSTALL_BIN}
-	cp epm_default_generate ${INSTALL_DEFAULT}
-	cp epm_default_filter ${INSTALL_DEFAULT}
-	chmod 755 ${INSTALL_BIN}/epm_score
-	chmod 755 ${INSTALL_BIN}/epm_display
-	chmod 755 ${INSTALL_DEFAULT}/epm_default_generate
-	chmod 755 ${INSTALL_DEFAULT}/epm_default_filter
-	-ls -l ${INSTALL_BIN}/epm_score*
-	-ls -l ${INSTALL_BIN}/epm_display*
-	-ls -l ${INSTALL_DEFAULT}/epm_default_generate*
-	-ls -l ${INSTALL_DEFAULT}/epm_default_filter*
+${BIN}/epm_score:	epm_score
+	test -d ${BIN}
+	test -w ${BIN}
+	rm -f ${BIN}/epm_score
+	cp -p epm_score ${BIN}
+	chmod 775 ${BIN}/epm_score
+	-ls -l ${BIN}/epm_score*
+
+${BIN}/epm_display:	epm_display
+	test -d ${BIN}
+	test -w ${BIN}
+	rm -f ${BIN}/epm_display
+	cp -p epm_display ${BIN}
+	chmod 775 ${BIN}/epm_display
+	-ls -l ${BIN}/epm_display*
+
+${DEFAULT}/epm_default_generate:	\
+		epm_default_generate
+	test -d ${DEFAULT}
+	test -w ${DEFAULT}
+	rm -f ${DEFAULT}/epm_default_generate
+	cp -p epm_default_generate ${DEFAULT}
+	chmod 775 ${DEFAULT}/epm_default_generate
+	-ls -l ${DEFAULT}/epm_default_generate*
+
+${DEFAULT}/epm_default_filter:	epm_default_filter
+	test -d ${DEFAULT}
+	test -w ${DEFAULT}
+	rm -f ${DEFAULT}/epm_default_filter
+	cp -p epm_default_filter ${DEFAULT}
+	chmod 775 ${DEFAULT}/epm_default_filter
+	-ls -l ${DEFAULT}/epm_default_filter*
+
+install:	${BIN}/epm_score \
+		${BIN}/epm_display \
+		${DEFAULT}/epm_default_generate \
+		${DEFAULT}/epm_default_filter
