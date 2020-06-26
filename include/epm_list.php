@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun 23 13:35:17 EDT 2020
+    // Date:	Fri Jun 26 13:48:40 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -48,8 +48,12 @@
 	exit ( 'ACCESS ERROR: $uid not set' );
 
     if ( ! is_dir ( "$epm_data/users/$uid/+lists+" ) )
+    {
+        @mkdir ( "$epm_data/users", 01770 );
+        @mkdir ( "$epm_data/users/$uid", 01770 );
         @mkdir ( "$epm_data/users/$uid/+lists+",
-	         0770, true );
+	         01770 );
+    }
 
     // Permission maps.  These map:
     //
@@ -347,7 +351,7 @@
 	              . " published";
 	    return;
 	}
-	@mkdir ( "$epm_data/lists" );
+	@mkdir ( "$epm_data/lists", 01770 );
 	if ( ! symbolic_link ( "../$f",
 	                       "$epm_data/$g" ) )
 	    ERROR ( "cannot make link $g" );
