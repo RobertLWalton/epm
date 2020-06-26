@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 25 15:22:28 EDT 2020
+// Date:    Thu Jun 25 23:33:02 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -652,7 +652,7 @@ function setup ( $dryrun )
 //	[BASE,NUMBER]
 //
 // where the backup is named BASE-LEVEL.tgz and NUMBER
-// n indicates this it the n'th child of the latest
+// n indicates this is the n'th child of the latest
 // level 0 backup.  NUMBER is 0 for level 0 backups.
 //
 // The list is sorted in BASE order, so if NUMBER is n
@@ -675,7 +675,7 @@ function backup_list ( & $list )
     $number = -1;
     foreach ( $files as $file )
     {
-        if ( ! preg_match ( '/^(.*)-(0|1)\.tgz$/',
+        if ( ! preg_match ( '/^(.+)-(0|1)\.tgz$/',
 	                    $file, $matches ) )
 	    continue;
 	$base = $matches[1];
@@ -686,7 +686,6 @@ function backup_list ( & $list )
 	    ++ $number;
 	$list[] = [$base,$number];
     }
-    return $list;
 }
 
 function clean_backups ( $dryrun, & $list = NULL )
@@ -701,18 +700,22 @@ function clean_backups ( $dryrun, & $list = NULL )
     $c = $c - $epm_backup_round;
     // We would like to delete first $c $list elements.
     list ( $base, $number ) = $list[$c];
-    $c = $c - $number;
-    // Now we can delete delete $c element.
+    if ( $number >= 0 )  // handles $number == -1 case
+	$c = $c - $number;
+    // Now we can delete $c elements.
     if ( $c <= 0 ) return;
     $commands = [];
     $i = 0;
     while ( $i < $c )
     {
         list ( $base, $number ) = $list[$i];
+	++ $i;
 	$l = ( $number == 0 ? '0' : '1' );
 	$commands[] = "rm -f $base-$l.tgz";
 	if ( $l == '0' )
 	    $commands[] = "rm -f $base-$l.snar";
+	else
+	    $commands[] = "rm -f $base-$l.parent";
     }
     foreach ( $commands as $command )
     {
@@ -730,7 +733,7 @@ function clean_backups ( $dryrun, & $list = NULL )
 function backup ( $dryrun )
 {
     global $epm_backup, $epm_backup_name,
-           $epm_time_format;
+           $epm_backup_round, $epm_time_format;
 
     backup_list ( $list );
 
@@ -739,15 +742,16 @@ function backup ( $dryrun )
     $commands = [];
     $len = count ( $list );
     if ( $len == 0 )
-    {
-        $pbase = NULL;
-	$cbase = NULL;
 	$number = 0;
-    }
     else
     {
 	list ( $pbase, $number ) = $list[$len-1];
-	if ( $number > 0 )
+	if ( $number == -1 )
+	    $number = 0;
+	elseif (    2 * ( $number + 1 )
+	         >= $epm_backup_round )
+	    $number = 0;
+	elseif ( $number > 0 )
 	{
 	    $cbase = $pbase;
 	    list ( $pbase, $zero ) =
@@ -773,15 +777,20 @@ function backup ( $dryrun )
     if ( $number != 0 )
 	$commands[] = [ $epm_backup,
 	                "cp -p $pbase-0.snar" .
-			" $base-0.snar" ];
+			" $base-1.snar" ];
     $d = $epm_backup;
     $l = ( $number == 0 ? '0' : '1' );
     $commands[] = [ $epm_data,
 		    "tgz -zc -g $d/$base-$l.snar" .
 		    " -f $d/$base-$l.tgz ." ];
     if ( $number != 0 )
+    {
 	$commands[] = [ $epm_backup,
 	                "rm $base-1.snar" ];
+	$commands[] = [ $epm_backup,
+	                "ln -snf $pbase-0.tgz" .
+			" $base-1.parent" ];
+    }
     foreach ( $commands as $e )
     {
         list ( $d, $command ) = $e;
@@ -792,4 +801,5 @@ function backup ( $dryrun )
 	    ERROR ( "last command returned $r" );
     }
     $list[] = [$base,$number];
+    clean_backups ( $list );
 }
