@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 26 13:30:35 EDT 2020
+// Date:    Fri Jun 26 13:50:26 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -444,7 +444,7 @@ function import_project ( $project, $dryrun = false )
     $m = umask ( 06 );
     if ( ! is_dir ( "$epm_data/$d2" )
          &&
-         ! mkdir ( "$epm_data/$d2", 0771, true ) )
+         ! mkdir ( "$epm_data/$d2", 01771, true ) )
 	ERROR ( "cannot make $d2 in \$epm_data" );
     umask ( $m );
 
@@ -475,7 +475,7 @@ function import_projects ( $dryrun = false )
     $m = umask ( 06 );
     if ( ! is_dir ( "$epm_data/$d1" )
          &&
-         ! mkdir ( "$epm_data/$d1", 0771, true ) )
+         ! mkdir ( "$epm_data/$d1", 01771, true ) )
 	ERROR ( "cannot make $d1 in \$epm_data" );
     umask ( $m );
 
@@ -502,7 +502,7 @@ function make_dir ( $dir, $mode, $dryrun )
         $m = @fileperms ( "$epm_data/$dir" );
 	if ( $m == false )
 	    ERROR ( "cannot stat $dir" );
-	$m = $m & 0777;
+	$m = $m & 01777;
 	if ( $m == $mode ) return;
         $action = sprintf
 	    ( "changing mode of directory %s" .
@@ -531,7 +531,7 @@ function make_link ( $to, $from, $dryrun )
     if ( is_link ( "$epm_data/$from" ) ) return;
     echo ( "making link $from => $to" . PHP_EOL );
     if ( $dryrun ) return;
-    if ( exec ( "ln -snf $to $link 2>&1" ) != '' )
+    if ( exec ( "ln -snf $to $from 2>&1" ) != '' )
         ERROR ( "cannot make link $from => $to" );
 	// PHP symlink fails sometimes so we dare not
 	// use it.  -snf will unlink $from if it exists
@@ -553,7 +553,7 @@ function copy_dir ( $dir, $dryrun )
     $desdir = "$epm_data/$dir";
 
     if ( ! is_dir ( $desdir ) )
-        make_dir ( $dir, 0770, $dryrun );
+        make_dir ( $dir, 01770, $dryrun );
 
     $files = @scandir ( $srcdir );
     if ( $files === false )
@@ -602,10 +602,10 @@ function setup ( $dryrun )
     // Be sure 0771 directories have the right mode.
     //
     $m = umask ( 06 );
-    make_dir ( '.', 0771, $dryrun );
-    make_dir ( 'projects', 0771, $dryrun );
-    make_dir ( 'projects/public', 0771, $dryrun );
-    make_dir ( 'projects/demos', 0771, $dryrun );
+    make_dir ( '.', 01771, $dryrun );
+    make_dir ( 'projects', 01771, $dryrun );
+    make_dir ( 'projects/public', 01771, $dryrun );
+    make_dir ( 'projects/demos', 01771, $dryrun );
     umask ( $m );
 
     make_link ( "$epm_home/default", 'default',

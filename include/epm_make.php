@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 19 12:32:26 EDT 2020
+// Date:    Fri Jun 26 13:49:30 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -679,7 +679,7 @@ function cleanup_dir ( $dir, & $warnings )
     }
 
     $m = umask ( 06 );
-    if ( ! mkdir ( $d, 0771) )
+    if ( ! mkdir ( $d, 01771) )
 	// Must give o+x permission so epm_sandbox can
 	// execute programs that are in directory.
 	//
@@ -2292,7 +2292,7 @@ function finish_run ( & $warnings, & $errors )
 
     $d = "$d/+submits+";
     $cf = "$d/+count+";
-    @mkdir ( "$epm_data/$d", 0770 );
+    @mkdir ( "$epm_data/$d", 01770 );
     LOCK ( $d, LOCK_EX );
     $count = @file_get_contents
 	( "$epm_data/$cf" );
