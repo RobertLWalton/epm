@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 26 02:07:19 EDT 2020
+// Date:    Fri Jun 26 03:04:21 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -822,5 +822,5 @@ function backup ( $dryrun )
 	    ERROR ( "last command returned $r" );
     }
     $list[] = [$base,$number];
-    clean_backups ( $list );
+    clean_backups ( $dryrun, $list );
 }
