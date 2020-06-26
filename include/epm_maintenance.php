@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 26 03:04:21 EDT 2020
+// Date:    Fri Jun 26 13:30:35 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -531,7 +531,7 @@ function make_link ( $to, $from, $dryrun )
     if ( is_link ( "$epm_data/$from" ) ) return;
     echo ( "making link $from => $to" . PHP_EOL );
     if ( $dryrun ) return;
-    if ( exec ( "ln -snf $target $link 2>&1" ) != '' )
+    if ( exec ( "ln -snf $to $link 2>&1" ) != '' )
         ERROR ( "cannot make link $from => $to" );
 	// PHP symlink fails sometimes so we dare not
 	// use it.  -snf will unlink $from if it exists
