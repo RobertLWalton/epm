@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 20 22:33:12 EDT 2020
+    // Date:	Fri Jun 26 16:48:00 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -233,12 +233,12 @@
         $epm_page_type = '+init+';
     else
         $epm_page_type = '+main+';
-    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
-    // require "$epm_home/include/debug_info.php";
+    require __DIR__ . '/index.php';
+    // require __DIR__ . '/../include/debug_info.php';
 
     if ( $epm_method == 'GET' )
     {
-        require "$epm_home/include/epm_random.php";
+        require __DIR__ . '/../include/epm_random.php';
         $_SESSION['EPM_ID_GEN']['+main+'] =
 	    init_id_gen();
 	$ID = bin2hex
@@ -633,7 +633,7 @@
 
 <html>
 <head>
-<?php require "$epm_home/include/epm_head.php"; ?>
+<?php require __DIR__ . '/../include/epm_head.php'; ?>
 
 <style>
     button, input, mark, span, pre {
@@ -740,7 +740,7 @@ Please <input type='text' size='40' id='cnum_in'
     }
 ?>
 <div class='terms'>
-<?php require "$epm_home/include/epm_terms.html"; ?>
+<?php require __DIR__ . '/../include/epm_terms.html'; ?>
 </div>
 
 <script>

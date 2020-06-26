@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 20 03:40:00 EDT 2020
+// Date:    Fri Jun 26 16:47:31 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -21,16 +21,24 @@
 //
 // instead, which is included by this page.
 
-$epm_web = $_SERVER['DOCUMENT_ROOT'];
-
-$epm_self = $_SERVER['PHP_SELF'];
-
 
 $epm_method = $_SERVER['REQUEST_METHOD'];
 if ( $epm_method != 'GET'
      &&
      $epm_method != 'POST' )
     exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
+
+
+$epm_self = $_SERVER['PHP_SELF'];
+
+if ( ! preg_match ( '#^(/[^/]+)(/.+)$#',
+                    $epm_self, $matches ) )
+    exit ( 'UNACCEPTABLE HTTP GET/POST' );
+
+$epm_root = $matches[1];
+$epm_self = $matches[2];
+$epm_web = $_SERVER['DOCUMENT_ROOT'];
+$epm_web .= $epm_root;
 
 // Redirect GETs to this page using either of its names
 // to login.php.
@@ -42,11 +50,11 @@ if ( $epm_self == "/index.php"
     if ( $epm_message == 'POST' )
 	exit ( "UNACCEPTABLE HTTP POST" );
 
-    header ( "Location: /page/login.php" );
+    header ( "Location: $epm_root/page/login.php" );
     exit;
 }
 
-require "parameters.php";
+require "$epm_web/parameters.php";
 
 // The rest of this file is code that is included at the
 // start of *ALL* EPM PHP pages for both GETs and POSTs.
@@ -237,7 +245,8 @@ if ( in_array ( $epm_page_type,
 	if ( isset ( $_POST['xhttp'] ) )
 	    exit ( 'this tab is orphaned;' .
 	           ' close this tab' );
-	header ( "Location: /page/orphan.html" );
+	header
+	    ( "Location: $epm_root/page/orphan.html" );
         exit;
     }
 

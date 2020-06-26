@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Jun 26 14:46:36 EDT 2020
+// Date:	Fri Jun 26 16:20:49 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -135,7 +135,7 @@ else
 if ( $epm_web[0] != '/' )
     $epm_web = getcwd() . "/$epm_web";
 
-$epm_self = 'epm';
+$epm_self = 'bin/epm';
 require "$epm_web/parameters.php";
 require "$epm_web/maintenance_parameters.php";
 
