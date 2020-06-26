@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 25 23:33:02 EDT 2020
+// Date:    Fri Jun 26 02:07:19 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -344,7 +344,7 @@ function export_project ( $project, $dryrun = false )
     }
     if ( ! is_dir ( "$epm_library/$d2" )
          &&
-         ! mkdir ( "$epm_library/$d2", 0770, true ) )
+         ! mkdir ( "$epm_library/$d2", 0750, true ) )
 	ERROR ( "cannot make $d2 in \$epm_library" );
 
     $dirs = @scandir ( "$epm_data/$d2" );
@@ -372,7 +372,7 @@ function export_projects ( $dryrun = false )
     }
     if ( ! is_dir ( "$epm_library/$d1" )
          &&
-         ! mkdir ( "$epm_library/$d1", 0770, true ) )
+         ! mkdir ( "$epm_library/$d1", 0750, true ) )
 	ERROR ( "cannot make $d1 in \$epm_library" );
 
     $dirs = @scandir ( "$epm_data/$d1" );
@@ -668,6 +668,9 @@ function backup_list ( & $list )
     global $epm_backup;
 
     $list = [];
+    if ( ! is_dir ( $epm_backup ) )
+        return;
+
     $files = scandir ( $epm_backup );
     if ( $files === false )
         ERROR ( 'cannot read $epm_backup' );
@@ -732,12 +735,24 @@ function clean_backups ( $dryrun, & $list = NULL )
 
 function backup ( $dryrun )
 {
-    global $epm_backup, $epm_backup_name,
+    global $epm_data, $epm_backup, $epm_backup_name,
            $epm_backup_round, $epm_time_format;
+
+    if ( ! is_dir ( $epm_backup ) )
+    {
+        echo ( "making $epm_backup" . PHP_EOL );
+	if ( ! $dryrun
+	     &&
+	     ! mkdir ( $epm_backup, 0750 ) )
+	    ERROR ( "cannot make $epm_backup" );
+    }
 
     backup_list ( $list );
 
     $time = strftime ( $epm_time_format );
+    $time = str_replace ( ':', '_', $time );
+        // Tar interprets :'s in its file name
+	// specially.
     $base = "$epm_backup_name-$time";
     $commands = [];
     $len = count ( $list );
@@ -758,6 +773,8 @@ function backup ( $dryrun )
 	        $list[$len-1-$number];
 	    ++ $number;
 	}
+	else
+	    $number = 1;
     }
 
     if ( $number > 1 )
@@ -781,8 +798,12 @@ function backup ( $dryrun )
     $d = $epm_backup;
     $l = ( $number == 0 ? '0' : '1' );
     $commands[] = [ $epm_data,
-		    "tgz -zc -g $d/$base-$l.snar" .
-		    " -f $d/$base-$l.tgz ." ];
+		    "tar -zc" .
+		    " -g $d/$base-$l.snar" .
+		    " -f $d/$base-$l.tgz" .
+		    " --exclude=+work+" .
+		    " --exclude=+run+" .
+		    " ." ];
     if ( $number != 0 )
     {
 	$commands[] = [ $epm_backup,

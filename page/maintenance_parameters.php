@@ -2,21 +2,20 @@
 
 // File:    maintenance_parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jun 25 17:38:59 EDT 2020
+// Date:    Fri Jun 26 02:52:44 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
 // make no warranty and accept no liability for EPM.
 
 // Per web site EPM maintenance parameters.  An edited
-// version of this file located in the admin directory
+// version of this file located in the web directory
 // of the server.  This file is included by bin/epm and
 // similar programs by
 //
 //    $epm_web = ...
 //    require "$epm_web/parameters.php";
-//    require
-//	"$epm_data/admin/maintenance_parameters.php";
+//    require "$epm_web/maintenance_parameters.php";
 
 $epm_backup = $epm_home . '/../epm_backup';
     // The directory in which backups are placed.
@@ -47,6 +46,8 @@ $epm_backup = $epm_home . '/../epm_backup';
 //
 $epm_backup_name = 'EPM-BACKUP';
 $epm_backup_round = 30;
+    // WARNING: $epm_backup_name should have only
+    //          letters, digits, and `-', BUT NOT `_'.
 
 $epm_library = $epm_home . '/../epm_public';
     // $epm_library/projects is the project library from

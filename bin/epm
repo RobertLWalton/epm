@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Jun 25 17:38:27 EDT 2020
+// Date:	Fri Jun 26 02:52:08 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -37,7 +37,9 @@ Next it sets $php_self to 'epm', loads
 and executes the functions as indicated.  Actions taken
 are described on the standard output.
 
-The -n option indicates a dry run.
+The -n option indicates a dry run.  However, for import
+and export, directories will be silently made even for
+a dryrun.
 
 EOT;
 
