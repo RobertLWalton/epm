@@ -2,7 +2,7 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Wed Jun 24 23:09:31 EDT 2020
+# Date:		Fri Jun 26 14:24:07 EDT 2020
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
@@ -59,8 +59,12 @@ ${BIN}/epm_display:	epm_display
 	chmod 775 ${BIN}/epm_display
 	-ls -l ${BIN}/epm_display*
 
+${DEFAULT}:
+	mkdir ${DEFAULT}
+	chmod g-w+rx,o-rw+x ${DEFAULT}
+
 ${DEFAULT}/epm_default_generate:	\
-		epm_default_generate
+		epm_default_generate ${DEFAULT}
 	test -d ${DEFAULT}
 	test -w ${DEFAULT}
 	rm -f ${DEFAULT}/epm_default_generate
@@ -68,7 +72,8 @@ ${DEFAULT}/epm_default_generate:	\
 	chmod 775 ${DEFAULT}/epm_default_generate
 	-ls -l ${DEFAULT}/epm_default_generate*
 
-${DEFAULT}/epm_default_filter:	epm_default_filter
+${DEFAULT}/epm_default_filter:	\
+		epm_default_filter ${DEFAULT}
 	test -d ${DEFAULT}
 	test -w ${DEFAULT}
 	rm -f ${DEFAULT}/epm_default_filter

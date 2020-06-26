@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 26 13:50:26 EDT 2020
+// Date:    Fri Jun 26 14:00:22 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -33,7 +33,7 @@ if ( ! isset ( $epm_home ) )
 // tories in a directory, recursively.  Files get the
 // mode 0660, except those with names matching $re
 // which get the mode 0771.  Directories get the mode
-// 0770.  Links are ignored.
+// 01770.  Links are ignored.
 //
 // If a file mode is being changed, a message to that
 // effect is written to the standard output.
@@ -61,7 +61,7 @@ function set_modes ( $d, $dryrun = false, $re = NULL )
 	if ( is_dir ( "$epm_data/$f" ) )
 	{
 	    set_modes ( $f, $dryrun, $re );
-	    $m = 0770;
+	    $m = 01770;
 	}
 	elseif ( ! isset ( $re ) )
 	    $m = 0660;
@@ -76,7 +76,7 @@ function set_modes ( $d, $dryrun = false, $re = NULL )
 	    ERROR ( "cannot read mode of $f" );
 	    continue;
 	}
-	$mode = $mode & 0777;
+	$mode = $mode & 01777;
 	if ( $mode == $m ) continue;
 
 	$action = sprintf ( "changing mode of %s from" .
@@ -102,7 +102,7 @@ function set_dir_mode ( $dir, $m, $dryrun = false )
 	ERROR ( "cannot read mode of $dir" );
 	return;
     }
-    $mode = $mode & 0777;
+    $mode = $mode & 01777;
     if ( $mode == $m ) return;
 
     $action = sprintf ( "changing mode of %s from" .
@@ -119,7 +119,7 @@ function set_dir_mode ( $dir, $m, $dryrun = false )
 // Function to init a project problem directory.
 //
 // Sets directory mode of projects, projects/$project,
-// and projects/$project/$problem to 0771.
+// and projects/$project/$problem to 01771.
 //
 // Makes sure that generate_PPPP exists.  If it does
 // not and there is a +solutions+/generate_PPPP.EEE,
@@ -163,7 +163,7 @@ function init_problem
     }
 
     foreach ( [$d1,$d2,$d3] as $d )
-        set_dir_mode ( $d, 0771, $dryrun );
+        set_dir_mode ( $d, 01771, $dryrun );
 
     foreach ( $epm_specials as $spec )
     {
@@ -225,7 +225,7 @@ function init_problem
     $spec_re = implode ( "|", $epm_specials );
     $spec_re = "/^($spec_re)-$problem\$/";
 
-    set_modes ( $d3, $dryrun, $spec_re, 0771 );
+    set_modes ( $d3, $dryrun, $spec_re );
 }
 
 // Function to init all the problems in a project.
@@ -241,8 +241,8 @@ function init_project ( $project, $dryrun = false )
         ERROR ( "$d2 is not a directory" );
 	return;
     }
-    set_dir_mode ( $d1, 0771, $dryrun );
-    set_dir_mode ( $d2, 0771, $dryrun );
+    set_dir_mode ( $d1, 01771, $dryrun );
+    set_dir_mode ( $d2, 01771, $dryrun );
 
     $dirs = @scandir ( "$epm_data/$d2" );
     if ( $dirs === false )
@@ -268,7 +268,7 @@ function init_projects ( $dryrun = false )
 	return;
     }
 
-    set_dir_mode ( $d1, 0771, $dryrun );
+    set_dir_mode ( $d1, 01771, $dryrun );
 
     $dirs = @scandir ( "$epm_data/$d1" );
     if ( $dirs === false )
@@ -294,7 +294,7 @@ function init_admin ( $dryrun = false )
 	return;
     }
 
-    set_dir_mode ( $d1, 0770, $dryrun );
+    set_dir_mode ( $d1, 01770, $dryrun );
     set_modes ( $d1, $dryrun );
 }
 
@@ -420,8 +420,8 @@ function import_problem
     else
     {
         $d = "projects/$project/$problem";
-        if ( ! chmod ( $d, 0771 ) )
-	    ERROR ( "cannot chmod $d to 0771" );
+        if ( ! chmod ( "$epm_data/$d", 01771 ) )
+	    ERROR ( "cannot chmod $d to 01771" );
         echo "done importing $project $problem" .
 	     PHP_EOL;
     }
@@ -540,7 +540,7 @@ function make_link ( $to, $from, $dryrun )
 
 // Copy file directory from $epm_home/setup/$dir to
 // $epm_data/$dir.  Make destination directory if
-// necessary with mode 0770.  If the destination of a
+// necessary with mode 01770.  If the destination of a
 // file to be copied exists, do not copy the file.
 // If the destination is a dangling link, unlink it
 // and copy.  Mode of copied files is 0660.  Copy
@@ -599,7 +599,7 @@ function setup ( $dryrun )
     //
     copy_dir ( '.', $dryrun );
 
-    // Be sure 0771 directories have the right mode.
+    // Be sure 01771 directories have the right mode.
     //
     $m = umask ( 06 );
     make_dir ( '.', 01771, $dryrun );
