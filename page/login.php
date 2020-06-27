@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 27 06:30:23 EDT 2020
+    // Date:	Sat Jun 27 13:06:09 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -69,7 +69,7 @@
     //
     //    PATH	    The path component of the URL used
     //		    to log in.  This always ends with
-    //		    `/page/login.php', precisely.
+    //		    `/page/login.php'.
     //
     //	  TICKET    Stored by the browser in its local
     //		    memory, which is specific to the
@@ -88,11 +88,10 @@
     // Next page is page/project.php if user is NOT new
     // and page/user.php otherwise.  In the case of a
     // new user, this last page determines UID, sets
-    // EPM_UID, and creates EMAIL-FILE.
+    // EPM_UID, creates EMAIL-FILE, and writes a log
+    // message to login.log. 
     //
-    // Each successful execution of the browser identi-
-    // fication protocol (i.e., each successful login)
-    // is logged separately to the file:
+    // Each successful login is logged to the file:
     //
     //		$epm_data/login.log
     //
@@ -101,9 +100,9 @@
     //	 // comment
     //   UID EMAIL IPADDR STIME
     //
-    // where IPADDR is $_SESSION['EPM_IPADDR'] and for
-    // a new user UID is 'NEW'.
-
+    // where IPADDR is $_SESSION['EPM_IPADDR'].  For
+    // new users this logging is done by page/user.php,
+    // and otherwise it is done by the current page.
 
     // Browser Identification Protocol
     // -------------------------------
@@ -132,10 +131,12 @@
     //     * Send 'op=AUTO&value=BID'
     //	   * Receive one of:
     //           'EXPIRED':
+    //		     tell user reconfirmation needed
     //               go to CONFIRM
     //           'BLOCKED_EMAIL':
     //		     go to FAIL
     //           'FAIL':  (means BID not recognized)
+    //		     tell user reconfirmation needed
     //               go to MANUAL_ID
     //		 'RENEW BID NEXT_PAGE'
     //		     go to FINISH
@@ -185,8 +186,6 @@
     }
     else
 	DEBUG ( 'POST ' . json_encode ( $_POST ) );
-
-    $STIME = $_SESSION['EPM_SESSION_TIME'];
 
     // Values read from EMAIL-FILE if that exists and
     // has been read.
@@ -293,22 +292,20 @@
     //
     function confirmation_reply ( $email, $op )
     {
-        global $uid;
-
 	$bid = new_bid ( $email );
 
 	$sname = $_SERVER['SERVER_NAME'];
-	$r = mail ( $data['EMAIL'],
+	$r = mail ( $email,
 	       "Your EPM Confirmation Number",
 	       "Your EPM $sname confirmation number" .
 	       " is:\r\n" .
 	       "\r\n" .
-	       "     {$data['CNUM']}\r\n",
+	       "     $bid\r\n",
 	       "From: no_reply@$sname" );
 	if ( $r === false )
 	    ERROR ( "mailer failed" );
 
-	reply ( "$op $bid" );
+	reply ( "$op" );
     }
 
     $op = NULL;
@@ -349,12 +346,16 @@
 	if ( $c === false )
 	    ERROR ( "cannot read readable file" .
 		    " $bfile" );
+	@unlink ( "$epm_data/$bfile" );
+
 	$email = trim ( $c );
 	if ( is_blocked ( $email ) )
 	    reply ( 'BLOCKED_EMAIL' );
 
-	@unlink ( "$epm_data/$bfile" );
 	read_email_file ( $email );
+
+	$STIME = $_SESSION['EPM_SESSION_TIME'];
+	$IPADDR = $_SESSION['EPM_IPADDR'];
 
 	if ( isset ( $uid ) )
 	{
@@ -371,11 +372,11 @@
 		$efile = "admin/email/"
 		       . rawurlencode ( $email );
 		++ $rcount;
-		$rtime = strtotime
-		    ( $epm_time_format );
 		$r = file_put_contents
 		    ( "$epm_data/$efile",
-		      "$uid $rcount $rtime" );
+		      "$uid $rcount $STIME" );
+		if ( $r === false )
+		    ERROR ( "cannot write $efile" );
 		confirmation_reply
 		    ( $email, 'EXPIRED' );
 	    }
@@ -395,6 +396,13 @@
 	    if ( $fmtime === false )
 		ERROR ( "cannot stat $f" );
 	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
+
+	    $r = @file_put_contents
+		( "$epm_data/login.log",
+		  "$uid $email $IPADDR $STIME",
+		  FILE_APPEND );
+	    if ( $r === false )
+		ERROR ( "could not write login.log" );
 
 	}
 	else
@@ -473,7 +481,7 @@ EOT;
 </td></tr></table>
 <br>
 <strong>New Users - See
-        <a href='/page/guide.html'>Guide</a></strong>
+        <a href='guide.html'>Guide</a></strong>
 </div>
 
 <div id='show_email' style.display='none'>
@@ -507,7 +515,7 @@ Please <input type='text' size='40' id='cnum_in'
     if ( file_exists ( "$epm_data/$f" ) )
     {
 	echo "<div class='terms'>";
-        include "$epm_data/$f";
+        readfile ( "$epm_data/$f" );
 	echo "</div>";
     }
 ?>
@@ -532,6 +540,9 @@ var get_cnum = document.getElementById("get_cnum");
 var cnum_in = document.getElementById("cnum_in");
 
 
+// Output message to user asynchronously while at the
+// same time continuing by returning from this function.
+// 
 function ALERT ( message )
 {
     // Alert must be scheduled as separate task.
@@ -589,7 +600,7 @@ function MALFORMED_RESPONSE ( when )
 }
 
 let PATH = location.pathname;
-var AUTO_RETRY, EMAIL, BID;
+var EMAIL, BID;
 
 var GET_EMAIL_ENABLED = false;
 var GET_CNUM_ENABLED = false;
@@ -696,21 +707,12 @@ function AUTO_ID()
 {
     storage.removeItem ( PATH + '\0' + EMAIL );
     SEND ( 'op=AUTO&value=' + BID,
-           AUTO_RESPONSE,
-	   'auto-login' );
+           AUTO_RESPONSE, 'auto-login' );
 }
 
 function AUTO_RESPONSE ( item )
 {
-    if ( item[0] == 'EXPIRED' )
-        CONFIRM();
-    else if ( item[0] == 'FAIL' )
-        MANUAL_ID();
-    else if ( item[0] == 'BLOCKED_EMAIL' )
-        FAIL ( EMAIL + ' is blocked' );
-    else if ( item[0] == 'RENEW'
-              &&
-	      item.length == 3 )
+    if ( item[0] == 'RENEW' && item.length == 3 )
     {
 	BID = item[1];
 	if ( ! /^[a-fA-F0-9]{32}$/.test(BID) )
@@ -727,9 +729,24 @@ function AUTO_RESPONSE ( item )
 	       // correct page.
 	}
     }
+    else if ( item.length !== 1 )
+	MALFORMED_RESPONSE ( 'to auto-login' );
+    else if ( item[0] == 'EXPIRED' )
+    {
+        ALERT ( 'you must re-confirm because your' +
+	        ' auto-login period has expired' );
+        CONFIRM();
+    }
+    else if ( item[0] == 'FAIL' )
+    {
+        ALERT ( 'you must re-confirm because your' +
+	        ' auto-login failed' );
+        MANUAL_ID();
+    }
+    else if ( item[0] == 'BLOCKED_EMAIL' )
+        FAIL ( EMAIL + ' is blocked' );
     else
-	MALFORMED_RESPONSE
-	    ( 'to auto-login' );
+	MALFORMED_RESPONSE ( 'to auto-login' );
 }
     
 </script>

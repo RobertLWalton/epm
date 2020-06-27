@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun 26 16:52:28 EDT 2020
+    // Date:	Sat Jun 27 10:47:50 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -50,6 +50,7 @@
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
     $STIME = $_SESSION['EPM_SESSION_TIME'];
+    $IPADDR = $_SESSION['EPM_IPADDR'];
     $edit = ( $new_user ? 'profile' : NULL );
         // One of: NULL (just view), 'emails', or
 	// 'profile'.  Set here for GET processing;
@@ -351,8 +352,7 @@
 	    $f = "admin/email/$re";
 	    if ( file_exists ( "$epm_data/$f" ) )
 	        WARN ( "$f exists when it should not" );
-	    $items = [ $uid, $STIME, 1, $STIME,
-				     0, 'NONE' ];
+	    $items = [ $uid, 0, $STIME ];
 	    $r = @file_put_contents
 		( "$epm_data/$f",
 		  implode ( ' ', $items ) );
@@ -369,6 +369,13 @@
 	    if ( $fmtime === false )
 		ERROR ( "could not stat $f" );
 	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
+
+	    $r = @file_put_contents
+		( "$epm_data/login.log",
+		  "$uid $email $IPADDR $STIME",
+		  FILE_APPEND );
+	    if ( $r === false )
+		ERROR ( "could not write login.log" );
 
 	    $_SESSION['EPM_UID'] = $uid;
 	        // Do this last as it certifies
@@ -410,8 +417,7 @@
 	    }
 	    else
 	    {
-	        $items = [ $uid, $STIME, 0, 'NONE',
-		                         0, 'NONE' ];
+	        $items = [ $uid, 0, $STIME ];
 		$r = @file_put_contents
 		    ( "$epm_data/$f",
 		      implode ( ' ', $items ) );

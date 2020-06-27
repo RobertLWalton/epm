@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 26 20:47:20 EDT 2020
+// Date:    Sat Jun 27 13:41:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -290,8 +290,9 @@ if ( ! isset ( $_POST['xhttp'] )
     {
 	if ( x < 0 ) x += screen.width;
 	if ( y < 0 ) y += screen.height;
+	let root = '<?php echo $epm_root; ?>';
 	window.open
-	    ( page, name,
+	    ( root + '/' + page, name,
 	      'height=' + h + 'px,' +
 	      'width=' + w + 'px,' +
 	      'screenX=' + x + 'px,' +
@@ -303,15 +304,14 @@ if ( ! isset ( $_POST['xhttp'] )
     function HELP ( reference )
     {
         AUX_WINDOW ( '+help+',
-	             '/page/help.html#' + reference,
+	             'help.html#' + reference,
 		     -800, 0, 800, 800 );
     }
     // Launches 'view' window in lower right corner.
     //
     function VIEW ( page )
     {
-        AUX_WINDOW ( '+view+',
-	             '/page/' + page,
+        AUX_WINDOW ( '+view+', page,
 		     -1200, -800, 1200, 800 );
     }
     </script>
