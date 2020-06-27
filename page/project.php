@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun 26 16:54:04 EDT 2020
+    // Date:	Sat Jun 27 17:42:49 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1334,7 +1334,7 @@ EOT;
 	        $errors[] = "your $problem problem"
 		          . " no longer exists";
 	    else
-	    $goto = $problem;
+		$goto = $problem;
 	}
         elseif ( isset ( $_POST['create'] ) )
 	{
@@ -2258,8 +2258,8 @@ EOT;
 	function GOTO_PROBLEM ( problem )
 	{
 	    let w = window.open
-	        (   '/page/problem.php?problem='
-		  + problem, problem, '' );
+	        ( '$epm_root/page/problem.php' +
+		  '?problem=' + problem, problem, '' );
 	}
 	</script>
 EOT;

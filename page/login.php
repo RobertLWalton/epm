@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 27 13:06:09 EDT 2020
+    // Date:	Sat Jun 27 16:28:21 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -39,10 +39,10 @@
     //		    ['EPM_SESSION_TIME'] in $epm_time_
     //		    format.
     //
-    //    RTIME	    Last required email confirmation.
+    //    ATIME	    Start time of auto-login period.
     //
-    //    RCOUNT    Number of successful required
-    //              confirmations.
+    //    ACOUNT    Number of previous auto-login
+    //		    periods.
     //
     //    BID-FILE  The file BDIR/BID that contains just
     //		    the line:
@@ -57,7 +57,7 @@
     //		    EMAIL is encoded by rawurlencode)
     //              that contains just the line:
     //
-    //		    UID RCOUNT RTIME
+    //		    UID ACOUNT ATIME
     //
     //		    File is initialized by user.php
     //		    when user first logs in, after
@@ -191,8 +191,9 @@
     // has been read.
     //
     $uid = NULL;
-    $rcount = NULL;
-    $rtime = NULL;
+    $acount = NULL;
+    $atime = NULL;
+    $STIME = $_SESSION['EPM_SESSION_TIME'];
 
     // Reply to POST from xhttp.
     //
@@ -233,15 +234,19 @@
     }
 
     // Read $epm_data/admin/email/$email(encoded) if it
-    // exists and if read set $uid, $rcount, $rtime.
+    // exists and if read set $uid, $acount, $atime.
+    // If the file exists, calculate whether auto-login
+    // period has expired.  If yes, update the file to
+    // have a new auto-login period beginning at STIME.
     //
     function read_email_file ( $email )
     {
-	global $epm_data, $uid, $rcount, $rtime;
+	global $epm_data, $uid, $acount, $atime,
+	       $STIME, $epm_expiration_times;
 
 	$uid = NULL;
-	$rcount = NULL;
-	$rtime = NULL;
+	$acount = NULL;
+	$atime = NULL;
 
 	$efile = "admin/email/"
 	       . rawurlencode ( $email );
@@ -259,8 +264,26 @@
 	    ERROR ( "$efile value '$c' badly" .
 		    " formatted" );
 	$uid = $items[0];
-	$rcount = $items[1];
-	$rtime = $items[2];
+	$acount = $items[1];
+	$atime = $items[2];
+
+	$etimes = & $epm_expiration_times;
+	$n = count ( $etimes );
+	$m = ( $acount >= $n ? $n - 1 : $acount );
+	$atime = strtotime ( $atime );
+	$stime = strtotime ( $STIME );
+	if ( $stime > $atime + $etimes[$m] )
+	{
+	    ++ $acount;
+	    $r = file_put_contents
+		( "$epm_data/$efile",
+		  "$uid $acount $STIME" );
+	    if ( $r === false )
+		ERROR ( "cannot write $efile" );
+	    return true;
+	}
+	else
+	    return false;
     }
 
     // Create new BID and its BID-FILE and return
@@ -352,35 +375,11 @@
 	if ( is_blocked ( $email ) )
 	    reply ( 'BLOCKED_EMAIL' );
 
-	read_email_file ( $email );
-
-	$STIME = $_SESSION['EPM_SESSION_TIME'];
-	$IPADDR = $_SESSION['EPM_IPADDR'];
+	if ( read_email_file ( $email ) )
+	    confirmation_reply ( $email, 'EXPIRED' );
 
 	if ( isset ( $uid ) )
 	{
-	    $now = time();
-
-	    $etimes = & $epm_expiration_times;
-	    $n = count ( $etimes );
-	    if ( $rcount >= $n )
-		$rcount = $n - 1;
-	    $rtime = strtotime ( $rtime );
-	    if (   $rtime + $etimes[$rcount]
-		 < $now )
-	    {
-		$efile = "admin/email/"
-		       . rawurlencode ( $email );
-		++ $rcount;
-		$r = file_put_contents
-		    ( "$epm_data/$efile",
-		      "$uid $rcount $STIME" );
-		if ( $r === false )
-		    ERROR ( "cannot write $efile" );
-		confirmation_reply
-		    ( $email, 'EXPIRED' );
-	    }
-	    $next_page = 'project.php';
 	    $_SESSION['EPM_UID'] = $uid;
 
 	    // If $uid exists, so does
@@ -397,12 +396,15 @@
 		ERROR ( "cannot stat $f" );
 	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
 
+	    $IPADDR = $_SESSION['EPM_IPADDR'];
 	    $r = @file_put_contents
 		( "$epm_data/login.log",
 		  "$uid $email $IPADDR $STIME",
 		  FILE_APPEND );
 	    if ( $r === false )
 		ERROR ( "could not write login.log" );
+
+	    $next_page = 'project.php';
 
 	}
 	else

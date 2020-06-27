@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 27 13:41:52 EDT 2020
+// Date:    Sat Jun 27 17:25:54 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -68,15 +68,11 @@ header ( 'Cache-Control: no-store' );
 
 // Check that we have not skipped proper login.
 //
-if ( ! isset ( $_SESSION['EPM_BID'] )
+if ( ! isset ( $_SESSION['EPM_UID'] )
      &&
-     $epm_self != "/page/login.php" )
-    exit ( 'UNACCEPTABLE HTTP GET/POST' );
-else if ( ! isset ( $_SESSION['EPM_UID'] )
-	  &&
-	  $epm_self != "/page/login.php"
-	  &&
-	  $epm_self != "/page/user.php" )
+     $epm_self != "/page/login.php"
+     &&
+     $epm_self != "/page/user.php" )
     exit ( 'UNACCEPTABLE HTTP GET/POST' );
 
 // First functions that most pages need defined.
@@ -290,9 +286,8 @@ if ( ! isset ( $_POST['xhttp'] )
     {
 	if ( x < 0 ) x += screen.width;
 	if ( y < 0 ) y += screen.height;
-	let root = '<?php echo $epm_root; ?>';
 	window.open
-	    ( root + '/' + page, name,
+	    ( '$epm_root' + '/page/' + page, name,
 	      'height=' + h + 'px,' +
 	      'width=' + w + 'px,' +
 	      'screenX=' + x + 'px,' +
