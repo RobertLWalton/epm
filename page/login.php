@@ -234,11 +234,11 @@
     else
         $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
+    require __DIR__ . '/../include/epm_random.php';
     // require __DIR__ . '/../include/debug_info.php';
 
     if ( $epm_method == 'GET' )
     {
-        require __DIR__ . '/../include/epm_random.php';
         $_SESSION['EPM_ID_GEN']['+main+'] =
 	    init_id_gen();
 	$ID = bin2hex
@@ -263,6 +263,8 @@
 	      $_SESSION['EPM_IPADDR'] . PHP_EOL,
 	      FILE_APPEND );
     }
+    else
+	DEBUG ( 'POST ' . json_encode ( $_POST ) );
 
     if ( ! isset ( $_SESSION['EPM_DATA'] ) )
 	$_SESSION['EPM_DATA'] = [];
@@ -275,6 +277,7 @@
     {
         global $ID;
 	echo ( "$ID $reply" );
+	DEBUG ( "REPLY $ID $reply" );
 	exit;
     }
 
@@ -367,20 +370,25 @@
 
 	if ( ! isset ( $data['CNUM'] ) )
 	    $data['CNUM'] =
-		bin2hex ( random_bytes ( 16 ) );
+		bin2hex ( random_16_bytes ( 16 ) );
 
 	$sname = $_SERVER['SERVER_NAME'];
-	mail ( $data['EMAIL'],
+	$r = mail ( $data['EMAIL'],
 	       "Your EPM Confirmation Number",
 	       "Your EPM $sname confirmation number" .
 	       " is:\r\n" .
 	       "\r\n" .
 	       "     {$data['CNUM']}\r\n",
-	       ["From" => "no_reply@$sname"] );
+	       "From: no_reply@$sname" );
+	if ( $r === false )
+	    ERROR ( "mailer failed" );
 
-	$data['BID'] = bin2hex ( random_bytes ( 16 ) );
-	$data['KEYA'] = bin2hex ( random_bytes ( 16 ) );
-	$data['KEYB'] = bin2hex ( random_bytes ( 16 ) );
+	$data['BID'] = bin2hex
+	    ( random_16_bytes ( 16 ) );
+	$data['KEYA'] = bin2hex
+	    ( random_16_bytes ( 16 ) );
+	$data['KEYB'] = bin2hex
+	    ( random_16_bytes ( 16 ) );
 	$data['CTIME'] = $STIME;
 
 	$iv = hex2bin
@@ -495,7 +503,7 @@
 	}
 
 	$data['HANDSHAKE'] =
-	    bin2hex ( random_bytes ( 16 ) );
+	    bin2hex ( random_16_bytes ( 16 ) );
 	$iv = hex2bin
 	    ( "00000000000000000000000000000000" );
 	$handshake = bin2hex ( openssl_encrypt

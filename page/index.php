@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 26 16:47:31 EDT 2020
+// Date:    Fri Jun 26 20:47:20 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -47,7 +47,7 @@ if ( $epm_self == "/index.php"
      ||
      $epm_self == '/page/index.php' )
 {
-    if ( $epm_message == 'POST' )
+    if ( $epm_method == 'POST' )
 	exit ( "UNACCEPTABLE HTTP POST" );
 
     header ( "Location: $epm_root/page/login.php" );
@@ -63,6 +63,7 @@ session_name ( $epm_session_name );
 session_start();
 clearstatcache();
 umask ( 07 );
+date_default_timezone_set ( 'UTC' );
 header ( 'Cache-Control: no-store' );
 
 // Check that we have not skipped proper login.
