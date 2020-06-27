@@ -381,6 +381,21 @@
 	    }
 	    $next_page = 'project.php';
 	    $_SESSION['EPM_UID'] = $uid;
+
+	    // If $uid exists, so does
+	    // /admin/users/$uid
+	    //
+	    $f = "/admin/users/$uid" .
+		 "/session_id";
+	    $r = file_put_contents
+		( "$epm_data/$f", session_id() );
+	    if ( $r === false )
+		ERROR ( "cannot write $f" );
+	    $fmtime = @filemtime ( "$epm_data/$f" );
+	    if ( $fmtime === false )
+		ERROR ( "cannot stat $f" );
+	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
+
 	}
 	else
 	    $next_page = 'user.php';
