@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 11:33:59 EDT 2020
+// Date:    Sun Jun 28 16:37:32 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -28,6 +28,57 @@ if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
 if ( ! isset ( $epm_home ) )
     exit ( 'ACCESS ERROR: $epm_home not set' );
+if ( ! isset ( $epm_web_group ) )
+    exit ( 'ACCESS ERROR: $epm_web_group not set' );
+
+// Return the numeric ID of a group name.
+//
+function gid_from_name ( $name )
+{
+    $entry = exec
+        ( "getent group $name", $nothing, $r );
+    if ( $r != 0 )
+        ERROR ( "getent group $name failed" );
+    if ( ! preg_match ( '/^([^:]+):[^:]*:(\d+):/',
+                        $entry, $matches ) )
+        ERROR ( "group $name getent result badly" .
+	        "formatted:" . PHP_EOL .
+		"    $entry" );
+    $group = $matches[1];
+    if ( $group != $name )
+        ERROR ( "group $name getent result has wrong" .
+	        "group name:" . PHP_EOL .
+		"    $entry" );
+    return intval ( $matches[2] );
+}
+
+// Test if a numeric group ID is one of the groups
+// of the current process.
+//
+function check_gid ( $gid )
+{
+    $gids = exec ( "id -G", $nothing, $r );
+    if ( $r != 0 )
+        ERROR ( "id -G failed" );
+    if ( ! preg_match ( '/^( |\d)+$/', $gids ) )
+        ERROR ( "id -G result badly formatted:" .
+	        PHP_EOL .
+		"    $gids" );
+    foreach ( explode ( ' ', $gids ) as $g )
+    {
+        $g = trim ( $g );
+	if ( $g == '' ) continue;
+	$g = intval ( $g );
+	if ( $g == $gid ) return true;
+    }
+    return false;
+}
+
+$epm_web_gid = gid_from_name ( $epm_web_group );
+if ( ! check_gid ( $epm_web_gid ) )
+    ERROR ( "$epm_web_group is NOT a group of the" .
+            " current process" );
+
 
 // Function to set the modes of the files and subdirec-
 // tories in a directory, recursively.  Files get the

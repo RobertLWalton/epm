@@ -2,7 +2,7 @@
 
 // File:    maintenance_parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 13:02:06 EDT 2020
+// Date:    Sun Jun 28 16:39:31 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -110,6 +110,10 @@
 //	chmod u+w parameters.php
 //	<edit R/parameters.php>
 
+
+$epm_web_group = 'walton';
+    // POSIX group of the server process.  You must add
+    // this group to your POSIX account.
 
 $epm_backup = $epm_home . '/../epm_backup';
     // The directory in which backups are placed.
