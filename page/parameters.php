@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 04:08:58 EDT 2020
+// Date:    Sun Jun 28 13:02:32 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -14,7 +14,9 @@
 //
 //    require __DIR__ . '/index.php';
 //
-// Index.php contains
+// Index.php computes $epm_root == /ROOT and sets
+// $epm_web =$_SERVER['DOCUMENT_ROOT']/ROOT.  It then
+// executes:
 //
 //    require "$epm_web/parameters.php";
 
@@ -23,59 +25,12 @@
 //
 //    $epm_self='bin/PROGRAM-NAME';
 //    require "$epm_web/parameters.php";
-
-// To set up an EPM instance you need the following
-// directories:
 //
-//     R	$_SERVER['DOCUMENT_ROOT'].  Directory
-//		in which you place an edited copy of
-//		this file.
-//     H	The `epm' home directory containing
-//           	`page', `template', etc subdirectories.
-//           	Must NOT be a descendant of R.
-//     D	Directory that will contain data.  This
-//		must NOT be a descendant of R.  Also,
-//	   	o+x permissions must be set on this dir-
-//		ectory and all its parents, because
-//		running JAVA in epm_sandbox requires
-//		that the path to the JAVA .class file
-//		be traversable by `others'.  Because of
-//		this, the last component of the name D
-//		should have a 12 digit random number in
-//		it that is unique to your installation,
-//		and the parent of this last component
-//		should have o-r permissions so the name
-//		D acts like an impenatrable password.
-//
-// You also need to put the UNIX account you are using
-// in the web server's UNIX group, denoted below by
-// `WEB-SERVERS-GROUP'.  All the files and directories
-// will be in this group, and will be shared between
-// your current account and the web server.  Ancestor
-// directories for these files and directories must
-// also be in this group and have g+x permission, unless
-// they have a+x permission.
-//
-// Only your account, and not the web server, should
-// have write permissions on R and H.
-//
-// Then to install, after populating H and creating
-// R and D:
-//
-//	chgrp WEB-SERVERS-GROUP \
-//	      R `find H` D
-//	chmod g+s \
-//	      R `find H -type d` D
-//	chmod g-w R `find H`
-//	chmod g+w D
-//
-//	cd R
-//	ln -s H/page .
-//	ln -s H/page/index.php .
-//	cp -p H/page/parameters.php .
-//	chmod u+w parameters.php
-//	<edit R/parameters.php>
-
+// where $epm_web is computed by searching the current
+// directories and its ancestors for a +web+ link to
+// $epm_web.  This file is included by bin/epm in some
+// cases in which $epm_web is given as an argument to
+// bin/epm.
 
 // Parameters that you NEED to edit:
 //
