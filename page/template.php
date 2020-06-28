@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 14:40:10 EDT 2020
+    // Date:	Sat Jun 27 22:35:34 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -12,11 +12,10 @@
     // Edits problem option page.
 
     $epm_page_type = '+init+';
-    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
         // This page does no POSTing.
+    require __DIR__ . '/index.php';
 
-    // require "$epm_home/include/debug_info.php";
-
+    // require __DIR__ . '/../include/debug_info.php';
 
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
@@ -32,7 +31,7 @@
     $uid = $_SESSION['EPM_UID'];
         // These are needed to require epm_template.php.
 
-    require "$epm_home/include/epm_template.php";
+    require __DIR__ . '/../include/epm_template.php';
 
     // Compute data for Template Commands in $template_
     // cache.
@@ -44,7 +43,7 @@
 
 <html>
 <head>
-<?php require "$epm_home/include/epm_head.php"; ?>
+<?php require __DIR__ . '/../include/epm_head.php'; ?>
 
 <style>
     @media screen and ( max-width: 1279px ) {
