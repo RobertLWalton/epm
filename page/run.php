@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 27 22:39:33 EDT 2020
+    // Date:	Sun Jun 28 04:08:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -15,7 +15,7 @@
     $epm_page_type = '+problem+';
     require __DIR__ . '/index.php';
 
-    // require __DIR__ . '/../include/debug_info.php';
+    // require "$epm_home/include/debug_info.php";
 
     if ( ! isset ( $_REQUEST['problem'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
@@ -35,7 +35,7 @@
     if ( ! is_dir ( "$epm_data/$probdir" ) )
         exit ( "problem $problem no longer exists" );
 
-    require __DIR__ . '/../include/epm_make.php';
+    require "$epm_home/include/epm_make.php";
     load_file_caches();
 
     $errors = [];    // Error messages to be shown.
@@ -291,7 +291,7 @@
 
 <html>
 <head>
-<?php require __DIR__ . '/../include/epm_head.php'; ?>
+<?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
     pre.red {

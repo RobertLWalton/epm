@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun 22 15:56:39 EDT 2020
+    // Date:	Sun Jun 28 04:08:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -52,7 +52,7 @@
     //		reset	Just reload page as per GET.
 
     $epm_page_type = '+main+';
-    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+    require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
 

@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 27 17:30:05 EDT 2020
+    // Date:	Sun Jun 28 04:08:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -42,7 +42,7 @@
 
     require __DIR__ . '/index.php';
 
-    // require __DIR__ . '/../include/debug_info.php';
+    // require "$epm_home/include/debug_info.php";
 
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .

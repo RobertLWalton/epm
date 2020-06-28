@@ -2,7 +2,7 @@
 
     // File:	logout.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  9 15:37:07 EDT 2020
+    // Date:	Sun Jun 28 04:08:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -10,7 +10,7 @@
     // for EPM.
 
     $epm_page_type = '+main+';
-    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+    require __DIR__ . '/index.php';
 
     // Return true if process with $pid is still
     // running, and false otherwise.
@@ -75,7 +75,7 @@
 	           " >/dev/null 2>&1" );
 	if ( count ( $pids ) > 0 ) usleep ( 1000000 );
 	session_unset();
-	header ( "Location: /page/login.php" );
+	header ( "Location: $epm_root/page/login.php" );
 	exit;
     }
 
@@ -134,23 +134,28 @@ Do you really want to log out?
     }
     $r .= '];</script>';
     echo $r;
-?>
 
-<script>
-let ID = '<?php echo $ID; ?>';
-function NO()
-{
-    location.assign ( '/page/project.php?id=' + ID );
-}
-function YES()
-{
-    window.open ( '', '+help+', '' ).close();
-    window.open ( '', '+view+', '' ).close();
-    for ( i = 0; i < problems.length; ++ i )
-        window.open ( '', problems[i], '' ).close();
-    location.assign
-        ( '/page/logout.php?answer=YES&id=' + ID );
-}
-</script>
+    echo <<<EOT
+    <script>
+    let ID = '$ID';
+    function NO()
+    {
+	location.assign
+	    ( '$epm_root/page/project.php' +
+	      '?id=' + ID );
+    }
+    function YES()
+    {
+	window.open ( '', '+help+', '' ).close();
+	window.open ( '', '+view+', '' ).close();
+	for ( i = 0; i < problems.length; ++ i )
+	    window.open ( '', problems[i], '' ).close();
+	location.assign
+	    ( '$epm_root/page/logout.php?' +
+	      'answer=YES&id=' + ID );
+    }
+    </script>
+EOT
+?>
 </body>
 </html>

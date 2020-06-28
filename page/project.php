@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 27 17:42:49 EDT 2020
+    // Date:	Sun Jun 28 04:08:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -396,13 +396,13 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    // require __DIR__ . '/../include/debug_info.php';
+    // require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
 
-    require __DIR__ . '/../include/epm_list.php';
-    require __DIR__ . '/../include/epm_template.php';
+    require "$epm_home/include/epm_list.php";
+    require "$epm_home/include/epm_template.php";
         // This last is only needed by merge function.
 
     if ( $epm_method == 'GET' )
@@ -1555,7 +1555,7 @@ EOT;
 
 <html>
 <head>
-<?php require __DIR__ . '/../include/epm_head.php'; ?>
+<?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
     div.op th {

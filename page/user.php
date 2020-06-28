@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 27 10:47:50 EDT 2020
+    // Date:	Sun Jun 28 04:08:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -38,14 +38,14 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    // require __DIR__  '/../include/debug_info.php';
+    // require "$epm_home/include/debug_info.php";
 
     if ( $epm_method != 'GET'
          &&
          $epm_method != 'POST' )
         exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
 
-    require __DIR__ . '/../include/epm_user.php';
+    require "$epm_home/include/epm_user.php";
 
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
@@ -483,7 +483,7 @@
 
 <html>
 <head>
-<?php require __DIR__ . '/../include/epm_head.php'; ?>
+<?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
     div.email-addresses {
@@ -766,7 +766,7 @@ EOT;
 
 </div>
 <div class='terms'>
-<?php require __DIR__ . '/../include/epm_terms.html'; ?>
+<?php require "$epm_home/include/epm_terms.html"; ?>
 </div>
 
 <script>

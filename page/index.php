@@ -13,11 +13,11 @@
 
 // The following is included by all EPM pages using:
 //
-//    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+//    require __DIR . '/index.php';
 //
 // DO NOT edit his page.  Edit
 //
-//    {$_SERVER['DOCUMENT_ROOT']}/parameters.php
+//    $epm_web/parameters.php
 //
 // instead, which is included by this page.
 

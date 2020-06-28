@@ -2,26 +2,26 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 27 22:32:29 EDT 2020
+// Date:    Sun Jun 28 04:08:58 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
 // make no warranty and accept no liability for EPM.
 
 // Per web site EPM parameters.  An edited version of
-// this file located in the $_SERVER['DOCUMENT_ROOT']
-// directory is included at the beginning of all pages
-// via:
+// this file located in $epm_web.  At the beginning of
+// all pages is in epm/pages is
 //
-//    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+//    require __DIR__ . '/index.php';
 //
-// Index.php contains `require "parameters.php';'.
+// Index.php contains
+//
+//    require "$epm_web/parameters.php";
 
 // This file is also included by bin/epm_run and similar
 // programs via:
 //
 //    $epm_self='bin/PROGRAM-NAME';
-//    $epm_web='DOCUMENT-ROOT';
 //    require "$epm_web/parameters.php";
 
 // To set up an EPM instance you need the following

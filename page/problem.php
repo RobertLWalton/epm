@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 27 17:27:12 EDT 2020
+    // Date:	Sun Jun 28 04:08:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -20,7 +20,7 @@
         $epm_page_type = '+problem+';
     require __DIR__ . '/index.php';
 
-    // require __DIR__ . '/../include/debug_info.php';
+    // require "$epm_home/include/debug_info.php";
 
     if ( ! isset ( $_REQUEST['problem'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
@@ -40,7 +40,7 @@
     if ( ! is_dir ( "$epm_data/$probdir" ) )
         exit ( "problem $problem no longer exists" );
 
-    require __DIR__ . '/../include/epm_make.php';
+    require "$epm_home/include/epm_make.php";
 
     $parent = NULL;
     $d = "$probdir/+parent+";
@@ -322,7 +322,7 @@
 	$work = [];
 	$run = [];
 
-        require __DIR__ . '/../include/epm_random.php';
+        require "$epm_home/include/epm_random.php";
         $_SESSION['EPM_ID_GEN'][$problem] =
 	    init_id_gen();
 	$ID = bin2hex
@@ -516,8 +516,9 @@ EOT;
 	      false, $errors );
         if ( isset ( $run['RESULT'] ) )
 	{
-	    header ( "Location: /page/run.php?" .
-	             "id=$ID&problem=$problem" );
+	    header
+	        ( "Location: $epm_root/page/run.php?" .
+	          "id=$ID&problem=$problem" );
 	    exit;
 	}
     }
@@ -579,7 +580,7 @@ EOT;
 
 <html>
 <head>
-<?php require __DIR__ . '/../include/epm_head.php'; ?>
+<?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
     div.problem_display {
