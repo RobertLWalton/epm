@@ -2,14 +2,14 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Fri Jun 26 14:24:07 EDT 2020
+# Date:		Sun Jun 28 11:31:22 EDT 2020
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
 # for this program.
 
 BIN = ../bin
-DEFAULT = ../default
+# DEFAULT must be defined by the environment
 
 # Kill all implicit rules
 #
@@ -59,12 +59,8 @@ ${BIN}/epm_display:	epm_display
 	chmod 775 ${BIN}/epm_display
 	-ls -l ${BIN}/epm_display*
 
-${DEFAULT}:
-	mkdir ${DEFAULT}
-	chmod g-w+rx,o-rw+x ${DEFAULT}
-
 ${DEFAULT}/epm_default_generate:	\
-		epm_default_generate ${DEFAULT}
+		epm_default_generate
 	test -d ${DEFAULT}
 	test -w ${DEFAULT}
 	rm -f ${DEFAULT}/epm_default_generate
@@ -73,7 +69,7 @@ ${DEFAULT}/epm_default_generate:	\
 	-ls -l ${DEFAULT}/epm_default_generate*
 
 ${DEFAULT}/epm_default_filter:	\
-		epm_default_filter ${DEFAULT}
+		epm_default_filter
 	test -d ${DEFAULT}
 	test -w ${DEFAULT}
 	rm -f ${DEFAULT}/epm_default_filter

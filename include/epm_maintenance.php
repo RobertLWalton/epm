@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 26 17:26:41 EDT 2020
+// Date:    Sun Jun 28 11:33:59 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -609,10 +609,9 @@ function setup ( $dryrun )
     make_dir ( 'projects', 02771, $dryrun );
     make_dir ( 'projects/public', 02771, $dryrun );
     make_dir ( 'projects/demos', 02771, $dryrun );
+    make_dir ( 'default', 02771, $dryrun );
     umask ( $m );
 
-    make_link ( "$epm_home/default", 'default',
-                $dryrun );
     make_link ( $epm_web, '+web+', $dryrun );
     make_link ( "$epm_home/page", '+web+/page',
                 $dryrun );
@@ -622,7 +621,9 @@ function setup ( $dryrun )
     $n = ( $dryrun ? '-n' : '' );
 
     echo ( "installing epm/src files" . PHP_EOL );
-    $command = "cd $epm_home/src; make $n install";
+    $command = "cd $epm_home/src;"
+             . " DEFAULT=$epm_data/default"
+             . " make $n install";
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "make returned exit code $r" );
