@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 13:36:17 EDT 2020
+// Date:    Sun Jun 28 14:22:19 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -29,10 +29,16 @@ if ( $epm_method != 'GET'
     exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
 
 
-$epm_root = '';
-$epm_self = $_SERVER['PHP_SELF'];
+$epm_self = '';
+$epm_root = $_SERVER['PHP_SELF'];
 if ( preg_match ( '#^(.*)(/page/.*)$#',
-                  $epm_self, $matches ) )
+                  $epm_root, $matches ) )
+{
+    $epm_root = $matches[1];
+    $epm_self = $matches[2];
+}
+elseif ( preg_match ( '#^(.*)(/[^/]+\.php)$#',
+                      $epm_root, $matches ) )
 {
     $epm_root = $matches[1];
     $epm_self = $matches[2];
@@ -53,6 +59,9 @@ if ( $epm_self == "/index.php"
     header ( "Location: $epm_root/page/login.php" );
     exit;
 }
+
+if ( ! is_readable ( "$epm_web/parameters.php" ) )
+    exit ( "UNACCEPTABLE HTTP GET/POST" );
 
 require "$epm_web/parameters.php";
 
