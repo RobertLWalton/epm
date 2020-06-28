@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 16:37:32 EDT 2020
+// Date:    Sun Jun 28 18:43:01 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -79,6 +79,84 @@ if ( ! check_gid ( $epm_web_gid ) )
     ERROR ( "$epm_web_group is NOT a group of the" .
             " current process" );
 
+// Function to set the permissions and group of a
+// file or directory, with optional directory recursion.
+//
+// The file or directory is $base/$fname.  It is given
+// permissions as follows:
+//
+//	directory	$dperms
+//	executable	$eperms
+//	other file	$operms
+//
+// where an executable is a non-directory file with u+x
+// set and an other file is any other non-directory.
+// Permissions are 4 digit octal numbers.
+//
+// In any case $base/$fname is given the $epm_web_group.
+//
+// Messages give only $fname and hide $base.
+//
+// When recursing into a directory, names in the
+// directory beginning with `.' are ignored.
+//
+function set_perms
+	( $base, $fname, $dryrun, $recurse,
+	         $dperms, $eperms, $operms )
+{
+    $f = "$base/$fname";
+    $fperms = fileperms ( $f );
+    if ( $fperms === false )
+        ERROR ( "cannot read permissions of $fname" );
+    if ( is_dir ( $f ) )
+    {
+        $perms = $dperms;
+	if ( $recurse )
+	{
+	    $gs = scandir ( $f );
+	    if ( $gs === false )
+		ERROR ( "cannot read $fname" );
+	    foreach ( $gs as $g )
+	    {
+	        if ( g[0] == '.' ) continue;
+		set_perms
+		    ( $base, "$fname/$g",
+		      $dryrun, $recurse,
+		      $dperms, $eperms, $operms );
+	    }
+	}
+    }
+    elseif ( $fperms & 0100 != 0 )
+	$perms = $eperms;
+    else
+	$perms = $operms;
+
+    $fperms = $fperms & 07777;
+    if ( $fperms != $perms )
+    {
+        $message = sprintf ( "%05o => %05o: %s",
+	                     $fperms, $perms, $fname );
+	echo 'changing ' . $message . PHP_EOL;
+	if ( ! $dryrun
+	     &&
+	     ! chmod ( $f, $perms ) )
+	    ERROR ( "could not change $message" );
+    }
+
+    $fgid = filegroup ( $f );
+    if ( $fgid === false )
+	ERROR ( "could not get group id of $fname" );
+    if ( $fgid != $epm_web_gid )
+    {
+        $message = "group id $fgid => $epm_web_gid:"
+	         . " $fname";
+	echo "changing $message" . PHP_EOL;
+	if ( ! $dryrun
+	     &&
+	     ! chgrp ( $f, $epm_web_gid ) )
+	    ERROR ( "could not change $message" );
+    }
+}
 
 // Function to set the modes of the files and subdirec-
 // tories in a directory, recursively.  Files get the
