@@ -2,7 +2,7 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun  6 05:53:38 EDT 2020
+    // Date:	Sat Jun 27 22:58:30 EDT 2020
 
     // The authors have this file in the public domain;
     // they make no warranty and accept no liability for
@@ -15,9 +15,9 @@
 
     $epm_page_type = '+init+';
     $epm_pdf = true;
-    require "{$_SERVER['DOCUMENT_ROOT']}/index.php";
+    require __DIR__ . '/index.php';
 
-    // require "$epm_home/include/debug_info.php";
+    // require __DIR__ . '/../include/debug_info.php';
 
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
