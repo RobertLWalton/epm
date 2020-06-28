@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jun 24 18:57:21 EDT 2020
+// Date:    Sat Jun 27 22:32:29 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -89,7 +89,7 @@ $epm_data = dirname ( $epm_web ) . '/epm_028746537635';
     //   random number as part of the LAST COMPONENT
     //   of the name of D.
 
-$epm_home = dirname ( $epm_web );
+$epm_home = dirname ( $epm_web ) . '/epm';
     // WARNING:
     //   This is only a test setting; reset this to H
     //   above (and UNLIKE the test setting, be sure
