@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 27 17:25:54 EDT 2020
+// Date:    Sun Jun 28 13:36:17 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -29,14 +29,14 @@ if ( $epm_method != 'GET'
     exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
 
 
+$epm_root = '';
 $epm_self = $_SERVER['PHP_SELF'];
-
-if ( ! preg_match ( '#^(/[^/]+)(/.+)$#',
-                    $epm_self, $matches ) )
-    exit ( 'UNACCEPTABLE HTTP GET/POST' );
-
-$epm_root = $matches[1];
-$epm_self = $matches[2];
+if ( preg_match ( '#^(.*)(/page/.*)$#',
+                  $epm_self, $matches ) )
+{
+    $epm_root = $matches[1];
+    $epm_self = $matches[2];
+}
 $epm_web = $_SERVER['DOCUMENT_ROOT'];
 $epm_web .= $epm_root;
 
