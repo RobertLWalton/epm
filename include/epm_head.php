@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 22 16:00:33 EDT 2020
+// Date:    Sun Jun 28 04:56:13 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -46,6 +46,7 @@ echo "<title>$title</title>";
     }
 
     :root {
+	font-family: "Times New Roman", Times, serif;
 	/* Background Colors (Light)
 	 */
 	--bg-cyan: #96F9F3;

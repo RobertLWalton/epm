@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Jun 24 22:50:53 EDT 2020
+Date:	Sun Jun 28 04:36:28 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -16,6 +16,7 @@ make no warranty and accept no liability for EPM.
 :root {
     width: 800px;
     height: 800px;
+    font-family: "Times New Roman", Times, serif;
 }
 body {
     overflow: hidden;
@@ -119,7 +120,7 @@ vertical-align: top;
 </td>
 <td style='text-align:right'>
 <strong>Other Documents:</strong>
-<a href='/page/guide.html'>Guide</a>
+<a href='guide.html'>Guide</a>
 </td>
 </tr>
 </table>
@@ -253,40 +254,40 @@ function line ( x, y, dx, dy, length )
     context.stroke();
 }
 
-context.font = 'bold 20px serif';
+context.font = 'bold 20px Times';
 context.fillText ( '.in test case input file', 60, 30 );
 vector ( 150, 35, 0, 1, 25 );
-line ( 250, 25, 1, 0, 150 );
+line ( 400, 25, -1, 0, 150 );
 vector ( 400, 25, 0, 1, 35 );
 context.font = '20px monospace';
 context.fillText ( 'generate-PPPP', 90, 80 );
 context.fillText ( 'generate-PPPP', 340, 80 );
 vector ( 150, 85, 0, 1, 25 );
 line ( 400, 85, 0, 1, 190 );
-context.font = 'bold 20px serif';
+context.font = 'bold 20px Times';
 context.fillText ( '.sin solution input file', 60, 130 );
 vector ( 150, 135, 0, 1, 25 );
 context.font = '20px monospace';
 context.fillText ( 'PPPP (solution)', 70, 180 );
 vector ( 150, 185, 0, 1, 25 );
-context.font = 'bold 20px serif';
+context.font = 'bold 20px Times';
 context.fillText ( '.sout solution output file', 50, 230 );
 vector ( 150, 235, 0, 1, 25 );
 context.font = '20px monospace';
 context.fillText ( 'filter-PPPP', 90, 280 );
 vector ( 400, 275, -1, 0, 160 );
 vector ( 150, 285, 0, 1, 25 );
-context.font = 'bold 20px serif';
+context.font = 'bold 20px Times';
 context.fillText ( '.fout filtered output file', 50, 330 );
 vector ( 150, 335, 0, 1, 25 );
 context.font = '20px monospace';
 context.fillText ( 'epm_score', 100, 380 );
-context.font = 'bold 20px serif';
+context.font = 'bold 20px Times';
 context.fillText ( "judge's .ftest filtered", 350, 380 );
 context.fillText ( "output file", 390, 400 );
 vector ( 340, 375, -1, 0, 120 );
 vector ( 150, 385, 0, 1, 25 );
-context.font = 'bold 20px serif';
+context.font = 'bold 20px Times';
 context.fillText ( '.score file', 115, 430 );
 
 </script>
