@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jun 26 17:26:54 EDT 2020
+// Date:    Sun Jun 28 05:22:32 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -2451,14 +2451,15 @@ function create_file
     {
 	$b = $matches[1];
 	if ( ! symbolic_link
-	           ( "../../../bin/epm_default_$b",
+	           ( "../../../default/epm_default_$b",
 		     $f ) )
 	    ERROR ( "create_file: cannot symbolically" .
 		    " link $filename to" .
-		    " ../../../bin/epm_default_$b" );
+		    " ../../../" .
+		    "default/epm_default_$b" );
 	$warnings[] =
 	    "$filename was created by linking to" .
-	    " ../../../bin/epm_default_$b";
+	    " ../../../default/epm_default_$b";
 	return true;
     }
     else
