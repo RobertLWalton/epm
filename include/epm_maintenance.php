@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 16:43:55 EDT 2020
+// Date:    Mon Jun 29 18:04:05 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -673,7 +673,7 @@ function setup ( $dryrun )
 	exec ( "cmp -s $src $des", $nothing, $r );
 	if ( fileowner ( $des ) != 0 )
 	    $r = 1;
-	if ( fileperms ( $des ) != 04711 )
+	if ( ( fileperms ( $des ) & 07777 ) != 04751 )
 	    $r = 1;
 	if ( $r != 0 )
 	    $TODO .= "rm -f $des" . PHP_EOL;
@@ -709,13 +709,18 @@ function setup ( $dryrun )
 
     if ( $TODO != '' )
     {
+	echo PHP_EOL . 'TODOs:' . PHP_EOL . PHP_EOL;
 	echo $TODO;
-	if ( ! $dryrun
-	     &&
-	         @file_put_contents
-		     ( "$epm_data/TODO", $TODO )
-	     === false )
-	    ERROR ( "cannot write TODO" );
+	if ( ! $dryrun )
+	{
+	    $r = @file_put_contents
+		( "$epm_data/TODO", $TODO );
+	    if ( $r === false )
+		ERROR ( "cannot write TODO" );
+	    echo PHP_EOL .
+	         "TODOs written to DATA/TODO" .
+		 PHP_EOL;
+	}
     }
 }
 
