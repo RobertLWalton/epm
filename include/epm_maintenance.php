@@ -1,8 +1,8 @@
 <?php
 
-// File:    epm_maintence.php
+// File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 03:33:22 EDT 2020
+// Date:    Mon Jun 29 13:59:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -10,8 +10,7 @@
 // for EPM.
 
 // Functions used to maintain directories and their
-// contents.  Used by $epm_home/bin programs and
-// by $epm_home/page/login.php.
+// contents.  Used by $epm_home/bin/epm.
 //
 // WARNING: Error messages ARE allowed to contain
 //          $epm_data or $epm_home.
@@ -83,9 +82,9 @@ if ( ! check_gid ( $epm_web_gid ) )
 // file or directory, with optional directory recursion.
 // 
 // The file or directory is $base/$fname.  If it is
-// a link, nothing is done.  Otherwise it is given the
-// $perm permission, which is 0771 or a subset, with
-// the following modifications:
+// a link or if its owner is root, nothing is done.
+// Otherwise it is given the $perm permission, which is
+// 0771 or a subset, with the following modifications:
 //
 //	02000 (g+s) is added for every directory
 //	00001 (o+x) is removed for non-executable files
@@ -105,11 +104,15 @@ function set_perms
 	( $base, $fname, $perms, $dryrun,
 	         $recurse = true )
 {
+    global $epm_web_gid;
+
     $f = "$base/$fname";
     if ( is_link ( $f ) ) return;
 
     if ( ! file_exists ( $f ) )
         ERROR ( "$fname does not exist" );
+    if ( fileowner ( $f ) == 0 ) return;
+
     $old_perms = @fileperms ( $f );
     if ( $old_perms === false )
         ERROR ( "cannot read permissions of $fname" );
@@ -141,14 +144,14 @@ function set_perms
     $old_perms = $old_perms & 07777;
     if ( $old_perms != $new_perms )
     {
-        $message = sprintf ( "%05o => %05o: %s",
+        $action = sprintf ( "%05o => %05o: %s",
 	                     $old_perms, $new_perms,
 			     $fname );
-	echo 'changing ' . $message . PHP_EOL;
+	echo 'changing ' . $action . PHP_EOL;
 	if ( ! $dryrun
 	     &&
 	     ! @chmod ( $f, $new_perms ) )
-	    ERROR ( "could not change $message" );
+	    ERROR ( "could not change $action" );
     }
 
     $fgid = @filegroup ( $f );
@@ -156,13 +159,13 @@ function set_perms
 	ERROR ( "could not get group id of $fname" );
     if ( $fgid != $epm_web_gid )
     {
-        $message = "group id $fgid => $epm_web_gid:"
+        $action = "group id $fgid => $epm_web_gid:"
 	         . " $fname";
-	echo "changing $message" . PHP_EOL;
+	echo "changing $action" . PHP_EOL;
 	if ( ! $dryrun
 	     &&
 	     ! @chgrp ( $f, $epm_web_gid ) )
-	    ERROR ( "could not change $message" );
+	    ERROR ( "could not change $action" );
     }
 }
 
@@ -206,6 +209,17 @@ function set_perms_web ( $dryrun )
     global $epm_web;
     set_perms ( $epm_web, "", 0750, $dryrun );
 }
+function set_perms_user ( $user, $dryrun )
+{
+    global $epm_data;
+    set_perms ( $epm_data, "users/$user",
+                0771, $dryrun );
+}
+function set_perms_users ( $dryrun )
+{
+    global $epm_data;
+    set_perms ( $epm_data, "users", 0771, $dryrun );
+}
 
 // Function to init a project problem directory.
 //
@@ -238,15 +252,9 @@ function init_problem
     $d3 = "$d2/$problem";
     $d4 = "$d3/+solutions+";
     if ( ! is_dir ( "$epm_data/$d2" ) )
-    {
         ERROR ( "$d2 is not a directory" );
-	return;
-    }
     if ( ! is_dir ( "$epm_data/$d3" ) )
-    {
         ERROR ( "$d3 is not a directory" );
-	return;
-    }
 
     foreach ( $epm_specials as $spec )
     {
@@ -312,10 +320,7 @@ function init_project ( $project, $dryrun )
     $d1 = "projects";
     $d2 = "$d1/$project";
     if ( ! is_dir ( "$epm_data/$d2" ) )
-    {
         ERROR ( "$d2 is not a directory" );
-	return;
-    }
 
     $dirs = @scandir ( "$epm_data/$d2" );
     if ( $dirs === false )
@@ -336,10 +341,7 @@ function init_projects ( $dryrun )
 
     $d1 = "projects";
     if ( ! is_dir ( "$epm_data/$d1" ) )
-    {
         ERROR ( "$d1 is not a directory" );
-	return;
-    }
 
     $dirs = @scandir ( "$epm_data/$d1" );
     if ( $dirs === false )
@@ -391,10 +393,7 @@ function export_project ( $project, $dryrun )
     $d1 = "projects";
     $d2 = "$d1/$project";
     if ( ! is_dir ( "$epm_data/$d2" ) )
-    {
         ERROR ( "$d2 is not a \$epm_data directory" );
-	return;
-    }
     if ( ! is_dir ( "$epm_library/$d2" )
          &&
          ! @mkdir ( "$epm_library/$d2", 0750, true ) )
@@ -419,10 +418,7 @@ function export_projects ( $dryrun )
 
     $d1 = "projects";
     if ( ! is_dir ( "$epm_data/$d1" ) )
-    {
         ERROR ( "$d1 is not a \$epm_data directory" );
-	return;
-    }
     if ( ! is_dir ( "$epm_library/$d1" )
          &&
          ! @mkdir ( "$epm_library/$d1", 0750 ) )
@@ -482,11 +478,8 @@ function import_project ( $project, $dryrun )
     $d1 = "projects";
     $d2 = "$d1/$project";
     if ( ! is_dir ( "$epm_library/$d2" ) )
-    {
         ERROR ( "$d2 is not a \$epm_library" .
 	        " directory" );
-	return;
-    }
     if ( ! is_dir ( "$epm_data/$d2" )
          &&
          ! @mkdir ( "$epm_data/$d2", 0770, true ) )
@@ -511,11 +504,8 @@ function import_projects ( $dryrun )
 
     $d1 = "projects";
     if ( ! is_dir ( "$epm_library/$d1" ) )
-    {
         ERROR ( "$d1 is not a \$epm_library" .
 	        " directory" );
-	return;
-    }
     if ( ! is_dir ( "$epm_data/$d1" )
          &&
          ! @mkdir ( "$epm_data/$d1" ) )
@@ -616,15 +606,15 @@ function setup ( $dryrun )
     global $epm_home, $epm_web, $epm_data,
            $epm_name_re;
 
-    // Copy recursively from $epm_home/setup.
-    //
-    copy_dir ( '.', $dryrun );
-
     make_dir ( '', $dryrun );
     make_dir ( 'projects', $dryrun );
     make_dir ( 'projects/public', $dryrun );
     make_dir ( 'projects/demos', $dryrun );
     make_dir ( 'default', $dryrun );
+
+    // Copy recursively from $epm_home/setup.
+    //
+    copy_dir ( '.', $dryrun );
 
     make_link ( $epm_web, '+web+', $dryrun );
     make_link ( "$epm_home/page", '+web+/page',
@@ -658,10 +648,10 @@ function setup ( $dryrun )
 	exec ( "cmp -s $src $des", $nothing, $r );
 	if ( fileowner ( $des ) != 0 )
 	    $r = 1;
-	if ( fileperms ( $des ) != 04770 )
+	if ( fileperms ( $des ) != 04711 )
 	    $r = 1;
 	if ( $r != 0 )
-	    $TODO .= "rm -r $des" . PHP_EOL;
+	    $TODO .= "rm -f $des" . PHP_EOL;
     }
     else
         $r = 1;
@@ -685,10 +675,11 @@ function setup ( $dryrun )
 	       . "$epm_home/bin/epm import demos" .
 	         PHP_EOL;
 
-    set_perms_home();
+    set_perms_home ( $dryrun );
     set_perms ( $epm_data, '', 0771, $dryrun, false );
     set_perms_projects ( $dryrun );
     set_perms_admin ( $dryrun );
+    set_perms_default ( $dryrun );
     set_perms_web ( $dryrun );
 
     if ( $TODO != '' )

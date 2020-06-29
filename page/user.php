@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 28 04:08:58 EDT 2020
+    // Date:	Mon Jun 29 14:23:06 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -337,14 +337,14 @@
 	    $edit = 'profile';
 	elseif ( $new_user )
 	{
-	    @mkdir ( "$epm_data/admin", 0770 );
-	    @mkdir ( "$epm_data/admin/users", 0770 );
+	    @mkdir ( "$epm_data/admin", 02770 );
+	    @mkdir ( "$epm_data/admin/users", 02770 );
 	    @mkdir ( "$epm_data/admin/users/$uid",
-	             0770 );
-	    @mkdir ( "$epm_data/admin/email", 0770 );
+	             02770 );
+	    @mkdir ( "$epm_data/admin/email", 02770 );
 	    $m = umask ( 06 );
-	    @mkdir ( "$epm_data/users", 0771 );
-	    @mkdir ( "$epm_data/users/$uid", 0771 );
+	    @mkdir ( "$epm_data/users", 02771 );
+	    @mkdir ( "$epm_data/users/$uid", 02771 );
 	    umask ( $m );
 
 	    $d = "admin/users/$uid";

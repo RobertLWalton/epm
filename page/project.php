@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 28 04:08:58 EDT 2020
+    // Date:	Mon Jun 29 14:26:30 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -744,12 +744,12 @@ EOT;
 	{
 	    $changes .= "  make $project $problem"
 	              . " directory" . PHP_EOL;
-	    $commands[] = ['mkdir', $desdir, '0771'];
+	    $commands[] = ['mkdir', $desdir, '02771'];
 	    $commands[] = ['mkdir',
 	                   "$desdir/+solutions+",
-	                   '0770'];
+	                   '02770'];
 	    $commands[] = ['mkdir', "$desdir/+submits+",
-	                            '0770'];
+	                            '02770'];
 	    $changes .= "  make $uid the owner of the"
 	              . " $project $problem directory"
 		      . PHP_EOL;
@@ -952,7 +952,7 @@ EOT;
 	{
 	    $changes .= "  make problem $uid $problem"
 	              . " directory" . PHP_EOL;
-	    $commands[] = ['mkdir', $desdir, '0771'];
+	    $commands[] = ['mkdir', $desdir, '02771'];
 	    $changes .=
 	        "  make $project $problem the parent" .
 		" of $uid $problem" . PHP_EOL;
@@ -1361,7 +1361,7 @@ EOT;
 	    {
 		$m = umask ( 06 );
 		if ( ! @mkdir ( "$epm_data/$d",
-		                0771, true ) )
+		                02771, true ) )
 		{
 		    $errors[] =
 			"trying to create problem" .
