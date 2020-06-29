@@ -2,7 +2,7 @@
 
 // File:    epm_maintence.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 18:43:01 EDT 2020
+// Date:    Mon Jun 29 03:33:22 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -81,18 +81,19 @@ if ( ! check_gid ( $epm_web_gid ) )
 
 // Function to set the permissions and group of a
 // file or directory, with optional directory recursion.
+// 
+// The file or directory is $base/$fname.  If it is
+// a link, nothing is done.  Otherwise it is given the
+// $perm permission, which is 0771 or a subset, with
+// the following modifications:
 //
-// The file or directory is $base/$fname.  It is given
-// permissions as follows:
-//
-//	directory	$dperms
-//	executable	$eperms
-//	other file	$operms
-//
-// where an executable is a non-directory file with u+x
-// set and an other file is any other non-directory.
-// Permissions are 4 digit octal numbers.
-//
+//	02000 (g+s) is added for every directory
+//	00001 (o+x) is removed for non-executable files
+//		    (files without u+x permission)
+//      00001 (o+x) is removed for directories whose
+//            names end in '+', and for the descendants
+//            of such directories.
+// 
 // In any case $base/$fname is given the $epm_web_group.
 //
 // Messages give only $fname and hide $base.
@@ -101,19 +102,26 @@ if ( ! check_gid ( $epm_web_gid ) )
 // directory beginning with `.' are ignored.
 //
 function set_perms
-	( $base, $fname, $dryrun, $recurse,
-	         $dperms, $eperms, $operms )
+	( $base, $fname, $perms, $dryrun,
+	         $recurse = true )
 {
     $f = "$base/$fname";
-    $fperms = fileperms ( $f );
-    if ( $fperms === false )
+    if ( is_link ( $f ) ) return;
+
+    if ( ! file_exists ( $f ) )
+        ERROR ( "$fname does not exist" );
+    $old_perms = @fileperms ( $f );
+    if ( $old_perms === false )
         ERROR ( "cannot read permissions of $fname" );
+    $new_perms = $perms;
     if ( is_dir ( $f ) )
     {
-        $perms = $dperms;
+	if ( $fname[-1] == '+' )
+	    $new_perms = $new_perms & 07770;
+
 	if ( $recurse )
 	{
-	    $gs = scandir ( $f );
+	    $gs = @scandir ( $f );
 	    if ( $gs === false )
 		ERROR ( "cannot read $fname" );
 	    foreach ( $gs as $g )
@@ -121,29 +129,29 @@ function set_perms
 	        if ( g[0] == '.' ) continue;
 		set_perms
 		    ( $base, "$fname/$g",
-		      $dryrun, $recurse,
-		      $dperms, $eperms, $operms );
+		      $new_perms, $dryrun, true );
 	    }
 	}
-    }
-    elseif ( $fperms & 0100 != 0 )
-	$perms = $eperms;
-    else
-	$perms = $operms;
 
-    $fperms = $fperms & 07777;
-    if ( $fperms != $perms )
+        $new_perms = $new_perms | 02000;
+    }
+    elseif ( $old_perms & 0100 == 0 )
+	$new_perms = $new_perms & 07770;
+
+    $old_perms = $old_perms & 07777;
+    if ( $old_perms != $new_perms )
     {
         $message = sprintf ( "%05o => %05o: %s",
-	                     $fperms, $perms, $fname );
+	                     $old_perms, $new_perms,
+			     $fname );
 	echo 'changing ' . $message . PHP_EOL;
 	if ( ! $dryrun
 	     &&
-	     ! chmod ( $f, $perms ) )
+	     ! @chmod ( $f, $new_perms ) )
 	    ERROR ( "could not change $message" );
     }
 
-    $fgid = filegroup ( $f );
+    $fgid = @filegroup ( $f );
     if ( $fgid === false )
 	ERROR ( "could not get group id of $fname" );
     if ( $fgid != $epm_web_gid )
@@ -153,117 +161,66 @@ function set_perms
 	echo "changing $message" . PHP_EOL;
 	if ( ! $dryrun
 	     &&
-	     ! chgrp ( $f, $epm_web_gid ) )
+	     ! @chgrp ( $f, $epm_web_gid ) )
 	    ERROR ( "could not change $message" );
     }
 }
 
-// Function to set the modes of the files and subdirec-
-// tories in a directory, recursively.  Files get the
-// mode 0660, except those with names matching $re
-// which get the mode 0771.  Directories get the mode
-// 02770.  Links are ignored.
+// Functions to set various perms.
 //
-// If a file mode is being changed, a message to that
-// effect is written to the standard output.
-//
-// If $dryrun is true, no actual mode changes are done
-// but the messages are written anyway.
-//
-function set_modes ( $d, $dryrun = false, $re = NULL )
+function set_perms_problem
+	( $project, $problem, $dryrun )
 {
     global $epm_data;
-
-    $files = @scandir ( "$epm_data/$d" );
-    if ( $files === false )
-    {
-	ERROR ( "cannot read $d" );
-	return;
-    }
-    foreach ( $files as $fname )
-    {
-	if ( $fname[0] == '.' ) continue;
-
-	$f = "$d/$fname";
-        if ( is_link ( "$epm_data/$f" ) )
-	    continue;
-	if ( is_dir ( "$epm_data/$f" ) )
-	{
-	    set_modes ( $f, $dryrun, $re );
-	    $m = 02770;
-	}
-	elseif ( ! isset ( $re ) )
-	    $m = 0660;
-	elseif ( preg_match ( $re, $fname ) )
-	    $m = 0771;
-	else
-	    $m = 0660;
-
-	$mode = @fileperms ( "$epm_data/$f" );
-	if ( $mode === false )
-	{
-	    ERROR ( "cannot read mode of $f" );
-	    continue;
-	}
-	$mode = $mode & 02777;
-	if ( $mode == $m ) continue;
-
-	$action = sprintf ( "changing mode of %s from" .
-	                    " %04o to %04o",
-			    $f, $mode, $m );
-	echo ( $action . PHP_EOL );
-	if ( $dryrun ) continue;
-	$r = @chmod ( "$epm_data/$f", $m );
-	if ( $r === false )
-	    ERROR ( "cannot $action" );
-    }
+    set_perms ( $epm_data, "projects/$project/$problem",
+                0771, $dryrun );
 }
-
-// Set the mode of directory $dir to $m.
-//
-function set_dir_mode ( $dir, $m, $dryrun = false )
+function set_perms_project ( $project, $dryrun )
 {
     global $epm_data;
-
-    $mode = @fileperms ( "$epm_data/$dir" );
-    if ( $mode === false )
-    {
-	ERROR ( "cannot read mode of $dir" );
-	return;
-    }
-    $mode = $mode & 02777;
-    if ( $mode == $m ) return;
-
-    $action = sprintf ( "changing mode of %s from" .
-			" %04o to %04o",
-			$dir, $mode, $m );
-    echo ( $action . PHP_EOL );
-    if ( $dryrun ) return;
-
-    $r = @chmod ( "$epm_data/$dir", $m );
-    if ( $r === false )
-	ERROR ( "cannot $action" );
+    set_perms ( $epm_data, "projects/$project",
+                0771, $dryrun );
+}
+function set_perms_projects ( $dryrun )
+{
+    global $epm_data;
+    set_perms ( $epm_data, "projects", 0771, $dryrun );
+}
+function set_perms_default ( $dryrun )
+{
+    global $epm_data;
+    set_perms ( $epm_data, "default", 0771, $dryrun );
+}
+function set_perms_admin ( $dryrun )
+{
+    global $epm_data;
+    set_perms ( $epm_data, "admin", 0770, $dryrun );
+}
+function set_perms_home ( $dryrun )
+{
+    global $epm_home;
+    set_perms ( $epm_home, "", 0750, $dryrun );
+}
+function set_perms_web ( $dryrun )
+{
+    global $epm_web;
+    set_perms ( $epm_web, "", 0750, $dryrun );
 }
 
 // Function to init a project problem directory.
 //
-// Sets directory mode of projects, projects/$project,
-// and projects/$project/$problem to 02771.
+// For every YYYY in $epm_specials, checks if the
+// problem directory contains YYYY-PPPP as a link or a
+// file.  If not, and in +solutions+ there is the
+// file YYYY-PPPP.cc or YYYY-PPPP.c, compiles this
+// last to produce YYYY-PPPP.
 //
-// Makes sure that generate_PPPP exists.  If it does
-// not and there is a +solutions+/generate_PPPP.EEE,
-// for .EEE being either .c or .cc, compile the later to
-// make generate_PPPP.  Otherwise make a link to
-// ../../../default/epm_default_generate.
+// Then if monitor-PPPP does not exist as a file,
+// for YYYY equal to `generate' or `filter' checks
+// if YYYY-PPPP now exists as a link or a file.  If
+// not, makes a link
 //
-// Then do ditto for filter_PPPP.
-//
-// Then do ditto for monitor_PPPP and display_PPPP,
-// but do not make any link if no source file.
-//
-// Lastly call set_mode for the project/$project/
-// $problem directory with an $re that will set the
-// mode of any SPECIAL-PROBLEM file to 0771.
+//	YYYY-PPPP => ../../../default/epm_default_YYYY
 //
 // If an action is being take, a message describing the
 // action is written to the standard output.
@@ -272,7 +229,7 @@ function set_dir_mode ( $dir, $m, $dryrun = false )
 // but the messages are written anyway.
 //
 function init_problem
-    ( $project, $problem, $dryrun = false )
+    ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_specials;
 
@@ -290,9 +247,6 @@ function init_problem
         ERROR ( "$d3 is not a directory" );
 	return;
     }
-
-    foreach ( [$d1,$d2,$d3] as $d )
-        set_dir_mode ( $d, 02771, $dryrun );
 
     foreach ( $epm_specials as $spec )
     {
@@ -323,7 +277,7 @@ function init_problem
 
 	passthru ( $command, $r );
 	if ( $r != 0 )
-	    ERROR ( "could not $action" );
+	    ERROR ( "compile returned exit code $r" );
     }
 
     $f = "$epm_data/$d3/monitor-$problem";
@@ -345,21 +299,13 @@ function init_problem
 
 	passthru ( $command, $r );
 	if ( $r != 0 )
-	    ERROR ( "could not $action" );
+	    ERROR ( "link returned exit code $r" );
     }
-
-    // Regular expression that matches names of the form
-    // SPECIAL-PROBLEM.
-    //
-    $spec_re = implode ( "|", $epm_specials );
-    $spec_re = "/^($spec_re)-$problem\$/";
-
-    set_modes ( $d3, $dryrun, $spec_re );
 }
 
 // Function to init all the problems in a project.
 //
-function init_project ( $project, $dryrun = false )
+function init_project ( $project, $dryrun )
 {
     global $epm_data, $epm_name_re;
 
@@ -370,8 +316,6 @@ function init_project ( $project, $dryrun = false )
         ERROR ( "$d2 is not a directory" );
 	return;
     }
-    set_dir_mode ( $d1, 02771, $dryrun );
-    set_dir_mode ( $d2, 02771, $dryrun );
 
     $dirs = @scandir ( "$epm_data/$d2" );
     if ( $dirs === false )
@@ -386,7 +330,7 @@ function init_project ( $project, $dryrun = false )
 
 // Function to init all projects.
 //
-function init_projects ( $dryrun = false )
+function init_projects ( $dryrun )
 {
     global $epm_data, $epm_name_re;
 
@@ -396,8 +340,6 @@ function init_projects ( $dryrun = false )
         ERROR ( "$d1 is not a directory" );
 	return;
     }
-
-    set_dir_mode ( $d1, 02771, $dryrun );
 
     $dirs = @scandir ( "$epm_data/$d1" );
     if ( $dirs === false )
@@ -410,27 +352,9 @@ function init_projects ( $dryrun = false )
     }
 }
 
-// Function to init admin files and directories.
-//
-function init_admin ( $dryrun = false )
-{
-    global $epm_data;
-
-    $d1 = "admin";
-    if ( ! is_dir ( "$epm_data/$d1" ) )
-    {
-        ERROR ( "$d1 is not a directory" );
-	return;
-    }
-
-    set_dir_mode ( $d1, 02770, $dryrun );
-    set_modes ( $d1, $dryrun );
-}
-
 // Function to sync $epm_library to $epm_data problem.
 //
-function export_problem
-    ( $project, $problem, $dryrun = false )
+function export_problem ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_library, $epm_specials;
     $dir = "projects/$project";
@@ -460,7 +384,7 @@ function export_problem
 
 // Function to sync $epm_library to $epm_data project.
 //
-function export_project ( $project, $dryrun = false )
+function export_project ( $project, $dryrun )
 {
     global $epm_data, $epm_library, $epm_name_re;
 
@@ -473,7 +397,7 @@ function export_project ( $project, $dryrun = false )
     }
     if ( ! is_dir ( "$epm_library/$d2" )
          &&
-         ! mkdir ( "$epm_library/$d2", 0750, true ) )
+         ! @mkdir ( "$epm_library/$d2", 0750, true ) )
 	ERROR ( "cannot make $d2 in \$epm_library" );
 
     $dirs = @scandir ( "$epm_data/$d2" );
@@ -489,7 +413,7 @@ function export_project ( $project, $dryrun = false )
 
 // Function to sync $epm_library to $epm_data projects.
 //
-function export_projects ( $dryrun = false )
+function export_projects ( $dryrun )
 {
     global $epm_data, $epm_library, $epm_name_re;
 
@@ -501,7 +425,7 @@ function export_projects ( $dryrun = false )
     }
     if ( ! is_dir ( "$epm_library/$d1" )
          &&
-         ! mkdir ( "$epm_library/$d1", 0750, true ) )
+         ! @mkdir ( "$epm_library/$d1", 0750 ) )
 	ERROR ( "cannot make $d1 in \$epm_library" );
 
     $dirs = @scandir ( "$epm_data/$d1" );
@@ -517,8 +441,7 @@ function export_projects ( $dryrun = false )
 
 // Function to sync $epm_data to $epm_library problem.
 //
-function import_problem
-    ( $project, $problem, $dryrun = false )
+function import_problem ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_library, $epm_specials;
     $dir = "projects/$project";
@@ -546,19 +469,13 @@ function import_problem
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
-    else
-    {
-        $d = "projects/$project/$problem";
-        if ( ! chmod ( "$epm_data/$d", 02771 ) )
-	    ERROR ( "cannot chmod $d to 02771" );
-        echo "done importing $project $problem" .
-	     PHP_EOL;
-    }
+    echo "done importing $project $problem" .
+	 PHP_EOL;
 }
 
 // Function to sync $epm_data to $epm_library project.
 //
-function import_project ( $project, $dryrun = false )
+function import_project ( $project, $dryrun )
 {
     global $epm_data, $epm_library, $epm_name_re;
 
@@ -570,12 +487,10 @@ function import_project ( $project, $dryrun = false )
 	        " directory" );
 	return;
     }
-    $m = umask ( 06 );
     if ( ! is_dir ( "$epm_data/$d2" )
          &&
-         ! mkdir ( "$epm_data/$d2", 02771, true ) )
+         ! @mkdir ( "$epm_data/$d2", 0770, true ) )
 	ERROR ( "cannot make $d2 in \$epm_data" );
-    umask ( $m );
 
     $dirs = @scandir ( "$epm_library/$d2" );
     if ( $dirs === false )
@@ -590,7 +505,7 @@ function import_project ( $project, $dryrun = false )
 
 // Function to sync $epm_data to $epm_library projects.
 //
-function import_projects ( $dryrun = false )
+function import_projects ( $dryrun )
 {
     global $epm_data, $epm_library, $epm_name_re;
 
@@ -601,12 +516,10 @@ function import_projects ( $dryrun = false )
 	        " directory" );
 	return;
     }
-    $m = umask ( 06 );
     if ( ! is_dir ( "$epm_data/$d1" )
          &&
-         ! mkdir ( "$epm_data/$d1", 02771, true ) )
+         ! @mkdir ( "$epm_data/$d1" ) )
 	ERROR ( "cannot make $d1 in \$epm_data" );
-    umask ( $m );
 
     $dirs = @scandir ( "$epm_library/$d1" );
     if ( $dirs === false )
@@ -619,37 +532,17 @@ function import_projects ( $dryrun = false )
     }
 }
 
-// If $dir is not a directory, make it.  If $dir is a
-// directory, set its mode.  Directory names are
-// relative to $epm_data.
+// If $dir is not a directory, make it.  Directory names
+// are relative to $epm_data.
 //
-function make_dir ( $dir, $mode, $dryrun )
+function make_dir ( $dir, $dryrun )
 {
     global $epm_data;
-    if ( is_dir ( "$epm_data/$dir" ) )
-    {
-        $m = @fileperms ( "$epm_data/$dir" );
-	if ( $m == false )
-	    ERROR ( "cannot stat $dir" );
-	$m = $m & 02777;
-	if ( $m == $mode ) return;
-        $action = sprintf
-	    ( "changing mode of directory %s" .
-	      " from %04o to %04o",
-	      $dir, $m, $mode );
-	echo ( $action . PHP_EOL );
-	if ( $dryrun ) return;
-	if ( ! chmod ( "$epm_data/$dir", $mode ) )
-	    ERROR ( "cannot $action" );
-	return;
-    }
-
+    if ( is_dir ( "$epm_data/$dir" ) ) return;
     echo ( "making directory $dir" . PHP_EOL );
     if ( $dryrun ) return;
-    $m = umask ( 06 );
-    if ( ! mkdir ( "$epm_data/$dir", $mode ) )
+    if ( ! @mkdir ( "$epm_data/$dir" ) )
         ERROR ( "cannot make directory $dir" );
-    umask ( $m );
 }
 
 // If $from is not a symbolic link, make it.  $from is
@@ -670,13 +563,12 @@ function make_link ( $to, $from, $dryrun )
 	// before linking it.
 }
 
-// Copy file directory from $epm_home/setup/$dir to
+// Copy $epm_home/setup/$dir and its contents to
 // $epm_data/$dir.  Make destination directory if
-// necessary with mode 02770.  If the destination of a
-// file to be copied exists, do not copy the file.
-// If the destination is a dangling link, unlink it
-// and copy.  Mode of copied files is 0660.  Copy
-// is recursive in directory trees.
+// necessary.  If the destination of a file to be copied
+// exists, do not copy the file.  If the destination is
+// a dangling link, unlink it and copy.  Copy is
+// recursive.
 //
 function copy_dir ( $dir, $dryrun )
 {
@@ -685,7 +577,7 @@ function copy_dir ( $dir, $dryrun )
     $desdir = "$epm_data/$dir";
 
     if ( ! is_dir ( $desdir ) )
-        make_dir ( $dir, 02770, $dryrun );
+        make_dir ( $dir, $dryrun );
 
     $files = @scandir ( $srcdir );
     if ( $files === false )
@@ -705,19 +597,15 @@ function copy_dir ( $dir, $dryrun )
 	    echo ( "unlinking $dir/$fname" . PHP_EOL );
 	    if ( ! $dryrun
 	         &&
-	         ! unlink ( "$desdir/$fname" ) )
+	         ! @unlink ( "$desdir/$fname" ) )
 		ERROR ( "cannot unlink $dir/$fname" );
 	}
-	$action = "copying setup/$dir/$fname to"
-	        . " $dir/$fname";
-	echo ( $action . PHP_EOL );
+	$action = "setup/$dir/$fname to $dir/$fname";
+	echo ( "copying $action" . PHP_EOL );
 	if ( $dryrun ) continue;
-	if ( ! copy ( "$srcdir/$fname",
-	              "$desdir/$fname" ) )
-	    ERROR ( "cannot $action" );
-	if ( ! chmod ( "$desdir/$fname", 0660 ) )
-	    ERROR ( "cannot change mode of" .
-	            " $dir/$fname to 0660" );
+	if ( ! @copy ( "$srcdir/$fname",
+	               "$desdir/$fname" ) )
+	    ERROR ( "cannot copy $action" );
     }
 }
 
@@ -725,21 +613,18 @@ function copy_dir ( $dir, $dryrun )
 //
 function setup ( $dryrun )
 {
-    global $epm_home, $epm_web, $epm_data;
+    global $epm_home, $epm_web, $epm_data,
+           $epm_name_re;
 
     // Copy recursively from $epm_home/setup.
     //
     copy_dir ( '.', $dryrun );
 
-    // Be sure 02771 directories have the right mode.
-    //
-    $m = umask ( 06 );
-    make_dir ( '.', 02771, $dryrun );
-    make_dir ( 'projects', 02771, $dryrun );
-    make_dir ( 'projects/public', 02771, $dryrun );
-    make_dir ( 'projects/demos', 02771, $dryrun );
-    make_dir ( 'default', 02771, $dryrun );
-    umask ( $m );
+    make_dir ( '', $dryrun );
+    make_dir ( 'projects', $dryrun );
+    make_dir ( 'projects/public', $dryrun );
+    make_dir ( 'projects/demos', $dryrun );
+    make_dir ( 'default', $dryrun );
 
     make_link ( $epm_web, '+web+', $dryrun );
     make_link ( "$epm_home/page", '+web+/page',
@@ -756,26 +641,65 @@ function setup ( $dryrun )
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "make returned exit code $r" );
+
     echo ( "making epm/secure/epm_sandbox" . PHP_EOL );
     $command =
         "cd $epm_home/secure; make $n epm_sandbox";
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "make returned exit code $r" );
-    echo ( "checking epm_sandbox installation" .
-           PHP_EOL );
+
+    $TODO = '';
     $src = "$epm_home/secure/epm_sandbox";
     $des = "$epm_home/bin/epm_sandbox";
-    if ( file_exists ( $src ) )
+    $r = 0;
+    if ( file_exists ( $des ) )
     {
 	exec ( "cmp -s $src $des", $nothing, $r );
+	if ( fileowner ( $des ) != 0 )
+	    $r = 1;
+	if ( fileperms ( $des ) != 04770 )
+	    $r = 1;
 	if ( $r != 0 )
-	{
-	    echo ( "NOTICE: as su root you must" .
-	           PHP_EOL .
-		   "    cd $epm_home/secure;" .
-		   " make install" . PHP_EOL );
-	}
+	    $TODO .= "rm -r $des" . PHP_EOL;
+    }
+    else
+        $r = 1;
+    if ( $r != 0 )
+	$TODO .= "su" . PHP_EOL
+	       . "cd $epm_home/secure" . PHP_EOL
+	       . "make install" . PHP_EOL
+	       . "exit" . PHP_EOL;
+
+    $demos = @scandir ( "$epm_data/projects/demos" );
+    if ( $demos === false )
+        ERROR ( "cannot read projects/demos" );
+    $count = 0;
+    foreach ( $demos as $fname )
+    {
+        if ( preg_match ( $epm_name_re, $fname ) )
+	    ++ $count;
+    }
+    if ( $count == 0 )
+        $TODO .= "cd $epm_data" . PHP_EOL
+	       . "$epm_home/bin/epm import demos" .
+	         PHP_EOL;
+
+    set_perms_home();
+    set_perms ( $epm_data, '', 0771, $dryrun, false );
+    set_perms_projects ( $dryrun );
+    set_perms_admin ( $dryrun );
+    set_perms_web ( $dryrun );
+
+    if ( $TODO != '' )
+    {
+	echo $TODO;
+	if ( ! $dryrun
+	     &&
+	         @file_put_contents
+		     ( "$epm_data/TODO", $TODO )
+	     === false )
+	    ERROR ( "cannot write TODO" );
     }
 }
 
