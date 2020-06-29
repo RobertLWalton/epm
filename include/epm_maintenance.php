@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 15:15:54 EDT 2020
+// Date:    Mon Jun 29 16:43:55 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -87,7 +87,7 @@ if ( ! check_gid ( $epm_web_gid ) )
 // 0771 or a subset, with the following modifications:
 //
 //	02000 (g+s) is added for every directory
-//	00001 (o+x) is removed for non-executable files
+//	00111 (a+x) is removed for non-executable files
 //		    (files without u+x permission)
 //      00001 (o+x) is removed for directories whose
 //            names end in '+', and for the descendants
@@ -100,11 +100,15 @@ if ( ! check_gid ( $epm_web_gid ) )
 // When recursing into a directory, names in the
 // directory beginning with `.' are ignored.
 //
+$set_perms_map = [
+    $epm_home => 'HOME',
+    $epm_web => 'WEB',
+    $epm_data => 'DATA' ];
 function set_perms
 	( $base, $fname, $perms, $dryrun,
 	         $recurse = true )
 {
-    global $epm_web_gid;
+    global $epm_web_gid, $set_perms_map;
 
     $f = "$base/$fname";
     if ( is_link ( $f ) ) return;
@@ -116,10 +120,11 @@ function set_perms
     $old_perms = @fileperms ( $f );
     if ( $old_perms === false )
         ERROR ( "cannot read permissions of $fname" );
+    $old_perms = $old_perms & 07777;
     $new_perms = $perms;
     if ( is_dir ( $f ) )
     {
-	if ( $fname[-1] == '+' )
+	if ( $fname != '' && $fname[-1] == '+' )
 	    $new_perms = $new_perms & 07770;
 
 	if ( $recurse )
@@ -127,26 +132,31 @@ function set_perms
 	    $gs = @scandir ( $f );
 	    if ( $gs === false )
 		ERROR ( "cannot read $fname" );
+	    if ( $fname == '' ) $gbase = '';
+	    else $gbase = "$fname/";
 	    foreach ( $gs as $g )
 	    {
-	        if ( g[0] == '.' ) continue;
+	        if ( $g[0] == '.' ) continue;
 		set_perms
-		    ( $base, "$fname/$g",
+		    ( $base, "{$gbase}$g",
 		      $new_perms, $dryrun, true );
 	    }
 	}
 
         $new_perms = $new_perms | 02000;
     }
-    elseif ( $old_perms & 0100 == 0 )
-	$new_perms = $new_perms & 07770;
+    elseif ( ( $old_perms & 0100 ) == 0 )
+	$new_perms = $new_perms & 07660;
 
-    $old_perms = $old_perms & 07777;
     if ( $old_perms != $new_perms )
     {
+	if ( isset ( $set_perms_map[$base] ) )
+	    $pbase = $set_perms_map[$base];
+	else
+	    $pbase = 'OTHER';
         $action = sprintf ( "%05o => %05o: %s",
 	                     $old_perms, $new_perms,
-			     $fname );
+			     "$pbase/$fname" );
 	echo 'changing ' . $action . PHP_EOL;
 	if ( ! $dryrun
 	     &&
@@ -208,6 +218,14 @@ function set_perms_web ( $dryrun )
 {
     global $epm_web;
     set_perms ( $epm_web, "", 0750, $dryrun );
+}
+function set_perms_all ( $dryrun )
+{
+    set_perms_projects ( $dryrun );
+    set_perms_default ( $dryrun );
+    set_perms_admin ( $dryrun );
+    set_perms_home ( $dryrun );
+    set_perms_web ( $dryrun );
 }
 function set_perms_user_problem
 	( $user, $problem, $dryrun )

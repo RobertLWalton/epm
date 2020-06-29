@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Jun 29 14:59:23 EDT 2020
+// Date:	Mon Jun 29 16:44:09 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -108,8 +108,9 @@ if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
 }
 
 $op = $argv[1];
-if ( ! in_array ( $op, ['print','init','import',
-                        'export','setup', 'backup'],
+if ( ! in_array ( $op, ['print', 'setup', 'backup',
+                        'import', 'export',
+                        'init', 'perms', '*user*'],
 		       true ) )
     ERROR ( "cannot understand $op" );
 
@@ -301,6 +302,7 @@ elseif ( $op == '*user*' )
 }
 
 if ( $dryrun ) echo ( "Dry Run" . PHP_EOL );
+else echo ( "Done" . PHP_EOL );
 
 
 exit ( 0 );
