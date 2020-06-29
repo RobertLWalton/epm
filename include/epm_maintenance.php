@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 14:44:45 EDT 2020
+// Date:    Mon Jun 29 15:15:54 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -208,6 +208,13 @@ function set_perms_web ( $dryrun )
 {
     global $epm_web;
     set_perms ( $epm_web, "", 0750, $dryrun );
+}
+function set_perms_user_problem
+	( $user, $problem, $dryrun )
+{
+    global $epm_data;
+    set_perms ( $epm_data, "users/$user/$problem",
+                0771, $dryrun );
 }
 function set_perms_user ( $user, $dryrun )
 {

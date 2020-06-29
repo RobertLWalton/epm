@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Jun 29 13:42:43 EDT 2020
+// Date:	Mon Jun 29 14:59:23 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -11,19 +11,24 @@
 // for EPM.
 
 $document = <<<'EOT'
+epm print [webdirectory]
+
 epm [-n] setup webdirectory
 epm [-n] backup [webdirectory]
 
 epm [-n] import [project [problem]]
 epm [-n] export [project [problem]]
 
-epm print [webdirectory]
 epm [-n] init project [problem]
 epm [-n] init -projects
+
 epm [-n] perms project [problem]
 epm [-n] perms -projects
 epm [-n] perms -admin
 epm [-n] perms -all
+
+epm [-n] *user* user [problem]
+epm [-n] *user* -all
 
 This program is intended to be run inside the $epm_data
 directory tree unless webdirectory is specified.
@@ -42,6 +47,9 @@ Next it sets $php_self to 'epm', loads
 and executes the functions as indicated.  Actions taken
 are described on the standard output.
 
+The print commands merely prints important parameter
+values.
+
 The -n option indicates a dry run.  However, for import
 and export, directories will be silently made even for
 a dryrun.
@@ -53,18 +61,24 @@ missing parts and incorrect permissions.
 
 See epm_maintenance.php for how to use backup.
 
-The print commands merely prints important parameter
-values.
+The import and export functions employ rsync to copy
+from/to $epm_library (in epm_maintenace.php).  Import
+also does init and perms for the target directory.
+
+The rest of the commands should not be needed, but
+are available for cleaning up system problems.
 
 The init command creates links or executables for the
 $epm_specials files.
 
 The perms commands set permissions and sets the group
-of files and directories to $epm_web_group.
+of files and directories to $epm_web_group.  These
+commands do not include the users directories.
 
-The import and export functions employ rsync to copy
-from/to $epm_library (in epm_maintenace.php).  Import
-also does init and perms for the target directory.
+The *user* commands do the same thing but for user
+directories.  WARNING: they will likely disrupt any
+executions or runs that are in progress.  Use them
+very cautiously.
 
 EOT;
 
@@ -203,20 +217,13 @@ if ( $op == 'print' )
     echo ( '$epm_backup_round = ' .
            $epm_backup_round .  PHP_EOL );
 }
-elseif ( $op == 'init' )
+elseif ( $op == 'setup' )
 {
-    if ( $argc < 3 ) ERROR ( 'too few arguments' );
-    if ( $argc > 4 ) ERROR ( 'too many arguments' );
-    if ( $argc == 4 )
-        init_problem ( $argv[2], $argv[3], $dryrun );
-    elseif ( $argv[2] == '-admin' )
-        init_admin ( $dryrun );
-    elseif ( $argv[2] == '-all' )
-        init_all ( $dryrun );
-    elseif ( $argv[2] == '-projects' )
-        init_projects ( $dryrun );
-    else
-        init_project ( $argv[2], $dryrun );
+    setup ( $dryrun );
+}
+elseif ( $op == 'backup' )
+{
+    backup ( $dryrun );
 }
 elseif ( $op == 'export' )
 {
@@ -253,13 +260,44 @@ elseif ( $op == 'import' )
         set_perms_project ( $argv[2], $dryrun );
     }
 }
-elseif ( $op == 'setup' )
+elseif ( $op == 'init' )
 {
-    setup ( $dryrun );
+    if ( $argc < 3 ) ERROR ( 'too few arguments' );
+    if ( $argc > 4 ) ERROR ( 'too many arguments' );
+    if ( $argc == 4 )
+        init_problem ( $argv[2], $argv[3], $dryrun );
+    elseif ( $argv[2] == '-projects' )
+        init_projects ( $dryrun );
+    else
+        init_project ( $argv[2], $dryrun );
 }
-elseif ( $op == 'backup' )
+elseif ( $op == 'perms' )
 {
-    backup ( $dryrun );
+    if ( $argc < 3 ) ERROR ( 'too few arguments' );
+    if ( $argc > 4 ) ERROR ( 'too many arguments' );
+    if ( $argc == 4 )
+        set_perms_problem
+	    ( $argv[2], $argv[3], $dryrun );
+    elseif ( $argv[2] == '-admin' )
+        set_perms_admin ( $dryrun );
+    elseif ( $argv[2] == '-all' )
+        set_perms_all ( $dryrun );
+    elseif ( $argv[2] == '-projects' )
+        set_perms_projects ( $dryrun );
+    else
+        set_perms_project ( $argv[2], $dryrun );
+}
+elseif ( $op == '*user*' )
+{
+    if ( $argc < 3 ) ERROR ( 'too few arguments' );
+    if ( $argc > 4 ) ERROR ( 'too many arguments' );
+    if ( $argc == 4 )
+        set_perms_user_problem
+	    ( $argv[2], $argv[3], $dryrun );
+    elseif ( $argv[2] == '-all' )
+        set_perms_users ( $dryrun );
+    else
+        set_perms_user ( $argv[2], $dryrun );
 }
 
 if ( $dryrun ) echo ( "Dry Run" . PHP_EOL );
@@ -268,4 +306,3 @@ if ( $dryrun ) echo ( "Dry Run" . PHP_EOL );
 exit ( 0 );
 
 ?>
-
