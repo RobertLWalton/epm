@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 13:59:52 EDT 2020
+// Date:    Mon Jun 29 14:44:45 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -225,7 +225,7 @@ function set_perms_users ( $dryrun )
 //
 // For every YYYY in $epm_specials, checks if the
 // problem directory contains YYYY-PPPP as a link or a
-// file.  If not, and in +solutions+ there is the
+// file.  If not, and in +sources+ there is the
 // file YYYY-PPPP.cc or YYYY-PPPP.c, compiles this
 // last to produce YYYY-PPPP.
 //
@@ -250,7 +250,7 @@ function init_problem
     $d1 = "projects";
     $d2 = "$d1/$project";
     $d3 = "$d2/$problem";
-    $d4 = "$d3/+solutions+";
+    $d4 = "$d3/+sources+";
     if ( ! is_dir ( "$epm_data/$d2" ) )
         ERROR ( "$d2 is not a directory" );
     if ( ! is_dir ( "$epm_data/$d3" ) )
@@ -371,7 +371,7 @@ function export_problem ( $project, $problem, $dryrun )
     foreach ( $epm_specials as $spec )
         $opt .= " --include '$spec-$problem.*'"
               . " --exclude $spec-$problem";
-    $opt .= " --include +solutions+"
+    $opt .= " --include +sources+"
           . " --exclude '+*+'";
     $command = "rsync $opt -av --delete"
              . " --info=STATS0,FLIST0"
@@ -452,7 +452,7 @@ function import_problem ( $project, $problem, $dryrun )
     foreach ( $epm_specials as $spec )
         $opt .= " --include '$spec-$problem.*'"
               . " --exclude $spec-$problem";
-    $opt .= " --include +solutions+"
+    $opt .= " --include +sources+"
           . " --exclude '+*+'";
     $command = "rsync $opt -av --delete"
              . " --info=STATS0,FLIST0"

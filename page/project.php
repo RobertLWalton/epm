@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun 29 14:26:30 EDT 2020
+    // Date:	Mon Jun 29 14:42:40 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -175,7 +175,7 @@
     //
     //	     projects/PROJECT/PROBLEM
     // and
-    //	     projects/PROJECT/PROBLEM/+solutions+
+    //	     projects/PROJECT/PROBLEM/+sources+
     //
     // The former directory contains the publicly
     // useable PROBLEM files, and the latter directory
@@ -746,7 +746,7 @@ EOT;
 	              . " directory" . PHP_EOL;
 	    $commands[] = ['mkdir', $desdir, '02771'];
 	    $commands[] = ['mkdir',
-	                   "$desdir/+solutions+",
+	                   "$desdir/+sources+",
 	                   '02770'];
 	    $commands[] = ['mkdir', "$desdir/+submits+",
 	                            '02770'];
@@ -791,8 +791,8 @@ EOT;
 
 	    if ( $action == 'S' )
 	    {
-		$t = "+solutions+/$fname";
-		$s = " solutions";
+		$t = "+sources+/$fname";
+		$s = " sources";
 	    }
 	    else
 	    {
@@ -848,8 +848,8 @@ EOT;
 
 	    if ( $action == 'S' )
 	    {
-		$t = "+solutions+/$fname";
-		$s = " solutions";
+		$t = "+sources+/$fname";
+		$s = " sources";
 	    }
 	    else
 	    {
@@ -979,8 +979,8 @@ EOT;
 
 	    if ( $action == 'S' )
 	    {
-		$t = "+solutions+/$fname";
-		$s = " solutions";
+		$t = "+sources+/$fname";
+		$s = " sources";
 	    }
 	    else
 	    {

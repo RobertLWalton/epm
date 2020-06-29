@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 13:02:32 EDT 2020
+// Date:    Mon Jun 29 14:44:15 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -209,7 +209,7 @@ $push_file_map = [
     // the file should exist in the remote directory
     // and be linked into the local directory.  If
     // it is 'S' then the file should exist in the
-    // +solutions+ subdirectory of the remote directory.
+    // +sources+ subdirectory of the remote directory.
     // If it is a (sub)map RE => V, then each RE is a
     // regular expression such that if YYYY matches
     // RE then V is to be used: it will be 'R' or 'L'.
