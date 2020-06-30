@@ -2,7 +2,7 @@
 
 // File:    maintenance_parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 16:39:31 EDT 2020
+// Date:    Mon Jun 29 22:07:31 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -21,11 +21,13 @@
 // directories:
 //
 //   H	The `epm' home directory containing `page',
-//      `template', etc subdirectories.
+//      `template', etc subdirectories.  Imported
+//      from github RobertLWalton/epm.
 //   W	$_SERVER['DOCUMENT_ROOT']/ROOT.  Directory in
 //       which you place an edited copy of this file.
 //   D	Directory that will contain data.  See below on
-//      how to choose the name of this directory.
+//      how to choose the name of this directory.  This
+//	directory can be created by the setup program.
 //
 // You also need to put the UNIX account you are using
 // in the web server's group.  The directories above
@@ -85,31 +87,13 @@
 // Then to install:
 //
 //   * Populate H from github.
-//   * Create W and D
+//   * Create W 
 //   * Install an edited version of epm_parameters.php
 //     in W.
 //   * Install an edited version of
 //     epm_maintenance parameters.php in W.
 //   * Then execute:     	     H/bin/epm setup W
 //   * Then perform the actions in:  D/TODO
-
-
-
-//
-//	chgrp WEB-SERVERS-GROUP \
-//	      R `find H` D
-//	chmod g+s \
-//	      R `find H -type d` D
-//	chmod g-w R `find H`
-//	chmod g+w D
-//
-//	cd R
-//	ln -s H/page .
-//	ln -s H/page/index.php .
-//	cp -p H/page/parameters.php .
-//	chmod u+w parameters.php
-//	<edit R/parameters.php>
-
 
 $epm_web_group = 'walton';
     // POSIX group of the server process.  You must add
