@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 18:04:05 EDT 2020
+// Date:    Mon Jun 29 21:14:08 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -185,8 +185,12 @@ function set_perms_problem
 	( $project, $problem, $dryrun )
 {
     global $epm_data;
+    echo "setting permissions for $project $problem" .
+         PHP_EOL;
     set_perms ( $epm_data, "projects/$project/$problem",
                 0771, $dryrun );
+    echo "done setting permissions for" .
+         " $project $problem" .  PHP_EOL . PHP_EOL;
 }
 function set_perms_project ( $project, $dryrun )
 {
@@ -202,22 +206,34 @@ function set_perms_projects ( $dryrun )
 function set_perms_default ( $dryrun )
 {
     global $epm_data;
+    echo "setting permissions for default" . PHP_EOL;
     set_perms ( $epm_data, "default", 0771, $dryrun );
+    echo "done setting permissions for default" .
+         PHP_EOL . PHP_EOL;
 }
 function set_perms_admin ( $dryrun )
 {
     global $epm_data;
+    echo "setting permissions for admin" . PHP_EOL;
     set_perms ( $epm_data, "admin", 0770, $dryrun );
+    echo "done setting permissions for admin" .
+         PHP_EOL . PHP_EOL;
 }
 function set_perms_home ( $dryrun )
 {
     global $epm_home;
+    echo "setting permissions for \$epm_home" . PHP_EOL;
     set_perms ( $epm_home, "", 0750, $dryrun );
+    echo "done setting permissions for \$epm_home" .
+         PHP_EOL . PHP_EOL;
 }
 function set_perms_web ( $dryrun )
 {
     global $epm_web;
+    echo "setting permissions for \$epm_web" . PHP_EOL;
     set_perms ( $epm_web, "", 0750, $dryrun );
+    echo "done setting permissions for \$epm_web" .
+         PHP_EOL . PHP_EOL;
 }
 function set_perms_all ( $dryrun )
 {
@@ -231,8 +247,12 @@ function set_perms_user_problem
 	( $user, $problem, $dryrun )
 {
     global $epm_data;
+    echo "setting permissions for $user $problem" .
+         PHP_EOL;
     set_perms ( $epm_data, "users/$user/$problem",
                 0771, $dryrun );
+    echo "done setting permissions for $user $problem" .
+         PHP_EOL . PHP_EOL;
 }
 function set_perms_user ( $user, $dryrun )
 {
@@ -271,6 +291,7 @@ function init_problem
     ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_specials;
+    echo "initing $project $problem" . PHP_EOL;
 
     $d1 = "projects";
     $d2 = "$d1/$project";
@@ -334,6 +355,8 @@ function init_problem
 	if ( $r != 0 )
 	    ERROR ( "link returned exit code $r" );
     }
+    echo "done initing $project $problem" .
+         PHP_EOL . PHP_EOL;
 }
 
 // Function to init all the problems in a project.
@@ -384,6 +407,8 @@ function init_projects ( $dryrun )
 function export_problem ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_library, $epm_specials;
+    echo "exporting $project $problem" . PHP_EOL;
+
     $dir = "projects/$project";
     if ( ! is_dir ( "$epm_library/$dir" ) )
         ERROR ( "$dir is not a \$epm_library" .
@@ -404,9 +429,8 @@ function export_problem ( $project, $problem, $dryrun )
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
-    else
-        echo "done exporting $project $problem" .
-	     PHP_EOL;
+    echo "done exporting $project $problem" .
+         PHP_EOL . PHP_EOL;
 }
 
 // Function to sync $epm_library to $epm_data project.
@@ -465,6 +489,8 @@ function export_projects ( $dryrun )
 function import_problem ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_library, $epm_specials;
+    echo "importing $project $problem" . PHP_EOL;
+
     $dir = "projects/$project";
     if ( ! is_dir ( "$epm_data/$dir" ) )
         ERROR ( "$dir is not a \$epm_data directory" );
@@ -491,7 +517,7 @@ function import_problem ( $project, $problem, $dryrun )
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
     echo "done importing $project $problem" .
-	 PHP_EOL;
+         PHP_EOL . PHP_EOL;
 }
 
 // Function to sync $epm_data to $epm_library project.

@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Jun 29 17:48:51 EDT 2020
+// Date:	Mon Jun 29 20:54:30 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -16,8 +16,10 @@ epm print [webdirectory]
 epm [-n] setup webdirectory
 epm [-n] backup [webdirectory]
 
-epm [-n] import [project [problem]]
-epm [-n] export [project [problem]]
+epm [-n] import project [problem]
+epm [-n] import -projects
+epm [-n] export project [problem]
+epm [-n] export -projects
 
 epm [-n] init project [problem]
 epm [-n] init -projects
