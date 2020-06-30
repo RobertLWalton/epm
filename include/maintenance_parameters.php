@@ -2,7 +2,7 @@
 
 // File:    maintenance_parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 22:07:31 EDT 2020
+// Date:    Tue Jun 30 04:15:15 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -16,21 +16,26 @@
 //    $epm_web = ...
 //    require "$epm_web/parameters.php";
 //    require "$epm_web/maintenance_parameters.php";
+//
+// See page/index.php for the algorithm for calculating
+// $epm_web.
 
 // To set up an EPM instance you need the following
 // directories:
 //
 //   H	The `epm' home directory containing `page',
 //      `template', etc subdirectories.  Imported
-//      from github RobertLWalton/epm.
+//      from github RobertLWalton/epm.  Aka $epm_home.
 //   W	$_SERVER['DOCUMENT_ROOT']/ROOT.  Directory in
-//       which you place an edited copy of this file.
+//      which you place an edited copy of this file.
+//      Aka $epm_web.
 //   D	Directory that will contain data.  See below on
 //      how to choose the name of this directory.  This
 //	directory can be created by the setup program.
+//	Aka $epm_data.
 //
-// You also need to put the UNIX account you are using
-// in the web server's group.  The directories above
+// You also need to add the web server's group to the
+// POSIX account you are using.  The directories above
 // will get this group and g+s permission so all their
 // descendants will get the web server's group.  Note
 // that H can be shared among serval EPM servers with
@@ -59,41 +64,22 @@
 //	g+x permission.
 //   
 // During setup the above rules will be checked. During
-// setup and subsequent execution:
+// setup and subsequent execution rules documented with
+// the set_perms function in include/epm_maintenance.php
+// are followed.
 //
-//   * The above directories and all their descendants
-//     will be given the web server's group.
-//
-//   * The above directories and all their descendant
-//     directories will be given g+srx permission.
-//
-//   * H and all its descendant directories get
-//     g-w,g+rx,o-rw,o+x permissions.
-//
-//   * D and all its descendant directories get
-//     g+wx,o-rw,o+x permissions.
-//
-//   * The descendent non-directories of H and W get
-//     g-wx,g+r,o-rwx permission, except that
-//     executables (all installed in H/bin) get
-//     g+x permission.
-//
-//   * The descendent non-directories of D get
-//     g-x,g+rw,o-rwx permission, except that
-//     executables get go+x permission.
-//
-//   * Note: W has no descendant directories.
-//     
 // Then to install:
 //
 //   * Populate H from github.
 //   * Create W 
-//   * Install an edited version of epm_parameters.php
-//     in W.
 //   * Install an edited version of
-//     epm_maintenance parameters.php in W.
-//   * Then execute:     	     H/bin/epm setup W
-//   * Then perform the actions in:  D/TODO
+//     H/include/parameters.php in W.
+//   * Install an edited version of
+//     H/include/maintenance parameters.php in W.
+//   * Then execute:     	    
+//			   H/bin/epm setup W
+//   * Then perform the
+//     actions in:  D/TODO
 
 $epm_web_group = 'walton';
     // POSIX group of the server process.  You must add
@@ -103,9 +89,10 @@ $epm_backup = $epm_home . '/../epm_backup';
     // The directory in which backups are placed.
 
 // A backup backs up the contents of the $epm_data
-// directory, as per, roughly:
+// directory as per, roughly:
 //
-//	cd $epm_data; tar zcf $epm_backup_directory .
+//	cd $epm_data; tar zcf \
+//	   $epm_backup_directory/NAME-TIME-LEVEL.tgz .
 //
 // A backup is a level 0 or level 1 GNU gzip compressed
 // tar.  After a level 0 is taken, following level 1's
@@ -120,6 +107,8 @@ $epm_backup = $epm_home . '/../epm_backup';
 // 1.
 //
 // A level 0 .tgz file has an associated .snar file.
+// A level 1 .tgz file has an associated .parent
+//           symbolic link to its parent .tgz file.
 //
 // When the number of backups exceeds ROUND, the value
 // of $epm_backup_round, the oldest excess are declared
@@ -138,7 +127,7 @@ $epm_library = $epm_home . '/../epm_public';
     // under git, but EPM does not execute git per se.
     //
     // WARNING:
-    //   This is only a test setting.  Reset this to
-    //   the location of the project library.
+    //   This is only a test setting.  You may wish
+    //   to put the library elsewhere.
 
 ?>

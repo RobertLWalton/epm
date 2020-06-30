@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 21:14:08 EDT 2020
+// Date:    Tue Jun 30 03:47:49 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -83,7 +83,7 @@ if ( ! check_gid ( $epm_web_gid ) )
 // 
 // The file or directory is $base/$fname.  If it is
 // a link or if its owner is root, nothing is done.
-// Otherwise it is given the $perm permission, which is
+// Otherwise it is given the $perms permission, which is
 // 0771 or a subset, with the following modifications:
 //
 //	02000 (g+s) is added for every directory
@@ -93,7 +93,29 @@ if ( ! check_gid ( $epm_web_gid ) )
 //            names end in '+', and for the descendants
 //            of such directories.
 // 
-// In any case $base/$fname is given the $epm_web_group.
+// Values of $perms are:
+//
+//	0750  for $epm_web and its contents
+//	0750  for $epm_home and its descendants
+//	0771  for $epm_data just by itself
+//	0770  for $epm_data/admin and its descendants
+//	0771  for $epm_data/default and its contents
+//	0771  for $epm_data/projects and its descendants
+//	0770  for $epm_data/lists* and its descendants
+//	0771  for $epm_data/users* and its descendants
+//
+// The *'ed directories are created dynamically and NOT
+// created at setup.
+//
+// Exceptions to the general rules are:
+//
+//	0771  for +work+ and +run+ subdirectories of
+//            $epm_data/users/UID/PROBLEM directories
+//     04751  for $epm_home/bin/epm_sandbox (must
+//	      be g+r during setup so it can be compared
+//            to $epm_home/secure/epm_sandbox)
+//
+// $base/$fname is always given the $epm_web_group.
 //
 // Messages give only $fname and hide $base.
 //
@@ -219,6 +241,16 @@ function set_perms_admin ( $dryrun )
     echo "done setting permissions for admin" .
          PHP_EOL . PHP_EOL;
 }
+function set_perms_lists ( $dryrun )
+{
+    global $epm_data;
+    if ( ! is_dir ( "$epm_data/lists" ) ) return;
+        
+    echo "setting permissions for lists" . PHP_EOL;
+    set_perms ( $epm_data, "lists", 0770, $dryrun );
+    echo "done setting permissions for lists" .
+         PHP_EOL . PHP_EOL;
+}
 function set_perms_home ( $dryrun )
 {
     global $epm_home;
@@ -240,9 +272,17 @@ function set_perms_all ( $dryrun )
     set_perms_projects ( $dryrun );
     set_perms_default ( $dryrun );
     set_perms_admin ( $dryrun );
+    set_perms_lists ( $dryrun );
     set_perms_home ( $dryrun );
     set_perms_web ( $dryrun );
 }
+
+// Do not execute the following when commands are
+// executing in +work+ or +run+ subdirectories as
+// their permissions will be mis-set.  As they are
+// recreated upon next use, the damage will not
+// affect future executions.
+//
 function set_perms_user_problem
 	( $user, $problem, $dryrun )
 {
@@ -650,7 +690,40 @@ function copy_dir ( $dir, $dryrun )
     }
 }
 
-// Function to set up contents of $epm_data.
+// Function to check the permissions of ancestors of
+// $dir.  $is_data is true if $dir is $epm_data, and
+// is false for $epm_home and $epm_web.
+//
+function check_ancestors ( & TODO, $dir, $is_data )
+{
+    global $epm_web_gid;
+
+    $ancestor = $dir;
+    while ( $ancestor != '/' )
+    {
+        $ancestor = pathinfo
+	    ( $ancestor, PATHINFO_DIRNAME );
+	$perms = fileperms ( $ancestor );
+	if ( ( $perms & 0001 ) != 0 ) continue;
+	$mode = 'o+x';
+	if ( ! $is_data )
+	{
+	    $gid = filegroup ( $ancestor );
+	    if ( $gid == $epm_web_gid )
+	    {
+	        $mode = 'g+x';
+		if ( ( $perms & 0010 ) != 0 )
+		    continue;
+	    }
+	}
+	TODO .= "chmod $mode $ancestor" . PHP_EOL;
+    }
+}
+
+// Function to set up contents of $epm_data, $epm_web,
+// and $epm_home/bin and set permissions of $epm_home,
+// $epm_web, $epm_data, and their descendents.  Can
+// be re-run on existing system to make repairs.
 //
 function setup ( $dryrun )
 {
@@ -691,6 +764,11 @@ function setup ( $dryrun )
         ERROR ( "make returned exit code $r" );
 
     $TODO = '';
+
+    check_ancestors ( $TODO, $epm_home, false );
+    check_ancestors ( $TODO, $epm_web,  false );
+    check_ancestors ( $TODO, $epm_data, true );
+
     $src = "$epm_home/secure/epm_sandbox";
     $des = "$epm_home/bin/epm_sandbox";
     $r = 0;
@@ -726,12 +804,8 @@ function setup ( $dryrun )
 	       . "$epm_home/bin/epm import demos" .
 	         PHP_EOL;
 
-    set_perms_home ( $dryrun );
+    set_perms_all ( $dryrun );
     set_perms ( $epm_data, '', 0771, $dryrun, false );
-    set_perms_projects ( $dryrun );
-    set_perms_admin ( $dryrun );
-    set_perms_default ( $dryrun );
-    set_perms_web ( $dryrun );
 
     if ( $TODO != '' )
     {
