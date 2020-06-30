@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jun 30 04:25:06 EDT 2020
+// Date:	Tue Jun 30 15:10:03 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -91,10 +91,6 @@ function ERROR ( $message )
               "ERROR: epm: $message" . PHP_EOL );
     exit ( 1 );
 }
-
-echo ( 'epm ' .
-       implode ( ' ', array_slice ( $argv, 1 ) ) .
-       PHP_EOL . PHP_EOL );
 
 $dryrun = false;
 if ( $argc >= 2 && $argv[1] == '-n' )
@@ -206,6 +202,9 @@ if ( isset ( $dir )
 
 require "$epm_home/include/epm_maintenance.php";
 
+title ( "epm " .
+        implode ( ' ', array_slice ( $argv, 1 ) ) );
+
 if ( $op == 'print' )
 {
     if ( $argc > 3 ) ERROR ( 'too many arguments' );
@@ -308,10 +307,7 @@ elseif ( $op == '*user*' )
         set_perms_user ( $argv[2], $dryrun );
 }
 
-if ( $dryrun ) echo ( "Dry Run" . PHP_EOL );
-else echo ( "Done" . PHP_EOL );
-
-
+done ();
 exit ( 0 );
 
 ?>

@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jun 30 05:49:36 EDT 2020
+// Date:    Tue Jun 30 13:36:54 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -77,6 +77,38 @@ $epm_web_gid = gid_from_name ( $epm_web_group );
 if ( ! check_gid ( $epm_web_gid ) )
     ERROR ( "$epm_web_group is NOT a group of the" .
             " current process" );
+
+// Section delimiter functions.
+//
+$epm_titles = [];
+function title ( $title )
+{
+    global $epm_titles, $epm_time_format;
+    $epm_titles[] = $title;
+    $c = count ( $epm_titles );
+    $dashes =
+        substr ( '--------------------', 0, 5 * $c );
+    if ( $c == 0 )
+	echo "$dashes [" .
+	     strftime ( $epm_time_format ) .
+	     "] $title" . PHP_EOL;
+    else
+	echo "$dashes $title" . PHP_EOL;
+}
+function done()
+{
+    global $epm_titles, $epm_time_format;
+    $c = count ( $epm_titles );
+    $title = array_pop ( $epm_titles );
+    $stars = substr
+        ( '********************', 0, 5 * $c );
+    if ( $c == 0 )
+	echo "$stars [" .
+	     strftime ( $epm_time_format ) .
+	     "] done $title" . PHP_EOL;
+    else
+	echo "$stars done $title" . PHP_EOL;
+}
 
 // Function to set the permissions and group of a
 // file or directory, with optional directory recursion.
@@ -211,70 +243,65 @@ function set_perms_problem
 	( $project, $problem, $dryrun )
 {
     global $epm_data;
-    echo "setting permissions for $project $problem" .
-         PHP_EOL;
+    title
+        ( "setting permissions for $project $problem" );
     set_perms ( $epm_data, "projects/$project/$problem",
                 0771, $dryrun );
-    echo "done setting permissions for" .
-         " $project $problem" .  PHP_EOL . PHP_EOL;
+    done();
 }
 function set_perms_project ( $project, $dryrun )
 {
     global $epm_data;
+    title ( "setting permissions for $project" );
     set_perms ( $epm_data, "projects/$project",
                 0771, $dryrun );
+    done();
 }
 function set_perms_projects ( $dryrun )
 {
     global $epm_data;
-    echo "setting permissions for projects" . PHP_EOL;
     if ( ! is_dir ( "$epm_data/projects" ) ) return;
+    title ( "setting permissions for projects" );
     set_perms ( $epm_data, "projects", 0771, $dryrun );
-    echo "done setting permissions for projects" .
-         PHP_EOL . PHP_EOL;
+    done();
 }
 function set_perms_default ( $dryrun )
 {
     global $epm_data;
     if ( ! is_dir ( "$epm_data/default" ) ) return;
-    echo "setting permissions for default" . PHP_EOL;
+    title ( "setting permissions for default" );
     set_perms ( $epm_data, "default", 0771, $dryrun );
-    echo "done setting permissions for default" .
-         PHP_EOL . PHP_EOL;
+    done();
 }
 function set_perms_admin ( $dryrun )
 {
     global $epm_data;
     if ( ! is_dir ( "$epm_data/admin" ) ) return;
-    echo "setting permissions for admin" . PHP_EOL;
+    title ( "setting permissions for admin" );
     set_perms ( $epm_data, "admin", 0770, $dryrun );
-    echo "done setting permissions for admin" .
-         PHP_EOL . PHP_EOL;
+    done();
 }
 function set_perms_lists ( $dryrun )
 {
     global $epm_data;
     if ( ! is_dir ( "$epm_data/lists" ) ) return;
-    echo "setting permissions for lists" . PHP_EOL;
+    title ( "setting permissions for lists" );
     set_perms ( $epm_data, "lists", 0770, $dryrun );
-    echo "done setting permissions for lists" .
-         PHP_EOL . PHP_EOL;
+    done();
 }
 function set_perms_home ( $dryrun )
 {
     global $epm_home;
-    echo "setting permissions for \$epm_home" . PHP_EOL;
+    title ( "setting permissions for \$epm_home" );
     set_perms ( $epm_home, "", 0750, $dryrun );
-    echo "done setting permissions for \$epm_home" .
-         PHP_EOL . PHP_EOL;
+    done();
 }
 function set_perms_web ( $dryrun )
 {
     global $epm_web;
-    echo "setting permissions for \$epm_web" . PHP_EOL;
+    title ( "setting permissions for \$epm_web" );
     set_perms ( $epm_web, "", 0750, $dryrun );
-    echo "done setting permissions for \$epm_web" .
-         PHP_EOL . PHP_EOL;
+    done();
 }
 function set_perms_all ( $dryrun )
 {
@@ -296,23 +323,25 @@ function set_perms_user_problem
 	( $user, $problem, $dryrun )
 {
     global $epm_data;
-    echo "setting permissions for $user $problem" .
-         PHP_EOL;
+    title ( "setting permissions for $user $problem" );
     set_perms ( $epm_data, "users/$user/$problem",
                 0771, $dryrun );
-    echo "done setting permissions for $user $problem" .
-         PHP_EOL . PHP_EOL;
+    done();
 }
 function set_perms_user ( $user, $dryrun )
 {
     global $epm_data;
+    title ( "setting permissions for $user" );
     set_perms ( $epm_data, "users/$user",
                 0771, $dryrun );
+    done();
 }
 function set_perms_users ( $dryrun )
 {
     global $epm_data;
+    title ( "setting permissions for users" );
     set_perms ( $epm_data, "users", 0771, $dryrun );
+    done();
 }
 
 // Function to init a project problem directory.
@@ -340,7 +369,7 @@ function init_problem
     ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_specials;
-    echo "initing $project $problem" . PHP_EOL;
+    title ( "initing $project $problem" );
 
     $d1 = "projects";
     $d2 = "$d1/$project";
@@ -404,8 +433,7 @@ function init_problem
 	if ( $r != 0 )
 	    ERROR ( "link returned exit code $r" );
     }
-    echo "done initing $project $problem" .
-         PHP_EOL . PHP_EOL;
+    done();
 }
 
 // Function to init all the problems in a project.
@@ -456,7 +484,7 @@ function init_projects ( $dryrun )
 function export_problem ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_library, $epm_specials;
-    echo "exporting $project $problem" . PHP_EOL;
+    title ( "exporting $project $problem" );
 
     $dir = "projects/$project";
     if ( ! is_dir ( "$epm_library/$dir" ) )
@@ -478,7 +506,7 @@ function export_problem ( $project, $problem, $dryrun )
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
-    echo "done exporting $project $problem" .
+    done();
          PHP_EOL . PHP_EOL;
 }
 
@@ -538,7 +566,7 @@ function export_projects ( $dryrun )
 function import_problem ( $project, $problem, $dryrun )
 {
     global $epm_data, $epm_library, $epm_specials;
-    echo "importing $project $problem" . PHP_EOL;
+    title ( "importing $project $problem" );
 
     $dir = "projects/$project";
     if ( ! is_dir ( "$epm_data/$dir" ) )
@@ -565,7 +593,7 @@ function import_problem ( $project, $problem, $dryrun )
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
-    echo "done importing $project $problem" .
+    done();
          PHP_EOL . PHP_EOL;
 }
 
@@ -742,7 +770,7 @@ function check_ancestors ( & $TODO, $dir, $is_data )
 function setup ( $dryrun )
 {
     global $epm_home, $epm_web, $epm_data,
-           $epm_name_re;
+           $epm_name_re, $epm_backup;
 
     make_dir ( '.', $dryrun );
     make_dir ( 'projects', $dryrun );
@@ -778,7 +806,44 @@ function setup ( $dryrun )
         ERROR ( "make returned exit code $r" );
 
     $TODO = "cd $epm_data/admin" . PHP_EOL
-          . "edit motd.html as desired" . PHP_EOL;
+          . "edit motd.html as desired" . PHP_EOL
+          . "edit +blocking+ as desired" . PHP_EOL;
+
+    if ( isset ( $epm_backup ) )
+    {
+        if ( ! is_dir ( $epm_backup ) )
+	{
+	    echo "making backup directory" . PHP_EOL;
+	    if ( ! $dryrun
+	         &&
+	         ! @mkdir ( $epm_backup ) )
+		ERROR ( "cannot make $epm_backup" );
+	}
+
+	$f = "$epm_backup/crontab";
+        if ( ! file_exists ( $f ) )
+	{
+	    echo ( "writing crontab" . PHP_EOL );
+	    $crontab = 
+	        "EPM = $epm_home/bin/epm" .
+		PHP_EOL .
+		"WEB = $epm_web" .
+		PHP_EOL .
+		"LOG = $epm_backup/LOG" .
+		PHP_EOL .
+	        '0 4 * * * $EPM backup $WEB' .
+		' >>$LOG 2>&1' .
+		PHP_EOL;
+
+	    if ( ! $dryrun
+	         &&
+		 ! file_put_contents ( $f, $crontab ) )
+	        ERROR ( "could not write $f" );
+	}
+	$TODO .= "cd $epm_backup" . PHP_EOL
+	       . "Edit crontab if you like" . PHP_EOL
+	       . "crontab crontab" . PHP_EOL;
+    }
 
     check_ancestors ( $TODO, $epm_home, false );
     check_ancestors ( $TODO, $epm_web,  false );
@@ -808,7 +873,8 @@ function setup ( $dryrun )
     $count = 0;
     if ( is_dir ( "$epm_data/projects/demos" ) )
     {
-	$demos = @scandir ( "$epm_data/projects/demos" );
+	$demos =
+	    @scandir ( "$epm_data/projects/demos" );
 	if ( $demos === false )
 	    ERROR ( "cannot read projects/demos" );
 	foreach ( $demos as $fname )
@@ -830,7 +896,7 @@ function setup ( $dryrun )
 
     if ( $TODO != '' )
     {
-	echo PHP_EOL . 'TODOs:' . PHP_EOL . PHP_EOL;
+	title ( 'TODOs' );
 	echo $TODO;
 	if ( ! $dryrun )
 	{
@@ -842,6 +908,7 @@ function setup ( $dryrun )
 	         "TODOs written to DATA/TODO" .
 		 PHP_EOL;
 	}
+	done();
     }
 }
 
@@ -937,6 +1004,7 @@ function backup ( $dryrun )
     global $epm_data, $epm_backup, $epm_backup_name,
            $epm_backup_round, $epm_time_format;
 
+    title ( "$epm_backup_name backup" );
     if ( ! is_dir ( $epm_backup ) )
     {
         echo ( "making $epm_backup" . PHP_EOL );
@@ -992,15 +1060,19 @@ function backup ( $dryrun )
 
     if ( $number != 0 )
 	$commands[] = [ $epm_backup,
-	                "cp -p $pbase-0.snar" .
-			" $base-1.snar" ];
+	                "cp -p $pbase-0.snar \\" .
+			PHP_EOL .
+			"    $base-1.snar" ];
     $d = $epm_backup;
     $l = ( $number == 0 ? '0' : '1' );
     $commands[] = [ $epm_data,
-		    "tar -zc" .
-		    " -g $d/$base-$l.snar" .
-		    " -f $d/$base-$l.tgz" .
-		    " --exclude=+work+" .
+		    "tar -zc \\" .
+		    PHP_EOL .
+		    "    -g $d/$base-$l.snar \\" .
+		    PHP_EOL .
+		    "    -f $d/$base-$l.tgz \\" .
+		    PHP_EOL .
+		    "    --exclude=+work+" .
 		    " --exclude=+run+" .
 		    " ." ];
     if ( $number != 0 )
@@ -1008,8 +1080,9 @@ function backup ( $dryrun )
 	$commands[] = [ $epm_backup,
 	                "rm $base-1.snar" ];
 	$commands[] = [ $epm_backup,
-	                "ln -snf $pbase-0.tgz" .
-			" $base-1.parent" ];
+	                "ln -snf $pbase-0.tgz \\" .
+			PHP_EOL .
+			"    $base-1.parent" ];
     }
     foreach ( $commands as $e )
     {
@@ -1022,4 +1095,5 @@ function backup ( $dryrun )
     }
     $list[] = [$base,$number];
     clean_backups ( $dryrun, $list );
+    done();
 }
