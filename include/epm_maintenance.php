@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jun 30 05:16:51 EDT 2020
+// Date:    Tue Jun 30 05:37:51 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -732,7 +732,7 @@ function setup ( $dryrun )
     global $epm_home, $epm_web, $epm_data,
            $epm_name_re;
 
-    make_dir ( '', $dryrun );
+    make_dir ( '.', $dryrun );
     make_dir ( 'projects', $dryrun );
     make_dir ( 'projects/public', $dryrun );
     make_dir ( 'projects/demos', $dryrun );
@@ -765,7 +765,8 @@ function setup ( $dryrun )
     if ( $r != 0 )
         ERROR ( "make returned exit code $r" );
 
-    $TODO = '';
+    $TODO = "cd $epm_data/admin" . PHP_EOL
+          . "edit motd.html as desired" . PHP_EOL;
 
     check_ancestors ( $TODO, $epm_home, false );
     check_ancestors ( $TODO, $epm_web,  false );
@@ -787,8 +788,8 @@ function setup ( $dryrun )
     else
         $r = 1;
     if ( $r != 0 )
-	$TODO .= "su" . PHP_EOL
-	       . "cd $epm_home/secure" . PHP_EOL
+	$TODO .= "cd $epm_home/secure" . PHP_EOL
+	       . "su" . PHP_EOL
 	       . "make install" . PHP_EOL
 	       . "exit" . PHP_EOL;
 
