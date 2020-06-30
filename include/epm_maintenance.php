@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jun 30 05:37:51 EDT 2020
+// Date:    Tue Jun 30 05:49:36 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -139,6 +139,28 @@ function set_perms
         ERROR ( "$fname does not exist" );
     if ( fileowner ( $f ) == 0 ) return;
 
+    if ( isset ( $set_perms_map[$base] ) )
+	$pbase = $set_perms_map[$base];
+    else
+	$pbase = 'OTHER';
+
+    // We must change the group BEFORE we read or change
+    // permissions, as changing the group removes g+s.
+    //
+    $fgid = @filegroup ( $f );
+    if ( $fgid === false )
+	ERROR ( "could not get group id of $fname" );
+    if ( $fgid != $epm_web_gid )
+    {
+        $action = "group id $fgid => $epm_web_gid:"
+	         . " $pbase/$fname";
+	echo "changing $action" . PHP_EOL;
+	if ( ! $dryrun
+	     &&
+	     ! @chgrp ( $f, $epm_web_gid ) )
+	    ERROR ( "could not change $action" );
+    }
+
     $old_perms = @fileperms ( $f );
     if ( $old_perms === false )
         ERROR ( "cannot read permissions of $fname" );
@@ -172,10 +194,6 @@ function set_perms
 
     if ( $old_perms != $new_perms )
     {
-	if ( isset ( $set_perms_map[$base] ) )
-	    $pbase = $set_perms_map[$base];
-	else
-	    $pbase = 'OTHER';
         $action = sprintf ( "%05o => %05o: %s",
 	                     $old_perms, $new_perms,
 			     "$pbase/$fname" );
@@ -183,20 +201,6 @@ function set_perms
 	if ( ! $dryrun
 	     &&
 	     ! @chmod ( $f, $new_perms ) )
-	    ERROR ( "could not change $action" );
-    }
-
-    $fgid = @filegroup ( $f );
-    if ( $fgid === false )
-	ERROR ( "could not get group id of $fname" );
-    if ( $fgid != $epm_web_gid )
-    {
-        $action = "group id $fgid => $epm_web_gid:"
-	         . " $fname";
-	echo "changing $action" . PHP_EOL;
-	if ( ! $dryrun
-	     &&
-	     ! @chgrp ( $f, $epm_web_gid ) )
 	    ERROR ( "could not change $action" );
     }
 }
@@ -223,8 +227,11 @@ function set_perms_project ( $project, $dryrun )
 function set_perms_projects ( $dryrun )
 {
     global $epm_data;
+    echo "setting permissions for projects" . PHP_EOL;
     if ( ! is_dir ( "$epm_data/projects" ) ) return;
     set_perms ( $epm_data, "projects", 0771, $dryrun );
+    echo "done setting permissions for projects" .
+         PHP_EOL . PHP_EOL;
 }
 function set_perms_default ( $dryrun )
 {
@@ -624,7 +631,12 @@ function make_dir ( $dir, $dryrun )
     if ( is_dir ( "$epm_data/$dir" ) ) return;
     echo ( "making directory $dir" . PHP_EOL );
     if ( $dryrun ) return;
-    if ( ! @mkdir ( "$epm_data/$dir" ) )
+    if ( $dir == '.' || $dir == '' )
+        $d = $epm_data;
+	// Cannot make D/. if D does not exist.
+    else
+        $d = "$epm_data/$dir";
+    if ( ! @mkdir ( "$d" ) )
         ERROR ( "cannot make directory $dir" );
 }
 
