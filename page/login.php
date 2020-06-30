@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 28 04:08:58 EDT 2020
+    // Date:	Tue Jun 30 15:27:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -297,7 +297,12 @@
 	while ( true )
 	{
 	    $bid = bin2hex ( random_16_bytes ( 16 ) );
-	    $bfile = "admin/browser/$bid";
+	    $bdir = "admin/browser";
+	    if ( ! is_dir ( "$epm_data/$bdir" ) 
+	         &&
+		 ! @mkdir ( "$epm_data/$bdir" ) )
+	        ERROR ( "cannot make $bdir" );
+	    $bfile = "$bdir/$bid";
 	    if ( is_readable ( "$epm_data/$bfile" ) )
 	    {
 	        WARN ( 'THIS SHOULD NEVER HAPPEN' );
