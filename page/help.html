@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun 30 15:59:33 EDT 2020
+Date:	Tue Jun 30 16:25:31 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -365,30 +365,26 @@ ticket for each <a href='#EPM-server'>EPM server</a>,
 each browser, and
 each email address of an account on the EPM server.
 <p>
-A ticket is created using a
-<a name='confirmation-number'>confirmation number</a> sent to
-the email address by the EPM server and copied from the email
-into the browser by the user.  A ticket
-expires after a certain interval: 2 days for the first ticket,
-7 days for the second ticket, and 30 days for each
-ticket thereafter.  In counting tickets, only <b>expired tickets</b>
-are counted, so if you get a new ticket before the previous
-one expires, the new ticket will not change your ticket expiration time.
+When you first log in your browser has no ticket.  Therefore
+the server emails you a ticket called a <b>confirmation number</b>,
+which you enter into the browser.  The browser sends this
+to the server, which logs the browser in.
 <p>
-A confirmation number is only used during ticket creation, and
-cannot be used to create more than one ticket.  It is not saved
-by the EPM server or browser.
+Every time the browser sends a ticket to the server, if
+the server accepts the ticket and logs the browser in,
+then the server sends the broswer a replacement ticket.  A
+ticket can be used only once.
 <p>
-During confirmation the
-`<b>Get New Ticket</b>' button removes the ticket for the
-entered email address and EPM server
-from the browser and returns to the initial
-login page.
-<p>
-During confirmation the
-`<b>Delete All Tickets</b>' button removes the <u>all</u>
-tickets for the current EPM server from the browser and returns
-to the initial login page.
+When you first log in with a given email address,
+your first <b>auto-login period</b> for that email address begins.
+During this period the server accepts tickets associated
+with the email address from browsers that have them.
+At the end of this period
+the server cancels all tickets associated with the
+email address and emails you a confirmation number when you
+request a new login.  The server also starts a new auto-login
+period.  The first auto-login period is 2 days, the second
+is 7 days, and all the rest are 30 days.
 </p>
 
 <a name="user-page"><h1>User Page</h1></a>
