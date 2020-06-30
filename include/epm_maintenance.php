@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jun 30 03:47:49 EDT 2020
+// Date:    Tue Jun 30 05:16:51 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -223,11 +223,13 @@ function set_perms_project ( $project, $dryrun )
 function set_perms_projects ( $dryrun )
 {
     global $epm_data;
+    if ( ! is_dir ( "$epm_data/projects" ) ) return;
     set_perms ( $epm_data, "projects", 0771, $dryrun );
 }
 function set_perms_default ( $dryrun )
 {
     global $epm_data;
+    if ( ! is_dir ( "$epm_data/default" ) ) return;
     echo "setting permissions for default" . PHP_EOL;
     set_perms ( $epm_data, "default", 0771, $dryrun );
     echo "done setting permissions for default" .
@@ -236,6 +238,7 @@ function set_perms_default ( $dryrun )
 function set_perms_admin ( $dryrun )
 {
     global $epm_data;
+    if ( ! is_dir ( "$epm_data/admin" ) ) return;
     echo "setting permissions for admin" . PHP_EOL;
     set_perms ( $epm_data, "admin", 0770, $dryrun );
     echo "done setting permissions for admin" .
@@ -245,7 +248,6 @@ function set_perms_lists ( $dryrun )
 {
     global $epm_data;
     if ( ! is_dir ( "$epm_data/lists" ) ) return;
-        
     echo "setting permissions for lists" . PHP_EOL;
     set_perms ( $epm_data, "lists", 0770, $dryrun );
     echo "done setting permissions for lists" .
@@ -694,7 +696,7 @@ function copy_dir ( $dir, $dryrun )
 // $dir.  $is_data is true if $dir is $epm_data, and
 // is false for $epm_home and $epm_web.
 //
-function check_ancestors ( & TODO, $dir, $is_data )
+function check_ancestors ( & $TODO, $dir, $is_data )
 {
     global $epm_web_gid;
 
@@ -716,7 +718,7 @@ function check_ancestors ( & TODO, $dir, $is_data )
 		    continue;
 	    }
 	}
-	TODO .= "chmod $mode $ancestor" . PHP_EOL;
+	$TODO .= "chmod $mode $ancestor" . PHP_EOL;
     }
 }
 
@@ -790,14 +792,17 @@ function setup ( $dryrun )
 	       . "make install" . PHP_EOL
 	       . "exit" . PHP_EOL;
 
-    $demos = @scandir ( "$epm_data/projects/demos" );
-    if ( $demos === false )
-        ERROR ( "cannot read projects/demos" );
     $count = 0;
-    foreach ( $demos as $fname )
+    if ( is_dir ( "$epm_data/projects/demos" ) )
     {
-        if ( preg_match ( $epm_name_re, $fname ) )
-	    ++ $count;
+	$demos = @scandir ( "$epm_data/projects/demos" );
+	if ( $demos === false )
+	    ERROR ( "cannot read projects/demos" );
+	foreach ( $demos as $fname )
+	{
+	    if ( preg_match ( $epm_name_re, $fname ) )
+		++ $count;
+	}
     }
     if ( $count == 0 )
         $TODO .= "cd $epm_data" . PHP_EOL
@@ -805,7 +810,10 @@ function setup ( $dryrun )
 	         PHP_EOL;
 
     set_perms_all ( $dryrun );
-    set_perms ( $epm_data, '', 0771, $dryrun, false );
+    if ( is_dir ( $epm_data ) )
+        // May not exist during dry run.
+	set_perms ( $epm_data, '', 0771,
+	            $dryrun, false );
 
     if ( $TODO != '' )
     {
