@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 15:53:40 EDT 2020
+    // Date:	Wed Jul  1 16:26:47 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -924,7 +924,9 @@ EOT;
 		" $project $problem";
 	    return;
 	}
-	$is_owner = $pmap['owner'];
+	$is_owner = ( isset ( $pmap['re-push'] )
+	              &&
+		      $pmap['re-push'] == '+' );
 
 	$new_pull = ! is_dir ( "$epm_data/$desdir" );
 
