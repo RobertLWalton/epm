@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun 30 16:15:03 EDT 2020
+    // Date:	Wed Jul  1 17:19:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -167,8 +167,9 @@
 
 	if ( isset ( $_SESSION['EPM_UID'] ) )
 	{
-	    header ( "location: $epm_root/project.php" .
-	             "?id=$ID" );
+	    header ( "location:" .
+	             " $epm_root/page/project.php" .
+		     "?id=$ID" );
 	    exit;
 	}
 
