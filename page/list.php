@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 03:17:42 EDT 2020
+    // Date:	Wed Jul  1 03:24:40 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -542,17 +542,17 @@ EOT;
 	border: 1px solid black;
 	margin-top: var(--pad);
 	text-align: left;
+	padding: var(--pad);
     }
     div.dsc-body p, div.dsc-body pre {
         margin: 0px;
-	padding: var(--pad);
+	padding: var(--pad) 0px;
     }
     div.dsc-body p {
 	font-size: var(--large-font-size);
     }
     div.dsc-body pre {
 	font-size: var(--font-size);
-	padding: 0px;
     }
 
 </style>
