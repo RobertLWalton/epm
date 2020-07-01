@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun 29 14:42:40 EDT 2020
+    // Date:	Wed Jul  1 15:53:40 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -11,7 +11,7 @@
 
     // Pushes and pulls problem and maintains problem
     // lists.  Does NOT delete projects or project
-    // problems or maintain permissions: see
+    // problems or maintain privileges: see
     // manage.php.
 
     // Directories and Files
@@ -21,34 +21,14 @@
     //
     //		projects/PROJECT
     //
-    // and a permission file:
+    // and a privilege file:
     //
-    //		projects/PROJECT/+perm+
+    //		projects/PROJECT/+priv+
     //
-    // The permission file in turn has lines of the
-    // form
+    // Each projects/PROJECT/PROBLEM directory also con-
+    // tains a +priv+ file.
     //
-    //		TYPE UID-RE
-    //
-    // where TYPE is one of:
-    //
-    //	   owner	Specify PROJECT owners.
-    //	   review	Allow attaching problem reviews.
-    //	   push		Allow pushing new problems.
-    //	   pull		Allow pulling problems.
-    //
-    // and UID-RE is a regular expression that is
-    // matched to a user's UID to determine if the
-    // user has the permissions specified by TYPE.
-    //
-    // The single `projects' directory, and each
-    // projects/PROJECT/PROBLEM directory, also con-
-    // tains a +perm+ file.
-    //
-    // A user with `owner' permissions for a directory
-    // can perform all operations on the directory and
-    // it descendents, including changing the +perm+
-    // files.
+    // See manage.php for detail on privileges.
     //
     // In the following all TIMEs are in the $epm_time_
     // format, and all descriptions consist of para-
@@ -155,14 +135,14 @@
     // A review file may be created by its UID user
     // after the user has solved the PROBLEM, if the
     // user is the owner of the PROBLEM, or if the user
-    // has `review' permission for the problem.  The
+    // has `review' privilege for the problem.  The
     // creator of a review file may delete or replace
     // it.
     //
     // A problem may be pulled by any user with `pull'
-    // permission for the problem.  A problem may be
+    // privilege for the problem.  A problem may be
     // created in a project by pushing it into the
-    // project by any user with `push' permission for
+    // project by any user with `push' privilege for
     // the project.  When a problem is created, the
     // projects/PROJECT/PROBLEM/+perm+ file is set to
     // make the pushing user the owner of the problem
@@ -704,31 +684,32 @@ EOT;
 	}
 	if ( is_dir ( "$epm_data/$desdir" ) )
 	{
-	    $pmap = problem_permissions
-		 ( $project, $problem );
-	    if ( ! $pmap['owner'] )
+	    problem_priv_map
+	        ( $pmap, $project, $problem );
+	    if ( ! isset ( $pmap['re-push'] )
+	         ||
+		 $pmap['re-push'] == '-' )
 	    {
 		$errors[] =
 		    "$problem => $project is not" .
-		    " possible because you are" .
-		    " not an owner of the existing" .
-		    " problem $project $problem";
+		    " possible; you need re-push" .
+		    " privilege for existing" .
+		    " $project $problem";
 		return;
 	    }
 	    $new_push = false;
 	}
 	else
 	{
-	    $pmap = project_permissions ( $project );
-	    if ( ! $pmap['push'] )
+	    project_priv_map ( $pmap, $project );
+	    if ( ! isset ( $pmap['push-new'] )
+	         ||
+		 $pmap['push-new'] == '-' )
 	    {
 		$errors[] =
 		    "$problem => $project is not" .
-		    " possible because you do not" .
-		    " have push permissions";
-		$errors[] = "    for the $project" .
-		    " project, and problem $project" .
-		    " $problem does not exist yet";
+		    " possible; you need push-new" .
+		    " privilege for $project";
 		return;
 	    }
 	    $new_push = true;
@@ -742,6 +723,11 @@ EOT;
 	$desmap = [];
 	if ( $new_push )
 	{
+	    $new_push_privs =
+		"+ owner $uid" . PHP_EOL .
+		"+ view $uid" . PHP_EOL .
+		"+ pull $uid" . PHP_EOL .
+		"+ re-push $uid" . PHP_EOL;
 	    $changes .= "  make $project $problem"
 	              . " directory" . PHP_EOL;
 	    $commands[] = ['mkdir', $desdir, '02771'];
@@ -750,12 +736,11 @@ EOT;
 	                   '02770'];
 	    $commands[] = ['mkdir', "$desdir/+submits+",
 	                            '02770'];
-	    $changes .= "  make $uid the owner of the"
+	    $changes .= "  give $uid all privileges for"
 	              . " $project $problem directory"
 		      . PHP_EOL;
-	    $commands[] = ['append', "$desdir/+perm+",
-	                             "owner $uid" .
-				     PHP_EOL];
+	    $commands[] = ['append', "$desdir/+priv+",
+	                             $new_push_privs];
 	    $changes .=
 	        "  make $project $problem the parent" .
 		" of $uid $problem" . PHP_EOL;
@@ -927,15 +912,16 @@ EOT;
 		return;
 	    }
 	}
-	$pmap = problem_permissions
-	     ( $project, $problem );
-	if ( ! $pmap['pull'] )
+	problem_priv_map ( $pmap, $project, $problem );
+	if ( ! isset ( $pmap['pull'] )
+	     ||
+	     $pmap['pull'] == '-' )
 	{
 	    $errors[] =
 		"$problem <= $project is not" .
-		" possible because you do not have" .
-		" `pull' permission for" .
-		" problem $project $problem";
+		" possible; you need" .
+		" `pull' privilege for" .
+		" $project $problem";
 	    return;
 	}
 	$is_owner = $pmap['owner'];
@@ -1284,7 +1270,8 @@ EOT;
 
     if ( ! isset ( $op ) )
     {
-        $favorites = favorites_to_list ( 'pull|push' );
+        $favorites = favorites_to_list
+	    ( ['pull','push-new','view'] );
 	if ( ! isset ( $listname ) )
 	{
 	    list ( $time, $proj, $base ) =
@@ -1894,7 +1881,7 @@ EOT;
     if ( $op == 'push' )
     {
 	$project_options = values_to_options
-	    ( read_projects ( 'push' ) );
+	    ( read_projects ( ['push-new'] ) );
 
 	echo <<<EOT
 	<div class='push-pull-list'>

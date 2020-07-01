@@ -1,17 +1,77 @@
 <?php
 
-    // File:	admin.php
+    // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 03:29:04 EDT 2020
+    // Date:	Wed Jul  1 12:29:51 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
     // they make no warranty and accept no liability
     // for EPM.
 
-    // Displays and edits permissions, deletes and
+    // Displays and edits privileges, deletes and
     // renames project problems and projects.
 
+    // Permissions are granted by +priv+ files in
+    // project and project problems.  If a user has a
+    // privilege for a project, the user also has the
+    // privilege for all problems in the project.
+    //
+    // The privileges are:
+    //
+    //    Project and Project Problem Permissions:
+    //
+    //	    owner	Right to change +priv+ file
+    //			of project or problem.
+    //
+    //	    view	Right to view actions attached
+    //			to the project or problem.
+    //
+    //    Project Permissions:
+    //
+    //
+    //	    push-new	Right to push new problems into
+    //			project.
+    //
+    //    Project Problem Permissions:
+    //
+    //
+    //	    pull	Right to pull problem.
+    //
+    //	    re-push	Right to re-push problems.
+    //
+    // Note that an owner does not have other permis-
+    // sions, but must change the +priv+ files to
+    // grant needed privileges to her/himself.
+    //
+    // A +priv+ file consists of entries of the form:
+    //
+    //	    S PRIV RE
+    //
+    // where PRIV is one of the privilege names, S is
+    // + to grant the privilege or - to deny it, and
+    // RE is a regular expression matched against the
+    // user's UID.  A +priv+ file line whose RE matches
+    // the current UID is said to be matching.  The
+    // +priv+ files are read one line at a time, and
+    // the first matching line for a particular permis-
+    // sion determines the result.  If there are no
+    // matching lines, privilege is denied.
+    // 
+    // Problem privileges are determined by reading
+    // the problem +priv+ file followed by the project
+    // +priv+ file, and using the first matching line,
+    // if any.  Thus the owner of a problem has more
+    // control over the problem than the owner of the
+    // project in which the problem lies.
+    //
+    // When a new problem is pushed, the problem is
+    // given a +priv+ file giving the pusher all of
+    // the above privileges.
+    //
+    // Lines in +priv+ files beginning with '#" are
+    // treated as comment lines and are ignored, as
+    // are blank lines.  REs cannot contain whitespace.
 
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
@@ -22,7 +82,7 @@
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
-    require "$epm_home/include/epm_admin.php";
+    require "$epm_home/include/epm_manage.php";
 
     if ( $epm_method == 'GET' )
     {
@@ -35,17 +95,6 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-
-    if ( ! isset ( $op ) )
-    {
-        $favorites = favorites_to_list ( 'pull|push' );
-	if ( ! isset ( $listname ) )
-	{
-	    list ( $time, $proj, $base ) =
-	        $favorites[0];
-	    $listname = "$proj:$base";
-	}
-    }
 
     if ( $epm_method == 'POST' )
     {
@@ -122,7 +171,7 @@
     </td>
     <td style='text-align:right'>
     <button type='button'
-            onclick='HELP("admin-page")'>
+            onclick='HELP("manage-page")'>
 	?</button>
     </td>
     </tr>

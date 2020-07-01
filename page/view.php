@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 28 04:08:58 EDT 2020
+    // Date:	Wed Jul  1 15:54:35 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -91,14 +91,15 @@
     		     // 'problem' POST.
     $problem = NULL; // Problem for 'problem' POST.
 
-    $favorites = favorites_to_list ( 'pull|push' );
+    $favorites = favorites_to_list
+	( ['pull','push-new','view'] );
     if ( ! isset ( $listname ) )
     {
         list ( $time, $proj, $base ) = $favorites[0];
 	$listname = "$proj:$base";
     }
     $list = listname_to_list ( $listname );
-    $projects = read_projects ( 'pull|push' );
+    $projects = read_projects ( ['view'] );
     $users = read_users();
 
     if ( $epm_method == 'POST' )

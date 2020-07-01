@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun 26 17:26:32 EDT 2020
+    // Date:	Wed Jul  1 14:31:37 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -55,108 +55,95 @@
 	         02770 );
     }
 
-    // Permission maps.  These map:
+    // A privilege map is a map
     //
-    //		permission => {true,false}
+    //	    PRIV => '+'		Privilege granted.
+    //	    PRIV => '-'		Privilege denied.
     //
-    // according to whether or not the current $uid is
-    // granted or not granted the permission.
-    //
-    define ( "ALL_PERMISSIONS",
-             [ 'owner'  => true, 'push'  => true,
-	       'pull'   => true, 'list' => true,
-	       'review' => true ] );
-    define ( "NO_PERMISSIONS",
-             [ 'owner'  => false, 'push'  => false,
-	       'pull'   => false, 'list' => false,
-	       'review' => false ] );
+    // of privileges constructed by reading +priv+
+    // files.  If PRIV is not in the map, no
+    // matching lines for PRIV were found in the
+    // files read so far.  See page/manage.php for
+    // the format of +priv+ files.
 
-    // Add permissions from $pfile into permission map
-    // $pmap.  Erroneous lines in the file generate
-    // WARN messages and are ignored.  $pfile is a file
-    // name relative to $epm_data.  If $pfile is not
-    // readable, $pmap is not changed (and it is NOT an
-    // error).  If a permission TYPE is not set in the
-    // initial $pmap, it is not legal.
+    // Read a +priv+ file and add to the privilege
+    // $map.  File lines are matched against $uid.
+    // PRIVs with no matching lines are not set in
+    // the map.  Lines with PRIV that is already
+    // set in the map are ignored.  The $map is NOT
+    // initialized.
     //
-    function add_permissions
-	    ( $pfile, & $pmap = NO_PERMISSIONS )
+    // However line formats are checked.  Lines
+    // whose first non-whitespace character is '#"
+    // are ignored.  Blank lines are also ignored.
+    //
+    // The file is relative to $epm_data.  If it does
+    // not exist, nothing is done.
+    //
+    function read_priv_file ( & $map, $fname )
     {
-        global $uid, $epm_data;
+        global $epm_data, $uid;
 
-	$c = @file_get_contents ( "$epm_data/$pfile" );
-	if ( $c === false ) return;
-
-	$c = preg_replace ( '#(\R|^)\h*//.*#', '', $c );
-	    // Get rid of `//...' comments.
-	$c = explode ( "\n", $c );
-	foreach ( $c as $line )
+	if ( ! file_exists ( "$epm_data/$fname" ) )
+	    return;
+	$c = @file_get_contents ( "$epm_data/$fname" );
+	if ( $c === false )
+	    ERROR ( "cannot read existant $fname" );
+	$priv_re =
+	    '(owner|view|pull|push\-new|re\-push)';
+	$line_re =
+	    '/^(\+|\-)\h+' . $priv_re . '\h+(\S+)$/';
+	foreach ( explode ( "\n", $c ) as $line )
 	{
-	    $m = NULL;
 	    $line = trim ( $line );
 	    if ( $line == '' ) continue;
-	    if ( ! preg_match
-	               ( '/^(\S+)\s+(\S+)$/',
-		         $line, $matches ) )
-	        $m = "badly formatted permission"
-		   . " '$line' in $pfile";
-	    elseif ( preg_match ( '#/#', $line ) )
-	        $m = "permission '$line' in $pfile has"
-		   . " illegal '/'";
-	    elseif ( ! isset ( $pmap[$matches[1]] ) )
-	        $m = "bad permission type"
-		   . " '{$matches[1]}' in $pfile";
-	    else
-	    {
-	        $r = preg_match
-		    ( "/^({$matches[2]})\$/", $uid );
-		if ( $r === false )
-		    $m = "bad permission regular"
-		       . " expression '{$matches[2]}'"
-		       . " in $pfile";
-		elseif ( $r )
-		    $pmap[$matches[1]] = true;
-	    }
-	    if ( isset ( $m ) )
-		WARN ( $m );
+	    if ( $line[0] == '#' ) continue;
+	    if ( ! preg_match ( $line_re, $line,
+	                                  $matches ) )
+		ERROR ( "badly formatted line" .
+			    " '$line' in $fname" );
+	    $sign = $matches[1];
+	    $priv = $matches[2];
+	    $re   = $matches[3];
+
+	    if ( isset ( $map[$priv] ) ) continue;
+
+	    $r = preg_match ( "/^($re)\$/", $uid );
+	    if ( $r === false )
+		ERROR ( "bad RE in line" .
+			" '$line' in $fname" );
+	    elseif ( $r )
+		$map[$priv] = $sign;
 	}
     }
 
-    // Add project permissions to $pmap and return
-    // $pmap.
+    // Return the privilege map of a project.
     //
-    function project_permissions
-	    ( $project, & $pmap = NO_PERMISSIONS )
+    function project_priv_map ( & $map, $project )
     {
-	add_permissions
-	    ( "projects/$project/+perm+", $pmap );
-	if ( $pmap['owner'] ) return ALL_PERMISSIONS;
-	add_permissions ( 'projects/+perm+', $pmap );
-	if ( $pmap['owner'] ) return ALL_PERMISSIONS;
-	return $pmap;
+        $map = [];
+	read_priv_file
+	     ( $map, "projects/$project/+priv+" );
     }
 
-    // Add problem permissions to $pmap and return
-    // $pmap.
+    // Return the privilege map of a project problem
     //
-    function problem_permissions
-	    ( $project, $problem,
-	      & $pmap = NO_PERMISSIONS )
+    function problem_priv_map
+	    ( & $map, $project, $problem )
     {
-	add_permissions
-	    ( "projects/$project/$problem/+perm+",
-	      $pmap );
-	if ( $pmap['owner'] ) return ALL_PERMISSIONS;
-	return project_permissions
-	    ( $project, $pmap );
+        $map = [];
+	read_priv_file
+	    ( $map,
+	      "projects/$project/$problem/+priv+" );
+	read_priv_file
+	    ( $map, "projects/$project/+priv+" );
     }
 
-    // Return the list of projects that have a given
-    // type of permission that matches the $type_re
-    // regular expression.  The list is sorted in
+    // Return the list of projects that have one of
+    // the given privileges.  The list is sorted in
     // natural order.
     //
-    function read_projects ( $type_re )
+    function read_projects ( $privs )
     {
 	global $epm_data, $epm_name_re;
 	$projects = [];
@@ -169,14 +156,14 @@
 	    if ( ! preg_match
 	               ( $epm_name_re, $project ) )
 	        continue;
-	    $pmap = project_permissions ( $project );
-	    foreach ( $pmap as $type => $value )
+	    project_priv_map ( $map, $project );
+	    foreach ( $privs as $priv )
 	    {
-	        if ( ! $value ) continue;
-		if ( ! preg_match
-		         ( "/^($type_re)\$/", $type ) )
+	        if ( ! isset ( $map[$priv] ) )
 		    continue;
-	        $projects[] = $project;
+		if ( $map[$priv] == '-' )
+		    continue;
+		$projects[] = $project;
 		break;
 	    }
 	}
@@ -762,11 +749,11 @@
     // unless that list is empty, in which case
     // constructs a list consisting of users problems
     // and problems of all projects for which user
-    // has a permission of a type matching $type_re,
-    // and writes that into +favorites+ before
-    // returning the constructed list.
+    // has a privilege listed in $privs, and writes
+    // that into +favorites+ before returning the
+    // constructed list.
     //
-    function favorites_to_list ( $type_re )
+    function favorites_to_list ( $privs )
     {
 	global $epm_data, $uid, $epm_time_format;
 
@@ -778,7 +765,7 @@
 	    ERROR ( "cannot stat $f" );
 	$time = strftime ( $epm_time_format, $time );
 	$list[] = [$time, '-', '-'];
-	foreach ( read_projects ( $type_re )
+	foreach ( read_projects ( $privs )
 	          as $project )
 	{
 	    $f = "projects/$project";
