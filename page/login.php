@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 17:19:23 EDT 2020
+    // Date:	Thu Jul  2 10:01:27 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -485,6 +485,7 @@ EOT;
        autofocus
        title='address (to be) associated with account'>
 </td><td style='width:10%;text-align:right'>
+<strong>Help &rarr;</strong>
 <button type='button' onclick='HELP("login-page")'>
 ?</button>
 </td></tr></table>
