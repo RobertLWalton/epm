@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul  2 05:10:37 EDT 2020
+    // Date:	Thu Jul  2 06:04:38 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -113,6 +113,12 @@
     $listname = & $_SESSION['EPM_MANAGE']['LISTNAME'];
     $project = & $_SESSION['EPM_MANAGE']['PROJECT'];
     $problem = & $_SESSION['EPM_MANAGE']['PROBLEM'];
+
+    if ( $epm_method == 'GET' )
+    {
+        $project = NULL;
+	$problem = NULL;
+    }
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -371,24 +377,30 @@ EOT;
 	<pre>$priv_file_contents</pre>
 	</div>
 	</div>
-	<div class='problem'>
-	<form method='POST' action='manage.php'
-	      enctype='multipart/form-data'
-	      id='problem-post'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type='hidden' name='problem-priv'
-	                     id='problem-value'>
-	<strong>Edit and</strong>
-	<button type='button'
-	        onclick='COPY("problem")'>
-	    Submit</button>
-	<div class='priv'>
-	<pre contenteditable='true'
-	     id='problem-contents'
-	    >$priv_file_contents</pre>
-	</div>
-	</form>
-	</div>
+EOT;
+        problem_priv_map ( $pmap, $project, $problem ); 
+	if ( isset ( $pmap['owner'] )
+	     &&
+	     $pmap['owner'] == '+' )
+	    echo <<<EOT
+	    <div class='problem'>
+	    <form method='POST' action='manage.php'
+		  enctype='multipart/form-data'
+		  id='problem-post'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type='hidden' name='problem-priv'
+				 id='problem-value'>
+	    <strong>Edit and</strong>
+	    <button type='button'
+		    onclick='COPY("problem")'>
+		Submit</button>
+	    <div class='priv'>
+	    <pre contenteditable='true'
+		 id='problem-contents'
+		>$priv_file_contents</pre>
+	    </div>
+	    </form>
+	    </div>
 EOT;
     }
     if ( isset ( $project ) )
@@ -398,6 +410,7 @@ EOT;
         if ( $priv_file_contents === false )
 	    $priv_file_contents = " \n";
         echo <<<EOT
+	<div style='clear:both'></div>
 	<div class='project'>
 	<strong>$project Project Privileges</strong>
 	<button type='button'
@@ -410,24 +423,30 @@ EOT;
 	<pre>$priv_file_contents</pre>
 	</div>
 	</div>
-	<div class='project'>
-	<form method='POST' action='manage.php'
-	      enctype='multipart/form-data'
-	      id='project-post'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type='hidden' name='project-priv'
-	                     id='project-value'>
-	<strong>Edit and</strong>
-	<button type='button'
-	        onclick='COPY("project")'>
-	    Submit</button>
-	<div class='priv'>
-	<pre contenteditable='true'
-	     id='project-contents'
-	    >$priv_file_contents</pre>
-	</div>
-	</form>
-	</div>
+EOT;
+        project_priv_map ( $pmap, $project ); 
+	if ( isset ( $pmap['owner'] )
+	     &&
+	     $pmap['owner'] == '+' )
+	    echo <<<EOT
+	    <div class='project'>
+	    <form method='POST' action='manage.php'
+		  enctype='multipart/form-data'
+		  id='project-post'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type='hidden' name='project-priv'
+				 id='project-value'>
+	    <strong>Edit and</strong>
+	    <button type='button'
+		    onclick='COPY("project")'>
+		Submit</button>
+	    <div class='priv'>
+	    <pre contenteditable='true'
+		 id='project-contents'
+		>$priv_file_contents</pre>
+	    </div>
+	    </form>
+	    </div>
 EOT;
     }
 
