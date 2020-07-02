@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul  2 00:04:15 EDT 2020
+    // Date:	Thu Jul  2 05:10:37 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -105,16 +105,17 @@
     {
 	if ( ! isset ( $_SESSION['EPM_MANAGE'] ) )
 	    $_SESSION['EPM_MANAGE'] =
-	        [ 'LISTNAME' => NULL ];
+	        [ 'LISTNAME' => NULL,
+		  'PROJECT' => NULL,
+		  'PROBLEM' => NULL ];
     }
 
     $listname = & $_SESSION['EPM_MANAGE']['LISTNAME'];
+    $project = & $_SESSION['EPM_MANAGE']['PROJECT'];
+    $problem = & $_SESSION['EPM_MANAGE']['PROBLEM'];
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $project = NULL; // Project for 'project' or
-    		     // 'problem' POST.
-    $problem = NULL; // Problem for 'problem' POST.
 
     $favorites = favorites_to_list
 	( ['pull','push-new','view'] );
@@ -153,24 +154,26 @@
 	}
         elseif ( isset ( $_POST['project'] ) )
 	{
-	    $project = $_POST['project'];
-	    if ( ! in_array ( $project, $projects,
+	    $proj = $_POST['project'];
+	    if ( ! in_array ( $proj, $projects,
 	                      true ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $project = $proj;
+	    $problem = NULL;
 	}
         elseif ( isset ( $_POST['problem'] ) )
 	{
-	    list ( $project, $problem ) =
+	    list ( $proj, $prob ) =
 	        explode ( ':', $_POST['problem'] );
-	    if (    "$project:$problem"
+	    if (    "$proj:$prob"
 	         != $_POST['problem'] )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $found = false;
 	    foreach ( $list as $item )
 	    {
-	        list ( $time, $proj, $prob ) = $item;
-		if (    $proj == $project
-		     && $prob == $problem )
+	        list ( $time, $pj, $pb ) = $item;
+		if (    $pj == $proj
+		     && $pb == $prob )
 		{
 		    $found = true;
 		    break;
@@ -178,13 +181,22 @@
 	    }
 	    if ( ! $found )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $project = $proj;
+	    $problem = $prob;
+	}
+        elseif ( isset ( $_POST['project-priv'] ) )
+	{
+	    $x = preg_replace ( "/\n/", '$', $_POST['project-priv'] );
+	    var_dump ( $x );
+	}
+        elseif ( isset ( $_POST['problem-priv'] ) )
+	{
+	    $x = preg_replace ( "/\n/", '$', $_POST['problem-priv'] );
+	    var_dump ( $x );
 	}
 	else
 	    exit ( 'UNACCEPTABLE HTTP POST' );
     }
-
-    unset ( $problem );
-        // Causes bad title in epm_head.php if left set.
 
 ?>
 
@@ -198,18 +210,27 @@ div.select {
     background-color: var(--bg-green);
     padding-top: var(--pad);
 }
-div.priv {
+div.project, div.problem {
     background-color: var(--bg-tan);
     padding: var(--pad) 0px;
     margin: 0px;
-    display: block;
-    text-align: left;
+    display: inline-block;
+    float: left;
+    width: 50%;
+}
+div.project {
+    background-color: var(--bg-tan);
+}
+div.problem {
+    background-color: var(--bg-blue);
+}
+div.priv {
+    margin-left: 2%;
+    border: black solid 1px;
+    width: 95%;
 }
 div.priv pre {
-    margin: 0px;
-    padding: var(--pad) 0px;
-    display: block;
-    text-align: left;
+    font-size: var(--large-font-size);
 }
 
 </style>
@@ -330,27 +351,99 @@ EOT;
     </div>
 EOT;
 
+    if ( isset ( $problem ) )
+    {
+        $f =  "/projects/$project/$problem/+priv+";
+        $priv_file_contents = @file_get_contents
+	    ( "$epm_data/$f" );
+        if ( $priv_file_contents === false )
+	    $priv_file_contents = " \n";
+        echo <<<EOT
+	<div class='problem'>
+	<strong>$project $problem Problem Privileges</strong>
+	<button type='button'
+	        style='visibility:hidden'>
+		Submit</button>
+		<!-- this keeps the two header
+		     heights the same, as button
+		     is higher then text -->
+	<div class='priv'>
+	<pre>$priv_file_contents</pre>
+	</div>
+	</div>
+	<div class='problem'>
+	<form method='POST' action='manage.php'
+	      enctype='multipart/form-data'
+	      id='problem-post'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' name='problem-priv'
+	                     id='problem-value'>
+	<strong>Edit and</strong>
+	<button type='button'
+	        onclick='COPY("problem")'>
+	    Submit</button>
+	<div class='priv'>
+	<pre contenteditable='true'
+	     id='problem-contents'
+	    >$priv_file_contents</pre>
+	</div>
+	</form>
+	</div>
+EOT;
+    }
     if ( isset ( $project ) )
     {
         $priv_file_contents = @file_get_contents
 	    ( "$epm_data/projects/$project/+priv+" );
         if ( $priv_file_contents === false )
-	    $priv_file_contents = 'None';
-	else 
-	    $priv_file_contents =
-	        "\n$priv_file_contents";
+	    $priv_file_contents = " \n";
         echo <<<EOT
+	<div class='project'>
+	<strong>$project Project Privileges</strong>
+	<button type='button'
+	        style='visibility:hidden'>
+		Submit</button>
+		<!-- this keeps the two header
+		     heights the same, as button
+		     is higher then text -->
 	<div class='priv'>
-	<strong>$project Privileges</strong>
-	<pre>
-	$priv_file_contents
-	</pre>
+	<pre>$priv_file_contents</pre>
+	</div>
+	</div>
+	<div class='project'>
+	<form method='POST' action='manage.php'
+	      enctype='multipart/form-data'
+	      id='project-post'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' name='project-priv'
+	                     id='project-value'>
+	<strong>Edit and</strong>
+	<button type='button'
+	        onclick='COPY("project")'>
+	    Submit</button>
+	<div class='priv'>
+	<pre contenteditable='true'
+	     id='project-contents'
+	    >$priv_file_contents</pre>
+	</div>
+	</form>
 	</div>
 EOT;
     }
 
 
 ?>
+
+<script>
+function COPY ( type )
+{
+    src = document.getElementById ( type + '-contents' );
+    des = document.getElementById ( type + '-value' );
+    form = document.getElementById ( type + '-post' );
+    des.value = src.innerText;
+    form.submit();
+}
+</script>
 
 </body>
 </html>
