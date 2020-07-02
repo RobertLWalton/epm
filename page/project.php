@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 16:26:47 EDT 2020
+    // Date:	Thu Jul  2 00:04:48 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1771,6 +1771,9 @@ EOT;
     <button type='submit'
 	    formaction='favorites.php'>
 	    Edit Favorites</button>
+    <button type='submit'
+	    formaction='manage.php'>
+	    Manage</button>
     <strong>Page</strong>
     </td>
     <td style='text-align:right'>

@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 15:54:35 EDT 2020
+    // Date:	Wed Jul  1 23:15:31 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -22,10 +22,12 @@
     // POST:
     // ----
     //
-    // Each post may selects a user, problem list, or
-    // problem.
+    // Each post may selects a user, project, problem
+    // list, or problem.
     //
     //	    user=UID
+    //
+    //	    project=UID
     //
     //	    problem=PROJECT:PROBLEM
     //
