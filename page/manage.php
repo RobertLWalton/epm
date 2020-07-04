@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul  4 18:35:25 EDT 2020
+    // Date:	Sat Jul  4 18:41:45 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -194,7 +194,7 @@
 	{
 	    check_priv_file_contents
 	        ( $_POST['project-priv'], $errors,
-		  "in Proposed Project Privilege File" );
+		  "In Proposed Project Privilege File:" );
 	    $x = preg_replace ( "/\n/", '$', $_POST['project-priv'] );
 	    var_dump ( $x );
 	}
