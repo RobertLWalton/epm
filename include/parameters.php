@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 29 14:44:15 EDT 2020
+// Date:    Sat Jul  4 17:28:27 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -122,6 +122,13 @@ $epm_parent_re =
     // Regular expression to target directory of
     // +parent+ link.  The first match is the
     // target directory relative to $epm_data.
+
+$epm_priv_re =
+    '/^\h*(\+|\-)\h+' .
+    '(owner|view|pull|push\-new|re\-push)' .
+    '\h+(\S+)\h*$/';
+    // Non-blank, non-comment lines of +priv+ files
+    // must match this re.
 
 $epm_specials =
     ['generate','filter','display','monitor'];

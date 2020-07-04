@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 14:31:37 EDT 2020
+    // Date:	Sat Jul  4 17:24:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -82,24 +82,20 @@
     //
     function read_priv_file ( & $map, $fname )
     {
-        global $epm_data, $uid;
+        global $epm_data, $uid, $epm_priv_re;
 
 	if ( ! file_exists ( "$epm_data/$fname" ) )
 	    return;
 	$c = @file_get_contents ( "$epm_data/$fname" );
 	if ( $c === false )
 	    ERROR ( "cannot read existant $fname" );
-	$priv_re =
-	    '(owner|view|pull|push\-new|re\-push)';
-	$line_re =
-	    '/^(\+|\-)\h+' . $priv_re . '\h+(\S+)$/';
 	foreach ( explode ( "\n", $c ) as $line )
 	{
 	    $line = trim ( $line );
 	    if ( $line == '' ) continue;
 	    if ( $line[0] == '#' ) continue;
-	    if ( ! preg_match ( $line_re, $line,
-	                                  $matches ) )
+	    if ( ! preg_match ( $epm_priv_re,
+	                        $line, $matches ) )
 		ERROR ( "badly formatted line" .
 			    " '$line' in $fname" );
 	    $sign = $matches[1];
@@ -115,6 +111,69 @@
 	    elseif ( $r )
 		$map[$priv] = $sign;
 	}
+    }
+
+    // Check the proposed new contents of a +priv+
+    // file for formatting and RE errors.  Append
+    // messages to $errors for any errors found.  Return
+    // '+' if the current $uid is certified as owner
+    // by the contents, '-' if certified as non-owner,
+    // and NULL if no information about ownership of
+    // $uid is in contents.
+    //
+    // If an error is found, $error_header is appended
+    // to $errors before the first error message.  All
+    // the other error messages are indented.
+    //
+    function check_priv_file_contents
+	    ( $contents, & $errors, $error_header )
+    {
+        global $uid, $epm_priv_re;
+
+	$is_owner = NULL;
+	$error_found = false;
+
+	foreach ( explode ( "\n", $contents ) as $line )
+	{
+	    $line = trim ( $line );
+	    if ( $line == '' ) continue;
+	    if ( $line[0] == '#' ) continue;
+	    if ( ! preg_match ( $epm_priv_re,
+	                        $line, $matches ) )
+	    {
+		if ( ! $error_found )
+		{
+		    $error_found = true;
+		    $errors[] = $error_header;
+		}
+		$errors[] =
+		    "    badly formatted line '$line'";
+		continue;
+	    }
+	    $sign = $matches[1];
+	    $priv = $matches[2];
+	    $re   = $matches[3];
+
+	    $r = preg_match ( "/^($re)\$/", $uid );
+	    if ( $r === false )
+	    {
+		if ( ! $error_found )
+		{
+		    $error_found = true;
+		    $errors[] = $error_header;
+		}
+		$errors[] =
+		    "    bad RE in line '$line'";
+		continue;
+	    }
+
+	    if ( $r == 0 ) continue;
+	    if ( $priv != 'owner' ) continue;
+	    if ( isset ( $is_owner ) ) continue;
+	    $is_owner = $sign;
+	}
+
+	return $is_owner;
     }
 
     // Return the privilege map of a project.
