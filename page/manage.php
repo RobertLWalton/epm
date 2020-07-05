@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul  4 18:41:45 EDT 2020
+    // Date:	Sun Jul  5 03:01:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -105,23 +105,24 @@
     {
 	if ( ! isset ( $_SESSION['EPM_MANAGE'] ) )
 	    $_SESSION['EPM_MANAGE'] =
-	        [ 'LISTNAME' => NULL,
-		  'PROJECT' => NULL,
+	        [ 'LISTNAME' => NULL ];
+	$_SESSION['EPM_DATA'] =
+		[ 'PROJECT' => NULL,
 		  'PROBLEM' => NULL ];
     }
 
     $listname = & $_SESSION['EPM_MANAGE']['LISTNAME'];
-    $project = & $_SESSION['EPM_MANAGE']['PROJECT'];
-    $problem = & $_SESSION['EPM_MANAGE']['PROBLEM'];
-
-    if ( $epm_method == 'GET' )
-    {
-        $project = NULL;
-	$problem = NULL;
-    }
+    $data = & $_SESSION['EPM_DATA'];
+    $project = & $data['PROJECT'];
+    $problem = & $data['PROBLEM'];
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $edited_contents = NULL;
+        // Contents of edited version of +priv+.
+    $owner_warn = false;
+        // True to ask if its ok to accept $edited_
+	// contents which removes $uid from ownership.
 
     $favorites = favorites_to_list
 	( ['pull','push-new','view'] );
@@ -190,21 +191,77 @@
 	    $project = $proj;
 	    $problem = $prob;
 	}
-        elseif ( isset ( $_POST['project-priv'] ) )
-	{
-	    check_priv_file_contents
-	        ( $_POST['project-priv'], $errors,
-		  "In Proposed Project Privilege File:" );
-	    $x = preg_replace ( "/\n/", '$', $_POST['project-priv'] );
-	    var_dump ( $x );
-	}
+        elseif ( isset ( $_POST['warning'] )
+	         &&
+		 $_POST['warning' == 'no' )
+	    /* do nothing */;
         elseif ( isset ( $_POST['problem-priv'] ) )
 	{
-	    check_priv_file_contents
-	        ( $_POST['problem-priv'], $errors,
-		  "in Proposed Problem Privilege File" );
-	    $x = preg_replace ( "/\n/", '$', $_POST['problem-priv'] );
-	    var_dump ( $x );
+	    if ( ! isset ( $_POST['warning'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $problem ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $project ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+   	    $edited_contents = $_POST['problem-priv'];
+   	    $warn = $_POST['warning'];
+	    $r = check_priv_file_contents
+	        ( $edited_contents, $errors,
+		  "In Proposed Problem Privilege File:" );
+	    if ( count ( $errors ) == 0 )
+	    {
+	    	if ( ! isset ( $r ) )
+		{
+		    project_priv_map ( $pmap, $project );
+		    if ( isset ( $pmap['owner'] )
+		        $r = $pmap['owner'];
+		}
+		if ( $r == '+' || $warning == 'yes' )
+		{
+		    $f = "/projects/$project/$problem/"
+		       . "+priv+";
+		    $r = @file_put_contents
+		        ( $f, $edited_contents );
+		    if ( $r === false )
+		        ERROR ( "cannot write $f" );
+		    $edited_contents = NULL;
+		    $problem = NULL;
+		    $project = NULL;
+		}
+		else
+		    $owner_warn = true;
+	    }
+	}
+        elseif ( isset ( $_POST['project-priv'] ) )
+	{
+	    if ( ! isset ( $_POST['warning'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( isset ( $problem ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $project ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+   	    $edited_contents = $_POST['project-priv'];
+   	    $warn = $_POST['warning'];
+	    $r = check_priv_file_contents
+	        ( $edited_contents, $errors,
+		  "In Proposed Project Privilege File:" );
+	    if ( count ( $errors ) == 0 )
+	    {
+		if ( $r == '+' || $warning == 'yes' )
+		{
+		    $f = "/projects/$project/+priv+";
+		    $r = @file_put_contents
+		        ( $f, $edited_contents );
+		    if ( $r === false )
+		        ERROR ( "cannot write $f" );
+		    $edited_contents = NULL;
+		    $project = NULL;
+		}
+		else
+		    $owner_warn = true;
+	    }
 	}
 	else
 	    exit ( 'UNACCEPTABLE HTTP POST' );
@@ -378,7 +435,7 @@ EOT;
 		Submit</button>
 		<!-- this keeps the two header
 		     heights the same, as button
-		     is higher then text -->
+		     is higher than text -->
 	<div class='priv'>
 	<pre>$priv_file_contents</pre>
 	</div>
@@ -396,9 +453,11 @@ EOT;
 	    <input type='hidden' name='id' value='$ID'>
 	    <input type='hidden' name='problem-priv'
 				 id='problem-value'>
+	    <input type='hidden' id='problem-warning'
+	           name='warning' value=''>
 	    <strong>Edit and</strong>
 	    <button type='button'
-		    onclick='COPY("problem")'>
+		    onclick='COPY("problem","")'>
 		Submit</button>
 	    <div class='priv'>
 	    <pre contenteditable='true'
@@ -442,9 +501,11 @@ EOT;
 	    <input type='hidden' name='id' value='$ID'>
 	    <input type='hidden' name='project-priv'
 				 id='project-value'>
+	    <input type='hidden' id='project-warning'
+	           name='warning' value=''>
 	    <strong>Edit and</strong>
 	    <button type='button'
-		    onclick='COPY("project")'>
+		    onclick='COPY("project","")'>
 		Submit</button>
 	    <div class='priv'>
 	    <pre contenteditable='true'
@@ -460,12 +521,14 @@ EOT;
 ?>
 
 <script>
-function COPY ( type )
+function COPY ( type, warn )
 {
     src = document.getElementById ( type + '-contents' );
     des = document.getElementById ( type + '-value' );
     form = document.getElementById ( type + '-post' );
+    warning = document.getElementById ( type + '-warning' );
     des.value = src.innerText;
+    warning.value = warn;
     form.submit();
 }
 </script>
