@@ -51,7 +51,7 @@ function view_priv ( $project )
 //	[TIME, UID, 'push', PROJECT, PROBLEM]
 //	[TIME, UID, 'pull', PROJECT, PROBLEM]
 //	[TIME, UID, 'create', UID, PROBLEM]
-//	[TIME, UID, 'submit', PROJECT, RUNBASE,
+//	[TIME, UID, 'submit', PROJECT, PROBLEM, RUNBASE,
 //			      STIME, SCORE...]
 //
 // For 'info':
@@ -117,10 +117,11 @@ function actions_to_rows ( $actions )
 	else if ( $type == 'submit' )
 	{
 	    $project = $items[3];
-	    $runbase = $items[4];
-	    $cpu_time = $items[5];
+	    $problem = $items[4];
+	    $runbase = $items[5];
+	    $cpu_time = $items[6];
 	    $score = implode
-	        ( ' ', array_slice ( $items, 6 ) );
+	        ( ' ', array_slice ( $items, 7 ) );
 	    $a = "submit $runbase.run in $project"
 	       . "  $cpu_time $score";
 	}
@@ -155,11 +156,7 @@ function read_actions ( $fname )
         $line = trim ( $line );
 	if ( $line == '' ) continue;
 	$line = preg_replace ( '/\s+/', ' ', $line );
-	$line = explode ( ' ', $line );
-	$value = implode
-	    ( ' ', array_slice ( $line, 5 ) );
-	array_splice ( $line, 5, 1000, [$value] );
-	$r[] = $line;
+	$r[] = explode ( ' ', $line );
     }
     return array_reverse ( $r );
 }

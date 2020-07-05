@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 05:22:32 EDT 2020
+// Date:    Sun Jul  5 14:37:16 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -2250,8 +2250,8 @@ function finish_run ( & $warnings, & $errors )
     else
 	$failed_case = NULL;
 
-    $action = "$time $uid submit $project $runbase"
-	    . " $stime $score" . PHP_EOL;
+    $action = "$time $uid submit $project $problem"
+            . " $runbase $stime $score" . PHP_EOL;
 
     $f = "projects/$project/+actions+";
     $r = @file_put_contents
