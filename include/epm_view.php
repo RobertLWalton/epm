@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun Jul  5 15:32:48 EDT 2020
+// Date:	Sun Jul  5 16:35:56 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -53,6 +53,8 @@ function view_priv ( $project )
 //	[TIME, UID, 'create', UID, PROBLEM]
 //	[TIME, UID, 'submit', PROJECT, PROBLEM, RUNBASE,
 //			      STIME, SCORE...]
+//	[TIME, UID, 'update', PROJECT, PROBLEM, THING...]
+//	[TIME, UID, 'update', PROJECT, 'project', THING...]
 //
 // For 'info':
 //
@@ -75,12 +77,14 @@ function view_priv ( $project )
 //
 function actions_to_rows ( $actions )
 {
+    global $view_cache;
     $r = '';
     foreach ( $actions as $items )
     {
         $time = $items[0];
         $user = $items[1];
         $type = $items[2];
+	$a = NULL;
 	if ( $type == 'info' )
 	{
 	    $key = $items[3];
@@ -102,6 +106,18 @@ function actions_to_rows ( $actions )
 	    else
 		$a = "unknown operation $op";
 	}
+	else
+	{
+	    $project = $items[3];
+	    if ( isset ( $view_cache[$project] ) )
+	        $v = $view_cache[$project];
+	    else
+	        $v = view_priv ( $project );
+	    if ( $v != '+' ) continue;
+	}
+
+	if ( isset ( $a ) )
+	    /* Do Nothing */;
 	else if ( $type == 'pull' )
 	    $a = "pull {$items[4]} from {$items[3]}";
 	else if ( $type == 'push' )
