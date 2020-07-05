@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 23:15:31 EDT 2020
+    // Date:	Sun Jul  5 14:05:38 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -62,6 +62,7 @@
 
     require "$epm_home/include/epm_user.php";
     require "$epm_home/include/epm_list.php";
+    require "$epm_home/include/epm_view.php";
 
     // Get list of users.
     //
