@@ -60,7 +60,7 @@ $epm_check_ipaddr = true;
     // secure server (running SSL with a certificate).
 
 $epm_debug = preg_match
-    ( '/(login|user|problem|run|project|list|favorites)/',
+    ( '/(login|user|project|list|favorites|manage)/',
       $epm_self );
     // True to turn debugging on; false for off.
 

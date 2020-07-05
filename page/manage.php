@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul  5 03:01:29 EDT 2020
+    // Date:	Sun Jul  5 03:42:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -193,7 +193,7 @@
 	}
         elseif ( isset ( $_POST['warning'] )
 	         &&
-		 $_POST['warning' == 'no' )
+		 $_POST['warning'] == 'no' )
 	    /* do nothing */;
         elseif ( isset ( $_POST['problem-priv'] ) )
 	{
@@ -214,7 +214,7 @@
 	    	if ( ! isset ( $r ) )
 		{
 		    project_priv_map ( $pmap, $project );
-		    if ( isset ( $pmap['owner'] )
+		    if ( isset ( $pmap['owner'] ) )
 		        $r = $pmap['owner'];
 		}
 		if ( $r == '+' || $warning == 'yes' )
@@ -222,9 +222,37 @@
 		    $f = "/projects/$project/$problem/"
 		       . "+priv+";
 		    $r = @file_put_contents
-		        ( $f, $edited_contents );
+		        ( "$epm_data/$f",
+			  $edited_contents );
 		    if ( $r === false )
 		        ERROR ( "cannot write $f" );
+
+		    $time = @filemtime
+		        ( "$epm_data/$f" );
+		    if ( $time === false )
+			ERROR ( "cannot stat $f" );
+		    $time = strftime
+		        ( $epm_time_format, $time );
+		    $action = "$time $uid update"
+		            . " $project $problem"
+			    . " privileges"
+			    . PHP_EOL;
+
+		    $f = "projects/$project/+actions+";
+		    $r = @file_put_contents
+			( "$epm_data/$f", $action,
+			  FILE_APPEND );
+		    if ( $r === false )
+			ERROR ( "cannot write $f" );
+
+		    $f = "projects/$project/$problem/"
+		       . "+actions+";
+		    $r = @file_put_contents
+			( "$epm_data/$f", $action,
+			  FILE_APPEND );
+		    if ( $r === false )
+			ERROR ( "cannot write $f" );
+
 		    $edited_contents = NULL;
 		    $problem = NULL;
 		    $project = NULL;
@@ -253,9 +281,29 @@
 		{
 		    $f = "/projects/$project/+priv+";
 		    $r = @file_put_contents
-		        ( $f, $edited_contents );
+		        ( "$epm_data/$f",
+			  $edited_contents );
 		    if ( $r === false )
 		        ERROR ( "cannot write $f" );
+
+		    $time = @filemtime
+		        ( "$epm_data/$f" );
+		    if ( $time === false )
+			ERROR ( "cannot stat $f" );
+		    $time = strftime
+		        ( $epm_time_format, $time );
+		    $action = "$time $uid update"
+		            . " $project project"
+			    . " privileges"
+			    . PHP_EOL;
+
+		    $f = "projects/$project/+actions+";
+		    $r = @file_put_contents
+			( "$epm_data/$f", $action,
+			  FILE_APPEND );
+		    if ( $r === false )
+			ERROR ( "cannot write $f" );
+
 		    $edited_contents = NULL;
 		    $project = NULL;
 		}
@@ -492,7 +540,9 @@ EOT;
         project_priv_map ( $pmap, $project ); 
 	if ( isset ( $pmap['owner'] )
 	     &&
-	     $pmap['owner'] == '+' )
+	     $pmap['owner'] == '+'
+	     &&
+	     ! isset ( $problem ) )
 	    echo <<<EOT
 	    <div class='project'>
 	    <form method='POST' action='manage.php'

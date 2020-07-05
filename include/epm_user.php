@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun 13 14:34:22 EDT 2020
+// Date:    Sun Jul  5 03:20:04 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -213,6 +213,12 @@ function actions_to_rows ( $actions )
 	else if ( $type == 'create' )
 	    $a = "created her/his own problem"
 	       . " {$items[3]}";
+	else if ( $type == 'update' )
+	{
+	    $updated = implode
+	        ( ' ', array_slice ( $items, 4 ) );
+	    $a = "update {$items[3]} $updated";
+	}
 	else if ( $type == 'submit' )
 	{
 	    $project = $items[3];
