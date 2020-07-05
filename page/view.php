@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul  5 14:05:38 EDT 2020
+    // Date:	Sun Jul  5 14:19:41 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -431,14 +431,14 @@ EOT;
 	<div class='user'>
 
 	<div class='profile'>
-	<strong>$uid Profile:</strong>
+	<strong>$user Profile:</strong>
 	<table>
 	$info_rows
 	</table>
 	</div>
 
 	<div class='emails'>
-	<strong>$uid Emails:</strong>
+	<strong>$user Emails:</strong>
 	<br>
 	$lines
 	</div>
@@ -459,7 +459,7 @@ EOT;
 	    title='Show Changes to User Information'>
 	    <pre id='user_info_mark'>&darr;</pre>
 	    </button>
-	<strong>Actions Changing $uid Profile and Emails
+	<strong>Actions Changing $user Profile and Emails
 	        (most recent first):</strong>
 	</td>
 	</tr></table>
@@ -481,7 +481,7 @@ EOT;
 	    title='Show User Actions'>
 	    <pre id='user_actions_mark'>&darr;</pre>
 	    </button>
-	<strong>Actions of $uid
+	<strong>Actions of $user
 	        (most recent first):</strong>
 	</td>
 	</tr></table>
