@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul  5 03:42:12 EDT 2020
+    // Date:	Sun Jul  5 04:23:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -158,6 +158,8 @@
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $listname = $new_listname;
 	    $list = listname_to_list ( $listname );
+	    $project = NULL;
+	    $problem = NULL;
 	}
         elseif ( isset ( $_POST['project'] ) )
 	{
@@ -188,8 +190,14 @@
 	    }
 	    if ( ! $found )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $project = $proj;
-	    $problem = $prob;
+	    if ( $proj == '-' )
+	        $errors[] = 'You must select a project'
+		          . ' problems';
+	    else
+	    {
+		$project = $proj;
+		$problem = $prob;
+	    }
 	}
         elseif ( isset ( $_POST['warning'] )
 	         &&
@@ -217,7 +225,7 @@
 		    if ( isset ( $pmap['owner'] ) )
 		        $r = $pmap['owner'];
 		}
-		if ( $r == '+' || $warning == 'yes' )
+		if ( $r == '+' || $warn == 'yes' )
 		{
 		    $f = "/projects/$project/$problem/"
 		       . "+priv+";
@@ -277,7 +285,7 @@
 		  "In Proposed Project Privilege File:" );
 	    if ( count ( $errors ) == 0 )
 	    {
-		if ( $r == '+' || $warning == 'yes' )
+		if ( $r == '+' || $warn == 'yes' )
 		{
 		    $f = "/projects/$project/+priv+";
 		    $r = @file_put_contents
@@ -373,6 +381,28 @@ div.priv pre {
 	foreach ( $warnings as $e )
 	    echo "<pre>$e</pre><br>";
 	echo "<br></div></div>";
+    }
+    if ( $owner_warn )
+    {
+        if ( isset ( $problem ) ) $type = 'problem';
+	else                      $type = 'project';
+
+        echo <<<EOT
+	<div class='warnings'>
+	<strong>WARNING: you will lose owner privileges
+	        with this change;
+		<br>
+		Do you want to continue?</strong>
+	<pre>   </pre>
+	<button type='button'
+		onclick='COPY("$type","yes")'>
+	     YES</button>
+	<pre>   </pre>
+	<button type='button'
+		onclick='COPY("$type","no")'>
+	     NO</button>
+	<br></div>
+EOT;
     }
 
     echo <<<EOT
@@ -493,6 +523,9 @@ EOT;
 	if ( isset ( $pmap['owner'] )
 	     &&
 	     $pmap['owner'] == '+' )
+	{
+	    if ( isset ( $edited_contents ) )
+		$priv_file_contents = $edited_contents;
 	    echo <<<EOT
 	    <div class='problem'>
 	    <form method='POST' action='manage.php'
@@ -515,6 +548,7 @@ EOT;
 	    </form>
 	    </div>
 EOT;
+	}
     }
     if ( isset ( $project ) )
     {
@@ -543,6 +577,9 @@ EOT;
 	     $pmap['owner'] == '+'
 	     &&
 	     ! isset ( $problem ) )
+	{
+	    if ( isset ( $edited_contents ) )
+		$priv_file_contents = $edited_contents;
 	    echo <<<EOT
 	    <div class='project'>
 	    <form method='POST' action='manage.php'
@@ -565,6 +602,7 @@ EOT;
 	    </form>
 	    </div>
 EOT;
+	}
     }
 
 
