@@ -125,5 +125,3 @@ echo "<title>$title</title>";
 	padding-left: var(--pad);
     }
 </style>
-
-?>

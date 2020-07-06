@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul  2 00:04:48 EDT 2020
+    // Date:	Mon Jul  6 03:29:30 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -446,7 +446,7 @@
     //
     function list_to_push_rows ( $list, & $warnings )
     {
-	$map = read_problems();
+	$map = read_problem_map();
 	$r = '';
 	foreach ( $list as $items )
 	{
@@ -544,7 +544,7 @@ EOT;
     {
         global $uid;
 
-	$map = read_problems();
+	$map = read_problem_map();
 	$r = '';
         foreach ( $list as $items )
 	{

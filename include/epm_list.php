@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul  4 17:24:23 EDT 2020
+    // Date:	Mon Jul  6 03:26:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -55,6 +55,9 @@
 	         02770 );
     }
 
+    // See page/manage.php for the format of +priv+
+    // files.
+    //
     // A privilege map is a map
     //
     //	    PRIV => '+'		Privilege granted.
@@ -63,8 +66,7 @@
     // of privileges constructed by reading +priv+
     // files.  If PRIV is not in the map, no
     // matching lines for PRIV were found in the
-    // files read so far.  See page/manage.php for
-    // the format of +priv+ files.
+    // files read so far.
 
     // Read a +priv+ file and add to the privilege
     // $map.  File lines are matched against $uid.
@@ -253,7 +255,7 @@
     // problem is not descended from a project.  Sort
     // the map by problems (keys) in natural order.
     //
-    function read_problems()
+    function read_problem_map()
     {
 	global $epm_data, $uid, $epm_name_re;
 
@@ -477,7 +479,7 @@
     // Each element becomes one line consisting of the
     // element members separated by 2 single spaces.
     //
-    // If a ROOT:LEAR occurs several times, only the
+    // If a ROOT:LEAF occurs several times, only the
     // first is kept, but the output TIME is the latest
     // of the associated TIMEs.
     //
@@ -799,6 +801,160 @@
 	else
 	    return read_file_list
 		( listname_to_filename ( $listname ) );
+    }
+
+    // Read and return a problem list given the
+    // listname.
+    // 
+    // Issue warnings for any problems that no longer
+    // exist and delete them from the list (if the
+    // listname is ROOT:- there cannot be any such
+    // problems).  If the list is local (-:NAME), delete
+    // non-existant problems from the list itself.
+    //
+    // Also, if the list is not your list, ignore any
+    // -:PROBLEM entries without warnings.
+    //
+    function read_problem_list
+	    ( $listname, & $warnings )
+    {
+        global $epm_data, $uid;
+
+	if ( $listname == '-:-' )
+	    return read_your_list();
+	elseif ( preg_match ( '/^(.+):-$/',
+	                      $listname, $matches ) )
+    	    return read_project_list ( $matches[1] );
+
+	$f = listname_to_filename ( $listname );
+	$old_list = read_file_list ( $f );
+	list ( $user, $name ) =
+	    explode ( ':', $listname );
+	if ( $user == $uid ) $user = '-';
+
+	$first = true;
+	$new_list = [];
+	foreach ( $old_list as $e )
+	{
+	    list ( $time, $project, $problem ) = $e;
+	    if ( $project == '-' )
+	    {
+	        if ( $user != '-' ) continue;
+		$d = "users/$uid/$problem";
+	    }
+	    else
+	        $d = "projects/$project/$problem";
+
+	    if ( is_dir ( "$epm_data/$d" ) )
+	    {
+	        $new_list[] = $e;
+		continue;
+	    }
+
+	    if ( $first )
+	    {
+	        $first = false;
+	        $warnings[] = "The following problems"
+		            . " no longer exist";
+		if ( $user == '-' )
+		    $warnings[] = "and have been"
+		                . " deleted from"
+				. " Your $name:";
+		else
+		    $warnings[] = "and have been"
+		                . " ignored:";
+	    }
+	    if ( $project == '-' ) $project = 'Your';
+	    $warnings[] = "    $project $problem";
+	}
+
+	if ( ! $first && $user == '-' )
+	    write_file_list ( $f, $new_list );
+
+	return $new_list;
+    }
+
+    // Read and return the favorites list.
+    //
+    // If any entries no longer exist, issue warnings
+    // messages for them and delete them from the
+    // favorites list.
+    //
+    // If the resulting list is empty, construct a
+    // new favorites list consisting of your problems
+    // and problems of all projects for which user
+    // has a privilege listed in $privs.
+    //
+    function read_favorites_list ( $privs, & $warnings )
+    {
+	global $epm_data, $uid, $epm_time_format;
+
+	$f = "users/$uid/+lists+/+favorites+";
+	$old_list = read_file_list ( $f );
+
+	$new_list = [];
+	$first = true;
+	foreach ( $old_list as $e )
+	{
+	    list ( $time, $root, $name ) = $e;
+	    if ( $root == '-' && $name == '-' )
+	        $g = "users/$uid";
+	    elseif ( $name == '-' )
+	        $g = "projects/$root";
+	    elseif ( $root == '-' )
+		$g = "users/$uid/+lists+/$name.list";
+	    else
+		$g = "lists/$root:$name.list";
+	    if ( file_exists ( "$epm_data/$g" ) )
+	    {
+	        $new_list[] = $e;
+		continue;
+	    }
+
+	    if ( $first )
+	    {
+	        $first = false;
+	        $warnings[] = "The following lists"
+		            . " no longer exist";
+		$warnings[] = "and have been deleted"
+		            . " from Your Favorites:";
+	    }
+	    if ( $root == '-' ) $root = 'Your';
+	    if ( $name == '-' ) $name = 'Problems';
+	    $warnings[] = "    $root $name";
+	}
+
+	if ( count ( $new_list ) > 0 )
+	{
+	    if ( ! $first )
+	        write_file_list ( $f, $new_list );
+	    return $new_list;
+	}
+
+	if ( ! $first )
+	    $warnings[] = "no lists are left in Your"
+	                . " Favorites; reinitializing"
+			. " Your Favorites";
+
+	$g = "users/$uid";
+	$time = @filemtime ( "$epm_data/$g" );
+	if ( $time === false )
+	    ERROR ( "cannot stat $g" );
+	$time = strftime ( $epm_time_format, $time );
+	$new_list[] = [$time, '-', '-'];
+	foreach ( read_projects ( $privs )
+	          as $project )
+	{
+	    $g = "projects/$project";
+	    $time = @filemtime ( "$epm_data/$g" );
+	    if ( $time === false )
+	        ERROR ( "cannot stat $g" );
+	    $time = strftime
+	        ( $epm_time_format, $time );
+	    $new_list[] = [$time, $project, '-'];
+	}
+	write_file_list ( $f, $new_list );
+	return $new_list;
     }
 
     // Returns favorites list as per
