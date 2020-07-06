@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  1 15:50:27 EDT 2020
+    // Date:	Mon Jul  6 05:32:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -124,8 +124,8 @@
 	// $lengths[J] is the number of marked
 	// elements of $list[J].
 
-    $favorites = favorites_to_list
-	( ['pull','push-new','view'] );
+    $favorites = read_favorites_list
+	( ['pull','push-new','view'], $warnings );
     // Build $fmap so that $fmap["PROJECT:BASENAME"]
     // exists iff [TIME PROJECT BASENAME] is in
     // $favorites.
@@ -401,8 +401,9 @@ EOT;
 		if ( count ( $errors ) == 0 )
 		{
 		    $names[$J] = '';
-		    $favorites = favorites_to_list
-			( ['pull','push-new','view'] );
+		    $favorites = read_favorites_list
+			( ['pull','push-new','view'],
+			  $warnings );
 		}
 	    }
 	    elseif ( $op == 'publish' )

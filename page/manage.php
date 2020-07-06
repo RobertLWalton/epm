@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul  5 04:23:46 EDT 2020
+    // Date:	Mon Jul  6 06:35:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -124,8 +124,8 @@
         // True to ask if its ok to accept $edited_
 	// contents which removes $uid from ownership.
 
-    $favorites = favorites_to_list
-	( ['pull','push-new','view'] );
+    $favorites = read_favorites_list
+	( ['pull','push-new','view'], $warnings );
     if ( ! isset ( $listname ) )
     {
         list ( $time, $proj, $base ) = $favorites[0];
