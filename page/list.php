@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 16:34:12 EDT 2020
+    // Date:	Tue Jul  7 16:51:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -665,8 +665,9 @@ EOT;
     {
 	$K = 1 - $J;
         $name = $names[$J];
+	$sname = ( $name != '' ? $name : NULL );
 	$options = list_to_options
-	    ( $favorites, $name, [$names[$K]] );
+	    ( $favorites, $sname, [$names[$K]] );
 	$writable = 'no';
 	$published = NULL;
 	$pname = 'No List Selected';
