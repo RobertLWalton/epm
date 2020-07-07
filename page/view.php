@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 16:27:18 EDT 2020
+    // Date:	Tue Jul  7 16:59:04 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -323,7 +323,9 @@ function INCLUDE ( checkbox, c )
     $user_options =
         values_to_options ( $users, $user );
     $project_options =
-        values_to_options ( $projects, $project );
+        values_to_options
+	    ( $projects,
+	      isset ( $problem ) ? NULL : $project );
     $listname_options = list_to_options
         ( $favorites, $listname );
     echo <<<EOT
