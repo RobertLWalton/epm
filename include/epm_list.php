@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 15:22:41 EDT 2020
+    // Date:	Tue Jul  7 16:41:37 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -982,7 +982,7 @@
     // attribute to the associated option.
     //
     function list_to_options
-            ( $list, $select = NULL, & $exclude = [] )
+            ( $list, $select = NULL, $exclude = [] )
     {
 	if ( isset ( $select ) )
 	    list ( $sroot, $sleaf ) =

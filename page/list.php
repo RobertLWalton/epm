@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 13:00:44 EDT 2020
+    // Date:	Tue Jul  7 16:34:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -659,13 +659,14 @@ EOT;
 EOT;
     $data['ELEMENTS'] = [];
     $elements = & $data['ELEMENTS'];
-    $options = list_to_options
-        ( $favorites, NULL, $names );
     $upload_file_title = 'Selected List Description'
 		       . ' (.dsc) File to be Uploaded';
     foreach ( [0,1] as $J )
     {
+	$K = 1 - $J;
         $name = $names[$J];
+	$options = list_to_options
+	    ( $favorites, $name, [$names[$K]] );
 	$writable = 'no';
 	$published = NULL;
 	$pname = 'No List Selected';
@@ -722,7 +723,7 @@ EOT;
 
 	    <strong>Select List to Edit:</strong>
 	    <select title='New Problem List to Edit'
-		   onclick='SELECT_LIST("$J")'>
+		   onchange='SELECT_LIST("$J")'>
 	    <option value=''>No List Selected</option>
 	    $options
 	    </select>
