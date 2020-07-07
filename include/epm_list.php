@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 12:23:54 EDT 2020
+    // Date:	Tue Jul  7 15:22:41 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -239,12 +239,20 @@
     //      VALUE
     //      </option>
     //
-    function values_to_options ( $list )
+    // If SELECTED != NULL, segment with VALUE ==
+    // SELECTED is marked as selected.
+    //
+    function values_to_options
+	    ( $list, $selected = NULL )
     {
 	$r = '';
 	foreach ( $list as $value )
 	{
-	    $r .= "<option value='$value'>"
+	    if ( $value == $selected )
+	        $s = 'selected';
+	    else
+	        $s = '';
+	    $r .= "<option value='$value' $s>"
 		. "$value</option>";
 	}
 	return $r;

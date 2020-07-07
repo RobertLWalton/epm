@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 06:52:46 EDT 2020
+    // Date:	Tue Jul  7 15:51:17 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -94,6 +94,9 @@
     		     // 'problem' POST.
     $problem = NULL; // Problem for 'problem' POST.
 
+    $non_others = ['submit','push','pull'];
+        // List for actions_to_rows.
+
     $favorites = read_favorites_list
 	( ['pull','push-new','view'], $warnings );
     if ( ! isset ( $listname ) )
@@ -133,37 +136,46 @@
         elseif ( isset ( $_POST['user'] ) )
 	{
 	    $user = $_POST['user'];
-	    if ( ! in_array ( $user, $users,
-	                      true ) )
+	    if ( $user == '' )
+	        $user = NULL;
+	    elseif ( ! in_array ( $user, $users,
+	                          true ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	}
         elseif ( isset ( $_POST['project'] ) )
 	{
 	    $project = $_POST['project'];
-	    if ( ! in_array ( $project, $projects,
-	                      true ) )
+	    if ( $project == '' )
+	        $project = NULL;
+	    elseif ( ! in_array ( $project, $projects,
+	                          true ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	}
         elseif ( isset ( $_POST['problem'] ) )
 	{
-	    list ( $project, $problem ) =
-	        explode ( ':', $_POST['problem'] );
-	    if (    "$project:$problem"
-	         != $_POST['problem'] )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $found = false;
-	    foreach ( $list as $item )
+	    $key = $_POST['problem'];
+	    if ( $key != '' )
 	    {
-	        list ( $time, $proj, $prob ) = $item;
-		if (    $proj == $project
-		     && $prob == $problem )
+		list ( $project, $problem ) =
+		    explode ( ':', $key );
+		if (    "$project:$problem"
+		     != $_POST['problem'] )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		$found = false;
+		foreach ( $list as $item )
 		{
-		    $found = true;
-		    break;
+		    list ( $time, $proj, $prob ) =
+		    	$item;
+		    if (    $proj == $project
+			 && $prob == $problem )
+		    {
+			$found = true;
+			break;
+		    }
 		}
+		if ( ! $found )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
 	    }
-	    if ( ! $found )
-		exit ( 'UNACCEPTABLE HTTP POST' );
 	}
     }
 
@@ -308,8 +320,10 @@ function INCLUDE ( checkbox, c )
 	echo "<br></div></div>";
     }
 
-    $user_options = values_to_options ( $users );
-    $project_options = values_to_options ( $projects );
+    $user_options =
+        values_to_options ( $users, $user );
+    $project_options =
+        values_to_options ( $projects, $project );
     $listname_options = list_to_options
         ( $favorites, $listname );
     echo <<<EOT
@@ -338,27 +352,29 @@ function INCLUDE ( checkbox, c )
 
     <div class='select'>
 
-    <strong>Select User</strong>
+    <strong>Select User:</strong>
     <form method='POST' action='view.php'
           id='user-form'>
     <input type='hidden' name='id' value='$ID'>
     <select name='user'
-            onclick='document.getElementById
+            onchange='document.getElementById
 	                ("user-form").submit()'>
+    <option value=''>No User Selected</option>
     $user_options
     </select></form>
 
-    <strong>or Project</strong>
+    <strong>or Project:</strong>
     <form method='POST' action='view.php'
           id='project-form'>
     <input type='hidden' name='id' value='$ID'>
     <select name='project'
-            onclick='document.getElementById
+            onchange='document.getElementById
 	                ("project-form").submit()'>
+    <option value=''>No Project Selected</option>
     $project_options
     </select></form>
     <pre>     </pre>
-    <strong>Include Action Types:</strong>
+    <strong>Include:</strong>
     <pre> </pre>
     <div class='checkbox'
          style='background-color:black'
@@ -374,44 +390,43 @@ function INCLUDE ( checkbox, c )
     <strong>pull</strong>
     <div class='checkbox'
          style='background-color:black'
-	 onclick='INCLUDE(this,"create")'></div>
-    <strong>create</strong>
+	 onclick='INCLUDE(this,"other")'></div>
+    <strong>other</strong>
 
 
     <br>
+EOT;
+    if ( isset ( $problem ) )
+	$key = "$project:$problem";
+    else
+	$key = '';
+    $problem_options = list_to_options
+	( $list, $key );
+    list ( $proj, $prob ) =
+	explode ( ':',  $listname );
+    if ( $proj == '-' ) $proj = '<i>Your</i>';
+    if ( $prob == '-' ) $prob = '<i>Problems</i>';
+    echo <<<EOT
 
-    <strong>or Problem List</strong>
+    <strong>or Problem:</strong>
+    <form method='POST' action='view.php'
+	  id='problem-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <select name='problem'
+	    onchange='document.getElementById
+			("problem-form").submit()'>
+    <option value=''>No Problem Selected</option>
+    $problem_options
+    </select></form>
+    <strong>from Problem List:</strong>
     <form method='POST' action='view.php'
           id='listname-form'>
     <input type='hidden' name='id' value='$ID'>
     <select name='listname'
-            onclick='document.getElementById
+            onchange='document.getElementById
 	                ("listname-form").submit()'>
     $listname_options
     </select></form>
-EOT;
-    if ( isset ( $list ) )
-    {
-	$problem_options = list_to_options ( $list );
-	list ( $proj, $prob ) =
-	    explode ( ':',  $listname );
-	if ( $proj == '-' ) $proj = '<i>Your</i>';
-	if ( $prob == '-' ) $prob = '<i>Problems</i>';
-    	echo <<<EOT
-
-	<strong>or Problem from $proj $prob</strong>
-	<form method='POST' action='view.php'
-	      id='problem-form'>
-	<input type='hidden' name='id' value='$ID'>
-	<select name='problem'
-		onclick='document.getElementById
-			    ("problem-form").submit()'>
-	$problem_options
-	</select></form>
-EOT;
-    }
-
-    echo <<<EOT
     </div>
 EOT;
 
@@ -424,10 +439,10 @@ EOT;
 	    ( '/<pre>[^@]+@/', '<pre>...@', $lines );
 	$f = "admin/users/$user/+changes+";
 	$change_rows = actions_to_rows
-	    ( read_actions ( "$f" ) );
+	    ( read_actions ( "$f" ), $non_others );
 	$g = "users/$user/+actions+";
 	$action_rows = actions_to_rows
-	    ( read_actions ( "$g" ) );
+	    ( read_actions ( "$g" ), $non_others );
         echo <<<EOT
 	<div class='user'>
 
@@ -460,7 +475,8 @@ EOT;
 	    title='Show Changes to User Information'>
 	    <pre id='user_info_mark'>&darr;</pre>
 	    </button>
-	<strong>Actions Changing $user Profile and Emails
+	<strong>Actions Changing $user
+	        Profile and Emails
 	        (most recent first):</strong>
 	</td>
 	</tr></table>
@@ -482,11 +498,12 @@ EOT;
 	    title='Show User Actions'>
 	    <pre id='user_actions_mark'>&darr;</pre>
 	    </button>
-	<strong>Actions of $user
+	<strong>Other Actions of $user
 	        (most recent first):</strong>
 	</td>
 	</tr></table>
-	<div id='user_actions_body' style='display:none'>
+	<div id='user_actions_body'
+	     style='display:none'>
 	<table>
 	$action_rows
 	</table>
@@ -499,7 +516,7 @@ EOT;
     {
 	$g = "projects/$project/+actions+";
 	$action_rows = actions_to_rows
-	    ( read_actions ( "$g" ) );
+	    ( read_actions ( "$g" ), $non_others );
         echo <<<EOT
 	<div class='actions'>
 	<table style='width:100%'><tr>
@@ -522,7 +539,7 @@ EOT;
 	else
 	    $f = "projects/$project/$problem/+actions+";
 	$action_rows = actions_to_rows
-	    ( read_actions ( "$f" ) );
+	    ( read_actions ( "$f" ), $non_others );
 	if ( $project == '-' ) $project = '<i>Your</i>';
         echo <<<EOT
 	<div class='actions'>

@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun Jul  5 16:35:56 EDT 2020
+// Date:	Tue Jul  7 15:41:42 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -47,14 +47,20 @@ function view_priv ( $project )
 // table row per line.  Each action item has one of the
 // format:
 //
+//	[TIME, UID, TYPE, ...]
+//
+// or more specifically, one of:
+//
 //	[TIME, UID, 'info', KEY, OP, VALUE]
 //	[TIME, UID, 'push', PROJECT, PROBLEM]
 //	[TIME, UID, 'pull', PROJECT, PROBLEM]
 //	[TIME, UID, 'create', UID, PROBLEM]
 //	[TIME, UID, 'submit', PROJECT, PROBLEM, RUNBASE,
 //			      STIME, SCORE...]
-//	[TIME, UID, 'update', PROJECT, PROBLEM, THING...]
-//	[TIME, UID, 'update', PROJECT, 'project', THING...]
+//	[TIME, UID, 'update', PROJECT, PROBLEM,
+//				       THING...]
+//	[TIME, UID, 'update', PROJECT, 'project',
+//				       THING...]
 //
 // For 'info':
 //
@@ -73,9 +79,12 @@ function view_priv ( $project )
 //           run file test case
 //     SCORE... is the run score and may have multiple
 //              elements that should be separated by
-///             single spaces
+//              single spaces
 //
-function actions_to_rows ( $actions )
+// Give each row class='TYPE' if TYPE is in $types
+// list, or class='other' if TYPE is not in $types.
+//
+function actions_to_rows ( $actions, $types )
 {
     global $view_cache;
     $r = '';
@@ -145,7 +154,12 @@ function actions_to_rows ( $actions )
 	else
 	    $a = "unknown action type $type";
 
-	$r .= "<tr class='$type'>"
+	if ( in_array ( $type, $types, true ) )
+	    $class = $type;
+	else
+	    $class = 'other';
+
+	$r .= "<tr class='$class'>"
 	    . "<td>$time</td>"
 	    . "<td>$user</td>"
 	    . "<td>$a</td></tr>";
