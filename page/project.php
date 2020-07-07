@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 06:56:11 EDT 2020
+    // Date:	Tue Jul  7 06:44:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1317,15 +1317,18 @@ EOT;
 	    if ( ! isset ( $listname ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $problem = $_POST['goto'];
-	    if ( ! preg_match
-	               ( $epm_name_re, $problem ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $d = "users/$uid/$problem";
-	    if ( ! is_dir ( "$epm_data/$d" ) )
-	        $errors[] = "your $problem problem"
-		          . " no longer exists";
-	    else
-		$goto = $problem;
+	    if ( $problem != '' )
+	    {
+		if ( ! preg_match
+			   ( $epm_name_re, $problem ) )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		$d = "users/$uid/$problem";
+		if ( ! is_dir ( "$epm_data/$d" ) )
+		    $errors[] = "your $problem problem"
+			      . " no longer exists";
+		else
+		    $goto = $problem;
+	    }
 	}
         elseif ( isset ( $_POST['create'] ) )
 	{
@@ -1833,7 +1836,7 @@ EOT;
 	      id='listname-form'>
 	<input type='hidden' name='id' value='$ID'>
 	<select name='listname'
-		onclick='document.getElementById
+		onchange='document.getElementById
 			    ("listname-form").submit()'>
 	$listname_options
 	</select></form>
@@ -1861,8 +1864,9 @@ EOT;
 		  id='goto-form'>
 	    <input type='hidden' name='id' value='$ID'>
 	    <select name='goto'
-		    onclick='document.getElementById
+		    onchange='document.getElementById
 				("goto-form").submit()'>
+	    <option value=''>Select Problem</option>
 	    $problem_options
 	    </select></form>
 EOT;
