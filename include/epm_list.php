@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 03:26:58 EDT 2020
+    // Date:	Mon Jul  6 12:23:54 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -777,32 +777,6 @@
 	return $list;
     }
 
-    // Given a $listname return the list of elements
-    //
-    //		[TIME PROJECT PROBLEM]
-    //
-    // named.  $listname may be one of:
-    //
-    //     -:-
-    //     PROJECT:-
-    //     PROJECT:BASENAME
-    //	   +favorites+
-    //
-    // Note that if $listname ends with '-' the list is
-    // read-only.
-    //	   
-    function listname_to_list ( $listname )
-    {
-	if ( $listname == '-:-' )
-	    return read_your_list();
-	elseif ( preg_match ( '/^(.+):-$/',
-	                      $listname, $matches ) )
-    	    return read_project_list ( $matches[1] );
-	else
-	    return read_file_list
-		( listname_to_filename ( $listname ) );
-    }
-
     // Read and return a problem list given the
     // listname.
     // 
@@ -955,45 +929,6 @@
 	}
 	write_file_list ( $f, $new_list );
 	return $new_list;
-    }
-
-    // Returns favorites list as per
-    //
-    //    listname_to_list ( '+favorites+' )
-    //
-    // unless that list is empty, in which case
-    // constructs a list consisting of users problems
-    // and problems of all projects for which user
-    // has a privilege listed in $privs, and writes
-    // that into +favorites+ before returning the
-    // constructed list.
-    //
-    function favorites_to_list ( $privs )
-    {
-	global $epm_data, $uid, $epm_time_format;
-
-        $list = listname_to_list ( '+favorites+' );
-	if ( count ( $list ) > 0 ) return $list;
-	$f = "users/$uid";
-	$time = @filemtime ( "$epm_data/$f" );
-	if ( $time === false )
-	    ERROR ( "cannot stat $f" );
-	$time = strftime ( $epm_time_format, $time );
-	$list[] = [$time, '-', '-'];
-	foreach ( read_projects ( $privs )
-	          as $project )
-	{
-	    $f = "projects/$project";
-	    $time = @filemtime ( "$epm_data/$f" );
-	    if ( $time === false )
-	        ERROR ( "cannot stat $f" );
-	    $time = strftime
-	        ( $epm_time_format, $time );
-	    $list[] = [$time, $project, '-'];
-	}
-	$f = "users/$uid/+lists+/+favorites+";
-	write_file_list ( $f, $list );
-	return $list;
     }
 
     // If $key is in list, return its $list entry,

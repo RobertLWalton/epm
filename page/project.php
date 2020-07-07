@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 06:36:22 EDT 2020
+    // Date:	Mon Jul  6 06:56:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -397,10 +397,12 @@
     // are in the list (i.e., that have PROJECT == '-')
     // as an HTML <option> list.
     //
-    function listname_to_problem_options ( $listname )
+    function listname_to_problem_options
+	    ( $listname, & $warnings )
     {
 	$r = '';
-	foreach ( listname_to_list ( $listname )
+	foreach ( read_problem_list
+		      ( $listname, $warnings )
 		  as $item )
 	{
 	    list ( $time, $project, $problem ) =
@@ -1626,15 +1628,21 @@ function FAIL ( message )
 
 <?php 
 
+    // Must execute these before $warnings is used.
+    //
     if ( $op == 'pull' )
 	$pull_rows = list_to_pull_rows
-	    ( listname_to_list ( $listname ),
+	    ( read_problem_list
+	          ( $listname, $warnings ),
 	      $warnings );
     elseif ( $op == 'push' )
 	$push_rows = list_to_push_rows
-	    ( listname_to_list ( $listname ),
+	    ( read_problem_list
+	          ( $listname, $warnings ),
 	      $warnings );
-	// Must execute these before $warnings is used.
+    elseif ( $op == NULL && isset ( $listname ) )
+	$problem_options = listname_to_problem_options
+	    ( $listname, $warnings );
 
     if ( count ( $errors ) > 0 )
     {
@@ -1845,9 +1853,6 @@ EOT;
 EOT;
 	if ( isset ( $listname ) )
 	{
-	    $problem_options =
-		listname_to_problem_options
-		    ( $listname );
 	    echo <<<EOT
 	    <strong>or Create Tab for Problem:</strong>
 EOT;

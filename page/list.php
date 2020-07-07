@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 05:32:29 EDT 2020
+    // Date:	Mon Jul  6 06:50:08 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -475,8 +475,8 @@ EOT;
 	if ( $names[$J] == '' )
 	    $lists[$J] = [];
 	else
-	    $lists[$J] = listname_to_list
-	        ( $names[$J] );
+	    $lists[$J] = read_problem_list
+	        ( $names[$J], $warnings );
 	$lengths[$J] = count ( $lists[$J] );
     }
 

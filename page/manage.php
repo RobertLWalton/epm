@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 06:35:46 EDT 2020
+    // Date:	Mon Jul  6 06:50:41 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -131,7 +131,7 @@
         list ( $time, $proj, $base ) = $favorites[0];
 	$listname = "$proj:$base";
     }
-    $list = listname_to_list ( $listname );
+    $list = read_problem_list ( $listname, $warnings );
     $projects = read_projects
 	( ['pull','push-new','view'] );
 
@@ -157,7 +157,8 @@
 	    if ( ! $found )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $listname = $new_listname;
-	    $list = listname_to_list ( $listname );
+	    $list = read_problem_list
+	        ( $listname, $warnings );
 	    $project = NULL;
 	    $problem = NULL;
 	}
@@ -192,7 +193,7 @@
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( $proj == '-' )
 	        $errors[] = 'You must select a project'
-		          . ' problems';
+		          . ' problem';
 	    else
 	    {
 		$project = $proj;

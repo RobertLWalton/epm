@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 06:37:51 EDT 2020
+    // Date:	Mon Jul  6 06:52:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -101,7 +101,7 @@
         list ( $time, $proj, $base ) = $favorites[0];
 	$listname = "$proj:$base";
     }
-    $list = listname_to_list ( $listname );
+    $list = read_problem_list ( $listname, $warnings );
     $projects = read_projects ( ['view'] );
     $users = read_users();
 
@@ -127,7 +127,8 @@
 	    if ( ! $found )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $listname = $new_listname;
-	    $list = listname_to_list ( $listname );
+	    $list = read_problem_list
+	        ( $listname, $warnings );
 	}
         elseif ( isset ( $_POST['user'] ) )
 	{
