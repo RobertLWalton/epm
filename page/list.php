@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 06:50:08 EDT 2020
+    // Date:	Tue Jul  7 13:00:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -119,7 +119,7 @@
     $lists = [NULL,NULL];
     $lengths = [0,0];
         // Lists to be given to list_to_edit_rows.
-	// If $lists[J] not set by POST, will be set
+	// If $lists[J] not set by POST, it will be set
 	// according to files named by $names[J].
 	// $lengths[J] is the number of marked
 	// elements of $list[J].
@@ -433,9 +433,14 @@ EOT;
 	    if ( ! isset ( $_POST['name'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $name = $_POST['name'];
-	    if ( ! isset ( $fmap[$name] ) )
+	    if ( $name == '' )
+	    {
+	    	$names[$J] = '';
+		$lists[$J] = NULL;
+	    }
+	    elseif ( ! isset ( $fmap[$name] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( $name == $names[$K] )
+	    elseif ( $name == $names[$K] )
 	        $errors[] = "cannot select list because"
 		          . " then both lists would be"
 			  . " the same";
@@ -718,6 +723,7 @@ EOT;
 	    <strong>Select List to Edit:</strong>
 	    <select title='New Problem List to Edit'
 		   onclick='SELECT_LIST("$J")'>
+	    <option value=''>No List Selected</option>
 	    $options
 	    </select>
 	    </div>

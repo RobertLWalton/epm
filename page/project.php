@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 06:44:44 EDT 2020
+    // Date:	Tue Jul  7 12:35:54 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1831,7 +1831,7 @@ EOT;
 	              . ' Problems to Push or Pull'
 		      . ' or Go To';
         echo <<<EOT
-	<strong>Selected Problem List:</strong>
+	<strong>Select Problem List:</strong>
 	<form method='POST' action='project.php'
 	      id='listname-form'>
 	<input type='hidden' name='id' value='$ID'>
@@ -1840,7 +1840,7 @@ EOT;
 			    ("listname-form").submit()'>
 	$listname_options
 	</select></form>
-	<strong>and</strong>
+	<strong>then</strong>
 	<form method='POST'>
 	<input type='hidden' name='id' value='$ID'>
 	<button type='submit' name='op' value='push'
@@ -1877,7 +1877,7 @@ EOT;
         }
 	echo <<<EOT
 	<br>
-	<strong>Create New Problem:</strong>
+	<strong>or Create New Problem:</strong>
 	<form method='POST' action='project.php'
 	      id='create-form'>
 	<input type='hidden' name='id' value='$ID'>
