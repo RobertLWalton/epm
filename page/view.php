@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 15:51:17 EDT 2020
+    // Date:	Tue Jul  7 16:27:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -399,13 +399,9 @@ EOT;
     if ( isset ( $problem ) )
 	$key = "$project:$problem";
     else
-	$key = '';
+	$key = NULL;
     $problem_options = list_to_options
 	( $list, $key );
-    list ( $proj, $prob ) =
-	explode ( ':',  $listname );
-    if ( $proj == '-' ) $proj = '<i>Your</i>';
-    if ( $prob == '-' ) $prob = '<i>Problems</i>';
     echo <<<EOT
 
     <strong>or Problem:</strong>

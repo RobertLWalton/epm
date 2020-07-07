@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 06:50:41 EDT 2020
+    // Date:	Tue Jul  7 16:03:39 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -165,39 +165,56 @@
         elseif ( isset ( $_POST['project'] ) )
 	{
 	    $proj = $_POST['project'];
-	    if ( ! in_array ( $proj, $projects,
-	                      true ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $project = $proj;
-	    $problem = NULL;
-	}
-        elseif ( isset ( $_POST['problem'] ) )
-	{
-	    list ( $proj, $prob ) =
-	        explode ( ':', $_POST['problem'] );
-	    if (    "$proj:$prob"
-	         != $_POST['problem'] )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $found = false;
-	    foreach ( $list as $item )
+	    if ( $proj == '' )
 	    {
-	        list ( $time, $pj, $pb ) = $item;
-		if (    $pj == $proj
-		     && $pb == $prob )
-		{
-		    $found = true;
-		    break;
-		}
+		$project = NULL;
+		$problem = NULL;
 	    }
-	    if ( ! $found )
+	    elseif ( ! in_array ( $proj, $projects,
+	                          true ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( $proj == '-' )
-	        $errors[] = 'You must select a project'
-		          . ' problem';
 	    else
 	    {
 		$project = $proj;
-		$problem = $prob;
+		$problem = NULL;
+	    }
+	}
+        elseif ( isset ( $_POST['problem'] ) )
+	{
+	    $key = $_POST['problem'];
+	    if ( $key == '' )
+	    {
+		$project = NULL;
+		$problem = NULL;
+	    }
+	    else
+	    {
+		list ( $proj, $prob ) = explode
+		    ( ':', $key );
+		if (    "$proj:$prob"
+		     != $_POST['problem'] )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		$found = false;
+		foreach ( $list as $item )
+		{
+		    list ( $time, $pj, $pb ) = $item;
+		    if (    $pj == $proj
+			 && $pb == $prob )
+		    {
+			$found = true;
+			break;
+		    }
+		}
+		if ( ! $found )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		if ( $proj == '-' )
+		    $errors[] = 'You must select a'
+		              . ' project problem';
+		else
+		{
+		    $project = $proj;
+		    $problem = $prob;
+		}
 	    }
 	}
         elseif ( isset ( $_POST['warning'] )
@@ -217,12 +234,14 @@
    	    $warn = $_POST['warning'];
 	    $r = check_priv_file_contents
 	        ( $edited_contents, $errors,
-		  "In Proposed Problem Privilege File:" );
+		  "In Proposed Problem Privilege" .
+		  " File:" );
 	    if ( count ( $errors ) == 0 )
 	    {
 	    	if ( ! isset ( $r ) )
 		{
-		    project_priv_map ( $pmap, $project );
+		    project_priv_map
+		        ( $pmap, $project );
 		    if ( isset ( $pmap['owner'] ) )
 		        $r = $pmap['owner'];
 		}
@@ -283,7 +302,8 @@
    	    $warn = $_POST['warning'];
 	    $r = check_priv_file_contents
 	        ( $edited_contents, $errors,
-		  "In Proposed Project Privilege File:" );
+		  "In Proposed Project Privilege" .
+		  " File:" );
 	    if ( count ( $errors ) == 0 )
 	    {
 		if ( $r == '+' || $warn == 'yes' )
@@ -445,7 +465,8 @@ EOT;
     </table></form></div>
 EOT;
 
-    $project_options = values_to_options ( $projects );
+    $project_options =
+        values_to_options ( $projects, $project );
     $listname_options = list_to_options
         ( $favorites, $listname );
     echo <<<EOT
@@ -457,43 +478,41 @@ EOT;
           id='project-form'>
     <input type='hidden' name='id' value='$ID'>
     <select name='project'
-            onclick='document.getElementById
+            onchange='document.getElementById
 	                ("project-form").submit()'>
+    <option value=''>No Project Selected</option>
     $project_options
     </select></form>
 
     <br>
-
-    <strong>or Problem List</strong>
+EOT;
+    if ( isset ( $problem ) )
+        $key = "$project:$problem";
+    else
+        $key = NULL;
+    $problem_options = list_to_options
+        ( $list, $key );
+    echo <<<EOT
+    <strong>or Problem:</strong>
+    <form method='POST' action='manage.php'
+	  id='problem-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <select name='problem'
+	    onchange='document.getElementById
+			("problem-form").submit()'>
+    <option value=''>No Problem Selected</option>
+    $problem_options
+    </select></form>
+    <strong>from Problem List:</strong>
     <form method='POST' action='manage.php'
           id='listname-form'>
     <input type='hidden' name='id' value='$ID'>
     <select name='listname'
-            onclick='document.getElementById
+            onchange='document.getElementById
 	                ("listname-form").submit()'>
     $listname_options
     </select></form>
 EOT;
-    if ( isset ( $list ) )
-    {
-	$problem_options = list_to_options ( $list );
-	list ( $proj, $prob ) =
-	    explode ( ':',  $listname );
-	if ( $proj == '-' ) $proj = '<i>Your</i>';
-	if ( $prob == '-' ) $prob = '<i>Problems</i>';
-    	echo <<<EOT
-
-	<strong>or Problem from $proj $prob</strong>
-	<form method='POST' action='manage.php'
-	      id='problem-form'>
-	<input type='hidden' name='id' value='$ID'>
-	<select name='problem'
-		onclick='document.getElementById
-			    ("problem-form").submit()'>
-	$problem_options
-	</select></form>
-EOT;
-    }
 
     echo <<<EOT
     </div>
@@ -508,7 +527,8 @@ EOT;
 	    $priv_file_contents = " \n";
         echo <<<EOT
 	<div class='problem'>
-	<strong>$project $problem Problem Privileges</strong>
+	<strong>$project $problem Problem Privileges
+	        </strong>
 	<button type='button'
 	        style='visibility:hidden'>
 		Submit</button>
@@ -612,10 +632,12 @@ EOT;
 <script>
 function COPY ( type, warn )
 {
-    src = document.getElementById ( type + '-contents' );
+    src = document.getElementById
+        ( type + '-contents' );
     des = document.getElementById ( type + '-value' );
     form = document.getElementById ( type + '-post' );
-    warning = document.getElementById ( type + '-warning' );
+    warning = document.getElementById
+        ( type + '-warning' );
     des.value = src.innerText;
     warning.value = warn;
     form.submit();
