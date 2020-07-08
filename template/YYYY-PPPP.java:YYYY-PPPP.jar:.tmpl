@@ -1,0 +1,18 @@
+{
+
+"COMMANDS": ["ln -s YYYY-PPPP.java PPPP.java",
+             "javac -encoding UTF-8 -sourcepath . \\",
+	     "    -d . PPPP.java \\",
+	     "    > YYYY-PPPP.cout 2> YYYY-PPPP.cerr",
+	     "jar cfe YYYY-PPPP.jar PPPP *.class \\",
+             "    >> YYYY-PPPP.cout 2>> YYYY-PPPP.cerr"],
+
+"CONDITION": "UPLOAD YYYY-PPPP.java",
+"KEEP":    ["YYYY-PPPP.jar", "YYYY-PPPP.java"],
+"SHOW":    ["YYYY-PPPP.cerr","YYYY-PPPP.cout",
+            "YYYY-PPPP.java"],
+"CHECKS":  ["EMPTY YYYY-PPPP.cerr",
+            "EMPTY YYYY-PPPP.cout"]
+}
+
+

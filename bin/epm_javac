@@ -3,7 +3,7 @@
 
 // File:	epm_javac
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jun  9 13:50:56 EDT 2020
+// Date:	Wed Jul  8 11:37:07 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -28,7 +28,6 @@ executed:
 	ln -s SOURCE.java CLASS.java
 	javac JAVA-OPTION ... CLASS.java
 	rm CLASS.java
-	mv CLASS.class SOURCE.class
 
 If there are no errors, standard output and standard
 error should both be empty.
@@ -90,10 +89,6 @@ $p = proc_open
 $c = proc_close ( $p );
 
 unlink ( "$CLASS.java" );
-if ( file_exists  ( "$CLASS.class" )
-     &&
-     ! rename ( "$CLASS.class", "$SOURCE.class" ) )
-    fatal ( "cannot mv $CLASS.class $SOURCE.class" );
 
 exit ( 0 );
 

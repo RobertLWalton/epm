@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jul  4 17:28:27 EDT 2020
+// Date:    Wed Jul  8 11:27:28 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -147,7 +147,7 @@ $upload_target_ext = [
     //
     "c" => "",
     "cc" => "",
-    "java" => "class",
+    "java" => "jar",
     "py" => "pyc",
     "tex" => "pdf",
     "in" => "sout",
@@ -172,7 +172,7 @@ $display_file_type = [
     "py" => "utf8",
     "tex" => "utf8",
     "" => "Compiled Binary Executable",
-    "class" => "Compiled JAVA Executable",
+    "jar" => "Compiled JAVA Executable",
     "pyc" => "Compiled PYTHON Executable",
     "run" => "utf8",
     "pdf" => "pdf",
@@ -241,10 +241,10 @@ $push_file_map = [
             "monitor-PPPP" => "L" ]
 ];
 
-$executable_ext = ['','class','pyc'];
+$executable_ext = ['','jar','pyc'];
     // Extensions of executable files.
 
-$linkable_ext = ['','c','cc','class','java','pyc','py'];
+$linkable_ext = ['','c','cc','jar','java','pyc','py'];
     // If EEE is a $linkable_ext then files with
     // a name of the form YYYY-PPPP.EEE can be the
     // targets of a link PPPP.EEE, and similarly files

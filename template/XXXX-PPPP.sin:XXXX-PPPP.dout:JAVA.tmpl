@@ -1,14 +1,14 @@
 {
 
-"COMMANDS": ["chmod o+r . PPPP.class",
+"COMMANDS": ["chmod o+r . PPPP.jar",
 	     "  $BIN/epm_sandbox $SSARGS $SSJDTIME \\",
 	     "    -status XXXX-PPPP.sstat java \\",
-	     "    $JFLAGS PPPP $DARGS \\",
+	     "    $JFLAGS -jar PPPP.jar $DARGS \\",
 	     "    < XXXX-PPPP.sin \\",
 	     "    > XXXX-PPPP.dout 2> XXXX-PPPP.derr",
-	     "chmod o-r . PPPP.class"],
+	     "chmod o-r . PPPP.jar"],
 
-"LOCAL-REQUIRES": ["XXXX-PPPP.sin", "PPPP.class"],
+"LOCAL-REQUIRES": ["XXXX-PPPP.sin", "PPPP.jar"],
 "KEEP":    ["XXXX-PPPP.dout"],
 "SHOW":    ["XXXX-PPPP.derr", "XXXX-PPPP.dout"],
 "KEEP-ON-ERROR": true

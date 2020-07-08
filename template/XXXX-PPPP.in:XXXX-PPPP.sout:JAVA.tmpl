@@ -1,18 +1,18 @@
 
 {
 
-"COMMANDS": ["chmod o+r . PPPP.class",
+"COMMANDS": ["chmod o+r . PPPP.jar",
              "$BIN/epm_sandbox $GSARGS $GSPACE \\",
              "    -status XXXX-PPPP.gstat generate-PPPP \\",
 	     "    < XXXX-PPPP.in 2> XXXX-PPPP.gerr | \\",
 	     "  $BIN/epm_sandbox $SSARGS $SSTIME \\",
 	     "    -status XXXX-PPPP.sstat java \\",
 	     "    $JFLAGS \\",
-	     "    PPPP $DARGS \\",
+	     "    jar PPPP.jar $DARGS \\",
 	     "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
-	     "chmod o-r . PPPP.class"],
+	     "chmod o-r . PPPP.jar"],
 
-"LOCAL-REQUIRES": ["XXXX-PPPP.in", "PPPP.class"],
+"LOCAL-REQUIRES": ["XXXX-PPPP.in", "PPPP.jar"],
 "REQUIRES": ["generate-PPPP"],
 "CREATABLE": ["generate-PPPP"],
 "KEEP":    ["XXXX-PPPP.sout"],

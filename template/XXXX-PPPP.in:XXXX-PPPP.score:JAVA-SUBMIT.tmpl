@@ -1,16 +1,16 @@
 {
 
 "CONDITION": "SUBMIT",
-"COMMANDS": ["chmod o+r . PPPP.class",
+"COMMANDS": ["chmod o+r . PPPP.jar",
              "$BIN/epm_sandbox $GSARGS $GSPACE \\",
              "    -status XXXX-PPPP.g1stat generate-PPPP \\",
 	     "    < XXXX-PPPP.in 2> XXXX-PPPP.g1err | \\",
 	     "  $BIN/epm_sandbox $SSARGS $SSTIME \\",
 	     "    -score XXXX-PPPP.score \\",
 	     "    -status XXXX-PPPP.sstat java \\",
-	     "    $JFLAGS PPPP $DARGS \\",
+	     "    $JFLAGS -jar PPPP.jar $DARGS \\",
 	     "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
-	     "chmod o-r . PPPP.class",
+	     "chmod o-r . PPPP.jar",
              "$BIN/epm_sandbox $GSARGS $GSPACE \\",
              "    -status XXXX-PPPP.g2stat generate-PPPP \\",
              "    < XXXX-PPPP.in 2> XXXX-PPPP.g2err | \\",
@@ -22,7 +22,7 @@
 	     "    XXXX-PPPP.fout XXXX-PPPP.ftest \\",
 	     "    > XXXX-PPPP.score 2> XXXX-PPPP.scerr"],
 
-"LOCAL-REQUIRES": ["PPPP.class"],
+"LOCAL-REQUIRES": ["PPPP.jar"],
 "REMOTE-REQUIRES": ["XXXX-PPPP.in", "XXXX-PPPP.ftest",
                     "generate-PPPP", "filter-PPPP"]
 
