@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jun 30 13:36:54 EDT 2020
+// Date:    Wed Jul  8 12:19:25 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -500,7 +500,7 @@ function export_problem ( $project, $problem, $dryrun )
               . " --exclude $spec-$problem";
     $opt .= " --include +sources+"
           . " --exclude '+*+'";
-    $command = "rsync $opt -av --delete"
+    $command = "rsync $opt -avc --delete"
              . " --info=STATS0,FLIST0"
              . " $epm_data/$dir/ $epm_library/$dir/";
     passthru ( $command, $r );
@@ -582,7 +582,7 @@ function import_problem ( $project, $problem, $dryrun )
               . " --exclude $spec-$problem";
     $opt .= " --include +sources+"
           . " --exclude '+*+'";
-    $command = "rsync $opt -av --delete"
+    $command = "rsync $opt -avc --delete"
              . " --info=STATS0,FLIST0"
              . " $epm_library/$dir/ $epm_data/$dir/";
 	// It is necessary to have the excludes
