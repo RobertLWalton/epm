@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 16:03:39 EDT 2020
+    // Date:	Thu Jul  9 00:47:00 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -133,7 +133,7 @@
     }
     $list = read_problem_list ( $listname, $warnings );
     $projects = read_projects
-	( ['pull','push-new','view'] );
+	( ['owner','pull','push-new','view'] );
 
     if ( $epm_method == 'POST' )
     {
