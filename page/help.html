@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Jul  2 10:02:47 EDT 2020
+Date:	Thu Jul  9 17:07:11 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -13,28 +13,42 @@ make no warranty and accept no liability for EPM.
 <title>EPM Help Page</title>
 
 <style>
-:root {
-    width: 800px;
-    height: 800px;
-    font-family: "Times New Roman", Times, serif;
-    zoom: normal;
+@media screen {
+    :root {
+	width: 800px;
+	height: 800px;
+	font-family: "Times New Roman", Times, serif;
+	zoom: normal;
+    }
+    body {
+	overflow: hidden;
+	}
+    div.header {
+	background-color: #96F9F3;
+	height: 5%;
+	margin: 0px;
+    }
+    #title {
+        display:none;
+    }
+    #toc {
+	background-color: #F2D9D9;
+	overflow: auto;
+	height: 95%;
+	display: none;
+    }
+    #text {
+	overflow: auto;
+	height: 95%;
+    }
 }
-body {
-    overflow: hidden;
-}
-div.header {
-    background-color: #96F9F3;
-    height: 5%;
-    margin: 0px;
-}
-#toc {
-    background-color: #F2D9D9;
-    overflow: auto;
-    height: 95%;
-}
-#text {
-    overflow: auto;
-    height: 95%;
+@media print {
+    div.header {
+        display: none;
+    }
+    #toc {
+	display: block;
+    }
 }
 #flow {
     border: 1px black solid;
@@ -127,7 +141,11 @@ vertical-align: top;
 </table>
 </div>
 
-<div id='toc' style='display:none'>
+<div id='title'>
+<h1>EPM Help Page</h1>
+</div>
+
+<div id='toc'>
 <div style='width:50%;float:left'>
 <ul>
 
