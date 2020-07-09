@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul  9 15:42:46 EDT 2020
+    // Date:	Thu Jul  9 16:24:17 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -94,7 +94,7 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
@@ -123,6 +123,9 @@
     $owner_warn = false;
         // True to ask if its ok to accept $edited_
 	// contents which removes $uid from ownership.
+    $move_warn = NULL;
+        // If not NULL, ask if problem should be
+	// moved to this project.
 
     $favorites = read_favorites_list
 	( ['pull','push-new','view'], $warnings );
@@ -132,8 +135,10 @@
 	$listname = "$proj:$base";
     }
     $list = read_problem_list ( $listname, $warnings );
-    $projects = read_projects
+    $priv_projects = read_projects
 	( ['owner','pull','push-new','view'] );
+    $move_projects = read_projects
+	( ['push-new'] );
 
     if ( $epm_method == 'POST' )
     {
@@ -170,7 +175,7 @@
 		$project = NULL;
 		$problem = NULL;
 	    }
-	    elseif ( ! in_array ( $proj, $projects,
+	    elseif ( ! in_array ( $proj, $priv_projects,
 	                          true ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    else
@@ -340,6 +345,28 @@
 		    $owner_warn = true;
 	    }
 	}
+        elseif ( isset ( $_POST['move'] ) )
+	{
+	    $proj = $_POST['move'];
+	    if ( ! isset ( $_POST['warning'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    elseif ( $proj == '' )
+	        /* do nothing */;
+	    elseif ( ! in_array ( $proj, $move_projects,
+	                          true ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    elseif ( ! isset ( $problem ) )
+		$errors[] = "you must select a problem"
+		          . " first";
+	    elseif ( $proj == $project )
+		$errors[] = "problem is aleady in $proj"
+		          . " project";
+	    elseif ( $_POST['warning'] == 'yes' )
+	        $errors[] = "moving not yet"
+		          . " implemented";
+	    else
+	        $move_warn = $proj;
+	}
 	else
 	    exit ( 'UNACCEPTABLE HTTP POST' );
     }
@@ -425,6 +452,24 @@ div.priv pre {
 	<br></div>
 EOT;
     }
+    if ( isset ( $move_warn ) )
+    {
+        echo <<<EOT
+	<div class='warnings'>
+	<strong>WARNING: do you really want to move
+	                 $problem from $project
+			 to $move_warn?</strong>
+	<pre>   </pre>
+	<button type='button'
+	        onclick='MOVE("yes")'>
+	     YES</button>
+	<pre>   </pre>
+	<button type='button'
+		onclick='MOVE("no")'>
+	     NO</button>
+	<br></div>
+EOT;
+    }
 
     echo <<<EOT
     <div style='background-color:orange;
@@ -466,7 +511,10 @@ EOT;
 EOT;
 
     $project_options =
-        values_to_options ( $projects, $project );
+        values_to_options ( $priv_projects, $project );
+    $move_options =
+        values_to_options
+	    ( $move_projects, $move_warn );
     $listname_options = list_to_options
         ( $favorites, $listname );
     if ( isset ( $problem ) )
@@ -509,6 +557,19 @@ EOT;
 	                ("project-form").submit()'>
     <option value=''>No Project Selected</option>
     $project_options
+    </select></form>
+
+    <strong>or Move Problem to Project</strong>
+    <form method='POST' action='manage.php'
+          id='move-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' id='move-warning'
+	   name='warning' value=''>
+    <select name='move'
+            onchange='document.getElementById
+	                ("move-form").submit()'>
+    <option value=''>No Project Selected</option>
+    $move_options
     </select></form>
 
     </div>
@@ -635,6 +696,14 @@ function COPY ( type, warn )
     warning = document.getElementById
         ( type + '-warning' );
     des.value = src.innerText;
+    warning.value = warn;
+    form.submit();
+}
+function MOVE ( warn )
+{
+    form = document.getElementById ( 'move-form' );
+    warning = document.getElementById
+        ( 'move-warning' );
     warning.value = warn;
     form.submit();
 }
