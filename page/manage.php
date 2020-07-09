@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul  9 00:47:00 EDT 2020
+    // Date:	Thu Jul  9 15:42:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -469,23 +469,6 @@ EOT;
         values_to_options ( $projects, $project );
     $listname_options = list_to_options
         ( $favorites, $listname );
-    echo <<<EOT
-
-    <div class='select'>
-
-    <strong>Select Project</strong>
-    <form method='POST' action='manage.php'
-          id='project-form'>
-    <input type='hidden' name='id' value='$ID'>
-    <select name='project'
-            onchange='document.getElementById
-	                ("project-form").submit()'>
-    <option value=''>No Project Selected</option>
-    $project_options
-    </select></form>
-
-    <br>
-EOT;
     if ( isset ( $problem ) )
         $key = "$project:$problem";
     else
@@ -493,7 +476,9 @@ EOT;
     $problem_options = list_to_options
         ( $list, $key );
     echo <<<EOT
-    <strong>or Problem:</strong>
+
+    <div class='select'>
+    <strong>Select Problem:</strong>
     <form method='POST' action='manage.php'
 	  id='problem-form'>
     <input type='hidden' name='id' value='$ID'>
@@ -512,9 +497,20 @@ EOT;
 	                ("listname-form").submit()'>
     $listname_options
     </select></form>
-EOT;
 
-    echo <<<EOT
+    <br>
+
+    <strong>or Select Project</strong>
+    <form method='POST' action='manage.php'
+          id='project-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <select name='project'
+            onchange='document.getElementById
+	                ("project-form").submit()'>
+    <option value=''>No Project Selected</option>
+    $project_options
+    </select></form>
+
     </div>
 EOT;
 
