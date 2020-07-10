@@ -59,7 +59,7 @@ $epm_check_ipaddr = true;
     // IP address.  Set to true if server is not a
     // secure server (running SSL with a certificate).
 
-$epm_superuser = walton;
+$epm_superuser = 'walton';
     // Regular expression RE such that `+ owner RE'
     // is prepended to the beginning of all +priv+ file
     // scans.  The superuser(s), having owner privi-
