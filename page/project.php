@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 12:35:54 EDT 2020
+    // Date:	Fri Jul 10 05:15:04 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -727,8 +727,6 @@ EOT;
 	{
 	    $new_push_privs =
 		"+ owner $uid" . PHP_EOL .
-		"+ view $uid" . PHP_EOL .
-		"+ pull $uid" . PHP_EOL .
 		"+ re-push $uid" . PHP_EOL;
 	    $changes .= "  make $project $problem"
 	              . " directory" . PHP_EOL;
@@ -892,8 +890,10 @@ EOT;
 	}
 
 	$g = "$desdir/+parent+";
+	$pull_priv = 'pull-new';
 	if ( is_link ( "$epm_data/$g" ) )
 	{
+	    $pull_priv = 're-pull';
 	    $s = @readlink ( "$epm_data/$g" );
 	    if ( $s === false )
 		ERROR ( "cannot read link $g" );
@@ -915,14 +915,14 @@ EOT;
 	    }
 	}
 	problem_priv_map ( $pmap, $project, $problem );
-	if ( ! isset ( $pmap['pull'] )
+	if ( ! isset ( $pmap[$pull_priv] )
 	     ||
-	     $pmap['pull'] == '-' )
+	     $pmap[$pull_priv] == '-' )
 	{
 	    $errors[] =
 		"$problem <= $project is not" .
 		" possible; you need" .
-		" `pull' privilege for" .
+		" `$pull_priv' privilege for" .
 		" $project $problem";
 	    return;
 	}

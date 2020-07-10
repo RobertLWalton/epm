@@ -1,3 +1,4 @@
 + push-new .*
-+ pull .*
++ pull-new .*
++ re-pull .*
 + view .*

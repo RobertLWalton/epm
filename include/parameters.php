@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul  8 11:27:28 EDT 2020
+// Date:    Fri Jul 10 05:25:39 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -125,7 +125,8 @@ $epm_parent_re =
 
 $epm_priv_re =
     '/^\h*(\+|\-)\h+' .
-    '(owner|view|pull|push\-new|re\-push)' .
+    '(owner|view|pull\-new|re\-pull|' .
+    'push\-new|re\-push)' .
     '\h+(\S+)\h*$/';
     // Non-blank, non-comment lines of +priv+ files
     // must match this re.
