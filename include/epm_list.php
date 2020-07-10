@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 16:41:37 EDT 2020
+    // Date:	Fri Jul 10 17:22:40 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -130,10 +130,21 @@
     function check_priv_file_contents
 	    ( $contents, & $errors, $error_header )
     {
-        global $uid, $epm_priv_re;
+        global $uid, $epm_priv_re, $epm_superuser;
 
 	$is_owner = NULL;
 	$error_found = false;
+
+	$re = $epm_superuser;
+	$r = preg_match ( "/^($re)\$/", $uid );
+	if ( $r === false )
+	{
+	    $error_found = true;
+	    $errors[] = $error_header;
+	    $errors[] = "    \$epm_superuser is bad RE";
+	}
+	elseif ( $r == 1 )
+	    $is_owner = '+';
 
 	foreach ( explode ( "\n", $contents ) as $line )
 	{
@@ -178,11 +189,28 @@
 	return $is_owner;
     }
 
+    // Return privilege map containing just the
+    // results of `+ owner $epm_superuser'.
+    //
+    function superuser_priv_map ( & $map )
+    {
+        global $uid, $epm_superuser;
+
+        $map = [];
+
+	$re = $epm_superuser;
+	$r = preg_match ( "/^($re)\$/", $uid );
+	if ( $r === false )
+	    ERROR ( "\$epm_superuser is bad RE" );
+	if ( $r == 1 )
+	    $map['owner'] = '+';
+    }
+
     // Return the privilege map of a project.
     //
     function project_priv_map ( & $map, $project )
     {
-        $map = [];
+        superuser_priv_map ( $map );
 	read_priv_file
 	     ( $map, "projects/$project/+priv+" );
     }
@@ -192,7 +220,7 @@
     function problem_priv_map
 	    ( & $map, $project, $problem )
     {
-        $map = [];
+        superuser_priv_map ( $map );
 	read_priv_file
 	    ( $map,
 	      "projects/$project/$problem/+priv+" );

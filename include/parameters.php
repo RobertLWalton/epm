@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jul 10 05:25:39 EDT 2020
+// Date:    Fri Jul 10 17:09:54 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -58,6 +58,12 @@ $epm_check_ipaddr = true;
     // If true a session is not allowed to change its
     // IP address.  Set to true if server is not a
     // secure server (running SSL with a certificate).
+
+$epm_superuser = walton;
+    // Regular expression RE such that `+ owner RE'
+    // is prepended to the beginning of all +priv+ file
+    // scans.  The superuser(s), having owner privi-
+    // leges, can change any +priv+ file.
 
 $epm_debug = preg_match
     ( '/(login|user|project|list|favorites|manage)/',
