@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul  9 16:24:17 EDT 2020
+    // Date:	Thu Jul  9 23:00:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -24,21 +24,26 @@
     //	    owner	Right to change +priv+ file
     //			of project or problem.
     //
-    //	    view	Right to view actions attached
-    //			to the project or problem.
-    //
     //    Project Permissions:
-    //
     //
     //	    push-new	Right to push new problems into
     //			project.
     //
+    //	    pull-new	Right to pull project problem
+    //			that is NOT the parent of the
+    //			user problem being pulled,
+    //			which may not pre-exist.
+    //
+    //	    re-pull	Right to pull project problem
+    //			that IS the parent of the user
+    //                  problem being pulled.
+    //
+    //	    view	Right to view actions attached
+    //			to the project.
+    //
     //    Project Problem Permissions:
     //
-    //
-    //	    pull	Right to pull problem.
-    //
-    //	    re-push	Right to re-push problems.
+    //	    re-push	Right to re-push problem.
     //
     // Note that an owner does not have other permis-
     // sions, but must change the +priv+ files to
