@@ -2,7 +2,7 @@
 //
 // File:    template.optn.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Mar 15 03:41:17 EDT 2020
+// Date:    Fri Jul 10 15:56:21 EDT 2020
 
 {
     "GXXFLAGS": { "description":
@@ -110,21 +110,58 @@
 		    "argname": "SSARGS" },
 
     "SSTIME": { "description":
-                    "non-debugging solution sandbox"
-		    " argument" },
+                    "non-debugging C/C++ solution"
+		    " sandbox argument" },
 
     "stime": { "type": "natural",
                "range": ["1", "30"],
-	       "default": "3",
+	       "default": "1",
 	       "description":
-	           "solution CPU time limit in seconds",
+	           "C/C++ solution CPU time limit in"
+		   " seconds",
 	       "valname": "STIME" },
     "stime-arg": { "values": ["-cputime STIME"],
 	           "default": "-cputime STIME",
 		   "description":
-		       "limit solution CPU time"
+		       "limit C/C++ solution CPU time"
 		       " (required)",
 		   "argname": "SSTIME" },
+
+    "SSJTIME": { "description":
+                    "non-debugging JAVA solution"
+		    " sandbox argument" },
+
+    "sjtime": { "type": "natural",
+                "range": ["1", "30"],
+	        "default": "2",
+	        "description":
+	           "JAVA solution CPU time limit in"
+		   " seconds",
+	        "valname": "SJTIME" },
+    "sjtime-arg": { "values": ["-cputime SJTIME"],
+	            "default": "-cputime SJTIME",
+		    "description":
+		        "limit JAVA solution CPU time"
+		        " (required)",
+		    "argname": "SSJTIME" },
+
+    "SSPTIME": { "description":
+                    "non-debugging PYTHON solution"
+		    " sandbox argument" },
+
+    "sptime": { "type": "natural",
+                "range": ["1", "30"],
+	        "default": "3",
+	        "description":
+	           "PYTHON solution CPU time limit in"
+		   " seconds",
+	        "valname": "SPTIME" },
+    "sptime-arg": { "values": ["-cputime SPTIME"],
+	            "default": "-cputime SPTIME",
+		    "description":
+		        "limit PYTHON solution CPU time"
+		        " (required)",
+		    "argname": "SSPTIME" },
 
     "SSDTIME": { "description":
                     "debugging solution sandbox"
