@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul  8 12:19:25 EDT 2020
+// Date:    Sat Jul 11 12:16:55 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -110,6 +110,27 @@ function done()
 	echo "$stars done $title" . PHP_EOL;
 }
 
+// Return directory name with components equal to `.'
+// and `..' removed (the latter removing the previous
+// component).
+//
+function scrub_dir ( $dir )
+{
+    $parent = pathinfo ( $dir, PATHINFO_DIRNAME );
+    $base = pathinfo ( $dir, PATHINFO_BASENAME );
+    if ( $parent == $dir ) return $dir;
+    $parent = scrub_dir ( $parent );
+
+    if ( $base == '..' )
+        return pathinfo ( $parent, PATHINFO_DIRNAME );
+    elseif ( $base == '.' )
+        return $parent;
+    elseif ( $parent == '/' )
+	return '/' . $base;
+    else
+	return $parent . '/' . $base;
+}
+
 // Function to set the permissions and group of a
 // file or directory, with optional directory recursion.
 // 
@@ -155,9 +176,9 @@ function done()
 // directory beginning with `.' are ignored.
 //
 $set_perms_map = [
-    $epm_home => 'HOME',
-    $epm_web => 'WEB',
-    $epm_data => 'DATA' ];
+    scrub_dir ( $epm_home ) => 'HOME',
+    scrub_dir ( $epm_web ) => 'WEB',
+    scrub_dir ( $epm_data ) => 'DATA' ];
 function set_perms
 	( $base, $fname, $perms, $dryrun,
 	         $recurse = true )
@@ -561,20 +582,26 @@ function export_projects ( $dryrun )
     }
 }
 
-// Function to sync $epm_data to $epm_library problem.
+// Function to sync $epm_data to epm_library problem.
 //
 function import_problem ( $project, $problem, $dryrun )
 {
-    global $epm_data, $epm_library, $epm_specials;
+    global $epm_data, $epm_specials;
     title ( "importing $project $problem" );
 
-    $dir = "projects/$project";
-    if ( ! is_dir ( "$epm_data/$dir" ) )
-        ERROR ( "$dir is not a \$epm_data directory" );
-    $dir = "$dir/$problem";
-    if ( ! is_dir ( "$epm_library/$dir" ) )
-        ERROR ( "$dir is not a \$epm_library" .
+    $desdir = "projects/$project";
+    if ( ! is_dir ( "$epm_data/$desdir" ) )
+        ERROR ( "$desdir is not an \$epm_data" .
 	        " directory" );
+    $desdir = "$desdir/$problem";
+    $lib = epm_library ( $project );
+    if ( ! isset ( $lib ) )
+        ERROR ( "epm_library ( $project ) is not" .
+	        " defined" );
+    $srcdir = "$lib/$problem";
+    if ( ! is_dir ( $srcdir ) )
+        ERROR ( "$problem is not an epm_library" .
+	        " ( $project ) subdirectory" );
 
     $opt = ( $dryrun ? '-n' : '' );
     foreach ( $epm_specials as $spec )
@@ -584,7 +611,7 @@ function import_problem ( $project, $problem, $dryrun )
           . " --exclude '+*+'";
     $command = "rsync $opt -avc --delete"
              . " --info=STATS0,FLIST0"
-             . " $epm_library/$dir/ $epm_data/$dir/";
+             . " $srcdir/ $epm_data/$desdir/";
 	// It is necessary to have the excludes
 	// because we have the --delete; with the
 	// excludes rsync will NOT delete excluded
@@ -597,25 +624,30 @@ function import_problem ( $project, $problem, $dryrun )
          PHP_EOL . PHP_EOL;
 }
 
-// Function to sync $epm_data to $epm_library project.
+// Function to sync $epm_data to epm_library($project).
+// If epm_library ( $project ) not defined, does
+// nothing.
 //
 function import_project ( $project, $dryrun )
 {
-    global $epm_data, $epm_library, $epm_name_re;
+    global $epm_data, $epm_name_re;
 
-    $d1 = "projects";
-    $d2 = "$d1/$project";
-    if ( ! is_dir ( "$epm_library/$d2" ) )
-        ERROR ( "$d2 is not a \$epm_library" .
+    $lib = epm_library ( $project );
+    if ( ! isset ( $lib ) ) return;
+    if ( ! is_dir ( $lib ) )
+        ERROR ( "epm_library ( $project ) is not a" .
 	        " directory" );
-    if ( ! is_dir ( "$epm_data/$d2" )
-         &&
-         ! @mkdir ( "$epm_data/$d2", 0770, true ) )
-	ERROR ( "cannot make $d2 in \$epm_data" );
 
-    $dirs = @scandir ( "$epm_library/$d2" );
+    $d = "projects/$project";
+    if ( ! is_dir ( "$epm_data/$d" )
+         &&
+         ! @mkdir ( "$epm_data/$d", 0770, true ) )
+	ERROR ( "cannot make $d in \$epm_data" );
+
+    $dirs = @scandir ( $lib );
     if ( $dirs === false )
-        ERROR ( "cannot read $d2 from \$epm_library" );
+        ERROR ( "cannot read epm_library" .
+	        " ( $project )" );
     foreach ( $dirs as $problem )
     {
         if ( ! preg_match ( $epm_name_re, $problem ) )
@@ -624,28 +656,27 @@ function import_project ( $project, $dryrun )
     }
 }
 
-// Function to sync $epm_data to $epm_library projects.
+// Function to sync $epm_data to epm_library projects.
+// Only projects already in $epm_data are sync'ed.
 //
 function import_projects ( $dryrun )
 {
-    global $epm_data, $epm_library, $epm_name_re;
+    global $epm_data, $epm_name_re;
 
-    $d1 = "projects";
-    if ( ! is_dir ( "$epm_library/$d1" ) )
-        ERROR ( "$d1 is not a \$epm_library" .
-	        " directory" );
-    if ( ! is_dir ( "$epm_data/$d1" )
-         &&
-         ! @mkdir ( "$epm_data/$d1" ) )
-	ERROR ( "cannot make $d1 in \$epm_data" );
-
-    $dirs = @scandir ( "$epm_library/$d1" );
+    if ( ! is_dir ( "$epm_data/projects" ) )
+        ERROR ( "`projects' directory is not exist" .
+	        " in \$epm_data" );
+    $dirs = @scandir ( "$epm_data/projects" );
     if ( $dirs === false )
-        ERROR ( "cannot read $d1 from \$epm_library" );
+        ERROR ( "cannot read `projects' directory" .
+	        " in \$epm_data" );
     foreach ( $dirs as $project )
     {
         if ( ! preg_match ( $epm_name_re, $project ) )
 	    continue;
+	$lib = epm_library ( $project );
+	if ( ! isset ( $lib ) ) continue;
+	if ( ! is_dir ( $lib ) ) continue;
 	import_project ( $project, $dryrun );
     }
 }

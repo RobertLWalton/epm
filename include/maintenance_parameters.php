@@ -2,7 +2,7 @@
 
 // File:    maintenance_parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jun 30 04:15:15 EDT 2020
+// Date:    Sat Jul 11 12:16:41 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -120,14 +120,26 @@ $epm_backup_round = 30;
     // WARNING: $epm_backup_name should have only
     //          letters, digits, and `-', BUT NOT `_'.
 
-$epm_library = $epm_home . '/../epm_public';
-    // $epm_library/projects is the project library from
-    // which projects and problems may be imported and
-    // to which they may be exported.  It is generally
-    // under git, but EPM does not execute git per se.
-    //
-    // WARNING:
-    //   This is only a test setting.  You may wish
-    //   to put the library elsewhere.
+// Function which if given a project name, returns the
+// library directory of the project.  For example,
+// epm_library ( PROJECT ) might return
+//
+//	$epm_home/../epm_PROJECT/projects/PROJECT
+//
+// This is the directory from which project files may
+// be imported and to which they may be exported.
+// This directory is usually under git, but EPM does
+// not execute git per se.
+//
+// Returns NULL if library directory for a project
+// does not exist.
+//
+function epm_library ( $project )
+{
+    global $epm_home;
+    if ( $project == 'obsolete' ) return NULL;
+    return "$epm_home/../epm_$project/" .
+           "projects/$project";
+}
 
 ?>
