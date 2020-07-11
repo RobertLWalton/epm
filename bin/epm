@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jul 11 16:22:31 EDT 2020
+// Date:	Sat Jul 11 17:06:57 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -71,10 +71,9 @@ function is defined in W/maintenance_parameters.php).
 Import also does init and perms for the target
 directory.
 
-Note: import -projects imports only those projects
-that ALREADY EXIST in $epm_data/projects, and then
-only if their epm_library ( $project ) directory
-exits.
+Note: import/export -projects imports/exports only
+projects whose $epm_data/projects/$project and
+epm_library ( $project ) directories both exist.
 
 The rest of the commands should not be needed, but
 are available for cleaning up system problems.

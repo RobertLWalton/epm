@@ -138,6 +138,7 @@ function epm_library ( $project )
 {
     global $epm_home;
     if ( $project == 'obsolete' ) return NULL;
+    if ( $project == 'public' ) return NULL;
     return "$epm_home/../epm_$project/" .
            "projects/$project";
 }

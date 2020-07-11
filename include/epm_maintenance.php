@@ -500,20 +500,30 @@ function init_projects ( $dryrun )
     }
 }
 
-// Function to sync $epm_library to $epm_data problem.
+// Function to sync epm_library to $epm_data problem.
 //
 function export_problem ( $project, $problem, $dryrun )
 {
-    global $epm_data, $epm_library, $epm_specials;
+    global $epm_data, $epm_specials;
     title ( "exporting $project $problem" );
 
-    $dir = "projects/$project";
-    if ( ! is_dir ( "$epm_library/$dir" ) )
-        ERROR ( "$dir is not a \$epm_library" .
+    $lib = epm_library ( $project );
+    if ( ! isset ( $lib ) )
+        ERROR ( "epm_library ( $project ) is not" .
+	        " defined" );
+    if ( ! is_dir ( $lib ) )
+        ERROR ( "epm_library ( $project ) is not" .
+	        " a directory" );
+    $desdir = "$lib/$problem";
+
+    $srcdir = "projects/$project";
+    if ( ! is_dir ( "$epm_data/$srcdir" ) )
+        ERROR ( "$srcdir is not an \$epm_data" .
 	        " directory" );
-    $dir = "$dir/$problem";
-    if ( ! is_dir ( "$epm_data/$dir" ) )
-        ERROR ( "$dir is not a \$epm_data directory" );
+    $srcdir = "$srcdir/$problem";
+    if ( ! is_dir ( "$epm_data/$srcdir" ) )
+        ERROR ( "$srcdir is not an \$epm_data" .
+	        " directory" );
 
     $opt = ( $dryrun ? '-n' : '' );
     foreach ( $epm_specials as $spec )
@@ -523,7 +533,7 @@ function export_problem ( $project, $problem, $dryrun )
           . " --exclude '+*+'";
     $command = "rsync $opt -avc --delete"
              . " --info=STATS0,FLIST0"
-             . " $epm_data/$dir/ $epm_library/$dir/";
+             . " $epm_data/$srcdir/ $desdir/";
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
@@ -531,24 +541,29 @@ function export_problem ( $project, $problem, $dryrun )
          PHP_EOL . PHP_EOL;
 }
 
-// Function to sync $epm_library to $epm_data project.
+// Function to sync epm_library to $epm_data project.
+// If epm_library ( $project ) not defined, does
+// nothing.
 //
 function export_project ( $project, $dryrun )
 {
-    global $epm_data, $epm_library, $epm_name_re;
+    global $epm_data, $epm_name_re;
 
-    $d1 = "projects";
-    $d2 = "$d1/$project";
-    if ( ! is_dir ( "$epm_data/$d2" ) )
-        ERROR ( "$d2 is not a \$epm_data directory" );
-    if ( ! is_dir ( "$epm_library/$d2" )
+    $lib = epm_library ( $project );
+    if ( ! isset ( $lib ) ) return;
+    if ( ! is_dir ( "$lib" )
          &&
-         ! @mkdir ( "$epm_library/$d2", 0750, true ) )
-	ERROR ( "cannot make $d2 in \$epm_library" );
+         ! @mkdir ( "$lib", 0750, true ) )
+	ERROR ( "cannot make epm_library" .
+	        " ( $project )" );
 
-    $dirs = @scandir ( "$epm_data/$d2" );
+    $d = "projects/$project";
+    if ( ! is_dir ( "$epm_data/$d" ) )
+        ERROR ( "$d is not an \$epm_data directory" );
+
+    $dirs = @scandir ( "$epm_data/$d" );
     if ( $dirs === false )
-        ERROR ( "cannot read $d2 in \$epm_data" );
+        ERROR ( "cannot read $d in \$epm_data" );
     foreach ( $dirs as $problem )
     {
         if ( ! preg_match ( $epm_name_re, $problem ) )
@@ -558,26 +573,27 @@ function export_project ( $project, $dryrun )
 }
 
 // Function to sync $epm_library to $epm_data projects.
+// Only projects in $epm_data are for which
+// epm_library ( $project ) exists are sync'ed.
 //
 function export_projects ( $dryrun )
 {
-    global $epm_data, $epm_library, $epm_name_re;
+    global $epm_data, $epm_name_re;
 
-    $d1 = "projects";
-    if ( ! is_dir ( "$epm_data/$d1" ) )
-        ERROR ( "$d1 is not a \$epm_data directory" );
-    if ( ! is_dir ( "$epm_library/$d1" )
-         &&
-         ! @mkdir ( "$epm_library/$d1", 0750 ) )
-	ERROR ( "cannot make $d1 in \$epm_library" );
-
-    $dirs = @scandir ( "$epm_data/$d1" );
+    if ( ! is_dir ( "$epm_data/projects" ) )
+        ERROR ( "`projects' directory is not exist" .
+	        " in \$epm_data" );
+    $dirs = @scandir ( "$epm_data/projects" );
     if ( $dirs === false )
-        ERROR ( "cannot read $d1 in \$epm_data" );
+        ERROR ( "cannot read `projects' directory" .
+	        " in \$epm_data" );
     foreach ( $dirs as $project )
     {
         if ( ! preg_match ( $epm_name_re, $project ) )
 	    continue;
+	$lib = epm_library ( $project );
+	if ( ! isset ( $lib ) ) continue;
+	if ( ! is_dir ( $lib ) ) continue;
 	export_project ( $project, $dryrun );
     }
 }
@@ -657,7 +673,8 @@ function import_project ( $project, $dryrun )
 }
 
 // Function to sync $epm_data to epm_library projects.
-// Only projects already in $epm_data are sync'ed.
+// Only projects already in $epm_data are for which
+// epm_library ( $project ) exists are sync'ed.
 //
 function import_projects ( $dryrun )
 {
