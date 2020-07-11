@@ -1,10 +1,9 @@
 {
 
-"COMMANDS": ["pdflatex -record -no-shell-escape -interaction \\",
-             "    nonstopmode >PPPP.tout 2>PPPP.terr PPPP.tex"],
+"COMMANDS": ["${BIN}/epm_latex PPPP" ],
 "CONDITION": "UPLOAD PPPP.tex",
 "KEEP":    ["PPPP.pdf","PPPP.tout","PPPP.tex"],
-"SHOW":    ["PPPP.pdf", "PPPP.terr", "PPPP.tout"],
+"SHOW":    ["PPPP.terr", "PPPP.pdf", "PPPP.tout"],
 "CHECKS":  ["EMPTY PPPP.terr"]
 
 }

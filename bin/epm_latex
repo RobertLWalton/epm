@@ -1,0 +1,83 @@
+#! /bin/php
+<?php
+
+// File:	epm_latex
+// Author:	Robert L Walton <walton@acm.org>
+// Date:	Sat Jul 11 05:12:50 EDT 2020
+
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain;
+// they make no warranty and accept no liability
+// for EPM.
+
+$document = <<<'EOT'
+    epm_latex PPPP
+
+Executes
+
+    pdflatex -record -no-shell-escape -interaction \
+             nonstopmode -halt-on-error PPPP.tex \
+	     >PPPP.tout 2>PPPP.terr
+
+and if no error code return, returns exit code 0.
+Otherwise reads the PPPP.log file and
+
+(1) Removes all lines before the first line beginning
+    with `!'.
+(2) Then removes all lines from the first line beginning
+    with `Here' up to the next line beginning with `!'.
+(3) Writes the remaining lines to PPPP.terr.
+(4) Returns the exit code returned by pdflatex.
+
+EOT;
+
+if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
+{
+    echo $document;
+    exit ( 0 );
+}
+
+$PPPP = $argv[1];
+
+$command = "pdflatex -record -no-shell-escape"
+         . " -interaction nonstopmode"
+	 . " -halt-on-error $PPPP.tex"
+	 . " >$PPPP.tout 2>$PPPP.terr";
+
+exec ( $command, $discard, $code );
+
+if ( $code == 0 ) exit ( 0 );
+
+$LOG = "$PPPP.log";
+$ERR = "$PPPP.terr";
+$c = @file_get_contents ( $LOG  );
+if ( $c === false )
+{
+    file_put_contents
+        ( $ERR, "cannot read $LOG", FILE_APPEND );
+    exit ( $code );
+}
+
+$state = 0;
+$out = '';
+foreach ( explode ( "\n", $c ) as $line )
+{
+    if ( $state == 0 && $line == '' ) continue;
+    if ( $state == 0 && $line[0] == '!' ) ++ $state;
+    if ( $state == 1 && substr ( $line, 0, 4 ) == 'Here' )
+        ++ $state;
+    if ( $state == 2 && $line == '' ) continue;
+    if ( $state == 2 && $line[0] == '!' ) ++ $state;
+    if ( $state == 1 || $state == 3 )
+        $out .= $line . PHP_EOL;
+}
+
+if ( $out == '' )
+    $out = "pdflatex returned $code but no errors found"
+         . " in $LOG file";
+
+file_put_contents ( $ERR, $out, FILE_APPEND );
+
+exit ( $code );
+  
+?>
