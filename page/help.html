@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Jul  9 17:12:31 EDT 2020
+Date:	Sun Jul 12 04:37:18 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -110,8 +110,12 @@ margin-left: 20px;
 margin-top: 0;
 font-size: 16pt;
 }
+table.top-align {
+margin-left: 20px;
+}
 table.top-align td {
 vertical-align: top;
+padding: 0px 10px;
 }
 .indented {
 margin-left: 20px;
@@ -207,6 +211,8 @@ vertical-align: top;
 <li><a href="#favorites-page">Favorites Page</a> [main]
 
 <li><a href="#view-page">View Page</a> [view]
+
+<li><a href="#manage-page">Manage Page</a> [main]
 
 <li><a href="#conflicts">Conflicts</a>
 
@@ -689,7 +695,7 @@ In addition, it must begin and end with a letter.
 <a name="problem-marks"><h2>Problem Marks</h2></a>
 <p>
 On the problem page:
-<table style='margin-left:20px' class='top-align'>
+<table class='top-align'>
 <tr><td>&darr;</td><td>means `show below'</td></tr>
 <tr><td>&uarr;</td><td>means `hide' (don't `show below')</td></tr>
 <tr><td><pre>&Chi;</pre></td><td>means `toggle overstrike of file name';
@@ -1413,6 +1419,33 @@ white any action types you want to exclude.
 The actions are generally self explanatory.  For the submit
 actions, the 3 decimal digit number followed immediately
 by `s' is the maximum solution execution time in seconds.
+</p>
+
+<a name="manage-page"><h1>Manage Page</h1></a>
+<p>
+The Manage Page allows you to view project and project problem
+privileges, to change these if you have owner privilege for
+a project or project problem, and to move problems between
+projects.
+<p>
+The following are the possible project privileges:
+<table class='top-align'>
+<tr><td>push&#8209;new</td><td>allows problems to be pushed to a project
+                         if they are not already in the project</td></tr>
+<tr><td>pull&#8209;new</td><td>allows a problem in the project to be
+                         pulled if the user does not already have a
+			 problem of the same name, or if the user's
+			 problem of the same name
+			 has no parent</td></tr>
+<tr><td>re&#8209;pull</td><td>allows a problem in the project to be
+                         pulled when an existing user problem
+			 has the project problem as its parent
+			 </td></tr>
+<tr><td>view</td><td>makes the project visible; e.g., allows
+                     project actions to be viewed in the View Page and
+		     the project problems to be included in
+		     the user's Favorites</td></tr>
+</table>
 </p>
 
 <a name="conflicts"><h1>Conflicts</h1></a>
