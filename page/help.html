@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 13:47:57 EDT 2020
+Date:	Sun Jul 12 14:08:57 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -323,7 +323,7 @@ context.fillText ( '.score file', 115, 430 );
 <a name="login-page"><h1>Login Page</h1></a>
 
 <p>
-The <b>login page</b> manages login using email addresses to
+The <b>Login Page</b> manages login using email addresses to
 identify a user and confirmation numbers to create tickets for
 the user in the user's browser.  Once you have logged in, an
 EPM server session for your user ID is attached to your browser,
@@ -344,7 +344,7 @@ There can be at most one problem tab for each of your problems.
 <li> A <a name="view-window">view popup window</a> for read-only
 views of files and information.
 <li> A <a name="help-window">help popup window</a> for this
-help page and the User Guide page.
+Help Page and the User Guide page.
 </ul>
 <p>
 EPM consists of a set of pages, such as the Login Page and the
@@ -420,7 +420,7 @@ is 7 days, and all the rest are 30 days.
 
 <p>
 To be an EPM user you must supply the following information which
-appears on the user page.
+appears on the User Page.
 
 <p class='indented'>
 <mark>NOTICE: All this information is PUBLIC in that it is
@@ -476,7 +476,7 @@ problems, and `<a name='public'>public</a>',
 into which anyone may push problems
 they have developed.
 <p>
-The project page lets you:
+The Project Page lets you:
 <ul>
 <li> pull a problem you want to solve from a project
 <li> create a new problem of your own that is not in a project
@@ -657,9 +657,11 @@ of the problem ovals, you can go to the Project Page or one of the
 other pages that share the `main' tab with the Project Page.
 <p>
 At the end a problem's oval will be green if it was successfully
-pushed, yellow if there were errors while executing the push
-actions for the problem, and white if no push actions were executed
-for the problem.
+pushed,
+yellow if the problem was skipped because errors were detected
+in compiling the problem's push actions (no actions were actually
+performed),
+and white if the problem was skipped over.
 </p>
 
 <a name="problem-page"><h1>Problem Page</h1></a>
@@ -697,7 +699,7 @@ In addition, it must begin with a letter and end with a letter or digit.
 
 <a name="problem-marks"><h2>Problem Marks</h2></a>
 <p>
-On the problem page:
+On the Problem Page:
 <table class='top-align'>
 <tr><td>&darr;</td><td>means `show below'</td></tr>
 <tr><td>&uarr;</td><td>means `hide' (don't `show below')</td></tr>
@@ -730,11 +732,12 @@ each link name has the same extension as the file to which it is
 linked.  For example, files imported from the
 <a href="#parent">parent</a> of a problem are actually links
 in your problem directory to the actual file in the parent directory.
-In general links are treated and talked about as if they were files.
+Usually links are treated and talked about as if they were files.
 <p>
 Clicking on a file name, if it is a button,
 will show the file with line numbers
-in a separate window.
+in a separate window.  There is an exception for PDF files,
+which will be rendered as a document in the separate window.
 <p>
 Clicking on &darr; will show the file below.
 <p>
@@ -757,7 +760,7 @@ If a file has been pushed to or pulled from a
 file itself is not in your problem directory, but is
 in the project's problem directory and is linked to your problem
 directory.  These are marked by `(Linked to PROJECT)' at
-the end of the file's line.  None of these files are executable.
+the end of the file's line.
 <p>
 Executable files and source files for executables
 may be links in your problem directory.
@@ -781,7 +784,7 @@ the name XXXX-PPPP.in matches the name `00-001-reverser.in'
 if XXXX is 00-001 and PPPP is `reverser'.
 <p>
 When a problem is pulled from a project, many of these files
-of these files are supplied by the problem
+are supplied by the problem
 <a href="#parent">parent</a>.  The pull may make links in your
 problem directory to these files in the parent directory, or
 the commands that make files from other files may read these
@@ -836,7 +839,7 @@ creates the problem).
                      made from PPPP.c or PPPP.cc file</td></tr>
 <tr><td>PPPP.pyc</td><td>PYTHON Program Binary File,
                      made from PPPP.py file</td></tr>
-<tr><td>PPPP.class</td><td>JAVA Program Binary File,
+<tr><td>PPPP.jar</td><td>JAVA Program Binary File,
                      made from PPPP.java file</td></tr>
 <tr><td>PPPP.pdf</td><td>Document PDF File,
                      made from PPPP.tex file;
@@ -855,11 +858,15 @@ creates the problem).
 <tr><td>generate&#8209;PPPP<pre>  </pre></td><td>
                      <a href="#generate-and-filter">
 		     Generate Program</a> executable;
-		     may be supplied by parent</td></tr>
+		     may be supplied by parent or
+		     created automatically by linking to
+		     epm_default_generator</td></tr>
 <tr><td>filter&#8209;PPPP</td><td>
                      <a href="#generate-and-filter">
                      Filter Program<a> executable;
-                     may be supplied by parent</td></tr>
+                     may be supplied by parent or
+		     created automatically by linking to
+		     epm_default_filter</td></tr>
 </table>
 <br>
 <strong>Files Made From Other Files (Not During Upload):</strong><br>
@@ -880,6 +887,7 @@ creates the problem).
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.fout</td><td>Filtered Solution Output File,
                      made from XXXX&#8209;PPPP.sout file
+                     and XXXX&#8209;PPPP.sin file
 		     by filter program
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
@@ -972,10 +980,12 @@ input lines, typically using a pseudo-random number generated
 built into the generate program (so it cannot be changed later)
 and seeded by a number in the input instruction line.
 <p>
-For example, `!!L SEED M N' could generate a line containing
-M numbers randomly choosen in the range [1,N] with SEED being
+For example, `!!L seed m n' could generate a line containing
+m numbers randomly choosen in the range [1,n] with seed being
 the pseudo-random number generator seed.  Here `L' is the literal
-letter L, and SEED, M, and N are natural number parameters.
+letter L, and seed, m, and n are natural number parameters.
+See the Downloads Page (accessible from any Problem Page)
+for source code of an example generate program.
 <p>
 The default filter program simply copies solution output
 (which it gets from file descriptor 3) to its standard output.
@@ -991,7 +1001,9 @@ in a graph, then the filter might check that the answer
 is in fact a graph path, and replace the answer by the length
 of the path.  The filter reads the solution input from its
 standard input, file descriptor 0, to construct the graph, and
-reads the solution input from file descriptor 3.
+reads the solution output from file descriptor 3.
+See the Downloads Page (accessible from any Problem Page)
+for source code of an example filter program.
 <p>
 The epm_score scoring program treats any line beginning with
 `!!' as a comment line, which it ignores.  If the default
@@ -1068,10 +1080,10 @@ or when a .run file is run.
 
 <a name="run-page"><h1>Run Page</h1></a>
 <p>
-If you click a <b>Run</b> button on the problem page, the associated
+If you click a <b>Run</b> button on the Problem Page, the associated
 .run file will be run and the page will switch to the Run Page where
 the results will be displayed.
-<p> The Run page displays both .run files that are listed on
+<p> The Run Page displays both .run files that are listed on
 the Problem Page, and may be `Run', and .run files that are only
 in the <a href="#parent">parent</a> of the current problem, and may
 only be `Submit'ed.
