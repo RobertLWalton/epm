@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 04:37:18 EDT 2020
+Date:	Sun Jul 12 09:32:36 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1428,9 +1428,18 @@ privileges, to change these if you have owner privilege for
 a project or project problem, and to move problems between
 projects.
 <p>
+By selecting a project, you an look at the privilege file
+of the project, and if you have owner privilege for the project,
+you can edit this file.  Similarly by selecting a problem list
+and then a project problem, you can look at the privilege files of the
+project problem and its project, and if you have owner privilege
+for the project problem, you can edit the project problem file.
+<p>
 The following are the possible project privileges:
 <table class='top-align'>
-<tr><td>push&#8209;new</td><td>allows problems to be pushed to a project
+<tr><td>owner</td><td>allows user to edit the privileges of
+                         the project</td></tr>
+<tr><td>push&#8209;new</td><td>allows problems to be pushed to the project
                          if they are not already in the project</td></tr>
 <tr><td>pull&#8209;new</td><td>allows a problem in the project to be
                          pulled if the user does not already have a
@@ -1445,7 +1454,86 @@ The following are the possible project privileges:
                      project actions to be viewed in the View Page and
 		     the project problems to be included in
 		     the user's Favorites</td></tr>
+<tr><td>move&#8209;from</td><td>allows problems to be moved from the project
+                     (if move-to and re-push privileges allow)
+		     </td></tr>
+<tr><td>move&#8209;to</td><td>allows problems to be moved to the project
+		      (if move-from and re-push privileges allow)
+		      </td></tr>
 </table>
+</p>
+<p>
+The following are the possible project problem privileges:
+<table class='top-align'>
+<tr><td>owner</td><td>allows user to edit the privileges of
+                         the project problem</td></tr>
+<tr><td>re&#8209;push</td><td>allows user to push a user problem
+                              which has this project problem as its
+			      parent; also allows a user to move
+			      this project problem to another project
+			      (if move-from and move-to
+			      privileges allow)
+                              </td></tr>
+</table>
+<p>
+To determine privileges, lines in privilege files are processed in
+the order
+<ol>
+<li> Superuser line: `+ owner $epm_superuser';
+    here $epm_superuser is a parameter of the EPM Server, and
+    is a regular expression that is matched with the current
+    user ID to see if the current user has `owner' privileges
+    for everything.
+<li> project problem file lines, if the privileges
+     of a project problem are being determined
+     (as opposed to the privileges of just a project)
+<li> project file lines
+</ol>
+<p>
+A privilege file line is one of the following:
+<ul>
+<li> blank line; ignored
+<li> comment line; first non-whitespace character is `#', ignored
+<li> line of form `&lt;sign&gt; &lt;key&gt; &lt;matcher&gt;'
+     <br>
+     where
+     <ul>
+     <li> &lt;sign&gt; ::= `+' | `-'
+     <li> &lt;key&gt; ::= &lt;privilege&gt; | &lt;group&gt;
+     <li> &lt;matcher&gt; ::= &lt;regular-expression&gt; | &lt;group&gt;
+     <li> &lt;privilege&gt; ::= `owner' | ... 
+              <div style='margin-left:2em'>
+	      where &lt;privilege&gt; must be appropriate for the file
+	      it is in (e.g., `re-push' is appropriate for a project
+	      problem file but not a project file)
+	      </div>
+     <li> &lt;group&gt; ::=
+              <div style='margin-left:2em'>
+	      sequence of letters, digits, `_', `-', and `@'
+	      which begins with a `@' followed by a letter,
+	      has only one `@' (at its beginning), and ends with
+	      a letter or digit
+	      </div>
+     </ul>
+     <br>
+     If this line matches, the
+     line assigns &lt;sign&gt; to &lt;key&gt; unless
+     &lt;key&gt; has previously been assigned.
+     <br>
+     A &lt;regular-expression&gt; matches if it matches the
+     current user ID.
+     <br>
+     A &lt;group&gt; matches if it has previously been assigned
+     `+'.
+</ul>
+<p>
+If after all the privilege file lines are processed a privilege
+has the value `+', the current user has the privilege.  Otherwise
+the current user does NOT have the privilege.
+<p>
+Groups may be defined that are sets of users, or are
+intersections, unions, or
+set complements of previous groups.
 </p>
 
 <a name="conflicts"><h1>Conflicts</h1></a>
@@ -1524,7 +1612,7 @@ let toc_mark = document.getElementById ( 'toc-mark' );
 let text = document.getElementById ( 'text' );
 function TOGGLE_TOC()
 {
-    if ( toc.style.display == 'none' )
+    if ( toc.style.display != 'block' )
     {
         toc.style.display = 'block';
         text.style.display = 'none';

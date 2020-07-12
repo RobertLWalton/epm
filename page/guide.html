@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 03:52:13 EDT 2020
+Date:	Sun Jul 12 11:14:55 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -533,7 +533,7 @@ let toc_mark = document.getElementById ( 'toc-mark' );
 let text = document.getElementById ( 'text' );
 function TOGGLE_TOC()
 {
-    if ( toc.style.display == 'none' )
+    if ( toc.style.display != 'block' )
     {
         toc.style.display = 'block';
         text.style.display = 'none';
