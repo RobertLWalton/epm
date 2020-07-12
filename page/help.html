@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 09:32:36 EDT 2020
+Date:	Sun Jul 12 13:09:23 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -331,8 +331,10 @@ context.fillText ( '.score file', 115, 430 );
 The <b>login page</b> manages login using email addresses to
 identify a user and confirmation numbers to create tickets for
 the user in the user's browser.  Once you have logged in, an
-EPM server session is attached to your browser and your user ID
-and a browser ticket is attached to the session.
+EPM server session for your user ID is attached to your browser,
+a browser ticket for future use is attached to you e-mail address,
+and your e-mail
+address is attached to your user ID.
 <p>
 Your session is allocated:
 <ul>
@@ -395,7 +397,7 @@ and enables a user to log in by giving only the email
 address associated with ticket.  There is a separate
 ticket for each <a href='#EPM-server'>EPM server</a>,
 each browser, and
-each email address of an account on the EPM server.
+each email address used to log in to the EPM server.
 <p>
 When you first log in your browser has no ticket.  Therefore
 the server emails you a ticket called a <b>confirmation number</b>,
@@ -438,9 +440,11 @@ appears on the user page.
 <li><strong>User ID</strong>:<p class='list'>
 A short name by which you will be known.
 Must consist of letters, digits, underline(_), and dash(-),
-begin and end with a letter, and have at least 4 characters.
+begin a letter, end with a letter or digit, and have at least 4 characters.
 For privacy, you may wish to choose an ID that is NOT
 part of your e-mail address.
+<mark>NOTICE: Once you have created your account, you
+CANNOT CHANGE your user ID!</mark>
 <li><strong>Full Name</strong>:<p class='list'>
 Your full name, so that you can be looked up on the web.
 <li><strong>Organization</strong>:<p class='list'>
@@ -503,8 +507,8 @@ problems.  Then select the problem from the
 <p>
 To create a new problem of your own, simply type its name
 into the `<b>Create a New Problem</b>' box.  The name
-must consist of letters, digits, underline(_), and dash(-) and
-begin and end with a letter.  If you plan to publish
+must consist of letters, digits, underline(_), and dash(-),
+begin with a letter, and end with a letter or digit.  If you plan to publish
 this problem in a project, you should choose a name distinct
 from other problem names already in the project.
 <p>
@@ -562,7 +566,8 @@ problem is yours and not someone else's, all the project problem
 files will be linked into your local directory, rather than
 just those you should have to try to solve the problem.
 <p>
-To pull problems, select a problems list and click `<b>Pull</b>'.
+To pull problems, in the Project Page
+select a problems list and click `<b>Pull</b>'.
 Then check the ovals for the problems you want to pull.
 Lastly, click <b>Submit</b>.  If all of the problems pull successfully,
 the pulled problem ovals will turn green, a `<b>Done!</b>' message
@@ -586,9 +591,11 @@ problem or cancel all pulling.  The problem's oval will become
 red while you are deciding what to do about the actions.
 <p>
 At the end a problem's oval will be green if it was successfully
-pulled, yellow if there were errors while executing the pull
-actions for the problem, and white if no pull actions were executed
-for the problem.
+pulled,
+yellow if the problem was skipped because errors were detected
+in compiling the problem's pull actions (no actions were actually
+performed),
+and white if the problem was skipped over.
 </p>
 
 <a name="project-push"><h2>Pushing Problems</h2></a>
@@ -689,7 +696,7 @@ A <a name='problem-name'><b>problem name</b></a>
 can contain only letters, digits, and the
 special characters dash(<pre.inline>-</pre>) and
 underline(<pre.inline>_</pre>).
-In addition, it must begin and end with a letter.
+In addition, it must begin with a letter and end with a letter or digit.
 </p>
 
 <a name="problem-marks"><h2>Problem Marks</h2></a>
