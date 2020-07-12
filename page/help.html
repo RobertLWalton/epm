@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 16:56:11 EDT 2020
+Date:	Sun Jul 12 17:44:12 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1436,6 +1436,10 @@ white any action types you want to exclude.
 The actions are generally self explanatory.  For the submit
 actions, the 3 decimal digit number followed immediately
 by `s' is the maximum solution execution time in seconds.
+<p>
+Projects for which you have no privileges will NOT be
+visible on the View Page.  Such projects are usually used
+to prepare programming contest problems.
 </p>
 
 <a name="manage-page"><h1>Manage Page</h1></a>
@@ -1582,21 +1586,16 @@ the Project Page selector to create a problem window.</dd>
 <a name="deficiencies"><h1>Deficiencies</h1></a>
 <dl>
 <dt>Moving Problems Between Projects</dt>
-<dd>There is not yet an Admin Page which will allows you to
-    move a problem to a different project if you own the
-    problem and have push privileges on its new project.</dd>
-
-<dt>Permission Changes</dt>
-<dd>There is not yet an Admin Page which will allows you to
-    change the privileges of a problem you own or project
-    that you own.
+<dd>To be implemented on Manage Page.  Not yet implemented.</dd>
 
 <dt>New Project Creation</dt>
-<dd>There is not yet an Admin Page which will allows permitted
-    users to create projects and set their privileges.
+<dd>The Manage Page does not allow users
+    to create projects.
 
 <dt>Score Board</dt>
-<dd>There is not yet any scoreboard.</dd>
+<dd>There is not yet any scoreboard.  Submissions shown
+    on the View Page provide data sufficent to construct
+    a scoreboard.</dd>
 
 <dt>No Automatic Contest Start</dt>
 <dd>There is not yet a system for automatically starting
@@ -1611,10 +1610,6 @@ the Project Page selector to create a problem window.</dd>
 <dd>Times attached to problem in problem lists and to list in
     the favorites list are not explained, and might not be
     that useful.</dd>
-
-<dt>JAVA and PYTHON Solution Times</dt>
-<dd>These should be options different from C/C++ solution
-    times.</dd>
 
 <dt>JAVA Output File Too Large</dt>
 <dd>This is not correctly scored.</dd>
