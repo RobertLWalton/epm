@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 11:14:55 EDT 2020
+Date:	Sun Jul 12 14:08:02 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -22,6 +22,7 @@ make no warranty and accept no liability for EPM.
 	height: 800px;
 	font-family: "Times New Roman", Times, serif;
 	zoom: normal;
+	font-size: 16pt;
     }
     body {
 	overflow: hidden;
@@ -46,6 +47,10 @@ make no warranty and accept no liability for EPM.
     }
 }
 @media print {
+    :root {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 12pt;
+    }
     div.header {
         display: none;
     }
@@ -75,20 +80,12 @@ text-decoration: underline;
 h2 {
 font-size: 18pt;
 }
-h3 {
-font-size: 16pt;
-}
-strong {
-font-size: 16pt;
-}
 pre {
     display: inline;
-    font-size: 16pt;
     font-family: monospace;
 }
 span.notemark {
     display: inline;
-    font-size: 16pt;
     font-family: monospace;
     color:red;
 }
@@ -96,11 +93,10 @@ a[name] {
     font-weight: bold;
 }
 table, td, a, li {
-font-size: 16pt;
+    font-size: inherit;
 }
 p, dl {
 margin-left: 10px;
-font-size: 16pt;
 }
 p.inline {
 display: inline;
@@ -108,7 +104,6 @@ display: inline;
 p.list {
 margin-left: 20px;
 margin-top: 0;
-font-size: 16pt;
 }
 table.top-align td {
 vertical-align: top;

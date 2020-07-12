@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 13:09:23 EDT 2020
+Date:	Sun Jul 12 13:47:57 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -22,6 +22,7 @@ make no warranty and accept no liability for EPM.
 	height: 800px;
 	font-family: "Times New Roman", Times, serif;
 	zoom: normal;
+	font-size: 16pt;
     }
     body {
 	overflow: hidden;
@@ -46,6 +47,10 @@ make no warranty and accept no liability for EPM.
     }
 }
 @media print {
+    :root {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 12pt;
+    }
     div.header {
         display: none;
     }
@@ -75,20 +80,12 @@ text-decoration: underline;
 h2 {
 font-size: 18pt;
 }
-h3 {
-font-size: 16pt;
-}
-strong {
-font-size: 16pt;
-}
 pre {
     display: inline;
-    font-size: 16pt;
     font-family: monospace;
 }
 span.notemark {
     display: inline;
-    font-size: 16pt;
     font-family: monospace;
     color:red;
 }
@@ -96,11 +93,10 @@ a[name] {
     font-weight: bold;
 }
 table, td, a, li {
-font-size: 16pt;
+    font-size: inherit;
 }
 p, dl {
 margin-left: 10px;
-font-size: 16pt;
 }
 p.inline {
 display: inline;
@@ -108,7 +104,6 @@ display: inline;
 p.list {
 margin-left: 20px;
 margin-top: 0;
-font-size: 16pt;
 }
 table.top-align {
 margin-left: 20px;
@@ -606,12 +601,12 @@ into a project, such as the <a href='#public'>public</a>
 project.  Then others can <a href='#project-pull'>pull</a>
 your problem from the `public' project and try to solve it.
 <p>
-To push a problem to a project you must have `push' permission
+To push a problem to a project you must have `push-new' privilege
 for the project.  You may re-push a problem you have previously
-pushed in order to update it.  To re-push you must have `owner'
-permission for the project problem.  When you initially push a problem,
-and thereby create the project problem, you are made the sole
-owner of the project problem.
+pushed in order to update it.  To re-push you must have `re-push'
+privilege for the project problem.  When you initially push a problem,
+and thereby create the project problem, you are given `owner'
+and `re-push' privileges for the project problem.
 <p>
 When you push a problem, files in your local problem directory
 are moved to its parent project problem directory and links are
@@ -629,13 +624,14 @@ whose target is a file the parent directory, executions are likely to still
 work as in most cases a file will be taken from either the
 local directory or the parent, with the local directory
 peferred for non-submissions, and the parent version required
-for non-solution executables for submissions.
+for non-solution-executables for submissions.
 If you delete a local problem directory link of a .run file,
 you will find that you an now submit the file.  If you
 want to restore local links you have deleted, you may do
 so by pulling the problem.
 <p>
-To push problems, select a problems list and click `<b>Push</b>'.
+To push problems, in the Project Page select a problems list
+and click `<b>Push</b>'.
 Then check the ovals for the problems you want to push and
 if some of these problems have not previously been pushed,
 use `<b>Select Project</b>' to select the project to push
@@ -1574,23 +1570,23 @@ the Project Page selector to create a problem window.</dd>
 <dt>Moving Problems Between Projects</dt>
 <dd>There is not yet an Admin Page which will allows you to
     move a problem to a different project if you own the
-    problem and have push permissions on its new project.</dd>
+    problem and have push privileges on its new project.</dd>
 
 <dt>Permission Changes</dt>
 <dd>There is not yet an Admin Page which will allows you to
-    change the permissions of a problem you own or project
+    change the privileges of a problem you own or project
     that you own.
 
 <dt>New Project Creation</dt>
 <dd>There is not yet an Admin Page which will allows permitted
-    users to create projects and set their permissions.
+    users to create projects and set their privileges.
 
 <dt>Score Board</dt>
 <dd>There is not yet any scoreboard.</dd>
 
 <dt>No Automatic Contest Start</dt>
 <dd>There is not yet a system for automatically starting
-    a contest by reseting its project's permissions at a
+    a contest by reseting its project's privileges at a
     specified time.</dd>
 
 <dt>Times are UTC</dt>
