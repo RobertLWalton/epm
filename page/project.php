@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 10 05:15:04 EDT 2020
+    // Date:	Sun Jul 12 17:20:31 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1274,8 +1274,7 @@ EOT;
 
     if ( ! isset ( $op ) )
     {
-        $favorites = read_favorites_list
-	    ( ['pull','push-new','view'], $warnings );
+        $favorites = read_favorites_list ( $warnings );
 	if ( ! isset ( $listname ) )
 	{
 	    list ( $time, $proj, $base ) =

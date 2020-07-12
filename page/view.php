@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 16:59:04 EDT 2020
+    // Date:	Sun Jul 12 17:21:07 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -97,8 +97,7 @@
     $non_others = ['submit','push','pull'];
         // List for actions_to_rows.
 
-    $favorites = read_favorites_list
-	( ['pull','push-new','view'], $warnings );
+    $favorites = read_favorites_list ( $warnings );
     if ( ! isset ( $listname ) )
     {
         list ( $time, $proj, $base ) = $favorites[0];

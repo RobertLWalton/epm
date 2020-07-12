@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul  6 05:11:56 EDT 2020
+    // Date:	Sun Jul 12 17:16:50 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -127,8 +127,7 @@
     if ( $time === false ) $time = time();
     $time = strftime ( $epm_time_format, $time );
     $inmap["-:-"] = $time;
-    $projects = read_projects
-        ( ['push-new','pull','view'] );
+    $projects = read_projects();
     foreach ( $projects as $project )
     {
         $time = @filemtime
@@ -175,8 +174,7 @@
 	        strftime ( $epm_time_format, $time );
 	}
 
-    $favorites = read_favorites_list
-        ( ['push-new','pull','view'], $warnings );
+    $favorites = read_favorites_list ( $warnings );
 
     // Build $fmap containing list of all lists
     // in the form NAME:BASENAME => TIME.  The

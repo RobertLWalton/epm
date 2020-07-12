@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 14:08:57 EDT 2020
+Date:	Sun Jul 12 16:56:11 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1186,7 +1186,9 @@ values.
 <p>
 <b>Number options</b> are numbers included in argument
 options.  For example, the STIME option value is the maximum number of
-CPU seconds allowed a problem solution program.
+CPU seconds allowed a C/C++ problem solution program, whereas
+SJTIME is the maximum allowed a JAVA
+solution program, and SPTIME is the maximum allowed a PYTHON program.
 <p>
 If you edit an inherited number option, its value will
 turn green, even if you input the same value as the inherited
@@ -1207,10 +1209,10 @@ are inserted into argument options.  For example,
 the STIME number option is inserted into the
 `-cputime STIME' value of the SSTIME argument option.
 The SSTIME argument in turn is
-inserted into the template command that runs the solution program,
-so that the options work together with the command to determine
+inserted into the template commands that run a C/C++ solution program,
+so that the options work together with the commands to determine
 the maximum number of CPU seconds
-allowed the solution program.
+allowed a C/C++ solution program.
 <p>
 The absence of any value for an option command argument is represented by
 an empty box.
@@ -1219,7 +1221,7 @@ one colored green is the current value and is local, and the one
 colored tan is inherited.
 If only one box is colored,
 the option value is inherited, even if the box is colored green
-(it is green because you have clicked on the inherited value).
+(it is green because you are editing and have clicked on the inherited value).
 </p>
 
 <a name="template-page"><h1>Template Page</h1></a>
@@ -1251,7 +1253,7 @@ several tempates are available to make a .score file with
 a score from an .in file with solution input.  One of these
 is selected if there is a binary file with no extension
 (for C or C++);
-another is selected if there is a binary file with the .class
+another is selected if there is a binary file with the .jar
 extension (for JAVA); and a third is selected if there is a binary
 file with the .pyc extension (for PYTHON).
 Files which are required to use a
@@ -1277,7 +1279,7 @@ For example, to be used during the upload of a PPPP.cc file, a
 template must have the `UPLOAD PPPP.cc' condition.
 As another example, a template used when a .run file is submitted
 must have the `SUBMIT' condition.
-Most of the time only templates with no conditions are selected.
+Much of the time only templates with no conditions are selected.
 </p>
 
 <a name="list-page"><h1>List Page</h1></a>
@@ -1302,7 +1304,7 @@ are asked to select a problem list, the list of problem lists
 presented for selection is always the favorites list.
 The favorites list is initialized to include `Your Problems'
 plus the automatically created problem lists of all projects
-from which you are allowed to pull problems.
+for which you have any privileges.
 <p>
 The List Page allows you to view and edit two problem lists
 (colored tan and blue).  Two lists are allowed so you can

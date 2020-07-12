@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul  9 23:00:11 EDT 2020
+    // Date:	Sun Jul 12 17:18:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -132,18 +132,15 @@
         // If not NULL, ask if problem should be
 	// moved to this project.
 
-    $favorites = read_favorites_list
-	( ['pull','push-new','view'], $warnings );
+    $favorites = read_favorites_list ( $warnings );
     if ( ! isset ( $listname ) )
     {
         list ( $time, $proj, $base ) = $favorites[0];
 	$listname = "$proj:$base";
     }
     $list = read_problem_list ( $listname, $warnings );
-    $priv_projects = read_projects
-	( ['owner','pull','push-new','view'] );
-    $move_projects = read_projects
-	( ['push-new'] );
+    $priv_projects = read_projects();
+    $move_projects = read_projects ( ['move-to'] );
 
     if ( $epm_method == 'POST' )
     {

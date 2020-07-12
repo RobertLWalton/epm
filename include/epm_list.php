@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 10 17:22:40 EDT 2020
+    // Date:	Sun Jul 12 17:21:28 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -229,10 +229,11 @@
     }
 
     // Return the list of projects that have one of
-    // the given privileges.  The list is sorted in
+    // the given privileges, or if $privs = NULL,
+    // that have any privilege.  The list is sorted in
     // natural order.
     //
-    function read_projects ( $privs )
+    function read_projects ( $privs = NULL )
     {
 	global $epm_data, $epm_name_re;
 	$projects = [];
@@ -246,15 +247,27 @@
 	               ( $epm_name_re, $project ) )
 	        continue;
 	    project_priv_map ( $map, $project );
-	    foreach ( $privs as $priv )
-	    {
-	        if ( ! isset ( $map[$priv] ) )
-		    continue;
-		if ( $map[$priv] == '-' )
-		    continue;
-		$projects[] = $project;
-		break;
-	    }
+	    if ( $privs == NULL )
+	        foreach ( $map as $priv => $sign )
+		{
+		    if ( $priv[0] == '@' )
+		        continue;
+		    elseif ( $sign == '+' )
+		    {
+		        $projects[] = $project;
+			break;
+		    }
+		}
+	    else
+		foreach ( $privs as $priv )
+		{
+		    if ( ! isset ( $map[$priv] ) )
+			continue;
+		    if ( $map[$priv] == '-' )
+			continue;
+		    $projects[] = $project;
+		    break;
+		}
 	}
 	natsort ( $projects );
 	return $projects;
@@ -893,9 +906,11 @@
     // If the resulting list is empty, construct a
     // new favorites list consisting of your problems
     // and problems of all projects for which user
-    // has a privilege listed in $privs.
+    // has a privilege listed in $privs, or of all
+    // projects for which user has any privilege
+    // if $privs = NULL.
     //
-    function read_favorites_list ( $privs, & $warnings )
+    function read_favorites_list ( & $warnings )
     {
 	global $epm_data, $uid, $epm_time_format;
 
@@ -952,8 +967,7 @@
 	    ERROR ( "cannot stat $g" );
 	$time = strftime ( $epm_time_format, $time );
 	$new_list[] = [$time, '-', '-'];
-	foreach ( read_projects ( $privs )
-	          as $project )
+	foreach ( read_projects() as $project )
 	{
 	    $g = "projects/$project";
 	    $time = @filemtime ( "$epm_data/$g" );
