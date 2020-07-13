@@ -2,7 +2,7 @@
 //
 // File:	epm_generate.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Jun 24 14:20:26 EDT 2020
+// Date:	Mon Jul 13 05:35:45 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -38,9 +38,9 @@ void error ( const char * format... )
 {
     va_list args;
     va_start ( args, format );
-    cout << "ERROR: line: " << line_number << ": ";
-    vprintf ( format, args );
-    cout << endl;
+    cerr << "ERROR: line: " << line_number << ": ";
+    vfprintf ( stderr, format, args );
+    cerr << endl;
     exit ( 1 );
 }
 
@@ -113,16 +113,16 @@ char documentation [] =
 "\n"
 "    Lines that begin with `!!##' are considered to\n"
 "    be comment lines.\n"
+// "\n"
+// "    A non-comment line of the form:\n"
+// "\n"
+// "        !!R seed k .........\n"
+// "\n"
+// "    denotes k ...\n"
 "\n"
 "    Other lines beginning with `!!' are considered\n"
 "    to be bad comment lines and cause a warning\n"
 "    message to be output on the standard error.\n"
-// "\n"
-// "    A non-comment line of the form:\n"
-// "\n"
-// "        !R seed k .........\n"
-// "\n"
-// "    denotes k ...\n"
 ;
 
 // Problem specific generate functions:
