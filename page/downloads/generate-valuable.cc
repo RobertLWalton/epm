@@ -2,7 +2,7 @@
 //
 // File:	generate-valuable.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Jun 24 14:32:11 EDT 2020
+// Date:	Mon Jul 13 05:30:45 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -38,9 +38,9 @@ void error ( const char * format... )
 {
     va_list args;
     va_start ( args, format );
-    cout << "ERROR: line: " << line_number << ": ";
-    vprintf ( format, args );
-    cout << endl;
+    cerr << "ERROR: line: " << line_number << ": ";
+    vfprintf ( stderr, format, args );
+    cerr << endl;
     exit ( 1 );
 }
 
@@ -109,14 +109,10 @@ char documentation [] =
 "generate-valuable [-doc]\n"
 "\n"
 "    Copies standard input to standard output,\n"
-"    removing lines the begin with `!!'.\n"
+"    removing lines that begin with `!!'.\n"
 "\n"
 "    Lines that begin with `!!##' are considered to\n"
 "    be comment lines.\n"
-"\n"
-"    Other lines beginning with `!!' are considered\n"
-"    to be bad comment lines and cause a warning\n"
-"    message to be output on the standard error.\n"
 "\n"
 "    Non-comment lines are replaced by zero or more\n"
 "    lines of the form `x y v'.  If too many such\n"
@@ -150,6 +146,10 @@ char documentation [] =
 "    is randomly distributed among the points on the\n"
 "    circle boundary.  Circles are choosen so there\n"
 "    are at least 4 points on their boundary.\n"
+"\n"
+"    Other lines beginning with `!!' are considered\n"
+"    to be bad comment lines and cause a warning\n"
+"    message to be output on the standard error.\n"
 ;
 
 #include <algorithm>

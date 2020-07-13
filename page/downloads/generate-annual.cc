@@ -1,8 +1,8 @@
-// Default Generate Program and Generate Template
+// Generate Annual Return Problem Data
 //
-// File:	epm_generate.cc
+// File:	generate-annual.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Mon Jul 13 05:35:45 EDT 2020
+// Date:	Mon Jul 13 05:22:39 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -106,59 +106,91 @@ template <typename T> inline void shuffle
 }
 
 char documentation [] =
-"epm_default_generate [-doc]\n"
+"generate-valuable [-doc]\n"
 "\n"
 "    Copies standard input to standard output,\n"
-"    removing lines the begin with `!!'.\n"
+"    removing lines that begin with `!!'.\n"
 "\n"
 "    Lines that begin with `!!##' are considered to\n"
 "    be comment lines.\n"
-// "\n"
-// "    A non-comment line of the form:\n"
-// "\n"
-// "        !!R seed k .........\n"
-// "\n"
-// "    denotes k ...\n"
+"\n"
+"    A line of the form:\n"
+"\n"
+"        !!G seed n y v A dmin dmax\n"
+"\n"
+"    denotes n lines for years y, y+1, ..., y+n-1\n"
+"    with values v, B*v, B^2*v, B^3*v, ..., for\n"
+"    B = 1 + A/100, and with the values dithered by\n"
+"    adding a value uniformly distribted in the range\n"
+"    [dmin,dmax].\n"
 "\n"
 "    Other lines beginning with `!!' are considered\n"
 "    to be bad comment lines and cause a warning\n"
 "    message to be output on the standard error.\n"
 ;
 
-// Problem specific generate functions:
-//
-// #include ...
-// using ...;
-//
-// const int MAX_... = ...;
-//
+const int MAX_N = 30;
+const int MAX_Y = 9999;
+const double MAX_V = 1e6;
+const double MAX_A = 100;
 // Input Data
 //
-// int k, ...
-// unsigned long seed;
-//
-// void R ( string line )
-// {
-//    char op[100];
-//
-//    istringstream in ( line );
-//    in >> op >> seed >> k >> ... >>;
-//    if ( in.fail() )
-//	  error ( "badly formatted"
-//	          " or too few parameters" );
-//    assert ( strcmp ( op, "!!R" ) == 0 );
-//    if ( seed < 1e8 || seed >= 1e9 )
-//	  error ( "seed out of range" );
-//    if ( k < 1 || k > MAX_N )
-//	  error ( "k out of range" );
-//    ......................
-//    if ( ! in.eof() )
-//	  error ( "extra stuff at end of line" );
-//
-//    srandom ( seed );
-//
-//    ..................
-// }
+int n, y;
+double v, A, dmin, dmax;
+unsigned long seed;
+
+void G ( string line )
+{
+    char op[100];
+
+    istringstream in ( line );
+    in >> op >> seed >> n >> y >> v
+       >> A >> dmin >> dmax;
+    if ( in.fail() )
+	error ( "badly formatted"
+	        " or too few parameters" );
+    assert ( strcmp ( op, "!!G" ) == 0 );
+    if ( seed < 1e8 || seed >= 1e9 )
+	error ( "seed out of range" );
+
+    if ( n < 1 || n > MAX_N )
+	error ( "n out of range" );
+    if ( y <= 0 || y > MAX_Y )
+	error ( "y out of range" );
+    if ( y + n - 1 > MAX_Y )
+	error ( "y + n out of range" );
+    if ( v <= 0 || v > MAX_V )
+	error ( "v out of range" );
+    if ( A < -MAX_A || A > MAX_A )
+	error ( "A out of range" );
+    if ( dmin < -MAX_V || dmin > MAX_V )
+	error ( "dmin out of range" );
+    if ( dmax < -MAX_V || dmax > MAX_V )
+	error ( "dmax out of range" );
+    if ( dmax < dmin )
+	error ( "dmax < dmin" );
+    if ( v + dmin <= 0 )
+	error ( "v + dmin <= 0" );
+    if ( v + dmax > MAX_V )
+	error ( "v + dmax too large" );
+    if ( ! in.eof() )
+	error ( "extra stuff at end of line" );
+
+    srandom ( seed );
+
+    FOR0 ( i, n )
+    {
+	double d = dmin + ( dmax - dmin ) * drandom();
+        double vout = v + d;
+	if ( vout <= 0 )
+	    error ( "v + dmin become too small" );
+	if ( vout > MAX_V )
+	    error ( "v + dmax become too large" );
+	cout << y << " " << vout << endl;
+	y += 1;
+	v *= ( 1 + A/100 );
+    }
+}
 
 
 // Main program.
@@ -183,22 +215,18 @@ int main ( int argc, char ** argv )
 	return 0;
     }
 
-    // Problem specific initializations:
-    //
-    // ......................
-
     while ( getline ( cin, line ) )
     {
         ++ line_number;
 	const char * p = line.c_str();
 	if ( strncmp ( p, "!!##", 4 ) == 0 )
 	    continue;
-	// else if ( strncmp ( p, "!!R", 3 ) == 0
-	//           && isspace ( p[3] ) )
-	// {
-	//     R ( line );
-	//     continue;
-	// }
+	else if ( strncmp ( p, "!!G", 3 ) == 0
+	         && isspace ( p[3] ) )
+	{
+	    G ( line );
+	    continue;
+	}
 	else if ( strncmp ( p, "!!", 2 ) == 0 )
 	{
 	    if ( bad_comments ++ == 0 )
@@ -208,10 +236,6 @@ int main ( int argc, char ** argv )
 	else
 	    cout << line << endl;
     }
-
-    // Problem specific finalizations:
-    //
-    // ......................
 
     if ( bad_comments > 0 )
         cerr << "WARNING: there were " << bad_comments
