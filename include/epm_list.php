@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 14 04:58:05 EDT 2020
+    // Date:	Tue Jul 14 09:10:24 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -182,16 +182,16 @@
     }
 
     // Return privilege map containing just the
-    // results of `+ owner $epm_superuser'.
+    // results of $epm_priv_prefix.
     //
-    function superuser_priv_map
+    function prefix_priv_map
 	( & $map, & $errors )
     {
-        global $epm_superuser;
+        global $epm_priv_prefix;
 	$map = [];
 	process_privs
-	    ( $map, "+ owner $epm_superuser",
-	      $errors, "In \$epm_superuser" );
+	    ( $map, $epm_priv_prefix,
+	      $errors, "In \$epm_priv_prefix:" );
     }
 
     // Return the privilege map of a project.
@@ -199,7 +199,7 @@
     function project_priv_map
         ( & $map, $project, & $errors )
     {
-        superuser_priv_map ( $map, $errors );
+        prefix_priv_map ( $map, $errors );
 	read_priv_file
 	     ( $map, "projects/$project/+priv+",
 	             $errors );
@@ -211,7 +211,7 @@
     function check_project_priv
         ( & $map, $project, $contents, & $errors )
     {
-        superuser_priv_map ( $map, $errors );
+        prefix_priv_map ( $map, $errors );
 	process_privs
 	    ( $map, $contents, $errors,
 	      "In proposed $process project" .
@@ -223,7 +223,7 @@
     function problem_priv_map
 	    ( & $map, $project, $problem, & $errors )
     {
-        superuser_priv_map ( $map, $errors );
+        prefix_priv_map ( $map, $errors );
 	read_priv_file
 	    ( $map,
 	      "projects/$project/$problem/+priv+",
@@ -240,7 +240,7 @@
         ( & $map, $project, $problem, $contents,
 	  & $errors )
     {
-        superuser_priv_map ( $map, $errors );
+        prefix_priv_map ( $map, $errors );
 	process_privs
 	    ( $map, $contents, $errors,
 	      "In proposed $process $problem" .
