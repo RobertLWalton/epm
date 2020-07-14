@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jul  7 15:41:42 EDT 2020
+// Date:	Tue Jul 14 14:53:09 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -36,6 +36,7 @@ function view_priv ( $project )
     if ( isset ( $view_cache[$project] ) )
 	return $view_cache[$project];
     project_priv_map ( $map, $project );
+
     if ( isset ( $map['view'] ) )
 	 $r = $map['view'];
     else $r = '-';

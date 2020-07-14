@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 14 13:11:42 EDT 2020
+    // Date:	Tue Jul 14 14:58:54 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -203,16 +203,21 @@
 	      $errors, "In \$epm_priv_prefix:" );
     }
 
-    // Return the privilege map of a project.
+    // Return the privilege map of a project.  If
+    // $errors argument not given, errors are fatal.
     //
     function project_priv_map
-        ( & $map, $project, & $errors )
+        ( & $map, $project, & $errors = NULL )
     {
         global $epm_project_privs;
+	$no_errors = ! isset ( $errors );
         prefix_priv_map ( $map, $errors );
 	read_priv_file
 	     ( $map, "projects/$project/+priv+",
                      $epm_project_privs, $errors );
+	if ( $no_errors && isset ( $errors )
+	                && count ( $errors ) > 0 )
+	    ERROR ( implode ( PHP_EOL, $errors ) );
     }
 
     // Ditto but use $contents as the (proposed)
@@ -231,11 +236,14 @@
     }
 
     // Return the privilege map of a project problem.
+    // If $errors argument not given, errors are fatal.
     //
     function problem_priv_map
-	    ( & $map, $project, $problem, & $errors )
+	    ( & $map, $project, $problem,
+	      & $errors = NULL )
     {
         global $epm_problem_privs, $epm_project_privs;
+	$no_errors = ! isset ( $errors );
         prefix_priv_map ( $map, $errors );
 	read_priv_file
 	    ( $map,
@@ -244,6 +252,9 @@
 	read_priv_file
 	    ( $map, "projects/$project/+priv+",
 	      $epm_project_privs, $errors );
+	if ( $no_errors && isset ( $errors )
+	                && count ( $errors ) > 0 )
+	    ERROR ( implode ( PHP_EOL, $errors ) );
     }
 
     // Ditto but use $contents as the (proposed)
@@ -283,11 +294,7 @@
 	    if ( ! preg_match
 	               ( $epm_name_re, $project ) )
 	        continue;
-	    $errors = [];
-	    project_priv_map
-	        ( $map, $project, $errors );
-	    if ( count ( $errors ) > 0 )
-	        ERROR ( implode ( PHP_EOL, $errors ) );
+	    project_priv_map ( $map, $project );
 
 	    if ( $privs == NULL )
 	        foreach ( $map as $priv => $sign )
