@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 12 17:20:31 EDT 2020
+    // Date:	Tue Jul 14 04:34:25 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -686,8 +686,13 @@ EOT;
 	}
 	if ( is_dir ( "$epm_data/$desdir" ) )
 	{
+	    $errors_size = count ( $errors );
 	    problem_priv_map
-	        ( $pmap, $project, $problem );
+	        ( $pmap, $project, $problem,
+		         $errors );
+	    if ( $errors_size < count ( $errors ) )
+	        return;
+
 	    if ( ! isset ( $pmap['re-push'] )
 	         ||
 		 $pmap['re-push'] == '-' )
@@ -703,7 +708,12 @@ EOT;
 	}
 	else
 	{
-	    project_priv_map ( $pmap, $project );
+	    $errors_size = count ( $errors );
+	    project_priv_map
+	        ( $pmap, $project, $errors );
+	    if ( $errors_size < count ( $errors ) )
+	        return;
+
 	    if ( ! isset ( $pmap['push-new'] )
 	         ||
 		 $pmap['push-new'] == '-' )
@@ -914,7 +924,13 @@ EOT;
 		return;
 	    }
 	}
-	problem_priv_map ( $pmap, $project, $problem );
+
+	$errors_size = count ( $errors );
+	problem_priv_map
+	    ( $pmap, $project, $problem, $errors );
+	if ( $errors_size < count ( $errors ) )
+	    return;
+
 	if ( ! isset ( $pmap[$pull_priv] )
 	     ||
 	     $pmap[$pull_priv] == '-' )

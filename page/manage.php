@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 12 17:18:26 EDT 2020
+    // Date:	Tue Jul 14 04:36:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -239,20 +239,15 @@
 
    	    $edited_contents = $_POST['problem-priv'];
    	    $warn = $_POST['warning'];
-	    $r = check_priv_file_contents
-	        ( $edited_contents, $errors,
-		  "In Proposed Problem Privilege" .
-		  " File:" );
+	    check_problem_priv
+	        ( $pmap, $project, $problem,
+		  $edited_contents, $errors );
 	    if ( count ( $errors ) == 0 )
 	    {
-	    	if ( ! isset ( $r ) )
-		{
-		    project_priv_map
-		        ( $pmap, $project );
-		    if ( isset ( $pmap['owner'] ) )
-		        $r = $pmap['owner'];
-		}
-		if ( $r == '+' || $warn == 'yes' )
+		$is_owner = ( isset ( $pmap['owner'] )
+		              &&
+			      $pmap['owner'] == '+' );
+		if ( $is_owner || $warn == 'yes' )
 		{
 		    $f = "/projects/$project/$problem/"
 		       . "+priv+";
@@ -307,13 +302,15 @@
 
    	    $edited_contents = $_POST['project-priv'];
    	    $warn = $_POST['warning'];
-	    $r = check_priv_file_contents
-	        ( $edited_contents, $errors,
-		  "In Proposed Project Privilege" .
-		  " File:" );
+	    check_project_priv
+	        ( $pmap, $project,
+		  $edited_contents, $errors );
 	    if ( count ( $errors ) == 0 )
 	    {
-		if ( $r == '+' || $warn == 'yes' )
+		$is_owner = ( isset ( $pmap['owner'] )
+		              &&
+			      $pmap['owner'] == '+' );
+		if ( $is_owner || $warn == 'yes' )
 		{
 		    $f = "/projects/$project/+priv+";
 		    $r = @file_put_contents
@@ -599,8 +596,11 @@ EOT;
 	</div>
 	</div>
 EOT;
-        problem_priv_map ( $pmap, $project, $problem ); 
-	if ( isset ( $pmap['owner'] )
+        problem_priv_map
+	    ( $pmap, $project, $problem, $errors ); 
+	if ( count ( $errors ) == 0
+	     &&
+	     isset ( $pmap['owner'] )
 	     &&
 	     $pmap['owner'] == '+' )
 	{
@@ -651,8 +651,10 @@ EOT;
 	</div>
 	</div>
 EOT;
-        project_priv_map ( $pmap, $project ); 
-	if ( isset ( $pmap['owner'] )
+        project_priv_map ( $pmap, $project, $errors ); 
+	if ( count ( $errors ) == 0
+	     &&
+	     isset ( $pmap['owner'] )
 	     &&
 	     $pmap['owner'] == '+'
 	     &&

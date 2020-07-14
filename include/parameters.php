@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jul 10 17:09:54 EDT 2020
+// Date:    Mon Jul 13 22:59:41 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -132,10 +132,12 @@ $epm_parent_re =
 $epm_priv_re =
     '/^\h*(\+|\-)\h+' .
     '(owner|view|pull\-new|re\-pull|' .
-    'push\-new|re\-push)' .
+    'push\-new|re\-push|move\-to|move\-from|' .
+    '@[A-Za-z](|[-_A-Za-z0-9]*[A-Za-z0-9]))' .
     '\h+(\S+)\h*$/';
     // Non-blank, non-comment lines of +priv+ files
-    // must match this re.
+    // must match this re.  Note that the RE part of
+    // line is the 4'th match, not the 3'rd.
 
 $epm_specials =
     ['generate','filter','display','monitor'];

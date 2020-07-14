@@ -2,7 +2,7 @@
 
 // File:    debug_info.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jun  6 04:55:23 EDT 2020
+// Date:    Tue Jul 14 05:13:03 EDT 2020
 
 // require this to print system info for debugging.
 
@@ -25,7 +25,8 @@ if ( ! isset ( $_POST['xhttp'] ) )
     $__server['DOCUMENT_ROOT'] =
         $_SERVER['DOCUMENT_ROOT'];
     echo "SERVER: "; print_r ( $__server ); echo "<br>";
-    echo "UMASK: "; printf ( '0%o', umask() ); echo "<br>";
+    echo "UMASK: "; printf ( '0%o', umask() );
+                    echo "<br>";
 }
 
 ?>

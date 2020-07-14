@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 12 17:21:28 EDT 2020
+    // Date:	Tue Jul 14 04:58:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -68,85 +68,33 @@
     // matching lines for PRIV were found in the
     // files read so far.
 
-    // Read a +priv+ file and add to the privilege
-    // $map.  File lines are matched against $uid.
-    // PRIVs with no matching lines are not set in
-    // the map.  Lines with PRIV that is already
-    // set in the map are ignored.  The $map is NOT
+    // Read actual or proposed contents of a  +priv+
+    // file and add to the privilege $map.  File
+    // lines with regular expressions are matched
+    // against $uid and groups are processed.  PRIVs
+    // with no matching lines are not set in the map.
+    // Lines with PRIV that is already set in the map
+    // are ignored.  Groups are set in the map as if
+    // they were privileges.  The $map is NOT
     // initialized.
     //
     // However line formats are checked.  Lines
     // whose first non-whitespace character is '#"
     // are ignored.  Blank lines are also ignored.
     //
-    // The file is relative to $epm_data.  If it does
-    // not exist, nothing is done.
-    //
-    function read_priv_file ( & $map, $fname )
-    {
-        global $epm_data, $uid, $epm_priv_re;
-
-	if ( ! file_exists ( "$epm_data/$fname" ) )
-	    return;
-	$c = @file_get_contents ( "$epm_data/$fname" );
-	if ( $c === false )
-	    ERROR ( "cannot read existant $fname" );
-	foreach ( explode ( "\n", $c ) as $line )
-	{
-	    $line = trim ( $line );
-	    if ( $line == '' ) continue;
-	    if ( $line[0] == '#' ) continue;
-	    if ( ! preg_match ( $epm_priv_re,
-	                        $line, $matches ) )
-		ERROR ( "badly formatted line" .
-			    " '$line' in $fname" );
-	    $sign = $matches[1];
-	    $priv = $matches[2];
-	    $re   = $matches[3];
-
-	    if ( isset ( $map[$priv] ) ) continue;
-
-	    $r = preg_match ( "/^($re)\$/", $uid );
-	    if ( $r === false )
-		ERROR ( "bad RE in line" .
-			" '$line' in $fname" );
-	    elseif ( $r )
-		$map[$priv] = $sign;
-	}
-    }
-
-    // Check the proposed new contents of a +priv+
-    // file for formatting and RE errors.  Append
-    // messages to $errors for any errors found.  Return
-    // '+' if the current $uid is certified as owner
-    // by the contents, '-' if certified as non-owner,
-    // and NULL if no information about ownership of
-    // $uid is in contents.
-    //
     // If an error is found, $error_header is appended
     // to $errors before the first error message.  All
     // the other error messages are indented.
     //
-    function check_priv_file_contents
-	    ( $contents, & $errors, $error_header )
+    function process_privs
+	    ( & $map, $contents,
+	      & $errors, $error_header )
     {
-        global $uid, $epm_priv_re, $epm_superuser;
+        global $uid, $epm_priv_re, $epm_name_re;
 
-	$is_owner = NULL;
+	$lines = explode ( "\n", $contents );
 	$error_found = false;
-
-	$re = $epm_superuser;
-	$r = preg_match ( "/^($re)\$/", $uid );
-	if ( $r === false )
-	{
-	    $error_found = true;
-	    $errors[] = $error_header;
-	    $errors[] = "    \$epm_superuser is bad RE";
-	}
-	elseif ( $r == 1 )
-	    $is_owner = '+';
-
-	foreach ( explode ( "\n", $contents ) as $line )
+	foreach ( $lines as $line )
 	{
 	    $line = trim ( $line );
 	    if ( $line == '' ) continue;
@@ -165,67 +113,141 @@
 	    }
 	    $sign = $matches[1];
 	    $priv = $matches[2];
-	    $re   = $matches[3];
+	    $re   = $matches[4];
 
-	    $r = preg_match ( "/^($re)\$/", $uid );
-	    if ( $r === false )
+	    if ( $re[0] == '@' )
 	    {
-		if ( ! $error_found )
+		$group = $re;
+	        if ( ! preg_match
+		           ( $epm_name_re,
+			     substr ( $group, 1 ) ) )
 		{
-		    $error_found = true;
-		    $errors[] = $error_header;
+		    if ( ! $error_found )
+		    {
+			$error_found = true;
+			$errors[] = $error_header;
+		    }
+		    $errors[] =
+			"    bad group name in line" .
+			" '$line'";
+		    continue;
 		}
-		$errors[] =
-		    "    bad RE in line '$line'";
-		continue;
+	        if ( isset ( $map[$group] )
+		     &&
+		     $map[$group] == '+'
+		     &&
+		     ! isset ( $map[$priv] ) )
+		    $map[$priv] = $sign;
 	    }
-
-	    if ( $r == 0 ) continue;
-	    if ( $priv != 'owner' ) continue;
-	    if ( isset ( $is_owner ) ) continue;
-	    $is_owner = $sign;
+	    else
+	    {
+		$r = preg_match ( "/^($re)\$/", $uid );
+		if ( $r === false )
+		{
+		    if ( ! $error_found )
+		    {
+			$error_found = true;
+			$errors[] = $error_header;
+		    }
+		    $errors[] =
+			"    bad RE in line '$line'";
+		    continue;
+		}
+		elseif ( $r != 0
+			 &&
+			 ! isset ( $map[$priv] ) )
+		    $map[$priv] = $sign;
+	    }
 	}
+    }
 
-	return $is_owner;
+    // Read a +priv+ file and add to the privilege
+    // $map.  The file is relative to $epm_data.
+    // If it does not exist, nothing is done.
+    // File line formatting errors append error
+    // messages to $errors.
+    //
+    function read_priv_file
+	( & $map, $fname, & $errors )
+    {
+        global $epm_data;
+
+	if ( ! file_exists ( "$epm_data/$fname" ) )
+	    return;
+	$c = @file_get_contents ( "$epm_data/$fname" );
+	if ( $c === false )
+	    ERROR ( "cannot read existant $fname" );
+	process_privs
+	    ( $map, $c, $errors, "In $fname:" );
     }
 
     // Return privilege map containing just the
     // results of `+ owner $epm_superuser'.
     //
-    function superuser_priv_map ( & $map )
+    function superuser_priv_map
+	( & $map, & $errors )
     {
-        global $uid, $epm_superuser;
-
-        $map = [];
-
-	$re = $epm_superuser;
-	$r = preg_match ( "/^($re)\$/", $uid );
-	if ( $r === false )
-	    ERROR ( "\$epm_superuser is bad RE" );
-	if ( $r == 1 )
-	    $map['owner'] = '+';
+        global $epm_superuser;
+	$map = [];
+	process_privs
+	    ( $map, "+ owner $epm_superuser",
+	      $errors, "In \$epm_superuser" );
     }
 
     // Return the privilege map of a project.
     //
-    function project_priv_map ( & $map, $project )
+    function project_priv_map
+        ( & $map, $project, & $errors )
     {
-        superuser_priv_map ( $map );
+        superuser_priv_map ( $map, $errors );
 	read_priv_file
-	     ( $map, "projects/$project/+priv+" );
+	     ( $map, "projects/$project/+priv+",
+	             $errors );
     }
 
-    // Return the privilege map of a project problem
+    // Ditto but use $contents as the (proposed)
+    // project privilege file contents.
+    //
+    function check_project_priv
+        ( & $map, $project, $contents, & $errors )
+    {
+        superuser_priv_map ( $map, $errors );
+	process_privs
+	    ( $map, $contents, $errors,
+	      "In proposed $process project" .
+	      " privilege file:" );
+    }
+
+    // Return the privilege map of a project problem.
     //
     function problem_priv_map
-	    ( & $map, $project, $problem )
+	    ( & $map, $project, $problem, & $errors )
     {
-        superuser_priv_map ( $map );
+        superuser_priv_map ( $map, $errors );
 	read_priv_file
 	    ( $map,
-	      "projects/$project/$problem/+priv+" );
+	      "projects/$project/$problem/+priv+",
+	      $errors );
 	read_priv_file
-	    ( $map, "projects/$project/+priv+" );
+	    ( $map, "projects/$project/+priv+",
+	      $errors );
+    }
+
+    // Ditto but use $contents as the (proposed)
+    // project problem privilege file contents.
+    //
+    function check_problem_priv
+        ( & $map, $project, $problem, $contents,
+	  & $errors )
+    {
+        superuser_priv_map ( $map, $errors );
+	process_privs
+	    ( $map, $contents, $errors,
+	      "In proposed $process $problem" .
+	      " problem privilege file:" );
+	read_priv_file
+	    ( $map, "projects/$project/+priv+",
+	      $errors );
     }
 
     // Return the list of projects that have one of
@@ -246,7 +268,12 @@
 	    if ( ! preg_match
 	               ( $epm_name_re, $project ) )
 	        continue;
-	    project_priv_map ( $map, $project );
+	    $errors = [];
+	    project_priv_map
+	        ( $map, $project, $errors );
+	    if ( count ( $errors ) > 0 )
+	        ERROR ( implode ( PHP_EOL, $errors ) );
+
 	    if ( $privs == NULL )
 	        foreach ( $map as $priv => $sign )
 		{
