@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 14 09:10:09 EDT 2020
+// Date:    Tue Jul 14 12:45:18 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -65,6 +65,8 @@ $epm_priv_prefix = '+ owner walton';
     //
     //		'+ owner user1' . PHP_EOL .
     //		'+ owner user2'
+    //
+    // Only `owner' privilege is allowed.
 
 $epm_debug = preg_match
     ( '/(login|user|project|list|favorites|manage)/',
@@ -130,15 +132,12 @@ $epm_parent_re =
     // +parent+ link.  The first match is the
     // target directory relative to $epm_data.
 
-$epm_priv_re =
-    '/^\h*(\+|\-)\h+' .
-    '(owner|view|pull\-new|re\-pull|' .
-    'push\-new|re\-push|move\-to|move\-from|' .
-    '@[A-Za-z](|[-_A-Za-z0-9]*[A-Za-z0-9]))' .
-    '\h+(\S+)\h*$/';
-    // Non-blank, non-comment lines of +priv+ files
-    // must match this re.  Note that the RE part of
-    // line is the 4'th match, not the 3'rd.
+$epm_project_privs =
+    ['owner','push-new','pull-new','re-pull',
+     'view','move-to','move-from'];
+$epm_problem_privs = ['owner','re-push'];
+    // Privileges allowed in a project +priv+ or
+    // project problem +priv+ file.
 
 $epm_specials =
     ['generate','filter','display','monitor'];

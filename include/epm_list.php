@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 14 09:10:24 EDT 2020
+    // Date:	Tue Jul 14 13:11:42 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -87,19 +87,20 @@
     // the other error messages are indented.
     //
     function process_privs
-	    ( & $map, $contents,
+	    ( & $map, $contents, $allowed_privs,
 	      & $errors, $error_header )
     {
-        global $uid, $epm_priv_re, $epm_name_re;
+        global $uid, $epm_name_re;
 
 	$lines = explode ( "\n", $contents );
 	$error_found = false;
+	$priv_re = '/^(\+|\-)\h+(\S+)\h+(\S+)$/';
 	foreach ( $lines as $line )
 	{
 	    $line = trim ( $line );
 	    if ( $line == '' ) continue;
 	    if ( $line[0] == '#' ) continue;
-	    if ( ! preg_match ( $epm_priv_re,
+	    if ( ! preg_match ( $priv_re,
 	                        $line, $matches ) )
 	    {
 		if ( ! $error_found )
@@ -108,56 +109,63 @@
 		    $errors[] = $error_header;
 		}
 		$errors[] =
-		    "    badly formatted line '$line'";
+		    "    badly formed line `$line'";
 		continue;
 	    }
 	    $sign = $matches[1];
 	    $priv = $matches[2];
-	    $re   = $matches[4];
+	    $re   = $matches[3];
+
+	    $errs = [];
+	    $match = false;
+	    if ( $priv[0] == '@' )
+	    {
+	        if (! preg_match
+		          ( $epm_name_re,
+			    substr ( $priv, 1 ) ) )
+		    $errs[] = "bad group name $priv";
+	    }
+	    elseif ( ! in_array ( $priv,
+	                          $allowed_privs,
+				  true ) )
+		    $errs[] = "privilege $priv not"
+		            . " allowed";
 
 	    if ( $re[0] == '@' )
 	    {
-		$group = $re;
 	        if ( ! preg_match
 		           ( $epm_name_re,
-			     substr ( $group, 1 ) ) )
-		{
-		    if ( ! $error_found )
-		    {
-			$error_found = true;
-			$errors[] = $error_header;
-		    }
-		    $errors[] =
-			"    bad group name in line" .
-			" '$line'";
-		    continue;
-		}
-	        if ( isset ( $map[$group] )
-		     &&
-		     $map[$group] == '+'
-		     &&
-		     ! isset ( $map[$priv] ) )
-		    $map[$priv] = $sign;
+			     substr ( $re, 1 ) ) )
+		    $errs[] = "bad group name $re";
+		elseif ( isset ( $map[$re] )
+		         &&
+			 $map[$re] == '+' )
+		    $match = true;
 	    }
 	    else
 	    {
 		$r = preg_match ( "/^($re)\$/", $uid );
 		if ( $r === false )
-		{
-		    if ( ! $error_found )
-		    {
-			$error_found = true;
-			$errors[] = $error_header;
-		    }
-		    $errors[] =
-			"    bad RE in line '$line'";
-		    continue;
-		}
-		elseif ( $r != 0
-			 &&
-			 ! isset ( $map[$priv] ) )
-		    $map[$priv] = $sign;
+		    $errs[] = "bad RE";
+		elseif ( $r == 1 )
+		    $match = true;
 	    }
+
+	    if ( count ( $errs ) > 0 )
+	    {
+		if ( ! $error_found )
+		{
+		    $error_found = true;
+		    $errors[] = $error_header;
+		}
+		foreach ( $errs as $err )
+		    $errors[] =
+			"    $err in line `$line'";
+	    }
+	    elseif ( $match
+	             &&
+		     ! isset ( $map[$priv] ) )
+	        $map[$priv] = $sign;
 	}
     }
 
@@ -168,7 +176,7 @@
     // messages to $errors.
     //
     function read_priv_file
-	( & $map, $fname, & $errors )
+	( & $map, $fname, $allowed_privs, & $errors )
     {
         global $epm_data;
 
@@ -178,7 +186,8 @@
 	if ( $c === false )
 	    ERROR ( "cannot read existant $fname" );
 	process_privs
-	    ( $map, $c, $errors, "In $fname:" );
+	    ( $map, $c, $allowed_privs,
+	      $errors, "In $fname:" );
     }
 
     // Return privilege map containing just the
@@ -190,7 +199,7 @@
         global $epm_priv_prefix;
 	$map = [];
 	process_privs
-	    ( $map, $epm_priv_prefix,
+	    ( $map, $epm_priv_prefix, ['owner'],
 	      $errors, "In \$epm_priv_prefix:" );
     }
 
@@ -199,10 +208,11 @@
     function project_priv_map
         ( & $map, $project, & $errors )
     {
+        global $epm_project_privs;
         prefix_priv_map ( $map, $errors );
 	read_priv_file
 	     ( $map, "projects/$project/+priv+",
-	             $errors );
+                     $epm_project_privs, $errors );
     }
 
     // Ditto but use $contents as the (proposed)
@@ -211,9 +221,11 @@
     function check_project_priv
         ( & $map, $project, $contents, & $errors )
     {
+        global $epm_project_privs;
         prefix_priv_map ( $map, $errors );
 	process_privs
-	    ( $map, $contents, $errors,
+	    ( $map, $contents, $epm_project_privs,
+	      $errors,
 	      "In proposed $process project" .
 	      " privilege file:" );
     }
@@ -223,14 +235,15 @@
     function problem_priv_map
 	    ( & $map, $project, $problem, & $errors )
     {
+        global $epm_problem_privs, $epm_project_privs;
         prefix_priv_map ( $map, $errors );
 	read_priv_file
 	    ( $map,
 	      "projects/$project/$problem/+priv+",
-	      $errors );
+	      $epm_problem_privs, $errors );
 	read_priv_file
 	    ( $map, "projects/$project/+priv+",
-	      $errors );
+	      $epm_project_privs, $errors );
     }
 
     // Ditto but use $contents as the (proposed)
@@ -240,14 +253,16 @@
         ( & $map, $project, $problem, $contents,
 	  & $errors )
     {
+        global $epm_problem_privs, $epm_project_privs;
         prefix_priv_map ( $map, $errors );
 	process_privs
-	    ( $map, $contents, $errors,
+	    ( $map, $contents, $epm_problem_privs,
+	      $errors,
 	      "In proposed $process $problem" .
 	      " problem privilege file:" );
 	read_priv_file
 	    ( $map, "projects/$project/+priv+",
-	      $errors );
+	      $epm_project_privs, $errors );
     }
 
     // Return the list of projects that have one of

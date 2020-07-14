@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 14:22:19 EDT 2020
+// Date:    Tue Jul 14 13:43:09 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -160,7 +160,10 @@ function EPM_ERROR_HANDLER
         ( "$epm_data/error.log", $m, FILE_APPEND );
 
     if ( $fatal )
-        exit ( "<pre>$message</pre>" );
+        exit ( "<div style='background-color:yellow'>" .
+	       "FATAL ERROR:<br>" .
+	       "<pre>$message</pre>" .
+	       "</div>" );
 
     return true;
         // Returning true suppresses normal error

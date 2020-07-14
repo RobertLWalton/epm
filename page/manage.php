@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 14 04:36:32 EDT 2020
+    // Date:	Tue Jul 14 13:56:39 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -284,8 +284,6 @@
 			ERROR ( "cannot write $f" );
 
 		    $edited_contents = NULL;
-		    $problem = NULL;
-		    $project = NULL;
 		}
 		else
 		    $owner_warn = true;
@@ -338,7 +336,6 @@
 			ERROR ( "cannot write $f" );
 
 		    $edited_contents = NULL;
-		    $project = NULL;
 		}
 		else
 		    $owner_warn = true;
@@ -596,11 +593,12 @@ EOT;
 	</div>
 	</div>
 EOT;
+	$errors = [];
         problem_priv_map
 	    ( $pmap, $project, $problem, $errors ); 
-	if ( count ( $errors ) == 0
-	     &&
-	     isset ( $pmap['owner'] )
+	if ( count ( $errors ) > 0 )
+	    ERROR ( implode ( PHP_EOL, $errors ) );
+	if ( isset ( $pmap['owner'] )
 	     &&
 	     $pmap['owner'] == '+' )
 	{
@@ -651,10 +649,12 @@ EOT;
 	</div>
 	</div>
 EOT;
+	$errors = [];
         project_priv_map ( $pmap, $project, $errors ); 
-	if ( count ( $errors ) == 0
-	     &&
-	     isset ( $pmap['owner'] )
+	if ( count ( $errors ) > 0 )
+	    ERROR ( implode ( PHP_EOL, $errors ) );
+
+	if ( isset ( $pmap['owner'] )
 	     &&
 	     $pmap['owner'] == '+'
 	     &&
