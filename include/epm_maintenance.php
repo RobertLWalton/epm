@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 15 01:44:43 EDT 2020
+// Date:    Wed Jul 15 01:51:53 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -1116,7 +1116,7 @@ function backup ( $dryrun )
     $commands[] = [ $epm_data,
     		    "rsync -av --delete \\" .
 		    PHP_EOL .
-		    "      +web+/ +web-save+/" ];
+		    "      +web+/ +web-backup+/" ];
     $commands[] = [ $epm_data,
 		    "tar -zc \\" .
 		    PHP_EOL .
