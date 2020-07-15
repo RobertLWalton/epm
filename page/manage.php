@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 14 15:03:40 EDT 2020
+    // Date:	Wed Jul 15 14:09:28 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -120,6 +120,10 @@
     $data = & $_SESSION['EPM_DATA'];
     $project = & $data['PROJECT'];
     $problem = & $data['PROBLEM'];
+        // If $problem is set and $project is not,
+	// it is `your' problem.  If $project is set
+	// and $problem is not, only the project is
+	// selected.
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -215,13 +219,10 @@
 		if ( ! $found )
 		    exit ( 'UNACCEPTABLE HTTP POST' );
 		if ( $proj == '-' )
-		    $errors[] = 'You must select a'
-		              . ' project problem';
+		    $project = NULL;
 		else
-		{
 		    $project = $proj;
-		    $problem = $prob;
-		}
+		$problem = $prob;
 	    }
 	}
         elseif ( isset ( $_POST['warning'] )
@@ -343,6 +344,11 @@
 	}
         elseif ( isset ( $_POST['move'] ) )
 	{
+	    if ( ! isset ( $problem ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $project ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
 	    $proj = $_POST['move'];
 	    if ( ! isset ( $_POST['warning'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -351,9 +357,6 @@
 	    elseif ( ! in_array ( $proj, $move_projects,
 	                          true ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    elseif ( ! isset ( $problem ) )
-		$errors[] = "you must select a problem"
-		          . " first";
 	    elseif ( $proj == $project )
 		$errors[] = "problem is aleady in $proj"
 		          . " project";
@@ -363,6 +366,28 @@
 	    else
 	        $move_warn = $proj;
 	}
+        elseif ( isset ( $_POST['download'] ) )
+	{
+	    if ( ! isset ( $problem ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( isset ( $project ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    $d = "users/$uid/$problem";
+	    $c = "cd $epm_data/$d;"
+	       . "x=`find . -name '+*' -prune"
+	       . "          -o -type f -print`;"
+	       . "rm -f ../+download+;"
+	       . "tar zcf ../+download+ \$x;";
+	    exec ( $c, $forget, $r );
+	    if ( $r != 0 )
+	        $errors[] = "could not tar Your"
+		          . " $problem";
+	    else
+	    {
+	    }
+	}
+
 	else
 	    exit ( 'UNACCEPTABLE HTTP POST' );
     }
@@ -507,14 +532,21 @@ EOT;
 EOT;
 
     $project_options =
-        values_to_options ( $priv_projects, $project );
+        values_to_options
+	    ( $priv_projects,
+	      isset ( $problem ) ? NULL : $project );
     $move_options =
         values_to_options
 	    ( $move_projects, $move_warn );
     $listname_options = list_to_options
         ( $favorites, $listname );
     if ( isset ( $problem ) )
-        $key = "$project:$problem";
+    {
+	if ( isset ( $project ) )
+	    $key = "$project:$problem";
+	else
+	    $key = "-:$problem";
+    }
     else
         $key = NULL;
     $problem_options = list_to_options
@@ -554,24 +586,39 @@ EOT;
     <option value=''>No Project Selected</option>
     $project_options
     </select></form>
+EOT;
 
-    <strong>or Move Problem to Project</strong>
-    <form method='POST' action='manage.php'
-          id='move-form'>
-    <input type='hidden' name='id' value='$ID'>
-    <input type='hidden' id='move-warning'
-	   name='warning' value=''>
-    <select name='move'
-            onchange='document.getElementById
-	                ("move-form").submit()'>
-    <option value=''>No Project Selected</option>
-    $move_options
-    </select></form>
+    if ( isset ( $project ) && isset ( $problem ) )
+        echo <<<EOT
+	<strong>or Move Problem to Project</strong>
+	<form method='POST' action='manage.php'
+	      id='move-form'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' id='move-warning'
+	       name='warning' value=''>
+	<select name='move'
+		onchange='document.getElementById
+			    ("move-form").submit()'>
+	<option value=''>No Project Selected</option>
+	$move_options
+	</select></form>
+EOT;
 
+    if ( ! isset ( $project ) && isset ( $problem ) )
+        echo <<<EOT
+	<strong>or</strong>
+	<form method='POST' action='manage.php'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' name='download' value=''>
+	<button type='submit'>Download Problem</button>
+	</form>
+EOT;
+
+    echo <<<EOT
     </div>
 EOT;
 
-    if ( isset ( $problem ) )
+    if ( isset ( $project ) && isset ( $problem ) )
     {
         $f =  "/projects/$project/$problem/+priv+";
         $priv_file_contents = @file_get_contents
