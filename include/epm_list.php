@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 14 14:58:54 EDT 2020
+    // Date:	Wed Jul 15 01:54:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -269,7 +269,7 @@
 	process_privs
 	    ( $map, $contents, $epm_problem_privs,
 	      $errors,
-	      "In proposed $process $problem" .
+	      "In proposed $project $problem" .
 	      " problem privilege file:" );
 	read_priv_file
 	    ( $map, "projects/$project/+priv+",
