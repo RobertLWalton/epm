@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul 15 14:09:28 EDT 2020
+    // Date:	Wed Jul 15 21:32:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -135,6 +135,10 @@
     $move_warn = NULL;
         // If not NULL, ask if problem should be
 	// moved to this project.
+    $download = NULL;
+        // If not NULL, open the download page with
+	// filename = $download and content-type =
+	// application/x-gzip.
 
     $favorites = read_favorites_list ( $warnings );
     if ( ! isset ( $listname ) )
@@ -384,8 +388,7 @@
 	        $errors[] = "could not tar Your"
 		          . " $problem";
 	    else
-	    {
-	    }
+	        $download = "$problem.tgz";
 	}
 
 	else
@@ -489,6 +492,22 @@ EOT;
 		onclick='MOVE("no")'>
 	     NO</button>
 	<br></div>
+EOT;
+    }
+
+    if ( isset ( $download ) )
+    {
+        $filename = rawurlencode ( $download );
+	$content_type = rawurlencode
+	    ( 'application/x-gzip' );
+        echo <<<EOT
+	<script>
+	window.open
+	    ( '$epm_root/page/download.php' +
+	      '?filename=$filename&' +
+	      'content-type=$content_type',
+	      '+download+' );
+	</script>
 EOT;
     }
 

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 14 13:43:09 EDT 2020
+// Date:    Wed Jul 15 21:20:38 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -71,9 +71,6 @@ require "$epm_web/parameters.php";
 session_name ( $epm_session_name );
 session_start();
 clearstatcache();
-umask ( 07 );
-date_default_timezone_set ( 'UTC' );
-header ( 'Cache-Control: no-store' );
 
 // Check that we have not skipped proper login.
 //
@@ -83,6 +80,26 @@ if ( ! isset ( $_SESSION['EPM_UID'] )
      &&
      $epm_self != "/page/user.php" )
     exit ( 'UNACCEPTABLE HTTP GET/POST' );
+
+// A session cannot change its IP address if
+// $epm_check_ipaddr is true (see parameters.php).
+//
+if ( $epm_check_ipaddr
+     &&
+     isset ( $_SESSION['EPM_IPADDR'] )
+     &&
+        $_SESSION['EPM_IPADDR']
+     != $_SERVER['REMOTE_ADDR'] )
+    exit ( "UNACCEPTABLE HTTP $epm_method: IP" );
+
+// If this is a download page, return to that
+// page and skip the rest of this file.
+//
+if ( $epm_page_type == '+download+' ) return;
+
+umask ( 07 );
+date_default_timezone_set ( 'UTC' );
+header ( 'Cache-Control: no-store' );
 
 // First functions that most pages need defined.
 
@@ -171,17 +188,6 @@ function EPM_ERROR_HANDLER
 }
 
 set_error_handler ( 'EPM_ERROR_HANDLER' );
-
-// A session cannot change its IP address if
-// $epm_check_ipaddr is true (see parameters.php).
-//
-if ( $epm_check_ipaddr
-     &&
-     isset ( $_SESSION['EPM_IPADDR'] )
-     &&
-        $_SESSION['EPM_IPADDR']
-     != $_SERVER['REMOTE_ADDR'] )
-    exit ( "UNACCEPTABLE HTTP $epm_method: IP" );
 
 // Each user can have only one session at a time.  When
 // started, each session for a user aborts the previous
