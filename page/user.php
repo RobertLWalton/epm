@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul  7 16:02:58 EDT 2020
+    // Date:	Thu Jul 16 22:16:55 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -372,7 +372,8 @@
 
 	    $r = @file_put_contents
 		( "$epm_data/login.log",
-		  "$uid $email $IPADDR $STIME",
+		  "$uid $email $IPADDR $STIME" .
+		  PHP_EOL,
 		  FILE_APPEND );
 	    if ( $r === false )
 		ERROR ( "could not write login.log" );
