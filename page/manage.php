@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul 15 21:32:26 EDT 2020
+    // Date:	Fri Jul 17 01:31:47 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -243,6 +243,8 @@
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
    	    $edited_contents = $_POST['problem-priv'];
+	    if ( trim ( $edited_contents ) == '' )
+	        $edited_contents = " \n";
    	    $warn = $_POST['warning'];
 	    check_problem_priv
 	        ( $pmap, $project, $problem,
@@ -304,6 +306,8 @@
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
    	    $edited_contents = $_POST['project-priv'];
+	    if ( trim ( $edited_contents ) == '' )
+	        $edited_contents = " \n";
    	    $warn = $_POST['warning'];
 	    check_project_priv
 	        ( $pmap, $project,
@@ -372,23 +376,50 @@
 	}
         elseif ( isset ( $_POST['download'] ) )
 	{
-	    if ( ! isset ( $problem ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( isset ( $project ) )
+	    if ( ! isset ( $problem )
+	         &&
+		 ! isset ( $project ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
-	    $d = "users/$uid/$problem";
-	    $c = "cd $epm_data/$d;"
-	       . "x=`find . -name '+*' -prune"
-	       . "          -o -type f -print`;"
-	       . "rm -f ../+download+;"
-	       . "tar zcf ../+download+ \$x;";
-	    exec ( $c, $forget, $r );
-	    if ( $r != 0 )
-	        $errors[] = "could not tar Your"
-		          . " $problem";
+	    if ( ! isset ( $problem ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    $d = NULL;
+	    if ( isset ( $project ) )
+	    {
+		problem_priv_map
+		    ( $pmap, $project, $problem ); 
+		if ( ! isset ( $pmap['re-push'] )
+		     ||
+		     $pmap['re-push'] != '+' )
+		    $errors[] = "you do not have"
+		              . " re-push privilege"
+			      . " on $project $problem";
+		else
+		{
+		    $d = "projects/$project/$problem";
+		    $n = "$project-$problem";
+		}
+	    }
 	    else
-	        $download = "$problem.tgz";
+	    {
+		$d = "users/$uid/$problem";
+		$n = $problem;
+	    }
+
+	    if ( isset ( $d ) )
+	    {
+		$e = "../../../users/$uid";
+		$c = "cd $epm_data/$d;"
+		   . "rm -f $e/+download+;"
+		   . "tar zcf $e/+download+ .;";
+		exec ( $c, $forget, $r );
+		if ( $r != 0 )
+		    $errors[] =
+		        "could not create $n.tgz";
+		else
+		    $download = "$n.tgz";
+	    }
 	}
 
 	else
@@ -623,7 +654,7 @@ EOT;
 	</select></form>
 EOT;
 
-    if ( ! isset ( $project ) && isset ( $problem ) )
+    if ( isset ( $problem ) )
         echo <<<EOT
 	<strong>or</strong>
 	<form method='POST' action='manage.php'>
