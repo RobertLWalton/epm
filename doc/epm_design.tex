@@ -1,6 +1,6 @@
-% Educational Problem Manager (EPM) Maintenance Manual.
+% Educational Problem Manager (EPM) Design Manual.
 %
-% File:         epm_maintenance.tex
+% File:         epm_design.tex
 % Author:       Bob Walton (walton@acm.org)
 % Date:		See \date below.
 
@@ -97,11 +97,11 @@
 \begin{document}
         
 \title{Educational Problem Manager\\
-Maintenance Manual}
+Design Manual}
 
 \author{Robert L. Walton}
 
-\date{May 19, 2020}
+\date{July 17, 2020}
  
 \maketitle
 
@@ -126,33 +126,59 @@ no liability for EPM.
 
 \section{Introduction}
 
-See the Administration Manual for instructions on how to install
-and run an EPM web site.
-This document is a manual for EPM system maintainers.
+This document gives design information for EPM system maintainers.
+This document supplements the EPM Help Page documentation for
+users and comments in code files for programmers.
 
-\section{Names}
+\section{Principals}
+
+\subsection{Names}
+
+\begin{enumerate}
+\item Names chosen by the user consists of letters, digits,
+dash({\tt -}), and underscore({\tt \_}), begin with a letter,
+and end with a letter or digit.
+See {\tt /include/parameters.php} {\tt \$epm\_name\_re}.
+\item Visible file basenames consist of letters, digits, dash({\tt -}), and
+underscore({\tt \_}), begin with a letter or digit, and end
+with a letter or digit.  Visible extensions, if present, obey the
+same rules.
+\item Basenames of problem files end with the
+      problem name, which may optionally be preceded by a dash({\tt -}) but
+      not by any other character.
+      See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
+\item Invisible problem
+      file and directory names begin and end with plus({\tt +}).
+\item Administrative files may follow other rules.  In particular,
+      email addresses have a file whose name is the URL encoded email
+      address, and browser tickets have a file whose name is the
+      32 hex digit ticket itself.
+\item Times are UTC formatted as per {\tt "\%FT\%T\%z"}.
+      See {\tt /include/parameters.php}\\ {\tt \$epm\_time\_format}.
+\end{enumerate}
+
 
 \section{Data Files}
 
 \begin{center}
-\begin{tabular}{|l|l|l|l|l|l|}
+\begin{tabular}{|l|l|p{1in}|l|l|l|}
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
-\TT{admin} & dir & \pagref{ADMIN}
+\TT{admin} & dir & administrative files
 	& login & user & \\ 
 \hline
-\TT{admin/browser} & dir & \pagref{ADMIN/BROWSER}
+\TT{admin/browser} & dir & browser tickets
 	& login & user & \\ 
 \hline
 \TT{admin/browser/BID} & bid & \pagref{ADMIN/BROWSER/BID}
 	& login & & \\ 
 \hline
+\TT{admin/email} & dir & email files
+	& login & user & \\ 
+\hline
 \TT{admin/email/EMAIL} & email & \pagref{ADMIN/EMAIL/EMAIL}
 	& user & & \\ 
-\hline
-\TT{admin/email} & dir & \pagref{ADMIN/EMAIL}
-	& login & user & \\ 
 \hline
 \TT{admin/submit} & dir & \pagref{ADMIN/SUBMIT}
 	& run & run & \\ 
