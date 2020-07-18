@@ -178,10 +178,10 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \TT{admin} & dir & \STACK{administrative\\files}
 	& login & user & \\ 
 \hline
-\TT{admin/ticket} & dir & \STACK{browser\\tickets}
+\TT{admin/browser} & dir & \STACK{browser\\tickets}
 	& login & user & \\ 
 \hline
-\TT{admin/ticket/TICKET} & 1-line & \pagref{ADMIN/TICKET/TICKET}
+\TT{admin/browser/TICKET} & 1-line & \pagref{ADMIN/TICKET/TICKET}
 	& login & & \\ 
 \hline
 \TT{admin/email} & dir & email files
@@ -269,7 +269,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 
 \begin{indpar}
 \begin{itemlist}
-\item[\TT{admin/ticket/TICKET} (ticket file):] UID EMAIL
+\item[\TT{admin/browser/TICKET} (ticket file):] UID EMAIL
 \label{ADMIN/TICKET/TICKET} \\
 \begin{tabular}[t]{lp{4.0in}}
 TICKET & ticket proper; 32 hexadecimal digit ticket number \\
@@ -285,7 +285,7 @@ the UID is not known when the ticket is created.
 \item[\TT{admin/email/EMAIL} (email file):] PID ACOUNT ATIME
 \label{ADMIN/EMAIL/EMAIL} \\
 \begin{tabular}[t]{lp{4.0in}}
-EMAIL & Email address \\
+EMAIL & Email address encoded with PHP rawurlencode \\
 PID & Personal user ID \\
 ACOUNT & Number of auto-login periods completed so far. \\
 ATIME & Start time of newest (incomplete) auto-login period. \\
