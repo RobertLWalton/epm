@@ -81,13 +81,23 @@
 	 \item}%
 	{\end{list}}
 
+\newenvironment{itemlist}[1][0.2in]%
+	{\begin{list}{}{\setlength{\labelwidth}{#1}%
+		        \setlength{\leftmargin}{\labelwidth}%
+		        \addtolength{\leftmargin}{+0.2in}%
+		        \addtolength{\linewidth}{-\labelwidth}%
+		        \addtolength{\linewidth}{-0.2in}%
+		        \renewcommand{\makelabel}[1]{##1\hfill}}
+	 \raggedright}%
+	{\end{list}}
+
 \newcommand{\TT}[1]{{\tt \bfseries #1}}
 \newcommand{\key}[1]{{\bf \em #1}}
 \newcommand{\EOL}{\penalty \exhyphenpenalty}
 \newcommand{\pagref}[1]{p\pageref{#1}}
 \newcommand{\FSTACK}[2]{{\tt \bfseries
     #1\begin{tabular}[t]{@{}l@{}}#2\end{tabular}}}
-\newcommand{\PSTACK}[1]{\begin{tabular}[t]{@{}l@{}}
+\newcommand{\STACK}[1]{\begin{tabular}[t]{@{}l@{}}
                         #1\end{tabular}}
 
 \newcommand{\ITEM}{\hspace*{-0.2in}}
@@ -101,7 +111,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{July 17, 2020}
+\date{July 18, 2020}
  
 \maketitle
 
@@ -161,33 +171,37 @@ same rules.
 \section{Data Files}
 
 \begin{center}
-\begin{tabular}{|l|l|p{1in}|l|l|l|}
+\begin{tabular}{|l|l|l|l|l|l|}
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
-\TT{admin} & dir & administrative files
+\TT{admin} & dir & \STACK{administrative\\files}
 	& login & user & \\ 
 \hline
-\TT{admin/browser} & dir & browser tickets
+\TT{admin/ticket} & dir & \STACK{browser\\tickets}
 	& login & user & \\ 
 \hline
-\TT{admin/browser/BID} & bid & \pagref{ADMIN/BROWSER/BID}
+\TT{admin/ticket/TICKET} & 1-line & \pagref{ADMIN/TICKET/TICKET}
 	& login & & \\ 
 \hline
 \TT{admin/email} & dir & email files
 	& login & user & \\ 
 \hline
-\TT{admin/email/EMAIL} & email & \pagref{ADMIN/EMAIL/EMAIL}
-	& user & & \\ 
+\TT{admin/email/EMAIL} & 1-line & \pagref{ADMIN/EMAIL/EMAIL}
+	& \STACK{user\\team} & & \\ 
 \hline
-\TT{admin/submit} & dir & \pagref{ADMIN/SUBMIT}
-	& run & run & \\ 
-\hline
-\TT{admin/users} & dir & \pagref{ADMIN/USERS}
+\TT{admin/users} & dir & \STACK{administrative\\user\\directories}
 	& login & user & \\ 
 \hline
-\TT{admin/users/UID} & dir & \pagref{ADMIN/USERS/UID}
+\TT{admin/users/UID} & dir & \STACK{administrative\\UID user files}
 	& user & & \\ 
+\hline
+\FSTACK{admin/}{users/UID/\\PID.log} & lines & \pagref{ADMIN/USERS/UID/PID.LOG}
+	& \STACK{user\\team} & & \\ 
+\hline
+\FSTACK{admin/}{users/UID/\\PID.inactive} & lines
+			& \pagref{ADMIN/USERS/UID/PID.INACTIVE}
+	& team & & \\ 
 \hline
 \FSTACK{admin/}{users/UID/\\UID.info} & json
 	& \pagref{ADMIN/USERS/UID/UID.INFO}
@@ -196,17 +210,17 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \TT{users} & dir & \pagref{USERS} & login & user & \\ 
 \hline
 \TT{users/UID} & dir & \pagref{USERS/UID}
-	& user & \PSTACK{problem\\project} & \\ 
+	& user & \STACK{problem\\project} & \\ 
 \hline
 \TT{users/UID/+lists+} & dir & \pagref{USERS/UID/+LISTS+}
-	& user & \PSTACK{list\\favorites} & project \\ 
+	& user & \STACK{list\\favorites} & project \\ 
 \hline
 \TT{users/UID/PROBLEM} & dir & \pagref{USERS/UID/PROBLEM}
-	& \PSTACK{problem\\project} & & \\ 
+	& \STACK{problem\\project} & & \\ 
 \hline
 \FSTACK{users/}{UID/PROBLEM/\\PROBLEM.cc}
     & C++ & \pagref{USERS/UID/PROBLEM/PROBLEM.cc}
-    	& \PSTACK{problem\\(upload)} & & \\ 
+    	& \STACK{problem\\(upload)} & & \\ 
 \hline
 \TT{projects} & dir & \pagref{PROJECTS} & login & maint & \\ 
 \hline
@@ -220,24 +234,95 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \subsection{Login}
 
 \begin{center}
+{\bf Login Page Requires}
+\\[1ex]
+\begin{tabular}{l}
+\TT{page/index.php} \\
+\TT{include/epm\_random.php} \\
+\end{tabular}
+\\[3ex]
 {\bf Login Page Files}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{admim/browser/BID}	& create  & update & read \\
+\TT{admim/ticket/TICKET}	& create  & -      & read \\
 \TT{admim/email/EMAIL}	& -       & update & read \\
-\TT{admim/login.log}	& create  & update & -    \\
+\TT{admim/users/UID/login/PID.log}
+			& -       & append & - \\
 \end{tabular}
 \\[3ex]
 {\bf Login Page Session Data}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{EPM\_EMAIL}	& -       & -      & read \\
-\TT{EPM\_UID}	& create  & -      & -    \\
-\TT{EPM\_IPADDR}& -       & -      & read \\
+\TT{EPM\_EMAIL}	& create  & -      & read \\
+\TT{EPM\_UID}	& create  & -      & read    \\
+\TT{EPM\_IPADDR}& create  & -      & read \\
 \TT{EPM\_SESSION\_TIME}
-                & -       & -      & read \\
+                & create  & -      & read \\
+\TT{EPM\_ID\_GEN['+main+']}
+                & create  & update & read \\
+\TT{EPM\_SESSION}
+                & create  & -      & - \\
 \end{tabular}
 \end{center}
+
+\subsubsection{Login File Formats}
+
+\begin{indpar}
+\begin{itemlist}
+\item[\TT{admin/ticket/TICKET} (ticket file):] UID EMAIL
+\label{ADMIN/TICKET/TICKET} \\
+\begin{tabular}[t]{lp{4.0in}}
+TICKET & ticket proper; 32 hexadecimal digit ticket number \\
+UID & User ID or '-' if personal and not known \\
+EMAIL & Email address \\
+\end{tabular}
+\\
+\begin{itemize}
+\item When a person initially logs in to create an account,
+the UID is not known when the ticket is created.
+\end{itemize}
+
+\item[\TT{admin/email/EMAIL} (email file):] PID ACOUNT ATIME
+\label{ADMIN/EMAIL/EMAIL} \\
+\begin{tabular}[t]{lp{4.0in}}
+EMAIL & Email address \\
+PID & Personal user ID \\
+ACOUNT & Number of auto-login periods completed so far. \\
+ATIME & Start time of newest (incomplete) auto-login period. \\
+\end{tabular}
+
+\item[\TT{admin/users/UID/PID.log} (login log):]~
+\label{ADMIN/USERS/UID/PID.LOG} \\
+Lines of format:\hspace{0.5in}TIME EMAIL IPADDR BROWSER \\
+\begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
+UID & User ID; equals team UID for teams \\
+PID & Personal ID; equals UID for personal users \\
+EMAIL & Email address used for login \\
+TIME & Session time (EPM\_SESSION\_TIME) for login \\
+IPADDR & IP address for session, or `\TT{-}' if creation record \\
+BROWSER & \STACK{
+          \$\_SERVER['HTTP\_USER\_AGENT'] with `(...)'s\\
+	  removed and horizontal spaces replaced by `\TT{;}'s;\\
+	  or `\TT{-}' if creation record}
+\end{tabular}
+\\
+\begin{itemize}
+\item If UID is a team ID, the first line is a creation record
+written when UID:PID is created.  No other line is a creation record.
+\item This file name and modification time is stored in
+EPM\_SESSION and used to abort a session if another session
+logs in with the same UID:PID.
+\end{itemize}
+
+\item[\TT{admin/users/UID/PID.inactive}:]~
+\label{ADMIN/USERS/UID/PID.INACTIVE} \\
+Inactive login log file, made by renaming active file
+when PID is no longer a member
+of UID team.  May be reactivated.
+
+
+\end{itemlist}
+\end{indpar}
 
 \subsection{User}
 
