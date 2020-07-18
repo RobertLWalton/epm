@@ -263,7 +263,7 @@ Name & Description & Creators & Updaters & Readers \\
 
 \section{Web Pages}
 
-\subsection{Login}
+\subsection{Login Page}
 
 \begin{center}
 {\bf Login Page Requires}
@@ -356,6 +356,18 @@ of UID team.  May be reactivated.
 \end{itemlist}
 \end{indpar}
 
+\subsubsection{Login Page Transactions}
+
+\begin{enumerate}
+\item If admin/emails/EMAIL exists for EMAIL provided by
+      user to browser, log existing
+      user in and go to Project Page.
+\item If admin/emails/EMAIL does NOT exist for EMAIL
+      provided by user to browser, give
+      the browser a valid ticket and go to User Page.
+\end{enumerate}
+
+
 \subsection{User}
 
 \begin{center}
@@ -416,6 +428,17 @@ the new account EMAIL, they are resolved to PIDs.
 
 \end{itemlist}
 \end{indpar}
+
+\subsubsection{User Page Transactions}
+
+\begin{enumerate}
+\item If EPM\_UID not set, get data for new user and create
+      new user account if data acceptable.
+\item If EPM\_UID exists for a personal account, display
+      user data and allow it to be edited.
+\item If EPM\_UID exists for a team account (as discovered
+      by reading UID.info), go to Team Page.
+\end{enumerate}
 
 \subsection{Problem}
 
