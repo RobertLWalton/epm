@@ -104,6 +104,10 @@
 \newcommand{\TTITEM}[1]{\hspace*{-0.2in}{\TT{#1}}\\}
 \newcommand{\BFITEM}[1]{\hspace*{-0.2in}{{\bf #1}}\\}
 
+\newcommand{\STAR}{{\Large $^\star$}}
+\newcommand{\PLUS}[1][]{{$^{+#1}$}}
+\newcommand{\QMARK}{{$^{\,\mbox{\footnotesize ?}}$}}
+
 \begin{document}
         
 \title{Educational Problem Manager\\
@@ -163,10 +167,14 @@ same rules.
       email addresses have a file whose name is the URL encoded email
       address, and browser tickets have a file whose name is the
       32 hex digit ticket itself.
+\end{enumerate}
+
+\subsection{Times}
+
+\begin{enumerate}
 \item Times are UTC formatted as per {\tt "\%FT\%T\%z"}.
       See {\tt /include/parameters.php}\\ {\tt \$epm\_time\_format}.
 \end{enumerate}
-
 
 \section{Data Files}
 
@@ -177,6 +185,9 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
 \TT{admin} & dir & \STACK{administrative\\files}
 	& login & user & \\ 
+\hline
+\TT{admin/+lock+} & dir & \STACK{administrative\\lock file}
+	& & \STACK{user\\team} & \\ 
 \hline
 \TT{admin/browser} & dir & \STACK{browser\\tickets}
 	& login & user & \\ 
@@ -229,6 +240,27 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \end{tabular}
 \end{center}
 
+\section{Session Variables}
+
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Description & Creators & Updaters & Readers \\
+\hline\hline
+\TT{EPM\_EMAIL} & \STACK{email used\\for login}
+                & \STACK{login\\user} & & all pages \\ 
+\hline
+\TT{EPM\_UID} & user ID & \STACK{login\\user} & & all pages \\ 
+\hline
+\TT{EPM\_IPADDR} & \STACK{session\\IP address}
+                 & login & & \STACK{login\\user} \\ 
+\hline
+\TT{EPM\_TIME} & \STACK{session\\time}
+                 & login & & \STACK{login\\user} \\ 
+\hline
+\end{tabular}
+\end{center}
+
 \section{Web Pages}
 
 \subsection{Login}
@@ -265,7 +297,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \end{tabular}
 \end{center}
 
-\subsubsection{Login File Formats}
+\subsubsection{Login Page File Formats}
 
 \begin{indpar}
 \begin{itemlist}
@@ -345,6 +377,45 @@ of UID team.  May be reactivated.
                 & -       & -      & read \\
 \end{tabular}
 \end{center}
+
+\subsubsection{User Page File Formats}
+
+\begin{indpar}
+\begin{itemlist}
+\item[\TT{admin/users/UID/UID.info} (user info file):]~
+\label{ADMIN/USERS/UID/UID.INFO} \\
+JSON file with the following components:
+\begin{tabular}[t]{ll}
+\TT{'uid'} & UID (PID for person, team UID for team) \\
+\TT{'sponsor'} & PID; missing if not team \\
+\TT{'manager'} & PID; missing if not team \\
+\TT{'emails'} & \TT{[} EMAIL \{ \TT{,} EMAIL \}\STAR{} \TT{]};
+                missing if team \\
+\TT{'members'} & \TT{[} MID \{ \TT{,} MID \}\STAR{} \TT{]};
+                missing if not team \\
+\TT{'full\_name'} & TEXT \\
+\TT{'organization'} & TEXT \\
+\TT{'location'} & TEXT \\
+\end{tabular}
+\\
+where
+\\
+\begin{tabular}[t]{lp{4.0in}}
+MID & member ID; PID if available or EMAIL not yet assigned to a user
+      personal account otherwise (EMAIL has `\TT{@}' and PID does not) \\
+TEXT & plain text \\
+\end{tabular}
+\\
+\begin{itemize}
+\item When a team UID.info file is created, MIDs are specified
+as EMAILs which are resolved if possible to PIDs.
+\item When a person initially creates an account, all
+UID.info files are searched and if any have MIDs matching
+the new account EMAIL, they are resolved to PIDs.
+\end{itemize}
+
+\end{itemlist}
+\end{indpar}
 
 \subsection{Problem}
 
