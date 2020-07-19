@@ -186,37 +186,43 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \TT{admin} & dir & \STACK{administrative\\files}
 	& login & user & \\ 
 \hline
+\TT{admin/+blocking+} & dir & \STACK{email blocking\\control file}
+	& (editor) & (editor ) & login \\ 
+\hline
+\TT{admin/motd.html} & html & \STACK{message\\of the day}
+	& (editor) & (editor ) & login \\ 
+\hline
 \TT{admin/+lock+} & dir & \STACK{administrative\\lock file}
-	& & \STACK{user\\team} & \\ 
+	& (updaters) & \STACK{user\\team} & \\ 
 \hline
 \TT{admin/browser} & dir & \STACK{browser\\tickets}
-	& login & user & \\ 
-\hline
-\TT{admin/browser/TICKET} & 1-line & \pagref{ADMIN/TICKET/TICKET}
 	& login & & \\ 
 \hline
+\TT{admin/browser/TICKET} & 1-line & \pagref{ADMIN/TICKET/TICKET}
+	& login & & login \\ 
+\hline
 \TT{admin/email} & dir & email files
-	& login & user & \\ 
+	& login & & \\ 
 \hline
 \TT{admin/email/EMAIL} & 1-line & \pagref{ADMIN/EMAIL/EMAIL}
-	& \STACK{user\\team} & & \\ 
+	& \STACK{user\\team} & user & \STACK{login\\user\\team} \\ 
 \hline
 \TT{admin/users} & dir & \STACK{administrative\\user\\directories}
-	& login & user & \\ 
-\hline
-\TT{admin/users/UID} & dir & \STACK{administrative\\UID user files}
 	& user & & \\ 
 \hline
-\FSTACK{admin/}{users/UID/\\PID.log} & lines & \pagref{ADMIN/USERS/UID/PID.LOG}
+\TT{admin/users/UID} & dir & \STACK{administrative\\UID user files}
 	& \STACK{user\\team} & & \\ 
 \hline
-\FSTACK{admin/}{users/UID/\\PID.inactive} & lines
+\FSTACK{admin/}{users/UID/\\PID.log} & json & \pagref{ADMIN/USERS/UID/PID.LOG}
+	& \STACK{user\\team} & \STACK{user\\team} &  \\ 
+\hline
+\FSTACK{admin/}{users/UID/\\PID.inactive} & json
 			& \pagref{ADMIN/USERS/UID/PID.INACTIVE}
 	& team & & \\ 
 \hline
 \FSTACK{admin/}{users/UID/\\UID.info} & json
 	& \pagref{ADMIN/USERS/UID/UID.INFO}
-	& user & & \\ 
+	& user & & user \\ 
 \hline
 \TT{users} & dir & \pagref{USERS} & login & user & \\ 
 \hline
@@ -314,7 +320,7 @@ EMAIL & Email address \\
 the UID is not known when the ticket is created.
 \end{itemize}
 
-\item[\TT{admin/email/EMAIL} (email file):] PID ACOUNT ATIME
+\item[\TT{admin/email/EMAIL} (regular email file):] PID ACOUNT ATIME
 \label{ADMIN/EMAIL/EMAIL} \\
 \begin{tabular}[t]{lp{4.0in}}
 EMAIL & Email address encoded with PHP rawurlencode \\
@@ -322,6 +328,26 @@ PID & Personal user ID \\
 ACOUNT & Number of auto-login periods completed so far. \\
 ATIME & Start time of newest (incomplete) auto-login period. \\
 \end{tabular}
+
+\item[\TT{admin/email/EMAIL} (alternate email file):] - TID ...
+\label{ADMIN/EMAIL/EMAIL-ALTERNATE} \\
+\begin{tabular}[t]{lp{4.0in}}
+EMAIL & Email address encoded with PHP rawurlencode \\
+TID & Team user ID (may be more than one) \\
+\end{tabular}
+\\
+\begin{itemize}
+\item This form of email file is created by the Team Page when
+a team member is assigned the given EMAIL before the member
+has an account.  The TID's list \underline{all} the team user IDs that
+\underline{might} have a member which is this EMAIL and not a PID.
+A TID might be listed whose
+TID.info file no longer contains the EMAIL.
+\\[1ex]
+When the alternate form is converted to a regular form,
+the list of TID's is used to convert any matching EMAIL members
+in TID.info files to PID members.
+\end{itemize}
 
 \item[\TT{admin/users/UID/PID.log} (login log):]~
 \label{ADMIN/USERS/UID/PID.LOG} \\
