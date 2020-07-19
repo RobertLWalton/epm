@@ -2,18 +2,18 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 15 21:20:38 EDT 2020
+// Date:    Sun Jul 19 11:44:01 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
 // make no warranty and accept no liability for EPM.
 
-// See page/parameters.php for EPM server setup
-// instructions.
+// See page/maintenance_parameters.php for EPM server
+// setup instructions.
 
 // The following is included by all EPM pages using:
 //
-//    require __DIR . '/index.php';
+//    require __DIR__ . '/index.php';
 //
 // DO NOT edit his page.  Edit
 //
@@ -61,7 +61,7 @@ if ( $epm_self == "/index.php"
 }
 
 if ( ! is_readable ( "$epm_web/parameters.php" ) )
-    exit ( "UNACCEPTABLE HTTP GET/POST" );
+    exit ( "UNACCEPTABLE HTTP $epm_method: PARAM" );
 
 require "$epm_web/parameters.php";
 
@@ -79,7 +79,7 @@ if ( ! isset ( $_SESSION['EPM_UID'] )
      $epm_self != "/page/login.php"
      &&
      $epm_self != "/page/user.php" )
-    exit ( 'UNACCEPTABLE HTTP GET/POST' );
+    exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
 
 // A session cannot change its IP address if
 // $epm_check_ipaddr is true (see parameters.php).
@@ -131,7 +131,7 @@ function ERROR ( $message )
 function EPM_ERROR_HANDLER
 	( $errno, $message, $file, $line )
 {
-    global $epm_data;
+    global $epm_data, $epm_self;
 
     if ( error_reporting() == 0 )
         return true;
@@ -162,7 +162,16 @@ function EPM_ERROR_HANDLER
 
     $stack = debug_backtrace
         ( DEBUG_BACKTRACE_IGNORE_ARGS );
-    $m = "$class $errno $message" . PHP_EOL;
+    if ( isset ( $_SESSION['EPM_UID'] ) )
+        $m = $_SESSION['EPM_UID'];
+    elseif ( isset ( $_SESSION['EPM_EMAIL'] ) )
+        $m = $_SESSION['EPM_EMAIL'];
+    else
+        $m = 'UNKNOWN';
+    if ( isset ( $_SESSION['EPM_TIME'] ) )
+        $m .= '(' . $_SESSION['EPM_TIME'] . ')';
+    $m = "$class $errno $epm_self $m" . PHP_EOL
+       . "  $message" . PHP_EOL;
     foreach ( $stack as $line )
     {
 	if ( ! isset ( $line['file'] ) ) continue;
@@ -201,24 +210,16 @@ set_error_handler ( 'EPM_ERROR_HANDLER' );
 // written to S = "admin/users/UID/session_id"
 // and the mod-time of S identifies the session.
 //
-if ( isset ( $_SESSION['EPM_SESSION'] ) )
+if ( isset ( $_SESSION['EPM_ABORT'] ) )
 {
-    $epm_session = & $_SESSION['EPM_SESSION'];
+    $epm_session = & $_SESSION['EPM_ABORT'];
         // This is [S,S-MOD-TIME].
     $our_time = $epm_session[1];
     $cur_time = filemtime
         ( "$epm_data/{$epm_session[0]}" );
     if ( $our_time != $cur_time )
-    {
-        $our_time = strftime
-	    ( $epm_time_format, $our_time );
-        $cur_time = strftime
-	    ( $epm_time_format, $cur_time );
-	exit ( "THIS SESSION (started $our_time)" .
-	       " HAS BEEN ABORTED" . 
-	       " BY A LATER SESSION" .
-	       " (started $cur_time)" );
-    }
+        require "$epm_home/include/epm_abort.php";
+	// This does not return.
 }
 
 // DEBUG, LOCK, and UNLOCK functions are in

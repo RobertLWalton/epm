@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 16 22:16:55 EDT 2020
+    // Date:	Sun Jul 19 11:44:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -49,7 +49,7 @@
 
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
-    $STIME = $_SESSION['EPM_SESSION_TIME'];
+    $STIME = $_SESSION['EPM_TIME'];
     $IPADDR = $_SESSION['EPM_IPADDR'];
     $edit = ( $new_user ? 'profile' : NULL );
         // One of: NULL (just view), 'emails', or
@@ -368,7 +368,7 @@
 	    $fmtime = @filemtime ( "$epm_data/$f" );
 	    if ( $fmtime === false )
 		ERROR ( "could not stat $f" );
-	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
+	    $_SESSION['EPM_ABORT'] = [$f,$fmtime];
 
 	    $r = @file_put_contents
 		( "$epm_data/login.log",

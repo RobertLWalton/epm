@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 10 05:41:03 EDT 2020
+    // Date:	Sun Jul 19 11:44:13 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -36,8 +36,7 @@
     //    STIME     Session Time.  The time of the
     //		    request that created the current
     //		    session, as stored in $_SESSION
-    //		    ['EPM_SESSION_TIME'] in $epm_time_
-    //		    format.
+    //		    ['EPM_TIME'] in $epm_time_format.
     //
     //    ATIME	    Start time of auto-login period.
     //
@@ -173,18 +172,11 @@
 	    exit;
 	}
 
-	$_SESSION['EPM_SESSION_TIME'] =
+	$_SESSION['EPM_TIME'] =
 	    strftime ( $epm_time_format,
 	               $_SERVER['REQUEST_TIME'] );
 	$_SESSION['EPM_IPADDR'] =
 	    $_SERVER['REMOTE_ADDR'];
-
-	file_put_contents
-	    ( "$epm_data/error.log",
-	      'NEW_SESSION ' .
-	      $_SESSION['EPM_SESSION_TIME'] . ' ' .
-	      $_SESSION['EPM_IPADDR'] . PHP_EOL,
-	      FILE_APPEND );
     }
     else
 	DEBUG ( 'POST ' . json_encode ( $_POST ) );
@@ -195,7 +187,7 @@
     $uid = NULL;
     $acount = NULL;
     $atime = NULL;
-    $STIME = $_SESSION['EPM_SESSION_TIME'];
+    $STIME = $_SESSION['EPM_TIME'];
 
     // Reply to POST from xhttp.
     //
@@ -401,7 +393,7 @@
 	    $fmtime = @filemtime ( "$epm_data/$f" );
 	    if ( $fmtime === false )
 		ERROR ( "cannot stat $f" );
-	    $_SESSION['EPM_SESSION'] = [$f,$fmtime];
+	    $_SESSION['EPM_ABORT'] = [$f,$fmtime];
 
 	    $IPADDR = $_SESSION['EPM_IPADDR'];
 	    $r = @file_put_contents
