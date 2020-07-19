@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul 19 12:55:17 EDT 2020
+// Date:    Sun Jul 19 13:40:04 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -308,23 +308,23 @@ if ( in_array ( $epm_page_type,
 if ( ! isset ( $_POST['xhttp'] )
      &&
      ! isset ( $epm_pdf ) )
+{
 
-    // This goes to the given page while resetting the
-    // current history so if you hit the back button you
-    // to get to the current history will produce a
-    // 'GET' to the current page, and NOT a 'POST' if
-    // that was the last thing you did on the current
-    // page.
-    //
+    $back_page = "$epm_root/$epm_self";
+    if ( $epm_page_type == '+problem+' )
+        $back_page = "$epm_root/page/problem.php"
+	           . "?problem="
+		   . $_REQUEST['problem'];
+    elseif ( $epm_page_type == '+main+' )
+        $back_page = "$epm_root/page/login.php";
+	         
     echo <<<EOT
     <script>
     history.replaceState
-	( null, document.title, location.href );
+	( null, document.title, '$back_page' );
 	// This causes the retry, back, and forward
-	// buttons to issue a GET to the current page
-	// and not a POST, even if a POST was the
-	// request that created the current version
-	// of the page.
+	// buttons to issue a GET to the $back_page.
+	// This prevents problems with wrong $ID's.
 
     // See HELP and VIEW below.
     //
@@ -357,5 +357,6 @@ if ( ! isset ( $_POST['xhttp'] )
     }
     </script>
 EOT;
+}
 
 ?>
