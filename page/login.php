@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 19 12:45:47 EDT 2020
+    // Date:	Sun Jul 19 17:27:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -123,6 +123,7 @@
     // MANUAL_ID:
     //     * Send 'op=MANUAL&value=EMAIL'
     //     * Receive one of:
+    //           'BAD_TEAM_ID': go to FAIL
     //           'BAD_EMAIL': go to FAIL
     //           'BLOCKED_EMAIL': go to FAIL
     //           'NEW': go to CONFIRM
@@ -332,7 +333,23 @@
     //
     if ( $op == 'MANUAL' )
     {
-	$email = trim ( $_POST['value'] );
+	$lname = trim ( $_POST['value'] );
+	if ( preg_match ( '/^([^:]*):(.*)$/',
+	                  $lname, $matches ) )
+	{
+	    $tid = $matches[1];
+	    $email = $matches[2];
+	    if ( ! preg_match ( $epm_name_re,
+	                        $tid ) )
+		reply ( 'BAD_TEAM_ID' );
+	}
+	else
+	{
+	    $tid = '-';
+	    $email = $lname;
+	}
+	DEBUG ( "LNAME $tid $email" );
+
 	$e = filter_var
 	    ( $email, FILTER_SANITIZE_EMAIL );
 
@@ -423,7 +440,7 @@
     button, input, mark, span, pre {
         font-size: var(--large-font-size);
     }
-    #get_email, #show_email {
+    #get_lname, #show_lname {
 	background-color: #96F9F3;
 	padding: var(--indent);
         font-size: var(--large-font-size);
@@ -464,13 +481,17 @@ EOT;
     }
 ?>
 
-<div id='get_email' style.display='none'>
+<div id='get_lname' style.display='none'>
 <table style='width:100%'>
 <tr><td style='width:90%'>
-<input type='text' id='email_in'
-       placeholder='Enter Email Address'
+<input type='text' id='lname_in'
+       placeholder=
+           'Enter Login Name:   [Team ID:]Email Address'
        autofocus
-       title='address (to be) associated with account'>
+       size='40'
+       title='[Team-ID:]Email-Address'>
+<button type='button' onclick='GOT_LNAME()'>
+    Submit</button>
 </td><td style='width:10%;text-align:right'>
 <strong>Help &rarr;</strong>
 <button type='button' onclick='HELP("login-page")'>
@@ -484,11 +505,11 @@ EOT;
         See Guide</button>
 </div>
 
-<div id='show_email' style.display='none'>
+<div id='show_lname' style.display='none'>
 <table style='width:100%'>
 <tr><td style='width:90%'>
-<strong>Email:<pre>   </pre>
-<span id='email_out'></span></strong>
+<strong>Login Name:<pre>   </pre>
+<span id='lname_out'></span></strong>
 </td><td style='width:10%;text-align:right'>
 <button type='button' onclick='HELP("login-page")'>
 ?</button>
@@ -496,13 +517,13 @@ EOT;
 <br>
 <button type='button'
         onclick="location.reload(true)">
-Change Email Address
+Change Login Name
 </button>
 </div>
 
 <div id='get_cnum' style.display='none'>
 A Confirmation Number has been sent
-to the above Email Address.
+to the Email Address.
 <br>
 <br>
 Please <input type='text' size='40' id='cnum_in'
@@ -532,10 +553,10 @@ var LOG = function(message) {};
 var ID = '<?php echo $ID; ?>';
 var xhttp = new XMLHttpRequest();
 var storage = window.localStorage;
-var get_email = document.getElementById("get_email");
-var email_in = document.getElementById("email_in");
-var email_out = document.getElementById("email_out");
-var show_email = document.getElementById("show_email");
+var get_lname = document.getElementById("get_lname");
+var lname_in = document.getElementById("lname_in");
+var lname_out = document.getElementById("lname_out");
+var show_lname = document.getElementById("show_lname");
 var get_cnum = document.getElementById("get_cnum");
 var cnum_in = document.getElementById("cnum_in");
 
@@ -600,9 +621,9 @@ function MALFORMED_RESPONSE ( when )
 }
 
 let PATH = location.pathname;
-var EMAIL, BID;
+var LNAME, BID;
 
-var GET_EMAIL_ENABLED = false;
+var GET_LNAME_ENABLED = false;
 var GET_CNUM_ENABLED = false;
     // These are set to true to enable callback, and
     // set false just before making callback, to avoid
@@ -610,37 +631,38 @@ var GET_CNUM_ENABLED = false;
 
 // BEGIN:
 //
-GET_EMAIL_ENABLED = true;
-get_email.style.display = 'block';
-show_email.style.display = 'none';
+GET_LNAME_ENABLED = true;
+get_lname.style.display = 'block';
+show_lname.style.display = 'none';
 get_cnum.style.display = 'none';
 
-function EMAIL_KEYDOWN ( event )
+function LNAME_KEYDOWN ( event )
 {
     if ( event.code == 'Enter'
          &&
-	 GET_EMAIL_ENABLED )
-    {
-	var value = email_in.value.trim();
-	if ( /^\S+@\S+\.\S+$/.test(value) )
-	{
-	    GET_EMAIL_ENABLED = false;
-	    GOT_EMAIL ( value );
-	}
-	else if ( value != '' )
-	    ALERT ( value + " is not a valid" +
-	            " email address" );
-    }
+	 GET_LNAME_ENABLED )
+        GOT_LNAME();
 }
-email_in.addEventListener ( 'keydown', EMAIL_KEYDOWN );
+lname_in.addEventListener ( 'keydown', LNAME_KEYDOWN );
 
-function GOT_EMAIL ( email )
+function GOT_LNAME()
 {
-    EMAIL = email;
-    get_email.style.display = 'none';
-    email_out.innerText = EMAIL;
-    show_email.style.display = 'block';
-    BID = storage.getItem(PATH + '\0' + EMAIL);
+    lname = lname_in.value.trim();
+    if ( /^\S+@\S+\.\S+$/.test(lname) )
+	GET_LNAME_ENABLED = false;
+    else
+    {
+	if ( lname != '' )
+	    ALERT ( lname + " is badly formed" +
+			    " login name" );
+	return;
+    }
+
+    LNAME = lname;
+    get_lname.style.display = 'none';
+    lname_out.innerText = LNAME;
+    show_lname.style.display = 'block';
+    BID = storage.getItem(PATH + '\0' + LNAME);
     if ( BID == null )
         MANUAL_ID();
     else
@@ -650,26 +672,30 @@ function GOT_EMAIL ( email )
 function MANUAL_ID()
 {
     SEND ( "op=MANUAL&value="
-           + encodeURIComponent ( EMAIL ),
+           + encodeURIComponent ( LNAME ),
            MANUAL_RESPONSE,
-	   'sending ' + EMAIL + ' to server' );
+	   'sending ' + LNAME + ' to server' );
 }
 
 function MANUAL_RESPONSE ( item )
 {
     if ( item.length != 1 )
         MALFORMED_RESPONSE
-	    ( 'after sending ' + EMAIL + ' to server' );
+	    ( 'after sending ' + LNAME + ' to server' );
+    else if ( item[0] == 'BAD_TEAM_ID' )
+        FAIL ( LNAME + ' contains badly formed'
+	             + ' team ID' );
     else if ( item[0] == 'BAD_EMAIL' )
-        FAIL ( EMAIL +
-	       ' is not a valid email address' );
+        FAIL ( LNAME + ' contains a badly formed'
+	             + ' email address' );
     else if ( item[0] == 'BLOCKED_EMAIL' )
-        FAIL ( EMAIL + ' is blocked' );
+        FAIL ( LNAME + ' contains a blocked email'
+	             + ' address' );
     else if ( item[0] == 'NEW' )
         CONFIRM();
     else
         MALFORMED_RESPONSE
-	    ( 'after sending ' + EMAIL + ' to server' );
+	    ( 'after sending ' + LNAME + ' to server' );
 };
 
 function CONFIRM()
@@ -705,7 +731,7 @@ function GOT_CNUM ( cnum )
 
 function AUTO_ID()
 {
-    storage.removeItem ( PATH + '\0' + EMAIL );
+    storage.removeItem ( PATH + '\0' + LNAME );
     SEND ( 'op=AUTO&value=' + BID,
            AUTO_RESPONSE, 'auto-login' );
 }
@@ -717,7 +743,7 @@ function AUTO_RESPONSE ( item )
 	BID = item[1];
 	if ( ! /^[a-fA-F0-9]{32}$/.test(BID) )
 	    MALFORMED_RESPONSE ( 'to auto-login' );
-	storage.setItem ( PATH + '\0' + EMAIL, BID );
+	storage.setItem ( PATH + '\0' + LNAME, BID );
 
 	try {
 	    window.location.assign
@@ -744,7 +770,8 @@ function AUTO_RESPONSE ( item )
         MANUAL_ID();
     }
     else if ( item[0] == 'BLOCKED_EMAIL' )
-        FAIL ( EMAIL + ' is blocked' );
+        FAIL ( LNAME + ' contains a blocked email'
+	             + ' address' );
     else
 	MALFORMED_RESPONSE ( 'to auto-login' );
 }

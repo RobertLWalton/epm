@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 15 01:59:22 EDT 2020
+// Date:    Sun Jul 19 17:27:23 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -69,7 +69,7 @@ $epm_priv_prefix = '+ owner walton';
     // Only `owner' privilege is allowed.
 
 $epm_debug = preg_match
-    ( '/(user|project|list|favorites|manage)/',
+    ( '/(login|user|project|manage)/',
       $epm_self );
     // True to turn debugging on; false for off.
 
