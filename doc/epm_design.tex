@@ -195,6 +195,9 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \TT{admin/+lock+} & dir & \STACK{administrative\\lock file}
 	& (updaters) & \STACK{user\\team} & \\ 
 \hline
+\TT{admin/+actions+} & lines & \STACK{list of\\adminstrative\\actions}
+	& (updaters) & \STACK{user\\team} & view \\ 
+\hline
 \TT{admin/browser} & dir & \STACK{browser\\tickets}
 	& login & & \\ 
 \hline
@@ -223,6 +226,9 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \FSTACK{admin/}{users/UID/\\UID.info} & json
 	& \pagref{ADMIN/USERS/UID/UID.INFO}
 	& user & & user \\ 
+\hline
+\FSTACK{admin/}{users/UID/\\+actions+} & lines & \pagref{ADMINSTRATIVE-ACTIONS}
+	& (updaters) & \STACK{user\\team} & view \\ 
 \hline
 \TT{users} & dir & \pagref{USERS} & login & user & \\ 
 \hline
