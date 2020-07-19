@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 19 17:27:05 EDT 2020
+    // Date:	Sun Jul 19 18:16:16 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -225,10 +225,13 @@
     // Read $epm_data/admin/email/$email(encoded) if it
     // exists and if read set $uid, $acount, $atime.
     // If the file exists, calculate whether auto-login
-    // period has expired.  If yes, update the file to
-    // have a new auto-login period beginning at STIME.
+    // period has expired using $STIME.  If yes, then
+    // if $t == 'c' update the file to have a new
+    // auto-login period beginning at STIME and return
+    // false, but if $t != 'c' just return true.  If no,
+    // return false.
     //
-    function read_email_file ( $email )
+    function read_email_file ( $t, $email )
     {
 	global $epm_data, $uid, $acount, $atime,
 	       $STIME, $epm_expiration_times;
@@ -241,7 +244,7 @@
 	       . rawurlencode ( $email );
 
 	if ( ! is_readable ( "$epm_data/$efile" ) )
-	    return;
+	    return false;
 
 	$c = @file_get_contents ( "$epm_data/$efile" );
 	if ( $c === false )
@@ -263,22 +266,21 @@
 	$stime = strtotime ( $STIME );
 	if ( $stime > $atime + $etimes[$m] )
 	{
+	    if ( $c != 'c' ) return true;
 	    ++ $acount;
 	    $r = file_put_contents
 		( "$epm_data/$efile",
 		  "$uid $acount $STIME" );
 	    if ( $r === false )
 		ERROR ( "cannot write $efile" );
-	    return true;
 	}
-	else
-	    return false;
+	return false;
     }
 
     // Create new BID and its BID-FILE and return
     // new bid.
     //
-    function new_bid ( $email )
+    function new_bid ( $t, $tid, $email )
     {
 	global $epm_data;
 
@@ -298,7 +300,7 @@
 	    }
 	    file_put_contents
 	        ( "$epm_data/$bfile",
-	          $email . PHP_EOL );
+	          "$t $tid $email" . PHP_EOL );
 	    return $bid;
 	}
     }
@@ -307,11 +309,14 @@
     // confirmation number and BID-FILE.  $op is
     // NEW or EXPIRED.
     //
-    function confirmation_reply ( $email, $op )
+    function confirmation_reply ( $tid, $email, $op )
     {
-	$bid = new_bid ( $email );
+        global $epm_root;
 
-	$sname = $_SERVER['SERVER_NAME'];
+	$bid = new_bid ( 'c', $tid, $email );
+
+	$sname = $_SERVER['SERVER_NAME']
+	       . $epm_root;
 	$r = mail ( $email,
 	       "Your EPM Confirmation Number",
 	       "Your EPM $sname confirmation number" .
@@ -362,7 +367,7 @@
 	elseif ( is_blocked ( $email ) )
 	    reply ( 'BLOCKED_EMAIL' );
 	else
-	    confirmation_reply ( $email, 'NEW' );
+	    confirmation_reply ( $tid, $email, 'NEW' );
     }
     elseif ( $op == 'AUTO' )
     {
@@ -381,12 +386,14 @@
 		    " $bfile" );
 	@unlink ( "$epm_data/$bfile" );
 
-	$email = trim ( $c );
+	$c = trim ( $c );
+	list ( $t, $tid, $email ) = explode ( ' ', $c );
 	if ( is_blocked ( $email ) )
 	    reply ( 'BLOCKED_EMAIL' );
 
-	if ( read_email_file ( $email ) )
-	    confirmation_reply ( $email, 'EXPIRED' );
+	if ( read_email_file ( $t, $email ) )
+	    confirmation_reply
+	        ( $tid, $email, 'EXPIRED' );
 
 	if ( isset ( $uid ) )
 	{
@@ -422,7 +429,7 @@
 	    $next_page = 'user.php';
 
 	$_SESSION['EPM_EMAIL'] = $email;
-	$bid = new_bid ( $email );
+	$bid = new_bid ( 'a', $tid, $email );
 	reply ( "RENEW $bid $next_page" );
     }
     elseif ( $epm_method == 'POST' )
