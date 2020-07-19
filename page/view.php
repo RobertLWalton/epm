@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 12 17:21:07 EDT 2020
+    // Date:	Sun Jul 19 12:48:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -33,10 +33,8 @@
     //
     //	    listname=PROJECT:BASENAME
 
-    if ( $_SERVER['REQUEST_METHOD'] == 'GET' )
-        $epm_page_type = '+init+';
-    else
-        $epm_page_type = '+view+';
+    $epm_page_type = '+view+';
+    $epm_page_init = true;
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
@@ -50,15 +48,6 @@
 
     $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
-
-    if ( $epm_method == 'GET' )
-    {
-        require "$epm_home/include/epm_random.php";
-        $_SESSION['EPM_ID_GEN']['+view+'] =
-	    init_id_gen();
-	$ID = bin2hex
-	    ( $_SESSION['EPM_ID_GEN']['+view+'][0] );
-    }
 
     require "$epm_home/include/epm_user.php";
     require "$epm_home/include/epm_list.php";

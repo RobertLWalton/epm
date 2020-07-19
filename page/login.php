@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 19 11:44:13 EDT 2020
+    // Date:	Sun Jul 19 12:45:47 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -149,21 +149,15 @@
     //     * Output message
     //     * reload
 
-    if ( $_SERVER['REQUEST_METHOD'] == 'GET' )
-        $epm_page_type = '+init+';
-    else
-        $epm_page_type = '+main+';
+    $epm_page_type = '+main+';
+    $epm_page_init = true;
+        // This causes index.php to require
+	// epm_random.php.
     require __DIR__ . '/index.php';
-    require "$epm_home/include/epm_random.php";
     // require "$epm_home/include/debug_info.php";
 
     if ( $epm_method == 'GET' )
     {
-        $_SESSION['EPM_ID_GEN']['+main+'] =
-	    init_id_gen();
-	$ID = bin2hex
-	    ( $_SESSION['EPM_ID_GEN']['+main+'][0] );
-
 	if ( isset ( $_SESSION['EPM_UID'] ) )
 	{
 	    header ( "location:" .

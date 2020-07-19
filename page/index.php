@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul 19 11:44:01 EDT 2020
+// Date:    Sun Jul 19 12:55:17 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -239,43 +239,70 @@ if ( in_array ( $epm_page_type,
     if ( $epm_page_type == '+problem+' )
     {
         if ( ! isset ( $_REQUEST['problem'] ) )
-	    exit ( 'UNACCEPTABLE HTTP GET/POST' );
+	    exit ( "UNACCEPTABLE HTTP $epm_method:" .
+	           " PROBLEM" );
 	$id_type = $_REQUEST['problem'];
     }
     else
         $id_type = $epm_page_type;
-    if ( ! isset ( $_SESSION['EPM_ID_GEN']
-			    [$id_type] ) )
-	exit ( 'UNACCEPTABLE HTTP GET/POST' );
-    $id_gen = & $_SESSION['EPM_ID_GEN'][$id_type];
 
-    $ID = bin2hex ( $id_gen[0] );
-    if ( ! isset ( $_REQUEST['id'] ) )
-    {
-        WARN ( "$php_self is missing ID" );
-	exit ( 'UNACCEPTABLE HTTP REQUEST:' .
-	       ' missing ID' );
-    }
-    elseif ( $_REQUEST['id'] != $ID )
-    {
-	if ( isset ( $_POST['xhttp'] ) )
-	    exit ( 'this tab is orphaned;' .
-	           ' close this tab' );
-	header
-	    ( "Location: $epm_root/page/orphan.html" );
-        exit;
-    }
+    if ( $epm_method == 'GET' )
+	$_SESSION['EPM_PAGE'][$id_type] = $epm_self;
+    elseif ( ! isset ( $_SESSION['EPM_PAGE']
+                                [$id_type] ) )
+	exit ( "UNACCEPTABLE HTTP $epm_method:" .
+	       " NO PAGE" );
+    elseif (    $_SESSION['EPM_PAGE'][$id_type]
+             != $epm_self )
+	exit ( "UNACCEPTABLE HTTP $epm_method: PAGE" );
 
-    $id_gen[0] = substr
-        ( @openssl_encrypt
-          ( $id_gen[0], 'aes-128-cbc', $id_gen[1],
-	    OPENSSL_RAW_DATA, $id_gen[2] ),
-	  0, 16 );
-	// The @ suppresses the warning about the empty
-	// iv.  openssl_encrypt returns 32 bytes, the
-	// last 16 of which are an encryption of the
-	// first 16.
-    $ID = bin2hex ( $id_gen[0] );
+    if ( isset ( $epm_page_init ) )
+    {
+	require "$epm_home/include/epm_random.php";
+	    $_SESSION['EPM_ID_GEN'][$id_type] =
+		init_id_gen();
+	    $ID = bin2hex
+		( $_SESSION['EPM_ID_GEN']
+		           [$id_type][0] );
+    }
+    elseif ( ! isset ( $_SESSION['EPM_ID_GEN']
+			        [$id_type] ) )
+	exit ( "UNACCEPTABLE HTTP $epm_method:" .
+	       " ID_GEN" );
+    else
+    {
+	$id_gen = & $_SESSION['EPM_ID_GEN'][$id_type];
+
+	$ID = bin2hex ( $id_gen[0] );
+	if ( ! isset ( $_REQUEST['id'] ) )
+	{
+	    WARN ( "$php_self is missing ID" );
+	    exit ( "UNACCEPTABLE HTTP $epm_method:" .
+		   " NO ID" );
+	}
+	elseif ( $_REQUEST['id'] != $ID )
+	{
+	    if ( isset ( $_POST['xhttp'] ) )
+		exit ( 'this tab is orphaned;' .
+		       ' close this tab' );
+	    header
+		( "Location:" .
+		  " $epm_root/page/orphan.html" );
+	    exit;
+	}
+
+	$id_gen[0] = substr
+	    ( @openssl_encrypt
+	      ( $id_gen[0], 'aes-128-cbc', $id_gen[1],
+		OPENSSL_RAW_DATA, $id_gen[2] ),
+	      0, 16 );
+	    // The @ suppresses the warning about the
+	    // empty iv.  openssl_encrypt returns 32
+	    // bytes, the last 16 of which are an
+	    // encryption of the first 16.
+
+	$ID = bin2hex ( $id_gen[0] );
+    }
 }
 
 if ( ! isset ( $_POST['xhttp'] )

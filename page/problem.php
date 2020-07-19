@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun 29 14:43:52 EDT 2020
+    // Date:	Sun Jul 19 12:45:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -15,9 +15,8 @@
     if ( $_SERVER['REQUEST_METHOD'] == 'GET'
          &&
 	 ! isset ( $_GET['id'] ) )
-        $epm_page_type = '+init+';
-    else
-        $epm_page_type = '+problem+';
+        $epm_page_init = true;
+    $epm_page_type = '+problem+';
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
@@ -293,7 +292,7 @@
         // True to ask whether current problem is to be
 	// deleted.
 
-    if ( $epm_page_type == '+init+' )
+    if ( isset ( $epm_page_init ) )
     {
         if ( isset ( $work['DIR'] )
 	     &&
@@ -321,12 +320,6 @@
 	    // receive orphaned response
 	$work = [];
 	$run = [];
-
-        require "$epm_home/include/epm_random.php";
-        $_SESSION['EPM_ID_GEN'][$problem] =
-	    init_id_gen();
-	$ID = bin2hex
-	    ( $_SESSION['EPM_ID_GEN'][$problem][0] );
     }
 
     // Process file deletions for other posts.
