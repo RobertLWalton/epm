@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 14 15:03:50 EDT 2020
+    // Date:	Mon Jul 20 04:45:34 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -2441,11 +2441,9 @@ EOT;
 
 	var xhttp = new XMLHttpRequest();
 	var message_sent = null;
-	var response_re = /^(\S+) (\S+)\s([^]*)$/;
-	    // Backslash n is turned into a newline
-	    // during initial character scanning
-	    // before identifiers, comments, etc are
-	    // parsed.
+	var response_re = /^(\S+) (\S+)\s([\s\S]*)$/;
+	    // [\s\S] matches any character including
+	    // new lines.
 	function SEND ( message, callback )
 	{
 	    xhttp.onreadystatechange = function() {

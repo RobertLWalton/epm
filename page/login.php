@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 19 18:16:16 EDT 2020
+    // Date:	Mon Jul 20 05:14:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -123,9 +123,11 @@
     // MANUAL_ID:
     //     * Send 'op=MANUAL&value=EMAIL'
     //     * Receive one of:
-    //           'BAD_TEAM_ID': go to FAIL
+    //           'BAD_TID': go to FAIL
     //           'BAD_EMAIL': go to FAIL
     //           'BLOCKED_EMAIL': go to FAIL
+    //           'NO_TEAM': go to FAIL
+    //           'NO_USER': go to FAIL
     //           'NEW': go to CONFIRM
     // AUTO_ID:
     //     * Send 'op=AUTO&value=BID'
@@ -224,12 +226,15 @@
 
     // Read $epm_data/admin/email/$email(encoded) if it
     // exists and if read set $uid, $acount, $atime.
-    // If the file exists, calculate whether auto-login
-    // period has expired using $STIME.  If yes, then
-    // if $t == 'c' update the file to have a new
-    // auto-login period beginning at STIME and return
-    // false, but if $t != 'c' just return true.  If no,
-    // return false.
+    // Return true if the auto-login period has expired
+    // and confirmation is needed, and false otherwise.
+    //
+    // More specifically, if the email file exists,
+    // calculate whether auto-login period has expired
+    // using $STIME.  If yes, then if $t == 'c' update
+    // the email file to have a new auto-login period
+    // beginning at STIME and return false, but if
+    // $t != 'c' just return true.  If no, return false.
     //
     function read_email_file ( $t, $email )
     {
@@ -306,8 +311,8 @@
     }
 
     // Output NEW or EXPIRED response, creating
-    // confirmation number and BID-FILE.  $op is
-    // NEW or EXPIRED.
+    // confirmation number and BID-FILE, and mailing
+    // confirmation number.  $op is NEW or EXPIRED.
     //
     function confirmation_reply ( $tid, $email, $op )
     {
@@ -339,14 +344,13 @@
     if ( $op == 'MANUAL' )
     {
 	$lname = trim ( $_POST['value'] );
-	if ( preg_match ( '/^([^:]*):(.*)$/',
+	if ( preg_match ( '/^([^:]+):(.+)$/',
 	                  $lname, $matches ) )
+	    // We do not allow $tid or $email
+	    // to be empty.
 	{
 	    $tid = $matches[1];
 	    $email = $matches[2];
-	    if ( ! preg_match ( $epm_name_re,
-	                        $tid ) )
-		reply ( 'BAD_TEAM_ID' );
 	}
 	else
 	{
@@ -366,8 +370,20 @@
 	    reply ( 'BAD_EMAIL' );
 	elseif ( is_blocked ( $email ) )
 	    reply ( 'BLOCKED_EMAIL' );
-	else
-	    confirmation_reply ( $tid, $email, 'NEW' );
+
+	if ( $tid != '-' )
+	{
+	    if ( ! preg_match ( $epm_name_re,
+	                        $tid ) )
+		reply ( 'BAD_TID' );
+	    $f = "admin/users/$tid/+read-write+";
+	    if ( ! is_readable ( "$epm_data/$f" ) )
+	        reply ( 'NO_TEAM' );
+	    read_email_file ( 'a', $email );
+	    if ( ! isset ( $uid ) )
+	        reply ( 'NO_USER' );
+	}
+	confirmation_reply ( $tid, $email, 'NEW' );
     }
     elseif ( $op == 'AUTO' )
     {
@@ -628,7 +644,9 @@ function MALFORMED_RESPONSE ( when )
 }
 
 let PATH = location.pathname;
-var LNAME, BID;
+var LNAME, TID, EMAIL, BID;
+let lname_re = /^([^:]+):(.+)$/;
+    // We do not allow TID or EMAIL to be empty.
 
 var GET_LNAME_ENABLED = false;
 var GET_CNUM_ENABLED = false;
@@ -666,6 +684,14 @@ function GOT_LNAME()
     }
 
     LNAME = lname;
+    TID = '';
+    EMAIL = LNAME;
+    let matches = lname.match ( lname_re );
+    if ( matches != null )
+    {
+        TID = matches[1];
+	EMAIL = matches[2];
+    }
     get_lname.style.display = 'none';
     lname_out.innerText = LNAME;
     show_lname.style.display = 'block';
@@ -684,20 +710,37 @@ function MANUAL_ID()
 	   'sending ' + LNAME + ' to server' );
 }
 
+function NO_USER_FAIL()
+{
+    FAIL ( EMAIL + ' is not an email address of'
+		 + ' an existing personal account;'
+		 + ' before you can log into the team'
+		 + ' you must do the following:'
+		 + ' if you have an account, log'
+		 + ' into it and add ' + EMAIL
+		 + ' to it; otherwise use ' + EMAIL
+		 + ' by itself as a login name and'
+		 + ' create a new personal account'
+		 + ' for yourself' );
+}
+
 function MANUAL_RESPONSE ( item )
 {
     if ( item.length != 1 )
         MALFORMED_RESPONSE
 	    ( 'after sending ' + LNAME + ' to server' );
-    else if ( item[0] == 'BAD_TEAM_ID' )
-        FAIL ( LNAME + ' contains badly formed'
-	             + ' team ID' );
+    else if ( item[0] == 'BAD_TID' )
+        FAIL ( TID + ' is badly formatted team ID' );
     else if ( item[0] == 'BAD_EMAIL' )
-        FAIL ( LNAME + ' contains a badly formed'
-	             + ' email address' );
-    else if ( item[0] == 'BLOCKED_EMAIL' )
-        FAIL ( LNAME + ' contains a blocked email'
+        FAIL ( EMAIL + ' is baddly formatted email'
 	             + ' address' );
+    else if ( item[0] == 'BLOCKED_EMAIL' )
+        FAIL ( EMAIL + ' is a blocked email address' );
+    else if ( item[0] == 'NO_TEAM' )
+        FAIL ( TID + ' does not name an existing'
+	           + ' team' );
+    else if ( item[0] == 'NO_USER' )
+        NO_USER_FAIL();
     else if ( item[0] == 'NEW' )
         CONFIRM();
     else
