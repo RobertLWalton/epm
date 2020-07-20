@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 28 04:56:13 EDT 2020
+// Date:    Mon Jul 20 16:35:34 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -53,6 +53,7 @@ echo "<title>$title</title>";
 	--bg-tan: #F2D9D9;
 	--bg-dark-tan: #E5B3B3;
 	--bg-green: #C0FFC0;
+	--bg-dark-green: #00FF00;
 	--bg-blue: #B3E6FF;
 	--bg-dark-blue: #80D4FF;
 	--bg-violet: #FFCCFF;
@@ -68,6 +69,9 @@ echo "<title>$title</title>";
 
     .indented {
 	margin-left: var(--indent);
+    }
+    .center {
+        text-align: center;
     }
     strong {
         font-size: var(--large-font-size);

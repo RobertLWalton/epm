@@ -53,25 +53,6 @@
     require "$epm_home/include/epm_list.php";
     require "$epm_home/include/epm_view.php";
 
-    // Get list of users.
-    //
-    function read_users ()
-    {
-        global $epm_data, $epm_name_re;
-
-	$r = [];
-	$d = '/admin/users';
-	$c = @scandir ( "$epm_data/$d" );
-	if ( $c === false )
-	    ERROR ( "cannot read $d" );
-	foreach ( $c as $u )
-	{
-	    if ( preg_match ( $epm_name_re, $u ) )
-		$r[] = $u;
-	}
-	return $r;
-    }
-
     if ( ! isset ( $_SESSION['EPM_VIEW'] ) )
         $_SESSION['EPM_VIEW'] = [ 'LISTNAME' => NULL ];
     $listname = & $_SESSION['EPM_VIEW']['LISTNAME'];

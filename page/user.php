@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 20 14:27:42 EDT 2020
+    // Date:	Mon Jul 20 16:15:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -480,9 +480,25 @@
 <?php require "$epm_home/include/epm_head.php"; ?>
 
 <style>
+    div.users, div.teams {
+        width: 50%;
+	float: left;
+	padding: 0px;
+    }
+    div.user-header {
+	background-color: var(--bg-dark-green);
+	padding: 10px 0px 0px 0px;
+	text-align: center;
+	border: 1px solid black;
+	border-radius: var(--radius);
+	border-collapse: collapse;
+    }
     div.email-addresses {
 	background-color: var(--bg-green);
 	padding: 10px 0px 0px 0px;
+	border: 1px solid black;
+	border-radius: var(--radius);
+	border-collapse: collapse;
     }
     div.email-addresses * {
 	padding-top: var(--pad);
@@ -495,8 +511,11 @@
 	padding-bottom: 2px;
     }
     div.user-profile {
-	background-color: var(--bg-tan);
+	background-color: var(--bg-dark-green);
 	padding: 10px 0px 0px 0px;
+	border: 1px solid black;
+	border-radius: var(--radius);
+	border-collapse: collapse;
     }
     div.user-profile * {
         font-size: var(--large-font-size);
@@ -507,6 +526,11 @@
     }
     td {
 	font-family: "Courier New", Courier, monospace;
+    }
+
+    div.terms {
+	border-radius: var(--radius);
+	border-collapse: collapse;
     }
 
 </style>
@@ -545,12 +569,54 @@ EOT;
 
     echo <<<EOT
     <div class='manage'>
-    <form method='POST' action='user.php'>
+    <form method='GET'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
     <td>
+EOT;
+    if ( ! isset ( $edit ) )
+        echo <<<EOT
+	<strong>Go To</strong>
+	<button type="submit"
+		formaction="project.php">
+		Project</button>
+	<button type="submit"
+		formaction="manage.php">
+		Manage</button>
+	<strong>Page</strong>
+	<pre>   </pre>
+	<button type='button'
+		onclick='VIEW("view.php")'>
+	    View Users, Projects, and Problems</button>
+EOT;
+    echo <<<EOT
+    </td>
+    <td style='text-align:right'>
+EOT;
+    if ( ! isset ( $edit ) )
+	echo <<<EOT
+	<button type="submit"
+	        formaction='logout.php'>
+	    Logout</button>
+	<pre>   </pre>
+EOT;
+    echo <<<EOT
+    <button type='button'
+            onclick='HELP("user-page")'>
+	?</button>
+    </td>
+    </tr>
+    </table>
+    </form>
+    </div>
+
+    <div class='users'>
+    <div class='user-header'>
+    <form method='POST' action='user.php'>
+    <input type='hidden' name='id' value='$ID'>
     <strong>Your Info</strong>
+    <br>
 EOT;
     if ( $edit == 'profile' )
     {
@@ -566,7 +632,7 @@ EOT;
 		onclick='UPDATE("check")'>
 		Check New Profile</button>
 	<button type="submit"
-	        formmethod='GET'>
+		formmethod="GET">
 		Cancel Edit</button>
 EOT;
     }
@@ -585,40 +651,9 @@ EOT;
 	<button type="submit"
 		name='edit' value='emails'>
 		Edit Emails</button>
-	</td><td>
-	<strong>Go To</strong>
-	<button type="submit"
-		formaction="project.php"
-		formmethod='GET'>Project</button>
-	<button type="submit"
-		formaction="manage.php"
-		formmethod='GET'>Manage</button>
-	<strong>Page</strong>
-	<pre>   </pre>
-	<button type='button'
-		onclick='VIEW("view.php")'>
-	    View Users, Projects, and Problems</button>
 EOT;
     }
     echo <<<EOT
-    </td>
-    <td style='text-align:right'>
-EOT;
-    if ( ! isset ( $edit ) )
-	echo <<<EOT
-	<button type="submit"
-		formmethod= 'GET'
-	        formaction='logout.php'>
-	    Logout</button>
-	<pre>   </pre>
-EOT;
-    echo <<<EOT
-    <button type='button'
-            onclick='HELP("user-page")'>
-	?</button>
-    </td>
-    </tr>
-    </table>
     </form>
     </div>
 EOT;
@@ -627,7 +662,7 @@ EOT;
     {
 	echo <<<EOT
 	<div class='email-addresses'>
-	<strong>Edit User Email Addresses:</strong>
+	<strong>Edit Your Email Addresses:</strong>
 	<div class='indented'>
 EOT;
 	$break = '';
@@ -681,7 +716,7 @@ EOT;
 	    ( $emails, $email );
 	echo <<<EOT
 	<div class='email-addresses'>
-	<strong>User Email Addresses:</strong>
+	<strong>Your Email Addresses:</strong>
 	<div class='indented'>
 	$addresses
 	</div></div>
@@ -703,7 +738,7 @@ EOT;
 	      id='profile-update'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden' name='update' id='update'>
-	<strong>Edit Your User Profile:</strong><br>
+	<strong>Edit Your Profile:</strong><br>
 	<table>
 EOT;
 	if ( $new_user )
@@ -766,6 +801,8 @@ EOT;
 ?>
 
 </div>
+</div>
+<div style='clear:both'></div>
 <div class='terms'>
 <?php require "$epm_home/include/epm_terms.html"; ?>
 </div>

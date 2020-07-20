@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul  5 14:14:10 EDT 2020
+// Date:    Mon Jul 20 16:14:43 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -23,6 +23,26 @@ if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
 if ( ! isset ( $epm_home ) )
     exit ( 'ACCESS ERROR: $epm_home not set' );
+
+// Get list of users.
+//
+function read_users ()
+{
+    global $epm_data, $epm_name_re;
+
+    $r = [];
+    $d = '/admin/users';
+    @mkdir ( "$epm_data/$d", 02770, true );
+    $c = @scandir ( "$epm_data/$d" );
+    if ( $c === false )
+	ERROR ( "cannot read $d" );
+    foreach ( $c as $u )
+    {
+	if ( preg_match ( $epm_name_re, $u ) )
+	    $r[] = $u;
+    }
+    return $r;
+}
 
 // Compute the $map:
 //
