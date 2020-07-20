@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul 19 13:40:04 EDT 2020
+// Date:    Mon Jul 20 06:12:24 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -309,22 +309,8 @@ if ( ! isset ( $_POST['xhttp'] )
      &&
      ! isset ( $epm_pdf ) )
 {
-
-    $back_page = "$epm_root/$epm_self";
-    if ( $epm_page_type == '+problem+' )
-        $back_page = "$epm_root/page/problem.php"
-	           . "?problem="
-		   . $_REQUEST['problem'];
-    elseif ( $epm_page_type == '+main+' )
-        $back_page = "$epm_root/page/login.php";
-	         
     echo <<<EOT
     <script>
-    history.replaceState
-	( null, document.title, '$back_page' );
-	// This causes the retry, back, and forward
-	// buttons to issue a GET to the $back_page.
-	// This prevents problems with wrong $ID's.
 
     // See HELP and VIEW below.
     //
