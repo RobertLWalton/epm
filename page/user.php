@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 19 11:44:26 EDT 2020
+    // Date:	Mon Jul 20 14:27:42 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -12,7 +12,7 @@
     // Display and edit user information in:
     //
     //		admin/email/*
-    //		admin/users/$uid/$uid.info
+    //		admin/users/$uid/*
     //
     // If $_SESSION['EPM_UID'] not set (i.e., if the
     // user is a new user), also assigns $uid and
@@ -98,13 +98,6 @@
     $full_name = & $info['full_name'];
     $organization = & $info['organization'];
     $location = & $info['location'];
-
-    // The following lock prevents others from
-    // creating/deleting users and emails, but
-    // NOT browser tickets.  Even if we are not
-    // editing, we read all the emails to check
-    // if they match the emails recorded in the
-    // UID.info file.
 
     LOCK ( "admin", LOCK_EX );
 
@@ -519,6 +512,10 @@
 </style>
 </head>
 <body>
+<div style='background-color:orange;
+	    text-align:center'>
+<strong>This Page is Under Re-Construction.</strong>
+</div>
 
 <?php 
 

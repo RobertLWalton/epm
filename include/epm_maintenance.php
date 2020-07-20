@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 15 01:51:53 EDT 2020
+// Date:    Mon Jul 20 14:54:30 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -657,7 +657,7 @@ function import_project ( $project, $dryrun )
     $d = "projects/$project";
     if ( ! is_dir ( "$epm_data/$d" )
          &&
-         ! @mkdir ( "$epm_data/$d", 0770, true ) )
+         ! @mkdir ( "$epm_data/$d", 02770, true ) )
 	ERROR ( "cannot make $d in \$epm_data" );
 
     $dirs = @scandir ( $lib );
@@ -712,7 +712,7 @@ function make_dir ( $dir, $dryrun )
 	// Cannot make D/. if D does not exist.
     else
         $d = "$epm_data/$dir";
-    if ( ! @mkdir ( "$d" ) )
+    if ( ! @mkdir ( "$d", 02770 ) )
         ERROR ( "cannot make directory $dir" );
 }
 
@@ -864,7 +864,7 @@ function setup ( $dryrun )
 	    echo "making backup directory" . PHP_EOL;
 	    if ( ! $dryrun
 	         &&
-	         ! @mkdir ( $epm_backup ) )
+	         ! @mkdir ( $epm_backup, 0750 ) )
 		ERROR ( "cannot make $epm_backup" );
 	}
 

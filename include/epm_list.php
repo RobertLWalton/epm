@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul 15 01:54:46 EDT 2020
+    // Date:	Mon Jul 20 14:43:41 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -49,10 +49,12 @@
 
     if ( ! is_dir ( "$epm_data/users/$uid/+lists+" ) )
     {
-        @mkdir ( "$epm_data/users", 02770 );
-        @mkdir ( "$epm_data/users/$uid", 02770 );
+	$m = umask ( 06 );
+        @mkdir ( "$epm_data/users", 02771 );
+        @mkdir ( "$epm_data/users/$uid", 02771 );
         @mkdir ( "$epm_data/users/$uid/+lists+",
 	         02770 );
+	umask ( $m );
     }
 
     // See page/manage.php for the format of +priv+

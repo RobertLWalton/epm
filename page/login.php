@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 20 05:14:58 EDT 2020
+    // Date:	Mon Jul 20 14:27:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -135,12 +135,13 @@
     //           'EXPIRED':
     //		     tell user reconfirmation needed
     //               go to CONFIRM
-    //           'BLOCKED_EMAIL':
-    //		     go to FAIL
-    //           'FAIL':  (means BID not recognized)
-    //		     tell user reconfirmation needed
-    //               go to MANUAL_ID
-    //		 'RENEW BID NEXT_PAGE'
+    //           'BLOCKED_EMAIL': go to FAIL
+    //           'BAD_TICKET': go to MANUAL_ID
+    //           'NO_TICKET': go to MANUAL_ID
+    //           'NO_TEAM': go to FAIL
+    //           'NO_USER': go to FAIL
+    //		 'USER_NOT_ON_TEAM': go to FAIL
+    //           'RENEW BID NEXT_PAGE':
     //		     go to FINISH
     // CONFIRM:
     //     * Get BID = confirmation number from user.
@@ -186,6 +187,8 @@
     $atime = NULL;
     $STIME = $_SESSION['EPM_TIME'];
 
+    LOCK ( "admin", LOCK_EX );
+
     // Reply to POST from xhttp.
     //
     function reply ( $reply )
@@ -229,12 +232,19 @@
     // Return true if the auto-login period has expired
     // and confirmation is needed, and false otherwise.
     //
-    // More specifically, if the email file exists,
-    // calculate whether auto-login period has expired
-    // using $STIME.  If yes, then if $t == 'c' update
-    // the email file to have a new auto-login period
-    // beginning at STIME and return false, but if
-    // $t != 'c' just return true.  If no, return false.
+    // More specifically, if the email file does NOT
+    // exist, or if it contains only a blank lines or
+    // if its first item is '-', then this function
+    // just returns false. 
+    //
+    // Otherwise the email file is read into $uid, etc.
+    // Then this function calculates whether the auto-
+    // login period has expired using $STIME.  If yes,
+    // then if $t == 'c' the email file is updated to
+    // have a new auto-login period beginning at $STIME,
+    // and this function return false, but if $t != 'c'
+    // this function just returns true.  If no, this
+    // function returns false.
     //
     function read_email_file ( $t, $email )
     {
@@ -256,7 +266,10 @@
 	    ERROR ( "failed to read readable" .
 		    " file $efile" );
 	$c = trim ( $c );
+	if ( $c == '' ) return false;
 	$items = explode ( ' ', $c );
+	if ( $items[0] == '-' ) return false;
+
 	if ( count ( $items ) != 3 )
 	    ERROR ( "$efile value '$c' badly" .
 		    " formatted" );
@@ -295,7 +308,8 @@
 	    $bdir = "admin/browser";
 	    if ( ! is_dir ( "$epm_data/$bdir" ) 
 	         &&
-		 ! @mkdir ( "$epm_data/$bdir" ) )
+		 ! @mkdir ( "$epm_data/$bdir",
+		            02770, true ) )
 	        ERROR ( "cannot make $bdir" );
 	    $bfile = "$bdir/$bid";
 	    if ( is_readable ( "$epm_data/$bfile" ) )
@@ -390,10 +404,10 @@
 	$bid = trim ( $_POST['value'] );
 	if ( ! preg_match ( '/^[a-fA-F0-9]{32}$/',
 			    $bid ) ) 
-	    reply ( 'FAIL' );
+	    reply ( 'BAD_TICKET' );
 	$bfile = "admin/browser/$bid";
 	if ( ! is_readable ( "$epm_data/$bfile" ) )
-		reply ( 'FAIL' );
+		reply ( 'NO_TICKET' );
 
 	$c = @file_get_contents
 	    ( "$epm_data/$bfile" );
@@ -410,43 +424,64 @@
 	if ( read_email_file ( $t, $email ) )
 	    confirmation_reply
 	        ( $tid, $email, 'EXPIRED' );
+		// Does not return
 
-	if ( isset ( $uid ) )
+	if ( $tid != '-' )
 	{
-	    $_SESSION['EPM_UID'] = $uid;
-
-	    // If $uid exists, so does
-	    // /admin/users/$uid
-	    //
-	    $f = "/admin/users/$uid" .
-		 "/session_id";
-	    $r = file_put_contents
-		( "$epm_data/$f", session_id() );
-	    if ( $r === false )
-		ERROR ( "cannot write $f" );
-	    $fmtime = @filemtime ( "$epm_data/$f" );
-	    if ( $fmtime === false )
-		ERROR ( "cannot stat $f" );
-	    $_SESSION['EPM_ABORT'] = [$f,$fmtime];
-
-	    $IPADDR = $_SESSION['EPM_IPADDR'];
-	    $r = @file_put_contents
-		( "$epm_data/login.log",
-		  "$uid $email $IPADDR $STIME" .
-		  PHP_EOL,
-		  FILE_APPEND );
-	    if ( $r === false )
-		ERROR ( "could not write login.log" );
-
-	    $next_page = 'project.php';
-
+	    $f = "admin/users/$tid/+read-write+";
+	    if ( ! is_readable ( "$epm_data/$f" ) )
+	        reply ( 'NO_TEAM' );
+	    if ( ! isset ( $uid ) )
+	        reply ( 'NO_USER' );
+	    $dir = "admin/users/$tid";
+	    if ( ! is_readable
+	               ( "$epm_data/$dir/$uid.login" ) )
+	        reply ( 'USER_NOT_ON_TEAM' );
+	    $_SESSION['EPM_UID'] = $tid;
+	}
+	elseif ( ! isset ( $uid ) )
+	{
+	    $_SESSION['EPM_EMAIL'] = $email;
+	    $bid = new_bid ( 'a', $tid, $email );
+	    reply ( "RENEW $bid user.php" );
 	}
 	else
-	    $next_page = 'user.php';
+	{
+	    $dir = "admin/users/$uid/";
+	    $_SESSION['EPM_UID'] = $uid;
+	}
+
+	$_SESSION['EPM_PID'] = $uid;
+	$_SESSION['EPM_EMAIL'] = $email;
+
+	$log = "$dir/$uid.login";
+	$IPADDR = $_SESSION['EPM_IPADDR'];
+	$browser = $_SERVER['HTTP_USER_AGENT'];
+	$browser = preg_replace
+	    ( '/\s*\([^\)]*\)\s*/', ' ', $browser );
+	$browser = preg_replace
+	    ( '/\s+/', ';', $browser );
+	if ( ! is_dir ( "$epm_data/$dir" )
+	     &&
+	     ! @mkdir ( "$epm_data/$dir",
+	                02770, true ) )
+	    ERROR ( "could not make directory $dir" );
+	$r = @file_put_contents
+	    ( "$epm_data/$log",
+	      "$STIME $email $IPADDR $browser" .
+	      PHP_EOL,
+	      FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "could not write $log" );
+
+	$mtime = @filemtime ( "$epm_data/$log" );
+	if ( $mtime === false )
+	    ERROR ( "cannot stat $log" );
+	$_SESSION['EPM_ABORT'] = [$log,$mtime];
 
 	$_SESSION['EPM_EMAIL'] = $email;
 	$bid = new_bid ( 'a', $tid, $email );
-	reply ( "RENEW $bid $next_page" );
+	reply ( "RENEW $bid project.php" );
     }
     elseif ( $epm_method == 'POST' )
 	exit ( "UNACCEPTABLE HTTP POST" );
@@ -813,15 +848,30 @@ function AUTO_RESPONSE ( item )
 	        ' auto-login period has expired' );
         CONFIRM();
     }
-    else if ( item[0] == 'FAIL' )
+    else if ( item[0] == 'BAD_TICKET' )
     {
-        ALERT ( 'you must re-confirm because your' +
+        ALERT ( 'malformed ticket; you must' +
+	        ' re-confirm because your' +
 	        ' auto-login failed' );
         MANUAL_ID();
     }
+    else if ( item[0] == 'NO_TICKET' )
+    {
+        ALERT ( 'ticket not found; you must' +
+	        ' re-confirm because your' +
+	        ' auto-login failed' );
+        MANUAL_ID();
+    }
+    else if ( item[0] == 'NO_TEAM' )
+        FAIL ( TID + ' does not name an existing'
+	           + ' team' );
+    else if ( item[0] == 'NO_USER' )
+        NO_USER_FAIL();
+    else if ( item[0] == 'USER_NOT_ON_TEAM' )
+        FAIL ( 'User ' + EMAIL + ' is not on team '
+	               + TID );
     else if ( item[0] == 'BLOCKED_EMAIL' )
-        FAIL ( LNAME + ' contains a blocked email'
-	             + ' address' );
+        FAIL ( EMAIL + ' is a blocked email address' );
     else
 	MALFORMED_RESPONSE ( 'to auto-login' );
 }

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul  5 14:37:16 EDT 2020
+// Date:    Mon Jul 20 14:50:34 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -2219,6 +2219,8 @@ function finish_run ( & $warnings, & $errors )
 	       ( $epm_parent_re, $r, $matches ) )
 	ERROR ( "link $f has bad value $r" );
     $d = $matches[1];
+    if ( ! is_dir ( "$epm_data/$d" ) )
+        ERROR ( "directory $d does not exist" );
     if ( ! preg_match
 	       ( '#^projects/([^/]+)/#',
 		 $d, $matches ) )
