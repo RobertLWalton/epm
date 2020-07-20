@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 20 14:43:41 EDT 2020
+    // Date:	Mon Jul 20 16:09:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -46,16 +46,6 @@
 	exit ( 'ACCESS ERROR: $epm_data not set' );
     if ( ! isset ( $uid ) )
 	exit ( 'ACCESS ERROR: $uid not set' );
-
-    if ( ! is_dir ( "$epm_data/users/$uid/+lists+" ) )
-    {
-	$m = umask ( 06 );
-        @mkdir ( "$epm_data/users", 02771 );
-        @mkdir ( "$epm_data/users/$uid", 02771 );
-        @mkdir ( "$epm_data/users/$uid/+lists+",
-	         02770 );
-	umask ( $m );
-    }
 
     // See page/manage.php for the format of +priv+
     // files.
@@ -436,6 +426,17 @@
 	   return;
 	}
 
+	if ( ! is_dir
+	          ( "$epm_data/users/$uid/+lists+" ) )
+	{
+	    $m = umask ( 06 );
+	    @mkdir ( "$epm_data/users", 02771 );
+	    @mkdir ( "$epm_data/users/$uid", 02771 );
+	    @mkdir ( "$epm_data/users/$uid/+lists+",
+		     02770 );
+	    umask ( $m );
+	}
+
 	$r = @file_put_contents ( "$epm_data/$f", '' );
 	if ( $r === false )
 	    ERROR ( "could not write $f" );
@@ -492,6 +493,12 @@
         global $epm_data, $uid;
 
 	$f = "users/$uid/+lists+/$name.list";
+	if ( ! file_exists ( "$epm_data/$f" ) )
+	{
+	    $errors[] = "you have no list named"
+		      . " $name";
+	    return;
+	}
 	$g = "lists/$uid:$name.list";
 	if ( is_link ( "$epm_data/$g" ) )
 	{
@@ -513,6 +520,12 @@
         global $epm_data, $uid;
 
 	$f = "users/$uid/+lists+/$name.list";
+	if ( ! file_exists ( "$epm_data/$f" ) )
+	{
+	    $errors[] = "you have no list named"
+		      . " $name";
+	    return;
+	}
 	$g = "lists/$uid:$name.list";
 	if ( ! is_link ( "$epm_data/$g" ) )
 	{
@@ -1011,6 +1024,17 @@
 	    $warnings[] = "no lists are left in Your"
 	                . " Favorites; reinitializing"
 			. " Your Favorites";
+
+	if ( ! is_dir
+	          ( "$epm_data/users/$uid/+lists+" ) )
+	{
+	    $m = umask ( 06 );
+	    @mkdir ( "$epm_data/users", 02771 );
+	    @mkdir ( "$epm_data/users/$uid", 02771 );
+	    @mkdir ( "$epm_data/users/$uid/+lists+",
+		     02770 );
+	    umask ( $m );
+	}
 
 	$g = "users/$uid";
 	$time = @filemtime ( "$epm_data/$g" );
