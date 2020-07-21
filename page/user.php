@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 14:02:29 EDT 2020
+    // Date:	Tue Jul 21 14:52:49 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -153,7 +153,7 @@
 	           " admin/email emails" );
 	    $emails = $actual;
 	    if ( $editable )
-		write_info ( $uid );
+		write_info ( $info );
 	}
     }
 
@@ -227,91 +227,6 @@
 	return true;
     }
 
-    function write_info ( $uid )
-    {
-        global $epm_data, $epm_time_format,
-	       $uid, $info;
-
-	$changes = '';
-	$time = strftime ( $epm_time_format );
-	$h = "$time $uid info";
-
-	$f = "admin/users/$uid/$uid.info";
-	$old = @file_get_contents ( "$epm_data/$f" );
-	if ( $old === false )
-	{
-	    foreach ( $info as $key => $value )
-	    {
-	        if ( $key != 'email' )
-		    $changes .= "$h $key = $value"
-			      . PHP_EOL;
-		else foreach ( $value as $email )
-		    $changes .= "$h email + $email"
-			      . PHP_EOL;
-	    }
-	}
-	else
-	{
-	    $old = json_decode ( $old, true );
-	    if ( $old == NULL )
-	        ERROR ( "badly formatted old $f" );
-	    foreach ( $info as $key => $value )
-	    {
-		if ( $key != 'emails' )
-		{
-		    if ( ! isset ( $old[$key] )
-		         ||
-			 $old[$key] != $info[$key] )
-		        $changes .= "$h $key = $value"
-			          . PHP_EOL;
-		}
-		elseif ( ! is_array ( $old['emails'] ) )
-		    ERROR ( "badly formatted old $f" );
-		else
-		{
-		    $adds = array_diff
-		        ( $info['emails'],
-			  $old['emails'] );
-		    foreach ( $adds as $email )
-			$changes .= "$h email + $email"
-			          . PHP_EOL;
-		    $subs = array_diff
-		        ( $old['emails'],
-			  $info['emails'] );
-		    foreach ( $subs as $email )
-			$changes .= "$h email - $email"
-			          . PHP_EOL;
-		}
-	    }
-	    foreach ( $old as $key => $value )
-	    {
-	        if ( isset ( $info[$key] ) ) continue;
-		$changes .= "$h $key -" . PHP_EOL;
-	    }
-	}
-
-	if ( $changes == '' ) return;
-
-
-	$c = json_encode ( $info, JSON_PRETTY_PRINT );
-	if ( $c === false )
-	    ERROR ( 'cannot json_encode $info' );
-	$r = @file_put_contents ( "$epm_data/$f", $c );
-	if ( $r === false )
-	    ERROR ( "cannot write $f" );
-
-	$f = "admin/users/$uid/+actions+";
-	$r = @file_put_contents
-	    ( "$epm_data/$f", $changes, FILE_APPEND );
-	if ( $r === false )
-	    ERROR ( "cannot append to $f" );
-	$f = "admin/+actions+";
-	$r = @file_put_contents
-	    ( "$epm_data/$f", $changes, FILE_APPEND );
-	if ( $r === false )
-	    ERROR ( "cannot append to $f" );
-    }
-	
     if ( $epm_method == 'GET' )
     {
 	// Do nothing.  Display user info or edit
@@ -388,7 +303,7 @@
 		  implode ( ' ', $items ) );
 	    if ( $r === false )
 		ERROR ( "could not write $f" );
-	    write_info ( $uid );
+	    write_info ( $info );
 
 	    $f = "admin/users/$uid/session_id";
 	    $r = file_put_contents
@@ -416,7 +331,7 @@
 	}
 	else
 	{
-	    write_info ( $uid );
+	    write_info ( $info );
 	    $edit = NULL;
 	}
 
@@ -458,7 +373,7 @@
 	        if ( $r === false )
 		    ERROR ( "could not write $f" );
 	        $emails[] = $e;
-		write_info ( $uid );
+		write_info ( $info );
 	    }
 	}
 	$edit = 'emails';
@@ -505,7 +420,7 @@
 			unlink ( "$epm_data/$f" );
 		}
 		array_splice ( $emails, $k, 1 );
-		write_info ( $uid );
+		write_info ( $info );
 	    }
 	}
 	$edit = 'emails';

@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 14:05:53 EDT 2020
+// Date:    Tue Jul 21 14:45:51 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -92,7 +92,7 @@ function email_map ( & $map )
     }
 }
 
-// Read, check, and return json_decode of UID.info file.
+// Read, check, and return json_decode of AID.info file.
 // $type is 'user' or 'team'.  Errors are terminal.
 // File must be readable.
 //
@@ -130,6 +130,108 @@ function read_info ( $type, $aid )
     }
 
     return $info;
+}
+
+// Write JSON AID.info file.  Logs changes to +actions+
+// files.  Writes nothing if there are no changes.
+//
+function write_info ( $info )
+{
+    global $epm_data, $epm_time_format;
+
+    if ( isset ( $info['uid'] ) )
+    {
+        $type = 'user';
+        $aid = $info['uid'];
+    }
+    else
+    {
+        $type = 'team';
+        $aid = $info['tid'];
+    }
+
+    $changes = '';
+    $time = strftime ( $epm_time_format );
+    $h = "$time $aid info";
+
+    $f = "admin/{$type}s/$aid/$aid.info";
+    $old = @file_get_contents ( "$epm_data/$f" );
+    if ( $old === false )
+    {
+	foreach ( $info as $key => $value )
+	{
+	    if ( is_array ( $value ) )
+		foreach ( $value as $item )
+		    $changes .= "$h $key + $item"
+			      . PHP_EOL;
+	    else
+		$changes .= "$h $key + $value"
+			  . PHP_EOL;
+	}
+    }
+    else
+    {
+	$old = json_decode ( $old, true );
+	if ( $old == NULL )
+	{
+	    $m = json_last_error_msg();
+	    ERROR ( "cannot decode json in $f:" .
+		    PHP_EOL . "    $m" );
+	}
+	foreach ( $info as $key => $value )
+	{
+	    if ( is_array ( $value ) )
+	    {
+		$adds = array_diff
+		    ( $info[$key], $old[$key] );
+		foreach ( $adds as $item )
+		    $changes .= "$h $key + $item"
+			      . PHP_EOL;
+		$subs = array_diff
+		    ( $old[$key], $info[$key] );
+		foreach ( $subs as $item )
+		    $changes .= "$h $key - $item"
+			      . PHP_EOL;
+	    }
+	    elseif ( ! isset ( $old[$key] ) )
+		$changes .= "$h $key + $value"
+			  . PHP_EOL;
+	    elseif ( $old[$key] != $info[$key] )
+		$changes .= "$h $key = $value"
+			  . PHP_EOL;
+	}
+	foreach ( $old as $key => $value )
+	{
+	    if ( isset ( $info[$key] ) ) continue;
+	    if ( is_array ( $value ) )
+		foreach ( $value as $item )
+		    $changes .= "$h $key - $item"
+			      . PHP_EOL;
+	    else
+		$changes .= "$h $key - $value"
+			  . PHP_EOL;
+	}
+    }
+
+    if ( $changes == '' ) return;
+
+    $c = json_encode ( $info, JSON_PRETTY_PRINT );
+    if ( $c === false )
+	ERROR ( 'cannot json_encode $info' );
+    $r = @file_put_contents ( "$epm_data/$f", $c );
+    if ( $r === false )
+	ERROR ( "cannot write $f" );
+
+    $f = "admin/{$type}s/$aid/+actions+";
+    $r = @file_put_contents
+	( "$epm_data/$f", $changes, FILE_APPEND );
+    if ( $r === false )
+	ERROR ( "cannot append to $f" );
+    $f = "admin/+actions+";
+    $r = @file_put_contents
+	( "$epm_data/$f", $changes, FILE_APPEND );
+    if ( $r === false )
+	ERROR ( "cannot append to $f" );
 }
 
 // Return the HTML for a $list of emails.  Each email
