@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:28:25 EDT 2020
+    // Date:	Tue Jul 21 13:47:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -404,7 +404,7 @@ EOT;
 	$lines = emails_to_lines ( $info['emails'] );
 	$lines = preg_replace
 	    ( '/<pre>[^@]+@/', '<pre>...@', $lines );
-	$f = "admin/users/$user/+changes+";
+	$f = "admin/users/$user/+actions+";
 	$change_rows = actions_to_rows
 	    ( read_actions ( "$f" ), $non_others );
 	$g = "accounts/$user/+actions+";

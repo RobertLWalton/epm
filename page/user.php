@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:27:26 EDT 2020
+    // Date:	Tue Jul 21 13:47:24 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -300,7 +300,7 @@
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
 
-	$f = "admin/users/$uid/+changes+";
+	$f = "admin/users/$uid/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
