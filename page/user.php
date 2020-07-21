@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 13:47:24 EDT 2020
+    // Date:	Tue Jul 21 14:02:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -92,8 +92,8 @@
 		'location' => ''];
 	}
 	else
-	    $data['INFO'] = read_uid_info
-	        ( $user['UID'] );
+	    $data['INFO'] = read_info
+	        ( 'user', $user['UID'] );
     }
     elseif ( isset ( $_POST['user'] )
              &&
@@ -110,8 +110,8 @@
 	{
 	    $user['UID'] = $new_uid;
 	    $data = & $_SESSION['EPM_DATA'];
-	    $data['INFO'] = read_uid_info
-	        ( $user['UID'] );
+	    $data['INFO'] = read_info
+	        ( 'user', $user['UID'] );
 	    $post_processed = true;
 	}
     }

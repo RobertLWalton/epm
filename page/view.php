@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 13:47:44 EDT 2020
+    // Date:	Tue Jul 21 14:04:57 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -399,7 +399,7 @@ EOT;
 
     if ( isset ( $user ) )
     {
-	$info = read_uid_info ( $user );
+	$info = read_info ( 'user', $user );
         $info_rows = user_info_to_rows ( $info );
 	$lines = emails_to_lines ( $info['emails'] );
 	$lines = preg_replace

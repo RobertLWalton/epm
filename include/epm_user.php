@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jul 20 16:14:43 EDT 2020
+// Date:    Tue Jul 21 14:05:53 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -93,13 +93,14 @@ function email_map ( & $map )
 }
 
 // Read, check, and return json_decode of UID.info file.
-// Errors are terminal.  File must be readable.
+// $type is 'user' or 'team'.  Errors are terminal.
+// File must be readable.
 //
-function read_uid_info ( $uid )
+function read_info ( $type, $aid )
 {
     global $epm_data;
 
-    $f = "admin/users/$uid/$uid.info";
+    $f = "admin/{$type}s/$aid/$aid.info";
     $c = @file_get_contents ( "$epm_data/$f" );
     if ( $c === false )
 	ERROR ( "cannot read $f" );
@@ -110,11 +111,19 @@ function read_uid_info ( $uid )
 	ERROR ( "cannot decode json in $f:" .
 		PHP_EOL . "    $m" );
     }
-    foreach ( ['uid',
-               'emails',
-	       'full_name',
-	       'organization',
-	       'location'] as $key )
+    $fields = ( $type == 'user' ?
+		    ['uid',
+		     'emails',
+		     'full_name',
+		     'organization',
+		     'location'] :
+		    ['sponsor',
+		     'tid',
+		     'members',
+		     'full_name',
+		     'organization',
+		     'location'] );
+    foreach ( $fields as $key )
     {
 	if ( ! isset ( $info[$key] ) )
 	    ERROR ( "$f has no $key" );
