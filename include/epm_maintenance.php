@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jul 20 14:54:30 EDT 2020
+// Date:    Tue Jul 21 11:33:20 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -155,7 +155,8 @@ function scrub_dir ( $dir )
 //	0771  for $epm_data/default and its contents
 //	0771  for $epm_data/projects and its descendants
 //	0770  for $epm_data/lists* and its descendants
-//	0771  for $epm_data/users* and its descendants
+//	0771  for $epm_data/accounts* and its
+//                descendants
 //
 // The *'ed directories are created dynamically and NOT
 // created at setup.
@@ -163,7 +164,7 @@ function scrub_dir ( $dir )
 // Exceptions to the general rules are:
 //
 //	0771  for +work+ and +run+ subdirectories of
-//            $epm_data/users/UID/PROBLEM directories
+//            $epm_data/accounts/AID/PROBLEM directories
 //     04751  for $epm_home/bin/epm_sandbox (must
 //	      be g+r during setup so it can be compared
 //            to $epm_home/secure/epm_sandbox)
@@ -340,28 +341,31 @@ function set_perms_all ( $dryrun )
 // recreated upon next use, the damage will not
 // affect future executions.
 //
-function set_perms_user_problem
-	( $user, $problem, $dryrun )
+function set_perms_account_problem
+	( $account, $problem, $dryrun )
 {
     global $epm_data;
-    title ( "setting permissions for $user $problem" );
-    set_perms ( $epm_data, "users/$user/$problem",
+    title ( "setting permissions for" .
+            " $account $problem" );
+    set_perms ( $epm_data,
+                "accounts/$account/$problem",
                 0771, $dryrun );
     done();
 }
-function set_perms_user ( $user, $dryrun )
+function set_perms_account ( $account, $dryrun )
 {
     global $epm_data;
-    title ( "setting permissions for $user" );
-    set_perms ( $epm_data, "users/$user",
+    title ( "setting permissions for $account" );
+    set_perms ( $epm_data, "accounts/$account",
                 0771, $dryrun );
     done();
 }
-function set_perms_users ( $dryrun )
+function set_perms_accounts ( $dryrun )
 {
     global $epm_data;
-    title ( "setting permissions for users" );
-    set_perms ( $epm_data, "users", 0771, $dryrun );
+    title ( "setting permissions for accounts" );
+    set_perms ( $epm_data, "accounts", 0771,
+                $dryrun );
     done();
 }
 

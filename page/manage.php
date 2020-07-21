@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 17 01:31:47 EDT 2020
+    // Date:	Tue Jul 21 11:22:51 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -403,13 +403,13 @@
 	    }
 	    else
 	    {
-		$d = "users/$aid/$problem";
+		$d = "accounts/$aid/$problem";
 		$n = $problem;
 	    }
 
 	    if ( isset ( $d ) )
 	    {
-		$e = "../../../users/$aid";
+		$e = "../../../accounts/$aid";
 		$c = "cd $epm_data/$d;"
 		   . "rm -f $e/+download+;"
 		   . "tar zcf $e/+download+ .;";

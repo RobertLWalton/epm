@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 10:35:14 EDT 2020
+// Date:    Tue Jul 21 11:34:21 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -2075,8 +2075,8 @@ function start_run
 //
 //	projects/$project/+actions+
 //	projects/$project/$problem/+actions+
-//	users/$aid/+actions+
-//	users/$aid/$problem/+actions+
+//	accounts/$aid/+actions+
+//	accounts/$aid/$problem/+actions+
 //
 // Then locks project/$project/$problem/+submits+ for
 // writing and moves .rout file to
@@ -2265,12 +2265,12 @@ function finish_run ( & $warnings, & $errors )
 	( "$epm_data/$f", $action, FILE_APPEND );
     if ( $r === false )
 	ERROR ( "cannot write $f" );
-    $f = "users/$aid/+actions+";
+    $f = "accounts/$aid/+actions+";
     $r = @file_put_contents
 	( "$epm_data/$f", $action, FILE_APPEND );
     if ( $r === false )
 	ERROR ( "cannot write $f" );
-    $f = "users/$aid/$problem/+actions+";
+    $f = "accounts/$aid/$problem/+actions+";
     $r = @file_put_contents
 	( "$epm_data/$f", $action, FILE_APPEND );
     if ( $r === false )

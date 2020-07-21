@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 09:09:54 EDT 2020
+    // Date:	Tue Jul 21 11:23:30 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -29,7 +29,7 @@
     $aid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
     $problem = $_REQUEST['problem'];
-    $probdir = "users/$aid/$problem";
+    $probdir = "accounts/$aid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
         exit ( "problem $problem no longer exists" );

@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jul 11 17:06:57 EDT 2020
+// Date:	Tue Jul 21 11:36:23 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -30,8 +30,8 @@ epm [-n] perms -admin
 epm [-n] perms -lists
 epm [-n] perms -all
 
-epm [-n] *user* user [problem]
-epm [-n] *user* -all
+epm [-n] *account* account [problem]
+epm [-n] *account* -all
 
 This program is intended to be run inside the $epm_data
 directory tree unless webdirectory is specified.
@@ -83,9 +83,9 @@ $epm_specials files.
 
 The perms commands set permissions and sets the group
 of files and directories to $epm_web_group.  These
-commands do not include the users directories.
+commands do not include the accounts directories.
 
-The *user* commands do the same thing but for user
+The *account* commands do the same thing but for account
 directories.  WARNING: they will likely disrupt any
 executions or runs that are in progress.  Use them
 cautiously.
@@ -118,7 +118,7 @@ if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
 $op = $argv[1];
 if ( ! in_array ( $op, ['print', 'setup', 'backup',
                         'import', 'export',
-                        'init', 'perms', '*user*'],
+                        'init', 'perms', '*account*'],
 		       true ) )
     ERROR ( "cannot understand $op" );
 
@@ -291,17 +291,17 @@ elseif ( $op == 'perms' )
     else
         set_perms_project ( $argv[2], $dryrun );
 }
-elseif ( $op == '*user*' )
+elseif ( $op == '*account*' )
 {
     if ( $argc < 3 ) ERROR ( 'too few arguments' );
     if ( $argc > 4 ) ERROR ( 'too many arguments' );
     if ( $argc == 4 )
-        set_perms_user_problem
+        set_perms_account_problem
 	    ( $argv[2], $argv[3], $dryrun );
     elseif ( $argv[2] == '-all' )
-        set_perms_users ( $dryrun );
+        set_perms_accounts ( $dryrun );
     else
-        set_perms_user ( $argv[2], $dryrun );
+        set_perms_account ( $argv[2], $dryrun );
 }
 
 done ();

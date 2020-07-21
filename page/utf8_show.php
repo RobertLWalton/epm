@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 10:59:04 EDT 2020
+    // Date:	Tue Jul 21 11:27:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -56,7 +56,7 @@
 
     $aid = $_SESSION['EPM_AID'];
     $problem = $_GET['problem'];
-    $probdir = "users/$aid/$problem";
+    $probdir = "accounts/$aid/$problem";
     $filename = $_GET['filename'];
     $ext = pathinfo ( $filename, PATHINFO_EXTENSION );
     if ( ! isset ( $display_file_type[$ext] )

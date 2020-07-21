@@ -2,7 +2,7 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 10:58:45 EDT 2020
+    // Date:	Tue Jul 21 11:23:45 EDT 2020
 
     // The authors have this file in the public domain;
     // they make no warranty and accept no liability for
@@ -31,7 +31,7 @@
 
     $aid = $_SESSION['EPM_AID'];
     $problem = $_GET['problem'];
-    $probdir = "users/$aid/$problem";
+    $probdir = "accounts/$aid/$problem";
     $filename = $_GET['filename'];
 
     $ext = pathinfo ( $filename, PATHINFO_EXTENSION );

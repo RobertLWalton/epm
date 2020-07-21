@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 09:07:40 EDT 2020
+// Date:    Tue Jul 21 11:21:58 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -206,9 +206,9 @@ set_error_handler ( 'EPM_ERROR_HANDLER' );
 // previous session finds out here that it has been
 // aborted.
 //
-// When a session EPM_AID is set, the session_id is
-// written to S = "admin/users/AID/session_id"
-// and the mod-time of S identifies the session.
+// When a session EPM_AID is set, a login log entry is
+// written to a log file S and the mod-time of S
+// identifies the session.
 //
 if ( isset ( $_SESSION['EPM_ABORT'] ) )
 {

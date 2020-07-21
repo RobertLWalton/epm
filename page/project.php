@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 10:52:16 EDT 2020
+    // Date:	Tue Jul 21 11:26:14 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -44,7 +44,7 @@
     //
     // A list is a NAME.list file in a directory:
     //
-    //	    users/AID/+lists+
+    //	    accounts/AID/+lists+
     //
     // Such a file belongs to the AID user and can be
     // edited by the user.  The file begins with lines
@@ -54,7 +54,7 @@
     //
     // that specify a problem in a project.  Thus a list
     // is a list of problems.  If a problem is not in a
-    // project, but is in the user's users/AID direc-
+    // project, but is in the user's accounts/AID direc-
     // tory, PROJECT is `-'.  The TIME is the last
     // time before the line was added to the list file
     // that a change was made to the PROBLEM files by a
@@ -76,18 +76,18 @@
     // that contains symbolic links of the form:
     //
     //	    OWNER:NAME.list =>
-    //		users/OWNER/+lists+/NAME.list
+    //		accounts/OWNER/+lists+/NAME.list
     //
-    // which make particular indices visible to users.
-    // To users other than OWNER this lists are read-
-    // only.  The OWNER of a list may create such a
-    // link by publishing the list, and delete the
-    // link by unpublishing the list.
+    // which make particular indices visible to
+    // accounts.  To accounts other than OWNER these
+    // lists are read-only.  The OWNER of a list may
+    // create such a link by publishing the list, and
+    // delete the link by unpublishing the list.
     //
     // In addition there are read-only lists contain-
     // ing the problems in the directories:
     //
-    //	    users/AID
+    //	    accounts/AID
     //
     //	    projects/PROJECT
     //
@@ -97,7 +97,7 @@
     // Each user with given AID has a list of favorite
     // lists in
     //
-    //	    users/AID/+lists+/+favorites+
+    //	    accounts/AID/+lists+/+favorites+
     //
     // This files contents are lines of the forms:
     //
@@ -105,7 +105,7 @@
     //
     // denoting the list file
     //
-    //		users/OWNER/+lists+/BASENAME.list
+    //		accounts/OWNER/+lists+/BASENAME.list
     //
     // If the OWNER is not the AID, then the symbolic
     // link
@@ -181,10 +181,10 @@
     //	    
     // The following are log files:
     //
-    //	    users/AID/+actions+
-    //	    users/AID/PROBLEM/+actions+
-    //	    users/AID/PROBLEM/+changes+
-    //	    users/AID/+lists+/+actions+
+    //	    accounts/AID/+actions+
+    //	    accounts/AID/PROBLEM/+actions+
+    //	    accounts/AID/PROBLEM/+changes+
+    //	    accounts/AID/+lists+/+actions+
     //	    projects/PROJECT/+actions+
     //	    projects/PROJECT/PROBLEM/+actions+
     //	    projects/PROJECT/PROBLEM/+changes+
@@ -274,9 +274,9 @@
     //		if it exists.
     //
     //	   EPM_DATA ALTERED
-    //		Filemtime of users/AID/PROBLEM/+altered+
-    //		before compile, or 0 if file does not
-    //		exist.
+    //		Filemtime of accounts/AID/PROBLEM/
+    //          +altered+ before compile, or 0 if file
+    //		does not exist.
 
     // Non-XHTTP POSTs:
     // --------- -----
@@ -420,8 +420,8 @@
     //
     // return the rows of a table for pushing problems
     // as a string.  The string has one segment for each
-    // list element for which PROBLEM exists in users/
-    // AID.  The segment has the form:
+    // list element for which PROBLEM exists in
+    // accounts/AID.  The segment has the form:
     //
     //     <tr data-project='PROJECT'
     //         data-problem='PROBLEM'>
@@ -646,7 +646,7 @@ EOT;
 	       $epm_time_format, $epm_parent_re,
 	       $data, $push_file_map;
 
-        $srcdir = "users/$aid/$problem";
+        $srcdir = "accounts/$aid/$problem";
 	$d = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$srcdir" ) )
 	{
@@ -875,7 +875,7 @@ EOT;
 	       $epm_time_format, $data,
 	       $push_file_map, $epm_parent_re;
 
-        $desdir = "users/$aid/$problem";
+        $desdir = "accounts/$aid/$problem";
 	$d = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$d" ) )
 	{
@@ -1202,13 +1202,13 @@ EOT;
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
 
-	$f = "users/$aid/+actions+";
+	$f = "accounts/$aid/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $action, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
 
-	$f = "users/$aid/$problem/+actions+";
+	$f = "accounts/$aid/$problem/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $action, FILE_APPEND );
 	if ( $r === false )
@@ -1228,7 +1228,7 @@ EOT;
 
 	$project = $data['PROJECT'];
 	$problem = $data['PROBLEM'];
-	$f = "users/$aid/$problem/+changes+";
+	$f = "accounts/$aid/$problem/+changes+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
@@ -1253,13 +1253,13 @@ EOT;
 	if ( $r === false )
 	    ERROR ( "cannot write $g" );
 
-	$g = "users/$aid/+actions+";
+	$g = "accounts/$aid/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$g", $action, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $g" );
 
-	$g = "users/$aid/$problem/+actions+";
+	$g = "accounts/$aid/$problem/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$g", $action, FILE_APPEND );
 	if ( $r === false )
@@ -1325,7 +1325,7 @@ EOT;
 		if ( ! preg_match
 			   ( $epm_name_re, $problem ) )
 		    exit ( 'UNACCEPTABLE HTTP POST' );
-		$d = "users/$aid/$problem";
+		$d = "accounts/$aid/$problem";
 		if ( ! is_dir ( "$epm_data/$d" ) )
 		    $errors[] = "your $problem problem"
 			      . " no longer exists";
@@ -1338,7 +1338,7 @@ EOT;
 	    if ( isset ( $op ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $problem = trim ( $_POST['create'] );
-	    $d = "users/$aid/$problem";
+	    $d = "accounts/$aid/$problem";
 	    if ( $problem == '' )
 	    {
 		// User hit carriage return on empty
@@ -1380,7 +1380,7 @@ EOT;
 
 		    umask ( $m );
 
-		    $f = "users/$aid/+actions+";
+		    $f = "accounts/$aid/+actions+";
 		    $r = @file_put_contents
 			( "$epm_data/$f", $action,
 			  FILE_APPEND );
@@ -1433,7 +1433,7 @@ EOT;
 			"  so this $op has been" .
 			" cancelled; try again";
 	    }
-	    $f = "users/$aid/$problem/+altered+";
+	    $f = "accounts/$aid/$problem/+altered+";
 	    $altered = @filemtime ( "$epm_data/$f" );
 	    if ( $altered === false ) $altered = 0;
 	    if ( $altered > $data['ALTERED'] )
@@ -1492,7 +1492,7 @@ EOT;
 		               LOCK_EX : LOCK_SH );
 		$data['LOCK'] = LOCK ( $d, $lock_type );
 	    }
-	    $f = "users/$aid/$problem/+altered+";
+	    $f = "accounts/$aid/$problem/+altered+";
 	    $altered = @filemtime ( "$epm_data/$f" );
 	    if ( $altered === false ) $altered = 0;
 	    $data['ALTERED'] = $altered;

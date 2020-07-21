@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 10:44:20 EDT 2020
+    // Date:	Tue Jul 21 11:21:10 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -30,7 +30,7 @@
     //		modification time, for problem lists
     //		the modification time is that of the
     //		list directory, either projects/PROJECT
-    //		or users/AID.
+    //		or accounts/AID.
 
     // POST:
     //
@@ -103,7 +103,7 @@
 		$flist[] = $list[$index];
 	    }
 	    write_file_list
-		( "users/$aid/+lists+/+favorites+",
+		( "accounts/$aid/+lists+/+favorites+",
 		  $flist );
 	}
     }
@@ -123,7 +123,7 @@
     // 
     $inmap = [];
     $time = @filemtime
-        ( "$epm_data/users/$aid/+actions+" );
+        ( "$epm_data/accounts/$aid/+actions+" );
     if ( $time === false ) $time = time();
     $time = strftime ( $epm_time_format, $time );
     $inmap["-:-"] = $time;
@@ -137,7 +137,7 @@
 	$time = strftime ( $epm_time_format, $time );
         $inmap["$project:-"] = $time;
     }
-    $d = "users/$aid/+lists+";
+    $d = "accounts/$aid/+lists+";
     $fnames = @scandir ( "$epm_data/$d" );
     if ( $fnames !== false )
         foreach ( $fnames as $fname )

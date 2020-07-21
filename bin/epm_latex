@@ -3,7 +3,7 @@
 
 // File:	epm_latex
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sat Jul 11 05:12:50 EDT 2020
+// Date:	Tue Jul 21 12:07:42 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -64,7 +64,8 @@ foreach ( explode ( "\n", $c ) as $line )
 {
     if ( $state == 0 && $line == '' ) continue;
     if ( $state == 0 && $line[0] == '!' ) ++ $state;
-    if ( $state == 1 && substr ( $line, 0, 4 ) == 'Here' )
+    if (    $state == 1
+         && substr ( $line, 0, 4 ) == 'Here' )
         ++ $state;
     if ( $state == 2 && $line == '' ) continue;
     if ( $state == 2 && $line[0] == '!' ) ++ $state;

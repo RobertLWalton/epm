@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 10:47:42 EDT 2020
+    // Date:	Tue Jul 21 11:22:19 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -307,7 +307,7 @@ EOT;
 	    WARN ( "$m $ftmp_name" );
 	    return false;
 	}
-	$f = "users/$aid/+lists+/$fbase.list";
+	$f = "accounts/$aid/+lists+/$fbase.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
 	    make_new_list ( $fbase, $errors );
@@ -690,7 +690,7 @@ EOT;
 	    }
 	    elseif ( $writable == 'yes' )
 	    {
-	        $f = "users/$aid/+lists+/"
+	        $f = "accounts/$aid/+lists+/"
 		   . "$basename.list";
 		$description = read_list_description
 		    ( $f );

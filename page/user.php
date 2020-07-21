@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 10:55:43 EDT 2020
+    // Date:	Tue Jul 21 11:27:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -18,7 +18,7 @@
     // user is a new user), also assigns $uid and
     // creates:
     //
-    //		users/$uid
+    //		accounts/$uid
     //	        admin/users/$uid/$uid.info
     //
     //
@@ -373,8 +373,8 @@
 	             02770 );
 	    @mkdir ( "$epm_data/admin/email", 02770 );
 	    $m = umask ( 06 );
-	    @mkdir ( "$epm_data/users", 02771 );
-	    @mkdir ( "$epm_data/users/$uid", 02771 );
+	    @mkdir ( "$epm_data/accounts", 02771 );
+	    @mkdir ( "$epm_data/accounts/$uid", 02771 );
 	    umask ( $m );
 
 	    $d = "admin/users/$uid";

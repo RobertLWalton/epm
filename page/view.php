@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 10:56:29 EDT 2020
+    // Date:	Tue Jul 21 11:28:25 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -407,7 +407,7 @@ EOT;
 	$f = "admin/users/$user/+changes+";
 	$change_rows = actions_to_rows
 	    ( read_actions ( "$f" ), $non_others );
-	$g = "users/$user/+actions+";
+	$g = "accounts/$user/+actions+";
 	$action_rows = actions_to_rows
 	    ( read_actions ( "$g" ), $non_others );
         echo <<<EOT
@@ -502,7 +502,7 @@ EOT;
     if ( isset ( $project ) && isset ( $problem ) )
     {
 	if ( $project == '-' )
-	    $f = "users/$aid/$problem/+actions+";
+	    $f = "accounts/$aid/$problem/+actions+";
 	else
 	    $f = "projects/$project/$problem/+actions+";
 	$action_rows = actions_to_rows
