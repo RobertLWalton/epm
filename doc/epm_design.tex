@@ -115,7 +115,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{July 19, 2020}
+\date{July 21, 2020}
  
 \maketitle
 
@@ -164,8 +164,8 @@ same rules.
 \item Invisible problem
       file and directory names begin and end with plus({\tt +}).
 \item Administrative files may follow other rules.  In particular,
-      email addresses have a file whose name is the URL encoded email
-      address, and browser tickets have a file whose name is the
+      email addresses have a file with a name that is the URL encoded email
+      address, and browser tickets have a file with a name that is the
       32 hex digit ticket itself.
 \end{enumerate}
 
@@ -176,13 +176,13 @@ same rules.
       See {\tt /include/parameters.php}\\ {\tt \$epm\_time\_format}.
 \end{enumerate}
 
-\subsection{User IDs}
+\subsection{Account IDs}
 
 \begin{enumerate}
-\item User IDs (UIDs) are user choosen names.  They are unique to the
-      user and used for both external and internal identification.
+\item Account IDs (AIDs) are user choosen names.  They are unique to the
+      account and used for both external and internal identification.
       Once assigned, they cannot be changed.
-\item There are two kinds of UIDs: personal PIDs for individual users,
+\item There are two kinds of AIDs: user UIDs for individual users,
       and team TIDs for teams.
 \end{enumerate}
 
@@ -205,6 +205,45 @@ same rules.
       request is checked to see if it has the right \$ID value,
       and a new \$ID value is generated for the next tab or
       window contents.
+\end{enumerate}
+
+\subsection{Tabs and Windows}
+
+\begin{enumerate}
+\item There are specific tabs and windows for different kinds
+of transations.  The \TT{main} window is for non-problem specific
+transations.  For each account problem there is a problem-specific
+window for transactions on that problem.  There is a \TT{view}
+pop-up window for looking at files and information, and a
+separate \TT{help} pop-up window for the Help Page and Guide Page.
+
+\item Pages are assigned to windows.  E.g., the Login, Project,
+User, Manage, List Edit, and Favorites Edit Pages are assigned
+to the main tab, the
+Problem, Option, and Run Pages are assigned to problem tabs,
+and the View and Template Pages are assigned to the view pop-up
+window.
+
+\item At any given time a tab or window has a current page.
+The page is initially opened with a GET.  Subsequent
+transactions on that page are done with POSTs.  Each POST to
+a page is checked to be sure that page is the current page for
+its the window type.  So if you have opened the Project Page
+in the main tab, you cannot POST to the User Page.
+
+\item Transactions within a tab are sequenced, so that
+if a transaction is out of sequence the tab becomes
+\key{orphaned} and must be closed.
+Sequencing prevents two main
+tabs from existing at the same time, or two problem tabs
+for the same problem existing at the same time.
+
+Sequencing is done
+by random sequence IDs that are attached to each page.
+The next request must contain the current ID else the
+tab is orphaned.  For the main tab the Login Page initializes
+the tab's ID sequence.  For problem tabs the Problem Page
+initializes the sequence.
 \end{enumerate}
 
 \section{Data Files}
