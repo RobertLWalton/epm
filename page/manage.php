@@ -56,8 +56,8 @@
     // where PRIV is one of the privilege names, S is
     // + to grant the privilege or - to deny it, and
     // RE is a regular expression matched against the
-    // user's UID.  A +priv+ file line whose RE matches
-    // the current UID is said to be matching.  The
+    // user's AID.  A +priv+ file line whose RE matches
+    // the current AID is said to be matching.  The
     // +priv+ files are read one line at a time, and
     // the first matching line for a particular permis-
     // sion determines the result.  If there are no
@@ -101,7 +101,7 @@
 
     require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_UID'];
+    $uid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";

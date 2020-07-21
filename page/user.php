@@ -409,6 +409,7 @@
 		ERROR ( "could not write login.log" );
 
 	    $_SESSION['EPM_UID'] = $uid;
+	    $_SESSION['EPM_AID'] = $uid;
 	        // Do this last as it certifies
 		// the EMAIL and .info files exist.
 	    $edit = NULL;

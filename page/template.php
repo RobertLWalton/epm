@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 28 04:08:58 EDT 2020
+    // Date:	Tue Jul 21 09:13:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -20,7 +20,7 @@
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
 	       $epm_method );
-    elseif ( ! isset ( $_SESSION['EPM_UID'] ) )
+    elseif ( ! isset ( $_SESSION['EPM_AID'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to template.php" );
     elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
@@ -28,7 +28,7 @@
 	       " to template.php" );
 
     $email = $_SESSION['EPM_EMAIL'];
-    $uid = $_SESSION['EPM_UID'];
+    $uid = $_SESSION['EPM_AID'];
         // These are needed to require epm_template.php.
 
     require "$epm_home/include/epm_template.php";

@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 28 04:08:58 EDT 2020
+    // Date:	Tue Jul 21 09:40:28 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -47,14 +47,14 @@
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
 	       $epm_method );
-    elseif ( ! isset ( $_SESSION['EPM_UID'] ) )
+    elseif ( ! isset ( $_SESSION['EPM_AID'] ) )
 	exit ( "ACCESS: illegal GET to utf8_show.php" );
     elseif ( ! isset ( $_GET['problem'] ) )
 	exit ( "ACCESS: illegal GET to utf8_show.php" );
     elseif ( ! isset ( $_GET['filename'] ) )
 	exit ( "ACCESS: illegal GET to utf8_show.php" );
 
-    $uid = $_SESSION['EPM_UID'];
+    $uid = $_SESSION['EPM_AID'];
     $problem = $_GET['problem'];
     $probdir = "users/$uid/$problem";
     $filename = $_GET['filename'];

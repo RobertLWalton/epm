@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jul 20 14:50:34 EDT 2020
+// Date:    Tue Jul 21 09:27:29 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -1078,7 +1078,7 @@ function execute_commands ( $base, $dir, $errors )
     $r .= "export EPM_WEB=$epm_web" . PHP_EOL;
     $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
     $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
-    $r .= "export EPM_UID=$uid" . PHP_EOL;
+    $r .= "export EPM_AID=$uid" . PHP_EOL;
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
     $r .= "export EPM_DIR=$dir" . PHP_EOL;
     $r .= "export BIN=$epm_home/bin" . PHP_EOL;
@@ -1154,7 +1154,7 @@ function execute_commands_2 ( $base, $dir )
     $env = getenv();
     $env['EPM_HOME'] = $epm_home;
     $env['EPM_DATA'] = $epm_data;
-    $env['EPM_UID'] = $uid;
+    $env['EPM_AID'] = $uid;
     $env['EPM_PROBLEM'] = $problem;
     $env['EPM_DIR'] = $dir;
     $env['BIN'] = "$epm_home/bin";

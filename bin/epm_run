@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun Jun 14 23:32:22 EDT 2020
+// Date:	Tue Jul 21 09:28:40 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -12,7 +12,7 @@
 
 $document = <<<'EOT'
 EPM_WEB=document-root-directory \
-EPM_UID=uid \
+EPM_AID=aid \
 EPM_PROBLEM=problem \
 EPM_DIR=run-subdirectory \
     epm_run [-d|-s] run-file [work-dir [status-file]]
@@ -135,7 +135,7 @@ switch ( $argc )
 // ini variables_order.  But getenv does work.
 //
 $epm_web  = getenv ( 'EPM_WEB' );
-$uid      = getenv ( 'EPM_UID' );
+$aid      = getenv ( 'EPM_AID' );
 $problem  = getenv ( 'EPM_PROBLEM' );
 $dir      = getenv ( 'EPM_DIR' );
 
@@ -143,7 +143,8 @@ $epm_self = "/bin/epm_run";
 require "$epm_web/parameters.php";
     // This sets $epm_home and $epm_data
 
-$probdir = "users/$uid/$problem";
+$probdir = "users/$aid/$problem";
+$uid = $aid;	// TBD: temp fix
 require "$epm_home/include/epm_make.php";
 
 $pardir = "$probdir/+parent+";
@@ -330,7 +331,7 @@ foreach ( $runin as $infile )
 	     ||
 	     $lock < LOCK ( $pardir, LOCK_SH ) )
 	{
-	    $errors[] = "parent of $uid $problem was"
+	    $errors[] = "parent of $aid $problem was"
 	              . " pushed during run";
 	    $first_failed = $base;
 	    $score = 'EPM Push Conflict Error';
@@ -343,7 +344,7 @@ foreach ( $runin as $infile )
     if ( $atime === false ) $atime = 0;
     if ( $atime > $altered )
     {
-	$errors[] = "$uid $problem was altered by"
+	$errors[] = "$aid $problem was altered by"
 		  . " another one of your tabs"
 		  . " during run execution";
 	$first_failed = $base;

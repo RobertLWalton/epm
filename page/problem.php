@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 19 12:45:58 EDT 2020
+    // Date:	Tue Jul 21 09:10:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -24,14 +24,14 @@
     if ( ! isset ( $_REQUEST['problem'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to problem.php" );
-    elseif ( ! isset ( $_SESSION['EPM_UID'] ) )
+    elseif ( ! isset ( $_SESSION['EPM_AID'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to problem.php" );
     elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to problem.php" );
 
-    $uid = $_SESSION['EPM_UID'];
+    $uid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
     $problem = $_REQUEST['problem'];
     $probdir = "users/$uid/$problem";

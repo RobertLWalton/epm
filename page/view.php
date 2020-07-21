@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 19 12:48:46 EDT 2020
+    // Date:	Tue Jul 21 09:40:55 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -25,9 +25,9 @@
     // Each post may selects a user, project, problem
     // list, or problem.
     //
-    //	    user=UID
+    //	    user=AID
     //
-    //	    project=UID
+    //	    project=PROJECT
     //
     //	    problem=PROJECT:PROBLEM
     //
@@ -39,14 +39,14 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    if ( ! isset ( $_SESSION['EPM_UID'] ) )
+    if ( ! isset ( $_SESSION['EPM_AID'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to view.php" );
     elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to view.php" );
 
-    $uid = $_SESSION['EPM_UID'];
+    $uid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_user.php";
@@ -59,7 +59,7 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $user = NULL;    // UID for 'user' POST.
+    $user = NULL;    // AID for 'user' POST.
     $project = NULL; // Project for 'project' or
     		     // 'problem' POST.
     $problem = NULL; // Problem for 'problem' POST.

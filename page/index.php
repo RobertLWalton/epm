@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jul 20 06:12:24 EDT 2020
+// Date:    Tue Jul 21 09:07:40 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -74,7 +74,7 @@ clearstatcache();
 
 // Check that we have not skipped proper login.
 //
-if ( ! isset ( $_SESSION['EPM_UID'] )
+if ( ! isset ( $_SESSION['EPM_AID'] )
      &&
      $epm_self != "/page/login.php"
      &&
@@ -162,8 +162,8 @@ function EPM_ERROR_HANDLER
 
     $stack = debug_backtrace
         ( DEBUG_BACKTRACE_IGNORE_ARGS );
-    if ( isset ( $_SESSION['EPM_UID'] ) )
-        $m = $_SESSION['EPM_UID'];
+    if ( isset ( $_SESSION['EPM_AID'] ) )
+        $m = $_SESSION['EPM_AID'];
     elseif ( isset ( $_SESSION['EPM_EMAIL'] ) )
         $m = $_SESSION['EPM_EMAIL'];
     else
@@ -206,8 +206,8 @@ set_error_handler ( 'EPM_ERROR_HANDLER' );
 // previous session finds out here that it has been
 // aborted.
 //
-// When a session EPM_UID is set, the session_id is
-// written to S = "admin/users/UID/session_id"
+// When a session EPM_AID is set, the session_id is
+// written to S = "admin/users/AID/session_id"
 // and the mod-time of S identifies the session.
 //
 if ( isset ( $_SESSION['EPM_ABORT'] ) )

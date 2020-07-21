@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 20 06:04:46 EDT 2020
+    // Date:	Tue Jul 21 09:13:16 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -44,9 +44,9 @@
     //
     // A list is a NAME.list file in a directory:
     //
-    //	    users/UID/+lists+
+    //	    users/AID/+lists+
     //
-    // Such a file belongs to the UID user and can be
+    // Such a file belongs to the AID user and can be
     // edited by the user.  The file begins with lines
     // of the form:
     //
@@ -54,7 +54,7 @@
     //
     // that specify a problem in a project.  Thus a list
     // is a list of problems.  If a problem is not in a
-    // project, but is in the user's users/UID direc-
+    // project, but is in the user's users/AID direc-
     // tory, PROJECT is `-'.  The TIME is the last
     // time before the line was added to the list file
     // that a change was made to the PROBLEM files by a
@@ -87,17 +87,17 @@
     // In addition there are read-only lists contain-
     // ing the problems in the directories:
     //
-    //	    users/UID
+    //	    users/AID
     //
     //	    projects/PROJECT
     //
     // These are used to edit other lists, which is
     // done by copying entries from one list to another.
     //
-    // Each user with given UID has a list of favorite
+    // Each user with given AID has a list of favorite
     // lists in
     //
-    //	    users/UID/+lists+/+favorites+
+    //	    users/AID/+lists+/+favorites+
     //
     // This files contents are lines of the forms:
     //
@@ -107,7 +107,7 @@
     //
     //		users/OWNER/+lists+/BASENAME.list
     //
-    // If the OWNER is not the UID, then the symbolic
+    // If the OWNER is not the AID, then the symbolic
     // link
     //
     //		lists/OWNER-BASENAME.list
@@ -126,13 +126,13 @@
     //
     //	    projects/PROJECT/PROBLEM/+review+
     //
-    // holds files named UID.review which are reviews of
-    // the problem by the UID user.  There can be at
-    // most one review for each PROJECT, PROBLEM, UID
+    // holds files named AID.review which are reviews of
+    // the problem by the AID user.  There can be at
+    // most one review for each PROJECT, PROBLEM, AID
     // triple.  A review file is just a sequence of
     // description paragraphs separated by blank lines.
     //
-    // A review file may be created by its UID user
+    // A review file may be created by its AID user
     // after the user has solved the PROBLEM, if the
     // user is the owner of the PROBLEM, or if the user
     // has `review' privilege for the problem.  The
@@ -172,19 +172,19 @@
     // output (.rout) file is placed in the file
     //
     //	     projects/PROJECT/PROBLEM/+submits+/
-    //		      CCCCCC-UID-RUN-PROBLEM.rout
+    //		      CCCCCC-AID-RUN-PROBLEM.rout
     //
     // file, where CCCCCC is a counter that goes 000000,
-    // 000001, 000002, ... as submissions occur, UID
+    // 000001, 000002, ... as submissions occur, AID
     // is the user who submitted, and RUN-PROBLEM.run
     // is the corresponding run (.run) file.
     //	    
     // The following are log files:
     //
-    //	    users/UID/+actions+
-    //	    users/UID/PROBLEM/+actions+
-    //	    users/UID/PROBLEM/+changes+
-    //	    users/UID/+lists+/+actions+
+    //	    users/AID/+actions+
+    //	    users/AID/PROBLEM/+actions+
+    //	    users/AID/PROBLEM/+changes+
+    //	    users/AID/+lists+/+actions+
     //	    projects/PROJECT/+actions+
     //	    projects/PROJECT/PROBLEM/+actions+
     //	    projects/PROJECT/PROBLEM/+changes+
@@ -206,18 +206,18 @@
     // The following are the possible action description
     // lines:
     //
-    //	 TIME UID pull PROJECT PROBLEM
-    //	 TIME UID push PROJECT PROBLEM
-    //	 TIME UID submit PROJECT PROBLEM STIME SCORE...
+    //	 TIME AID pull PROJECT PROBLEM
+    //	 TIME AID push PROJECT PROBLEM
+    //	 TIME AID submit PROJECT PROBLEM STIME SCORE...
     //   TIME UID publish OWNER LISTNAME
     //   TIME UID unpublish OWNER LISTNAME
     //   TIME UID add OWNER LISTNAME
     //   TIME UID sub OWNER LISTNAME
     //
-    // Here TIME is the time of the action, UID is the
-    // user performing the action, PROJECT may be '-'
+    // Here TIME is the time of the action, AID is the
+    // account performing the action, PROJECT may be '-'
     // to indicate that the PROBLEM is private to the
-    // UID user, STIME is the max solution time in a
+    // AID account, STIME is the max solution time in a
     // submit run, SCORE... is the submit run score and
     // may contain single spaces, OWNER is the owner of
     // the list named LISTNAME, add means that user UID
@@ -274,7 +274,7 @@
     //		if it exists.
     //
     //	   EPM_DATA ALTERED
-    //		Filemtime of users/UID/PROBLEM/+altered+
+    //		Filemtime of users/AID/PROBLEM/+altered+
     //		before compile, or 0 if file does not
     //		exist.
 
@@ -378,7 +378,7 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_UID'];
+    $uid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
@@ -421,7 +421,7 @@
     // return the rows of a table for pushing problems
     // as a string.  The string has one segment for each
     // list element for which PROBLEM exists in users/
-    // UID.  The segment has the form:
+    // AID.  The segment has the form:
     //
     //     <tr data-project='PROJECT'
     //         data-problem='PROBLEM'>
@@ -520,7 +520,7 @@ EOT;
     //
     // Here NOTE is one of:
     //
-    //	   (create UID PROBLEM)
+    //	   (create AID PROBLEM)
     //		if PROBLEM does not exist for user
     //		and PROJECT != '-'
     //     (re-pull)
@@ -529,7 +529,7 @@ EOT;
     //     (re-pull)
     //		if PROBLEM exists and has a parent and
     //		and the parent == PROJECT
-    //	   (pull into <mark>EXISTING</mark> UID PROBLEM)
+    //	   (pull into <mark>EXISTING</mark> AID PROBLEM)
     //		if PROBLEM exists and has no parent and
     //		PROJECT != '-'
     //	   (<mark>CHANGE</mark> to<mark>DIFFERENT</mark>
