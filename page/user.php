@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 20 22:41:44 EDT 2020
+    // Date:	Tue Jul 21 04:31:04 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -38,12 +38,7 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    // require "$epm_home/include/debug_info.php";
-
-    if ( $epm_method != 'GET'
-         &&
-         $epm_method != 'POST' )
-        exit ( "UNACCEPTABLE HTTP METHOD $epm_method" );
+    require "$epm_home/include/debug_info.php";
 
     require "$epm_home/include/epm_user.php";
 
@@ -57,8 +52,12 @@
 	// changed below by POST processing.
     $errors = [];
         // List of error messages to be displayed.
+    $post_processed = false;
 
     // Data:
+    //
+    //     EPM_USER UID
+    //          Currently selected UID.
     //
     //	   EPM_DATA INFO
     //	        .info file contents containing:
@@ -73,6 +72,12 @@
     //		Value of $edit for the last page
     //		served.
     //
+    if ( ! isset ( $_SESSION['EPM_USER'] ) )
+	$_SESSION['EPM_USER']['UID'] = NULL;
+    $user = & $_SESSION['EPM_USER'];
+    if ( ! isset ( $user['UID'] ) && ! $new_user )
+        $user['UID'] = $_SESSION['EPM_UID'];
+
     if ( $epm_method == 'GET' )
     {
 	$_SESSION['EPM_DATA'] = [];
@@ -88,10 +93,31 @@
 	}
 	else
 	    $data['INFO'] = read_uid_info
-	        ( $_SESSION['EPM_UID'] );
+	        ( $user['UID'] );
+    }
+    elseif ( isset ( $_POST['user'] )
+             &&
+	     $_POST['user'] != $user['UID'] )
+    {
+        if ( $new_user )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        $new_uid = $_POST['user'];
+	$f = "admin/users/$new_uid/$new_uid.info";
+	if ( ! is_readable ( "$epm_data/$f" ) )
+	    $errors[] =
+	        "$new_uid is no longer a user id";
+	else
+	{
+	    $user['UID'] = $new_uid;
+	    $data = & $_SESSION['EPM_DATA'];
+	    $data['INFO'] = read_uid_info
+	        ( $user['UID'] );
+	    $post_processed = true;
+	}
     }
     else
 	$data = & $_SESSION['EPM_DATA'];
+
     $info = & $data['INFO'];
     $uid = & $info['uid'];
     $emails = & $info['emails'];
@@ -99,11 +125,17 @@
     $organization = & $info['organization'];
     $location = & $info['location'];
 
+    $editable =
+        ( $new_user
+	  ||
+	  $uid == $_SESSION['EPM_UID'] );
+
     LOCK ( "admin", LOCK_EX );
 
     if ( $epm_method == 'GET' && ! $new_user )
     {
-	$uid = $_SESSION['EPM_UID'];
+        if ( $uid != $user['UID'] )
+	    ERROR ( "bad {$user['UID']} info uid" );
 
 	email_map ( $map );
 	$actual = [];
@@ -117,8 +149,11 @@
 	     count ( array_diff ( $actual, $emails ) )
 	     > 0 )
 	{
+	    WARN ( "$uid info emails !=" .
+	           " admin/email emails" );
 	    $emails = $actual;
-	    write_info();
+	    if ( $editable )
+		write_info ( $uid );
 	}
     }
 
@@ -192,7 +227,7 @@
 	return true;
     }
 
-    function write_info()
+    function write_info ( $uid )
     {
         global $epm_data, $epm_time_format,
 	       $uid, $info;
@@ -293,6 +328,8 @@
     }
     elseif ( isset ( $_POST['update'] ) )
     {
+        if ( ! $editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
         $update = $_POST['update'];
 	if ( ! in_array ( $update, ['check','finish'],
 	                  true ) )
@@ -351,7 +388,7 @@
 		  implode ( ' ', $items ) );
 	    if ( $r === false )
 		ERROR ( "could not write $f" );
-	    write_info();
+	    write_info ( $uid );
 
 	    $f = "admin/users/$uid/session_id";
 	    $r = file_put_contents
@@ -378,7 +415,7 @@
 	}
 	else
 	{
-	    write_info();
+	    write_info ( $uid );
 	    $edit = NULL;
 	}
 
@@ -387,6 +424,8 @@
              &&
 	     isset ( $_POST['new_email'] ) )
     {
+        if ( ! $editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
@@ -418,13 +457,15 @@
 	        if ( $r === false )
 		    ERROR ( "could not write $f" );
 	        $emails[] = $e;
-		write_info();
+		write_info ( $uid );
 	    }
 	}
 	$edit = 'emails';
     }
     elseif ( isset ( $_POST['delete_email'] ) )
     {
+        if ( ! $editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
@@ -463,12 +504,12 @@
 			unlink ( "$epm_data/$f" );
 		}
 		array_splice ( $emails, $k, 1 );
-		write_info();
+		write_info ( $uid );
 	    }
 	}
 	$edit = 'emails';
     }
-    else
+    elseif ( ! $post_processed )
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
     $data['LAST_EDIT'] = $edit;
@@ -559,7 +600,8 @@ EOT;
 	echo '</strong></div></div>';
     }
 
-    if ( $edit != 'profile' && count ( $emails ) == 1 )
+    if ( $editable && $edit != 'profile'
+                   && count ( $emails ) == 1 )
         echo <<<EOT
 	<div class='warnings'>
         <strong>Its a good idea to add a
@@ -604,12 +646,17 @@ EOT;
     </table>
     </form>
     </div>
+EOT;
+    if ( $editable ) $uname = 'Your';
+    else $uname = $uid;
 
+    echo <<<EOT
     <div class='users'>
     <div class='user-header'>
-    <form method='POST' action='user.php'>
+    <form method='POST' action='user.php'
+          id='user-form'>
     <input type='hidden' name='id' value='$ID'>
-    <strong>Your Info</strong>
+    <strong>$uname Info</strong>
     <br>
 EOT;
     if ( $edit == 'profile' )
@@ -641,13 +688,30 @@ EOT;
 EOT;
     else
     {
-    	echo <<<EOT
-	<button type="submit"
-		name='edit' value='profile'>
-		Edit Profile</button>
-	<button type="submit"
-		name='edit' value='emails'>
-		Edit Emails</button>
+	require "$epm_home/include/epm_list.php";
+        $users = read_users();
+	$options = values_to_options ( $users, $uid );
+	if ( $editable )
+	    echo <<<EOT
+	    <button type="submit"
+		    name='edit' value='profile'>
+		    Edit Profile</button>
+	    <button type="submit"
+		    name='edit' value='emails'>
+		    Edit Emails</button>
+	    <br>
+	    <strong>or Select Another User</strong>
+EOT;
+	else
+	    echo <<<EOT
+	    <strong>Select Another User</strong>
+EOT;
+	echo <<<EOT
+	<select name='user'
+		onchange='document.getElementById
+			    ("user-form").submit()'>
+	$options
+	</select>
 EOT;
     }
     echo <<<EOT
@@ -713,7 +777,7 @@ EOT;
 	    ( $emails, $email );
 	echo <<<EOT
 	<div class='email-addresses'>
-	<strong>Your Email Addresses:</strong>
+	<strong>$uname Email Addresses:</strong>
 	<div class='indented'>
 	$addresses
 	</div></div>
@@ -748,7 +812,7 @@ EOT;
 	    </strong></mark></td><tr>
 	    <tr><th>User ID:</th>
 		<td> <input type='text' size='20'
-		      name='uid' value='$uid'
+		      name='uid' value=''
 		      title='Your User ID (Short Name)'
 		      placeholder='User Id (Short Name)'
 		      >
@@ -789,7 +853,7 @@ EOT;
     {
         $rows = user_info_to_rows ( $info );
 	echo <<<EOT
-	<strong>Your User Profile:</strong>
+	<strong>$uname User Profile:</strong>
 	<table>
 	$rows
 	</table>
