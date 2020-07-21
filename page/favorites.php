@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 09:07:07 EDT 2020
+    // Date:	Tue Jul 21 10:44:20 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -30,7 +30,7 @@
     //		modification time, for problem lists
     //		the modification time is that of the
     //		list directory, either projects/PROJECT
-    //		or users/UID.
+    //		or users/AID.
 
     // POST:
     //
@@ -56,7 +56,7 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
@@ -103,7 +103,7 @@
 		$flist[] = $list[$index];
 	    }
 	    write_file_list
-		( "users/$uid/+lists+/+favorites+",
+		( "users/$aid/+lists+/+favorites+",
 		  $flist );
 	}
     }
@@ -114,16 +114,16 @@
     //		-:- => TIME,
     //		PROJECT:- => TIME,
     //		-:BASENAME => TIME,
-    //		USER:BASENAME => TIME,
+    //		ACCOUNT:BASENAME => TIME,
     //
     // in the order indicated.  TIME is the mtime
-    // of the user's +actions+ file for -:-, the PROJECT
-    // directory for PROJECT:-, and the list itself
-    // for the other cases.
+    // of the accounts's +actions+ file for -:-, the
+    // PROJECT directory for PROJECT:-, and the list
+    // itself for the other cases.
     // 
     $inmap = [];
     $time = @filemtime
-        ( "$epm_data/users/$uid/+actions+" );
+        ( "$epm_data/users/$aid/+actions+" );
     if ( $time === false ) $time = time();
     $time = strftime ( $epm_time_format, $time );
     $inmap["-:-"] = $time;
@@ -137,7 +137,7 @@
 	$time = strftime ( $epm_time_format, $time );
         $inmap["$project:-"] = $time;
     }
-    $d = "users/$uid/+lists+";
+    $d = "users/$aid/+lists+";
     $fnames = @scandir ( "$epm_data/$d" );
     if ( $fnames !== false )
         foreach ( $fnames as $fname )
@@ -163,14 +163,14 @@
 	    if ( ! preg_match ( $re, $fname,
 	                         $matches ) )
 	        continue;
-	    $user = $matches[1];
-	    if ( $user == $uid ) continue;
+	    $account = $matches[1];
+	    if ( $account == $aid ) continue;
 	    $basename = $matches[2];
 	    $time = @filemtime
 	        ( "$epm_data/$d/$fname" );
 	    if ( $time === false )
 		ERROR ( "cannot stat $d/$fname" );
-	    $inmap["$user:$basename"] =
+	    $inmap["$account:$basename"] =
 	        strftime ( $epm_time_format, $time );
 	}
 

@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 09:27:29 EDT 2020
+// Date:    Tue Jul 21 10:35:14 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -30,8 +30,8 @@ if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
 if ( ! isset ( $epm_home ) )
     exit ( 'ACCESS ERROR: $epm_home not set' );
-if ( ! isset ( $uid ) )
-    exit ( 'ACCESS ERROR: $uid not set' );
+if ( ! isset ( $aid ) )
+    exit ( 'ACCESS ERROR: $aid not set' );
 if ( ! isset ( $problem ) )
     exit ( 'ACCESS ERROR: $problem not set' );
 if ( ! isset ( $probdir ) )
@@ -1071,14 +1071,14 @@ function get_exit_message
 function execute_commands ( $base, $dir, $errors )
 {
     global $epm_data, $epm_home, $epm_web,
-           $uid, $problem, $epm_shell_timeout;
+           $aid, $problem, $epm_shell_timeout;
 
     $r = '';
     $r .= "cd $epm_data/$dir" . PHP_EOL;
     $r .= "export EPM_WEB=$epm_web" . PHP_EOL;
     $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
     $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
-    $r .= "export EPM_AID=$uid" . PHP_EOL;
+    $r .= "export EPM_AID=$aid" . PHP_EOL;
     $r .= "export EPM_PROBLEM=$problem" . PHP_EOL;
     $r .= "export EPM_DIR=$dir" . PHP_EOL;
     $r .= "export BIN=$epm_home/bin" . PHP_EOL;
@@ -1134,7 +1134,7 @@ function execute_commands ( $base, $dir, $errors )
 //
 function execute_commands_2 ( $base, $dir )
 {
-    global $epm_data, $epm_home, $uid, $problem;
+    global $epm_data, $epm_home, $aid, $problem;
 
     $cwd = "$epm_data/$dir";
 
@@ -1154,7 +1154,7 @@ function execute_commands_2 ( $base, $dir )
     $env = getenv();
     $env['EPM_HOME'] = $epm_home;
     $env['EPM_DATA'] = $epm_data;
-    $env['EPM_AID'] = $uid;
+    $env['EPM_AID'] = $aid;
     $env['EPM_PROBLEM'] = $problem;
     $env['EPM_DIR'] = $dir;
     $env['BIN'] = "$epm_home/bin";
@@ -1816,7 +1816,7 @@ function start_make_file
 //
 function finish_make_file ( & $warnings, & $errors )
 {
-    global $_SESSION, $probdir, $uid, $problem,
+    global $_SESSION, $probdir, $aid, $problem,
            $epm_data, $work,
            $epm_file_maxsize, $epm_score_file_written;
 
@@ -1831,7 +1831,7 @@ function finish_make_file ( & $warnings, & $errors )
 	     ||
 	     $lock > $work['LOCK'] )
 	{
-	    $errors[] = "parent of $uid $problem was"
+	    $errors[] = "parent of $aid $problem was"
 	              . " pushed during command"
 		      . " execution";
 	    return;
@@ -1843,7 +1843,7 @@ function finish_make_file ( & $warnings, & $errors )
     if ( $altered === false ) $altered = 0;
     if ( $altered > $work['ALTERED'] )
     {
-	$errors[] = "$uid $problem was altered by"
+	$errors[] = "$aid $problem was altered by"
 		  . " another one of your tabs"
 		  . " during command execution";
 	return;
@@ -2075,14 +2075,14 @@ function start_run
 //
 //	projects/$project/+actions+
 //	projects/$project/$problem/+actions+
-//	users/$uid/+actions+
-//	users/$uid/$problem/+actions+
+//	users/$aid/+actions+
+//	users/$aid/$problem/+actions+
 //
 // Then locks project/$project/$problem/+submits+ for
 // writing and moves .rout file to
 //
 //	projects/$project/+submits+/
-//		 CCCCCC:$uid:$runbase.rout
+//		 CCCCCC:$aid:$runbase.rout
 //
 // Here CCCCCC is the value of
 //
@@ -2099,7 +2099,7 @@ function start_run
 //
 function finish_run ( & $warnings, & $errors )
 {
-    global $epm_data, $probdir, $uid, $problem, $run,
+    global $epm_data, $probdir, $aid, $problem, $run,
            $epm_parent_re, $_SESSION,
 	   $epm_time_format;
 
@@ -2132,7 +2132,7 @@ function finish_run ( & $warnings, & $errors )
 	     ||
 	     $lock > $run['LOCK'] )
 	{
-	    $errors[] = "parent of $uid $problem was"
+	    $errors[] = "parent of $aid $problem was"
 	              . " pushed during run execution";
 	    return;
 	}
@@ -2143,7 +2143,7 @@ function finish_run ( & $warnings, & $errors )
     if ( $altered === false ) $altered = 0;
     if ( $altered > $run['ALTERED'] )
     {
-	$errors[] = "$uid $problem was altered by"
+	$errors[] = "$aid $problem was altered by"
 		  . " another one of your tabs"
 		  . " during run execution";
 	return;
@@ -2252,7 +2252,7 @@ function finish_run ( & $warnings, & $errors )
     else
 	$failed_case = NULL;
 
-    $action = "$time $uid submit $project $problem"
+    $action = "$time $aid submit $project $problem"
             . " $runbase $stime $score" . PHP_EOL;
 
     $f = "projects/$project/+actions+";
@@ -2265,12 +2265,12 @@ function finish_run ( & $warnings, & $errors )
 	( "$epm_data/$f", $action, FILE_APPEND );
     if ( $r === false )
 	ERROR ( "cannot write $f" );
-    $f = "users/$uid/+actions+";
+    $f = "users/$aid/+actions+";
     $r = @file_put_contents
 	( "$epm_data/$f", $action, FILE_APPEND );
     if ( $r === false )
 	ERROR ( "cannot write $f" );
-    $f = "users/$uid/$problem/+actions+";
+    $f = "users/$aid/$problem/+actions+";
     $r = @file_put_contents
 	( "$epm_data/$f", $action, FILE_APPEND );
     if ( $r === false )
@@ -2308,7 +2308,7 @@ function finish_run ( & $warnings, & $errors )
 	ERROR ( "could not write $cf" );
     $count = sprintf ( '%06d', $count );
 
-    $f = "$d/$count:$uid:$runbase.rout";
+    $f = "$d/$count:$aid:$runbase.rout";
 
     if ( ! rename ( "$epm_data/$rout",
                     "$epm_data/$f" ) )

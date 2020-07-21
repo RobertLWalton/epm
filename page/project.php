@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 09:13:16 EDT 2020
+    // Date:	Tue Jul 21 10:52:16 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -209,10 +209,10 @@
     //	 TIME AID pull PROJECT PROBLEM
     //	 TIME AID push PROJECT PROBLEM
     //	 TIME AID submit PROJECT PROBLEM STIME SCORE...
-    //   TIME UID publish OWNER LISTNAME
-    //   TIME UID unpublish OWNER LISTNAME
-    //   TIME UID add OWNER LISTNAME
-    //   TIME UID sub OWNER LISTNAME
+    //   TIME AID publish OWNER LISTNAME
+    //   TIME AID unpublish OWNER LISTNAME
+    //   TIME AID add OWNER LISTNAME
+    //   TIME AID sub OWNER LISTNAME
     //
     // Here TIME is the time of the action, AID is the
     // account performing the action, PROJECT may be '-'
@@ -220,10 +220,10 @@
     // AID account, STIME is the max solution time in a
     // submit run, SCORE... is the submit run score and
     // may contain single spaces, OWNER is the owner of
-    // the list named LISTNAME, add means that user UID
-    // has added the list to their favorites, and sub
-    // means user UID has removed the list from their
-    // favorites.
+    // the list named LISTNAME, add means that account
+    // AID has added the list to their favorites, and
+    // sub means account AID has removed the list from
+    // their favorites.
     //
     // +actions+ logs are NOT protected by locking and
     // it is possible for the writing of two lines to
@@ -378,7 +378,7 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
@@ -544,7 +544,7 @@ EOT;
     //
     function list_to_pull_rows ( $list, & $warnings )
     {
-        global $uid;
+        global $aid;
 
 	$map = read_problem_map();
 	$r = '';
@@ -558,7 +558,7 @@ EOT;
 		     $map[$problem] == '-' )
 		{
 		    $warnings[] =
-		        "cannot pull $uid $problem" .
+		        "cannot pull $aid $problem" .
 			" as no project is specified";
 		    continue;
 		}
@@ -566,13 +566,13 @@ EOT;
 		$comment = "(re-pull)";
 	    }
 	    elseif ( ! isset ( $map[$problem] ) )
-		$comment = "(create $uid problem)";
+		$comment = "(create $aid problem)";
 	    elseif ( $project == $map[$problem] )
 		$comment = "(re-pull)";
 	    elseif ( '-' == $map[$problem] )
 		$comment =
 		    "(pull into <mark>EXISTING</mark>" .
-		    " $uid $problem)";
+		    " $aid $problem)";
             else
 		$comment = '(<mark>CHANGE</mark> to'
 		         . ' <mark>DIFFERENT</mark>'
@@ -642,11 +642,11 @@ EOT;
     function compile_push_problem
 	( $project, $problem, & $warnings, & $errors )
     {
-	global $epm_data, $uid, $epm_filename_re,
+	global $epm_data, $aid, $epm_filename_re,
 	       $epm_time_format, $epm_parent_re,
 	       $data, $push_file_map;
 
-        $srcdir = "users/$uid/$problem";
+        $srcdir = "users/$aid/$problem";
 	$d = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$srcdir" ) )
 	{
@@ -719,8 +719,8 @@ EOT;
 	    $new_push = true;
 	}
 
-	$changes = "Changes to Push $uid $problem to"
-	         . " $project $problem by $uid ("
+	$changes = "Changes to Push $aid $problem to"
+	         . " $project $problem by $aid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
@@ -728,8 +728,8 @@ EOT;
 	if ( $new_push )
 	{
 	    $new_push_privs =
-		"+ owner $uid" . PHP_EOL .
-		"+ re-push $uid" . PHP_EOL;
+		"+ owner $aid" . PHP_EOL .
+		"+ re-push $aid" . PHP_EOL;
 	    $changes .= "  make $project $problem"
 	              . " directory" . PHP_EOL;
 	    $commands[] = ['mkdir', $desdir, '02771'];
@@ -738,14 +738,14 @@ EOT;
 	                   '02770'];
 	    $commands[] = ['mkdir', "$desdir/+submits+",
 	                            '02770'];
-	    $changes .= "  give $uid all privileges for"
+	    $changes .= "  give $aid all privileges for"
 	              . " $project $problem directory"
 		      . PHP_EOL;
 	    $commands[] = ['append', "$desdir/+priv+",
 	                             $new_push_privs];
 	    $changes .=
 	        "  make $project $problem the parent" .
-		" of $uid $problem" . PHP_EOL;
+		" of $aid $problem" . PHP_EOL;
 	    $commands[] = ['link',
 	                   "../../../$desdir",
 	                   "$srcdir/+parent+"];
@@ -800,14 +800,14 @@ EOT;
 	    }
 
 	    $changes .=
-	        "  move $fname from $uid $problem to" .
+	        "  move $fname from $aid $problem to" .
 		" $project $problem$s" . PHP_EOL;
 	    $commands[] =
 	        ['rename', "$srcdir/$fname",
 		           "$desdir/$t"];
 		    // This will also move a link.
 	    $changes .=
-	        "  link $fname in $uid $problem to" .
+	        "  link $fname in $aid $problem to" .
 	        " $fname in $project $problem$s" .
 		PHP_EOL;
 	    $commands[] = ['link',
@@ -820,7 +820,7 @@ EOT;
 	    ( "$epm_data/$srcdir/$fname" ) )
 	{
 	    $changes .=
-	        "  merge $fname in $uid $problem" .
+	        "  merge $fname in $aid $problem" .
 		" into $fname in $project $problem" .
 		PHP_EOL;
 	    $commands[] =
@@ -871,11 +871,11 @@ EOT;
     function compile_pull_problem
 	( $project, $problem, & $warnings, & $errors )
     {
-	global $epm_data, $uid, $epm_filename_re,
+	global $epm_data, $aid, $epm_filename_re,
 	       $epm_time_format, $data,
 	       $push_file_map, $epm_parent_re;
 
-        $desdir = "users/$uid/$problem";
+        $desdir = "users/$aid/$problem";
 	$d = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$d" ) )
 	{
@@ -936,20 +936,20 @@ EOT;
 
 	$new_pull = ! is_dir ( "$epm_data/$desdir" );
 
-	$changes = "Changes to Pull $uid $problem from"
-	         . " $project $problem by $uid ("
+	$changes = "Changes to Pull $aid $problem from"
+	         . " $project $problem by $aid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
 
 	if ( $new_pull )
 	{
-	    $changes .= "  make problem $uid $problem"
+	    $changes .= "  make problem $aid $problem"
 	              . " directory" . PHP_EOL;
 	    $commands[] = ['mkdir', $desdir, '02771'];
 	    $changes .=
 	        "  make $project $problem the parent" .
-		" of $uid $problem" . PHP_EOL;
+		" of $aid $problem" . PHP_EOL;
 	    $commands[] = ['link',
 	                   "../../../$srcdir",
 	                   "$desdir/+parent+"];
@@ -1005,7 +1005,7 @@ EOT;
 	    }
 
 	    $changes .=
-	        "  link $fname in $uid $problem to" .
+	        "  link $fname in $aid $problem to" .
 	        " $fname in $project $problem$s" .
 		PHP_EOL;
 	    $commands[] = ['link',
@@ -1168,7 +1168,7 @@ EOT;
     //
     function record_push_execution ()
     {
-	global $epm_data, $data, $uid,
+	global $epm_data, $data, $aid,
 	       $epm_time_format;
 
 	$changes = $data['CHANGES'];
@@ -1187,7 +1187,7 @@ EOT;
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
 	$time = strftime ( $epm_time_format, $time );
-	$action = "$time $uid push $project $problem"
+	$action = "$time $aid push $project $problem"
 	        . PHP_EOL;
 
 	$f = "projects/$project/+actions+";
@@ -1202,13 +1202,13 @@ EOT;
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
 
-	$f = "users/$uid/+actions+";
+	$f = "users/$aid/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $action, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $f" );
 
-	$f = "users/$uid/$problem/+actions+";
+	$f = "users/$aid/$problem/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $action, FILE_APPEND );
 	if ( $r === false )
@@ -1221,14 +1221,14 @@ EOT;
     //
     function record_pull_execution ()
     {
-	global $epm_data, $data, $uid, $epm_time_format;
+	global $epm_data, $data, $aid, $epm_time_format;
 
 	$changes = $data['CHANGES'];
 	if ( $changes == '' ) return;
 
 	$project = $data['PROJECT'];
 	$problem = $data['PROBLEM'];
-	$f = "users/$uid/$problem/+changes+";
+	$f = "users/$aid/$problem/+changes+";
 	$r = @file_put_contents
 	    ( "$epm_data/$f", $changes, FILE_APPEND );
 	if ( $r === false )
@@ -1238,7 +1238,7 @@ EOT;
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
 	$time = strftime ( $epm_time_format, $time );
-	$action = "$time $uid pull $project $problem"
+	$action = "$time $aid pull $project $problem"
 	        . PHP_EOL;
 
 	$g = "projects/$project/+actions+";
@@ -1253,13 +1253,13 @@ EOT;
 	if ( $r === false )
 	    ERROR ( "cannot write $g" );
 
-	$g = "users/$uid/+actions+";
+	$g = "users/$aid/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$g", $action, FILE_APPEND );
 	if ( $r === false )
 	    ERROR ( "cannot write $g" );
 
-	$g = "users/$uid/$problem/+actions+";
+	$g = "users/$aid/$problem/+actions+";
 	$r = @file_put_contents
 	    ( "$epm_data/$g", $action, FILE_APPEND );
 	if ( $r === false )
@@ -1325,7 +1325,7 @@ EOT;
 		if ( ! preg_match
 			   ( $epm_name_re, $problem ) )
 		    exit ( 'UNACCEPTABLE HTTP POST' );
-		$d = "users/$uid/$problem";
+		$d = "users/$aid/$problem";
 		if ( ! is_dir ( "$epm_data/$d" ) )
 		    $errors[] = "your $problem problem"
 			      . " no longer exists";
@@ -1338,7 +1338,7 @@ EOT;
 	    if ( isset ( $op ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $problem = trim ( $_POST['create'] );
-	    $d = "users/$uid/$problem";
+	    $d = "users/$aid/$problem";
 	    if ( $problem == '' )
 	    {
 		// User hit carriage return on empty
@@ -1374,13 +1374,13 @@ EOT;
 		        ERROR ( "cannot stat $d" );
 		    $time = strftime
 		        ( $epm_time_format, $time );
-		    $action = "$time $uid create"
+		    $action = "$time $aid create"
 		            . " $problem"
 			    . PHP_EOL;
 
 		    umask ( $m );
 
-		    $f = "users/$uid/+actions+";
+		    $f = "users/$aid/+actions+";
 		    $r = @file_put_contents
 			( "$epm_data/$f", $action,
 			  FILE_APPEND );
@@ -1433,11 +1433,11 @@ EOT;
 			"  so this $op has been" .
 			" cancelled; try again";
 	    }
-	    $f = "users/$uid/$problem/+altered+";
+	    $f = "users/$aid/$problem/+altered+";
 	    $altered = @filemtime ( "$epm_data/$f" );
 	    if ( $altered === false ) $altered = 0;
 	    if ( $altered > $data['ALTERED'] )
-		$errors[] = "$uid $problem was altered"
+		$errors[] = "$aid $problem was altered"
 			  . " by another one of your"
 			  . " tabs during this $op";
 
@@ -1492,7 +1492,7 @@ EOT;
 		               LOCK_EX : LOCK_SH );
 		$data['LOCK'] = LOCK ( $d, $lock_type );
 	    }
-	    $f = "users/$uid/$problem/+altered+";
+	    $f = "users/$aid/$problem/+altered+";
 	    $altered = @filemtime ( "$epm_data/$f" );
 	    if ( $altered === false ) $altered = 0;
 	    $data['ALTERED'] = $altered;

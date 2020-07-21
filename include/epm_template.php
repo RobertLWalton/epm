@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue May  5 02:55:11 EDT 2020
+// Date:    Tue Jul 21 10:38:41 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -22,15 +22,16 @@ if ( ! isset ( $epm_data ) )
     exit ( 'ACCESS ERROR: $epm_data not set' );
 if ( ! isset ( $epm_home ) )
     exit ( 'ACCESS ERROR: $epm_home not set' );
-if ( ! isset ( $uid ) )
-    exit ( 'ACCESS ERROR: $uid not set' );
+if ( ! isset ( $aid ) )
+    exit ( 'ACCESS ERROR: $aid not set' );
 
 // Readable template directories, in use-first order:
 //
 $template_dirs = [];
-if ( is_dir ( "$epm_data/admin/users/$uid/template" ) )
+if ( is_dir
+         ( "$epm_data/admin/accounts/$aid/template" ) )
     $template_dirs[] =
-        [$epm_data, "admin/users/$uid/template"];
+        [$epm_data, "admin/accounts/$aid/template"];
 if ( is_dir ( "$epm_data/template" ) )
     $template_dirs[] = [$epm_data, "template"];
 $template_dirs[] = [$epm_home, "template"];

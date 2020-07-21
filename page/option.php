@@ -26,10 +26,10 @@
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to option.php" );
 
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
     $problem = $_REQUEST['problem'];
-    $probdir = "users/$uid/$problem";
+    $probdir = "users/$aid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
         exit ( "problem $problem no longer exists" );
@@ -58,7 +58,7 @@
     // Set options to the json of $epm_home/template/
     // template.optn with overrides (as a 2D matrix)
     // from $epm_data/template/template.optn and
-    // $epm_data/admin/users/$uid/template.optn.
+    // $epm_data/admin/accounts/$aid/template.optn.
     //
     // Also set the following:
     //

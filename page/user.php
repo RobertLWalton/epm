@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 04:31:04 EDT 2020
+    // Date:	Tue Jul 21 10:55:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -689,6 +689,7 @@ EOT;
 EOT;
     else
     {
+	$aid = $uid;  // To keep epm_list.php happy.
 	require "$epm_home/include/epm_list.php";
         $users = read_users();
 	$options = values_to_options ( $users, $uid );

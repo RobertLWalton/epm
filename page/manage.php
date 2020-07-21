@@ -101,7 +101,7 @@
 
     require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
@@ -131,7 +131,7 @@
         // Contents of edited version of +priv+.
     $owner_warn = false;
         // True to ask if its ok to accept $edited_
-	// contents which removes $uid from ownership.
+	// contents which removes $aid from ownership.
     $move_warn = NULL;
         // If not NULL, ask if problem should be
 	// moved to this project.
@@ -270,7 +270,7 @@
 			ERROR ( "cannot stat $f" );
 		    $time = strftime
 		        ( $epm_time_format, $time );
-		    $action = "$time $uid update"
+		    $action = "$time $aid update"
 		            . " $project $problem"
 			    . " privileges"
 			    . PHP_EOL;
@@ -332,7 +332,7 @@
 			ERROR ( "cannot stat $f" );
 		    $time = strftime
 		        ( $epm_time_format, $time );
-		    $action = "$time $uid update"
+		    $action = "$time $aid update"
 		            . " $project project"
 			    . " privileges"
 			    . PHP_EOL;
@@ -403,13 +403,13 @@
 	    }
 	    else
 	    {
-		$d = "users/$uid/$problem";
+		$d = "users/$aid/$problem";
 		$n = $problem;
 	    }
 
 	    if ( isset ( $d ) )
 	    {
-		$e = "../../../users/$uid";
+		$e = "../../../users/$aid";
 		$c = "cd $epm_data/$d;"
 		   . "rm -f $e/+download+;"
 		   . "tar zcf $e/+download+ .;";

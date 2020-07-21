@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 09:40:28 EDT 2020
+    // Date:	Tue Jul 21 10:59:04 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -54,9 +54,9 @@
     elseif ( ! isset ( $_GET['filename'] ) )
 	exit ( "ACCESS: illegal GET to utf8_show.php" );
 
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
     $problem = $_GET['problem'];
-    $probdir = "users/$uid/$problem";
+    $probdir = "users/$aid/$problem";
     $filename = $_GET['filename'];
     $ext = pathinfo ( $filename, PATHINFO_EXTENSION );
     if ( ! isset ( $display_file_type[$ext] )

@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 09:40:55 EDT 2020
+    // Date:	Tue Jul 21 10:56:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -46,7 +46,7 @@
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to view.php" );
 
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_user.php";
@@ -502,7 +502,7 @@ EOT;
     if ( isset ( $project ) && isset ( $problem ) )
     {
 	if ( $project == '-' )
-	    $f = "users/$uid/$problem/+actions+";
+	    $f = "users/$aid/$problem/+actions+";
 	else
 	    $f = "projects/$project/$problem/+actions+";
 	$action_rows = actions_to_rows

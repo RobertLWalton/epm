@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 09:08:01 EDT 2020
+    // Date:	Tue Jul 21 10:47:42 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -97,7 +97,7 @@
 
     // require "$epm_home/include/debug_info.php";
 
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
@@ -240,7 +240,7 @@ EOT;
     function upload_list_description
 	    ( $name, & $warnings, & $errors )
     {
-        global $epm_data, $uid, $epm_name_re,
+        global $epm_data, $aid, $epm_name_re,
 	       $epm_upload_maxsize;
 
         if ( ! isset ( $_FILES['uploaded_file'] ) )
@@ -307,7 +307,7 @@ EOT;
 	    WARN ( "$m $ftmp_name" );
 	    return false;
 	}
-	$f = "users/$uid/+lists+/$fbase.list";
+	$f = "users/$aid/+lists+/$fbase.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
 	    make_new_list ( $fbase, $errors );
@@ -389,9 +389,9 @@ EOT;
 		 ||
 		 $op == 'unpublish' )
 	{
-	    list ( $user, $name ) =
+	    list ( $account, $name ) =
 	        explode ( ':', $names[$J] );
-	    if ( $user != '-' )
+	    if ( $account != '-' )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
 	    if ( $op == 'delete' )
@@ -690,11 +690,11 @@ EOT;
 	    }
 	    elseif ( $writable == 'yes' )
 	    {
-	        $f = "users/$uid/+lists+/"
+	        $f = "users/$aid/+lists+/"
 		   . "$basename.list";
 		$description = read_list_description
 		    ( $f );
-		$g = "lists/$uid:$basename.list";
+		$g = "lists/$aid:$basename.list";
 		if ( file_exists ( "$epm_data/$g" ) )
 		    $published = 'yes';
 		else

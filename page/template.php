@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 09:13:58 EDT 2020
+    // Date:	Tue Jul 21 10:59:54 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -28,7 +28,7 @@
 	       " to template.php" );
 
     $email = $_SESSION['EPM_EMAIL'];
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
         // These are needed to require epm_template.php.
 
     require "$epm_home/include/epm_template.php";

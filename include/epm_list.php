@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 20 16:09:26 EDT 2020
+    // Date:	Tue Jul 21 10:29:20 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -16,7 +16,7 @@
     //	-:-		List of Your Problems
     //  -:NAME  	Your NAME list
     //  PROJECT:-	List of PROJECT Problems
-    //  USER:NAME	Published NAME list of USER
+    //  ACCOUNT:NAME	Published NAME list of ACCOUNT
     //  +favorites+	Your favorites list.
     //
     // Problem names have the form:
@@ -44,8 +44,8 @@
 
     if ( ! isset ( $epm_data ) )
 	exit ( 'ACCESS ERROR: $epm_data not set' );
-    if ( ! isset ( $uid ) )
-	exit ( 'ACCESS ERROR: $uid not set' );
+    if ( ! isset ( $aid ) )
+	exit ( 'ACCESS ERROR: $aid not set' );
 
     // See page/manage.php for the format of +priv+
     // files.
@@ -63,7 +63,7 @@
     // Read actual or proposed contents of a  +priv+
     // file and add to the privilege $map.  File
     // lines with regular expressions are matched
-    // against $uid and groups are processed.  PRIVs
+    // against $aid and groups are processed.  PRIVs
     // with no matching lines are not set in the map.
     // Lines with PRIV that is already set in the map
     // are ignored.  Groups are set in the map as if
@@ -82,7 +82,7 @@
 	    ( & $map, $contents, $allowed_privs,
 	      & $errors, $error_header )
     {
-        global $uid, $epm_name_re;
+        global $aid, $epm_name_re;
 
 	$lines = explode ( "\n", $contents );
 	$error_found = false;
@@ -136,7 +136,7 @@
 	    }
 	    else
 	    {
-		$r = preg_match ( "/^($re)\$/", $uid );
+		$r = preg_match ( "/^($re)\$/", $aid );
 		if ( $r === false )
 		    $errs[] = "bad RE";
 		elseif ( $r == 1 )
@@ -340,17 +340,17 @@
 	return $r;
     }
 
-    // Return a map from a user's own problems to the
-    // projects each is descended from, or '-' if a
+    // Return a map from an account's own problems to
+    // the projects each is descended from, or '-' if a
     // problem is not descended from a project.  Sort
     // the map by problems (keys) in natural order.
     //
     function read_problem_map()
     {
-	global $epm_data, $uid, $epm_name_re;
+	global $epm_data, $aid, $epm_name_re;
 
 	$pmap = [];
-	$f = "users/$uid";
+	$f = "users/$aid";
 	$ps = @scandir ( "$epm_data/$f" );
 	if ( $ps == false )
 	    ERROR ( "cannot read $f directory" );
@@ -386,19 +386,19 @@
     //
     function listname_to_filename ( $listname )
     {
-        global $uid;
+        global $aid;
 
 	if ( $listname[0] == '+' )
-	    return "users/$uid/+lists+/$listname";
+	    return "users/$aid/+lists+/$listname";
 
-        list ( $user, $name ) =
+        list ( $account, $name ) =
 	    explode ( ':', $listname );
 	if ( $name == '-' )
 	    return NULL;
-	elseif ( $user == '-' )
-	    return "users/$uid/+lists+/$name.list";
+	elseif ( $account == '-' )
+	    return "users/$aid/+lists+/$name.list";
 	else
-	    return "lists/$user:$name.list";
+	    return "lists/$account:$name.list";
     }
 
     // Given a name make a new empty file for the
@@ -409,7 +409,7 @@
     //
     function make_new_list ( $name, & $errors )
     {
-        global $epm_data, $uid, $epm_name_re,
+        global $epm_data, $aid, $epm_name_re,
 	       $epm_time_format;
 
 	if ( ! preg_match ( $epm_name_re, $name ) )
@@ -418,7 +418,7 @@
 	             . " list name";
 	   return;
 	}
-	$f = "users/$uid/+lists+/$name.list";
+	$f = "users/$aid/+lists+/$name.list";
 	if ( file_exists ( "$epm_data/$f" ) )
 	{
 	   $errors[] = "the $name list already"
@@ -427,12 +427,12 @@
 	}
 
 	if ( ! is_dir
-	          ( "$epm_data/users/$uid/+lists+" ) )
+	          ( "$epm_data/users/$aid/+lists+" ) )
 	{
 	    $m = umask ( 06 );
 	    @mkdir ( "$epm_data/users", 02771 );
-	    @mkdir ( "$epm_data/users/$uid", 02771 );
-	    @mkdir ( "$epm_data/users/$uid/+lists+",
+	    @mkdir ( "$epm_data/users/$aid", 02771 );
+	    @mkdir ( "$epm_data/users/$aid/+lists+",
 		     02770 );
 	    umask ( $m );
 	}
@@ -445,7 +445,7 @@
 	    ERROR ( "could not stat $f" );
 	$time = strftime ( $epm_time_format, $time );
 
-	$f = "users/$uid/+lists+/+favorites+";
+	$f = "users/$aid/+lists+/+favorites+";
 	$flist = read_file_list ( $f );
 	array_unshift
 	    ( $flist, [$time, '-', $name] );
@@ -462,9 +462,9 @@
     function delete_list
             ( $name, & $errors, $execute )
     {
-        global $epm_data, $uid;
+        global $epm_data, $aid;
 
-        $f = "users/$uid/+lists+/$name.list";
+        $f = "users/$aid/+lists+/$name.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
 	    $errors[] = "you have no list named"
@@ -476,11 +476,11 @@
 
 	unlink ( "$epm_data/$f" );
 
-	$g = "lists/$uid:$name.list";
+	$g = "lists/$aid:$name.list";
 	if ( is_link ( "$epm_data/$g" ) )
 	    unlink ( "$epm_data/$g" );
 
-	$f = "users/$uid/+lists+/+favorites+";
+	$f = "users/$aid/+lists+/+favorites+";
 	delete_from_file_list
 	    ( $f, '-', $name );
     }
@@ -490,16 +490,16 @@
     //
     function publish_list ( $name, & $errors )
     {
-        global $epm_data, $uid;
+        global $epm_data, $aid;
 
-	$f = "users/$uid/+lists+/$name.list";
+	$f = "users/$aid/+lists+/$name.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
 	    $errors[] = "you have no list named"
 		      . " $name";
 	    return;
 	}
-	$g = "lists/$uid:$name.list";
+	$g = "lists/$aid:$name.list";
 	if ( is_link ( "$epm_data/$g" ) )
 	{
 	    $errors[] = "Your $name is already"
@@ -517,16 +517,16 @@
     //
     function unpublish_list ( $name, & $errors )
     {
-        global $epm_data, $uid;
+        global $epm_data, $aid;
 
-	$f = "users/$uid/+lists+/$name.list";
+	$f = "users/$aid/+lists+/$name.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
 	    $errors[] = "you have no list named"
 		      . " $name";
 	    return;
 	}
-	$g = "lists/$uid:$name.list";
+	$g = "lists/$aid:$name.list";
 	if ( ! is_link ( "$epm_data/$g" ) )
 	{
 	    $errors[] = "Your $name is already"
@@ -852,20 +852,20 @@
     //
     //		[TIME - PROBLEM]
     //
-    // for all PROBLEMs users/UID/PROBLEM where TIME
+    // for all PROBLEMs users/AID/PROBLEM where TIME
     // is the modification time of the problem
     // directory.  Sort by TIME.
     //
     function read_your_list()
     {
-	global $epm_data, $uid, $epm_name_re,
+	global $epm_data, $aid, $epm_name_re,
 	       $epm_time_format;
 
 	// First build map from PROBLEM to TIME
 	// and sort on TIME.
 	//
 	$map = [];
-	$f = "users/$uid";
+	$f = "users/$aid";
 	$ps = @scandir ( "$epm_data/$f" );
 	if ( $ps == false )
 	    ERROR ( "cannot read $f directory" );
@@ -905,7 +905,7 @@
     function read_problem_list
 	    ( $listname, & $warnings )
     {
-        global $epm_data, $uid;
+        global $epm_data, $aid;
 
 	if ( $listname == '-:-' )
 	    return read_your_list();
@@ -915,9 +915,9 @@
 
 	$f = listname_to_filename ( $listname );
 	$old_list = read_file_list ( $f );
-	list ( $user, $name ) =
+	list ( $account, $name ) =
 	    explode ( ':', $listname );
-	if ( $user == $uid ) $user = '-';
+	if ( $account == $aid ) $account = '-';
 
 	$first = true;
 	$new_list = [];
@@ -926,8 +926,8 @@
 	    list ( $time, $project, $problem ) = $e;
 	    if ( $project == '-' )
 	    {
-	        if ( $user != '-' ) continue;
-		$d = "users/$uid/$problem";
+	        if ( $account != '-' ) continue;
+		$d = "users/$aid/$problem";
 	    }
 	    else
 	        $d = "projects/$project/$problem";
@@ -943,7 +943,7 @@
 	        $first = false;
 	        $warnings[] = "The following problems"
 		            . " no longer exist";
-		if ( $user == '-' )
+		if ( $account == '-' )
 		    $warnings[] = "and have been"
 		                . " deleted from"
 				. " Your $name:";
@@ -955,7 +955,7 @@
 	    $warnings[] = "    $project $problem";
 	}
 
-	if ( ! $first && $user == '-' )
+	if ( ! $first && $account == '-' )
 	    write_file_list ( $f, $new_list );
 
 	return $new_list;
@@ -976,9 +976,9 @@
     //
     function read_favorites_list ( & $warnings )
     {
-	global $epm_data, $uid, $epm_time_format;
+	global $epm_data, $aid, $epm_time_format;
 
-	$f = "users/$uid/+lists+/+favorites+";
+	$f = "users/$aid/+lists+/+favorites+";
 	$old_list = read_file_list ( $f );
 
 	$new_list = [];
@@ -987,11 +987,11 @@
 	{
 	    list ( $time, $root, $name ) = $e;
 	    if ( $root == '-' && $name == '-' )
-	        $g = "users/$uid";
+	        $g = "users/$aid";
 	    elseif ( $name == '-' )
 	        $g = "projects/$root";
 	    elseif ( $root == '-' )
-		$g = "users/$uid/+lists+/$name.list";
+		$g = "users/$aid/+lists+/$name.list";
 	    else
 		$g = "lists/$root:$name.list";
 	    if ( file_exists ( "$epm_data/$g" ) )
@@ -1026,17 +1026,17 @@
 			. " Your Favorites";
 
 	if ( ! is_dir
-	          ( "$epm_data/users/$uid/+lists+" ) )
+	          ( "$epm_data/users/$aid/+lists+" ) )
 	{
 	    $m = umask ( 06 );
 	    @mkdir ( "$epm_data/users", 02771 );
-	    @mkdir ( "$epm_data/users/$uid", 02771 );
-	    @mkdir ( "$epm_data/users/$uid/+lists+",
+	    @mkdir ( "$epm_data/users/$aid", 02771 );
+	    @mkdir ( "$epm_data/users/$aid/+lists+",
 		     02770 );
 	    umask ( $m );
 	}
 
-	$g = "users/$uid";
+	$g = "users/$aid";
 	$time = @filemtime ( "$epm_data/$g" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $g" );

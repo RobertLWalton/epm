@@ -2,7 +2,7 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 09:10:24 EDT 2020
+    // Date:	Tue Jul 21 10:58:45 EDT 2020
 
     // The authors have this file in the public domain;
     // they make no warranty and accept no liability for
@@ -29,9 +29,9 @@
     elseif ( ! isset ( $_GET['filename'] ) )
 	exit ( "ACCESS: illegal GET to pdf_show.php" );
 
-    $uid = $_SESSION['EPM_AID'];
+    $aid = $_SESSION['EPM_AID'];
     $problem = $_GET['problem'];
-    $probdir = "users/$uid/$problem";
+    $probdir = "users/$aid/$problem";
     $filename = $_GET['filename'];
 
     $ext = pathinfo ( $filename, PATHINFO_EXTENSION );

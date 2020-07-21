@@ -144,7 +144,6 @@ require "$epm_web/parameters.php";
     // This sets $epm_home and $epm_data
 
 $probdir = "users/$aid/$problem";
-$uid = $aid;	// TBD: temp fix
 require "$epm_home/include/epm_make.php";
 
 $pardir = "$probdir/+parent+";
