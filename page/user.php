@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 20 16:15:18 EDT 2020
+    // Date:	Mon Jul 20 22:41:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -573,10 +573,10 @@ EOT;
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
-    <td>
 EOT;
     if ( ! isset ( $edit ) )
         echo <<<EOT
+	<td>
 	<strong>Go To</strong>
 	<button type="submit"
 		formaction="project.php">
@@ -586,22 +586,16 @@ EOT;
 		Manage</button>
 	<strong>Page</strong>
 	<pre>   </pre>
-	<button type='button'
-		onclick='VIEW("view.php")'>
-	    View Users, Projects, and Problems</button>
-EOT;
-    echo <<<EOT
-    </td>
-    <td style='text-align:right'>
-EOT;
-    if ( ! isset ( $edit ) )
-	echo <<<EOT
 	<button type="submit"
 	        formaction='logout.php'>
 	    Logout</button>
-	<pre>   </pre>
+	</td>
 EOT;
     echo <<<EOT
+    <td style='text-align:right'>
+    <button type='button'
+	    onclick='VIEW("view.php")'>
+	View Users, Projects, and Problems</button>
     <button type='button'
             onclick='HELP("user-page")'>
 	?</button>
@@ -631,9 +625,12 @@ EOT;
 	<button type='button'
 		onclick='UPDATE("check")'>
 		Check New Profile</button>
-	<button type="submit"
-		formmethod="GET">
-		Cancel Edit</button>
+EOT;
+	if ( ! $new_user )
+	    echo <<<EOT
+	    <button type="submit"
+		    formmethod="GET">
+		    Cancel Edit</button>
 EOT;
     }
     elseif ( $edit == 'emails' )
