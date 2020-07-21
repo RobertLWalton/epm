@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 14:45:51 EDT 2020
+// Date:    Tue Jul 21 15:45:19 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -24,14 +24,32 @@ if ( ! isset ( $epm_data ) )
 if ( ! isset ( $epm_home ) )
     exit ( 'ACCESS ERROR: $epm_home not set' );
 
-// Get list of users.
+// Fields are in display order with value being display
+// label.  If the latter is '' the field is to be
+// displayed in another fashion.
 //
-function read_users ()
+$epm_info_fields =
+    [ 'user' => [ 'uid' => 'User ID',
+                  'emails' => '',
+		  'full_name' => 'Full Name',
+		  'organization' => 'Organization',
+		  'location' => 'Location' ],
+      'team' => [ 'sponsor' => 'Sponsor',
+                  'tid' => 'Team ID',
+                  'members' => '',
+		  'full_name' => 'Full Name',
+		  'organization' => 'Organization',
+		  'location' => 'Location' ] ];
+
+// Get list of users or teams.  $type is either 'user'
+// or 'team'.
+//
+function read_accounts ( $type )
 {
     global $epm_data, $epm_name_re;
 
     $r = [];
-    $d = '/admin/users';
+    $d = "admin/{$type}s";
     @mkdir ( "$epm_data/$d", 02770, true );
     $c = @scandir ( "$epm_data/$d" );
     if ( $c === false )
@@ -98,7 +116,7 @@ function email_map ( & $map )
 //
 function read_info ( $type, $aid )
 {
-    global $epm_data;
+    global $epm_data, $epm_info_fields;
 
     $f = "admin/{$type}s/$aid/$aid.info";
     $c = @file_get_contents ( "$epm_data/$f" );
@@ -111,19 +129,8 @@ function read_info ( $type, $aid )
 	ERROR ( "cannot decode json in $f:" .
 		PHP_EOL . "    $m" );
     }
-    $fields = ( $type == 'user' ?
-		    ['uid',
-		     'emails',
-		     'full_name',
-		     'organization',
-		     'location'] :
-		    ['sponsor',
-		     'tid',
-		     'members',
-		     'full_name',
-		     'organization',
-		     'location'] );
-    foreach ( $fields as $key )
+    foreach ( $epm_info_fields[$type]
+              as $key => $value )
     {
 	if ( ! isset ( $info[$key] ) )
 	    ERROR ( "$f has no $key" );
@@ -254,29 +261,29 @@ function emails_to_lines ( $list, $email = NULL )
     return implode ( '<br>', $r );
 }
 
-// Given user $info from json_decode, return the HTML
-// for the rows of a table that contains that info.
-// The row labels are <th> and values are <td>.
+// Given an $info, return the HTML for the rows of a
+// table that contains displays info.  The row labels
+// are <th> and values are <td>.
 //
-function user_info_to_rows ( $info )
+function info_to_rows ( $info )
 {
-    $uid = $info['uid'];
-    $hfull_name = htmlspecialchars
-        ( $info['full_name'] );
-    $horganization = htmlspecialchars
-        ( $info['organization'] );
-    $hlocation = htmlspecialchars
-        ( $info['location'] );
-    return <<<EOT
-    <tr><th>User ID:</th>
-	<td>$uid</td></tr>
-    <tr><th>Full Name:</th>
-	<td>$hfull_name</td></tr>
-    <tr><th>Organization:</th>
-	<td>$horganization</td></tr>
-    <tr><th>Location:</th>
-	<td>$hlocation</td></tr>
-EOT;
+    global $epm_info_fields;
+
+    if ( isset ( $info['tid'] ) )
+        $fields = $epm_info_fields['team'];
+    else
+        $fields = $epm_info_fields['user'];
+
+    $r = '';
+    foreach ( $fields as $key => $label )
+    {
+        if ( $label == '' ) continue;
+	$value = $info[$key];
+	$value = htmlspecialchars ( $value );
+	$r .= "<tr><th>$label:</th>"
+	    . "<td>$value</td></tr>";
+    }
+    return $r;
 }
 
 ?>

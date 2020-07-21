@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 14:52:49 EDT 2020
+    // Date:	Tue Jul 21 15:45:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -563,17 +563,12 @@ EOT;
     </form>
     </div>
 EOT;
-    if ( $editable ) $uname = 'Your';
-    else $uname = $uid;
-
     echo <<<EOT
     <div class='users'>
     <div class='user-header'>
     <form method='POST' action='user.php'
           id='user-form'>
     <input type='hidden' name='id' value='$ID'>
-    <strong>$uname Info</strong>
-    <br>
 EOT;
     if ( $edit == 'profile' )
     {
@@ -581,6 +576,8 @@ EOT;
 	if ( $new_user )
 	    $style = 'style="background-color:yellow"';
     	echo <<<EOT
+	<strong>Your Info</strong>
+	<br>
 	<button type='button'
 		onclick='UPDATE("finish")'
 		$style>
@@ -598,6 +595,8 @@ EOT;
     }
     elseif ( $edit == 'emails' )
     	echo <<<EOT
+	<strong>Your Info</strong>
+	<br>
 	<button type="submit"
 	        formmethod='GET'>
 		Finish Editing</button>
@@ -606,29 +605,25 @@ EOT;
     {
 	$aid = $uid;  // To keep epm_list.php happy.
 	require "$epm_home/include/epm_list.php";
-        $users = read_users();
+        $users = read_accounts ( 'user' );
 	$options = values_to_options ( $users, $uid );
-	if ( $editable )
-	    echo <<<EOT
-	    <button type="submit"
-		    name='edit' value='profile'>
-		    Edit Profile</button>
-	    <button type="submit"
-		    name='edit' value='emails'>
-		    Edit Emails</button>
-	    <br>
-	    <strong>or Select Another User</strong>
-EOT;
-	else
-	    echo <<<EOT
-	    <strong>Select Another User</strong>
-EOT;
 	echo <<<EOT
 	<select name='user'
 		onchange='document.getElementById
 			    ("user-form").submit()'>
 	$options
 	</select>
+	<strong>Info</strong>
+EOT;
+	if ( $editable )
+	    echo <<<EOT
+	    <br>
+	    <button type="submit"
+		    name='edit' value='profile'>
+		    Edit Profile</button>
+	    <button type="submit"
+		    name='edit' value='emails'>
+		    Edit Emails</button>
 EOT;
     }
     echo <<<EOT
@@ -768,7 +763,7 @@ EOT;
     }
     else
     {
-        $rows = user_info_to_rows ( $info );
+        $rows = info_to_rows ( $info );
 	echo <<<EOT
 	<strong>$uname User Profile:</strong>
 	<table>
