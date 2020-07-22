@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 15:45:43 EDT 2020
+    // Date:	Wed Jul 22 13:22:16 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -631,6 +631,9 @@ EOT;
     </div>
 EOT;
 
+    if ( $editable ) $uname = 'Your';
+    else $uname = $uid;
+
     if ( $edit == 'emails' )
     {
 	echo <<<EOT
@@ -696,84 +699,41 @@ EOT;
 EOT;
     }
 
-    $location_placeholder =
-	 "Town, State (and Country) of Organization";
-    $hfull_name = htmlspecialchars ( $full_name );
-    $horganization = htmlspecialchars ( $organization );
-    $hlocation = htmlspecialchars ( $location );
+    $exclude = ( $new_user ?          [] :
+                 $edit == 'profile' ? ['uid'] :
+		                      NULL );
+    $rows = info_to_rows ( $info, $exclude );
+    $h = ( $edit == 'profile' ?
+           'Edit Your Profile' :
+	   "$uname Profile" );
+
+    if ( $new_user )
+        $h = "<strong style='background-color:red'>"
+	   . "WARNING:</strong>"
+	   . "<mark><strong>"
+	   . "You can never change your User ID,"
+	   . "the short name by which you will be"
+	   . " known, after you acknowledge your"
+	   . "initial profile."
+	   . "</strong></mark><strong>$h:</strong>";
+    else
+        $h = "<strong>$h:</strong>";
+
     echo <<<EOT
     <div class='user-profile'>
+    <form method='POST' action='user.php'
+	  id='profile-update'>
+    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' name='update' id='update'>
+    $h<br>
+    <table>
+    $rows
+    </table>
+    </form>
+    </div>
 EOT;
-    if ( $edit == 'profile' )
-    {
-	echo <<<EOT
-	<form method='POST' action='user.php'
-	      id='profile-update'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type='hidden' name='update' id='update'>
-	<strong>Edit Your Profile:</strong><br>
-	<table>
-EOT;
-	if ( $new_user )
-	    echo <<<EOT
-	    <tr><th><mark>WARNING:</mark</th>
-	    <td>
-	    <mark><strong>
-	    You can never change your User ID after you
-	    hit the Finish button for the first time.
-	    </strong></mark></td><tr>
-	    <tr><th>User ID:</th>
-		<td> <input type='text' size='20'
-		      name='uid' value=''
-		      title='Your User ID (Short Name)'
-		      placeholder='User Id (Short Name)'
-		      >
-	     <pre>  </pre>
-	     (Short name by which you will be known
-	      to other users.)
-	     </td></tr>
-EOT;
-	else
-	    echo <<<EOT
-	    <tr><th>User ID:</th>
-		<td>$uid</td></tr>
-EOT;
-	echo <<<EOT
-	<tr><th>Full Name:</th>
-	    <td> <input type='text' size='40'
-		  name='full_name'
-		  value='$hfull_name'
-		  title='Your Full Name'
-		  placeholder='John Doe'></td></tr>
-	<tr><th>Organization:</th><td>
-	    <input type='text' size='40'
-	     name='organization' value='$horganization'
-	     title='University, Company, or Self'
-	     placeholder='University, Company, or Self'>
-	     </td></tr>
-	<tr><th>Location:</th><td>
-	    <input type='text' size='40'
-	     name='location' value='$hlocation'
-	     title='$location_placeholder'
-	     placeholder='$location_placeholder'>
-	     </td></tr>
-	</table>
-	</form>
-EOT;
-    }
-    else
-    {
-        $rows = info_to_rows ( $info );
-	echo <<<EOT
-	<strong>$uname User Profile:</strong>
-	<table>
-	$rows
-	</table>
-EOT;
-    }
 ?>
 
-</div>
 </div>
 <div style='clear:both'></div>
 <div class='terms'>

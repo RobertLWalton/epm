@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 22 03:47:13 EDT 2020
+// Date:    Wed Jul 22 12:40:46 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -94,6 +94,23 @@ function read_accounts ( $type )
 	if ( preg_match ( $epm_name_re, $u ) )
 	    $r[] = $u;
     }
+    return $r;
+}
+
+// Return UID associated with email, or false if none.
+//
+function uid_of_email ( $email )
+{
+    global $epm_data;
+
+    $f = "admin/email/" . rawurlencode ( $email );
+    $c = @ file_get_contents ( "$epm_data/$f" );
+    if ( $c === false ) return false;
+    $c = trim ( $c );
+    if ( $c == '' ) return false;
+    $items = explode ( ' ', $c );
+    $r = $items[0];
+    if ( $r == '-' ) return false;
     return $r;
 }
 
@@ -340,5 +357,67 @@ function info_to_rows ( $info, $exclude = NULL )
     }
     return $r;
 }
+
+// Copy non-array info values of given $type from
+// $src to $des.  Ignore values not set in $src.
+//
+function copy_info ( $type, $src, $des )
+{
+    global $epm_info_fields;
+
+    $fields = $epm_info_fields[$type];
+    foreach ( $fields as $key => $items )
+    {
+        if ( $items == [] ) continue;
+        if ( ! isset ( $src[$key] ) )
+	    continue;
+	else
+	    $des[$key] = $src[key];
+    }
+}
+
+// Trim the non-array values of $info and check
+// that they are not empty and have legal lengths.
+// Errors cause messages to $errors.  $info is
+// of given $type.
+//
+function scrub_info ( $type, $info, & $errors )
+{
+    global $epm_info_fields;
+
+    $fields = $epm_info_fields[$type];
+    foreach ( $fields as $key => $items )
+    {
+        if ( $items == [] ) continue;
+	list ( $label, $min_length, $max_length,
+	               $placeholder, $title ) = $items;
+	$label = $strtolower ( $label );
+	if ( ! isset ( $info[$key] ) )
+	{
+	    $errors[] = "you must set $label";
+	    continue;
+	}
+	$value = $info[$key];
+	$value = trim ( $value );
+	$info[$key] = $value;
+	if ( $value == '' )
+	{
+	    $errors[] = "you must set $label";
+	    continue;
+	}
+	$length = strlen ( utf8_decode ( $value ) );
+	     // Note, grapheme_strlen is not available
+	     // because we do not assume intl extension.
+	if ( $length < $min_length )
+	    $errors[] = "$label is too short"
+	              . " (< $min_length characters)";
+	if ( $length > $max_length )
+	    $errors[] = "$label is too long"
+	              . " (> $max_length characters)";
+    }
+}
+
+
+
 
 ?>
