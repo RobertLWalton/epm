@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 15:45:19 EDT 2020
+// Date:    Wed Jul 22 02:57:55 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -25,21 +25,56 @@ if ( ! isset ( $epm_home ) )
     exit ( 'ACCESS ERROR: $epm_home not set' );
 
 // Fields are in display order with value being display
-// label.  If the latter is '' the field is to be
-// displayed in another fashion.
+// label.  Format is
+//
+//	KEY => [FORM_LABEL, MIN_LENGTH, MAX_LENGTH,
+//              PLACEHOLDER, TITLE]
+//
+// or   KEY => [] if KEY is to be displayed in another
+//                   fashion.
 //
 $epm_info_fields =
-    [ 'user' => [ 'uid' => 'User ID',
-                  'emails' => '',
-		  'full_name' => 'Full Name',
-		  'organization' => 'Organization',
-		  'location' => 'Location' ],
-      'team' => [ 'sponsor' => 'Sponsor',
-                  'tid' => 'Team ID',
-                  'members' => '',
-		  'full_name' => 'Full Name',
-		  'organization' => 'Organization',
-		  'location' => 'Location' ] ];
+    [ 'user' =>
+          [ 'uid' => ['User ID',4,12,
+                      'User ID (short name)',
+		      'Your User ID (short name)'],
+	    'emails' => [],
+	    'full_name' => ['Full Name',8,40,
+	                    'John Doe',
+			    'Your Full Name'],
+	    'organization' => ['Organization',8,40,
+	                       'University, Company,' .
+			           ' or Association',
+			       'Organization with' .
+			           ' which you are' .
+				   ' associated'],
+	    'location' => ['Location',8,40,
+	                   'Town, State, and Country',
+	                   'Town, State, and Country' .
+			       ' of Organization' .
+			       ' or You']
+	  ],
+      'team' =>
+          [ 'manager' => ['Manager',4,12,
+	                  'User ID of Manager',
+	                  'User ID of Manager'],
+            'tid' => ['Team ID',4,12,
+                      'Team ID (short name)',
+		      'Team ID (short name)'],
+	    'members' => [],
+	    'organization' => ['Organization',8,40,
+	                       'University, Company,' .
+			           ' or Association',
+			       'Organization with' .
+			           ' which team is' .
+				   ' associated'],
+	    'location' => ['Location',8,40,
+	                   'Town, State, and Country',
+	                   'Town, State, and Country' .
+			       ' of Organization' .
+			       ' or Team Members']
+	  ]
+    ];
 
 // Get list of users or teams.  $type is either 'user'
 // or 'team'.
@@ -110,6 +145,26 @@ function email_map ( & $map )
     }
 }
 
+// Return the HTML for a $list of emails.  Each email
+// in $list becomes a <pre>...</pre> segment in the
+// returned HTML.  If $email is not NULL, its segment
+// is marked as '(used for current login)'.  Segments
+// are separated by <br>.
+//
+function emails_to_lines ( $list, $email = NULL )
+{
+    $r = [];
+    foreach ( $list as $item )
+    {
+	$line = '<pre>' . htmlspecialchars ( $item )
+	      . '</pre>';
+        if ( $item == $email )
+	    $line .= ' (used for current login)';
+	$r[] = $line;
+    }
+    return implode ( '<br>', $r );
+}
+
 // Read, check, and return json_decode of AID.info file.
 // $type is 'user' or 'team'.  Errors are terminal.
 // File must be readable.
@@ -130,7 +185,7 @@ function read_info ( $type, $aid )
 		PHP_EOL . "    $m" );
     }
     foreach ( $epm_info_fields[$type]
-              as $key => $value )
+              as $key => $items )
     {
 	if ( ! isset ( $info[$key] ) )
 	    ERROR ( "$f has no $key" );
@@ -241,26 +296,6 @@ function write_info ( $info )
 	ERROR ( "cannot append to $f" );
 }
 
-// Return the HTML for a $list of emails.  Each email
-// in $list becomes a <pre>...</pre> segment in the
-// returned HTML.  If $email is not NULL, its segment
-// is marked as '(used for current login)'.  Segments
-// are separated by <br>.
-//
-function emails_to_lines ( $list, $email = NULL )
-{
-    $r = [];
-    foreach ( $list as $item )
-    {
-	$line = '<pre>' . htmlspecialchars ( $item )
-	      . '</pre>';
-        if ( $item == $email )
-	    $line .= ' (used for current login)';
-	$r[] = $line;
-    }
-    return implode ( '<br>', $r );
-}
-
 // Given an $info, return the HTML for the rows of a
 // table that contains displays info.  The row labels
 // are <th> and values are <td>.
@@ -275,11 +310,12 @@ function info_to_rows ( $info )
         $fields = $epm_info_fields['user'];
 
     $r = '';
-    foreach ( $fields as $key => $label )
+    foreach ( $fields as $key => $items )
     {
-        if ( $label == '' ) continue;
+        if ( $items == [] ) continue;
 	$value = $info[$key];
 	$value = htmlspecialchars ( $value );
+	$label = $items[0];
 	$r .= "<tr><th>$label:</th>"
 	    . "<td>$value</td></tr>";
     }
