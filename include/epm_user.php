@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 22 12:40:46 EDT 2020
+// Date:    Wed Jul 22 15:47:26 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -214,7 +214,7 @@ function read_info ( $type, $aid )
 // Write JSON AID.info file.  Logs changes to +actions+
 // files.  Writes nothing if there are no changes.
 //
-function write_info ( $info )
+function write_info ( & $info )
 {
     global $epm_data, $epm_time_format;
 
@@ -322,7 +322,7 @@ function write_info ( $info )
 // which is a possibly empty list of keys.  Otherwise
 // the rows are htmlspecialchars of their values.
 //
-function info_to_rows ( $info, $exclude = NULL )
+function info_to_rows ( & $info, $exclude = NULL )
 {
     global $epm_info_fields;
 
@@ -361,7 +361,7 @@ function info_to_rows ( $info, $exclude = NULL )
 // Copy non-array info values of given $type from
 // $src to $des.  Ignore values not set in $src.
 //
-function copy_info ( $type, $src, $des )
+function copy_info ( $type, & $src, & $des )
 {
     global $epm_info_fields;
 
@@ -371,8 +371,7 @@ function copy_info ( $type, $src, $des )
         if ( $items == [] ) continue;
         if ( ! isset ( $src[$key] ) )
 	    continue;
-	else
-	    $des[$key] = $src[key];
+	$des[$key] = $src[$key];
     }
 }
 
@@ -381,7 +380,7 @@ function copy_info ( $type, $src, $des )
 // Errors cause messages to $errors.  $info is
 // of given $type.
 //
-function scrub_info ( $type, $info, & $errors )
+function scrub_info ( $type, & $info, & $errors )
 {
     global $epm_info_fields;
 
@@ -391,7 +390,7 @@ function scrub_info ( $type, $info, & $errors )
         if ( $items == [] ) continue;
 	list ( $label, $min_length, $max_length,
 	               $placeholder, $title ) = $items;
-	$label = $strtolower ( $label );
+	$label = strtolower ( $label );
 	if ( ! isset ( $info[$key] ) )
 	{
 	    $errors[] = "you must set $label";

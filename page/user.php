@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul 22 13:22:16 EDT 2020
+    // Date:	Wed Jul 22 15:34:09 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -68,7 +68,7 @@
     //		organization	string
     //		location	string
     //
-    //	   EPM_DATA EDIT
+    //	   EPM_DATA LAST_EDIT
     //		Value of $edit for the last page
     //		served.
     //
@@ -121,9 +121,6 @@
     $info = & $data['INFO'];
     $uid = & $info['uid'];
     $emails = & $info['emails'];
-    $full_name = & $info['full_name'];
-    $organization = & $info['organization'];
-    $location = & $info['location'];
 
     $editable =
         ( $new_user
@@ -245,37 +242,32 @@
     {
         if ( ! $editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $data['LAST_EDIT'] != 'profile' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
         $update = $_POST['update'];
 	if ( ! in_array ( $update, ['check','finish'],
 	                  true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
-	// Read and check all the form data.
-	//
+	$old_uid = $uid;
+	copy_info ( 'user', $_POST, $info );
+	scrub_info ( 'user', $info, $errors );
+
 	if ( $new_user )
 	{
-	    sanitize ( $uid, 'uid', 'User ID', 4 );
 	    $d = "admin/users/$uid";
-	    if ( count ( $errors ) == 0
-	         &&
-		 ! preg_match ( $epm_name_re, $uid ) )
+	    if ( $uid == '' )
+	        /* Do Nothing */;
+	    elseif ( ! preg_match
+	                ( $epm_name_re, $uid ) )
 	        $errors[] = "$uid is not a properly"
 		          . " formatted user id";
-	    elseif ( count ( $errors ) == 0
-	             &&
-		     is_dir ( "$epm_data/$d" ) )
+	    elseif ( is_dir ( "$epm_data/$d" ) )
 	        $errors[] = "another account is already"
 		          . " using $uid as a User ID";
 	}
-	sanitize
-	    ( $full_name, 'full_name',
-	                  'Full Name', 5 );
-	sanitize
-	    ( $organization, 'organization',
-	                     'Organization', 3 );
-	sanitize
-	    ( $location, 'location',
-	                 'Location', 6 );
+	elseif ( $uid != $old_uid )
+	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
 	if (    $update != 'finish'
 	     || count ( $errors ) > 0 )
