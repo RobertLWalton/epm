@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 22 15:47:26 EDT 2020
+// Date:    Wed Jul 22 17:06:30 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -36,8 +36,9 @@ if ( ! isset ( $epm_home ) )
 $epm_info_fields =
     [ 'user' =>
           [ 'uid' => ['User ID',4,12,
-                      'User ID (short name)',
-		      'Your User ID (short name)'],
+                      'Your User ID',
+		      'Your User ID (short name by' .
+		      ' which others will know you)'],
 	    'emails' => [],
 	    'full_name' => ['Full Name',8,40,
 	                    'John Doe',
@@ -52,7 +53,7 @@ $epm_info_fields =
 	                   'Town, State, and Country',
 	                   'Town, State, and Country' .
 			       ' of Organization' .
-			       ' or You']
+			       ' or Yourself']
 	  ],
       'team' =>
           [ 'manager' => ['Manager',4,12,

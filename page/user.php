@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul 22 15:34:09 EDT 2020
+    // Date:	Wed Jul 22 17:05:25 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -273,60 +273,76 @@
 	     || count ( $errors ) > 0 )
 	    $edit = 'profile';
 	elseif ( $new_user )
-	{
-	    @mkdir ( "$epm_data/admin", 02770 );
-	    @mkdir ( "$epm_data/admin/users", 02770 );
-	    @mkdir ( "$epm_data/admin/users/$uid",
-	             02770 );
-	    @mkdir ( "$epm_data/admin/email", 02770 );
-	    $m = umask ( 06 );
-	    @mkdir ( "$epm_data/accounts", 02771 );
-	    @mkdir ( "$epm_data/accounts/$uid", 02771 );
-	    umask ( $m );
-
-	    $d = "admin/users/$uid";
-	    $re = rawurlencode ( $email );
-	    $f = "admin/email/$re";
-	    if ( file_exists ( "$epm_data/$f" ) )
-	        WARN ( "$f exists when it should not" );
-	    $items = [ $uid, 0, $STIME ];
-	    $r = @file_put_contents
-		( "$epm_data/$f",
-		  implode ( ' ', $items ) );
-	    if ( $r === false )
-		ERROR ( "could not write $f" );
-	    write_info ( $info );
-
-	    $f = "admin/users/$uid/session_id";
-	    $r = file_put_contents
-	        ( "$epm_data/$f", session_id() );
-	    if ( $r === false )
-		ERROR ( "could not write $f" );
-	    $fmtime = @filemtime ( "$epm_data/$f" );
-	    if ( $fmtime === false )
-		ERROR ( "could not stat $f" );
-	    $_SESSION['EPM_ABORT'] = [$f,$fmtime];
-
-	    $r = @file_put_contents
-		( "$epm_data/login.log",
-		  "$uid $email $IPADDR $STIME" .
-		  PHP_EOL,
-		  FILE_APPEND );
-	    if ( $r === false )
-		ERROR ( "could not write login.log" );
-
-	    $_SESSION['EPM_UID'] = $uid;
-	    $_SESSION['EPM_AID'] = $uid;
-	        // Do this last as it certifies
-		// the EMAIL and .info files exist.
-	    $edit = NULL;
-	}
+	    $edit = 'new_uid';
 	else
 	{
 	    write_info ( $info );
 	    $edit = NULL;
 	}
 
+    }
+    elseif ( isset ( $_POST['new_uid'] ) )
+    {
+        if ( ! $editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $data['LAST_EDIT'] != 'new_uid' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	@mkdir ( "$epm_data/admin", 02770 );
+	@mkdir ( "$epm_data/admin/users", 02770 );
+	@mkdir ( "$epm_data/admin/users/$uid",
+		 02770 );
+	@mkdir ( "$epm_data/admin/email", 02770 );
+	$m = umask ( 06 );
+	@mkdir ( "$epm_data/accounts", 02771 );
+	@mkdir ( "$epm_data/accounts/$uid", 02771 );
+	umask ( $m );
+
+	$d = "admin/users/$uid";
+	$re = rawurlencode ( $email );
+	$f = "admin/email/$re";
+	if ( file_exists ( "$epm_data/$f" ) )
+	    WARN ( "$f exists when it should not" );
+	$items = [ $uid, 0, $STIME ];
+	$r = @file_put_contents
+	    ( "$epm_data/$f",
+	      implode ( ' ', $items ) );
+	if ( $r === false )
+	    ERROR ( "could not write $f" );
+	write_info ( $info );
+
+	$f = "admin/users/$uid/session_id";
+	$r = file_put_contents
+	    ( "$epm_data/$f", session_id() );
+	if ( $r === false )
+	    ERROR ( "could not write $f" );
+	$fmtime = @filemtime ( "$epm_data/$f" );
+	if ( $fmtime === false )
+	    ERROR ( "could not stat $f" );
+	$_SESSION['EPM_ABORT'] = [$f,$fmtime];
+
+	$r = @file_put_contents
+	    ( "$epm_data/login.log",
+	      "$uid $email $IPADDR $STIME" .
+	      PHP_EOL,
+	      FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "could not write login.log" );
+
+	$_SESSION['EPM_UID'] = $uid;
+	$_SESSION['EPM_AID'] = $uid;
+	    // Do this last as it certifies
+	    // the EMAIL and .info files exist.
+	$edit = NULL;
+	$new_user = false;
+    }
+    elseif ( isset ( $_POST['NO_new_uid'] ) )
+    {
+        if ( ! $editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $data['LAST_EDIT'] != 'new_uid' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$edit = 'profile';
     }
     elseif ( isset ( $_POST['add_email'] )
              &&
@@ -508,8 +524,29 @@ EOT;
 	echo '</strong></div></div>';
     }
 
-    if ( $editable && $edit != 'profile'
-                   && count ( $emails ) == 1 )
+    if ( $edit == 'new_uid' )
+        echo <<<EOT
+	<div class='errors'>
+	<strong>You are about to save your user info
+	        for the first time.  After doing so,
+		you may <b>NOT</b> change your User
+		ID, the short name by which others
+		will know you.  Do you want to save
+		your user info now?</strong>
+	<form action='user.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
+	<button type='submit' name='NO_new_uid'>
+	    NO</button>
+	<button type='submit' name='new_uid'>
+	    YES</button>
+	</form>
+	</div>
+EOT;
+
+    if ( $editable && count ( $emails ) == 1
+                   && ( ! isset ( $edit )
+		        ||
+			$edit == 'emails' ) )
         echo <<<EOT
 	<div class='warnings'>
         <strong>Its a good idea to add a
@@ -691,9 +728,10 @@ EOT;
 EOT;
     }
 
-    $exclude = ( $new_user ?          [] :
-                 $edit == 'profile' ? ['uid'] :
-		                      NULL );
+    $exclude = NULL;
+    if ( $new_user ) $exclude = [];
+    elseif ( $edit == 'profile' ) $exclude = ['uid'];
+
     $rows = info_to_rows ( $info, $exclude );
     $h = ( $edit == 'profile' ?
            'Edit Your Profile' :
@@ -704,10 +742,11 @@ EOT;
 	   . "WARNING:</strong>"
 	   . "<mark><strong>"
 	   . "You can never change your User ID,"
-	   . "the short name by which you will be"
+	   . " the short name by which you will be"
 	   . " known, after you acknowledge your"
-	   . "initial profile."
-	   . "</strong></mark><strong>$h:</strong>";
+	   . " initial profile."
+	   . "</strong></mark>"
+	   . "<br><br><strong>$h:</strong>";
     else
         $h = "<strong>$h:</strong>";
 
