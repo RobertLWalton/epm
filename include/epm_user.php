@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 22 02:57:55 EDT 2020
+// Date:    Wed Jul 22 03:47:13 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -300,7 +300,12 @@ function write_info ( $info )
 // table that contains displays info.  The row labels
 // are <th> and values are <td>.
 //
-function info_to_rows ( $info )
+// If $exclude is NOT NULL, all the rows are text
+// <input> except those whose keys are in $exclude,
+// which is a possibly empty list of keys.  Otherwise
+// the rows are htmlspecialchars of their values.
+//
+function info_to_rows ( $info, $exclude = NULL )
 {
     global $epm_info_fields;
 
@@ -313,11 +318,25 @@ function info_to_rows ( $info )
     foreach ( $fields as $key => $items )
     {
         if ( $items == [] ) continue;
-	$value = $info[$key];
-	$value = htmlspecialchars ( $value );
-	$label = $items[0];
-	$r .= "<tr><th>$label:</th>"
-	    . "<td>$value</td></tr>";
+	list ( $label, $min_length, $max_length,
+	               $placeholder, $title ) = $items;
+	if ( isset ( $info[$key] ) )
+	    $value = $info[$key];
+	else
+	    $value = '';
+	$r .= "<tr><th>$label:</th><td>";
+	if ( isset ( $exclude )
+	     &&
+	     ! in_array ( $key, $exclude, true ) )
+	    $r .= "<input type='text'"
+	        . " name='$key'"
+	        . " value='$value'"
+	        . " size='$max_length'"
+	        . " placeholder='$placeholder'"
+	        . " title='$title'>";
+	else
+	    $r .= htmlspecialchars ( $value );
+	$r .= "</td></tr>";
     }
     return $r;
 }
