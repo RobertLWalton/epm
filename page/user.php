@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul 22 17:05:25 EDT 2020
+    // Date:	Thu Jul 23 04:33:17 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -46,10 +46,11 @@
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
     $STIME = $_SESSION['EPM_TIME'];
     $IPADDR = $_SESSION['EPM_IPADDR'];
-    $edit = ( $new_user ? 'profile' : NULL );
-        // One of: NULL (just view), 'emails', or
-	// 'profile'.  Set here for GET processing;
-	// changed below by POST processing.
+    $edit = ( $new_user ? 'uid-profile' : NULL );
+        // One of: NULL (just view), 'emails', 
+	// 'uid-profile', 'members', or 'tid-profile'.
+	// Set here for GET processing; changed below
+	// by POST processing.
     $errors = [];
         // List of error messages to be displayed.
     $post_processed = false;
@@ -232,19 +233,21 @@
     elseif ( isset ( $_POST['edit'] ) )
     {
         $edit = $_POST['edit'];
-	if ( ! in_array ( $edit, ['emails','profile'],
-	                  true ) )
+	if ( ! in_array
+	          ( $edit, ['emails','uid-profile',
+		            'members', 'tid-profile'],
+	                   true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
     }
-    elseif ( isset ( $_POST['update'] ) )
+    elseif ( isset ( $_POST['uid-update'] ) )
     {
         if ( ! $editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-        if ( $data['LAST_EDIT'] != 'profile' )
+        if ( $data['LAST_EDIT'] != 'uid-profile' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-        $update = $_POST['update'];
+        $update = $_POST['uid-update'];
 	if ( ! in_array ( $update, ['check','finish'],
 	                  true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -271,9 +274,9 @@
 
 	if (    $update != 'finish'
 	     || count ( $errors ) > 0 )
-	    $edit = 'profile';
+	    $edit = 'uid-profile';
 	elseif ( $new_user )
-	    $edit = 'new_uid';
+	    $edit = 'new-uid';
 	else
 	{
 	    write_info ( $info );
@@ -281,11 +284,11 @@
 	}
 
     }
-    elseif ( isset ( $_POST['new_uid'] ) )
+    elseif ( isset ( $_POST['new-uid'] ) )
     {
         if ( ! $editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-        if ( $data['LAST_EDIT'] != 'new_uid' )
+        if ( $data['LAST_EDIT'] != 'new-uid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	@mkdir ( "$epm_data/admin", 02770 );
@@ -336,13 +339,13 @@
 	$edit = NULL;
 	$new_user = false;
     }
-    elseif ( isset ( $_POST['NO_new_uid'] ) )
+    elseif ( isset ( $_POST['NO-new-uid'] ) )
     {
         if ( ! $editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-        if ( $data['LAST_EDIT'] != 'new_uid' )
+        if ( $data['LAST_EDIT'] != 'new-uid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$edit = 'profile';
+	$edit = 'uid-profile';
     }
     elseif ( isset ( $_POST['add_email'] )
              &&
@@ -524,7 +527,7 @@ EOT;
 	echo '</strong></div></div>';
     }
 
-    if ( $edit == 'new_uid' )
+    if ( $edit == 'new-uid' )
         echo <<<EOT
 	<div class='errors'>
 	<strong>You are about to save your user info
@@ -535,9 +538,9 @@ EOT;
 		your user info now?</strong>
 	<form action='user.php' method='POST'>
 	<input type='hidden' name='id' value='$ID'>
-	<button type='submit' name='NO_new_uid'>
+	<button type='submit' name='NO-new-uid'>
 	    NO</button>
-	<button type='submit' name='new_uid'>
+	<button type='submit' name='new-uid'>
 	    YES</button>
 	</form>
 	</div>
@@ -599,7 +602,7 @@ EOT;
           id='user-form'>
     <input type='hidden' name='id' value='$ID'>
 EOT;
-    if ( $edit == 'profile' )
+    if ( $edit == 'uid-profile' )
     {
         $style = '';
 	if ( $new_user )
@@ -608,11 +611,11 @@ EOT;
 	<strong>Your Info</strong>
 	<br>
 	<button type='button'
-		onclick='UPDATE("finish")'
+		onclick='UID_UPDATE("finish")'
 		$style>
 		Finish Editing</button>
 	<button type='button'
-		onclick='UPDATE("check")'>
+		onclick='UID_UPDATE("check")'>
 		Check New Profile</button>
 EOT;
 	if ( ! $new_user )
@@ -648,7 +651,7 @@ EOT;
 	    echo <<<EOT
 	    <br>
 	    <button type="submit"
-		    name='edit' value='profile'>
+		    name='edit' value='uid-profile'>
 		    Edit Profile</button>
 	    <button type="submit"
 		    name='edit' value='emails'>
@@ -730,10 +733,11 @@ EOT;
 
     $exclude = NULL;
     if ( $new_user ) $exclude = [];
-    elseif ( $edit == 'profile' ) $exclude = ['uid'];
+    elseif ( $edit == 'uid-profile' )
+        $exclude = ['uid'];
 
     $rows = info_to_rows ( $info, $exclude );
-    $h = ( $edit == 'profile' ?
+    $h = ( $edit == 'uid-profile' ?
            'Edit Your Profile' :
 	   "$uname Profile" );
 
@@ -753,9 +757,10 @@ EOT;
     echo <<<EOT
     <div class='user-profile'>
     <form method='POST' action='user.php'
-	  id='profile-update'>
+	  id='uid-profile-update'>
     <input type='hidden' name='id' value='$ID'>
-    <input type='hidden' name='update' id='update'>
+    <input type='hidden' name='uid-update'
+           id='uid-update'>
     $h<br>
     <table>
     $rows
@@ -772,14 +777,14 @@ EOT;
 </div>
 
 <script>
-let profile_update = document.getElementById
-    ( 'profile-update' );
-let update = document.getElementById
-    ( 'update' );
-function UPDATE ( value )
+let uid_profile_update = document.getElementById
+    ( 'uid-profile-update' );
+let uid_update = document.getElementById
+    ( 'uid-update' );
+function UID_UPDATE ( value )
 {
-    update.value = value;
-    profile_update.submit();
+    uid_update.value = value;
+    uid_profile_update.submit();
 }
 </script>
 
