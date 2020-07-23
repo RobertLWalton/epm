@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 23 14:15:43 EDT 2020
+    // Date:	Thu Jul 23 14:52:02 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -56,6 +56,17 @@
     $errors = [];
         // List of error messages to be displayed.
     $post_processed = false;
+
+    if ( ! $new_user )
+    {
+	$aid = $_SESSION['EPM_AID'];
+	    // To keep epm_list.php happy.
+	require "$epm_home/include/epm_list.php";
+        $users = read_accounts ( 'user' );
+        $tids = read_accounts ( 'team' );
+	$manager_tids = read_tids ( 'manager' );
+	$member_tids = read_tids ( 'member' );
+    }
 
     // Data:
     //
@@ -115,8 +126,6 @@
 	    $data['UID-INFO'] = read_info
 	        ( 'user', $user['UID'] );
 
-	    $manager_tids = read_tids ( 'manager' );
-	    $member_tids = read_tids ( 'member' );
 	    $tid = & $user['TID'];
 	    if ( ! isset ( $tid )
 		 &&
@@ -647,9 +656,6 @@ EOT;
 EOT;
     else
     {
-	$aid = $uid;  // To keep epm_list.php happy.
-	require "$epm_home/include/epm_list.php";
-        $users = read_accounts ( 'user' );
 	$options = values_to_options ( $users, $uid );
 	echo <<<EOT
 	<select name='user'
