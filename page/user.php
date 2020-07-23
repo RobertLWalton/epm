@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 23 04:33:17 EDT 2020
+    // Date:	Thu Jul 23 04:50:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -247,10 +247,6 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'uid-profile' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-        $update = $_POST['uid-update'];
-	if ( ! in_array ( $update, ['check','finish'],
-	                  true ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	$old_uid = $uid;
 	copy_info ( 'user', $_POST, $info );
@@ -272,8 +268,7 @@
 	elseif ( $uid != $old_uid )
 	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
-	if (    $update != 'finish'
-	     || count ( $errors ) > 0 )
+	if ( count ( $errors ) > 0 )
 	    $edit = 'uid-profile';
 	elseif ( $new_user )
 	    $edit = 'new-uid';
@@ -611,12 +606,10 @@ EOT;
 	<strong>Your Info</strong>
 	<br>
 	<button type='button'
-		onclick='UID_UPDATE("finish")'
+		onclick='document.getElementById
+		    ("uid-profile-update").submit()'
 		$style>
 		Finish Editing</button>
-	<button type='button'
-		onclick='UID_UPDATE("check")'>
-		Check New Profile</button>
 EOT;
 	if ( ! $new_user )
 	    echo <<<EOT
@@ -759,8 +752,7 @@ EOT;
     <form method='POST' action='user.php'
 	  id='uid-profile-update'>
     <input type='hidden' name='id' value='$ID'>
-    <input type='hidden' name='uid-update'
-           id='uid-update'>
+    <input type='hidden' name='uid-update'>
     $h<br>
     <table>
     $rows
@@ -775,18 +767,6 @@ EOT;
 <div class='terms'>
 <?php require "$epm_home/include/epm_terms.html"; ?>
 </div>
-
-<script>
-let uid_profile_update = document.getElementById
-    ( 'uid-profile-update' );
-let uid_update = document.getElementById
-    ( 'uid-update' );
-function UID_UPDATE ( value )
-{
-    uid_update.value = value;
-    uid_profile_update.submit();
-}
-</script>
 
 </body>
 </html>
