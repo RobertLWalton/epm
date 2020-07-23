@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 23 14:52:02 EDT 2020
+    // Date:	Thu Jul 23 15:31:53 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -12,28 +12,8 @@
     // Display and edit user information in:
     //
     //		admin/email/*
-    //		admin/users/$uid/*
-    //
-    // If $_SESSION['EPM_UID'] not set (i.e., if the
-    // user is a new user), also assigns $uid and
-    // creates:
-    //
-    //		accounts/$uid
-    //	        admin/users/$uid/$uid.info
-    //
-    //
-    // Does this by using a form to collect the follow-
-    // ing information:
-    //
-    //	   uid		Use's ID (short name).
-    //	   full_name	Use's full name.
-    //	   organization Use's organization.
-    //     location     Town, state, country of
-    //			organization.
-    //
-    // and allows emails to be added to the user's
-    // account and emails other than the login email
-    // to be deleted.
+    //		admin/users/UID/*
+    //		admin/teams/TID/*
 
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
@@ -63,9 +43,6 @@
 	    // To keep epm_list.php happy.
 	require "$epm_home/include/epm_list.php";
         $users = read_accounts ( 'user' );
-        $tids = read_accounts ( 'team' );
-	$manager_tids = read_tids ( 'manager' );
-	$member_tids = read_tids ( 'member' );
     }
 
     // Data:
@@ -75,6 +52,12 @@
     //
     //     EPM_USER TID
     //          Currently selected TID.
+    //
+    //     EPM_USER TID-LIST
+    //          Currently selected TID-LIST:
+    //		  'all' => all tids
+    //		  'manager' => manager tids of UID
+    //		  'member' => member tids of UID
     //
     //	   EPM_DATA UID-INFO
     //	        .info file contents containing:
@@ -103,10 +86,14 @@
     //
     if ( ! isset ( $_SESSION['EPM_USER'] ) )
 	$_SESSION['EPM_USER'] = ['UID' => NULL,
-	                         'TID' => NULL];
+	                         'TID' => NULL,
+				 'TID-LIST' => 'all'];
     $user = & $_SESSION['EPM_USER'];
-    if ( ! isset ( $user['UID'] ) && ! $new_user )
-        $user['UID'] = $_SESSION['EPM_UID'];
+    $uid = & $user['UID'];
+    $tid = & $user['TID'];
+    $tid_list = & $user['TID-LIST'];
+    if ( ! isset ( $uid ) && ! $new_user )
+        $uid = $_SESSION['EPM_UID'];
 
     if ( $epm_method == 'GET' )
     {
@@ -124,21 +111,12 @@
 	else
 	{
 	    $data['UID-INFO'] = read_info
-	        ( 'user', $user['UID'] );
-
-	    $tid = & $user['TID'];
-	    if ( ! isset ( $tid )
-		 &&
-		 count ( $manager_tids ) > 0 )
-		$tid = $manager_tids[0];
-	    if ( isset ( $tid ) )
-		$data['TID-INFO'] = read_info
-		    ( 'team', $tid );
+	        ( 'user', $uid );
 	}
     }
     elseif ( isset ( $_POST['user'] )
              &&
-	     $_POST['user'] != $user['UID'] )
+	     $_POST['user'] != $uid )
     {
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -152,16 +130,16 @@
 	        "$new_uid is no longer a user id";
 	else
 	{
-	    $user['UID'] = $new_uid;
+	    $uid = $new_uid;
 	    $data = & $_SESSION['EPM_DATA'];
 	    $data['UID-INFO'] = read_info
-	        ( 'user', $user['UID'] );
+	        ( 'user', $uid );
 	    $post_processed = true;
 	}
     }
     elseif ( isset ( $_POST['team'] )
              &&
-	     $_POST['team'] != $user['TID'] )
+	     $_POST['team'] != $tid )
     {
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -175,24 +153,68 @@
 	        "$new_tid is no longer a team id";
 	else
 	{
-	    $user['TID'] = $new_tid;
+	    $tid = $new_tid;
 	    $data = & $_SESSION['EPM_DATA'];
 	    $data['TID-INFO'] = read_info
-	        ( 'team', $user['TID'] );
+	        ( 'team', $tid );
 	    $post_processed = true;
 	}
+    }
+    elseif ( isset ( $_POST['tid-list'] )
+             &&
+	     $_POST['tid-list'] != $tid_list )
+    {
+	if ( isset ( $data['LAST_EDIT'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $new_user )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+        $new_tid_list = $_POST['tid-list'];
+	if ( ! in_array ( $new_tid_list,
+	                  ['all','member','manager'],
+			  true ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$tid_list = $new_tid_list;
+	$data = & $_SESSION['EPM_DATA'];
+	$post_processed = true;
     }
     else
 	$data = & $_SESSION['EPM_DATA'];
 
+    // The above establishes $uid_info, $tid_info,
+    // and $tid-list before the following is executed.
+
     $uid_info = & $data['UID-INFO'];
-    $uid = & $uid_info['uid'];
     $emails = & $uid_info['emails'];
 
     $uid_editable =
         ( $new_user
 	  ||
 	  $uid == $_SESSION['EPM_UID'] );
+
+    if ( ! $new_user )
+    {
+	switch ( $tid_list )
+	{
+	case 'all':
+	    $tids = read_accounts ( 'team' );
+	    break;
+	case 'manager':
+	    $tids = read_tids ( 'manager' );
+	    break;
+	case 'member':
+	    $tids = read_tids ( 'member' );
+	}
+
+	if ( ! isset ( $tid )
+	     &&
+	     count ( $tids ) > 0 )
+	{
+	    $tid = $tids[0];
+	    $data['TID-INFO'] = read_info
+		( 'team', $tid );
+	}
+    }
 
     if ( $epm_method == 'GET' && ! $new_user )
     {
@@ -476,17 +498,23 @@
 	float: left;
 	padding: 0px;
     }
-    div.user-header {
-	background-color: var(--bg-dark-green);
-	padding: 10px 0px 0px 0px;
+    div.user-header, div.team-header {
+	padding: var(--pad) 0px 0px 0px;
 	text-align: center;
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
+	height: calc(4*var(--large-font-size));
+    }
+    div.user-header {
+	background-color: var(--bg-dark-green);
+    }
+    div.team-header {
+	background-color: var(--bg-dark-tan);
     }
     div.email-addresses {
 	background-color: var(--bg-green);
-	padding: 10px 0px 0px 0px;
+	padding: var(--pad) 0px 0px 0px;
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
@@ -503,7 +531,7 @@
     }
     div.user-profile {
 	background-color: var(--bg-dark-green);
-	padding: 10px 0px 0px 0px;
+	padding: var(--pad) 0px 0px 0px;
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
@@ -658,6 +686,7 @@ EOT;
     {
 	$options = values_to_options ( $users, $uid );
 	echo <<<EOT
+	<strong>User</strong>
 	<select name='user'
 		onchange='document.getElementById
 			    ("user-form").submit()'>
@@ -784,10 +813,121 @@ EOT;
     </table>
     </form>
     </div>
+    </div>
 EOT;
+    if ( ! $new_user )
+    {
+	$all_select = '';
+	$manager_select = '';
+	$member_select = '';
+	switch ( $tid_list )
+	{
+	case 'all':
+	    $all_select = 'selected';
+	    break;
+	case 'manager':
+	    $manager_select = 'selected';
+	    break;
+	case 'member':
+	    $member_select = 'selected';
+	    break;
+        }
+
+	echo <<<EOT
+	<div class='teams'>
+	<div class='team-header'>
+EOT;
+	if ( $edit == 'tid-profile' )
+	{
+	    $style = '';
+	    if ( $new_team )
+		$style = 'style="background-color:yellow"';
+	    echo <<<EOT
+	    <strong>$tid Team Info</strong>
+	    <br>
+	    <button type='button'
+		    onclick='document.getElementById
+			("tid-profile-update").submit()'
+		    $style>
+		    Finish Editing</button>
+	    <button type="submit"
+		    formmethod="GET">
+		    Cancel Edit</button>
+EOT;
+	}
+	elseif ( $edit == 'members' )
+	    echo <<<EOT
+	    <strong>$tid Team Info</strong>
+	    <br>
+	    <button type="submit"
+		    formmethod='GET'>
+		    Finish Editing</button>
+EOT;
+	else
+	{
+	    echo <<<EOT
+	    <form method='POST' action='user.php'
+		  id='tid-list-form'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <strong>Select Team List:</strong>
+	    <select name='tid-list'
+		    onchange='document.getElementById
+			("tid-list-form").submit()'>
+	    <option value='all' $all_select>
+		all teams</option>
+	    <option value='manager' $manager_select>
+		teams of which you are the manager
+		</option>
+	    <option value='member' $member_select>
+		teams on which you are a member</option>
+	    </select>
+	    </form>
+	    <br>
+EOT;
+	    if ( count ( $tids ) == 0 )
+	        echo <<<EOT
+		<strong>There are NO teams in this
+		        team list.</strong>
+EOT;
+	    else
+	    {
+		$tid_options =
+		    values_to_options ( $tids, $tid );
+		echo <<<EOT
+		<form method='POST' action='user.php'
+		      id='team-form'>
+		<input type='hidden' name='id'
+		       value='$ID'>
+		<select
+		     name='team'
+		     onchange='document.getElementById
+				("team-form").submit()'>
+		$tid_options
+		</select>
+		<strong>Info</strong>
+EOT;
+		if ( $tid_editable )
+		    echo <<<EOT
+		    <br>
+		    <button type="submit"
+			    name='edit' value='tid-profile'>
+			    Edit Profile</button>
+		    <button type="submit"
+			    name='edit' value='members'>
+			    Edit Members</button>
+EOT;
+		echo <<<EOT
+		</form>
+EOT;
+	    }
+	}
+	echo <<<EOT
+	</div>
+	</div>
+EOT;
+    }
 ?>
 
-</div>
 <div style='clear:both'></div>
 <div class='terms'>
 <?php require "$epm_home/include/epm_terms.html"; ?>
