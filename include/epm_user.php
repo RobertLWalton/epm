@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 22 17:06:30 EDT 2020
+// Date:    Thu Jul 23 11:19:46 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -96,6 +96,21 @@ function read_accounts ( $type )
 	    $r[] = $u;
     }
     return $r;
+}
+
+// Get the list tid's from the current user's 'manager'
+// or 'member' files.
+//
+function read_tids ( $fname )
+{
+    global $epm_data;
+
+    $uid = $_SESSION['EPM_UID'];
+    $f = "admin/users/$uid/$fname";
+    $c = @file_get_contents ( "$epm_data/$f" );
+    if ( $c === false ) return [];
+    $c = trim ( $c );
+    return explode ( ' ', $c );
 }
 
 // Return UID associated with email, or false if none.
