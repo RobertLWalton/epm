@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jul 23 21:45:46 EDT 2020
+// Date:    Fri Jul 24 02:58:25 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -60,8 +60,9 @@ $epm_info_fields =
 	                  'User ID of Manager',
 	                  'User ID of Manager'],
             'tid' => ['Team ID',4,12,
-                      'Team ID (short name)',
-		      'Team ID (short name)'],
+                      'Team ID',
+		      'Team ID (short name by which' .
+		      ' others will know the team)'],
 	    'members' => [],
 	    'organization' => ['Organization',8,40,
 	                       'University, Company,' .
@@ -347,7 +348,7 @@ function info_to_rows ( & $info, $exclude = NULL )
 {
     global $epm_info_fields;
 
-    if ( isset ( $info['tid'] ) )
+    if ( isset ( $info['manager'] ) )
         $fields = $epm_info_fields['team'];
     else
         $fields = $epm_info_fields['user'];

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 23 21:47:25 EDT 2020
+    // Date:	Fri Jul 24 02:24:42 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -26,6 +26,7 @@
 
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
+    $new_team = false;
     $STIME = $_SESSION['EPM_TIME'];
     $IPADDR = $_SESSION['EPM_IPADDR'];
     $edit = ( $new_user ? 'uid-profile' : NULL );
@@ -118,6 +119,7 @@
              &&
 	     $_POST['user'] != $uid )
     {
+	$data = & $_SESSION['EPM_DATA'];
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
@@ -131,7 +133,6 @@
 	else
 	{
 	    $uid = $new_uid;
-	    $data = & $_SESSION['EPM_DATA'];
 	    $data['UID-INFO'] = read_info
 	        ( 'user', $uid );
 	    $post_processed = true;
@@ -141,6 +142,7 @@
              &&
 	     $_POST['team'] != $tid )
     {
+	$data = & $_SESSION['EPM_DATA'];
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
@@ -154,7 +156,6 @@
 	else
 	{
 	    $tid = $new_tid;
-	    $data = & $_SESSION['EPM_DATA'];
 	    $data['TID-INFO'] = read_info
 	        ( 'team', $tid );
 	    $post_processed = true;
@@ -164,6 +165,7 @@
              &&
 	     $_POST['tid-list'] != $tid_list )
     {
+	$data = & $_SESSION['EPM_DATA'];
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
@@ -175,15 +177,6 @@
 			  true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$tid_list = $new_tid_list;
-	$data = & $_SESSION['EPM_DATA'];
-	$post_processed = true;
-    }
-    elseif ( isset ( $_POST['new-tid'] ) )
-    {
-	if ( isset ( $data['LAST_EDIT'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
-        if ( $new_user )
-	    exit ( "UNACCEPTABLE HTTP POST" );
 	$post_processed = true;
     }
     else
@@ -193,7 +186,9 @@
     // and $tid-list before the following is executed.
 
     $uid_info = & $data['UID-INFO'];
+    $tid_info = & $data['TID-INFO'];
     $emails = & $uid_info['emails'];
+    $members = & $tid_info['members'];
 
     $uid_editable =
         ( $new_user
@@ -489,6 +484,23 @@
 	}
 	$edit = 'emails';
     }
+    elseif ( isset ( $_POST['new-tid'] ) )
+    {
+	if ( isset ( $data['LAST_EDIT'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $new_user )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$data['TID-INFO'] = [
+	    'tid' => '',
+	    'manager' => $_SESSION['EPM_UID'],
+	    'members' => [],
+	    'team_name' => '',
+	    'organization' => '',
+	    'location' => ''];
+	$tid_info = & $data['TID-INFO'];
+	$edit = 'tid-profile';
+	$new_team = true;
+    }
     elseif ( ! $post_processed )
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
@@ -520,12 +532,17 @@
     div.team-header {
 	background-color: var(--bg-dark-tan);
     }
-    div.email-addresses {
-	background-color: var(--bg-green);
+    div.email-addresses, div.members {
 	padding: var(--pad) 0px 0px 0px;
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
+    }
+    div.email-addresses {
+	background-color: var(--bg-green);
+    }
+    div.members {
+	background-color: var(--bg-tan);
     }
     div.email-addresses * {
 	padding-top: var(--pad);
@@ -537,18 +554,23 @@
 	padding-top: 2px;
 	padding-bottom: 2px;
     }
-    div.user-profile {
-	background-color: var(--bg-dark-green);
+    div.user-profile, div.team-profile {
 	padding: var(--pad) 0px 0px 0px;
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
     }
-    div.user-profile * {
+    div.user-profile {
+	background-color: var(--bg-dark-green);
+    }
+    div.team-profile {
+	background-color: var(--bg-dark-tan);
+    }
+    div.user-profile *, div.team-profile * {
         font-size: var(--large-font-size);
 	padding: 5px;
     }
-    div.user-profile th {
+    div.user-profile th, div.team-profile th {
 	text-align: right;
     }
     td {
@@ -689,6 +711,10 @@ EOT;
 	<button type="submit"
 	        formmethod='GET'>
 		Finish Editing</button>
+EOT;
+    elseif ( isset ( $edit ) )
+    	echo <<<EOT
+	<strong>$uid Info</strong>
 EOT;
     else
     {
@@ -849,9 +875,13 @@ EOT;
 	{
 	    $style = '';
 	    if ( $new_team )
-		$style = 'style="background-color:yellow"';
+		$style =
+		    'style="background-color:yellow"';
+	    $tname = ( isset ( $tid ) ? $tid : 'New' );
 	    echo <<<EOT
-	    <strong>$tid Team Info</strong>
+	    <form method='POST' action='user.php'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <strong>$tname Team Info</strong>
 	    <br>
 	    <button type='button'
 		    onclick='document.getElementById
@@ -861,15 +891,19 @@ EOT;
 	    <button type="submit"
 		    formmethod="GET">
 		    Cancel Edit</button>
+	    </form>
 EOT;
 	}
 	elseif ( $edit == 'members' )
 	    echo <<<EOT
+	    <form method='POST' action='user.php'>
+	    <input type='hidden' name='id' value='$ID'>
 	    <strong>$tid Team Info</strong>
 	    <br>
 	    <button type="submit"
 		    formmethod='GET'>
 		    Finish Editing</button>
+	    </form>
 EOT;
 	else
 	{
@@ -918,7 +952,8 @@ EOT;
 		    echo <<<EOT
 		    <br>
 		    <button type="submit"
-			    name='edit' value='tid-profile'>
+			    name='edit'
+			    value='tid-profile'>
 			    Edit Profile</button>
 		    <button type="submit"
 			    name='edit' value='members'>
@@ -939,6 +974,60 @@ EOT;
 	}
 	echo <<<EOT
 	</div>
+EOT;
+        if ( $new_team )
+	    echo <<<EOT
+	    <div class='members '>
+	    <strong>Members:</strong>
+	    <div class='indented'>
+	    To Be Determined
+	    </div></div>
+EOT;
+
+	if ( $new_team || isset ( $tid ) )
+	{
+	    $exclude = NULL;
+	    if ( $new_team ) $exclude = ['manager'];
+	    elseif ( $edit == 'tid-profile' )
+		$exclude = ['manager','tid'];
+
+	    $rows = info_to_rows
+		( $tid_info, $exclude );
+	    $h = ( $new_team ? 'Edit New Team Profile' :
+		   $edit == 'tid-profile' ?
+		       "Edit $tid Profile" :
+		   "$tid Profile" );
+
+	    if ( $new_team )
+		$h = "<strong
+		       style='background-color:red'>"
+		   . "WARNING:</strong>"
+		   . "<mark><strong>"
+		   . "You can never change the Team ID,"
+		   . " the short name by which the team"
+		   . " will be known, after you"
+		   . " acknowledge the team's initial"
+		   . " profile."
+		   . "</strong></mark>"
+		   . "<br><br><strong>$h:</strong>";
+	    else
+		$h = "<strong>$h:</strong>";
+
+	    echo <<<EOT
+	    <div class='team-profile'>
+	    <form method='POST' action='user.php'
+		  id='tid-profile-update'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type='hidden' name='uid-update'>
+	    $h<br>
+	    <table>
+	    $rows
+	    </table>
+	    </form>
+	    </div>
+EOT;
+	}
+	echo <<<EOT
 	</div>
 EOT;
     }
