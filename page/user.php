@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 24 02:24:42 EDT 2020
+    // Date:	Fri Jul 24 18:55:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -26,7 +26,6 @@
 
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
-    $new_team = false;
     $STIME = $_SESSION['EPM_TIME'];
     $IPADDR = $_SESSION['EPM_IPADDR'];
     $edit = ( $new_user ? 'uid-profile' : NULL );
@@ -53,6 +52,7 @@
     //
     //     EPM_USER TID
     //          Currently selected TID.
+    //		'' for a new team.
     //
     //     EPM_USER TID-LIST
     //          Currently selected TID-LIST:
@@ -195,6 +195,8 @@
 	  ||
 	  $uid == $_SESSION['EPM_UID'] );
 
+    $new_team = ( $tid == '' );
+
     if ( ! $new_user )
     {
 	switch ( $tid_list )
@@ -316,7 +318,8 @@
 		          . " formatted user id";
 	    elseif ( is_dir ( "$epm_data/$d" ) )
 	        $errors[] = "another account is already"
-		          . " using $uid as a User ID";
+		          . " using $uid as an Account"
+			  . " ID";
 	}
 	elseif ( $uid != $old_uid )
 	    exit ( "UNACCEPTABLE HTTP POST: UID" );
@@ -498,8 +501,51 @@
 	    'organization' => '',
 	    'location' => ''];
 	$tid_info = & $data['TID-INFO'];
+	$members = & $tid_info['members'];
 	$edit = 'tid-profile';
-	$new_team = true;
+	$tid = '';
+    }
+    elseif ( isset ( $_POST['tid-update'] ) )
+    {
+        if ( ! $uid_editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $data['LAST_EDIT'] != 'tid-profile' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	$old_tid = $tid_info['TID'];
+	$old_manager = $manager;
+	copy_info ( 'team', $_POST, $tid_info );
+	scrub_info ( 'team', $tid_info, $errors );
+
+	$new_tid = $tid_info['TID'];
+	if ( ! $new_team && $new_tid != $old_tid )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	    
+	if ( $new_tid != $old_tid )
+	{
+	    $d = "admin/teams/$new_tid";
+	    if ( $new_tid == '' )
+	        /* Do Nothing */;
+	    elseif ( ! preg_match
+	                ( $epm_name_re, $new_tid ) )
+	        $errors[] = "$new_tid is not a properly"
+		          . " formatted team id";
+	    elseif ( is_dir ( "$epm_data/$d" ) )
+	        $errors[] = "another account is already"
+		          . " using $new_tid as an"
+			  . " Account ID";
+	}
+
+	if ( count ( $errors ) > 0 )
+	    $edit = 'tid-profile';
+	elseif ( $new_team )
+	    $edit = 'new-tid';
+	else
+	{
+	    write_info ( $tid_info );
+	    $edit = NULL;
+	}
+
     }
     elseif ( ! $post_processed )
 	exit ( 'UNACCEPTABLE HTTP POST' );
@@ -591,6 +637,9 @@
 </div>
 
 <?php 
+
+    if ( $uid_editable ) $uname = 'Your';
+    else $uname = $uid;
 
     if ( count ( $errors ) > 0 )
     {
@@ -714,7 +763,7 @@ EOT;
 EOT;
     elseif ( isset ( $edit ) )
     	echo <<<EOT
-	<strong>$uid Info</strong>
+	<strong>$uname Info</strong>
 EOT;
     else
     {
@@ -743,9 +792,6 @@ EOT;
     </form>
     </div>
 EOT;
-
-    if ( $uid_editable ) $uname = 'Your';
-    else $uname = $uid;
 
     if ( $edit == 'emails' )
     {
@@ -851,6 +897,8 @@ EOT;
 EOT;
     if ( ! $new_user )
     {
+	$create_team =
+	    ( $new_team && $edit == 'tid-profile' );
 	$all_select = '';
 	$manager_select = '';
 	$member_select = '';
@@ -975,16 +1023,16 @@ EOT;
 	echo <<<EOT
 	</div>
 EOT;
-        if ( $new_team )
+        if ( $create_team )
 	    echo <<<EOT
 	    <div class='members '>
 	    <strong>Members:</strong>
 	    <div class='indented'>
-	    To Be Determined
+	    <strong>To Be Determined</strong>
 	    </div></div>
 EOT;
 
-	if ( $new_team || isset ( $tid ) )
+	if ( $create_team )
 	{
 	    $exclude = NULL;
 	    if ( $new_team ) $exclude = ['manager'];
