@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jul 23 11:19:46 EDT 2020
+// Date:    Thu Jul 23 21:45:46 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -181,14 +181,19 @@ function email_map ( & $map )
 // Return the HTML for a $list of emails.  Each email
 // in $list becomes a <pre>...</pre> segment in the
 // returned HTML.  If $email is not NULL, its segment
-// is marked as '(used for current login)'.  Segments
-// are separated by <br>.
+// is marked as '(used for current login)'.  If $strip
+// is true, the non-domain part of each email is
+// rendered as `...'.  Segments are separated by <br>.
 //
-function emails_to_lines ( $list, $email = NULL )
+function emails_to_lines
+	( $list, $email = NULL, $strip = false )
 {
     $r = [];
     foreach ( $list as $item )
     {
+        if ( $strip )
+	    $item = preg_replace
+	        ( '/^[^@]*@/', '...@', $item );
 	$line = '<pre>' . htmlspecialchars ( $item )
 	      . '</pre>';
         if ( $item == $email )

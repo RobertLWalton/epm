@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 23 15:31:53 EDT 2020
+    // Date:	Thu Jul 23 21:47:25 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -176,6 +176,14 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$tid_list = $new_tid_list;
 	$data = & $_SESSION['EPM_DATA'];
+	$post_processed = true;
+    }
+    elseif ( isset ( $_POST['new-tid'] ) )
+    {
+	if ( isset ( $data['LAST_EDIT'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $new_user )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$post_processed = true;
     }
     else
@@ -504,7 +512,7 @@
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
-	height: calc(4*var(--large-font-size));
+	height: calc(4.5*var(--large-font-size));
     }
     div.user-header {
 	background-color: var(--bg-dark-green);
@@ -768,7 +776,7 @@ EOT;
     else
     {
 	$addresses = emails_to_lines
-	    ( $emails, $email );
+	    ( $emails, $email, ! $uid_editable );
 	echo <<<EOT
 	<div class='email-addresses'>
 	<strong>$uname Email Addresses:</strong>
@@ -920,6 +928,14 @@ EOT;
 		</form>
 EOT;
 	    }
+	    echo <<<EOT
+	    <br>
+	    <form method='POST' action='user.php'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <button type='submit' name='new-tid'>
+	        Create a New Team</button>
+	    </form>
+EOT;
 	}
 	echo <<<EOT
 	</div>
