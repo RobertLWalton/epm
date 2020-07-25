@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 03:35:54 EDT 2020
+    // Date:	Sat Jul 25 03:40:06 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -117,6 +117,9 @@
 	{
 	    $data['UID-INFO'] = read_info
 	        ( 'user', $uid );
+	    if ( isset ( $tid ) )
+		$data['TID-INFO'] = read_info
+		    ( 'team', $tid );
 	}
     }
     elseif ( isset ( $_POST['user'] )
@@ -176,6 +179,24 @@
 			  true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$tid_list = $new_tid_list;
+	$tid = NULL;
+	$tid_info = NULL;
+    }
+    elseif ( isset ( $_POST['create-tid'] ) )
+    {
+	if ( isset ( $data['LAST_EDIT'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $new_user )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$data['TID-INFO'] = [
+	    'tid' => '',
+	    'manager' => $_SESSION['EPM_UID'],
+	    'members' => [],
+	    'team_name' => '',
+	    'organization' => '',
+	    'location' => ''];
+	$tid = NULL;
+	$edit = 'tid-profile';
     }
     else
 	$post_processed = false;
@@ -186,16 +207,16 @@
     $uid_info = & $data['UID-INFO'];
     $tid_info = & $data['TID-INFO'];
     $emails = & $uid_info['emails'];
-    $members = & $tid_info['members'];
 
     $uid_editable =
         ( $new_user
 	  ||
 	  $uid == $_SESSION['EPM_UID'] );
 
-    $new_team = ( $tid == '' );
+    $no_team = ( ! isset ( $tid_info ) );
+    $new_team = ( ! isset ( $tid ) && ! $no_team );
 
-    if ( ! $new_user )
+    if ( ! $new_user && ! $new_team )
     {
 	switch ( $tid_list )
 	{
@@ -209,13 +230,13 @@
 	    $tids = read_tids ( 'member' );
 	}
 
-	if ( ! isset ( $tid )
+	if ( $no_team
 	     &&
 	     count ( $tids ) > 0 )
 	{
 	    $tid = $tids[0];
-	    $data['TID-INFO'] = read_info
-		( 'team', $tid );
+	    $tid_info = read_info ( 'team', $tid );
+	    $no_team = false;
 	}
     }
 
@@ -489,24 +510,6 @@
 	}
 	$edit = 'emails';
     }
-    elseif ( isset ( $_POST['new-tid'] ) )
-    {
-	if ( isset ( $data['LAST_EDIT'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
-        if ( $new_user )
-	    exit ( "UNACCEPTABLE HTTP POST" );
-	$data['TID-INFO'] = [
-	    'tid' => '',
-	    'manager' => $_SESSION['EPM_UID'],
-	    'members' => [],
-	    'team_name' => '',
-	    'organization' => '',
-	    'location' => ''];
-	$tid_info = & $data['TID-INFO'];
-	$members = & $tid_info['members'];
-	$edit = 'tid-profile';
-	$tid = '';
-    }
     elseif ( isset ( $_POST['tid-update'] ) )
     {
         if ( ! $uid_editable )
@@ -541,7 +544,7 @@
 	if ( count ( $errors ) > 0 )
 	    $edit = 'tid-profile';
 	elseif ( $new_team )
-	    $edit = 'new-tid';
+	    $edit = 'create-tid';
 	else
 	{
 	    write_info ( $tid_info );
@@ -640,6 +643,7 @@
 
 <?php 
 
+    $editing_user = false;
     if ( $uid_editable ) $uname = 'Your';
     else $uname = $uid;
 
@@ -736,6 +740,7 @@ EOT;
 EOT;
     if ( $edit == 'uid-profile' )
     {
+        $editing_user = true;
         $style = '';
 	if ( $new_user )
 	    $style = 'style="background-color:yellow"';
@@ -756,6 +761,8 @@ EOT;
 EOT;
     }
     elseif ( $edit == 'emails' )
+    {
+        $editing_user = true;
     	echo <<<EOT
 	<strong>Your Info</strong>
 	<br>
@@ -763,6 +770,7 @@ EOT;
 	        formmethod='GET'>
 		Finish Editing</button>
 EOT;
+    }
     elseif ( isset ( $edit ) )
     	echo <<<EOT
 	<strong>$uname Info</strong>
@@ -897,66 +905,50 @@ EOT;
     </div>
     </div>
 EOT;
-    if ( ! $new_user )
-    {
-	$create_team =
-	    ( $new_team && $edit == 'tid-profile' );
-	$all_select = '';
-	$manager_select = '';
-	$member_select = '';
-	switch ( $tid_list )
-	{
-	case 'all':
-	    $all_select = 'selected';
-	    break;
-	case 'manager':
-	    $manager_select = 'selected';
-	    break;
-	case 'member':
-	    $member_select = 'selected';
-	    break;
-        }
 
+    // Team Section
+
+    if ( $new_user )
+        /* Do Nothing */;
+    elseif ( $editing_user && $no_team )
+        /* Do Nothing */;
+    else
+    {
 	echo <<<EOT
 	<div class='teams'>
 	<div class='team-header'>
 EOT;
-	if ( $edit == 'tid-profile' )
+        if ( isset ( $edit ) || $new_team )
 	{
-	    $style = '';
-	    if ( $new_team )
-		$style =
-		    'style="background-color:yellow"';
-	    $tname = ( isset ( $tid ) ? $tid : 'New' );
+	    $tname = ( $new_team ? 'New' : $tid );
 	    echo <<<EOT
-	    <form method='POST' action='user.php'>
-	    <input type='hidden' name='id' value='$ID'>
 	    <strong>$tname Team Info</strong>
-	    <br>
-	    <button type='button'
-		    onclick='document.getElementById
-			("tid-profile-update").submit()'
-		    $style>
-		    Finish Editing</button>
-	    <button type="submit"
-		    formmethod="GET">
-		    Cancel Edit</button>
-	    </form>
 EOT;
 	}
-	elseif ( $edit == 'members' )
-	    echo <<<EOT
-	    <form method='POST' action='user.php'>
-	    <input type='hidden' name='id' value='$ID'>
-	    <strong>$tid Team Info</strong>
-	    <br>
-	    <button type="submit"
-		    formmethod='GET'>
-		    Finish Editing</button>
-	    </form>
-EOT;
 	else
 	{
+	    $all_select = '';
+	    $manager_select = '';
+	    $member_select = '';
+	    $tid_editable =
+	        ( ! $no_team
+		  &&
+		     $tid_info['manager']
+		  == $_SESSION['EPM_UID'] );
+
+	    switch ( $tid_list )
+	    {
+	    case 'all':
+		$all_select = 'selected';
+		break;
+	    case 'manager':
+		$manager_select = 'selected';
+		break;
+	    case 'member':
+		$member_select = 'selected';
+		break;
+	    }
+
 	    echo <<<EOT
 	    <form method='POST' action='user.php'
 		  id='tid-list-form'>
@@ -1017,15 +1009,49 @@ EOT;
 	    <br>
 	    <form method='POST' action='user.php'>
 	    <input type='hidden' name='id' value='$ID'>
-	    <button type='submit' name='new-tid'>
+	    <button type='submit' name='create-tid'>
 	        Create a New Team</button>
 	    </form>
 EOT;
 	}
+
+	if ( $edit == 'tid-profile' )
+	{
+	    $style = '';
+	    if ( $new_team )
+		$style =
+		    'style="background-color:yellow"';
+	    $tname = ( isset ( $tid ) ? $tid : 'New' );
+	    echo <<<EOT
+	    <form method='POST' action='user.php'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <br>
+	    <button type='button'
+		    onclick='document.getElementById
+			("tid-profile-update").submit()'
+		    $style>
+		    Finish Editing</button>
+	    <button type="submit"
+		    formmethod="GET">
+		    Cancel Edit</button>
+	    </form>
+EOT;
+	}
+	elseif ( $edit == 'members' )
+	    echo <<<EOT
+	    <form method='POST' action='user.php'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <br>
+	    <button type="submit"
+		    formmethod='GET'>
+		    Finish Editing</button>
+	    </form>
+EOT;
 	echo <<<EOT
 	</div>
 EOT;
-        if ( $create_team )
+	if ( isset ( $tid_info ) )
+	{
 	    echo <<<EOT
 	    <div class='members '>
 	    <strong>Members:</strong>
@@ -1034,8 +1060,6 @@ EOT;
 	    </div></div>
 EOT;
 
-	if ( $create_team )
-	{
 	    $exclude = NULL;
 	    if ( $new_team ) $exclude = ['manager'];
 	    elseif ( $edit == 'tid-profile' )
@@ -1077,9 +1101,11 @@ EOT;
 	    </div>
 EOT;
 	}
+
 	echo <<<EOT
 	</div>
 EOT;
+
     }
 ?>
 
