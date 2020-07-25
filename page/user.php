@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 24 18:55:23 EDT 2020
+    // Date:	Sat Jul 25 03:35:54 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -26,8 +26,6 @@
 
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
-    $STIME = $_SESSION['EPM_TIME'];
-    $IPADDR = $_SESSION['EPM_IPADDR'];
     $edit = ( $new_user ? 'uid-profile' : NULL );
         // One of: NULL (just view), 'emails', 
 	// 'uid-profile', 'members', or 'tid-profile'.
@@ -35,7 +33,6 @@
 	// by POST processing.
     $errors = [];
         // List of error messages to be displayed.
-    $post_processed = false;
 
     if ( ! $new_user )
     {
@@ -52,7 +49,7 @@
     //
     //     EPM_USER TID
     //          Currently selected TID.
-    //		'' for a new team.
+    //		NULL if no team or new team.
     //
     //     EPM_USER TID-LIST
     //          Currently selected TID-LIST:
@@ -70,6 +67,7 @@
     //		location	string
     //
     //	   EPM_DATA TID-INFO
+    //		NULL if no team
     //	        .info file contents containing:
     //
     //		tid		string
@@ -84,6 +82,8 @@
     //	   EPM_DATA LAST_EDIT
     //		Value of $edit for the last page
     //		served.
+ 
+    // Set up $user.
     //
     if ( ! isset ( $_SESSION['EPM_USER'] ) )
 	$_SESSION['EPM_USER'] = ['UID' => NULL,
@@ -96,10 +96,14 @@
     if ( ! isset ( $uid ) && ! $new_user )
         $uid = $_SESSION['EPM_UID'];
 
+    // Set up $data.
+    //
+    if ( $epm_method == 'GET' )
+	$_SESSION['EPM_DATA'] = [];
+    $data = & $_SESSION['EPM_DATA'];
+    $post_processed = true;
     if ( $epm_method == 'GET' )
     {
-	$_SESSION['EPM_DATA'] = [];
-	$data = & $_SESSION['EPM_DATA'];
         if ( $new_user )
 	{
 	    $data['UID-INFO'] = [
@@ -119,7 +123,6 @@
              &&
 	     $_POST['user'] != $uid )
     {
-	$data = & $_SESSION['EPM_DATA'];
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
@@ -135,14 +138,12 @@
 	    $uid = $new_uid;
 	    $data['UID-INFO'] = read_info
 	        ( 'user', $uid );
-	    $post_processed = true;
 	}
     }
     elseif ( isset ( $_POST['team'] )
              &&
 	     $_POST['team'] != $tid )
     {
-	$data = & $_SESSION['EPM_DATA'];
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
@@ -158,14 +159,12 @@
 	    $tid = $new_tid;
 	    $data['TID-INFO'] = read_info
 	        ( 'team', $tid );
-	    $post_processed = true;
 	}
     }
     elseif ( isset ( $_POST['tid-list'] )
              &&
 	     $_POST['tid-list'] != $tid_list )
     {
-	$data = & $_SESSION['EPM_DATA'];
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
@@ -177,10 +176,9 @@
 			  true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$tid_list = $new_tid_list;
-	$post_processed = true;
     }
     else
-	$data = & $_SESSION['EPM_DATA'];
+	$post_processed = false;
 
     // The above establishes $uid_info, $tid_info,
     // and $tid-list before the following is executed.
@@ -352,6 +350,9 @@
 	@mkdir ( "$epm_data/accounts/$uid", 02771 );
 	umask ( $m );
 
+	$STIME = $_SESSION['EPM_TIME'];
+	$IPADDR = $_SESSION['EPM_IPADDR'];
+
 	$d = "admin/users/$uid";
 	$re = rawurlencode ( $email );
 	$f = "admin/email/$re";
@@ -428,6 +429,7 @@
 	    }
 	    else
 	    {
+		$STIME = $_SESSION['EPM_TIME'];
 	        $items = [ $uid, 0, $STIME ];
 		$r = @file_put_contents
 		    ( "$epm_data/$f",
