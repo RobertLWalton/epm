@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 16:10:28 EDT 2020
+    // Date:	Sat Jul 25 17:50:28 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -179,7 +179,7 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$tid_list = $new_tid_list;
 	$tid = NULL;
-	$tid_info = NULL;
+	$data['TID-INFO'] = NULL;
     }
     elseif ( isset ( $_POST['create-tid'] ) )
     {
@@ -212,52 +212,18 @@
     $no_team = ( ! isset ( $tid_info ) );
     $new_team = ( ! isset ( $tid ) && ! $no_team );
 
-    if ( ! $new_user && ! $new_team )
+    // Compute list of teams in $tid_list.
+    //
+    function compute_tids ( $tid_list )
     {
 	switch ( $tid_list )
 	{
 	case 'all':
-	    $tids = read_accounts ( 'team' );
-	    break;
+	    return read_accounts ( 'team' );
 	case 'manager':
-	    $tids = read_tids ( 'manager' );
-	    break;
+	    return read_tids ( 'manager' );
 	case 'member':
-	    $tids = read_tids ( 'member' );
-	}
-
-	if ( $no_team
-	     &&
-	     count ( $tids ) > 0 )
-	{
-	    $tid = $tids[0];
-	    $tid_info = read_info ( 'team', $tid );
-	    $no_team = false;
-	}
-    }
-
-    if ( $epm_method == 'GET' && ! $new_user )
-    {
-        if ( $uid != $user['UID'] )
-	    ERROR ( "bad {$user['UID']} info uid" );
-
-	email_map ( $map );
-	$actual = [];
-	foreach ( $map as $e => $u )
-	{
-	    if ( $u == $uid )
-	        $actual[] = $e;
-	}
-	if ( count ( array_diff ( $emails, $actual ) )
-	     +
-	     count ( array_diff ( $actual, $emails ) )
-	     > 0 )
-	{
-	    WARN ( "$uid info emails !=" .
-	           " admin/email emails" );
-	    $emails = $actual;
-	    if ( $uid_editable )
-		write_info ( $uid_info );
+	    return read_tids ( 'member' );
 	}
     }
 
@@ -293,6 +259,45 @@
 	}
 	$variable = $value;
 	return true;
+    }
+
+    if ( ! $new_user && ! $new_team )
+    {
+	$tids = compute_tids ( $tid_list );
+
+	if ( $no_team
+	     &&
+	     count ( $tids ) > 0 )
+	{
+	    $tid = $tids[0];
+	    $tid_info = read_info ( 'team', $tid );
+	    $no_team = false;
+	}
+    }
+
+    if ( $epm_method == 'GET' && ! $new_user )
+    {
+        if ( $uid != $user['UID'] )
+	    ERROR ( "bad {$user['UID']} info uid" );
+
+	email_map ( $map );
+	$actual = [];
+	foreach ( $map as $e => $u )
+	{
+	    if ( $u == $uid )
+	        $actual[] = $e;
+	}
+	if ( count ( array_diff ( $emails, $actual ) )
+	     +
+	     count ( array_diff ( $actual, $emails ) )
+	     > 0 )
+	{
+	    WARN ( "$uid info emails !=" .
+	           " admin/email emails" );
+	    $emails = $actual;
+	    if ( $uid_editable )
+		write_info ( $uid_info );
+	}
     }
 
     if ( $epm_method == 'GET' )
@@ -577,6 +582,17 @@
 
 	write_info ( $tid_info );
 
+	$f = "admin/users/$aid/manager";
+	$c = @file_get_contents ( "$epm_data/$f" );
+	if ( $c === false ) $c = '';
+	$c = trim ( $c );
+	$c .= " $tid";
+	$r = @file_put_contents ( "$epm_data/$f", $c );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+
+	$tid_list = 'manager';
+	$tids = compute_tids ( $tid_list );
 	$edit = NULL;
     }
     elseif ( isset ( $_POST['NO-new-tid'] ) )
