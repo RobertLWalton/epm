@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 06:26:13 EDT 2020
+    // Date:	Sat Jul 25 16:10:28 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -37,7 +37,6 @@
     if ( ! $new_user )
     {
 	$aid = $_SESSION['EPM_AID'];
-	    // To keep epm_list.php happy.
 	require "$epm_home/include/epm_list.php";
         $users = read_accounts ( 'user' );
     }
@@ -190,7 +189,7 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$data['TID-INFO'] = [
 	    'tid' => '',
-	    'manager' => $_SESSION['EPM_UID'],
+	    'manager' => $aid,
 	    'members' => [],
 	    'team_name' => '',
 	    'organization' => '',
@@ -208,10 +207,7 @@
     $tid_info = & $data['TID-INFO'];
     $emails = & $uid_info['emails'];
 
-    $uid_editable =
-        ( $new_user
-	  ||
-	  $uid == $_SESSION['EPM_UID'] );
+    $uid_editable = ( $new_user || $uid == $aid );
 
     $no_team = ( ! isset ( $tid_info ) );
     $new_team = ( ! isset ( $tid ) && ! $no_team );
@@ -328,7 +324,7 @@
 
 	if ( $new_user )
 	{
-	    $d = "admin/users/$uid";
+	    $d = "admin/accounts/$uid";
 	    if ( $uid == '' )
 	        /* Do Nothing */;
 	    elseif ( ! preg_match
@@ -352,7 +348,6 @@
 	    write_info ( $uid_info );
 	    $edit = NULL;
 	}
-
     }
     elseif ( isset ( $_POST['new-uid'] ) )
     {
@@ -385,25 +380,27 @@
 	      implode ( ' ', $items ) );
 	if ( $r === false )
 	    ERROR ( "could not write $f" );
+
 	write_info ( $uid_info );
 
-	$f = "admin/users/$uid/session_id";
-	$r = file_put_contents
-	    ( "$epm_data/$f", session_id() );
-	if ( $r === false )
-	    ERROR ( "could not write $f" );
-	$fmtime = @filemtime ( "$epm_data/$f" );
-	if ( $fmtime === false )
-	    ERROR ( "could not stat $f" );
-	$_SESSION['EPM_ABORT'] = [$f,$fmtime];
-
+	$log = "$d/$uid.login";
+	$browser = $_SERVER['HTTP_USER_AGENT'];
+	$browser = preg_replace
+	    ( '/\s*\([^\)]*\)\s*/', ' ', $browser );
+	$browser = preg_replace
+	    ( '/\s+/', ';', $browser );
 	$r = @file_put_contents
-	    ( "$epm_data/login.log",
-	      "$uid $email $IPADDR $STIME" .
+	    ( "$epm_data/$log",
+	      "$STIME $email $IPADDR $browser" .
 	      PHP_EOL,
 	      FILE_APPEND );
 	if ( $r === false )
-	    ERROR ( "could not write login.log" );
+	    ERROR ( "could not write $log" );
+
+	$mtime = @filemtime ( "$epm_data/$log" );
+	if ( $mtime === false )
+	    ERROR ( "cannot stat $log" );
+	$_SESSION['EPM_ABORT'] = [$log,$mtime];
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_AID'] = $uid;
@@ -515,26 +512,28 @@
         if ( $data['LAST_EDIT'] != 'tid-profile' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
-	$old_tid = $tid_info['TID'];
-	$old_manager = $tid_info['MANAGER'];
-	if ( $old_manager != $_SESSION['EPM_UID'] )
+	$old_tid = $tid_info['tid'];
+	$old_manager = $tid_info['manager'];
+	if ( $old_manager != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	copy_info ( 'team', $_POST, $tid_info );
 	scrub_info ( 'team', $tid_info, $errors );
 
-	$new_tid = $tid_info['TID'];
-	$new_manager = $tid_info['MANAGER'];
+	$new_tid = $tid_info['tid'];
+	$new_manager = $tid_info['manager'];
 	if ( ! $new_team && $new_tid != $old_tid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	if ( $new_manager != $_SESSION['EPM_UID'] )
+	if ( $new_manager != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
-	if ( $new_tid != $old_tid )
+	if ( count ( $errors ) == 0
+	     &&
+	     $new_tid != $old_tid )
 	{
-	    $d = "admin/teams/$new_tid";
+	    $d = "admin/accounts/$new_tid";
 	    if ( $new_tid == '' )
-	        /* Do Nothing */;
+	        $errors[] = 'missing team ID';
 	    elseif ( ! preg_match
 	                ( $epm_name_re, $new_tid ) )
 	        $errors[] = "$new_tid is not a properly"
@@ -558,10 +557,14 @@
     }
     elseif ( isset ( $_POST['new-tid'] ) )
     {
-        if (    $tid_info['MANAGER']
-	     == $_SESSION['EPM_UID'] )
         if ( $data['LAST_EDIT'] != 'new-tid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $tid_info['manager'] != $aid )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	$tid = $tid_info['tid'];
+	$no_team = false;
+	$new_team = false;
 
 	@mkdir ( "$epm_data/admin", 02770 );
 	@mkdir ( "$epm_data/admin/teams", 02770 );
@@ -572,26 +575,13 @@
 	@mkdir ( "$epm_data/accounts/$tid", 02771 );
 	umask ( $m );
 
-	$STIME = $_SESSION['EPM_TIME'];
-	$IPADDR = $_SESSION['EPM_IPADDR'];
-
 	write_info ( $tid_info );
 
-	$r = @file_put_contents
-	    ( "$epm_data/login.log",
-	      "$tid $email $IPADDR $STIME" .
-	      PHP_EOL,
-	      FILE_APPEND );
-	if ( $r === false )
-	    ERROR ( "could not write login.log" );
-
 	$edit = NULL;
-	$tid = $tid_info['TID'];
     }
     elseif ( isset ( $_POST['NO-new-tid'] ) )
     {
-        if (    $tid_info['MANAGER']
-	     == $_SESSION['EPM_UID'] )
+        if ( $tid_info['manager'] != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'new-tid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -620,7 +610,7 @@
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
-	height: calc(4.5*var(--large-font-size));
+	height: calc(6.5*var(--large-font-size));
     }
     div.user-header {
 	background-color: var(--bg-dark-green);
@@ -997,8 +987,7 @@ EOT;
 	    $tid_editable =
 	        ( ! $no_team
 		  &&
-		     $tid_info['manager']
-		  == $_SESSION['EPM_UID'] );
+		  $tid_info['manager'] == $aid );
 
 	    switch ( $tid_list )
 	    {
@@ -1156,7 +1145,7 @@ EOT;
 	    <form method='POST' action='user.php'
 		  id='tid-profile-update'>
 	    <input type='hidden' name='id' value='$ID'>
-	    <input type='hidden' name='uid-update'>
+	    <input type='hidden' name='tid-update'>
 	    $h<br>
 	    <table>
 	    $rows
