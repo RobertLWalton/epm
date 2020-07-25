@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jul 24 02:58:25 EDT 2020
+// Date:    Sat Jul 25 05:41:13 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -63,6 +63,9 @@ $epm_info_fields =
                       'Team ID',
 		      'Team ID (short name by which' .
 		      ' others will know the team)'],
+	    'team_name' => ['Team Full Name',6,40,
+	                    'Whatever Works for You',
+			    'Team Full Name'],
 	    'members' => [],
 	    'organization' => ['Organization',8,40,
 	                       'University, Company,' .

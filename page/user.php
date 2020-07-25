@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 03:40:06 EDT 2020
+    // Date:	Sat Jul 25 05:43:48 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -420,9 +420,9 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$edit = 'uid-profile';
     }
-    elseif ( isset ( $_POST['add_email'] )
+    elseif ( isset ( $_POST['add-email'] )
              &&
-	     isset ( $_POST['new_email'] ) )
+	     isset ( $_POST['new-email'] ) )
     {
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -435,7 +435,7 @@
 	              . " limit of $epm_max_emails"
 		      . " email address";
     	elseif ( sanitize_email
-	         ( $e, $_POST['new_email'] ) )
+	         ( $e, $_POST['new-email'] ) )
 	{
 	    $re = rawurlencode ( $e );
 	    $f = "admin/email/$re";
@@ -463,7 +463,7 @@
 	}
 	$edit = 'emails';
     }
-    elseif ( isset ( $_POST['delete_email'] ) )
+    elseif ( isset ( $_POST['delete-email'] ) )
     {
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -471,7 +471,7 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
     	if ( sanitize_email
-	         ( $e, $_POST['delete_email'] ) )
+	         ( $e, $_POST['delete-email'] ) )
         {
 	    $re = rawurlencode ( $e );
 	    $f = "admin/email/$re";
@@ -828,7 +828,7 @@ EOT;
 	    <pre>$he</pre>
 	    <pre>    </pre>
 	    <button type='submit'
-		    name='delete_email'
+		    name='delete-email'
 		    value='$he'>Delete</button>
 	    </form>
 EOT;
@@ -842,13 +842,13 @@ EOT;
 	    <br>
 	    <form method='POST' action='user.php'>
 	    <input type='hidden' name='id' value='$ID'>
-	    <input type='email' name='new_email'
+	    <input type='email' name='new-email'
 		   value='' size='40'
 		   placeholder='Another Email Address'
 		   title='$new_email_title'>
 	    <pre>    </pre>
 	    <input type='submit'
-		   name='add_email' value='Add'>
+		   name='add-email' value='Add'>
 	    </form>
 EOT;
 	}
