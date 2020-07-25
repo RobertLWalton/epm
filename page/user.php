@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 05:43:48 EDT 2020
+    // Date:	Sat Jul 25 06:26:13 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -512,18 +512,22 @@
     }
     elseif ( isset ( $_POST['tid-update'] ) )
     {
-        if ( ! $uid_editable )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'tid-profile' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	$old_tid = $tid_info['TID'];
-	$old_manager = $manager;
+	$old_manager = $tid_info['MANAGER'];
+	if ( $old_manager != $_SESSION['EPM_UID'] )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
 	copy_info ( 'team', $_POST, $tid_info );
 	scrub_info ( 'team', $tid_info, $errors );
 
 	$new_tid = $tid_info['TID'];
+	$new_manager = $tid_info['MANAGER'];
 	if ( ! $new_team && $new_tid != $old_tid )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	if ( $new_manager != $_SESSION['EPM_UID'] )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
 	if ( $new_tid != $old_tid )
@@ -544,13 +548,54 @@
 	if ( count ( $errors ) > 0 )
 	    $edit = 'tid-profile';
 	elseif ( $new_team )
-	    $edit = 'create-tid';
+	    $edit = 'new-tid';
 	else
 	{
 	    write_info ( $tid_info );
 	    $edit = NULL;
 	}
 
+    }
+    elseif ( isset ( $_POST['new-tid'] ) )
+    {
+        if (    $tid_info['MANAGER']
+	     == $_SESSION['EPM_UID'] )
+        if ( $data['LAST_EDIT'] != 'new-tid' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	@mkdir ( "$epm_data/admin", 02770 );
+	@mkdir ( "$epm_data/admin/teams", 02770 );
+	@mkdir ( "$epm_data/admin/teams/$tid",
+		 02770 );
+	$m = umask ( 06 );
+	@mkdir ( "$epm_data/accounts", 02771 );
+	@mkdir ( "$epm_data/accounts/$tid", 02771 );
+	umask ( $m );
+
+	$STIME = $_SESSION['EPM_TIME'];
+	$IPADDR = $_SESSION['EPM_IPADDR'];
+
+	write_info ( $tid_info );
+
+	$r = @file_put_contents
+	    ( "$epm_data/login.log",
+	      "$tid $email $IPADDR $STIME" .
+	      PHP_EOL,
+	      FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "could not write login.log" );
+
+	$edit = NULL;
+	$tid = $tid_info['TID'];
+    }
+    elseif ( isset ( $_POST['NO-new-tid'] ) )
+    {
+        if (    $tid_info['MANAGER']
+	     == $_SESSION['EPM_UID'] )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $data['LAST_EDIT'] != 'new-tid' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$edit = 'tid-profile';
     }
     elseif ( ! $post_processed )
 	exit ( 'UNACCEPTABLE HTTP POST' );
@@ -677,6 +722,25 @@ EOT;
 	<button type='submit' name='NO-new-uid'>
 	    NO</button>
 	<button type='submit' name='new-uid'>
+	    YES</button>
+	</form>
+	</div>
+EOT;
+
+    if ( $edit == 'new-tid' )
+        echo <<<EOT
+	<div class='errors'>
+	<strong>You are about to save the team's info
+	        for the first time.  After doing so,
+		you may <b>NOT</b> change the team's
+		ID, the short name by which others
+		will know the team.  Do you want to save
+		the team's info now?</strong>
+	<form action='user.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
+	<button type='submit' name='NO-new-tid'>
+	    NO</button>
+	<button type='submit' name='new-tid'>
 	    YES</button>
 	</form>
 	</div>
