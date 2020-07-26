@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul 26 12:05:14 EDT 2020
+// Date:    Sun Jul 26 16:20:28 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -237,6 +237,33 @@ function emails_to_rows
 	    $r .= " <button type='submit'"
 	        . "         name='delete-email'"
 	        . "         value='$item'>"
+	        . "         Delete</button>";
+	$r .= '</td></tr>';
+    }
+    return $r;
+}
+
+// Return the HTML for a $list of members, where each
+// member has the form [UID,EMAIL].  Each Member in
+// $list becomes a <tr><td>...</td></tr> segment in
+// the returned HTML.  If $act == 'delete', a `Delete'
+// button is added after each member with name=
+// 'delete-member' and value='UID'.  Note that EMAIL
+// may be ''.
+//
+function members_to_rows ( $list, $act = NULL )
+{
+    $r = '';
+    foreach ( $list as $item )
+    {
+        list ( $uid, $email ) = $item;
+	$r .= "<tr><td>$uid";
+	if ( $email != '' )
+	    $r .= " ($email)";
+	if ( $act == 'delete' )
+	    $r .= " <button type='submit'"
+	        . "         name='delete-member'"
+	        . "         value='$uid'>"
 	        . "         Delete</button>";
 	$r .= '</td></tr>';
     }

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 26 12:05:34 EDT 2020
+    // Date:	Sun Jul 26 16:07:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -891,15 +891,15 @@ EOT;
     $exclude = NULL;
     if ( $new_user ) $exclude = [];
     elseif ( $edit == 'uid-profile' )
-        $exclude = ['uid'];
+	$exclude = ['uid'];
 
     $rows = info_to_rows ( $uid_info, $exclude );
     $h = ( $edit == 'uid-profile' ?
-           'Edit Your Profile' :
+	   'Edit Your Profile' :
 	   "$uname Profile" );
 
     if ( $new_user )
-        $h = "<strong style='background-color:red'>"
+	$h = "<strong style='background-color:red'>"
 	   . "WARNING:</strong>"
 	   . "<mark><strong>"
 	   . "You can never change your User ID,"
@@ -909,7 +909,7 @@ EOT;
 	   . "</strong></mark>"
 	   . "<br><br><strong>$h:</strong>";
     else
-        $h = "<strong>$h:</strong>";
+	$h = "<strong>$h:</strong>";
 
     echo <<<EOT
     <div class='user-profile'>
@@ -929,16 +929,16 @@ EOT;
     // Team Section
 
     if ( $new_user )
-        /* Do Nothing */;
+	/* Do Nothing */;
     elseif ( $editing_user && $no_team )
-        /* Do Nothing */;
+	/* Do Nothing */;
     else
     {
 	echo <<<EOT
 	<div class='teams'>
 	<div class='team-header'>
 EOT;
-        if ( isset ( $edit ) || $new_team )
+	if ( isset ( $edit ) || $new_team )
 	{
 	    $tname = ( $new_team ? 'New' : $tid );
 	    echo <<<EOT
@@ -951,7 +951,7 @@ EOT;
 	    $manager_select = '';
 	    $member_select = '';
 	    $tid_editable =
-	        ( ! $no_team
+		( ! $no_team
 		  &&
 		  $tid_info['manager'] == $aid );
 
@@ -988,9 +988,9 @@ EOT;
 	    <br>
 EOT;
 	    if ( count ( $tids ) == 0 )
-	        echo <<<EOT
+		echo <<<EOT
 		<strong>There are NO teams in this
-		        team list.</strong>
+			team list.</strong>
 EOT;
 	    else
 	    {
@@ -1029,7 +1029,7 @@ EOT;
 	    <form method='POST' action='user.php'>
 	    <input type='hidden' name='id' value='$ID'>
 	    <button type='submit' name='create-tid'>
-	        Create a New Team</button>
+		Create a New Team</button>
 	    </form>
 EOT;
 	}
@@ -1071,36 +1071,96 @@ EOT;
 EOT;
 	if ( isset ( $tid_info ) )
 	{
-	    echo <<<EOT
-	    <div class='members '>
-	    <strong>Members:</strong>
-	    <div class='indented'>
-	    <strong>To Be Determined</strong>
-	    </div></div>
+	    $members = & $tid_info['members'];
+	    if ( $edit == 'members' )
+	    {
+		$rows = members_to_rows
+		    ( $members, 'delete' );
+		echo <<<EOT
+		<div class='members'>
+		<form method='POST'
+		      action='user.php'>
+		<input type='hidden'
+		       name='id' value='$ID'>
+		<strong>Edit Your Members:</strong>
+		<table class='indented'>
+		$rows
 EOT;
-
+		if ( count ( $members ) < 6 )
+		{
+		    $title =
+			 "Add another member to" .
+			 " the team";
+		    $holder =
+			 "New member UID or EMAIL";
+		    echo <<<EOT
+		    <tr><td>
+		    <input type='text'
+			   name='new-member'
+			   value='' size='40'
+			   placeholder='$holder'
+			   title='$title'>
+		    <pre>    </pre>
+		    <button type='submit'
+			    name='add-member'>
+			    Add</button>
+		    </td></tr>
+EOT;
+		}
+		echo <<<EOT
+		</table>
+		</form>
+		</div>
+EOT;
+	    }
+	    elseif ( count ( $members ) > 0 )
+	    {
+		$rows = members_to_rows
+		    ( $members );
+		echo <<<EOT
+		<div class='members '>
+		<strong>Members:</strong>
+		<table class='indented'>
+		$rows
+		</table>
+		</div>
+EOT;
+	    }
+	    else
+		echo <<<EOT
+		<div class='members '>
+		<strong>Members:</strong>
+		<div class='indented'>
+		<strong>To Be Determined</strong>
+		</div>
+		</div>
+EOT;
 	    $exclude = NULL;
-	    if ( $new_team ) $exclude = ['manager'];
+	    if ( $new_team )
+		$exclude = ['manager'];
 	    elseif ( $edit == 'tid-profile' )
 		$exclude = ['manager','tid'];
 
 	    $rows = info_to_rows
 		( $tid_info, $exclude );
-	    $h = ( $new_team ? 'Edit New Team Profile' :
+	    $h = ( $new_team ?
+		       'Edit New Team Profile' :
 		   $edit == 'tid-profile' ?
 		       "Edit $tid Profile" :
 		   "$tid Profile" );
 
 	    if ( $new_team )
-		$h = "<strong
-		       style='background-color:red'>"
+		$h = "<strong"
+		   . " style="
+		   . "   'background-color:red'>"
 		   . "WARNING:</strong>"
 		   . "<mark><strong>"
-		   . "You can never change the Team ID,"
-		   . " the short name by which the team"
-		   . " will be known, after you"
-		   . " acknowledge the team's initial"
-		   . " profile."
+		   . "You can never change the"
+		   . " Team ID, the short name by"
+		   . " which the team will be"
+		   . " known, after you"
+		   . " acknowledge the team's"
+		   . " initial profile."
 		   . "</strong></mark>"
 		   . "<br><br><strong>$h:</strong>";
 	    else
@@ -1110,7 +1170,8 @@ EOT;
 	    <div class='team-profile'>
 	    <form method='POST' action='user.php'
 		  id='tid-profile-update'>
-	    <input type='hidden' name='id' value='$ID'>
+	    <input type='hidden'
+		    name='id' value='$ID'>
 	    <input type='hidden' name='tid-update'>
 	    $h<br>
 	    <table>
@@ -1124,8 +1185,8 @@ EOT;
 	echo <<<EOT
 	</div>
 EOT;
-
     }
+
 ?>
 
 <div style='clear:both'></div>
