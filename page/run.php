@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:26:32 EDT 2020
+    // Date:	Sat Jul 25 21:16:37 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -575,7 +575,7 @@ EOT;
     {
 	alert ( message );
 	window.close();
-	location.assign ( '/page/illegal.html' );
+	location.assign ( 'illegal.html' );
     }
 
     function ALERT ( message )

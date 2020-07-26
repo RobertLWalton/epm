@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 18:01:50 EDT 2020
+    // Date:	Sat Jul 25 21:12:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -481,7 +481,7 @@ EOT;
 </td></tr></table>
 <br>
 <button type='button'
-        onclick="location.reload(true)">
+        onclick='location.assign("login.php")'>
 Change Login Name
 </button>
 </div>
@@ -539,7 +539,7 @@ function ALERT ( message )
 function FAIL ( message )
 {
     alert ( message );
-    location.reload();
+    location.assign ( 'login.php' );
 }
 
 var REQUEST_IN_PROGRESS = false;
