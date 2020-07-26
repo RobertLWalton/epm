@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 17:50:28 EDT 2020
+    // Date:	Sun Jul 26 10:43:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -227,40 +227,6 @@
 	}
     }
 
-    // Check that value can be legally added as an email
-    // and set variable to new value.  Return true if
-    // value is legal and false if not, and if false is
-    // returned, add to $errors and do not set variable.
-    //
-    function sanitize_email ( & $variable, $value )
-    {
-        global $errors;
-
-	$value =  trim ( $value );
-	if ( $value == "" )
-	    return false;
-	$svalue = filter_var
-	    ( $value, FILTER_SANITIZE_EMAIL );
-	if ( $value != $svalue )
-	{
-	    $errors[] =
-	        "Email $value contains characters" .
-		" illegal in an email address";
-	    return false;
-	}
-	if ( ! filter_var
-		  ( $value,
-		    FILTER_VALIDATE_EMAIL ) )
-	{
-	    $errors[] =
-	        "Email $value is not a valid email" .
-		" address";
-	    return false;
-	}
-	$variable = $value;
-	return true;
-    }
-
     if ( ! $new_user && ! $new_team )
     {
 	$tids = compute_tids ( $tid_list );
@@ -431,13 +397,13 @@
         if ( $data['LAST_EDIT'] != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
+	$e = trim ( $_POST['new-email'] );
 	if ( count ( $emails ) >= 
 	     $epm_max_emails )
 	    $errors[] = "you already have the maximum"
 	              . " limit of $epm_max_emails"
 		      . " email address";
-    	elseif ( sanitize_email
-	         ( $e, $_POST['new-email'] ) )
+    	elseif ( validate_email ( $e, $errors ) )
 	{
 	    $re = rawurlencode ( $e );
 	    $f = "admin/email/$re";
@@ -472,8 +438,8 @@
         if ( $data['LAST_EDIT'] != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
-    	if ( sanitize_email
-	         ( $e, $_POST['delete-email'] ) )
+	$e = trim ( $_POST['delete-email'] );
+    	if ( validate_email ( $e, $errors ) )
         {
 	    $re = rawurlencode ( $e );
 	    $f = "admin/email/$re";

@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jul 25 05:41:13 EDT 2020
+// Date:    Sun Jul 26 10:22:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -115,6 +115,36 @@ function read_tids ( $fname )
     if ( $c === false ) return [];
     $c = trim ( $c );
     return explode ( ' ', $c );
+}
+
+// Check that a value is a legal email.  Return true if
+// it is, else return false.  If it is not legal, write
+// error messages to $errors.  If $email is blank,
+// return false but no error messages are written.
+//
+function validate_email ( $email, & $errors )
+{
+    $email =  trim ( $email );
+    if ( $email == "" ) return false;
+    $svalue = filter_var
+	( $email, FILTER_SANITIZE_EMAIL );
+    if ( $email != $svalue )
+    {
+	$errors[] =
+	    "Email $email contains characters" .
+	    " illegal in an email address";
+	return false;
+    }
+    if ( ! filter_var
+	      ( $email,
+		FILTER_VALIDATE_EMAIL ) )
+    {
+	$errors[] =
+	    "Email $email is not a valid email" .
+	    " address";
+	return false;
+    }
+    return true;
 }
 
 // Return UID associated with email, or false if none.
