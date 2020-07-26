@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 26 18:15:03 EDT 2020
+    // Date:	Sun Jul 26 18:22:16 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -32,7 +32,9 @@
 	// Set here for GET processing; changed below
 	// by POST processing.
     $errors = [];
-        // List of error messages to be displayed.
+    $warnings = [];
+        // Lists of error and warning messages to be
+	// displayed.
 
     if ( ! $new_user )
     {
@@ -584,9 +586,9 @@
 	{
 	    $mmail = $m;
 	    $m = NULL;
-	    if ( validate_email ( $mail, $errors ) )
+	    if ( validate_email ( $mmail, $errors ) )
 	    {
-		$re = rawurlencode ( $e );
+		$re = rawurlencode ( $mmail );
 		$f = "admin/email/$re";
 		$c = @file_get_contents
 			( "$epm_data/$f" );
@@ -627,10 +629,10 @@
 	        $errors[] = "$m is not a user UID";
 	}
 
-	$members = & $tid_info['MEMBERS'];
-	if ( $m == '' )
+	$members = & $tid_info['members'];
+	if ( $m === '' )
 	    /* Do Nothing */;
-	elseif ( $errors > 0 )
+	elseif ( count ( $errors ) > 0 )
 	    /* Do Nothing */;
 	elseif ( count ( $members ) >= 6 )
 	    $errors[] = "you already have the maximum"
@@ -641,9 +643,10 @@
 	    {
 		$warnings[] = "no user yet has $mmail"
 		            . " as an email";
-		$m = count ( $members );
+		$members[] = ['',$mmail];
 	    }
-	    $members[] = [$m,$mmail];
+	    else
+		$members[] = [$m,$mmail];
 	    write_info ( $tid_info );
 	}
 	$edit = 'members';
@@ -658,7 +661,7 @@
 	$c = trim ( $_POST['delete-member'] );
 	if ( ! preg_match ( '/^\d+$/', $c ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$members = & $tid_info['MEMBERS'];
+	$members = & $tid_info['members'];
 	if ( $c >= count ( $members ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	array_splice ( $members, $c, 1 );
