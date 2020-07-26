@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 26 10:43:11 EDT 2020
+    // Date:	Sun Jul 26 12:05:34 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -612,15 +612,13 @@
     div.members {
 	background-color: var(--bg-tan);
     }
-    div.email-addresses * {
-	padding-top: var(--pad);
-	padding-bottom: var(--pad);
+    div.email-addresses td {
         font-size: var(--large-font-size);
+	padding: 2px;
     }
     div.email-addresses button {
         font-size: var(--font-size);
-	padding-top: 2px;
-	padding-bottom: 2px;
+	padding: 2px;
     }
     div.user-profile, div.team-profile {
 	padding: var(--pad) 0px 0px 0px;
@@ -841,66 +839,52 @@ EOT;
 
     if ( $edit == 'emails' )
     {
+	$rows = emails_to_rows
+	    ( $emails, $email, 'delete' );
 	echo <<<EOT
 	<div class='email-addresses'>
+	<form method='POST' action='user.php'>
+	<input type='hidden' name='id' value='$ID'>
 	<strong>Edit Your Email Addresses:</strong>
-	<div class='indented'>
+	<table class='indented'>
+	$rows
 EOT;
-	$break = '';
-	foreach ( $emails as $e )
-	{
-	    echo $break;
-	    $break = '<br>';
-	    $he = htmlspecialchars ( $e );
-	    if ( $e == $email )
-	    {
-	        echo ( "<pre>$email</pre>" .
-		       " (used for current login)" );
-		continue;
-	    }
-	    echo <<<EOT
-	    <form method='POST' action='user.php'>
-	    <input type='hidden' name='id' value='$ID'>
-	    <pre>$he</pre>
-	    <pre>    </pre>
-	    <button type='submit'
-		    name='delete-email'
-		    value='$he'>Delete</button>
-	    </form>
-EOT;
-	}
 	if ( count ( $emails ) < $epm_max_emails )
 	{
 	    $new_email_title =
 		 "Add another email address to the" .
 		 " account";
 	    echo <<<EOT
-	    <br>
-	    <form method='POST' action='user.php'>
-	    <input type='hidden' name='id' value='$ID'>
+	    <tr><td>
 	    <input type='email' name='new-email'
 		   value='' size='40'
 		   placeholder='Another Email Address'
 		   title='$new_email_title'>
 	    <pre>    </pre>
-	    <input type='submit'
-		   name='add-email' value='Add'>
-	    </form>
+	    <button type='submit'
+		    name='add-email'>Add</button>
+	    </td></tr>
 EOT;
 	}
 
-	echo "</div></div>";
+	echo <<<EOT
+	</table>
+	</form>
+	</div>
+EOT;
     }
     else
     {
-	$addresses = emails_to_lines
-	    ( $emails, $email, ! $uid_editable );
+	$act = NULL;
+	if ( ! $uid_editable ) $act = 'strip';
+	$rows = emails_to_rows
+	    ( $emails, $email, $act );
 	echo <<<EOT
 	<div class='email-addresses'>
-	<strong>$uname Email Addresses:</strong>
-	<div class='indented'>
-	$addresses
-	</div></div>
+	<strong>$uname Your Email Addresses:</strong>
+	<table class='indented'>
+	$rows
+	</table></div>
 EOT;
     }
 

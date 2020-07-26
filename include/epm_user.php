@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul 26 10:22:52 EDT 2020
+// Date:    Sun Jul 26 12:05:14 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -213,28 +213,34 @@ function email_map ( & $map )
 }
 
 // Return the HTML for a $list of emails.  Each email
-// in $list becomes a <pre>...</pre> segment in the
-// returned HTML.  If $email is not NULL, its segment
-// is marked as '(used for current login)'.  If $strip
-// is true, the non-domain part of each email is
-// rendered as `...'.  Segments are separated by <br>.
+// in $list becomes a <tr><td>...</td></tr> segment in
+// the returned HTML.  If $email is not NULL, its
+// segment is marked as '(used for current login)'.
+// If $act == 'strip', the non-domain part of each email
+// is rendered as `...'.  If $act == 'delete', a
+// `Delete' button is added after each email != $email,
+// with name='delete-email' and value='email'.
 //
-function emails_to_lines
-	( $list, $email = NULL, $strip = false )
+function emails_to_rows
+	( $list, $email = NULL, $act = NULL )
 {
-    $r = [];
+    $r = '';
     foreach ( $list as $item )
     {
-        if ( $strip )
+        if ( $act == 'strip' )
 	    $item = preg_replace
 	        ( '/^[^@]*@/', '...@', $item );
-	$line = '<pre>' . htmlspecialchars ( $item )
-	      . '</pre>';
+	$r .= '<tr><td>' . htmlspecialchars ( $item );
         if ( $item == $email )
-	    $line .= ' (used for current login)';
-	$r[] = $line;
+	    $r .= ' (used for current login)';
+	elseif ( $act == 'delete' )
+	    $r .= " <button type='submit'"
+	        . "         name='delete-email'"
+	        . "         value='$item'>"
+	        . "         Delete</button>";
+	$r .= '</td></tr>';
     }
-    return implode ( '<br>', $r );
+    return $r;
 }
 
 // Read, check, and return json_decode of AID.info file.
