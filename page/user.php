@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 26 16:07:26 EDT 2020
+    // Date:	Sun Jul 26 18:15:03 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -563,11 +563,108 @@
     }
     elseif ( isset ( $_POST['NO-new-tid'] ) )
     {
-        if ( $tid_info['manager'] != $aid )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'new-tid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $tid_info['manager'] != $aid )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$edit = 'tid-profile';
+    }
+    elseif ( isset ( $_POST['add-member'] )
+             &&
+	     isset ( $_POST['new-member'] ) )
+    {
+        if ( $data['LAST_EDIT'] != 'members' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $tid_info['manager'] != $aid )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	$m = trim ( $_POST['new-member'] );
+	$mmail = '';
+	if ( strpos ( $m, '@' ) !== false )
+	{
+	    $mmail = $m;
+	    $m = NULL;
+	    if ( validate_email ( $mail, $errors ) )
+	    {
+		$re = rawurlencode ( $e );
+		$f = "admin/email/$re";
+		$c = @file_get_contents
+			( "$epm_data/$f" );
+		if ( $c === false )
+		{
+		    $r = @file_put_contents
+		        ( "$epm_data/$f",
+			  "- $tid" );
+		    if ( $r === false )
+		        ERROR ( "could not write $f" );
+		}
+		else
+		{
+		    $c = trim ( $c );
+		    $items = explode ( ' ', $c );
+		    if ( $items[0] != '-' )
+		    {
+			$mmail = $m;
+		        $m = $items[0];
+		    }
+		    elseif ( ! in_array
+			        ( $tid, $items, true ) )
+		    {
+			$r = @file_put_contents
+			    ( "$epm_data/$f",
+			      "$c $tid" );
+			if ( $r === false )
+			    ERROR
+			      ( "could not write $f" );
+		    }
+		}
+	    }
+	}
+	elseif ( $m != '' )
+	{
+	    $f = "admin/users/$m";
+	    if ( ! is_dir ( "$epm_data/$f" ) )
+	        $errors[] = "$m is not a user UID";
+	}
+
+	$members = & $tid_info['MEMBERS'];
+	if ( $m == '' )
+	    /* Do Nothing */;
+	elseif ( $errors > 0 )
+	    /* Do Nothing */;
+	elseif ( count ( $members ) >= 6 )
+	    $errors[] = "you already have the maximum"
+	              . " limit of 6 members";
+	else
+	{
+	    if ( ! isset ( $m ) )
+	    {
+		$warnings[] = "no user yet has $mmail"
+		            . " as an email";
+		$m = count ( $members );
+	    }
+	    $members[] = [$m,$mmail];
+	    write_info ( $tid_info );
+	}
+	$edit = 'members';
+    }
+    elseif ( isset ( $_POST['delete-member'] ) )
+    {
+        if ( $data['LAST_EDIT'] != 'members' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $tid_info['manager'] != $aid )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	$c = trim ( $_POST['delete-member'] );
+	if ( ! preg_match ( '/^\d+$/', $c ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$members = & $tid_info['MEMBERS'];
+	if ( $c >= count ( $members ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	array_splice ( $members, $c, 1 );
+	write_info ( $tid_info );
+
+	$edit = 'members';
     }
     elseif ( ! $post_processed )
 	exit ( 'UNACCEPTABLE HTTP POST' );
@@ -592,7 +689,6 @@
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
-	height: calc(6.5*var(--large-font-size));
     }
     div.user-header {
 	background-color: var(--bg-dark-green);
@@ -664,18 +760,27 @@
 
     if ( count ( $errors ) > 0 )
     {
-	echo <<<EOT
-	<div class='errors'>
-	<strong>
-        Errors:
-	<div class='indented'>
-EOT;
-	foreach ( $errors as $value )
+	echo "<div class='errors'>";
+	echo "<strong>Errors:</strong>";
+	echo "<div class='indented'>";
+	foreach ( $errors as $e )
 	{
-	    $hvalue = htmlspecialchars ( $value );
-	    echo "<mark>$hvalue</mark><br>";
+	    $he = htmlspecialchars ( $e );
+	    echo "<pre>$he</pre><br>";
 	}
-	echo '</strong></div></div>';
+	echo "<br></div></div>";
+    }
+    if ( count ( $warnings ) > 0 )
+    {
+	echo "<div class='warnings'>";
+	echo "<strong>Warnings:</strong>";
+	echo "<div class='indented'>";
+	foreach ( $warnings as $e )
+	{
+	    $he = htmlspecialchars ( $e );
+	    echo "<pre>$he</pre><br>";
+	}
+	echo "<br></div></div>";
     }
 
     if ( $edit == 'new-uid' )
