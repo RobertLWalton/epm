@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 27 03:21:21 EDT 2020
+    // Date:	Mon Jul 27 18:07:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -337,7 +337,7 @@
 	if ( $tid != '-' )
 	{
 	    $dir = "admin/teams/$tid";
-	    if ( ! is_dir ( "$epm_data/$d" ) )
+	    if ( ! is_dir ( "$epm_data/$dir" ) )
 	        reply ( 'NO_TEAM' );
 	    if ( ! isset ( $uid ) )
 	        reply ( 'NO_USER' );
