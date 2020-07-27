@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jul 27 14:12:32 EDT 2020
+// Date:    Mon Jul 27 19:00:20 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -356,6 +356,7 @@ function emails_to_rows
 function split_member ( $member )
 {
     $pos = strpos ( $member, '(' );
+    if ( $pos === false ) return [$member,''];
     $uid = substr ( $member, 0, $pos );
     $email = substr ( $member, $pos + 1, -1 );
     return [$uid,$email];
