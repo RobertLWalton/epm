@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 26 21:42:22 EDT 2020
+    // Date:	Mon Jul 27 02:29:31 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -688,7 +688,18 @@
 		    if ( $r === false )
 		        ERROR ( "cannot write $fl" );
 		}
+
+		$f = "admin/users/$m/member";
+		$c = @file_get_contents
+		    ( "$epm_data/$f" );
+		if ( $c === false ) $c = $tid;
+		else $c = "$c $tid";
+		$r = @file_put_contents
+		    ( "$epm_data/$f", $c );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
 	    }
+
 	    write_info ( $tid_info );
 	}
 	$edit = 'members';
@@ -706,6 +717,33 @@
 	$members = & $tid_info['members'];
 	if ( $c >= count ( $members ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+	$items = $members[$c];
+	list ( $mid, $mail ) = $items;
+	if ( $mid != '' )
+	{
+	    $d = "admin/teams/$tid";
+	    $fl = "$d/$mid.login";
+	    $fi = "$d/$mid.inactive";
+	    if ( ! file_exists ( "$epm_data/$fl" ) )
+	        ERROR ( "$fl does not exist" );
+	    rename ( $fl, $fi );
+
+	    $f = "admin/users/$mid/member";
+	    $c = @file_get_contents ( "$epm_data/$f" );
+	    if ( $c === false )
+	        ERROR ( "cannot read $f" );
+	    $c = trim ( $c );
+	    $list = explode ( ' ', $c );
+	    $p = array_search ( $tid, $list );
+	    if ( $p === false )
+	        ERROR ( "$tid is not in $f" );
+	    array_splice ( $list, $p, 1 );
+	    $r = @file_put_contents
+	        ( "$epm_data/$f",
+		  implode ( ' ', $list ) );
+	    if ( $r === false )
+	        ERROR ( "cannot write $f" );
+	}
 	array_splice ( $members, $c, 1 );
 	write_info ( $tid_info );
 

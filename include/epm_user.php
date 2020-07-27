@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul 26 18:11:20 EDT 2020
+// Date:    Mon Jul 27 02:58:17 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -355,13 +355,21 @@ function write_info ( & $info )
 		$adds = array_diff
 		    ( $info[$key], $old[$key] );
 		foreach ( $adds as $item )
+		{
+		    if ( is_array ( $item ) )
+		        $item = "$item[0]({$item[1]})";
 		    $changes .= "$h $key + $item"
 			      . PHP_EOL;
+		}
 		$subs = array_diff
 		    ( $old[$key], $info[$key] );
 		foreach ( $subs as $item )
+		{
+		    if ( is_array ( $item ) )
+		        $item = "$item[0]({$item[1]})";
 		    $changes .= "$h $key - $item"
 			      . PHP_EOL;
+		}
 	    }
 	    elseif ( ! isset ( $old[$key] ) )
 		$changes .= "$h $key + $value"

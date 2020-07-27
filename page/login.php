@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 21:12:12 EDT 2020
+    // Date:	Mon Jul 27 03:21:21 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -192,7 +192,7 @@
 	$stime = strtotime ( $STIME );
 	if ( $stime > $atime + $etimes[$m] )
 	{
-	    if ( $c != 'c' ) return true;
+	    if ( $t != 'c' ) return true;
 	    ++ $acount;
 	    $r = file_put_contents
 		( "$epm_data/$efile",
