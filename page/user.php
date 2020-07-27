@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jul 26 18:22:16 EDT 2020
+    // Date:	Sun Jul 26 21:42:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -580,6 +580,7 @@
         if ( $tid_info['manager'] != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
+	$members = & $tid_info['members'];
 	$m = trim ( $_POST['new-member'] );
 	$mmail = '';
 	if ( strpos ( $m, '@' ) !== false )
@@ -592,33 +593,44 @@
 		$f = "admin/email/$re";
 		$c = @file_get_contents
 			( "$epm_data/$f" );
-		if ( $c === false )
+		if ( $c === false ) $c = '';
+		$c = trim ( $c );
+		if ( $c == '' ) $c = '-';
+		$items = explode ( ' ', $c );
+		if ( $items[0] != '-' )
+		    $m = $items[0];
+
+		$found = false;
+		foreach ( $members as $e )
+		{
+		    list ( $id, $mail ) = $e;
+		    if ( $id === $m || $mail == $mmail )
+		    {
+			$found = true;
+			break;
+		    }
+		}
+
+		if ( $found )
+		{
+		    if ( ! isset ( $m ) )
+			$errors[] =
+			    "($mmail) is already a" .
+			    " member";
+		    else
+			$errors[] =
+			    "$m ($mmail) is already a" .
+			    " member";
+		}
+		elseif ( $items[0] == '-'
+		         &&
+		         ! in_array
+			        ( $tid, $items, true ) )
 		{
 		    $r = @file_put_contents
-		        ( "$epm_data/$f",
-			  "- $tid" );
+			( "$epm_data/$f", "$c $tid" );
 		    if ( $r === false )
-		        ERROR ( "could not write $f" );
-		}
-		else
-		{
-		    $c = trim ( $c );
-		    $items = explode ( ' ', $c );
-		    if ( $items[0] != '-' )
-		    {
-			$mmail = $m;
-		        $m = $items[0];
-		    }
-		    elseif ( ! in_array
-			        ( $tid, $items, true ) )
-		    {
-			$r = @file_put_contents
-			    ( "$epm_data/$f",
-			      "$c $tid" );
-			if ( $r === false )
-			    ERROR
-			      ( "could not write $f" );
-		    }
+			ERROR ( "could not write $f" );
 		}
 	    }
 	}
@@ -627,9 +639,23 @@
 	    $f = "admin/users/$m";
 	    if ( ! is_dir ( "$epm_data/$f" ) )
 	        $errors[] = "$m is not a user UID";
+
+	    foreach ( $members as $e )
+	    {
+		if ( $e[0] == $m )
+		{
+		    if ( $e[1] == '' )
+			$errors[] =
+			    "$m is already a member";
+		    else
+			$errors[] =
+			    "$m ({$e[1]}) is already" .
+			    " a member";
+		    break;
+		}
+	    }
 	}
 
-	$members = & $tid_info['members'];
 	if ( $m === '' )
 	    /* Do Nothing */;
 	elseif ( count ( $errors ) > 0 )
@@ -646,7 +672,23 @@
 		$members[] = ['',$mmail];
 	    }
 	    else
+	    {
 		$members[] = [$m,$mmail];
+		$d = "admin/teams/$tid";
+		$fl = "$d/$m.login";
+		$fi = "$d/$m.inactive";
+		if ( file_exists ( "$epm_data/$fi" ) )
+		    rename ( "$epm_data/$fi",
+		             "$epm_data/$fl" );
+		else
+		{
+		    $r = @file_put_contents
+		        ( "$epm_data/$fl", '',
+			  FILE_APPEND );
+		    if ( $r === false )
+		        ERROR ( "cannot write $fl" );
+		}
+	    }
 	    write_info ( $tid_info );
 	}
 	$edit = 'members';
