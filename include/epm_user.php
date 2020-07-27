@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jul 27 02:58:17 EDT 2020
+// Date:    Mon Jul 27 14:12:32 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -102,19 +102,34 @@ function read_accounts ( $type )
     return $r;
 }
 
-// Get the list tid's from the current user's 'manager'
+// Get the tids list from the $uid user's 'manager'
 // or 'member' files.
 //
-function read_tids ( $fname )
+function read_tids ( $uid, $name )
 {
     global $epm_data;
 
-    $uid = $_SESSION['EPM_UID'];
-    $f = "admin/users/$uid/$fname";
+    $f = "admin/users/$uid/$name";
     $c = @file_get_contents ( "$epm_data/$f" );
     if ( $c === false ) return [];
     $c = trim ( $c );
+    if ( $c == '' ) return [];
     return explode ( ' ', $c );
+}
+
+// Write the $tids list to the $uid user's 'manager'
+// or 'member' files.
+//
+function write_tids ( $tids, $uid, $name )
+{
+    global $epm_data;
+
+    $f = "admin/users/$uid/$name";
+    $r = @file_put_contents
+        ( "$epm_data/$f",
+	  implode ( ' ', $tids ) );
+    if ( $r === false )
+        ERROR ( "cannot write file $f" );
 }
 
 // Check that a value is a legal email.  Return true if
@@ -144,6 +159,99 @@ function validate_email ( $email, & $errors )
 	    " address";
 	return false;
     }
+    return true;
+}
+
+// Get the item list from the admin/email/$email file.
+//
+function read_email ( $email )
+{
+    global $epm_data;
+
+    $f = "admin/email/" . rawurlencode ( $email );
+    $c = @ file_get_contents ( "$epm_data/$f" );
+    if ( $c === false ) return [];;
+    $c = trim ( $c );
+    if ( $c == '' ) return [];
+    return explode ( ' ', $c );
+}
+
+// Write the item list to the admin/email/$email file.
+//
+function write_email ( $items, $email )
+{
+    global $epm_data;
+
+    $f = "admin/email/" . rawurlencode ( $email );
+    $r = @file_put_contents
+        ( "$epm_data/$f",
+	  implode ( ' ', $items ) );
+    if ( $r === false )
+        ERROR ( "cannot write file $f" );
+}
+
+// Initialize email for a new user.  If email exists
+// and contains a list of tids, update the tid infos
+// and new uid member list.
+//
+// Return true if initialization succeeded and false
+// if it failed because email file already existed
+// and did not begin with '-'.
+//
+function init_email ( $uid, $email )
+{
+    global $epm_data;
+
+    $items = read_email ( $email );
+    if ( count ( $items ) > 0 )
+    {
+	if ( $items[0] != '-' )
+	    return false;
+	array_splice ( $items, 0, 1 );
+	$memtids = [];
+	foreach ( $items as $tid )
+	{
+	    $fl = "admin/teams/$tid/$uid.login";
+	    $fi = "admin/teams/$tid/$uid.inactive";
+
+	    $info = read_info ( 'team', $tid );
+	    $mems = & $info['members'];
+	    $found = false;
+	    $match = "($email)";
+	    $count = 0;
+	    foreach ( $mems as $e )
+	    {
+		if ( $e == $match )
+		{
+		    $found = true;
+		    break;
+		}
+		++ $count;
+	    }
+	    if ( ! $found ) continue;
+
+	    array_splice
+		( $mems, $count, 1,
+		  ["$uid($email)"] );
+	    write_info ( $info );
+	    $memtids[] = $tid;
+	    if ( file_exists ( "$epm_data/$fi" ) )
+		rename ( "$epm_data/$fi",
+			 "$epm_data/$fl" );
+	    else
+	    {
+		$r = @file_put_contents
+		    ( "$epm_data/$fl", '',
+		      FILE_APPEND );
+		if ( $r === false )
+		    ERROR ( "cannot write $fl" );
+	    }
+	}
+	write_tids ( $memtids, $uid, 'member' );
+    }
+
+    $STIME = $_SESSION['EPM_TIME'];
+    write_email ( [$uid, 0, $STIME], $email );
     return true;
 }
 
@@ -243,6 +351,16 @@ function emails_to_rows
     return $r;
 }
 
+// Split member into [uid,email] where either may be ''.
+//
+function split_member ( $member )
+{
+    $pos = strpos ( $member, '(' );
+    $uid = substr ( $member, 0, $pos );
+    $email = substr ( $member, $pos + 1, -1 );
+    return [$uid,$email];
+}
+
 // Return the HTML for a $list of members, where each
 // member has the form [UID,EMAIL].  Each Member in
 // $list becomes a <tr><td>...</td></tr> segment in
@@ -256,12 +374,9 @@ function members_to_rows ( $list, $act = NULL )
 {
     $r = '';
     $C = 0;
-    foreach ( $list as $item )
+    foreach ( $list as $mem )
     {
-        list ( $uid, $email ) = $item;
-	$r .= "<tr><td>$uid";
-	if ( $email != '' )
-	    $r .= " ($email)";
+	$r .= "<tr><td>$mem";
 	if ( $act == 'delete' )
 	    $r .= " <button type='submit'"
 	        . "         name='delete-member'"
@@ -355,21 +470,13 @@ function write_info ( & $info )
 		$adds = array_diff
 		    ( $info[$key], $old[$key] );
 		foreach ( $adds as $item )
-		{
-		    if ( is_array ( $item ) )
-		        $item = "$item[0]({$item[1]})";
 		    $changes .= "$h $key + $item"
 			      . PHP_EOL;
-		}
 		$subs = array_diff
 		    ( $old[$key], $info[$key] );
 		foreach ( $subs as $item )
-		{
-		    if ( is_array ( $item ) )
-		        $item = "$item[0]({$item[1]})";
 		    $changes .= "$h $key - $item"
 			      . PHP_EOL;
-		}
 	    }
 	    elseif ( ! isset ( $old[$key] ) )
 		$changes .= "$h $key + $value"
