@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 27 02:29:31 EDT 2020
+    // Date:	Mon Jul 27 05:10:35 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -297,17 +297,18 @@
 
 	if ( $new_user )
 	{
-	    $d = "admin/accounts/$uid";
-	    if ( $uid == '' )
+	    $new_uid = $uid_info['uid'];
+	    $d = "accounts/$new_uid";
+	    if ( $new_uid == '' )
 	        /* Do Nothing */;
 	    elseif ( ! preg_match
-	                ( $epm_name_re, $uid ) )
-	        $errors[] = "$uid is not a properly"
+	                ( $epm_name_re, $new_uid ) )
+	        $errors[] = "$new_uid is not a properly"
 		          . " formatted user id";
 	    elseif ( is_dir ( "$epm_data/$d" ) )
 	        $errors[] = "another account is already"
-		          . " using $uid as an Account"
-			  . " ID";
+		          . " using $new_uid as an"
+			  . " Account ID";
 	}
 	elseif ( $uid != $old_uid )
 	    exit ( "UNACCEPTABLE HTTP POST: UID" );
@@ -324,11 +325,12 @@
     }
     elseif ( isset ( $_POST['new-uid'] ) )
     {
-        if ( ! $uid_editable )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'new-uid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( ! $uid_editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 
+	$uid = $uid_info['uid'];
 	@mkdir ( "$epm_data/admin", 02770 );
 	@mkdir ( "$epm_data/admin/users", 02770 );
 	@mkdir ( "$epm_data/admin/users/$uid",
@@ -345,12 +347,56 @@
 	$d = "admin/users/$uid";
 	$re = rawurlencode ( $email );
 	$f = "admin/email/$re";
-	if ( file_exists ( "$epm_data/$f" ) )
-	    WARN ( "$f exists when it should not" );
-	$items = [ $uid, 0, $STIME ];
+	$c = @ file_get_contents ( "$epm_data/$f" );
+	if ( $c !== false )
+	{
+	    $c = trim ( $c );
+	    if ( $c == '' ) $c = '-';
+	    $items = explode ( ' ', $c );
+	    if ( $items[0] != '-' )
+	        ERROR ( "$f should not contain $c" );
+	    array_splice ( $items, 0, 1 );
+	    foreach ( $items as $tid )
+	    {
+		$info = read_info ( 'team', $tid );
+		$ms = & $info['members'];
+		foreach ( $ms as & $e )
+		{
+		    if ( $e[1] == $email )
+		    {
+		        $e[0] = $uid;
+			break;
+		    }
+		}
+		write_info ( $info );
+
+		$fl = "admin/teams/$tid/$uid.login";
+		$fi = "admin/teams/$tid/$uid.inactive";
+		if ( file_exists ( "$epm_data/$fi" ) )
+		    rename ( "$epm_data/$fi",
+		             "$epm_data/$fl" );
+		else
+		{
+		    $r = @file_put_contents
+		        ( "$epm_data/$fl", '',
+			  FILE_APPEND );
+		    if ( $r === false )
+		        ERROR ( "cannot write $fl" );
+		}
+	    }
+	    if ( count ( $items ) > 0 )
+	    {
+	        $fm = "admin/users/$uid/member";
+		$r = @file_put_contents
+		    ( "$epm_data/$fm",
+		      implode ( ' ', $items ) );
+		if ( $r === false )
+		        ERROR ( "cannot write $fm" );
+	    }
+	}
+
 	$r = @file_put_contents
-	    ( "$epm_data/$f",
-	      implode ( ' ', $items ) );
+	    ( "$epm_data/$f", "$uid 0 $STIME" );
 	if ( $r === false )
 	    ERROR ( "could not write $f" );
 
@@ -381,6 +427,9 @@
 	    // the EMAIL and .info files exist.
 	$edit = NULL;
 	$new_user = false;
+	$aid = $_SESSION['EPM_AID'];
+	require "$epm_home/include/epm_list.php";
+        $users = read_accounts ( 'user' );
     }
     elseif ( isset ( $_POST['NO-new-uid'] ) )
     {
@@ -504,7 +553,7 @@
 	     &&
 	     $new_tid != $old_tid )
 	{
-	    $d = "admin/accounts/$new_tid";
+	    $d = "accounts/$new_tid";
 	    if ( $new_tid == '' )
 	        $errors[] = 'missing team ID';
 	    elseif ( ! preg_match
