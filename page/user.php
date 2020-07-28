@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 27 15:15:07 EDT 2020
+    // Date:	Tue Jul 28 04:14:19 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -485,7 +485,7 @@
 	$new_manager = $tid_info['manager'];
 	if ( ! $new_team && $new_tid != $old_tid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	if ( $new_manager != $aid )
+	if ( $new_team && $new_manager != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
 	if ( count ( $errors ) == 0
@@ -498,17 +498,36 @@
 	    elseif ( ! preg_match
 	                ( $epm_name_re, $new_tid ) )
 	        $errors[] = "$new_tid is not a properly"
-		          . " formatted team id";
+		          . " formatted team ID";
 	    elseif ( is_dir ( "$epm_data/$d" ) )
 	        $errors[] = "another account is already"
 		          . " using $new_tid as an"
 			  . " Account ID";
 	}
 
+	if ( count ( $errors ) == 0
+	     &&
+	     $new_manager != $old_manager )
+	{
+	    $d = "admin/users/$new_manager";
+	    if ( $new_manager == '' )
+	        $errors[] = 'missing team manager';
+	    elseif ( ! preg_match
+	                ( $epm_name_re, $new_manager ) )
+	        $errors[] = "$new_manager is not a"
+		          . " properly formatted user"
+			  . " ID";
+	    elseif ( ! is_dir ( "$epm_data/$d" ) )
+	        $errors[] = "$new_manager is not the ID"
+		          . " of a user";
+	}
+
 	if ( count ( $errors ) > 0 )
 	    $edit = 'tid-profile';
 	elseif ( $new_team )
 	    $edit = 'new-tid';
+	elseif ( $new_manager != $old_manager )
+	    $edit = 'new-manager';
 	else
 	{
 	    write_info ( $tid_info );
@@ -538,16 +557,35 @@
 
 	write_info ( $tid_info );
 
-	$f = "admin/users/$aid/manager";
-	$c = @file_get_contents ( "$epm_data/$f" );
-	if ( $c === false ) $c = '';
-	$c = trim ( $c );
-	$c .= " $tid";
-	$r = @file_put_contents ( "$epm_data/$f", $c );
-	if ( $r === false )
-	    ERROR ( "cannot write $f" );
+	$items = read_tids ( $aid, 'manager' );
+	$items[] = $tid;
+	write_tids ( $items, $aid, 'manager' );
 
 	$tid_list = 'manager';
+	$tids = compute_tids ( $tid_list );
+	$edit = NULL;
+    }
+    elseif ( isset ( $_POST['new-manager'] ) )
+    {
+        if ( $data['LAST_EDIT'] != 'new-manager' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	$tid = $tid_info['tid'];
+
+	write_info ( $tid_info );
+
+	$items = read_tids ( $aid, 'manager' );
+	$pos = array_search ( $tid, $items );
+	if ( $pos !== false )
+	    array_splice ( $items, $pos, 1 );
+	write_tids ( $items, $aid, 'manager' );
+
+	$mid = $tid_info['manager'];
+	$items = read_tids ( $mid, 'manager' );
+	$items[] = $tid;
+	write_tids ( $items, $mid, 'manager' );
+
+	$tid_list = 'all';
 	$tids = compute_tids ( $tid_list );
 	$edit = NULL;
     }
@@ -557,6 +595,13 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $tid_info['manager'] != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+	$edit = 'tid-profile';
+    }
+    elseif ( isset ( $_POST['NO-new-manager'] ) )
+    {
+        if ( $data['LAST_EDIT'] != 'new-manager' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        $tid_info['manager'] = $aid;
 	$edit = 'tid-profile';
     }
     elseif ( isset ( $_POST['add-member'] )
@@ -844,6 +889,25 @@
 	<button type='submit' name='NO-new-uid'>
 	    NO</button>
 	<button type='submit' name='new-uid'>
+	    YES</button>
+	</form>
+	</div>
+EOT;
+
+    if ( $edit == 'new-manager' )
+        echo <<<EOT
+	<div class='errors'>
+	<strong>You are about save team info that
+	        changes the manager of this team so
+		you will no longer be manager.  You
+		will lose the ability to edit team
+		info and members.  Do you want to
+		save this info now?</strong>
+	<form action='user.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
+	<button type='submit' name='NO-new-manager'>
+	    NO</button>
+	<button type='submit' name='new-manager'>
 	    YES</button>
 	</form>
 	</div>
@@ -1291,7 +1355,7 @@ EOT;
 	    if ( $new_team )
 		$exclude = ['manager'];
 	    elseif ( $edit == 'tid-profile' )
-		$exclude = ['manager','tid'];
+		$exclude = ['tid'];
 
 	    $rows = info_to_rows
 		( $tid_info, $exclude );

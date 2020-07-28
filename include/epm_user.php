@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jul 27 19:00:20 EDT 2020
+// Date:    Tue Jul 28 03:21:43 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -190,9 +190,9 @@ function write_email ( $items, $email )
         ERROR ( "cannot write file $f" );
 }
 
-// Initialize email for a new user.  If email exists
-// and contains a list of tids, update the tid infos
-// and new uid member list.
+// Initialize email.  If email exists, begins with '-',
+// and therefore contains a list of tids, update the tid
+// infos and uid member list.
 //
 // Return true if initialization succeeded and false
 // if it failed because email file already existed
@@ -208,7 +208,7 @@ function init_email ( $uid, $email )
 	if ( $items[0] != '-' )
 	    return false;
 	array_splice ( $items, 0, 1 );
-	$memtids = [];
+	$tids = read_tids ( $uid, 'member' );
 	foreach ( $items as $tid )
 	{
 	    $fl = "admin/teams/$tid/$uid.login";
@@ -216,25 +216,35 @@ function init_email ( $uid, $email )
 
 	    $info = read_info ( 'team', $tid );
 	    $mems = & $info['members'];
-	    $found = false;
-	    $match = "($email)";
-	    $count = 0;
-	    foreach ( $mems as $e )
-	    {
-		if ( $e == $match )
-		{
-		    $found = true;
-		    break;
-		}
-		++ $count;
-	    }
-	    if ( ! $found ) continue;
+	    $found = NULL;
+	    $duplicate = false;
 
-	    array_splice
-		( $mems, $count, 1,
-		  ["$uid($email)"] );
+	    $new_mems = [];
+	    foreach ( $mems as $mem )
+	    {
+	        list ( $id, $mail ) =
+		    split_member ( $mem );
+		if ( $mail = $email )
+		    $found = "$uid($email)";
+		elseif ( $id == $uid )
+		    $duplicate = true;
+		else
+		    $new_mems[] = $mem;
+	    }
+
+	    if ( ! isset ( $found ) ) continue;
+	        // Nothing to change.
+
+	    $new_mems[] = $found;
+	    $info['members'] = $new_mems;
 	    write_info ( $info );
-	    $memtids[] = $tid;
+
+	    if ( $duplicate ) continue;
+	        // Do not change $uid/member or
+		// admin/teams/$tid/$uid.login.
+
+	    $tids[] = $tid;
+
 	    if ( file_exists ( "$epm_data/$fi" ) )
 		rename ( "$epm_data/$fi",
 			 "$epm_data/$fl" );
@@ -247,7 +257,7 @@ function init_email ( $uid, $email )
 		    ERROR ( "cannot write $fl" );
 	    }
 	}
-	write_tids ( $memtids, $uid, 'member' );
+	write_tids ( $tids, $uid, 'member' );
     }
 
     $STIME = $_SESSION['EPM_TIME'];
@@ -305,10 +315,16 @@ function email_map ( & $map )
 	}
 	$c = trim ( $c );
 	$items = explode ( ' ', $c );
-	if ( count ( $items ) < 1
-	     ||
-	     ! preg_match
-		   ( $epm_name_re, $items[0] ) )
+
+	if ( count ( $items ) < 1 )
+	{
+	    WARN ( "empty $f" );
+	    continue;
+	}
+	elseif ( $items[0] == '-' )
+	    continue;
+	elseif ( ! preg_match
+		      ( $epm_name_re, $items[0] ) )
 	{
 	    WARN ( "bad value $c in $f" );
 	    continue;
