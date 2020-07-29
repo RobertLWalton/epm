@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jul 27 18:07:05 EDT 2020
+    // Date:	Wed Jul 29 17:08:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -64,7 +64,7 @@
     $epm_page_type = '+main+';
     $epm_page_init = true;
         // This causes index.php to require
-	// epm_random.php.
+	// epm_random.php for GET but NOT for POST.
     require __DIR__ . '/index.php';
     // require "$epm_home/include/debug_info.php";
 
@@ -85,7 +85,10 @@
 	    $_SERVER['REMOTE_ADDR'];
     }
     else
+    {
+        require "$epm_home/include/epm_random.php";
 	DEBUG ( 'POST ' . json_encode ( $_POST ) );
+    }
 
     // Values read from EMAIL-FILE if that exists and
     // has been read.
@@ -360,6 +363,8 @@
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_EMAIL'] = $email;
+	$_SESSION['EPM_IS_TEAM'] = ( $tid != '-' );
+	$_SESSION['EPM_RW'] = ( $tid == '-' );
 
 	$log = "$dir/$uid.login";
 	$IPADDR = $_SESSION['EPM_IPADDR'];

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 11:21:58 EDT 2020
+// Date:    Wed Jul 29 13:39:57 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -74,12 +74,16 @@ clearstatcache();
 
 // Check that we have not skipped proper login.
 //
-if ( ! isset ( $_SESSION['EPM_AID'] )
-     &&
-     $epm_self != "/page/login.php"
+if ( $epm_self != "/page/login.php"
      &&
      $epm_self != "/page/user.php" )
-    exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
+{
+    if ( ! isset ( $_SESSION['EPM_AID'] ) )
+	exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
+
+    $rw = $_SESSION['EPM_RW'];
+    $is_team = $_SESSION['EPM_IS_TEAM'];
+}
 
 // A session cannot change its IP address if
 // $epm_check_ipaddr is true (see parameters.php).
@@ -256,7 +260,9 @@ if ( in_array ( $epm_page_type,
              != $epm_self )
 	exit ( "UNACCEPTABLE HTTP $epm_method: PAGE" );
 
-    if ( isset ( $epm_page_init ) )
+    if ( isset ( $epm_page_init )
+         &&
+         $epm_method == 'GET' )
     {
 	require "$epm_home/include/epm_random.php";
 	    $_SESSION['EPM_ID_GEN'][$id_type] =

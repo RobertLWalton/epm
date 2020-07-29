@@ -370,6 +370,8 @@
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_AID'] = $uid;
+	$_SESSION['EPM_IS_TEAM'] = false;
+	$_SESSION['EPM_RW'] = true;
 	    // Do this last as it certifies
 	    // the EMAIL and .info files exist.
 	$edit = NULL;
