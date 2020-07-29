@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 28 03:21:43 EDT 2020
+// Date:    Wed Jul 29 05:32:19 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -224,7 +224,7 @@ function init_email ( $uid, $email )
 	    {
 	        list ( $id, $mail ) =
 		    split_member ( $mem );
-		if ( $mail = $email )
+		if ( $mail == $email )
 		    $found = "$uid($email)";
 		elseif ( $id == $uid )
 		    $duplicate = true;

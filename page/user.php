@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 28 04:14:19 EDT 2020
+    // Date:	Wed Jul 29 05:31:55 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -615,7 +615,7 @@
 
 	$members = & $tid_info['members'];
 	$m = trim ( $_POST['new-member'] );
-	$mmail = '';
+	$mmail = NULL;
 	if ( strpos ( $m, '@' ) !== false )
 	{
 	    $mmail = $m;
@@ -653,8 +653,12 @@
 		    $items = read_email ( $mmail );
 		    if ( count ( $items ) == 0 )
 		        $items = ['-'];
-		    $items[] = $tid;
-		    write_email ( $items, $mmail );
+		    if ( ! in_array
+		              ( $tid, $items, true ) )
+		    {
+			$items[] = $tid;
+			write_email ( $items, $mmail );
+		    }
 		}
 		else
 		   $m = $uidof;
@@ -698,7 +702,11 @@
 	    }
 	    else
 	    {
-		$members[] = "$m($mmail)";
+		if ( isset ( $mmail ) )
+		    $members[] = "$m($mmail)";
+		else
+		    $members[] = "$m";
+
 		$d = "admin/teams/$tid";
 		$fl = "$d/$m.login";
 		$fi = "$d/$m.inactive";
@@ -837,6 +845,18 @@
     }
 
 </style>
+
+<script>
+function KEY_DOWN ( event, id )
+{
+    if ( event.code == 'Enter' )
+    {
+        event.preventDefault();
+        document.getElementById(id).click();
+    }
+}
+</script>
+
 </head>
 <body>
 <div style='background-color:orange;
@@ -1075,10 +1095,13 @@ EOT;
 	    <input type='email' name='new-email'
 		   value='' size='40'
 		   placeholder='Another Email Address'
-		   title='$new_email_title'>
+		   title='$new_email_title'
+		   onkeydown=
+		       'KEY_DOWN(event,"add-email")'>
 	    <pre>    </pre>
 	    <button type='submit'
-		    name='add-email'>Add</button>
+		    name='add-email'
+		    id='add-email'>Add</button>
 	    </td></tr>
 EOT;
 	}
@@ -1315,10 +1338,14 @@ EOT;
 			   name='new-member'
 			   value='' size='40'
 			   placeholder='$holder'
-			   title='$title'>
+			   title='$title'
+			   onkeydown=
+			       'KEY_DOWN
+			          (event,"add-member")'>
 		    <pre>    </pre>
 		    <button type='submit'
-			    name='add-member'>
+			    name='add-member'
+			    id='add-member'>
 			    Add</button>
 		    </td></tr>
 EOT;
