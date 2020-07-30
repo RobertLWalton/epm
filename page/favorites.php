@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:21:10 EDT 2020
+    // Date:	Thu Jul 30 05:46:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -169,7 +169,10 @@
 	    $time = @filemtime
 	        ( "$epm_data/$d/$fname" );
 	    if ( $time === false )
-		ERROR ( "cannot stat $d/$fname" );
+	    {
+		WARN ( "dangling link $d/$fname" );
+		continue;
+	    }
 	    $inmap["$account:$basename"] =
 	        strftime ( $epm_time_format, $time );
 	}
@@ -287,7 +290,7 @@ var LOG = function(message) {};
     <table style='width:100%'>
 
     <tr id='not-edited' style='width:100%'>
-    <form method='GET'>
+    <form method='GET' action='favorites.php'>
     <td>
     <input type='hidden' name='id' value='$ID'>
     <label>
@@ -311,6 +314,7 @@ var LOG = function(message) {};
     </td>
     <td>
     </td><td style='text-align:right'>
+    $RW_BUTTON
     <button type='button'
             onclick='HELP("favorites-page")'>
 	?</button>

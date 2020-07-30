@@ -317,23 +317,28 @@ if ( isset ( $_SESSION['EPM_AID'] ) )
     $rw = $_SESSION['EPM_RW'];
     $is_team = $_SESSION['EPM_IS_TEAM'];
 
+    // $RW_BUTTON must be inside a form with formaction
+    // set to the appropriate page.
+    // 
     if ( ! $is_team )
         $RW_BUTTON = '';
     elseif ( $rw )
         $RW_BUTTON = <<<EOT
 	<button type='submit' name='rw' value='ro'
+		id='rw-button'
+	        formmethod='POST'
 	        title='current mode is read-write;
 		       click to change to read-only'>
 	        RO</button>
-	<pre>  </pre>
 EOT;
     else
         $RW_BUTTON = <<<EOT
 	<button type='submit' name='rw' value='rw'
+		id='rw-button'
+	        formmethod='POST'
 	        title='current mode is read-only;
 		       click to change to read-write'>
 	        RW</button>
-	<pre>  </pre>
 EOT;
 }
 

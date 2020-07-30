@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:22:51 EDT 2020
+    // Date:	Thu Jul 30 05:51:30 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -548,7 +548,7 @@ EOT;
     <strong>This Page is Under Construction.</strong>
     </div>
     <div class='manage'>
-    <form method='GET'>
+    <form method='GET' action='manage.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
@@ -573,6 +573,7 @@ EOT;
     <strong>Page</strong>
     </td>
     <td style='text-align:right'>
+    $RW_BUTTON
     <button type='button'
             onclick='HELP("manage-page")'>
 	?</button>

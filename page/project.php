@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:26:14 EDT 2020
+    // Date:	Thu Jul 30 05:37:21 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1754,7 +1754,7 @@ EOT;
     $display = ( isset ( $op ) ? 'none' : 'table-row' );
     echo <<<EOT
     <div class='manage'>
-    <form method='GET'>
+    <form method='GET' action='project.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
 
@@ -1791,6 +1791,7 @@ EOT;
     <strong>Page</strong>
     </td>
     <td style='text-align:right'>
+    $RW_BUTTON
     <button type='button'
             onclick='HELP("project-page")'>
 	?</button>

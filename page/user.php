@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul 29 05:31:55 EDT 2020
+    // Date:	Thu Jul 30 05:36:55 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -967,14 +967,14 @@ EOT;
 
     echo <<<EOT
     <div class='manage'>
-    <form method='GET'>
+    <form method='GET' action='user.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
 EOT;
     if ( ! isset ( $edit ) )
         echo <<<EOT
-	<td>
+	<td style='text-align:left'>
 	<strong>Go To</strong>
 	<button type="submit"
 		formaction="project.php">
@@ -983,10 +983,6 @@ EOT;
 		formaction="manage.php">
 		Manage</button>
 	<strong>Page</strong>
-	<pre>   </pre>
-	<button type="submit"
-	        formaction='logout.php'>
-	    Logout</button>
 	</td>
 EOT;
     echo <<<EOT
@@ -994,6 +990,15 @@ EOT;
     <button type='button'
 	    onclick='VIEW("view.php")'>
 	View Users, Projects, and Problems</button>
+EOT;
+    if ( ! isset ( $edit ) )
+        echo <<<EOT
+	<button type="submit"
+	        formaction='logout.php'>
+	    Logout</button>
+	$RW_BUTTON
+EOT;
+    echo <<<EOT
     <button type='button'
             onclick='HELP("user-page")'>
 	?</button>

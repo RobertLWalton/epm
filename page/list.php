@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:22:19 EDT 2020
+    // Date:	Thu Jul 30 05:39:57 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -607,7 +607,7 @@ EOT;
 
     echo <<<EOT
     <div class='manage'>
-    <form method='GET'>
+    <form method='GET' action='list.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
 
@@ -631,6 +631,7 @@ EOT;
     </td>
     <td>
     </td><td style='text-align:right'>
+    $RW_BUTTON
     <button type='button'
             onclick='HELP("list-page")'>
 	?</button>
