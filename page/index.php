@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 29 21:05:55 EDT 2020
+// Date:    Thu Jul 30 15:18:20 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -122,7 +122,6 @@ if ( isset ( $_SESSION['EPM_ABORT'] ) )
 if ( $epm_page_type == '+download+' ) return;
 
 umask ( 07 );
-date_default_timezone_set ( 'UTC' );
 header ( 'Cache-Control: no-store' );
 
 // First functions that most pages need defined.
@@ -315,7 +314,8 @@ if ( isset ( $_POST['xhttp'] ) ) return;
 if ( isset ( $_SESSION['EPM_AID'] ) )
 {
     $rw = $_SESSION['EPM_RW'];
-    $is_team = $_SESSION['EPM_IS_TEAM'];
+    $is_team =
+      ( $_SESSION['EPM_AID'] != $_SESSION['EPM_UID'] );
 
     // $RW_BUTTON must be inside a form with formaction
     // set to the appropriate page.
@@ -328,7 +328,7 @@ if ( isset ( $_SESSION['EPM_AID'] ) )
 		id='rw-button'
 	        formmethod='POST'
 	        title='current mode is read-write;
-		       click to change to read-only'>
+click to change to read-only'>
 	        RO</button>
 EOT;
     else
@@ -337,7 +337,7 @@ EOT;
 		id='rw-button'
 	        formmethod='POST'
 	        title='current mode is read-only;
-		       click to change to read-write'>
+click to change to read-write'>
 	        RW</button>
 EOT;
 }
