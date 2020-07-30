@@ -115,7 +115,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{July 21, 2020}
+\date{July 30, 2020}
  
 \maketitle
 
@@ -254,7 +254,7 @@ initializes the sequence.
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
 \TT{admin} & dir & \STACK{administrative\\files}
-	& user & & \\ 
+	& login & \STACK{login\\user} & all \\ 
 \hline
 \TT{admin/+blocking+} & dir & \STACK{email blocking\\control file}
 	& (editor) & (editor ) & login \\ 
@@ -263,49 +263,63 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& (editor) & (editor ) & login \\ 
 \hline
 \TT{admin/+lock+} & lock & \STACK{administrative\\lock file}
-	& (lockers) & \STACK{login\\user\\team} & \\ 
+	& (lockers) & \STACK{login\\user} & (lockers) \\ 
 \hline
 \TT{admin/+actions+} & lines &
-        \STACK{log of\\administrative\\actoins \pagref{ADMINISTRATIVE-ACTIONS}}
-	& (updaters) & \STACK{user\\team} & view \\ 
+        \STACK{log of\\administrative\\actions \pagref{ADMINISTRATIVE-ACTIONS}}
+	& (updaters) & user & view \\ 
 \hline
 \TT{admin/browser} & dir & \STACK{browser\\tickets}
-	& login & & \\ 
+	& login & login & login \\ 
 \hline
 \TT{admin/browser/TICKET} & 1-line
-        & \STACK{ticket info\\\pagref{ADMIN/TICKET/TICKET}}
+        & ticket info \pagref{ADMIN/TICKET/TICKET}
 	& login & & login \\ 
 \hline
 \TT{admin/email} & dir & email files
-	& login & & \\ 
+	& user & user & \STACK{login\\user} \\ 
 \hline
 \TT{admin/email/EMAIL} & 1-line
-        & \STACK{email info\\\pagref{ADMIN/EMAIL/EMAIL}}
-	& \STACK{user\\team} & \STACK{login\\user\\team}
-	                     & \STACK{login\\user\\team} \\ 
+        & email info \pagref{ADMIN/EMAIL/EMAIL}
+	& user & \STACK{login\\user} & \STACK{login\\user} \\ 
 \hline
-\TT{admin/users} & dir & \STACK{administrative\\user\\directories}
+\TT{\STACK{admin/users\\admin/teams}}
+        & dir & \STACK{administrative\\user\\directories}
+	& user & user & \STACK{user\\login} \\ 
+\hline
+\TT{\STACK{admin/users/UID\\admin/teams/TID}}
+        & dir & \STACK{administrative\\UID user files}
+	& user & \STACK{user\\login} & \STACK{user\\login} \\ 
+\hline
+\STACK{
+\FSTACK{admin/}{users/UID/\\UID.login}\\
+\FSTACK{admin/}{teams/TID/\\UID.login}}
+        & lines
+        & \STACK{log of logins\\\pagref{ADMIN/USERS/UID/UID.LOGIN}}
+	& (updaters) & \STACK{login\\user} & (index)  \\ 
+\hline
+\STACK{
+\FSTACK{admin/}{users/UID/\\UID.inactive}\\
+\FSTACK{admin/}{teams/TID/\\UID.inactive}}
+        & lines
+	& \STACK{inactive\\.login files \pagref{ADMIN/USERS/UID/PID.INACTIVE}}
 	& user & & \\ 
 \hline
-\TT{admin/users/UID} & dir & \STACK{administrative\\UID user files}
-	& \STACK{user\\team} & & \\ 
-\hline
-\FSTACK{admin/}{users/UID/\\PID.login} & lines
-        & \STACK{log of logins\\\pagref{ADMIN/USERS/UID/PID.LOG}}
-	& (updaters) & \STACK{login\\user\\team} & (login)  \\ 
-\hline
-\FSTACK{admin/}{users/UID/\\PID.inactive} & lines
-	& \STACK{inactive\\.login files \pagref{ADMIN/USERS/UID/PID.INACTIVE}}
-	& team & & \\ 
-\hline
 \FSTACK{admin/}{users/UID/\\UID.info} & json
-	& \STACK{user info\\\pagref{ADMIN/USERS/UID/UID.INFO}}
-	& user & & user \\ 
+	& user info \pagref{ADMIN/USERS/UID/UID.INFO}
+	& user & user & user \\ 
 \hline
-\FSTACK{admin/}{users/UID/\\+actions+} & lines
-        & \STACK{log of user's\\administrative\\
+\FSTACK{admin/}{teams/TID/\\TID.info} & json
+	& team info \pagref{ADMIN/USERS/TID/TID.INFO}
+	& user & user & user \\ 
+\hline
+\STACK{
+\FSTACK{admin/}{users/UID/\\+actions+}\\
+\FSTACK{admin/}{teams/TID/\\+actions+}}
+        & lines
+        & \STACK{log of accounts's\\administrative\\
 	         actions \pagref{ADMINSTRATIVE-ACTIONS}}
-	& (updaters) & \STACK{user\\team} & view \\ 
+	& (updaters) & user & view \\ 
 \hline
 \end{tabular}
 \end{center}
@@ -315,6 +329,10 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
+\FSTACK{admin/}{teams\\+read-write+}
+    & UID & \STACK{current\\read-write\\user \pagref{READ-WRITE-USER}}
+    & +main+ & +main+ & +main+ \\ 
+\hline
 \TT{users} & dir & \pagref{USERS} & login & user & \\ 
 \hline
 \TT{users/UID} & dir & \pagref{USERS/UID}
@@ -347,9 +365,9 @@ Name & Description & Creators & Updaters & Readers \\
 \TT{EPM\_EMAIL} & \STACK{login email}
                 & login & & all pages \\ 
 \hline
-\TT{EPM\_UID} & user ID & \STACK{login\\user} & & all pages \\ 
+\TT{EPM\_AID} & account ID & \STACK{login\\user} & & all pages \\ 
 \hline
-\TT{EPM\_PID} & personal ID & \STACK{login\\user} & & \STACK{login\\user} \\ 
+\TT{EPM\_UID} & personal ID & \STACK{login\\user} & & \STACK{login\\user} \\ 
 \hline
 \TT{EPM\_IPADDR} & \STACK{session\\IP address}
                  & login & & \STACK{index\\login\\user} \\ 
@@ -383,7 +401,7 @@ Name & Description & Creators & Updaters & Readers \\
 \begin{tabular}{lllll}
 \TT{admim/ticket/TICKET}	& create  & -      & read \\
 \TT{admim/email/EMAIL}	& -       & update & read \\
-\TT{admim/users/UID/login/PID.login}
+\TT{admim/users/UID/login/UID.login}
 			& -       & append & - \\
 \end{tabular}
 \\[3ex]
@@ -418,11 +436,11 @@ EMAIL & Email address \\
 the UID is not known when the ticket is created.
 \end{itemize}
 
-\item[\TT{admin/email/EMAIL} (regular email file):] PID ACOUNT ATIME
+\item[\TT{admin/email/EMAIL} (regular email file):] UID ACOUNT ATIME
 \label{ADMIN/EMAIL/EMAIL} \\
 \begin{tabular}[t]{lp{4.0in}}
 EMAIL & Email address encoded with PHP rawurlencode \\
-PID & Personal user ID \\
+UID & user ID \\
 ACOUNT & Number of auto-login periods completed so far. \\
 ATIME & Start time of newest (incomplete) auto-login period. \\
 \end{tabular}
@@ -438,21 +456,21 @@ TID & Team user ID (may be more than one) \\
 \item This form of email file is created by the Team Page when
 a team member is assigned the given EMAIL before the member
 has an account.  The TID's list \underline{all} the team user IDs that
-\underline{might} have a member which is this EMAIL and not a PID.
+\underline{might} have a member which is this EMAIL and not a UID.
 A TID might be listed whose
 TID.info file no longer contains the EMAIL.
 \\[1ex]
 When the pre-login form is converted to a regular form,
 the list of TID's is used to convert any matching EMAIL members
-in TID.info files to PID members.
+in TID.info files to UID members.
 \end{itemize}
 
-\item[\TT{admin/users/UID/PID.login} (login log):]~
-\label{ADMIN/USERS/UID/PID.LOG} \\
+\item[\TT{admin/users/UID/UID.login} (login log):]~
+\label{ADMIN/USERS/UID/UID.LOGIN} \\
 Lines of format:\hspace{0.5in}TIME EMAIL IPADDR BROWSER \\
 \begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
-UID & User ID; equals team UID for teams \\
-PID & Personal ID; equals UID for personal users \\
+AID & Account ID; equals TID for teams, UID for users \\
+UID & User ID; equals UID for personal users \\
 TIME & Session time (EPM\_TIME) for login \\
 EMAIL & Email address used for login \\
 IPADDR & IP address for session, or `\TT{-}' if creation record \\
@@ -464,12 +482,12 @@ BROWSER & \STACK{
 \\
 \begin{itemize}
 \item
-A login with full name UID:PID is valid iff this file exists.
+A login with full name AID:UID is valid iff this file exists.
 \item If UID is a team ID, the first line is a creation record
-written when UID:PID is created.  No other line is a creation record.
+written when AID:UID is created.  No other line is a creation record.
 \item This file name and modification time is stored in
 EPM\_ABORT and used to abort a session if another session
-logs in with the same UID:PID.
+logs in with the same AID:UID.
 \end{itemize}
 
 \item[\TT{admin/users/UID/PID.inactive}:]~
