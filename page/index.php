@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 29 13:39:57 EDT 2020
+// Date:    Wed Jul 29 21:05:55 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -74,16 +74,12 @@ clearstatcache();
 
 // Check that we have not skipped proper login.
 //
-if ( $epm_self != "/page/login.php"
+if ( ! isset ( $_SESSION['EPM_AID'] )
+     &&
+     $epm_self != "/page/login.php"
      &&
      $epm_self != "/page/user.php" )
-{
-    if ( ! isset ( $_SESSION['EPM_AID'] ) )
-	exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
-
-    $rw = $_SESSION['EPM_RW'];
-    $is_team = $_SESSION['EPM_IS_TEAM'];
-}
+    exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
 
 // A session cannot change its IP address if
 // $epm_check_ipaddr is true (see parameters.php).
@@ -95,6 +91,30 @@ if ( $epm_check_ipaddr
         $_SESSION['EPM_IPADDR']
      != $_SERVER['REMOTE_ADDR'] )
     exit ( "UNACCEPTABLE HTTP $epm_method: IP" );
+
+// Each user can have only one session at a time.  When
+// started, each session for a user aborts the previous
+// session for the user.  As there is no way to know
+// when a session has ended, there is no way to know if
+// this session has aborted a previous session.  The
+// previous session finds out here that it has been
+// aborted.
+//
+// When a session EPM_AID is set, a login log entry is
+// written to a log file S and the mod-time of S
+// identifies the session.
+//
+if ( isset ( $_SESSION['EPM_ABORT'] ) )
+{
+    $epm_session = & $_SESSION['EPM_ABORT'];
+        // This is [S,S-MOD-TIME].
+    $our_time = $epm_session[1];
+    $cur_time = filemtime
+        ( "$epm_data/{$epm_session[0]}" );
+    if ( $our_time != $cur_time )
+        require "$epm_home/include/epm_abort.php";
+	// This does not return.
+}
 
 // If this is a download page, return to that
 // page and skip the rest of this file.
@@ -202,30 +222,6 @@ function EPM_ERROR_HANDLER
 
 set_error_handler ( 'EPM_ERROR_HANDLER' );
 
-// Each user can have only one session at a time.  When
-// started, each session for a user aborts the previous
-// session for the user.  As there is no way to know
-// when a session has ended, there is no way to know if
-// this session has aborted a previous session.  The
-// previous session finds out here that it has been
-// aborted.
-//
-// When a session EPM_AID is set, a login log entry is
-// written to a log file S and the mod-time of S
-// identifies the session.
-//
-if ( isset ( $_SESSION['EPM_ABORT'] ) )
-{
-    $epm_session = & $_SESSION['EPM_ABORT'];
-        // This is [S,S-MOD-TIME].
-    $our_time = $epm_session[1];
-    $cur_time = filemtime
-        ( "$epm_data/{$epm_session[0]}" );
-    if ( $our_time != $cur_time )
-        require "$epm_home/include/epm_abort.php";
-	// This does not return.
-}
-
 // DEBUG, LOCK, and UNLOCK functions are in
 // parameters.php because they are shared with
 // bin/epm_run.
@@ -311,44 +307,69 @@ if ( in_array ( $epm_page_type,
     }
 }
 
-if ( ! isset ( $_POST['xhttp'] )
-     &&
-     ! isset ( $epm_pdf ) )
+// If this is an xhttp request, do not produce any
+// html output.
+//
+if ( isset ( $_POST['xhttp'] ) ) return;
+
+if ( isset ( $_SESSION['EPM_AID'] ) )
 {
-    echo <<<EOT
-    <script>
+    $rw = $_SESSION['EPM_RW'];
+    $is_team = $_SESSION['EPM_IS_TEAM'];
 
-    // See HELP and VIEW below.
-    //
-    function AUX_WINDOW ( name, page, x, y, w, h )
-    {
-	if ( x < 0 ) x += screen.width;
-	if ( y < 0 ) y += screen.height;
-	window.open
-	    ( '$epm_root' + '/page/' + page, name,
-	      'height=' + h + 'px,' +
-	      'width=' + w + 'px,' +
-	      'screenX=' + x + 'px,' +
-	      'screenY=' + y + 'px' );
-    }
-
-    // Launches 'help' window in upper right corner.
-    //
-    function HELP ( reference )
-    {
-        AUX_WINDOW ( '+help+',
-	             'help.html#' + reference,
-		     -800, 0, 800, 800 );
-    }
-    // Launches 'view' window in lower right corner.
-    //
-    function VIEW ( page )
-    {
-        AUX_WINDOW ( '+view+', page,
-		     -1200, -800, 1200, 800 );
-    }
-    </script>
+    if ( ! $is_team )
+        $RW_BUTTON = '';
+    elseif ( $rw )
+        $RW_BUTTON = <<<EOT
+	<button type='submit' name='rw' value='ro'
+	        title='current mode is read-write;
+		       click to change to read-only'>
+	        RO</button>
+	<pre>  </pre>
+EOT;
+    else
+        $RW_BUTTON = <<<EOT
+	<button type='submit' name='rw' value='rw'
+	        title='current mode is read-only;
+		       click to change to read-write'>
+	        RW</button>
+	<pre>  </pre>
 EOT;
 }
+
+echo <<<EOT
+<script>
+
+// See HELP and VIEW below.
+//
+function AUX_WINDOW ( name, page, x, y, w, h )
+{
+    if ( x < 0 ) x += screen.width;
+    if ( y < 0 ) y += screen.height;
+    window.open
+	( '$epm_root' + '/page/' + page, name,
+	  'height=' + h + 'px,' +
+	  'width=' + w + 'px,' +
+	  'screenX=' + x + 'px,' +
+	  'screenY=' + y + 'px' );
+}
+
+// Launches 'help' window in upper right corner.
+//
+function HELP ( reference )
+{
+    AUX_WINDOW ( '+help+',
+		 'help.html#' + reference,
+		 -800, 0, 800, 800 );
+}
+// Launches 'view' window in lower right corner.
+//
+function VIEW ( page )
+{
+    AUX_WINDOW ( '+view+', page,
+		 -1200, -800, 1200, 800 );
+}
+</script>
+EOT;
 
 ?>
