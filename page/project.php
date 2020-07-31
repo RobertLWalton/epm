@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 30 05:37:21 EDT 2020
+    // Date:	Fri Jul 31 05:23:53 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -720,7 +720,8 @@ EOT;
 	}
 
 	$changes = "Changes to Push $aid $problem to"
-	         . " $project $problem by $aid ("
+	         . " $project $problem" . PHP_EOL
+		 . "    by $aid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
@@ -738,8 +739,11 @@ EOT;
 	                   '02770'];
 	    $commands[] = ['mkdir', "$desdir/+submits+",
 	                            '02770'];
-	    $changes .= "  give $aid all privileges for"
-	              . " $project $problem directory"
+	    $changes .= "  give $aid owner privilege"
+	              . " for $project $problem"
+		      . PHP_EOL;
+	    $changes .= "  give $aid re-push privilege"
+	              . " for $project $problem"
 		      . PHP_EOL;
 	    $commands[] = ['append', "$desdir/+priv+",
 	                             $new_push_privs];
@@ -808,7 +812,7 @@ EOT;
 		    // This will also move a link.
 	    $changes .=
 	        "  link $fname in $aid $problem to" .
-	        " $fname in $project $problem$s" .
+	        " $project $problem$s" .
 		PHP_EOL;
 	    $commands[] = ['link',
 	                   "+parent+/$t",
@@ -937,7 +941,8 @@ EOT;
 	$new_pull = ! is_dir ( "$epm_data/$desdir" );
 
 	$changes = "Changes to Pull $aid $problem from"
-	         . " $project $problem by $aid ("
+	         . " $project $problem" . PHP_EOL
+		 . "    by $aid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
@@ -1006,7 +1011,7 @@ EOT;
 
 	    $changes .=
 	        "  link $fname in $aid $problem to" .
-	        " $fname in $project $problem$s" .
+	        " $project $problem$s" .
 		PHP_EOL;
 	    $commands[] = ['link',
 	                   "+parent+/$t",

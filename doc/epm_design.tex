@@ -115,7 +115,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{July 30, 2020}
+\date{July 31, 2020}
  
 \maketitle
 
@@ -249,6 +249,7 @@ initializes the sequence.
 \section{Data Files}
 
 \begin{center}
+\small
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
@@ -264,6 +265,9 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 \TT{admin/+lock+} & lock & \STACK{administrative\\lock file}
 	& (lockers) & \STACK{login\\user} & (lockers) \\ 
+\hline
+\TT{admin/+random+} & lock & \STACK{random\\number\\generator}
+	& login & \STACK{login\\index} & \STACK{login\\index} \\ 
 \hline
 \TT{admin/+actions+} & lines &
         \STACK{log of\\administrative\\actions \pagref{ADMINISTRATIVE-ACTIONS}}
@@ -325,29 +329,76 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \end{center}
 
 \begin{center}
+\small
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
-\FSTACK{admin/}{teams\\+read-write+}
+\FSTACK{admin/}{users/UID/\\manager}
+    & 1-line & \STACK{teams that UID\\manages \pagref{UID-MANAGER}}
+    & user & user & user \\ 
+\hline
+\FSTACK{admin/}{users/UID/\\member}
+    & 1-line & \STACK{teams of which\\UID is a\\member \pagref{UID-MEMBER}}
+    & user & user & user \\ 
+\hline
+\FSTACK{admi}{n/teams/TID/\\+read-write+}
     & UID & \STACK{current\\read-write\\user \pagref{READ-WRITE-USER}}
     & +main+ & +main+ & +main+ \\ 
 \hline
-\TT{users} & dir & \pagref{USERS} & login & user & \\ 
+\TT{accounts} & dir & \STACK{holds account\\subdirectories}
+              & user & user & all \\ 
 \hline
-\TT{users/UID} & dir & \pagref{USERS/UID}
-	& user & \STACK{problem\\project} & \\ 
+\TT{accounts/AID} & dir & \STACK{account\\subdirectory}
+	& user & \STACK{problem\\project} & all \\ 
 \hline
-\TT{users/UID/+lists+} & dir & \pagref{USERS/UID/+LISTS+}
-	& user & \STACK{list\\favorites} & project \\ 
+\FSTACK{accoun}{ts/AID/\\+lists+}
+        & dir & \STACK{holds account\\problem lists}
+	& list & \STACK{list\\favorites} & \STACK{+main+\\view} \\ 
 \hline
-\TT{users/UID/PROBLEM} & dir & \pagref{USERS/UID/PROBLEM}
-	& \STACK{problem\\project} & & \\ 
+\FSTACK{accoun}{ts/AID/\\+actions+}
+        & lines & \STACK{log of account\\problem\\related\\actions}
+	& (updaters) & \STACK{project\\run} & view \\ 
 \hline
-\FSTACK{users/}{UID/PROBLEM/\\PROBLEM.cc}
-    & C++ & \pagref{USERS/UID/PROBLEM/PROBLEM.cc}
-    	& \STACK{problem\\(upload)} & & \\ 
+\FSTACK{accou}{nts/AID/\\PROBLEM}
+        & dir & \STACK{account\\problem\\directory}
+	& project & \STACK{+problem+\\project} & \STACK{+problem+\\project} \\ 
 \hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\+actions+}
+        & lines & \STACK{log of\\problem\\related\\actions}
+	& (updaters) & \STACK{project\\run} & view \\ 
+\hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\+altered+}
+        & empty & \STACK{alteration\\indicator \pagref{PROBLEM/ALTERED}}
+	& (updaters) & \STACK{problem\\run} & (updaters) \\ 
+\hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\+changes+}
+        & lines & \STACK{log of changes\\made by pulls}
+	& project & project & \\ 
+\hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\+work+}
+        & dir & \STACK{working\\directory\\for jobs}
+	& \STACK{problem\\run}
+	& \STACK{problem\\run}
+	& \STACK{problem\\run} \\ 
+\hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\+run+}
+        & dir & \STACK{working\\directory\\for runs}
+	& run & run & run \\
+\hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\\ldots}
+        & various & \STACK{files visible\\to users}
+	& +problem+ & +problem+ & +problem+ \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Format & Description & Creators & Updaters & Readers \\
+\hline\hline
 \TT{projects} & dir & \pagref{PROJECTS} & login & maint & \\ 
 \hline
 \TT{solutions} & dir & \pagref{SOLUTIONS} & login & maint & \\ 
