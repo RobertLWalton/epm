@@ -1330,7 +1330,7 @@ EOT;
 	    }
 	}
 	elseif ( ! $rw )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    $op = NULL;
 	// From here on we are processing posts
 	// that can only occur if $rw is true.
         elseif ( isset ( $_POST['op'] ) )
