@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 30 14:28:20 EDT 2020
+    // Date:	Fri Jul 31 18:09:10 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -121,6 +121,8 @@
 		    ( 'team', $tid );
 	}
     }
+    elseif ( isset ( $_POST['rw'] ) )
+	require "$epm_home/include/epm_rw.php";
     elseif ( isset ( $_POST['user'] )
              &&
 	     $_POST['user'] != $uid )
@@ -187,15 +189,18 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$data['TID-INFO'] = [
-	    'tid' => '',
-	    'manager' => $aid,
-	    'members' => [],
-	    'team_name' => '',
-	    'organization' => '',
-	    'location' => ''];
-	$tid = NULL;
-	$edit = 'tid-profile';
+	if ( $rw )
+	{
+	    $data['TID-INFO'] = [
+		'tid' => '',
+		'manager' => $aid,
+		'members' => [],
+		'team_name' => '',
+		'organization' => '',
+		'location' => ''];
+	    $tid = NULL;
+	    $edit = 'tid-profile';
+	}
     }
     else
 	$post_processed = false;
@@ -267,10 +272,13 @@
 	}
     }
 
-    if ( $epm_method == 'GET' )
+    if ( $epm_method == 'GET' || ! $rw )
     {
 	// Do nothing.  Display user info or edit
 	// new user profile.
+	//
+	// We ensure that if ! $new_user and ! $rw
+	// then $edit == NULL.
     }
     elseif ( isset ( $_POST['edit'] ) )
     {
@@ -874,6 +882,9 @@ function KEY_DOWN ( event, id )
     if ( $uid_editable ) $uname = 'Your';
     else $uname = $uid;
 
+    // NOTE: if ! $new_user and ! $rw then
+    //       $edit == NULL.
+
     if ( count ( $errors ) > 0 )
     {
 	echo "<div class='errors'>";
@@ -956,10 +967,11 @@ EOT;
 	</div>
 EOT;
 
-    if ( $uid_editable && count ( $emails ) == 1
-                       && ( ! isset ( $edit )
-		            ||
-			    $edit == 'emails' ) )
+    if ( $rw && $uid_editable
+             && count ( $emails ) == 1
+	     && ( ! isset ( $edit )
+		  ||
+		  $edit == 'emails' ) )
         echo <<<EOT
 	<div class='warnings'>
         <strong>Its a good idea to add a
@@ -1066,7 +1078,7 @@ EOT;
 	</select>
 	<strong>Info</strong>
 EOT;
-	if ( $uid_editable )
+	if ( $rw && $uid_editable )
 	    echo <<<EOT
 	    <br>
 	    <button type="submit"
@@ -1257,7 +1269,7 @@ EOT;
 		</select>
 		<strong>Info</strong>
 EOT;
-		if ( $tid_editable )
+		if ( $rw && $tid_editable )
 		    echo <<<EOT
 		    <br>
 		    <button type="submit"
@@ -1272,13 +1284,15 @@ EOT;
 		</form>
 EOT;
 	    }
-	    echo <<<EOT
-	    <br>
-	    <form method='POST' action='user.php'>
-	    <input type='hidden' name='id' value='$ID'>
-	    <button type='submit' name='create-tid'>
-		Create a New Team</button>
-	    </form>
+	    if ( $rw )
+		echo <<<EOT
+		<br>
+		<form method='POST' action='user.php'>
+		<input type='hidden'
+		       name='id' value='$ID'>
+		<button type='submit' name='create-tid'>
+		    Create a New Team</button>
+		</form>
 EOT;
 	}
 
