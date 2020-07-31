@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 05:23:53 EDT 2020
+    // Date:	Fri Jul 31 13:22:08 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1294,7 +1294,12 @@ EOT;
 
     if ( $epm_method == 'POST' )
     {
-        if ( isset ( $_POST['listname'] ) )
+	if ( isset ( $_POST['rw'] ) )
+	{
+	    require "$epm_home/include/epm_rw.php";
+	    $op = NULL;
+	}
+        elseif ( isset ( $_POST['listname'] ) )
 	{
 	    if ( isset ( $op ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -1303,20 +1308,6 @@ EOT;
 	         === NULL )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $listname = $new_listname;
-	}
-        elseif ( isset ( $_POST['op'] ) )
-	{
-	    $new_op = $_POST['op'];
-	    if ( ! in_array
-	               ( $new_op, ['push','pull'],
-		                  true ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( ! isset ( $listname ) )
-	        $errors[] = "you must select problem"
-		          . " list BEFORE you push or"
-			  . " pull";
-	    else
-		$op = $new_op;
 	}
         elseif ( isset ( $_POST['goto'] ) )
 	{
@@ -1337,6 +1328,24 @@ EOT;
 		else
 		    $goto = $problem;
 	    }
+	}
+	elseif ( ! $rw )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	// From here on we are processing posts
+	// that can only occur if $rw is true.
+        elseif ( isset ( $_POST['op'] ) )
+	{
+	    $new_op = $_POST['op'];
+	    if ( ! in_array
+	               ( $new_op, ['push','pull'],
+		                  true ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $listname ) )
+	        $errors[] = "you must select problem"
+		          . " list BEFORE you push or"
+			  . " pull";
+	    else
+		$op = $new_op;
 	}
         elseif ( isset ( $_POST['create'] ) )
 	{
@@ -1849,24 +1858,34 @@ EOT;
 			    ("listname-form").submit()'>
 	$listname_options
 	</select></form>
-	<strong>then</strong>
-	<form method='POST'>
-	<input type='hidden' name='id' value='$ID'>
-	<button type='submit' name='op' value='push'
-	        title='$push_title'>
-	Push
-	</button>
-	<strong>or</strong>
-	<button type='submit' name='op' value='pull'
-	        title='$pull_title'>
-	Pull
-	</button>
-	</form>
+EOT;
+	if ( $rw )
+	    echo <<<EOT
+	    <strong>then</strong>
+	    <form method='POST'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <button type='submit' name='op' value='push'
+		    title='$push_title'>
+	    Push
+	    </button>
+	    <strong>or</strong>
+	    <button type='submit' name='op' value='pull'
+		    title='$pull_title'>
+	    Pull
+	    </button>
+	    </form>
 EOT;
 	if ( isset ( $listname ) )
 	{
-	    echo <<<EOT
-	    <strong>or Create Tab for Problem:</strong>
+	    if ( $rw )
+		echo <<<EOT
+		<strong>or Create Tab for Problem:
+		        </strong>
+EOT;
+	    else
+		echo <<<EOT
+		<strong>and Create Tab for Problem:
+		        </strong>
 EOT;
 	    if ( $problem_options != '' ) echo <<<EOT
 	    <form method='POST' action='project.php'
@@ -1884,18 +1903,19 @@ EOT;
 	          <mark>Your</mark> problems
 EOT;
         }
-	echo <<<EOT
-	<br>
-	<strong>or Create New Problem:</strong>
-	<form method='POST' action='project.php'
-	      id='create-form'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type="text" size="32"
-	       placeholder="New Problem Name"
-	       title="New Problem Name"
-	       name='create'
-	       onkeydown='KEYDOWN("create-form")'>
-	</form>
+	if ( $rw )
+	    echo <<<EOT
+	    <br>
+	    <strong>or Create New Problem:</strong>
+	    <form method='POST' action='project.php'
+		  id='create-form'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type="text" size="32"
+		   placeholder="New Problem Name"
+		   title="New Problem Name"
+		   name='create'
+		   onkeydown='KEYDOWN("create-form")'>
+	    </form>
 EOT;
     }
     echo <<<EOT

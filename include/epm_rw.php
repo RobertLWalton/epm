@@ -2,7 +2,7 @@
 
     // File:	epm_rw.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 10:29:14 EDT 2020
+    // Date:	Fri Jul 31 13:20:28 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -25,10 +25,12 @@
 	exit ( 'ACCESS ERROR: POST rw not set' );
 
     $new_rw = $_POST['rw'];
-    if ( ! in_array ( $new_rw, ['rw','ro'], true ) )
+    if ( ! in_array ( $new_rw, ['rw','ro'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST: RW' );
 
-    if ( $new_rw == $_SESSION['EPM_RW'] )
+    $new_rw = ( $new_rw == 'rw' ? true : false );
+
+    if ( $new_rw === $_SESSION['EPM_RW'] )
         /* Do Nothing */;
     elseif ( ! $is_team )
     {
@@ -37,7 +39,7 @@
     }
     else
     {
-        $d = "admin/team/" . $_SESSION['EPM_AID'];
+        $d = "admin/teams/" . $_SESSION['EPM_AID'];
 	if ( ! is_dir ( "$epm_data/$d" ) )
 	    exit ( 'UNACCEPTABLE HTTP POST: RW AID' );
 	LOCK ( $d, LOCK_EX );
@@ -46,14 +48,14 @@
 	if ( $c === false ) $c = '';
 	else $c = trim ( $c );
 
-	if ( $new_rw == 'ro' )
+	if ( ! $new_rw )
 	{
 	    if ( $c == $_SESSION['EPM_UID'] )
 	    {
 	        $r = @file_put_contents
 		    ( "$epm_data/$f", '' );
 	        if ( $r === false )
-		    ERROR ( "cannot write $f";
+		    ERROR ( "cannot write $f" );
 	    }
 	    $rw = false;
 	    $_SESSION['EPM_RW'] = $rw;
@@ -67,11 +69,12 @@
 	    if ( $m === false )
 		ERROR ( "cannot stat $f" );
 	    $errors[] = "cannot switch to read-write"
-	              . " mode";
+	              . " mode;";
 	    $errors[] = "    user $c has held"
 	              . " read-write mode since "
 		      . strftime
-		          ( $epm_time_format, $m );
+		          ( $epm_time_format, $m )
+		      . ";";
 	    $errors[] = "    to force mode change"
 	              . " use User Page";
 	}
