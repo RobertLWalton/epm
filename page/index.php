@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jul 30 15:18:20 EDT 2020
+// Date:    Fri Jul 31 10:23:46 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -317,29 +317,31 @@ if ( isset ( $_SESSION['EPM_AID'] ) )
     $is_team =
       ( $_SESSION['EPM_AID'] != $_SESSION['EPM_UID'] );
 
-    // $RW_BUTTON must be inside a form with formaction
-    // set to the appropriate page.
+    // $RW_BUTTON must be inside a form with action set
+    // to the appropriate page.
     // 
+    $RW_BUTTON_RO = <<<EOT
+    <button type='submit' name='rw' value='ro'
+	    id='rw-button'
+	    formmethod='POST'
+	    title='current mode is read-write;
+click to change to read-only'>
+	    RO</button>
+EOT;
+    $RW_BUTTON_RW = <<<EOT
+    <button type='submit' name='rw' value='rw'
+	    id='rw-button'
+	    formmethod='POST'
+	    title='current mode is read-only;
+click to change to read-write'>
+	    RW</button>
+EOT;
     if ( ! $is_team )
         $RW_BUTTON = '';
     elseif ( $rw )
-        $RW_BUTTON = <<<EOT
-	<button type='submit' name='rw' value='ro'
-		id='rw-button'
-	        formmethod='POST'
-	        title='current mode is read-write;
-click to change to read-only'>
-	        RO</button>
-EOT;
+        $RW_BUTTON = $RW_BUTTON_RO;
     else
-        $RW_BUTTON = <<<EOT
-	<button type='submit' name='rw' value='rw'
-		id='rw-button'
-	        formmethod='POST'
-	        title='current mode is read-only;
-click to change to read-write'>
-	        RW</button>
-EOT;
+        $RW_BUTTON = $RW_BUTTON_RW;
 }
 
 echo <<<EOT

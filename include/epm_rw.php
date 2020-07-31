@@ -2,7 +2,7 @@
 
     // File:	epm_rw.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 30 14:23:31 EDT 2020
+    // Date:	Fri Jul 31 10:29:14 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -32,21 +32,8 @@
         /* Do Nothing */;
     elseif ( ! $is_team )
     {
-        $rw = true;
 	$_SESSION['EPM_RW'] = $new_rw;
-    }
-    elseif ( $new_rw == 'ro' )
-    {
-        $rw = false;
-	$_SESSION['EPM_RW'] = $rw;
-        $RW_BUTTON = <<<EOT
-	<button type='submit' name='rw' value='rw'
-		id='rw-button'
-	        formmethod='POST'
-	        title='current mode is read-only;
-click to change to read-write'>
-	        RW</button>
-EOT;
+        $rw = $new_rw;
     }
     else
     {
@@ -56,9 +43,25 @@ EOT;
 	LOCK ( $d, LOCK_EX );
 	$f = "$d/+read-write+";
 	$c = @file_get_contents ( "$epm_data/$f" );
-	if ( $c !== false
-	     &&
-	     trim ( $c ) != $_SESSION['EPM_UID'] )
+	if ( $c === false ) $c = '';
+	else $c = trim ( $c );
+
+	if ( $new_rw == 'ro' )
+	{
+	    if ( $c == $_SESSION['EPM_UID'] )
+	    {
+	        $r = @file_put_contents
+		    ( "$epm_data/$f", '' );
+	        if ( $r === false )
+		    ERROR ( "cannot write $f";
+	    }
+	    $rw = false;
+	    $_SESSION['EPM_RW'] = $rw;
+	    $RW_BUTTON = $RW_BUTTON_RW;
+	}
+	elseif ( $c != ''
+	         &&
+		 $c != $_SESSION['EPM_UID'] )
 	{
 	    $m = @filemtime ( "$epm_data/$f" );
 	    if ( $m === false )
@@ -81,14 +84,7 @@ EOT;
 		ERROR ( "cannot write $f" );
 	    $rw = true;
 	    $_SESSION['EPM_RW'] = $rw;
-	    $RW_BUTTON = <<<EOT
-	    <button type='submit' name='rw' value='ro'
-		    id='rw-button'
-		    formmethod='POST'
-		    title='current mode is read-write;
-click to change to read-only'>
-		    RO</button>
-EOT;
+	    $RW_BUTTON = $RW_BUTTON_RO;
 	}
     }
 
