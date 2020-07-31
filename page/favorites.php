@@ -73,46 +73,41 @@
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
 
-    if ( $epm_method == 'POST' )
+    if ( $epm_method != 'POST' )
+        /* Do Nothing */;
+    elseif ( isset ( $_POST['rw'] ) )
+	require "$epm_home/include/epm_rw.php";
+    elseif ( !isset ( $_POST['op'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( !isset ( $_POST['indices'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( $rw )
     {
-	if ( isset ( $_POST['rw'] ) )
-	    require "$epm_home/include/epm_rw.php";
-        elseif ( !isset ( $_POST['op'] ) )
+	$op = $_POST['op'];
+	if ( ! in_array ( $op, ['save','reset'],
+			       true ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-        elseif ( !isset ( $_POST['indices'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	elseif ( $rw )
-	{
-	    $op = $_POST['op'];
-	    if ( ! in_array ( $op, ['save','reset'],
-				   true ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
 
-	    if ( $op == 'save' )
+	if ( $op == 'save' )
+	{
+	    $list = $data['LIST'];
+	    $count = count ( $list );
+	    $flist = [];
+	    $indices = $_POST['indices'];
+	    $favs = ( $indices == '' ? [] :
+		      explode ( ':', $indices ) );
+	    foreach ( $favs as $index )
 	    {
-		$list = $data['LIST'];
-		$count = count ( $list );
-		$flist = [];
-		$indices = $_POST['indices'];
-		$favs = ( $indices == '' ? [] :
-			  explode ( ':', $indices ) );
-		foreach ( $favs as $index )
-		{
-		    if ( $index == '' ) continue;
-		    if ( ! preg_match
-		               ( '/\d+/', $index ) )
-			exit ( 'UNACCEPTABLE HTTP' .
-			       ' POST' );
-		    if ( $index >= $count )
-			exit ( 'UNACCEPTABLE HTTP' .
-			       ' POST' );
-		    $flist[] = $list[$index];
-		}
-		write_file_list
-		    ( "accounts/$aid/+lists+/" .
-		      "+favorites+",
-		      $flist );
+		if ( $index == '' ) continue;
+		if ( ! preg_match ( '/\d+/', $index ) )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		if ( $index >= $count )
+		    exit ( 'UNACCEPTABLE HTTP POST' );
+		$flist[] = $list[$index];
 	    }
+	    write_file_list
+		( "accounts/$aid/+lists+/+favorites+",
+		  $flist );
 	}
     }
 
