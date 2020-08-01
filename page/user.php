@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 18:09:10 EDT 2020
+    // Date:	Sat Aug  1 04:20:02 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1245,6 +1245,12 @@ EOT;
 		teams on which you are a member</option>
 	    </select>
 	    </form>
+	    <div style='float:right'>
+	    <button type='button'
+		    onclick='HELP("teams")'>
+		?</button>
+
+	    </div>
 	    <br>
 EOT;
 	    if ( count ( $tids ) == 0 )
