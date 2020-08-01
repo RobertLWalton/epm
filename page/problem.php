@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 18:33:23 EDT 2020
+    // Date:	Sat Aug  1 16:49:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -15,7 +15,7 @@
     if ( $_SERVER['REQUEST_METHOD'] == 'GET'
          &&
 	 ! isset ( $_GET['id'] ) )
-        $epm_page_init = true;
+        $epm_ID_init = true;
     $epm_page_type = '+problem+';
     require __DIR__ . '/index.php';
 

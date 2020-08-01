@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 10:59:54 EDT 2020
+    // Date:	Sat Aug  1 16:30:35 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -11,7 +11,7 @@
 
     // Edits problem option page.
 
-    $epm_page_type = '+init+';
+    $epm_page_type = '+no-post+';
         // This page does no POSTing.
     require __DIR__ . '/index.php';
 

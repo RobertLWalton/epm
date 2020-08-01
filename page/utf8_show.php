@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:27:46 EDT 2020
+    // Date:	Sat Aug  1 16:28:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -38,7 +38,7 @@
 
 <?php
 
-    $epm_page_type = '+init+';
+    $epm_page_type = '+no-post+';
 
     require __DIR__ . '/index.php';
 

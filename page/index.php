@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jul 31 10:23:46 EDT 2020
+// Date:    Sat Aug  1 16:49:27 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -37,7 +37,7 @@ if ( preg_match ( '#^(.*)(/page/.*)$#',
     $epm_root = $matches[1];
     $epm_self = $matches[2];
 }
-elseif ( preg_match ( '#^(.*)(/[^/]+\.php)$#',
+elseif ( preg_match ( '#^(.*)(/index\.php)$#',
                       $epm_root, $matches ) )
 {
     $epm_root = $matches[1];
@@ -115,11 +115,6 @@ if ( isset ( $_SESSION['EPM_ABORT'] ) )
         require "$epm_home/include/epm_abort.php";
 	// This does not return.
 }
-
-// If this is a download page, return to that
-// page and skip the rest of this file.
-//
-if ( $epm_page_type == '+download+' ) return;
 
 umask ( 07 );
 header ( 'Cache-Control: no-store' );
@@ -225,6 +220,11 @@ set_error_handler ( 'EPM_ERROR_HANDLER' );
 // parameters.php because they are shared with
 // bin/epm_run.
 
+// If this is a download page, return to that
+// page and skip the rest of this file.
+//
+if ( $epm_page_type == '+download+' ) return;
+
 // Enforce session GET/POST request sequencing.
 //
 // The requests of a session are sequenced using $ID
@@ -255,7 +255,7 @@ if ( in_array ( $epm_page_type,
              != $epm_self )
 	exit ( "UNACCEPTABLE HTTP $epm_method: PAGE" );
 
-    if ( isset ( $epm_page_init )
+    if ( isset ( $epm_ID_init )
          &&
          $epm_method == 'GET' )
     {

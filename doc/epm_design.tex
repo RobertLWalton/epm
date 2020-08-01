@@ -144,7 +144,7 @@ This document gives design information for EPM system maintainers.
 This document supplements the EPM Help Page documentation for
 users and comments in code files for programmers.
 
-\section{Definitions and Principals}
+\section{Definitions and Rules}
 
 \subsection{Names}
 
@@ -156,11 +156,10 @@ See {\tt /include/parameters.php} {\tt \$epm\_name\_re}.
 \item Visible file basenames consist of letters, digits, dash({\tt -}), and
 underscore({\tt \_}), begin with a letter or digit, and end
 with a letter or digit.  Visible extensions, if present, obey the
-same rules.
+same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
 \item Visible problem file basenames end with the
       problem name, which may optionally be preceded by a dash({\tt -}) but
       not by any other character.
-      See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
 \item Invisible problem
       file and directory names begin and end with plus({\tt +}).
 \item Administrative files may follow other rules.  In particular,
@@ -172,8 +171,15 @@ same rules.
 \subsection{Times}
 
 \begin{enumerate}
-\item Times are UTC formatted as per {\tt "\%FT\%T\%z"}.
-      See {\tt /include/parameters.php}\\ {\tt \$epm\_time\_format}.
+\item Times are formatted as per {\tt /include/parameters.php}
+     which:
+     \begin{itemize}
+     \item defines {\tt \$epm\_time\_\EOL format}
+           (defaults to {\tt "\%FT\%T\%Z"})
+     \item sets the time zone using
+           {\tt date\_default\_\EOL timezone\_\EOL set}
+     \end{itemize}
+
 \end{enumerate}
 
 \subsection{Account IDs}
@@ -194,6 +200,7 @@ same rules.
       the first time the server is used, and thereafter they
       are generated as a pseudo-random sequence using previously
       generated values to aes-128-cbc encrypt previous values.
+      See {\tt /include/epm\_random.php}.
 \item Browser TICKETS are random IDs.
 \item The \$ID variable is a random ID used to validate
       both POST and GET requests from pages.
@@ -201,19 +208,25 @@ same rules.
       For each tab, and
       sometimes for the view window, the first GET for the tab
       or window generates the first \$ID value for the pages
-      that will occupy the tab or window, and thereafter each
+      that will occupy the tab or window, and also generates
+      a random key that is used to generate a sequence
+      of \$ID values for the tab or window by encrypting
+      each \$ID to generate the next \$ID.  Thereafter each
       request is checked to see if it has the right \$ID value,
       and a new \$ID value is generated for the next tab or
       window contents.
+
+      \$ID values are generated and checked by {\tt /page/index.php}
+      which is required by all page files.
 \end{enumerate}
 
 \subsection{Tabs and Windows}
 
 \begin{enumerate}
 \item There are specific tabs and windows for different kinds
-of transations.  The \TT{main} window is for non-problem specific
+of transations.  The \TT{main} tab is for non-problem specific
 transations.  For each account problem there is a problem-specific
-window for transactions on that problem.  There is a \TT{view}
+tab for transactions on that problem.  There is a \TT{view}
 pop-up window for looking at files and information, and a
 separate \TT{help} pop-up window for the Help Page and Guide Page.
 
@@ -224,14 +237,16 @@ Problem, Option, and Run Pages are assigned to problem tabs,
 and the View and Template Pages are assigned to the view pop-up
 window.
 
-\item At any given time a tab or window has a current page.
+\item \key{Page Rule}\label{PAGE-RULE}
+At any given time a tab or window has a current page.
 The page is initially opened with a GET.  Subsequent
 transactions on that page are done with POSTs.  Each POST to
 a page is checked to be sure that page is the current page for
-its the window type.  So if you have opened the Project Page
+its the tab or window type.  So if you have opened the Project Page
 in the main tab, you cannot POST to the User Page.
 
-\item Transactions within a tab are sequenced, so that
+\item \key{Sequence Rule}\label{SEQUENCE-RULE}
+Transactions within a tab are sequenced, so that
 if a transaction is out of sequence the tab becomes
 \key{orphaned} and must be closed.
 Sequencing prevents two main
@@ -239,11 +254,178 @@ tabs from existing at the same time, or two problem tabs
 for the same problem existing at the same time.
 
 Sequencing is done
-by random sequence IDs that are attached to each page.
-The next request must contain the current ID else the
+by random sequence \$IDs that are attached to each page.
+The next request must contain the current \$ID else the
 tab is orphaned.  For the main tab the Login Page initializes
-the tab's ID sequence.  For problem tabs the Problem Page
+the tab's \$ID sequence.  For problem tabs the Problem Page
 initializes the sequence.
+\end{enumerate}
+
+\subsection{Directories}
+
+\begin{enumerate}
+\item There are three main directories:\label{MAIN-DIRECTORIES}
+
+      \key{H, Home Directory}:  This is the {\tt /epm}
+      directory which is loaded from {\tt github}.
+
+      \key{W, Web Directory}\label{W-DIRECTORY}:  This is the directory
+      named by the EPM server URL.  It contains
+      the {\tt index.php} file that is
+      the first file loaded when a user initially
+      contacts the EPM server.
+
+      \key{D, Data Directory}:  This is the directory
+      containing all the mutable data for the EPM server.
+
+\item The following subdirectories of H contain the
+      EPM files that are directly visible to web clients:
+
+      \key{H/page}:  Loadable page files.  {\tt W/page} is
+      symbolically linked to this directory.
+
+      \key{H/page/downloads}:  Example files downloadable
+      by the client.
+
+\item The following subdirectories of H contain the
+      EPM files that are \underline{not}
+      directly visible to web clients:
+
+      \key{H/include}:  Files that can be `{\tt require}'ed by
+      loadable page files.
+
+      \key{H/bin}:  Binary executables of programs called by
+      loadable pages or used for off-line maintenance.
+
+      \key{H/template}:  Templates used to compute client problem
+      files from other client or project files.
+
+      \key{H/doc}:  Off-line documentation files, including this file.
+
+      \key{H/secure}:  Source code for binary executables involved with
+      security.
+
+      \key{H/src}:  Source code for binary executables \underline{not}
+      involved with security.
+
+      \key{H/setup}:  Initial contents of D, the data directory,
+      during EPM server setup.
+
+\end{enumerate}
+
+\subsection{Page Initialization}
+
+\begin{enumerate}
+\item The web directory, W, contains the following:
+
+  \hspace*{0.2in}\begin{tabular}{l}
+      symbolic link {\tt W/page} $\Longrightarrow$ {\tt H/page} \\
+      symbolic link {\tt W/index.php}
+          $\Longrightarrow$ {\tt W/page/index.php} \\
+      {\tt W/parameters.php}, modified {\tt H/include/parameters.php} \\
+      {\tt W/maintenance\_parameters.php}, \\
+      \hspace*{0.2in}modified {\tt H/include/maintenance\_parameters.php}, \\
+      \hspace*{0.2in}(only used off-line) \\
+      \end{tabular}
+
+\item When loaded, a page initializes by executing the following steps:
+\begin{itemize}
+\item Set {\tt \$epm\_page\_type} to indicate the tab or pop-up window
+      or other type.  The possible values are:
+      
+      {\tt +main+} and {\tt +problem+} for tabs;
+      
+      {\tt +view+} for a view pop-up window that POSTs;
+      
+      {\tt +no-post+} for a view pop-up window that does \underline{not}
+      POST;
+      
+      {\tt +download+} for pages that download files
+      so that {\tt <script>}
+      in {\tt /page/\EOL index.php} which implements the help button
+      is surpressed (these pages do not POSTing and have
+      no buttons).
+
+\item If the page is the first loaded in a tab or popup-window that POSTs,
+      then it must set {\tt \$epm\_ID\_init} to initialize a new
+      \$ID sequence for the tab or popup-window.  Otherwise the page
+      leaves {\tt \$epm\_ID\_init} unset.
+
+\item The page requires {\tt /page/index.php} using:
+
+      \hspace*{0.2in}{\tt require \_\_DIR\_\_ . '/index.php'}
+      
+\end{itemize}
+
+\item Upon being required, {\tt /page/index.php} executes the
+      following:
+\begin{itemize}
+\item Computes:
+
+      \hspace*{0.2in}\begin{tabular}{l}
+		\tt \$epm\_root = ROOT \\
+		\tt \$epm\_self = SELF \\
+		\tt \$epm\_web = W \\
+		\end{tabular}
+
+       where the page currently being loaded has the URL
+
+       \hspace*{0.2in}{\tt http://HOST/ROOT/SELF}
+
+       {\tt SELF} has the form {\tt page/...}, or if
+       not that, the form {\tt index.php}, HOST is the
+       EPM server host name, and {\tt ROOT} is whatever
+       is left over.  Here W is the EPM server web directory
+       (\pagref{W-DIRECTORY}) and is
+
+       \hspace*{0.2in}{\tt \$\_SERVER['DOCUMENT\_ROOT'] . ROOT}
+
+\item If {\tt SELF} is either {\tt index.php} or {\tt page/index.php},
+      re-routes the request to {\tt page/\EOL login.php}.
+
+\item Loads {\tt W/parameters.php} which in turn defines H and D:
+      see \pagref{MAIN-DIRECTORIES}.
+
+\item Runs the following checks and aborts invalid requests:
+\begin{itemize}
+\item Checks that the session is logged in, unless the page being
+loaded is {\tt /page/\EOL login.php} or {\tt /page/user/php}.
+\item Checks that the client request is using the same IP
+address as was used for login, unless the {\tt \$epm\_check\_ipaddr}
+parameter is false.
+\item Uses {\tt EPM\_ABORT} (\pagref{EPM_ABORT}) to check that
+no other session has been started after this session using the
+same login name (team and user ID for a team, or user ID for a user).
+\end{itemize}
+
+\item Defines functions and error handlers.
+
+\item Except for pages of {\tt +download+} and {\tt +no-post+} type,
+      checks for violations of the Page Rule (\pagref{PAGE-RULE})
+      and aborts violating requests.
+
+\item Except for pages of {\tt +download+} and {\tt +no-post+} type,
+      initializes or checks the \$ID to enforce the
+      Sequence Rule (\pagref{SEQUENCE-RULE}), and
+      re-routes violating requests
+      to the {\tt /page/orphan.html} page to declare
+      the tab or window orphaned.
+
+\item Except for pages of {\tt +download+} type, defines functions
+      and parameters for use in creating buttons and launching
+      widows, including {\tt <script>} functions.
+
+\item Note that may parameters and some functions are defined in
+      {\tt W/parameters.php}.  See that file.  Also see
+      {\tt /page/index.php} for functions it defines and button
+      parameters it defines.
+
+
+\end{itemize}
+
+
+      
+
 \end{enumerate}
 
 \section{Data Files}

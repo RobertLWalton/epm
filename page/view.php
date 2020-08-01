@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 15:46:13 EDT 2020
+    // Date:	Sat Aug  1 16:50:15 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -34,7 +34,7 @@
     //	    listname=PROJECT:BASENAME
 
     $epm_page_type = '+view+';
-    $epm_page_init = true;
+    $epm_ID_init = true;
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
@@ -196,9 +196,9 @@ div.emails {
     float: left;
     margin-left: 3em;
 }
-div.emails pre {
+div.emails td {
     font-size: var(--large-font-size);
-    padding-left: var(--large-font-size);
+    padding: 2px;
 }
 div.changes {
     background-color: var(--bg-blue);
@@ -401,9 +401,8 @@ EOT;
     {
 	$info = read_info ( 'user', $user );
         $info_rows = info_to_rows ( $info );
-	$lines = emails_to_lines ( $info['emails'] );
-	$lines = preg_replace
-	    ( '/<pre>[^@]+@/', '<pre>...@', $lines );
+	$email_rows = emails_to_rows
+	    ( $info['emails'], $email, 'strip' );
 	$f = "admin/users/$user/+actions+";
 	$change_rows = actions_to_rows
 	    ( read_actions ( "$f" ), $non_others );
@@ -423,7 +422,9 @@ EOT;
 	<div class='emails'>
 	<strong>$user Emails:</strong>
 	<br>
-	$lines
+	<table class='indented'>
+	$email_rows
+	</table>
 	</div>
 
 	<div style='clear:both'></div>

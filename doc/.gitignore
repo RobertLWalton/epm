@@ -1,4 +1,5 @@
-epm.aux
-epm.idx
-epm.log
-epm.toc
+epm_*.aux
+epm_*.idx
+epm_*.log
+epm_*.toc
+epm_*.fls

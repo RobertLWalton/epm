@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jul 30 14:28:32 EDT 2020
+    // Date:	Sat Aug  1 16:49:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -62,7 +62,7 @@
     //     * reload
 
     $epm_page_type = '+main+';
-    $epm_page_init = true;
+    $epm_ID_init = true;
         // This causes index.php to require
 	// epm_random.php for GET but NOT for POST.
     require __DIR__ . '/index.php';
