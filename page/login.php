@@ -192,7 +192,7 @@
 	$stime = strtotime ( $STIME );
 	if ( $stime > $atime + $etimes[$m] )
 	{
-	    if ( $c != 'c' ) return true;
+	    if ( $t != 'c' ) return true;
 	    ++ $acount;
 	    $r = file_put_contents
 		( "$epm_data/$efile",
@@ -482,7 +482,7 @@ EOT;
 </td></tr></table>
 <br>
 <button type='button'
-        onclick="location.reload(true)">
+        onclick='location.assign("login.php")'>
 Change Login Name
 </button>
 </div>
@@ -540,7 +540,7 @@ function ALERT ( message )
 function FAIL ( message )
 {
     alert ( message );
-    location.reload();
+    location.assign("login.php");
 }
 
 var REQUEST_IN_PROGRESS = false;
