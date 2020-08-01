@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jul 21 11:36:50 EDT 2020
+// Date:	Thu Jul 30 16:18:00 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -270,7 +270,8 @@ if ( count ( $errors ) > 0 )
 echo "Run-File: $runfile" . PHP_EOL;
 $start_time = microtime ( true );
 echo "Start-Time: " .
-     strftime ( "%FT%T%z", intval ( $start_time ) ) .
+     strftime ( $epm_time_format,
+                intval ( $start_time ) ) .
      PHP_EOL;
 
 $lines = [];

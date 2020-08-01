@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:24:01 EDT 2020
+    // Date:	Fri Jul 31 18:33:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -324,7 +324,7 @@
 
     // Process file deletions for other posts.
     //
-    if ( isset ( $_POST['delete_files'] ) )
+    if ( $rw && isset ( $_POST['delete_files'] ) )
     {
 	$files = $_POST['delete_files'];
 	$files = explode ( ',', $files );
@@ -348,6 +348,51 @@
     // Process POST requests.
     //
     if ( $epm_method != 'POST' ) /* Do Nothing */;
+    // xhttp posts are first and are done if ! $rw
+    elseif ( isset ( $_POST['reload'] )
+             &&
+	     isset ( $work['BASE'] ) )
+    {
+	/* Do Nothing */
+    }
+    elseif ( isset ( $_POST['update'] ) )
+    {
+	$count = 0;
+	echo "ID $ID\n";
+	$r = update_work_results ( 0 );
+	if (    $r === true
+	     && $_POST['update'] == 'abort' )
+	{
+	    abort_dir ( $work['DIR'] );
+	    usleep ( 100000 ); // 0.1 second
+	    $r = update_work_results ( 0 );
+	}
+	while ( true )
+	{
+	    if ( $r !== true || $count == 10 )
+	    			// 5 seconds
+	    {
+	        echo "RELOAD\n";
+		exit;
+	    }
+	    usleep ( 500000 ); // 0.5 second
+	    $r = update_workmap();
+	    if ( count ( $r ) > 0 )
+	    {
+		$workmap = & $work['MAP'];
+	        foreach ( $r as $n )
+		{
+		    $e = $workmap[$n];
+		    echo "TIME $n {$e[2]}\n";
+		}
+		exit;
+	    }
+	    $count += 1;
+	    $r = update_work_results ( 0 );
+	}
+    }
+    elseif ( ! $rw )
+        /* Do Nothing */;
     elseif ( isset ( $_POST['delete_problem'] ) )
     {
 	$prob = $_POST['delete_problem'];
@@ -515,48 +560,6 @@ EOT;
 	    exit;
 	}
     }
-    elseif ( isset ( $_POST['reload'] )
-             &&
-	     isset ( $work['BASE'] ) )
-    {
-	/* Do Nothing */
-    }
-    elseif ( isset ( $_POST['update'] ) )
-    {
-	$count = 0;
-	echo "ID $ID\n";
-	$r = update_work_results ( 0 );
-	if (    $r === true
-	     && $_POST['update'] == 'abort' )
-	{
-	    abort_dir ( $work['DIR'] );
-	    usleep ( 100000 ); // 0.1 second
-	    $r = update_work_results ( 0 );
-	}
-	while ( true )
-	{
-	    if ( $r !== true || $count == 10 )
-	    			// 5 seconds
-	    {
-	        echo "RELOAD\n";
-		exit;
-	    }
-	    usleep ( 500000 ); // 0.5 second
-	    $r = update_workmap();
-	    if ( count ( $r ) > 0 )
-	    {
-		$workmap = & $work['MAP'];
-	        foreach ( $r as $n )
-		{
-		    $e = $workmap[$n];
-		    echo "TIME $n {$e[2]}\n";
-		}
-		exit;
-	    }
-	    $count += 1;
-	    $r = update_work_results ( 0 );
-	}
-    }
     elseif ( isset ( $_POST['delete_files'] ) )
     {
     	// Work was done above.
@@ -704,7 +707,7 @@ EOT;
 	</form></div>
 EOT;
     }
-    else if ( $make_ftest )
+    else if ( isset ( $make_ftest ) )
     {
         $fout = pathinfo ( $make_ftest,
 	                   PATHINFO_FILENAME )
@@ -761,17 +764,23 @@ EOT;
 
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$problem</pre></b>
-    <form action='problem.php' method='POST'>
-    <input type='hidden'
-	   name= 'problem' value='$problem'>
-    <input type='hidden' name='id' value='$ID'>
-    <button type='submit'
-	    name='delete_problem'
-	    value='$problem'
-	    title='Delete Current Problem'>
-    Delete</button>
-    </form>
+EOT;
 
+    if ( $rw )
+        echo <<<EOT
+	<form action='problem.php' method='POST'>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
+	<input type='hidden' name='id' value='$ID'>
+	<button type='submit'
+		name='delete_problem'
+		value='$problem'
+		title='Delete Current Problem'>
+	Delete</button>
+	</form>
+EOT;
+
+    echo <<<EOT
     </td><td>
     <button type='button'
 	    onclick='VIEW("downloads/index.html")'>
@@ -1002,40 +1011,48 @@ EOT;
 	    </button>
     <strong>Current Problem Files
 	(most recent first):</strong>
-    </td><td>
-    <form action='problem.php' method='POST'
-	  enctype='multipart/form-data'
-	  id='upload-form'>
-    <input type='hidden'
-	   name= 'problem' value='$problem'>
-    <input type='hidden' name='id' value='$ID'>
-    <label>
-    <strong>Upload a File:</strong>
-    <input type='hidden' name='MAX_FILE_SIZE'
-	   value='$epm_upload_maxsize'>
-    <input type='hidden' name='delete_files' value=''>
-    <input type='hidden' name='upload' value='yes'>
-    <input type='file' name='uploaded_file'
-	   onchange='document.getElementById
-		      ( "upload-form" ).submit()'
-	   title='File to Upload'>
-    </label>
-    </form>
-    <pre>    </pre>
-    <form action='problem.php' method='POST'>
-    <input type='hidden'
-	   name= 'problem' value='$problem'>
-    <input type='hidden' name='id' value='$ID'>
-    <input type='hidden' name='delete_files' value=''>
-    <input type="submit" name="execute_deletes"
-	   value=
-	     "Delete Over-Struck Files">
-    </form>
-    </td><td style='text-align:right'>
-    <button type='button'
-            onclick='HELP("problem-marks")'>
-	?</button>
     </td>
+EOT;
+    if ( $rw )
+        echo <<<EOT
+	<td>
+	<form action='problem.php' method='POST'
+	      enctype='multipart/form-data'
+	      id='upload-form'>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
+	<input type='hidden' name='id' value='$ID'>
+	<label>
+	<strong>Upload a File:</strong>
+	<input type='hidden' name='MAX_FILE_SIZE'
+	       value='$epm_upload_maxsize'>
+	<input type='hidden'
+	       name='delete_files' value=''>
+	<input type='hidden' name='upload' value='yes'>
+	<input type='file' name='uploaded_file'
+	       onchange='document.getElementById
+			  ( "upload-form" ).submit()'
+	       title='File to Upload'>
+	</label>
+	</form>
+	<pre>    </pre>
+	<form action='problem.php' method='POST'>
+	<input type='hidden'
+	       name= 'problem' value='$problem'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden'
+	       name='delete_files' value=''>
+	<input type="submit" name="execute_deletes"
+	       value=
+		 "Delete Over-Struck Files">
+	</form>
+	</td><td style='text-align:right'>
+	<button type='button'
+		onclick='HELP("problem-marks")'>
+	    ?</button>
+	</td>
+EOT;
+    echo <<<EOT
     </tr>
     </table>
     <div id='problems_body'>
@@ -1110,7 +1127,8 @@ EOT;
 	else
 	    echo "<td></td>";
 
-	echo <<<EOT
+	if ( $rw )
+	    echo <<<EOT
 	    <td><button type='button'
 		 id='button$count'
 		 onclick='TOGGLE_DELETE
@@ -1118,9 +1136,13 @@ EOT;
 		 title='Mark $fname For Deletion'>
 	    <pre id='mark$count'>&Chi;</pre>
 	    </button></td>
-	    <td colspan='100'>
 EOT;
-	if ( $flinkable )
+        echo <<<EOT
+	<td colspan='100'>
+EOT;
+	if ( ! $rw )
+	    /* Do Nothing */;
+	elseif ( $flinkable )
 	{
 	    $ext = ( $fext != '' ? ".$fext" : $fext );
 	    $base = pathinfo
@@ -1256,7 +1278,7 @@ EOT;
     {
 	alert ( message );
 	window.close();
-	location.assign ( '/page/illegal.html' );
+	location.assign ( 'illegal.html' );
     }
 
     let reload = document.getElementById("reload");

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 14:57:08 EDT 2020
+    // Date:	Thu Jul 30 14:28:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -64,7 +64,7 @@
     $epm_page_type = '+main+';
     $epm_page_init = true;
         // This causes index.php to require
-	// epm_random.php.
+	// epm_random.php for GET but NOT for POST.
     require __DIR__ . '/index.php';
     // require "$epm_home/include/debug_info.php";
 
@@ -85,7 +85,10 @@
 	    $_SERVER['REMOTE_ADDR'];
     }
     else
+    {
+        require "$epm_home/include/epm_random.php";
 	DEBUG ( 'POST ' . json_encode ( $_POST ) );
+    }
 
     // Values read from EMAIL-FILE if that exists and
     // has been read.
@@ -298,8 +301,8 @@
 	    if ( ! preg_match ( $epm_name_re,
 	                        $tid ) )
 		reply ( 'BAD_TID' );
-	    $f = "admin/users/$tid/+read-write+";
-	    if ( ! is_readable ( "$epm_data/$f" ) )
+	    $dir = "admin/teams/$tid";
+	    if ( ! is_dir ( "$epm_data/$dir" ) )
 	        reply ( 'NO_TEAM' );
 	    read_email_file ( 'a', $email );
 	    if ( ! isset ( $uid ) )
@@ -336,12 +339,11 @@
 
 	if ( $tid != '-' )
 	{
-	    $f = "admin/users/$tid/+read-write+";
-	    if ( ! is_readable ( "$epm_data/$f" ) )
+	    $dir = "admin/teams/$tid";
+	    if ( ! is_dir ( "$epm_data/$dir" ) )
 	        reply ( 'NO_TEAM' );
 	    if ( ! isset ( $uid ) )
 	        reply ( 'NO_USER' );
-	    $dir = "admin/teams/$tid";
 	    if ( ! is_readable
 	               ( "$epm_data/$dir/$uid.login" ) )
 	        reply ( 'USER_NOT_ON_TEAM' );
@@ -361,6 +363,7 @@
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_EMAIL'] = $email;
+	$_SESSION['EPM_RW'] = ( $tid == '-' );
 
 	$log = "$dir/$uid.login";
 	$IPADDR = $_SESSION['EPM_IPADDR'];
@@ -540,7 +543,7 @@ function ALERT ( message )
 function FAIL ( message )
 {
     alert ( message );
-    location.assign("login.php");
+    location.assign ( 'login.php' );
 }
 
 var REQUEST_IN_PROGRESS = false;

@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:21:10 EDT 2020
+    // Date:	Fri Jul 31 14:36:20 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -73,14 +73,17 @@
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
 
-    if ( $epm_method == 'POST' )
+    if ( $epm_method != 'POST' )
+        /* Do Nothing */;
+    elseif ( isset ( $_POST['rw'] ) )
+	require "$epm_home/include/epm_rw.php";
+    elseif ( !isset ( $_POST['op'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( !isset ( $_POST['indices'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( $rw )
     {
-        if ( !isset ( $_POST['op'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-        if ( !isset ( $_POST['indices'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-
-        $op = $_POST['op'];
+	$op = $_POST['op'];
 	if ( ! in_array ( $op, ['save','reset'],
 			       true ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
@@ -92,7 +95,7 @@
 	    $flist = [];
 	    $indices = $_POST['indices'];
 	    $favs = ( $indices == '' ? [] :
-	              explode ( ':', $indices ) );
+		      explode ( ':', $indices ) );
 	    foreach ( $favs as $index )
 	    {
 		if ( $index == '' ) continue;
@@ -169,7 +172,10 @@
 	    $time = @filemtime
 	        ( "$epm_data/$d/$fname" );
 	    if ( $time === false )
-		ERROR ( "cannot stat $d/$fname" );
+	    {
+		WARN ( "dangling link $d/$fname" );
+		continue;
+	    }
 	    $inmap["$account:$basename"] =
 	        strftime ( $epm_time_format, $time );
 	}
@@ -287,7 +293,7 @@ var LOG = function(message) {};
     <table style='width:100%'>
 
     <tr id='not-edited' style='width:100%'>
-    <form method='GET'>
+    <form method='GET' action='favorites.php'>
     <td>
     <input type='hidden' name='id' value='$ID'>
     <label>
@@ -307,14 +313,15 @@ var LOG = function(message) {};
     </button>
     <strong>Page</strong>
     </td>
-    </form>
     </td>
     <td>
     </td><td style='text-align:right'>
+    $RW_BUTTON
     <button type='button'
             onclick='HELP("favorites-page")'>
 	?</button>
     </td>
+    </form>
     </tr>
 
     <tr id='edited' style='width:100%;display:none'>
@@ -408,138 +415,164 @@ EOT;
     echo <<<EOT
     </div>
 
-    <script>
+EOT;
 
-    let edited = document.getElementById ( 'edited' );
-    let not_edited = document.getElementById
-	( 'not-edited' );
-    let lists = document.getElementById ( 'lists' );
-    let off = 'white';
-    let on = 'black';
+    if ( $rw )
+        echo <<<EOT
 
-    let submit_form = document.getElementById
-	( 'submit-form' );
-    let op_in = document.getElementById ( 'op' );
-    let indices_in = document.getElementById
-        ( 'indices' );
+	<script>
+	let edited = document.getElementById
+	    ( 'edited' );
+	let not_edited = document.getElementById
+	    ( 'not-edited' );
+	let lists = document.getElementById ( 'lists' );
+	let off = 'white';
+	let on = 'black';
 
-function BOX ( div )
-    {
-	let table = div.firstElementChild;
-	let tbody = table.firstElementChild;
-	let tr = tbody.firstElementChild;
-	let td = tr.firstElementChild;
-	let checkbox = td.firstElementChild;
-	return checkbox;
-    }
+	let submit_form = document.getElementById
+	    ( 'submit-form' );
+	let op_in = document.getElementById ( 'op' );
+	let indices_in = document.getElementById
+	    ( 'indices' );
 
-    function DRAGSTART ( event, c )
-    {
-        event.dataTransfer.setData ( "id", c );
-    }
-    function ALLOWDROP ( event )
-    {
-        event.preventDefault();
-    }
-    function DROP ( event )
-    {
-        event.preventDefault();
-	id = event.dataTransfer.getData ( "id" );
-	let des = event.currentTarget;
-	let src = document.getElementById ( id );
-	let src_box = BOX ( src );
-	let div = des.parentElement;
-
-	let next = des.nextElementSibling;
-	if ( next == null )
+	function BOX ( div )
 	{
-	    div.appendChild ( src );
-	    if ( des != div.firstElementChild
-		 &&
-		 BOX(des).style.backgroundColor != on )
-		src_box.style.backgroundColor = off;
-	    }
-	else
-	{
-	    div.insertBefore ( src, next );
-	    if ( BOX(next).style.backgroundColor == on )
-		src_box.style.backgroundColor = on;
-	    else if ( des != div.firstElementChild
-		      &&
-			 BOX(des).style.backgroundColor
-		      != on )
-		src_box.style.backgroundColor = off;
+	    let table = div.firstElementChild;
+	    let tbody = table.firstElementChild;
+	    let tr = tbody.firstElementChild;
+	    let td = tr.firstElementChild;
+	    let checkbox = td.firstElementChild;
+	    return checkbox;
 	}
-	edited.style.display = 'table-row';
-	not_edited.style.display = 'none';
-    }
 
-    function CHECK ( event, c )
-    {
-        event.preventDefault();
-	let checkbox = event.currentTarget;
-	let src = document.getElementById ( c );
-	let div = src.parentElement;
-
-	if ( checkbox.style.backgroundColor == on )
+	function DRAGSTART ( event, c )
 	{
-	    checkbox.style.backgroundColor = off;
-	    var next = src.nextElementSibling;
-	    while ( next != null
-		    &&
-		       BOX(next).style.backgroundColor
-		    == on )
-		next = next.nextElementSibling;
-	    if ( next != src.nextElementSibling )
+	    event.dataTransfer.setData ( "id", c );
+	}
+	function ALLOWDROP ( event )
+	{
+	    event.preventDefault();
+	}
+	function DROP ( event )
+	{
+	    event.preventDefault();
+	    id = event.dataTransfer.getData ( "id" );
+	    let des = event.currentTarget;
+	    let src = document.getElementById ( id );
+	    let src_box = BOX ( src );
+	    let div = des.parentElement;
+
+	    let next = des.nextElementSibling;
+	    if ( next == null )
 	    {
-		if ( next == null )
-		    div.appendChild ( src );
-		else
-		    div.insertBefore ( src, next );
-	    }
-	}
-	else
-	{
-	    checkbox.style.backgroundColor = on;
-	    var previous = src.previousElementSibling;
-	    while ( previous != div.firstElementChild
-		    &&
-		       BOX(previous).style
-		                    .backgroundColor
-		    != on )
-		previous =
-		    previous.previousElementSibling;
-	    if (    previous
-	         != src.previousElementSibling )
-	    {
-		let next = previous.nextElementSibling;
-		div.insertBefore ( src, next );
-	    }
-	}
-
-	edited.style.display = 'table-row';
-	not_edited.style.display = 'none';
-    }
-
-    function SUBMIT ( op )
-    {
-	var list = [];
-	for ( var i = 1; i < lists.children.length;
-	                 ++ i )
-	{
-	    let div = lists.children[i];
-	    let color = BOX(div).style.backgroundColor;
-	    if ( color == on )
-	        list.push ( div.id );
+		div.appendChild ( src );
+		if ( des != div.firstElementChild
+		     &&
+		        BOX(des).style.backgroundColor
+		     != on )
+		    src_box.style.backgroundColor = off;
+		}
 	    else
-	        break;
+	    {
+		div.insertBefore ( src, next );
+		if (    BOX(next).style.backgroundColor
+		     == on )
+		    src_box.style.backgroundColor = on;
+		else if ( des != div.firstElementChild
+			  &&
+			     BOX(des).style
+			             .backgroundColor
+			  != on )
+		    src_box.style.backgroundColor = off;
+	    }
+	    edited.style.display = 'table-row';
+	    not_edited.style.display = 'none';
 	}
-	indices_in.value = list.join ( ':' );
-        op_in.value = op;
-	submit_form.submit();
-    }
 
-    </script>
+	function CHECK ( event, c )
+	{
+	    event.preventDefault();
+	    let checkbox = event.currentTarget;
+	    let src = document.getElementById ( c );
+	    let div = src.parentElement;
+
+	    if ( checkbox.style.backgroundColor == on )
+	    {
+		checkbox.style.backgroundColor = off;
+		var next = src.nextElementSibling;
+		while ( next != null
+			&&
+			   BOX(next).style
+			            .backgroundColor
+			== on )
+		    next = next.nextElementSibling;
+		if ( next != src.nextElementSibling )
+		{
+		    if ( next == null )
+			div.appendChild ( src );
+		    else
+			div.insertBefore ( src, next );
+		}
+	    }
+	    else
+	    {
+		checkbox.style.backgroundColor = on;
+		var previous =
+		    src.previousElementSibling;
+		while (    previous
+		        != div.firstElementChild
+			&&
+			   BOX(previous).style
+					.backgroundColor
+			!= on )
+		    previous =
+			previous.previousElementSibling;
+		if (    previous
+		     != src.previousElementSibling )
+		{
+		    let next =
+		        previous.nextElementSibling;
+		    div.insertBefore ( src, next );
+		}
+	    }
+
+	    edited.style.display = 'table-row';
+	    not_edited.style.display = 'none';
+	}
+
+	function SUBMIT ( op )
+	{
+	    var list = [];
+	    for ( var i = 1; i < lists.children.length;
+			     ++ i )
+	    {
+		let div = lists.children[i];
+		let color =
+		    BOX(div).style.backgroundColor;
+		if ( color == on )
+		    list.push ( div.id );
+		else
+		    break;
+	    }
+	    indices_in.value = list.join ( ':' );
+	    op_in.value = op;
+	    submit_form.submit();
+	}
+
+	</script>
+EOT;
+    else
+        echo <<<EOT
+	<script>
+	function DRAGSTART ( event, c )
+	{
+	    event.preventDefault();
+	}
+	function ALLOWDROP ( event ) {}
+	function DROP ( event ) {}
+	function CHECK ( event, c ) {}
+	function SUBMIT ( op ) {}
+	</script>
 EOT;
 
 ?>

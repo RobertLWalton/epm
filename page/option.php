@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:23:30 EDT 2020
+    // Date:	Fri Jul 31 21:01:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -124,7 +124,9 @@
     // $problem.optn.  If there are errors $optmap, is
     // reset to $defaults and editing begins anew.
 
-    if ( isset ( $_POST['edit'] ) )
+    if ( ! $rw )
+        /* Do Nothing */;
+    elseif ( isset ( $_POST['edit'] ) )
         $edit = true;
     elseif ( isset ( $_POST['update'] ) )
     {
@@ -376,40 +378,49 @@ EOT;
     </td>
     </table>
     </div>
+EOT;
 
-    <form action='option.php' method='POST'
-          onkeydown='return event.key != "Enter"'>
-	  <!-- onkeydown keeps text area enter key
-	       from triggering submit -->
-    <!-- This form lasts till the end of the
-         document -->
-    <input type='hidden'
-           name='problem' value='$problem'>
-    <input type='hidden' name='id' value='$ID'>
-    <div class='center manage'>
+    if ( $rw )
+    {
+
+	echo <<<EOT
+	<form action='option.php' method='POST'
+	      onkeydown='return event.key != "Enter"'>
+	      <!-- onkeydown keeps text area enter key
+		   from triggering submit -->
+	<!-- This form lasts till the end of the
+	     document -->
+	<input type='hidden'
+	       name='problem' value='$problem'>
+	<input type='hidden' name='id' value='$ID'>
 EOT;
-    if ( $edit )
-        echo <<<EOT
-	<button type='submit'
-	        name='update' value='update'>
-	    Update Options</button>
-	<pre>    </pre>
-        <button type='submit'
-	        name='cancel' value='cancel'>
-	    Cancel Edit</button>
-	<pre>    </pre>
-        <button type='submit'
-	        name='reset-all' value='reset-all'>
-	    Reset All to Inherited Values</button>
+	if ( $edit )
+	    echo <<<EOT
+	    <div class='center manage'>
+	    <button type='submit'
+		    name='update' value='update'>
+		Update Options</button>
+	    <pre>    </pre>
+	    <button type='submit'
+		    name='cancel' value='cancel'>
+		Cancel Edit</button>
+	    <pre>    </pre>
+	    <button type='submit'
+		    name='reset-all' value='reset-all'>
+		Reset All to Inherited Values</button>
+	    </div>
 EOT;
-    else
-        echo <<<EOT
-	<button type='submit' name='edit'
-	        value='edit'>Edit Options</button>
+	else
+	    echo <<<EOT
+	    <div class='center manage'>
+	    <button type='submit' name='edit'
+		    value='edit'>Edit Options</button>
+	    </div>
 EOT;
+
+    }
 
     echo <<<EOT
-    </div>
     <div class='values'>
     <table style='width:100%'><tr>
     <td>

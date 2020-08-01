@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:22:51 EDT 2020
+    // Date:	Fri Jul 31 17:34:53 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -102,6 +102,7 @@
     require "$epm_home/include/debug_info.php";
 
     $aid = $_SESSION['EPM_AID'];
+    $uid = $_SESSION['EPM_UID'];
     $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
@@ -152,7 +153,9 @@
 
     if ( $epm_method == 'POST' )
     {
-        if ( isset ( $_POST['listname'] ) )
+	if ( isset ( $_POST['rw'] ) )
+	    require "$epm_home/include/epm_rw.php";
+        elseif ( isset ( $_POST['listname'] ) )
 	{
 	    $new_listname = $_POST['listname'];
 	    list ( $proj, $basename ) =
@@ -229,6 +232,57 @@
 		$problem = $prob;
 	    }
 	}
+        elseif ( isset ( $_POST['download'] ) )
+	{
+	    if ( ! isset ( $problem )
+	         &&
+		 ! isset ( $project ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    if ( ! isset ( $problem ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    $d = NULL;
+	    if ( isset ( $project ) )
+	    {
+		problem_priv_map
+		    ( $pmap, $project, $problem ); 
+		if ( ! isset ( $pmap['re-push'] )
+		     ||
+		     $pmap['re-push'] != '+' )
+		    $errors[] = "you do not have"
+		              . " re-push privilege"
+			      . " on $project $problem";
+		else
+		{
+		    $d = "projects/$project/$problem";
+		    $n = "$project-$problem";
+		}
+	    }
+	    else
+	    {
+		$d = "accounts/$aid/$problem";
+		$n = $problem;
+	    }
+
+	    if ( isset ( $d ) )
+	    {
+		$e = "../../../accounts/$aid";
+		$c = "cd $epm_data/$d;"
+		   . "rm -f $e/+download-$uid+;"
+		   . "tar zcf $e/+download-$uid+ .;";
+		exec ( $c, $forget, $r );
+		if ( $r != 0 )
+		    $errors[] =
+		        "could not create $n.tgz";
+		else
+		    $download = "$n.tgz";
+	    }
+	}
+	elseif ( ! $rw )
+	    /* Do Nothing */;
+	    // From this point on posts are ignored if
+	    // $rw is false.
         elseif ( isset ( $_POST['warning'] )
 	         &&
 		 $_POST['warning'] == 'no' )
@@ -374,53 +428,6 @@
 	    else
 	        $move_warn = $proj;
 	}
-        elseif ( isset ( $_POST['download'] ) )
-	{
-	    if ( ! isset ( $problem )
-	         &&
-		 ! isset ( $project ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-
-	    if ( ! isset ( $problem ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-
-	    $d = NULL;
-	    if ( isset ( $project ) )
-	    {
-		problem_priv_map
-		    ( $pmap, $project, $problem ); 
-		if ( ! isset ( $pmap['re-push'] )
-		     ||
-		     $pmap['re-push'] != '+' )
-		    $errors[] = "you do not have"
-		              . " re-push privilege"
-			      . " on $project $problem";
-		else
-		{
-		    $d = "projects/$project/$problem";
-		    $n = "$project-$problem";
-		}
-	    }
-	    else
-	    {
-		$d = "accounts/$aid/$problem";
-		$n = $problem;
-	    }
-
-	    if ( isset ( $d ) )
-	    {
-		$e = "../../../accounts/$aid";
-		$c = "cd $epm_data/$d;"
-		   . "rm -f $e/+download+;"
-		   . "tar zcf $e/+download+ .;";
-		exec ( $c, $forget, $r );
-		if ( $r != 0 )
-		    $errors[] =
-		        "could not create $n.tgz";
-		else
-		    $download = "$n.tgz";
-	    }
-	}
 
 	else
 	    exit ( 'UNACCEPTABLE HTTP POST' );
@@ -548,7 +555,7 @@ EOT;
     <strong>This Page is Under Construction.</strong>
     </div>
     <div class='manage'>
-    <form method='GET'>
+    <form method='GET' action='manage.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
     <tr>
@@ -573,6 +580,7 @@ EOT;
     <strong>Page</strong>
     </td>
     <td style='text-align:right'>
+    $RW_BUTTON
     <button type='button'
             onclick='HELP("manage-page")'>
 	?</button>
@@ -638,7 +646,8 @@ EOT;
     </select></form>
 EOT;
 
-    if ( isset ( $project ) && isset ( $problem ) )
+    if ( $rw && isset ( $project )
+             && isset ( $problem ) )
         echo <<<EOT
 	<strong>or Move Problem to Project</strong>
 	<form method='POST' action='manage.php'
@@ -691,7 +700,9 @@ EOT;
 	</div>
 EOT;
         problem_priv_map ( $pmap, $project, $problem ); 
-	if ( isset ( $pmap['owner'] )
+	if ( $rw
+	     &&
+	     isset ( $pmap['owner'] )
 	     &&
 	     $pmap['owner'] == '+' )
 	{
@@ -744,7 +755,9 @@ EOT;
 EOT;
         project_priv_map ( $pmap, $project ); 
 
-	if ( isset ( $pmap['owner'] )
+	if ( $rw
+	     &&
+	     isset ( $pmap['owner'] )
 	     &&
 	     $pmap['owner'] == '+'
 	     &&

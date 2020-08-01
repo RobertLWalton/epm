@@ -2,7 +2,7 @@
 
     // File:	download.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:20:44 EDT 2020
+    // Date:	Fri Jul 31 17:55:46 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -21,6 +21,7 @@
     // exit;  // Must exit after printing debug stuff.
 
     $aid = $_SESSION['EPM_AID'];
+    $uid = $_SESSION['EPM_UID'];
 
     if ( ! isset ( $_GET['content-type'] ) )
         exit ( "UNACCEPTABLE HTTP $epm_method" );
@@ -29,7 +30,7 @@
     $content_type = $_GET['content-type'];
     $filename = $_GET['filename'];
 
-    $f = "$epm_data/accounts/$aid/+download+";
+    $f = "$epm_data/accounts/$aid/+download-$uid+";
     $filesize = @filesize ( $f );
     if ( $filesize === false )
         exit ( "UNACCEPTABLE HTTP $epm_method" );

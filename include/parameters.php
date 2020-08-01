@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jul 19 17:27:23 EDT 2020
+// Date:    Thu Jul 30 16:14:07 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -54,6 +54,9 @@ $epm_session_name = "EPM_859036254367";
     // Reset 12 digit number to NON-PUBLIC, SITE-
     // SPECIFIC 12 digit random number.
 
+date_default_timezone_set ( 'America/New_York' );
+    // Timezone used for $epm_time_format (see below).
+
 $epm_check_ipaddr = true;
     // If true a session is not allowed to change its
     // IP address.  Set to true if server is not a
@@ -104,7 +107,7 @@ $epm_shell_timeout = 3;
     // startup and execute initialization commands
     // for a .sh script.
 
-$epm_time_format = "%FT%T%z";
+$epm_time_format = "%FT%T%Z";
     // Format for times, as per strftime.
 
 $epm_name_re =

@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:26:14 EDT 2020
+    // Date:	Fri Jul 31 13:22:08 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -720,7 +720,8 @@ EOT;
 	}
 
 	$changes = "Changes to Push $aid $problem to"
-	         . " $project $problem by $aid ("
+	         . " $project $problem" . PHP_EOL
+		 . "    by $aid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
@@ -738,8 +739,11 @@ EOT;
 	                   '02770'];
 	    $commands[] = ['mkdir', "$desdir/+submits+",
 	                            '02770'];
-	    $changes .= "  give $aid all privileges for"
-	              . " $project $problem directory"
+	    $changes .= "  give $aid owner privilege"
+	              . " for $project $problem"
+		      . PHP_EOL;
+	    $changes .= "  give $aid re-push privilege"
+	              . " for $project $problem"
 		      . PHP_EOL;
 	    $commands[] = ['append', "$desdir/+priv+",
 	                             $new_push_privs];
@@ -808,7 +812,7 @@ EOT;
 		    // This will also move a link.
 	    $changes .=
 	        "  link $fname in $aid $problem to" .
-	        " $fname in $project $problem$s" .
+	        " $project $problem$s" .
 		PHP_EOL;
 	    $commands[] = ['link',
 	                   "+parent+/$t",
@@ -937,7 +941,8 @@ EOT;
 	$new_pull = ! is_dir ( "$epm_data/$desdir" );
 
 	$changes = "Changes to Pull $aid $problem from"
-	         . " $project $problem by $aid ("
+	         . " $project $problem" . PHP_EOL
+		 . "    by $aid ("
 	         . strftime ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
@@ -1006,7 +1011,7 @@ EOT;
 
 	    $changes .=
 	        "  link $fname in $aid $problem to" .
-	        " $fname in $project $problem$s" .
+	        " $project $problem$s" .
 		PHP_EOL;
 	    $commands[] = ['link',
 	                   "+parent+/$t",
@@ -1289,7 +1294,12 @@ EOT;
 
     if ( $epm_method == 'POST' )
     {
-        if ( isset ( $_POST['listname'] ) )
+	if ( isset ( $_POST['rw'] ) )
+	{
+	    require "$epm_home/include/epm_rw.php";
+	    $op = NULL;
+	}
+        elseif ( isset ( $_POST['listname'] ) )
 	{
 	    if ( isset ( $op ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -1298,20 +1308,6 @@ EOT;
 	         === NULL )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $listname = $new_listname;
-	}
-        elseif ( isset ( $_POST['op'] ) )
-	{
-	    $new_op = $_POST['op'];
-	    if ( ! in_array
-	               ( $new_op, ['push','pull'],
-		                  true ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( ! isset ( $listname ) )
-	        $errors[] = "you must select problem"
-		          . " list BEFORE you push or"
-			  . " pull";
-	    else
-		$op = $new_op;
 	}
         elseif ( isset ( $_POST['goto'] ) )
 	{
@@ -1332,6 +1328,24 @@ EOT;
 		else
 		    $goto = $problem;
 	    }
+	}
+	elseif ( ! $rw )
+	    $op = NULL;
+	// From here on we are processing posts
+	// that can only occur if $rw is true.
+        elseif ( isset ( $_POST['op'] ) )
+	{
+	    $new_op = $_POST['op'];
+	    if ( ! in_array
+	               ( $new_op, ['push','pull'],
+		                  true ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( ! isset ( $listname ) )
+	        $errors[] = "you must select problem"
+		          . " list BEFORE you push or"
+			  . " pull";
+	    else
+		$op = $new_op;
 	}
         elseif ( isset ( $_POST['create'] ) )
 	{
@@ -1754,7 +1768,7 @@ EOT;
     $display = ( isset ( $op ) ? 'none' : 'table-row' );
     echo <<<EOT
     <div class='manage'>
-    <form method='GET'>
+    <form method='GET' action='project.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
 
@@ -1791,6 +1805,7 @@ EOT;
     <strong>Page</strong>
     </td>
     <td style='text-align:right'>
+    $RW_BUTTON
     <button type='button'
             onclick='HELP("project-page")'>
 	?</button>
@@ -1843,24 +1858,34 @@ EOT;
 			    ("listname-form").submit()'>
 	$listname_options
 	</select></form>
-	<strong>then</strong>
-	<form method='POST'>
-	<input type='hidden' name='id' value='$ID'>
-	<button type='submit' name='op' value='push'
-	        title='$push_title'>
-	Push
-	</button>
-	<strong>or</strong>
-	<button type='submit' name='op' value='pull'
-	        title='$pull_title'>
-	Pull
-	</button>
-	</form>
+EOT;
+	if ( $rw )
+	    echo <<<EOT
+	    <strong>then</strong>
+	    <form method='POST'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <button type='submit' name='op' value='push'
+		    title='$push_title'>
+	    Push
+	    </button>
+	    <strong>or</strong>
+	    <button type='submit' name='op' value='pull'
+		    title='$pull_title'>
+	    Pull
+	    </button>
+	    </form>
 EOT;
 	if ( isset ( $listname ) )
 	{
-	    echo <<<EOT
-	    <strong>or Create Tab for Problem:</strong>
+	    if ( $rw )
+		echo <<<EOT
+		<strong>or Create Tab for Problem:
+		        </strong>
+EOT;
+	    else
+		echo <<<EOT
+		<strong>and Create Tab for Problem:
+		        </strong>
 EOT;
 	    if ( $problem_options != '' ) echo <<<EOT
 	    <form method='POST' action='project.php'
@@ -1878,18 +1903,19 @@ EOT;
 	          <mark>Your</mark> problems
 EOT;
         }
-	echo <<<EOT
-	<br>
-	<strong>or Create New Problem:</strong>
-	<form method='POST' action='project.php'
-	      id='create-form'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type="text" size="32"
-	       placeholder="New Problem Name"
-	       title="New Problem Name"
-	       name='create'
-	       onkeydown='KEYDOWN("create-form")'>
-	</form>
+	if ( $rw )
+	    echo <<<EOT
+	    <br>
+	    <strong>or Create New Problem:</strong>
+	    <form method='POST' action='project.php'
+		  id='create-form'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type="text" size="32"
+		   placeholder="New Problem Name"
+		   title="New Problem Name"
+		   name='create'
+		   onkeydown='KEYDOWN("create-form")'>
+	    </form>
 EOT;
     }
     echo <<<EOT

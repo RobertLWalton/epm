@@ -2,7 +2,7 @@
 
     // File:	pdf_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:23:45 EDT 2020
+    // Date:	Wed Jul 29 21:06:32 EDT 2020
 
     // The authors have this file in the public domain;
     // they make no warranty and accept no liability for
@@ -13,8 +13,7 @@
     // problem directory or a temporary in its
     // +work+ subdirectory.
 
-    $epm_page_type = '+init+';
-    $epm_pdf = true;
+    $epm_page_type = '+download+';
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";

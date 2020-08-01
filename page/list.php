@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:22:19 EDT 2020
+    // Date:	Fri Jul 31 14:55:52 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -326,22 +326,26 @@ EOT;
 	    return ( "-:$fbase" );
     }
 
-    if ( $epm_method == 'POST' )
+    if ( $epm_method != 'POST' )
+        /* Do Nothing */;
+    elseif ( isset ( $_POST['rw'] ) )
+	require "$epm_home/include/epm_rw.php";
+    elseif ( ! isset ( $_POST['op'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( ! isset ( $_POST['indices'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( ! isset ( $_POST['lengths'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( ! isset ( $_POST['list'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+    elseif ( $rw || $_POST['op'] == 'select' )
     {
-        if ( ! isset ( $_POST['op'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-        if ( ! isset ( $_POST['indices'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-        if ( ! isset ( $_POST['lengths'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-        if ( ! isset ( $_POST['list'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$op = $_POST['op'];
 	if ( ! in_array ( $op, ['save','finish','reset',
 	                        'cancel','delete',
 				'select','new',
 				'dsc', 'publish',
-				'unpublish'], true ) )
+				'unpublish'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$J = $_POST['list'];
 	if ( ! in_array ( $J, [0,1] ) )
@@ -607,7 +611,7 @@ EOT;
 
     echo <<<EOT
     <div class='manage'>
-    <form method='GET'>
+    <form method='GET' action='list.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
 
@@ -631,6 +635,7 @@ EOT;
     </td>
     <td>
     </td><td style='text-align:right'>
+    $RW_BUTTON
     <button type='button'
             onclick='HELP("list-page")'>
 	?</button>
@@ -707,7 +712,19 @@ EOT;
 	<div class='list$J'>
 EOT;
 
-	if ( $writable == 'no' )
+	if ( ! $rw )
+	    echo <<<EOT
+	    <div class='read-only-header list-header'>
+
+	    <strong>Select List to Edit:</strong>
+	    <select title='New Problem List to Edit'
+		   onchange='SELECT_LIST("$J")'>
+	    <option value=''>No List Selected</option>
+	    $options
+	    </select>
+	    </div>
+EOT;
+	elseif ( $writable == 'no' )
 	    echo <<<EOT
 	    <div class='read-only-header list-header'>
 
@@ -728,7 +745,7 @@ EOT;
 	    </select>
 	    </div>
 EOT;
-	if ( $writable == 'yes' )
+	elseif ( $writable == 'yes' )
 	{
 	    echo <<<EOT
 	    <div id='write-header-$J'
@@ -834,268 +851,298 @@ EOT;
     </script>
 EOT;
 
-?>
-
-<script>
-function DELETE ( J )
-{
-    let write_header = document.getElementById
-        ( "write-header-" + J );
-    let delete_header = document.getElementById
-        ( "delete-header-" + J );
-    write_header.style.display = 'none';
-    delete_header.style.display = 'block';
-}
-function DELETE_NO ( J )
-{
-    let write_header = document.getElementById
-        ( "write-header-" + J );
-    let delete_header = document.getElementById
-        ( "delete-header-" + J );
-    write_header.style.display = 'block';
-    delete_header.style.display = 'none';
-}
-
-let edited = document.getElementById ( 'edited' );
-let not_edited = document.getElementById
-    ( 'not-edited' );
-let submit_form = document.getElementById
-    ( 'submit-form' );
-let op_in = document.getElementById ( 'op' );
-let list_in = document.getElementById ( 'list' );
-let lengths_in = document.getElementById ( 'lengths' );
-let indices_in = document.getElementById ( 'indices' );
-let name_in = document.getElementById ( 'name' );
-
-let on = 'black';
-let off = 'white';
-
-function BOX ( table )
-{
-    let tbody = table.firstElementChild;
-    let tr = tbody.firstElementChild;
-    let td = tr.firstElementChild;
-    let checkbox = td.firstElementChild;
-    return checkbox;
-}
-
-for ( var J = 0; J <= 1; ++ J )
-{
-    let list = document.getElementById ( 'list' + J );
-    let first = list.firstElementChild;
-    var next = first.nextElementSibling;
-    for ( I = 0; I < lengths[J]; ++ I )
+    echo <<<EOT
+    <script>
+    function DELETE ( J )
     {
-	if ( next == null ) break;
-	BOX(next).style.backgroundColor = on;
-	next = next.nextElementSibling;
+	let write_header = document.getElementById
+	    ( "write-header-" + J );
+	let delete_header = document.getElementById
+	    ( "delete-header-" + J );
+	write_header.style.display = 'none';
+	delete_header.style.display = 'block';
     }
-}
+    function DELETE_NO ( J )
+    {
+	let write_header = document.getElementById
+	    ( "write-header-" + J );
+	let delete_header = document.getElementById
+	    ( "delete-header-" + J );
+	write_header.style.display = 'block';
+	delete_header.style.display = 'none';
+    }
 
-function COMPUTE_INDICES()
-{
+    let edited = document.getElementById ( 'edited' );
+    let not_edited = document.getElementById
+	( 'not-edited' );
+    let submit_form = document.getElementById
+	( 'submit-form' );
+    let op_in = document.getElementById ( 'op' );
+    let list_in = document.getElementById ( 'list' );
+    let lengths_in = document.getElementById
+        ( 'lengths' );
+    let indices_in = document.getElementById
+        ( 'indices' );
+    let name_in = document.getElementById ( 'name' );
+
+    let on = 'black';
+    let off = 'white';
+
+    function BOX ( table )
+    {
+	let tbody = table.firstElementChild;
+	let tr = tbody.firstElementChild;
+	let td = tr.firstElementChild;
+	let checkbox = td.firstElementChild;
+	return checkbox;
+    }
+
     for ( var J = 0; J <= 1; ++ J )
     {
-        let list = document.getElementById
+	let list = document.getElementById
 	    ( 'list' + J );
 	let first = list.firstElementChild;
 	var next = first.nextElementSibling;
-
-	var ilist = [];
-	var length = 0;
-	while ( next != null )
+	for ( I = 0; I < lengths[J]; ++ I )
 	{
-	    ilist.push ( next.id );
-	    let checkbox = BOX ( next );
-	    if ( checkbox.style.backgroundColor == on )
-	        ++ length;
+	    if ( next == null ) break;
+	    BOX(next).style.backgroundColor = on;
 	    next = next.nextElementSibling;
 	}
-	lengths[J] = length;
-	indices[J] = ilist.join ( ':' );
     }
-}
 
-function SUBMIT ( op, list, name = '' )
-{
-    COMPUTE_INDICES();
-    op_in.value = op;
-    list_in.value = list;
-    indices_in.value = indices.join(';');
-    lengths_in.value = lengths.join(';');
-    name_in.value = name;
-    submit_form.submit();
-}
+    function COMPUTE_INDICES()
+    {
+	for ( var J = 0; J <= 1; ++ J )
+	{
+	    let list = document.getElementById
+		( 'list' + J );
+	    let first = list.firstElementChild;
+	    var next = first.nextElementSibling;
 
-function UPLOAD ( event, J )
-{
-    event.preventDefault();
-    let submit_form = document.getElementById
-	    ( 'upload-form' + J );
-    let indices_in = document.getElementById
-	    ( 'upload-indices' + J );
-    let lengths_in = document.getElementById
-	    ( 'upload-lengths' + J );
-    COMPUTE_INDICES();
-    indices_in.value = indices.join(';');
-    lengths_in.value = lengths.join(';');
-    submit_form.submit();
-}
+	    var ilist = [];
+	    var length = 0;
+	    while ( next != null )
+	    {
+		ilist.push ( next.id );
+		let checkbox = BOX ( next );
+		if (    checkbox.style.backgroundColor
+		     == on )
+		    ++ length;
+		next = next.nextElementSibling;
+	    }
+	    lengths[J] = length;
+	    indices[J] = ilist.join ( ':' );
+	}
+    }
 
-function NEW ( event, J )
-{
-    if ( event.code === 'Enter' )
+    function SUBMIT ( op, list, name = '' )
+    {
+	COMPUTE_INDICES();
+	op_in.value = op;
+	list_in.value = list;
+	indices_in.value = indices.join(';');
+	lengths_in.value = lengths.join(';');
+	name_in.value = name;
+	submit_form.submit();
+    }
+
+    function UPLOAD ( event, J )
     {
 	event.preventDefault();
-        let new_in = event.currentTarget;
-	SUBMIT ( 'new', J, new_in.value );
+	let submit_form = document.getElementById
+		( 'upload-form' + J );
+	let indices_in = document.getElementById
+		( 'upload-indices' + J );
+	let lengths_in = document.getElementById
+		( 'upload-lengths' + J );
+	COMPUTE_INDICES();
+	indices_in.value = indices.join(';');
+	lengths_in.value = lengths.join(';');
+	submit_form.submit();
     }
-}
 
-function SELECT_LIST ( J )
-{
-    let select = event.currentTarget;
-    SUBMIT ( 'select', J, select.value );
-}
-
-function CHECK ( event )
-{
-    event.preventDefault();
-    let checkbox = event.currentTarget;
-    let td = checkbox.parentElement;
-    let tr = td.parentElement;
-    let tbody = tr.parentElement;
-    let table = tbody.parentElement;
-    let div = table.parentElement;
-    let writable = div.dataset.writable;
-    if ( writable == 'no' ) return;
-
-    if ( checkbox.style.backgroundColor == on )
+    function NEW ( event, J )
     {
-	checkbox.style.backgroundColor = off;
-	var next = table.nextElementSibling;
-	while ( next != null
-		&&
-		   BOX(next).style.backgroundColor
-		== on )
-	    next = next.nextElementSibling;
-	if ( next != table.nextElementSibling )
+	if ( event.code === 'Enter' )
 	{
-	    if ( next == null )
-		div.appendChild ( table );
-	    else
+	    event.preventDefault();
+	    let new_in = event.currentTarget;
+	    SUBMIT ( 'new', J, new_in.value );
+	}
+    }
+
+    function SELECT_LIST ( J )
+    {
+	let select = event.currentTarget;
+	SUBMIT ( 'select', J, select.value );
+    }
+    </script>
+EOT;
+
+if ( $rw )
+    echo <<<EOT
+    <script>
+    function CHECK ( event )
+    {
+	event.preventDefault();
+	let checkbox = event.currentTarget;
+	let td = checkbox.parentElement;
+	let tr = td.parentElement;
+	let tbody = tr.parentElement;
+	let table = tbody.parentElement;
+	let div = table.parentElement;
+	let writable = div.dataset.writable;
+	if ( writable == 'no' ) return;
+
+	if ( checkbox.style.backgroundColor == on )
+	{
+	    checkbox.style.backgroundColor = off;
+	    var next = table.nextElementSibling;
+	    while ( next != null
+		    &&
+		       BOX(next).style.backgroundColor
+		    == on )
+		next = next.nextElementSibling;
+	    if ( next != table.nextElementSibling )
+	    {
+		if ( next == null )
+		    div.appendChild ( table );
+		else
+		    div.insertBefore ( table, next );
+	    }
+	}
+	else
+	{
+	    checkbox.style.backgroundColor = on;
+	    var previous = table.previousElementSibling;
+	    while ( previous != div.firstElementChild
+		    &&
+		       BOX(previous).style
+		                    .backgroundColor
+		    != on )
+		previous =
+		    previous.previousElementSibling;
+	    if (    previous
+	         != table.previousElementSibling )
+	    {
+		let next = previous.nextElementSibling;
 		div.insertBefore ( table, next );
+	    }
 	}
+	edited.style.display = 'table-row';
+	not_edited.style.display = 'none';
     }
-    else
+
+    var dragsrc = null;
+	// Source (start) table of drag.  We cannot use
+	// id because `copy' duplicates ids.
+    var controls_down = 0;
+	// Non-zero if some control key is down.
+
+    function KEYDOWN ( event )
     {
-	checkbox.style.backgroundColor = on;
-	var previous = table.previousElementSibling;
-	while ( previous != div.firstElementChild
-	        &&
-		   BOX(previous).style.backgroundColor
-		!= on )
-	    previous = previous.previousElementSibling;
-	if ( previous != table.previousElementSibling )
+	if ( event.code == 'ControlLeft'
+	     ||
+	     event.code == 'ControlRight' )
+	    ++ controls_down;
+    }
+
+    function KEYUP ( event )
+    {
+	if ( event.code == 'ControlLeft'
+	     ||
+	     event.code == 'ControlRight' )
+	    -- controls_down;
+    }
+
+    window.addEventListener ( 'keydown', KEYDOWN );
+    window.addEventListener ( 'keyup', KEYUP );
+
+    function DRAGSTART ( event )
+    {
+	let table = event.currentTarget;
+	let div = table.parentElement;
+	let writable = div.dataset.writable;
+	let effect = 'copy';
+	if ( writable == 'yes' && controls_down == 0 )
+	    effect = 'move';
+	event.dataTransfer.dropEffect = effect;
+	event.dataTransfer.setData ( 'effect', effect );
+	dragsrc = table;
+    }
+    function DRAGEND ( event )
+    {
+	dragsrc = null;
+    }
+    function ALLOWDROP ( event )
+    {
+	event.preventDefault();
+    }
+    function DROP ( event )
+    {
+	let target = event.currentTarget;
+	    // May be table or the header div above
+	    // tables.
+	let div = target.parentElement;
+	let writable = div.dataset.writable;
+	if ( writable == 'no' )
 	{
-	    let next = previous.nextElementSibling;
-	    div.insertBefore ( table, next );
+	    event.preventDefault();
+	    return;
+	}
+	let effect = event.dataTransfer.getData
+	    ( 'effect' );
+	let src = dragsrc;
+	if ( effect == 'copy' )
+	    src = src.cloneNode ( true );
+	let next = target.nextElementSibling;
+	if ( next == null )
+	{
+	    div.appendChild ( src );
+	    if ( target != div.firstElementChild
+		 &&
+		    BOX(target).style.backgroundColor
+		 != on )
+		BOX(src).style.backgroundColor = off;
+
+	    edited.style.display = 'table-row';
+	    not_edited.style.display = 'none';
+	}
+	else
+	{
+	    div.insertBefore ( src, next );
+	    if ( BOX(next).style.backgroundColor == on )
+		BOX(src).style.backgroundColor = on;
+	    else if ( target != div.firstElementChild
+		      &&
+			 BOX(target).style
+			            .backgroundColor
+		      != on )
+		BOX(src).style.backgroundColor = off;
+
+	    edited.style.display = 'table-row';
+	    not_edited.style.display = 'none';
 	}
     }
-    edited.style.display = 'table-row';
-    not_edited.style.display = 'none';
-}
 
-var dragsrc = null;
-    // Source (start) table of drag.
-    // We cannot use id because `copy' duplicates ids.
-var controls_down = 0;
-    // Non-zero if some control key is down.
-
-function KEYDOWN ( event )
-{
-    if ( event.code == 'ControlLeft'
-         ||
-	 event.code == 'ControlRight' )
-        ++ controls_down;
-}
-
-function KEYUP ( event )
-{
-    if ( event.code == 'ControlLeft'
-         ||
-	 event.code == 'ControlRight' )
-        -- controls_down;
-}
-
-window.addEventListener ( 'keydown', KEYDOWN );
-window.addEventListener ( 'keyup', KEYUP );
-
-function DRAGSTART ( event )
-{
-    let table = event.currentTarget;
-    let div = table.parentElement;
-    let writable = div.dataset.writable;
-    let effect = 'copy';
-    if ( writable == 'yes' && controls_down == 0 )
-        effect = 'move';
-    event.dataTransfer.dropEffect = effect;
-    event.dataTransfer.setData ( 'effect', effect );
-    dragsrc = table;
-}
-function DRAGEND ( event )
-{
-    dragsrc = null;
-}
-function ALLOWDROP ( event )
-{
-    event.preventDefault();
-}
-function DROP ( event )
-{
-    let target = event.currentTarget;
-        // May be table or the header div above tables.
-    let div = target.parentElement;
-    let writable = div.dataset.writable;
-    if ( writable == 'no' )
+    </script>
+EOT;
+else
+    echo <<<EOT
+    <script>
+    function CHECK ( event ) {}
+    function DRAGSTART ( event )
     {
-        event.preventDefault();
-	return;
+	event.preventDefault();
     }
-    let effect = event.dataTransfer.getData
-        ( 'effect' );
-    let src = dragsrc;
-    if ( effect == 'copy' )
-        src = src.cloneNode ( true );
-    let next = target.nextElementSibling;
-    if ( next == null )
-    {
-        div.appendChild ( src );
-	if ( target != div.firstElementChild
-	     &&
-	     BOX(target).style.backgroundColor != on )
-	    BOX(src).style.backgroundColor = off;
+    function DRAGEND ( event ) {}
+    function ALLOWDROP ( event ) {}
+    function DROP ( event ) {}
+    </script>
+EOT;
 
-	edited.style.display = 'table-row';
-	not_edited.style.display = 'none';
-    }
-    else
-    {
-	div.insertBefore ( src, next );
-	if ( BOX(next).style.backgroundColor == on )
-	    BOX(src).style.backgroundColor = on;
-	else if ( target != div.firstElementChild
-	          &&
-	             BOX(target).style.backgroundColor
-		  != on )
-	    BOX(src).style.backgroundColor = off;
-
-	edited.style.display = 'table-row';
-	not_edited.style.display = 'none';
-    }
-}
-
-</script>
+?>
 
 </body>
 </html>
