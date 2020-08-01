@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jul 25 21:16:37 EDT 2020
+    // Date:	Fri Jul 31 22:58:53 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -42,7 +42,9 @@
     $warnings = [];  // Warning messages to be shown.
     $post_processed = false;
 
-    if ( isset ( $_POST['execute_run'] ) )
+    if ( ! $rw )
+	$post_processed = true;
+    elseif ( isset ( $_POST['execute_run'] ) )
     {
 	$f = $_POST['execute_run'];
 	if ( ! isset ( $local_file_cache[$f] )
@@ -108,6 +110,8 @@
         $runresult = $run['RESULT'];
     }
 
+    // xhttp POSTs.
+    //
     if ( isset ( $_POST['reload'] )
 	 &&
 	 isset ( $runbase ) )
@@ -497,14 +501,14 @@ EOT;
 		    continue;
 		}
 
-		if ( $entry['loc'] == 'local' )
+		if ( $rw && $entry['loc'] == 'local' )
 		     echo <<<EOT
 		     <button type='submit'
 			     name='execute_run'
 			     value='$fname'
 			 >Run</button>
 EOT;
-		else
+		elseif ( $rw )
 		     echo <<<EOT
 		     <button type='submit'
 			     name='submit_run'
