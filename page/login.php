@@ -222,29 +222,30 @@
     // Create new TICKET and its TICKET-FILE and return
     // new bid.
     //
-    function new_ticket ( $t, $tid, $email )
+    function new_ticket ( $t, $aid, $email )
     {
 	global $epm_data;
 
 	while ( true )
 	{
-	    $bid = bin2hex ( random_16_bytes ( 16 ) );
+	    $ticket =
+	        bin2hex ( random_16_bytes ( 16 ) );
 	    $bdir = "admin/browser";
 	    if ( ! is_dir ( "$epm_data/$bdir" ) 
 	         &&
 		 ! @mkdir ( "$epm_data/$bdir",
 		            02770, true ) )
 	        ERROR ( "cannot make $bdir" );
-	    $bfile = "$bdir/$bid";
-	    if ( is_readable ( "$epm_data/$bfile" ) )
+	    $tfile = "$bdir/$ticket";
+	    if ( is_readable ( "$epm_data/$tfile" ) )
 	    {
 	        WARN ( 'THIS SHOULD NEVER HAPPEN' );
 	        continue;
 	    }
 	    file_put_contents
-	        ( "$epm_data/$bfile",
-	          "$t $tid $email" . PHP_EOL );
-	    return $bid;
+	        ( "$epm_data/$tfile",
+	          "$t $aid $email" . PHP_EOL );
+	    return $ticket;
 	}
     }
 
@@ -252,11 +253,11 @@
     // confirmation number and TICKET-FILE, and mailing
     // confirmation number.  $op is NEW or EXPIRED.
     //
-    function confirmation_reply ( $tid, $email, $op )
+    function confirmation_reply ( $aid, $email, $op )
     {
         global $epm_root;
 
-	$bid = new_ticket ( 'c', $tid, $email );
+	$ticket = new_ticket ( 'c', $aid, $email );
 
 	$sname = $_SERVER['SERVER_NAME']
 	       . $epm_root;
@@ -265,7 +266,7 @@
 	       "Your EPM $sname confirmation number" .
 	       " is:\r\n" .
 	       "\r\n" .
-	       "     $bid\r\n",
+	       "     $ticket\r\n",
 	       "From: no_reply@$sname" );
 	if ( $r === false )
 	    ERROR ( "mailer failed" );
@@ -284,18 +285,18 @@
 	$lname = trim ( $_POST['value'] );
 	if ( preg_match ( '/^([^:]+):(.+)$/',
 	                  $lname, $matches ) )
-	    // We do not allow $tid or $email
+	    // We do not allow $aid or $email
 	    // to be empty.
 	{
-	    $tid = $matches[1];
+	    $aid = $matches[1];
 	    $email = $matches[2];
 	}
 	else
 	{
-	    $tid = '-';
+	    $aid = '-';
 	    $email = $lname;
 	}
-	DEBUG ( "LNAME $tid $email" );
+	DEBUG ( "LNAME $aid $email" );
 
 	$e = filter_var
 	    ( $email, FILTER_SANITIZE_EMAIL );
@@ -309,50 +310,50 @@
 	elseif ( is_blocked ( $email ) )
 	    reply ( 'BLOCKED_EMAIL' );
 
-	if ( $tid != '-' )
+	if ( $aid != '-' )
 	{
 	    if ( ! preg_match ( $epm_name_re,
-	                        $tid ) )
+	                        $aid ) )
 		reply ( 'BAD_AID' );
-	    $dir = "admin/teams/$tid";
+	    $dir = "admin/teams/$aid";
 	    if ( ! is_dir ( "$epm_data/$dir" ) )
 	        reply ( 'NO_TEAM' );
 	    read_email_file ( 'a', $email );
 	    if ( ! isset ( $uid ) )
 	        reply ( 'NO_USER' );
 	}
-	confirmation_reply ( $tid, $email, 'NEW' );
+	confirmation_reply ( $aid, $email, 'NEW' );
     }
     elseif ( $op == 'AUTO' )
     {
-	$bid = trim ( $_POST['value'] );
+	$ticket = trim ( $_POST['value'] );
 	if ( ! preg_match ( '/^[a-fA-F0-9]{32}$/',
-			    $bid ) ) 
+			    $ticket ) ) 
 	    reply ( 'BAD_TICKET' );
-	$bfile = "admin/browser/$bid";
-	if ( ! is_readable ( "$epm_data/$bfile" ) )
+	$tfile = "admin/browser/$ticket";
+	if ( ! is_readable ( "$epm_data/$tfile" ) )
 		reply ( 'NO_TICKET' );
 
 	$c = @file_get_contents
-	    ( "$epm_data/$bfile" );
+	    ( "$epm_data/$tfile" );
 	if ( $c === false )
 	    ERROR ( "cannot read readable file" .
-		    " $bfile" );
-	@unlink ( "$epm_data/$bfile" );
+		    " $tfile" );
+	@unlink ( "$epm_data/$tfile" );
 
 	$c = trim ( $c );
-	list ( $t, $tid, $email ) = explode ( ' ', $c );
+	list ( $t, $aid, $email ) = explode ( ' ', $c );
 	if ( is_blocked ( $email ) )
 	    reply ( 'BLOCKED_EMAIL' );
 
 	if ( read_email_file ( $t, $email ) )
 	    confirmation_reply
-	        ( $tid, $email, 'EXPIRED' );
+	        ( $aid, $email, 'EXPIRED' );
 		// Does not return
 
-	if ( $tid != '-' )
+	if ( $aid != '-' )
 	{
-	    $dir = "admin/teams/$tid";
+	    $dir = "admin/teams/$aid";
 	    if ( ! is_dir ( "$epm_data/$dir" ) )
 	        reply ( 'NO_TEAM' );
 	    if ( ! isset ( $uid ) )
@@ -360,13 +361,13 @@
 	    if ( ! is_readable
 	               ( "$epm_data/$dir/$uid.login" ) )
 	        reply ( 'USER_NOT_ON_TEAM' );
-	    $_SESSION['EPM_AID'] = $tid;
+	    $_SESSION['EPM_AID'] = $aid;
 	}
 	elseif ( ! isset ( $uid ) )
 	{
 	    $_SESSION['EPM_EMAIL'] = $email;
-	    $bid = new_ticket ( 'a', $tid, $email );
-	    reply ( "RENEW $bid user.php" );
+	    $ticket = new_ticket ( 'a', $aid, $email );
+	    reply ( "RENEW $ticket user.php" );
 	}
 	else
 	{
@@ -376,8 +377,8 @@
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_EMAIL'] = $email;
-	$_SESSION['EPM_RW'] = ( $tid == '-' );
-	$_SESSION['EPM_IS_TEAM'] = ( $tid != '-' );
+	$_SESSION['EPM_RW'] = ( $aid == '-' );
+	$_SESSION['EPM_IS_TEAM'] = ( $aid != '-' );
 
 	$log = "$dir/$uid.login";
 	$IPADDR = $_SESSION['EPM_IPADDR'];
@@ -405,8 +406,8 @@
 	$_SESSION['EPM_ABORT'] = [$log,$mtime];
 
 	$_SESSION['EPM_EMAIL'] = $email;
-	$bid = new_ticket ( 'a', $tid, $email );
-	reply ( "RENEW $bid project.php" );
+	$ticket = new_ticket ( 'a', $aid, $email );
+	reply ( "RENEW $ticket project.php" );
     }
     elseif ( $epm_method == 'POST' )
 	exit ( "UNACCEPTABLE HTTP POST" );

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Aug  2 12:34:52 EDT 2020
+// Date:    Sun Aug  2 14:53:19 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -87,12 +87,13 @@ if ( $epm_check_ipaddr
 // and set parameter variables if we have done
 // login.
 //
-if ( ! isset ( $_SESSION['EPM_AID'] )
-     &&
-     $epm_self != "/page/login.php"
-     &&
-     $epm_self != "/page/user.php" )
-    exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
+if ( ! isset ( $_SESSION['EPM_AID'] ) )
+{
+    if ( $epm_self != "/page/login.php"
+         &&
+	 $epm_self != "/page/user.php" )
+	exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
+}
 else
 {
     $aid = $_SESSION['EPM_AID'];
