@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 09:20:37 EDT 2020
+    // Date:	Sun Aug  2 13:26:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -17,55 +17,65 @@
     // The browser runs the protocol using javascript
     // XMLHttpRequest to POST requests.  When the
     // browser is notified of success, it is given
-    // a page to go to (page/project.php or for new
-    // users page/user.php).
+    // a page to go to (project.php or for new users
+    // user.php).
     //
     // The protocol is:
     //
     // BEGIN:
     //	   * Set PATH = location.pathname.
-    //     * Get EMAIL from user.
-    //	   * Get BID = localStorage.getItem(PATH\0EMAIL)
-    //	   * If BID != null:
+    //     * Get LNAME from user.
+    //	   * Clear Messages
+    //	   * Get TICKET =
+    //           localStorage.getItem(PATH\0LNAME)
+    //	   * If TICKET != null:
     //          * go to AUTO_ID
     // MANUAL_ID:
-    //     * Send 'op=MANUAL&value=EMAIL'
+    //     * Send 'op=MANUAL&value=LNAME'
     //     * Receive one of:
-    //           'BAD_TID': go to FAIL
-    //           'BAD_EMAIL': go to FAIL
-    //           'BLOCKED_EMAIL': go to FAIL
-    //           'NO_TEAM': go to FAIL
-    //           'NO_USER': go to FAIL
+    //           'BAD_AID':
+    //           'BAD_EMAIL':
+    //           'BLOCKED_EMAIL':
+    //           'NO_TEAM':
+    //           'NO_USER':
+    //		     goto LNAME_ERROR
     //           'NEW': go to CONFIRM
     // AUTO_ID:
-    //     * Send 'op=AUTO&value=BID'
+    //     * Send 'op=AUTO&value=TICKET'
     //	   * Receive one of:
     //           'EXPIRED':
-    //		     tell user reconfirmation needed
-    //               go to CONFIRM
-    //           'BLOCKED_EMAIL': go to FAIL
-    //           'BAD_TICKET': go to MANUAL_ID
-    //           'NO_TICKET': go to MANUAL_ID
-    //           'NO_TEAM': go to FAIL
-    //           'NO_USER': go to FAIL
-    //		 'USER_NOT_ON_TEAM': go to FAIL
-    //           'RENEW BID NEXT_PAGE':
+    //               goto CONFIRM with Ticket Message
+    //           'BAD_TICKET':
+    //           'NO_TICKET':
+    //               go to TICKET_ERROR
+    //           'BLOCKED_EMAIL':
+    //           'NO_TEAM':
+    //           'NO_USER':
+    //		 'USER_NOT_ON_TEAM':
+    //		     goto LNAME_ERROR
+    //           'RENEW TICKET NEXT_PAGE':
     //		     go to FINISH
     // CONFIRM:
-    //     * Get BID = confirmation number from user.
+    //     * Write Ticket Message if any.
+    //     * Get TICKET = confirmation number from user.
+    //	   * Clear Messages
     //     * go to AUTO_ID
     // FINISH:
-    //     * localStorage.setItem(PATH\0EMAIL,BID)
+    //     * localStorage.setItem(PATH\0LNAME,TICKET)
     //     * Issue GET to NEXT_PAGE
-    // FAIL:
-    //     * Output message
-    //     * reload
+    // TICKET_ERROR:
+    //	   * output Ticket Message
+    //     * goto MANUAL_ID
+    // LNAME_ERROR:
+    //	   * output Lname Message
+    //     * goto BEGIN
 
     $epm_page_type = '+main+';
     $epm_ID_init = true;
         // This causes index.php to require
 	// epm_random.php for GET but NOT for POST.
     require __DIR__ . '/index.php';
+
     // require "$epm_home/include/debug_info.php";
 
     if ( $epm_method == 'GET' )
@@ -96,6 +106,7 @@
     $uid = NULL;
     $acount = NULL;
     $atime = NULL;
+
     $STIME = $_SESSION['EPM_TIME'];
 
     LOCK ( "admin", LOCK_EX );
@@ -125,6 +136,7 @@
 	{
 	    $line = trim ( $line );
 	    if ( $line == '' ) continue;
+	    if ( $line[0] == '#' ) continue;
 	    if ( ! preg_match
 	               ( $line_re, $line, $matches ) )
 	        ERROR ( "bad $f line: $line" );
@@ -136,6 +148,7 @@
 	    if ( $r == 0 ) continue;
 	    return ( $sign == '-' );
 	}
+	return false;
     }
 
     // Read $epm_data/admin/email/$email(encoded) if it
@@ -154,8 +167,8 @@
     // then if $t == 'c' the email file is updated to
     // have a new auto-login period beginning at $STIME,
     // and this function return false, but if $t != 'c'
-    // this function just returns true.  If no, this
-    // function returns false.
+    // this function just returns true.  If not expired,
+    // this function returns false.
     //
     function read_email_file ( $t, $email )
     {
@@ -206,10 +219,10 @@
 	return false;
     }
 
-    // Create new BID and its BID-FILE and return
+    // Create new TICKET and its TICKET-FILE and return
     // new bid.
     //
-    function new_bid ( $t, $tid, $email )
+    function new_ticket ( $t, $tid, $email )
     {
 	global $epm_data;
 
@@ -236,14 +249,14 @@
     }
 
     // Output NEW or EXPIRED response, creating
-    // confirmation number and BID-FILE, and mailing
+    // confirmation number and TICKET-FILE, and mailing
     // confirmation number.  $op is NEW or EXPIRED.
     //
     function confirmation_reply ( $tid, $email, $op )
     {
         global $epm_root;
 
-	$bid = new_bid ( 'c', $tid, $email );
+	$bid = new_ticket ( 'c', $tid, $email );
 
 	$sname = $_SERVER['SERVER_NAME']
 	       . $epm_root;
@@ -300,7 +313,7 @@
 	{
 	    if ( ! preg_match ( $epm_name_re,
 	                        $tid ) )
-		reply ( 'BAD_TID' );
+		reply ( 'BAD_AID' );
 	    $dir = "admin/teams/$tid";
 	    if ( ! is_dir ( "$epm_data/$dir" ) )
 	        reply ( 'NO_TEAM' );
@@ -352,7 +365,7 @@
 	elseif ( ! isset ( $uid ) )
 	{
 	    $_SESSION['EPM_EMAIL'] = $email;
-	    $bid = new_bid ( 'a', $tid, $email );
+	    $bid = new_ticket ( 'a', $tid, $email );
 	    reply ( "RENEW $bid user.php" );
 	}
 	else
@@ -392,7 +405,7 @@
 	$_SESSION['EPM_ABORT'] = [$log,$mtime];
 
 	$_SESSION['EPM_EMAIL'] = $email;
-	$bid = new_bid ( 'a', $tid, $email );
+	$bid = new_ticket ( 'a', $tid, $email );
 	reply ( "RENEW $bid project.php" );
     }
     elseif ( $epm_method == 'POST' )
@@ -451,17 +464,32 @@ EOT;
     }
 ?>
 
+<div class='errors' id='ticket_error'
+     style='display:none'>
+<pre id='ticket_message'></pre>
+</div>
+
+<div class='errors' id='lname_error'
+     style='display:none'>
+<pre id='lname_message'></pre>
+</div>
+
 <div id='get_lname' style.display='none'>
 <table style='width:100%'>
 <tr><td style='width:90%'>
 <input type='text' id='lname_in'
        placeholder=
-           'Enter Login Name:   [Team ID:]Email Address'
+	'Enter Login Name:   [Account ID:]Email Address'
        autofocus
        size='40'
-       title='[Team-ID:]Email-Address'>
+       title='User-Email-Address
+or Team-ID:Member-User-Email-Address
+or User-ID:Coach-User-Email-Address'>
 <button type='button' onclick='GOT_LNAME()'>
     Submit</button>
+<button type='button'
+        onclick='CLEAR_LNAME()'>
+    Clear</button>
 </td><td style='width:10%;text-align:right'>
 <strong>Help &rarr;</strong>
 <button type='button' onclick='HELP("login-page")'>
@@ -520,31 +548,47 @@ var LOG = function(message) {};
 <?php if ( $epm_debug )
           echo "LOG = console.log;" . PHP_EOL ?>
 
-var ID = '<?php echo $ID; ?>';
-var xhttp = new XMLHttpRequest();
-var storage = window.localStorage;
-var get_lname = document.getElementById("get_lname");
-var lname_in = document.getElementById("lname_in");
-var lname_out = document.getElementById("lname_out");
-var show_lname = document.getElementById("show_lname");
-var get_cnum = document.getElementById("get_cnum");
-var cnum_in = document.getElementById("cnum_in");
+let ID = '<?php echo $ID; ?>';
+let xhttp = new XMLHttpRequest();
+let storage = window.localStorage;
 
+let ticket_error =
+    document.getElementById("ticket_error");
+let ticket_message =
+    document.getElementById("ticket_message");
+let lname_error =
+    document.getElementById("lname_error");
+let lname_message =
+    document.getElementById("lname_message");
 
-// Output message to user asynchronously while at the
-// same time continuing by returning from this function.
-// 
-function ALERT ( message )
-{
-    // Alert must be scheduled as separate task.
-    //
-    setTimeout ( function () { alert ( message ); } );
-}
+let get_lname = document.getElementById("get_lname");
+let lname_in = document.getElementById("lname_in");
+let lname_out = document.getElementById("lname_out");
+let show_lname = document.getElementById("show_lname");
+let get_cnum = document.getElementById("get_cnum");
+let cnum_in = document.getElementById("cnum_in");
 
+// Call for internal errors, like bad xhttp response
+// code or response message format.
+//
 function FAIL ( message )
 {
     alert ( message );
     location.assign ( 'login.php' );
+}
+
+function TICKET_ERROR ( message )
+{
+    ticket_error.style.display = 'block';
+    ticket_message.innerText = message;
+    MANUAL_ID();
+}
+
+function LNAME_ERROR ( message )
+{
+    lname_error.style.display = 'block';
+    lname_message.innerText = message;
+    BEGIN();
 }
 
 var REQUEST_IN_PROGRESS = false;
@@ -591,9 +635,9 @@ function MALFORMED_RESPONSE ( when )
 }
 
 let PATH = location.pathname;
-var LNAME, TID, EMAIL, BID;
+var LNAME, AID, EMAIL, TICKET;
 let lname_re = /^([^:]+):(.+)$/;
-    // We do not allow TID or EMAIL to be empty.
+    // We do not allow AID or EMAIL to be empty.
 
 var GET_LNAME_ENABLED = false;
 var GET_CNUM_ENABLED = false;
@@ -601,12 +645,14 @@ var GET_CNUM_ENABLED = false;
     // set false just before making callback, to avoid
     // spurious callbacks.
 
-// BEGIN:
-//
-GET_LNAME_ENABLED = true;
-get_lname.style.display = 'block';
-show_lname.style.display = 'none';
-get_cnum.style.display = 'none';
+function BEGIN()
+{
+    GET_LNAME_ENABLED = true;
+    get_lname.style.display = 'block';
+    show_lname.style.display = 'none';
+    get_cnum.style.display = 'none';
+}
+BEGIN();
 
 function LNAME_KEYDOWN ( event )
 {
@@ -617,33 +663,42 @@ function LNAME_KEYDOWN ( event )
 }
 lname_in.addEventListener ( 'keydown', LNAME_KEYDOWN );
 
+function CLEAR_LNAME()
+{
+    lname_in.value = '';
+    ticket_error.style.display = 'none';
+    lname_error.style.display = 'none';
+}
+
 function GOT_LNAME()
 {
+    ticket_error.style.display = 'none';
+    lname_error.style.display = 'none';
     lname = lname_in.value.trim();
     if ( /^\S+@\S+\.\S+$/.test(lname) )
 	GET_LNAME_ENABLED = false;
     else
     {
 	if ( lname != '' )
-	    ALERT ( lname + " is badly formed" +
+	    alert ( lname + " is badly formed" +
 			    " login name" );
 	return;
     }
 
     LNAME = lname;
-    TID = '';
+    AID = '';
     EMAIL = LNAME;
     let matches = lname.match ( lname_re );
     if ( matches != null )
     {
-        TID = matches[1];
+        AID = matches[1];
 	EMAIL = matches[2];
     }
     get_lname.style.display = 'none';
     lname_out.innerText = LNAME;
     show_lname.style.display = 'block';
-    BID = storage.getItem(PATH + '\0' + LNAME);
-    if ( BID == null )
+    TICKET = storage.getItem(PATH + '\0' + LNAME);
+    if ( TICKET == null )
         MANUAL_ID();
     else
 	AUTO_ID();
@@ -657,9 +712,10 @@ function MANUAL_ID()
 	   'sending ' + LNAME + ' to server' );
 }
 
-function NO_USER_FAIL()
+function NO_USER_ERROR()
 {
-    FAIL ( EMAIL + ' is not an email address of'
+    LNAME_ERROR
+         ( EMAIL + ' is not an email address of'
 		 + ' an existing personal account;'
 		 + ' before you can log into the team'
 		 + ' you must do the following:'
@@ -676,18 +732,20 @@ function MANUAL_RESPONSE ( item )
     if ( item.length != 1 )
         MALFORMED_RESPONSE
 	    ( 'after sending ' + LNAME + ' to server' );
-    else if ( item[0] == 'BAD_TID' )
-        FAIL ( TID + ' is badly formatted team ID' );
+    else if ( item[0] == 'BAD_AID' )
+        LNAME_ERROR
+	    ( AID + ' is badly formatted team ID' );
     else if ( item[0] == 'BAD_EMAIL' )
-        FAIL ( EMAIL + ' is baddly formatted email'
-	             + ' address' );
+        LNAME_ERROR ( EMAIL + ' is badly formatted'
+	             + ' email address' );
     else if ( item[0] == 'BLOCKED_EMAIL' )
-        FAIL ( EMAIL + ' is a blocked email address' );
+        LNAME_ERROR
+	    ( EMAIL + ' is a blocked email address' );
     else if ( item[0] == 'NO_TEAM' )
-        FAIL ( TID + ' does not name an existing'
-	           + ' team' );
+        LNAME_ERROR
+	    ( AID + ' does not name an existing team' );
     else if ( item[0] == 'NO_USER' )
-        NO_USER_FAIL();
+        NO_USER_ERROR();
     else if ( item[0] == 'NEW' )
         CONFIRM();
     else
@@ -695,8 +753,13 @@ function MANUAL_RESPONSE ( item )
 	    ( 'after sending ' + LNAME + ' to server' );
 };
 
-function CONFIRM()
+function CONFIRM ( message = '' )
 {
+    if ( message != '' )
+    {
+	ticket_error.style.display = 'block';
+	ticket_message.innerText = message;
+    }
     GET_CNUM_ENABLED = true;
     get_cnum.style.display = 'block';
 }
@@ -714,7 +777,7 @@ function CNUM_KEYDOWN ( event )
 	    GOT_CNUM ( value );
 	}
 	else if ( value != '' )
-	    ALERT ( value + ' is not a valid' +
+	    alert ( value + ' is not a valid' +
 	            ' confirmation number' );
     }
 }
@@ -722,14 +785,16 @@ cnum_in.addEventListener ( 'keydown', CNUM_KEYDOWN );
 
 function GOT_CNUM ( cnum )
 {
-    BID = cnum;
+    ticket_error.style.display = 'none';
+    lname_error.style.display = 'none';
+    TICKET = cnum;
     AUTO_ID();
 }
 
 function AUTO_ID()
 {
     storage.removeItem ( PATH + '\0' + LNAME );
-    SEND ( 'op=AUTO&value=' + BID,
+    SEND ( 'op=AUTO&value=' + TICKET,
            AUTO_RESPONSE, 'auto-login' );
 }
 
@@ -737,10 +802,10 @@ function AUTO_RESPONSE ( item )
 {
     if ( item[0] == 'RENEW' && item.length == 3 )
     {
-	BID = item[1];
-	if ( ! /^[a-fA-F0-9]{32}$/.test(BID) )
+	TICKET = item[1];
+	if ( ! /^[a-fA-F0-9]{32}$/.test(TICKET) )
 	    MALFORMED_RESPONSE ( 'to auto-login' );
-	storage.setItem ( PATH + '\0' + LNAME, BID );
+	storage.setItem ( PATH + '\0' + LNAME, TICKET );
 
 	try {
 	    window.location.assign
@@ -756,34 +821,31 @@ function AUTO_RESPONSE ( item )
 	MALFORMED_RESPONSE ( 'to auto-login' );
     else if ( item[0] == 'EXPIRED' )
     {
-        ALERT ( 'you must re-confirm because your' +
-	        ' auto-login period has expired' );
-        CONFIRM();
+        CONFIRM ( 'you must re-confirm because your' +
+	          ' auto-login period has expired' );
     }
     else if ( item[0] == 'BAD_TICKET' )
     {
-        ALERT ( 'malformed ticket; you must' +
-	        ' re-confirm because your' +
-	        ' auto-login failed' );
-        MANUAL_ID();
+        TICKET_ERROR ( 'malformed ticket; you must' +
+	               ' re-confirm because your' +
+	               ' auto-login failed' );
     }
     else if ( item[0] == 'NO_TICKET' )
     {
-        ALERT ( 'ticket not found; you must' +
-	        ' re-confirm because your' +
-	        ' auto-login failed' );
-        MANUAL_ID();
+        TICKET_ERROR ( 'ticket not found; you must' +
+	               ' re-confirm because your' +
+	               ' auto-login failed' );
     }
     else if ( item[0] == 'NO_TEAM' )
-        FAIL ( TID + ' does not name an existing'
-	           + ' team' );
+        LNAME_ERROR ( AID + ' does not name an existing'
+	                  + ' team' );
     else if ( item[0] == 'NO_USER' )
-        NO_USER_FAIL();
+        NO_USER_ERROR();
     else if ( item[0] == 'USER_NOT_ON_TEAM' )
-        FAIL ( 'User ' + EMAIL + ' is not on team '
-	               + TID );
+        LNAME_ERROR ( 'User ' + EMAIL + ' is not on' +
+		      ' team ' + AID );
     else if ( item[0] == 'BLOCKED_EMAIL' )
-        FAIL ( EMAIL + ' is a blocked email address' );
+        LNAME ( EMAIL + ' is a blocked email address' );
     else
 	MALFORMED_RESPONSE ( 'to auto-login' );
 }
