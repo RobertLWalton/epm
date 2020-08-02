@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 15:13:26 EDT 2020
+    // Date:	Sun Aug  2 15:35:02 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -230,7 +230,7 @@
 	while ( true )
 	{
 	    $ticket =
-	        bin2hex ( random_16_bytes ( 16 ) );
+	        bin2hex ( random_16_bytes() );
 	    $bdir = "admin/browser";
 	    if ( ! is_dir ( "$epm_data/$bdir" ) 
 	         &&
@@ -262,10 +262,13 @@
 
 	$sname = $_SERVER['SERVER_NAME']
 	       . $epm_root;
+	$lname = $email;
+	if ( $aid != '-' ) $lname = "$aid:$email";
 	$r = mail ( $email,
 	       "Your EPM Confirmation Number",
-	       "Your EPM $sname confirmation number" .
-	       " is:\r\n" .
+	       "Your EPM $sname confirmation" .
+	       " number\r\n" .
+	       "     for $lname is:\r\n" .
 	       "\r\n" .
 	       "     $ticket\r\n",
 	       "From: no_reply@$sname" );
