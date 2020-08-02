@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 13:22:08 EDT 2020
+    // Date:	Sun Aug  2 12:41:54 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -377,9 +377,6 @@
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
-
-    $aid = $_SESSION['EPM_AID'];
-    $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
     require "$epm_home/include/epm_template.php";
@@ -1766,6 +1763,8 @@ EOT;
     }
 
     $display = ( isset ( $op ) ? 'none' : 'table-row' );
+    $login_title =
+        'Login Name; Click to See User Profile';
     echo <<<EOT
     <div class='manage'>
     <form method='GET' action='project.php'>
@@ -1777,8 +1776,8 @@ EOT;
     <strong>User:</strong>
     <button type='submit'
 	    formaction='user.php'
-	    title='Click to See User Profile'>
-	    $email</button>
+	    title='$login_title'>
+	    $lname</button>
     </td>
     <td>
 
@@ -1817,7 +1816,7 @@ EOT;
     	echo <<<EOT
 	<tr id='check-row'>
 	<td>
-	<strong>User: $email</strong>
+	<strong title='Login Name'>$lname</strong>
 	</td>
 	<td>
 	<div class='checkbox'

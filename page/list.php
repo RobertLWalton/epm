@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 14:55:52 EDT 2020
+    // Date:	Sun Aug  2 12:46:50 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -96,9 +96,6 @@
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
-
-    $aid = $_SESSION['EPM_AID'];
-    $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
 
@@ -609,6 +606,8 @@ EOT;
 	echo "<br></div></div>";
     }
 
+    $login_title =
+        'Login Name; Click to See User Profile';
     echo <<<EOT
     <div class='manage'>
     <form method='GET' action='list.php'>
@@ -617,11 +616,10 @@ EOT;
 
     <tr id='not-edited' style='width:100%'>
     <td>
-    <strong>User:</strong>
     <button type='submit'
-    	   formaction='user.php'
-           title='Click to See User Profile'>
-	   $email</button>
+    	    formaction='user.php'
+	    title='$login_title'>
+	    $lname</button>
     </td>
     <td>
     <strong>Go To</strong>
@@ -644,7 +642,7 @@ EOT;
 
     <tr id='edited' style='width:100%;display:none'>
     <td>
-    <strong>User:&nbsp;$email</strong>
+    <strong title='Login Name'>$lname</strong>
     </td>
     <td>
     </td>

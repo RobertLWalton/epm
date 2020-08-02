@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 14:36:20 EDT 2020
+    // Date:	Sun Aug  2 12:54:51 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -55,9 +55,6 @@
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
-
-    $aid = $_SESSION['EPM_AID'];
-    $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_list.php";
 
@@ -288,20 +285,20 @@ var LOG = function(message) {};
 	echo "<br></div></div>";
     }
 
+    $login_title =
+        'Login Name; Click to See User Profile';
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
 
     <tr id='not-edited' style='width:100%'>
     <form method='GET' action='favorites.php'>
-    <td>
     <input type='hidden' name='id' value='$ID'>
-    <label>
-    <strong>User:</strong>
-    <input type='submit' value='$email'
-	   formaction='user.php'
-           title='Click to See User Profile'>
-    </label>
+    <td>
+    <button type='submit'
+    	    formaction='user.php'
+	    title='$login_title'>
+	    $lname</button>
     </td>
     <td>
     <strong>Go To</strong>
@@ -327,7 +324,7 @@ var LOG = function(message) {};
     <tr id='edited' style='width:100%;display:none'>
     <td>
     <input type='hidden' name='id' value='$ID'>
-    <strong>User:&nbsp;$email</strong>
+    <strong title='Login Name'>$lname</strong>
     </td>
     <td>
     <button type='button'
