@@ -603,7 +603,11 @@ Name & Description & Creators & Updaters & Readers \\
 \hline
 \TT{EPM\_AID} & account ID & \STACK{login\\user} & & all pages \\ 
 \hline
-\TT{EPM\_UID} & user ID & \STACK{login\\user} & & \STACK{login\\user} \\ 
+\TT{EPM\_UID} & user ID
+              & \STACK{login\\user} & & \STACK{login\\user\\manage} \\ 
+\hline
+\TT{EPM\_IS\_TEAM} & \STACK{true iff AID\\is team ID}
+                   & \STACK{login\\user} & & index \\ 
 \hline
 \TT{EPM\_IPADDR} & \STACK{session\\IP address}
                  & login & & \STACK{index\\login\\user} \\ 
@@ -647,6 +651,8 @@ Name & Description & Creators & Updaters & Readers \\
 \TT{EPM\_EMAIL}	& create  & -      & - \\
 \TT{EPM\_AID}	& create  & -      & read    \\
 \TT{EPM\_UID}	& create  & -      & -    \\
+\TT{EPM\_IS\_TEAM}
+		& create  & -      & -    \\
 \TT{EPM\_IPADDR}& create  & -      & read \\
 \TT{EPM\_TIME}
                 & create  & -      & read \\
@@ -747,6 +753,10 @@ logs in with the same AID:UID.
 \TT{EPM\_UID}\label{EPM_UID}
     & User ID; equals EPM\_AID if that is a user ID.  Otherwise the full
       account name is AID:UID where AID is a team ID.
+      Set when EPM\_AID is set.
+\\[0.5ex]
+\TT{EPM\_IS\_TEAM}\label{EPM_IS_TEAM}
+    & True iff EPM\_AID is team ID;
       Set when EPM\_AID is set.
 \\[0.5ex]
 \TT{EPM\_IPADDR}\label{EPM_IPADDR}
