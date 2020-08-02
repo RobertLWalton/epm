@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  1 16:50:15 EDT 2020
+    // Date:	Sun Aug  2 10:06:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -38,16 +38,6 @@
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
-
-    if ( ! isset ( $_SESSION['EPM_AID'] ) )
-	exit ( "ACCESS: illegal $epm_method" .
-	       " to view.php" );
-    elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
-	exit ( "ACCESS: illegal $epm_method" .
-	       " to view.php" );
-
-    $aid = $_SESSION['EPM_AID'];
-    $email = $_SESSION['EPM_EMAIL'];
 
     require "$epm_home/include/epm_user.php";
     require "$epm_home/include/epm_list.php";
@@ -181,25 +171,6 @@ div.user {
     background-color: var(--bg-tan);
     padding-top: var(--pad);
 }
-div.profile {
-    float: left;
-}
-div.profile table {
-    font-size: var(--large-font-size);
-    padding-left: var(--pad);
-}
-div.profile th {
-    text-align: right;
-    padding-right: var(--pad);
-}
-div.emails {
-    float: left;
-    margin-left: 3em;
-}
-div.emails td {
-    font-size: var(--large-font-size);
-    padding: 2px;
-}
 div.changes {
     background-color: var(--bg-blue);
     padding-top: var(--pad);
@@ -302,7 +273,7 @@ function INCLUDE ( checkbox, c )
     <table style='width:100%'>
     <tr>
     <td>
-    <strong>User:&nbsp;$email</strong>
+    <strong title='Login Name'>$lname</strong>
     </td>
     <td>
     <form method='GET'>
@@ -399,10 +370,6 @@ EOT;
 
     if ( isset ( $user ) )
     {
-	$info = read_info ( 'user', $user );
-        $info_rows = info_to_rows ( $info );
-	$email_rows = emails_to_rows
-	    ( $info['emails'], $email, 'strip' );
 	$f = "admin/users/$user/+actions+";
 	$change_rows = actions_to_rows
 	    ( read_actions ( "$f" ), $non_others );
@@ -411,26 +378,6 @@ EOT;
 	    ( read_actions ( "$g" ), $non_others );
         echo <<<EOT
 	<div class='user'>
-
-	<div class='profile'>
-	<strong>$user Profile:</strong>
-	<table>
-	$info_rows
-	</table>
-	</div>
-
-	<div class='emails'>
-	<strong>$user Emails:</strong>
-	<br>
-	<table class='indented'>
-	$email_rows
-	</table>
-	</div>
-
-	<div style='clear:both'></div>
-	    <!-- Needed to make div.user height =
-		 max height of contents. -->
-	</div>
 
 	<div class='changes'>
 	<table style='width:100%'><tr>
@@ -464,14 +411,13 @@ EOT;
 		 ("user_actions",
 		  "User Actions")'
 	    title='Show User Actions'>
-	    <pre id='user_actions_mark'>&darr;</pre>
+	    <pre id='user_actions_mark'>&uarr;</pre>
 	    </button>
 	<strong>Other Actions of $user
 	        (most recent first):</strong>
 	</td>
 	</tr></table>
-	<div id='user_actions_body'
-	     style='display:none'>
+	<div id='user_actions_body'>
 	<table>
 	$action_rows
 	</table>

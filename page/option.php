@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 21:01:26 EDT 2020
+    // Date:	Sun Aug  2 12:38:20 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -19,15 +19,7 @@
     if ( ! isset ( $_REQUEST['problem'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to option.php" );
-    elseif ( ! isset ( $_SESSION['EPM_AID'] ) )
-	exit ( "ACCESS: illegal $epm_method" .
-	       " to option.php" );
-    elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
-	exit ( "ACCESS: illegal $epm_method" .
-	       " to option.php" );
 
-    $aid = $_SESSION['EPM_AID'];
-    $email = $_SESSION['EPM_EMAIL'];
     $problem = $_REQUEST['problem'];
     $probdir = "accounts/$aid/$problem";
 
@@ -336,7 +328,7 @@
     <div class='manage'>
     <table style='width:100%'>
     <td style='width:30%;text-align:left'>
-    <strong>User:&nbsp;$email</strong>
+    <strong title='Login Name'>$lname</strong>
     </td>
 EOT;
     if ( $edit )

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Aug  1 16:49:27 EDT 2020
+// Date:    Sun Aug  2 12:34:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -72,15 +72,6 @@ session_name ( $epm_session_name );
 session_start();
 clearstatcache();
 
-// Check that we have not skipped proper login.
-//
-if ( ! isset ( $_SESSION['EPM_AID'] )
-     &&
-     $epm_self != "/page/login.php"
-     &&
-     $epm_self != "/page/user.php" )
-    exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
-
 // A session cannot change its IP address if
 // $epm_check_ipaddr is true (see parameters.php).
 //
@@ -91,6 +82,54 @@ if ( $epm_check_ipaddr
         $_SESSION['EPM_IPADDR']
      != $_SERVER['REMOTE_ADDR'] )
     exit ( "UNACCEPTABLE HTTP $epm_method: IP" );
+
+// Check that we have not skipped proper login,
+// and set parameter variables if we have done
+// login.
+//
+if ( ! isset ( $_SESSION['EPM_AID'] )
+     &&
+     $epm_self != "/page/login.php"
+     &&
+     $epm_self != "/page/user.php" )
+    exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
+else
+{
+    $aid = $_SESSION['EPM_AID'];
+    $uid = $_SESSION['EPM_UID'];
+    $rw = $_SESSION['EPM_RW'];
+    $is_team = $_SESSION['EPM_IS_TEAM'];
+    $lname = $_SESSION['EPM_EMAIL'];
+    if ( $aid != $uid ) $lname = "$aid:$lname";
+
+
+    // $RW_BUTTON must be inside a form with action set
+    // to the appropriate page.
+    // 
+    $RW_BUTTON_RO = <<<EOT
+    <button type='submit' name='rw' value='ro'
+	    id='rw-button'
+	    formmethod='POST'
+	    title='current mode is read-write;
+click to change to read-only'>
+	    RO</button>
+EOT;
+    $RW_BUTTON_RW = <<<EOT
+    <button type='submit' name='rw' value='rw'
+	    id='rw-button'
+	    formmethod='POST'
+	    title='current mode is read-only;
+click to change to read-write'>
+	    RW</button>
+EOT;
+
+    if ( ! $is_team )
+        $RW_BUTTON = '';
+    elseif ( $rw )
+	$RW_BUTTON = $RW_BUTTON_RO;
+    else
+	$RW_BUTTON = $RW_BUTTON_RW;
+}
 
 // Each user can have only one session at a time.  When
 // started, each session for a user aborts the previous
@@ -310,39 +349,6 @@ if ( in_array ( $epm_page_type,
 // html output.
 //
 if ( isset ( $_POST['xhttp'] ) ) return;
-
-if ( isset ( $_SESSION['EPM_AID'] ) )
-{
-    $rw = $_SESSION['EPM_RW'];
-    $is_team =
-      ( $_SESSION['EPM_AID'] != $_SESSION['EPM_UID'] );
-
-    // $RW_BUTTON must be inside a form with action set
-    // to the appropriate page.
-    // 
-    $RW_BUTTON_RO = <<<EOT
-    <button type='submit' name='rw' value='ro'
-	    id='rw-button'
-	    formmethod='POST'
-	    title='current mode is read-write;
-click to change to read-only'>
-	    RO</button>
-EOT;
-    $RW_BUTTON_RW = <<<EOT
-    <button type='submit' name='rw' value='rw'
-	    id='rw-button'
-	    formmethod='POST'
-	    title='current mode is read-only;
-click to change to read-write'>
-	    RW</button>
-EOT;
-    if ( ! $is_team )
-        $RW_BUTTON = '';
-    elseif ( $rw )
-        $RW_BUTTON = $RW_BUTTON_RO;
-    else
-        $RW_BUTTON = $RW_BUTTON_RW;
-}
 
 echo <<<EOT
 <script>

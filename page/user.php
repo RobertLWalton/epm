@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  1 04:20:02 EDT 2020
+    // Date:	Sun Aug  2 09:18:55 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -379,6 +379,7 @@
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_AID'] = $uid;
 	$_SESSION['EPM_RW'] = true;
+	$_SESSION['EPM_IS_TEAM'] = false;
 	    // Do this last as it certifies
 	    // the EMAIL and .info files exist.
 	$rw = true;

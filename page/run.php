@@ -20,15 +20,7 @@
     if ( ! isset ( $_REQUEST['problem'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
 	       " to run.php" );
-    elseif ( ! isset ( $_SESSION['EPM_AID'] ) )
-	exit ( "ACCESS: illegal $epm_method" .
-	       " to run.php" );
-    elseif ( ! isset ( $_SESSION['EPM_EMAIL'] ) )
-	exit ( "ACCESS: illegal $epm_method" .
-	       " to run.php" );
 
-    $aid = $_SESSION['EPM_AID'];
-    $email = $_SESSION['EPM_EMAIL'];
     $problem = $_REQUEST['problem'];
     $probdir = "accounts/$aid/$problem";
 
@@ -370,7 +362,7 @@
     <table style='width:100%'>
     <tr>
     <td>
-    <strong>User:&nbsp;$email</strong>
+    <strong title='Login Name'>$lname</strong>
     </td>
     <td style='padding-left:50px'>
     <strong>Go To</strong>
