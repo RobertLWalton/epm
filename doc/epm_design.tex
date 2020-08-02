@@ -115,7 +115,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{July 31, 2020}
+\date{August 2, 2020}
  
 \maketitle
 
@@ -141,8 +141,11 @@ no liability for EPM.
 \section{Introduction}
 
 This document gives design information for EPM system maintainers.
-This document supplements the EPM Help Page documentation for
-users and comments in code files for programmers.
+This document supplements but does not reiterate
+documentation in the EPM Help Page for
+users.  Comments in code files in turn supplement but do not, with
+the exception of parameters files,
+reiterate this document or the Help Page.
 
 \section{Definitions and Rules}
 
@@ -481,7 +484,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \FSTACK{admin/}{users/UID/\\UID.login}\\
 \FSTACK{admin/}{teams/TID/\\UID.login}}
         & lines
-        & \STACK{log of logins\\\pagref{ADMIN/USERS/UID/UID.LOGIN}}
+        & \STACK{log of logins\\\pagref{ADMIN/USERS/AID/UID.LOGIN}}
 	& (updaters) & \STACK{login\\user} & (index)  \\ 
 \hline
 \STACK{
@@ -600,7 +603,7 @@ Name & Description & Creators & Updaters & Readers \\
 \hline
 \TT{EPM\_AID} & account ID & \STACK{login\\user} & & all pages \\ 
 \hline
-\TT{EPM\_UID} & personal ID & \STACK{login\\user} & & \STACK{login\\user} \\ 
+\TT{EPM\_UID} & user ID & \STACK{login\\user} & & \STACK{login\\user} \\ 
 \hline
 \TT{EPM\_IPADDR} & \STACK{session\\IP address}
                  & login & & \STACK{index\\login\\user} \\ 
@@ -634,19 +637,22 @@ Name & Description & Creators & Updaters & Readers \\
 \begin{tabular}{lllll}
 \TT{admim/ticket/TICKET}	& create  & -      & read \\
 \TT{admim/email/EMAIL}	& -       & update & read \\
-\TT{admim/users/UID/login/UID.login}
-			& -       & append & - \\
+\TT{admim/users/AID/UID.login}
+			& -       & append & stat \\
 \end{tabular}
 \\[3ex]
 {\bf Login Page Session Data}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{EPM\_EMAIL}	& create  & -      & read \\
-\TT{EPM\_UID}	& create  & -      & read    \\
+\TT{EPM\_EMAIL}	& create  & -      & - \\
+\TT{EPM\_AID}	& create  & -      & read    \\
+\TT{EPM\_UID}	& create  & -      & -    \\
 \TT{EPM\_IPADDR}& create  & -      & read \\
 \TT{EPM\_TIME}
                 & create  & -      & read \\
 \TT{EPM\_ABORT}
+                & create  & -      & - \\
+\TT{EPM\_RW}
                 & create  & -      & - \\
 \end{tabular}
 \end{center}
@@ -660,8 +666,8 @@ Name & Description & Creators & Updaters & Readers \\
 \begin{tabular}[t]{lp{4.0in}}
 TICKET & ticket proper; 32 hexadecimal digit ticket number \\
 T & ticket type; `c' for confirmation number; `a' for automatic \\
-TID & team ID or '-' if none (i.e., ticket is for personal account) \\
-EMAIL & Email address \\
+TID & team ID or '-' if ticket is for user account \\
+EMAIL & Email address (identifying user account) \\
 \end{tabular}
 \\
 \begin{itemize}
@@ -688,46 +694,38 @@ TID & Team user ID (may be more than one) \\
 \begin{itemize}
 \item This form of email file is created by the Team Page when
 a team member is assigned the given EMAIL before the member
-has an account.  The TID's list \underline{all} the team user IDs that
+has an account or EMAIL has been added to an existing account.
+The TID's list \underline{all} the team user IDs that
 \underline{might} have a member which is this EMAIL and not a UID.
 A TID might be listed whose
 TID.info file no longer contains the EMAIL.
 \\[1ex]
 When the pre-login form is converted to a regular form,
 the list of TID's is used to convert any matching EMAIL members
-in TID.info files to UID members.
+in TID.info files to UID(EMAIL) members.
 \end{itemize}
 
-\item[\TT{admin/users/UID/UID.login} (login log):]~
-\label{ADMIN/USERS/UID/UID.LOGIN} \\
+\item[\TT{admin/users/AID/UID.login} (login log):]~
+\label{ADMIN/USERS/AID/UID.LOGIN} \\
 Lines of format:\hspace{0.5in}TIME EMAIL IPADDR BROWSER \\
 \begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
 AID & Account ID; equals TID for teams, UID for users \\
-UID & User ID; equals UID for personal users \\
+UID & User ID \\
 TIME & Session time (EPM\_TIME) for login \\
-EMAIL & Email address used for login \\
-IPADDR & IP address for session, or `\TT{-}' if creation record \\
+EMAIL & Email address (EPM\_EMAIL) used for login \\
+IPADDR & IP address (EPM\_IPADDR) for session \\
 BROWSER & \STACK{
           \$\_SERVER['HTTP\_USER\_AGENT'] with `(...)'s\\
-	  removed and horizontal spaces replaced by `\TT{;}'s;\\
-	  or `\TT{-}' if creation record}
+	  removed and horizontal spaces replaced by `\TT{;}'s} \\
 \end{tabular}
 \\
 \begin{itemize}
 \item
 A login with full name AID:UID is valid iff this file exists.
-\item If UID is a team ID, the first line is a creation record
-written when AID:UID is created.  No other line is a creation record.
 \item This file name and modification time is stored in
 EPM\_ABORT and used to abort a session if another session
 logs in with the same AID:UID.
 \end{itemize}
-
-\item[\TT{admin/users/UID/PID.inactive}:]~
-\label{ADMIN/USERS/UID/PID.INACTIVE} \\
-Inactive login log file, made by renaming active file
-when PID is no longer a member
-of UID team.  May be reactivated.
 
 
 \end{itemlist}
@@ -742,28 +740,32 @@ of UID team.  May be reactivated.
       (1) sent by browser, or (2) browser sends TICKET which identifies
       EMAIL.  Generally set before EPM\_UID set.
 \\[0.5ex]
-\TT{EPM\_UID}\label{EPM_UID}
-    & User ID, either personal or team; set by Login Page when a valid
+\TT{EPM\_AID}\label{EPM_AID}
+    & Account ID, either user or team; set by Login Page when a valid
       TICKET is received, and set by User Page for new users.
 \\[0.5ex]
-\TT{EPM\_PID}\label{EPM_PID}
-    & Personal ID; equals EPM\_UID if that is personal.  Otherwise the full
-      account name is UID:PID where UID is a team ID.
-      Set when EPM\_UID is set.
+\TT{EPM\_UID}\label{EPM_UID}
+    & User ID; equals EPM\_AID if that is a user ID.  Otherwise the full
+      account name is AID:UID where AID is a team ID.
+      Set when EPM\_AID is set.
 \\[0.5ex]
 \TT{EPM\_IPADDR}\label{EPM_IPADDR}
-    & Set to \$\_SERVER['REMOTE\_ADDR'] by Login Page if EPM\_UID is
+    & Set to \$\_SERVER['REMOTE\_ADDR'] by Login Page if EPM\_AID is
       not yet set.
 \\[0.5ex]
 \TT{EPM\_TIME}\label{EPM_TIME}
     & Set to \$\_SERVER['REQUEST\_TIME'] formatted by \$epm\_format\_time
-      by Login Page if EPM\_UID is not yet set.
+      by Login Page if EPM\_AID is not yet set.
 \\[0.5ex]
 \TT{EPM\_ABORT}\label{EPM_ABORT}
     & Set to [FILE,MTIME] where MTIME is the mod time of \$epm\_data/FILE
       and the session must abort if the mod time of this file changes.
-      Here FILE is admin/users/UID/PID.login to which a line is appended
-      whenever EPM\_UID is set for a session.
+      Here FILE is admin/users/AID/UID.login to which a line is appended
+      whenever EPM\_AID is set for a session.
+\\[0.5ex]
+\TT{EPM\_RW}\label{EPM_RW}
+    & Set to false for team login and true for user login.  Set
+      whenever EPM\_AID is set for a session.
 \end{tabular}
 \end{indpar}
 
@@ -775,7 +777,8 @@ of UID team.  May be reactivated.
       user to browser, log existing
       user in and go to Project Page.
 \item Otherwise, give
-      the browser a valid ticket and go to User Page.
+      the browser a valid ticket, set EPM\_EMAIL,
+      and go to User Page.
 \end{enumerate}
 
 
@@ -786,8 +789,11 @@ of UID team.  May be reactivated.
 \\[1ex]
 \begin{tabular}{lllll}
 \TT{admim/browser/BID}	& create  & update & read \\
-\TT{admim/email/EMAIL}	& -       & update & read \\
-\TT{admim/login.login}	& create  & update & -    \\
+\TT{admim/email/EMAIL}	& create  & update & read \\
+\TT{admim/users/AID/UID.login}
+			& -       & append & stat \\
+\TT{admim/users/AID/UID.inactive}
+			& -       & append & stat \\
 \end{tabular}
 \\[3ex]
 {\bf User Page Session Data}
@@ -825,7 +831,7 @@ where
 \\
 \begin{tabular}[t]{lp{4.0in}}
 MID & member ID; PID if available or EMAIL not yet assigned to a user
-      personal account otherwise (EMAIL has `\TT{@}' and PID does not) \\
+      account otherwise (EMAIL has `\TT{@}' and PID does not) \\
 TEXT & plain text \\
 \end{tabular}
 \\
@@ -837,6 +843,12 @@ UID.info files are searched and if any have MIDs matching
 the new account EMAIL, they are resolved to PIDs.
 \end{itemize}
 
+\item[\TT{admin/users/UID/PID.inactive}:]~
+\label{ADMIN/USERS/UID/PID.INACTIVE} \\
+Inactive {\tt .login} file, made by renaming {\tt .login}
+when UID is no longer a member
+of AID team.  May be reactivated.
+
 \end{itemlist}
 \end{indpar}
 
@@ -845,7 +857,7 @@ the new account EMAIL, they are resolved to PIDs.
 \begin{enumerate}
 \item If EPM\_UID not set, get data for new user and create
       new user account if data acceptable.
-\item If EPM\_UID exists for a personal account, display
+\item If EPM\_UID exists for a user account, display
       user data and allow it to be edited.
 \item If EPM\_UID exists for a team account (as discovered
       by reading UID.info), go to Team Page.
