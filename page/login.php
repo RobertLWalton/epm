@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 13:26:32 EDT 2020
+    // Date:	Sun Aug  2 15:13:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -29,7 +29,7 @@
     //	   * Get TICKET =
     //           localStorage.getItem(PATH\0LNAME)
     //	   * If TICKET != null:
-    //          * go to AUTO_ID
+    //          * go to AUTO_ID with stored TICKET
     // MANUAL_ID:
     //     * Send 'op=MANUAL&value=LNAME'
     //     * Receive one of:
@@ -57,9 +57,10 @@
     //		     go to FINISH
     // CONFIRM:
     //     * Write Ticket Message if any.
+    //     * Clear confirmation number
     //     * Get TICKET = confirmation number from user.
     //	   * Clear Messages
-    //     * go to AUTO_ID
+    //     * go to AUTO_ID with confirmation number
     // FINISH:
     //     * localStorage.setItem(PATH\0LNAME,TICKET)
     //     * Issue GET to NEXT_PAGE
@@ -646,6 +647,10 @@ var GET_CNUM_ENABLED = false;
     // set false just before making callback, to avoid
     // spurious callbacks.
 
+var CNUM_SENT = false;
+    // This is set true if AUTO_ID sent CNUM and
+    // not stored TICKET.
+
 function BEGIN()
 {
     GET_LNAME_ENABLED = true;
@@ -702,7 +707,7 @@ function GOT_LNAME()
     if ( TICKET == null )
         MANUAL_ID();
     else
-	AUTO_ID();
+	AUTO_ID ( false );
 }
 
 function MANUAL_ID()
@@ -763,6 +768,7 @@ function CONFIRM ( message = '' )
     }
     GET_CNUM_ENABLED = true;
     get_cnum.style.display = 'block';
+    cnum_in.value = '';
 }
 
 function CNUM_KEYDOWN ( event )
@@ -789,11 +795,12 @@ function GOT_CNUM ( cnum )
     ticket_error.style.display = 'none';
     lname_error.style.display = 'none';
     TICKET = cnum;
-    AUTO_ID();
+    AUTO_ID ( true );
 }
 
-function AUTO_ID()
+function AUTO_ID ( cnum_sent )
 {
+    CNUM_SENT = cnum_sent;
     storage.removeItem ( PATH + '\0' + LNAME );
     SEND ( 'op=AUTO&value=' + TICKET,
            AUTO_RESPONSE, 'auto-login' );
@@ -827,15 +834,29 @@ function AUTO_RESPONSE ( item )
     }
     else if ( item[0] == 'BAD_TICKET' )
     {
-        TICKET_ERROR ( 'malformed ticket; you must' +
-	               ' re-confirm because your' +
-	               ' auto-login failed' );
+        if ( CNUM_SENT )
+	    TICKET_ERROR
+	        ( 'malformed confirmation number;' +
+	          ' a new confirmation number' +
+	          ' has been sent' );
+	else
+	    TICKET_ERROR
+	        ( 'malformed ticket; you must' +
+	          ' re-confirm because your' +
+	          ' auto-login failed' );
     }
     else if ( item[0] == 'NO_TICKET' )
     {
-        TICKET_ERROR ( 'ticket not found; you must' +
-	               ' re-confirm because your' +
-	               ' auto-login failed' );
+        if ( CNUM_SENT )
+	    TICKET_ERROR
+	        ( 'bad confirmation number;' +
+	          ' a new confirmation number' +
+	          ' has been sent' );
+	else
+	    TICKET_ERROR
+	        ( 'ticket not found; you must' +
+	          ' re-confirm because your' +
+	          ' auto-login failed' );
     }
     else if ( item[0] == 'NO_TEAM' )
         LNAME_ERROR ( AID + ' does not name an existing'
