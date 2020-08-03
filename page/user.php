@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug  3 04:59:44 EDT 2020
+    // Date:	Mon Aug  3 14:26:45 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -501,10 +501,12 @@
 	    elseif ( in_array ( $g, $guests ) )
 		$errors[] = "`$g' is already listed"
 		          . " as a guest";
-	    elseif ( count ( $guests ) >= 6 )
+	    elseif (    count ( $guests )
+	             >= $epm_max_guests )
 		$errors[] = "you already have the"
 		          . " maximum limit of"
-			  . " 6 guests";
+			  . " $epm_max_guests guest"
+			  . " entries";
 	    else
 	    {
 	        $guests[] = $g;
@@ -792,9 +794,11 @@
 	    /* Do Nothing */;
 	elseif ( count ( $errors ) > 0 )
 	    /* Do Nothing */;
-	elseif ( count ( $members ) >= 6 )
+	elseif (    count ( $members )
+	         >= $epm_max_members )
 	    $errors[] = "you already have the maximum"
-	              . " limit of 6 members";
+	              . " limit of $epm_max_members"
+		      . " members";
 	else
 	{
 	    if ( ! isset ( $m ) )
@@ -911,7 +915,8 @@
     div.members {
 	background-color: var(--bg-tan);
     }
-    div.email-addresses td {
+    div.email-addresses td, div.guests td,
+                            div.members td {
         font-size: var(--large-font-size);
 	padding: 2px;
     }
@@ -1295,7 +1300,7 @@ EOT;
 	<table class='indented'>
 	$rows
 EOT;
-	if ( count ( $guests ) < 6 )
+	if ( count ( $guests ) < $epm_max_guests )
 	{
 	    echo <<<EOT
 	    <tr><td>
@@ -1506,7 +1511,8 @@ EOT;
 		<table class='indented'>
 		$rows
 EOT;
-		if ( count ( $members ) < 6 )
+		if (   count ( $members )
+		     < $epm_max_members )
 		{
 		    $title =
 			 "Add another member to" .

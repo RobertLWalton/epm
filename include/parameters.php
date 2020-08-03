@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Jul 30 16:14:07 EDT 2020
+// Date:    Mon Aug  3 14:24:58 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -78,6 +78,14 @@ $epm_debug = preg_match
 
 
 // Parameters you may like to edit:
+
+$epm_max_members = 3;
+    // Max number of members a team may have.
+
+$epm_max_guests = 10;
+    // Max number of guest entries a user may have.
+    // Note: if you are restricting individual guests,
+    // one guest may have more than one entry.
 
 $epm_max_emails = 3;
     // Max number of email addresses a user may have.
