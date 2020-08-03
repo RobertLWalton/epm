@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Aug  3 03:19:51 EDT 2020
+// Date:    Mon Aug  3 15:04:19 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -448,10 +448,15 @@ function read_info ( $type, $aid )
     foreach ( $epm_info_fields[$type]
               as $key => $items )
     {
-	if ( ! isset ( $info[$key] )
-	     &&
-	     count ( $items ) > 0 )
-	    ERROR ( "$f has no $key" );
+	if ( ! isset ( $info[$key] ) )
+	{
+	    if ( count ( $items ) > 0 )
+		ERROR ( "$f has no $key" );
+	    else
+	        $info[$key] = [];
+		// This allows emails, members, and
+		// guests to be missing.
+	}
     }
 
     return $info;

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug  3 14:26:45 EDT 2020
+    // Date:	Mon Aug  3 15:13:50 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -496,7 +496,10 @@
 	    $items = explode ( ' ', $g );
 	    $gid = $items[0];
 	    $f = "admin/users/$gid";
-	    if ( ! is_dir ( "$epm_data/$f" ) )
+	    if ( $gid == $uid )
+	        $errors[] = "you cannot be a guest of"
+		          . " yourself";
+	    elseif ( ! is_dir ( "$epm_data/$f" ) )
 	        $errors[] = "$gid is not a user UID";
 	    elseif ( in_array ( $g, $guests ) )
 		$errors[] = "`$g' is already listed"
