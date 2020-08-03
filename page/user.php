@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug  3 03:40:23 EDT 2020
+    // Date:	Mon Aug  3 04:59:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -482,6 +482,95 @@
 	}
 	$edit = 'emails';
     }
+    elseif ( isset ( $_POST['add-guest'] )
+             &&
+	     isset ( $_POST['new-guest'] ) )
+    {
+        if ( $data['LAST_EDIT'] != 'guests' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	$guests = & $uid_info['guests'];
+	$g = trim ( $_POST['new-guest'] );
+	if ( $g != '' )
+	{
+	    $items = explode ( ' ', $g );
+	    $gid = $items[0];
+	    $f = "admin/users/$gid";
+	    if ( ! is_dir ( "$epm_data/$f" ) )
+	        $errors[] = "$gid is not a user UID";
+	    elseif ( in_array ( $g, $guests ) )
+		$errors[] = "`$g' is already listed"
+		          . " as a guest";
+	    elseif ( count ( $guests ) >= 6 )
+		$errors[] = "you already have the"
+		          . " maximum limit of"
+			  . " 6 guests";
+	    else
+	    {
+	        $guests[] = $g;
+
+		$d = "admin/users/$uid";
+		$fl = "$d/$gid.login";
+		$fi = "$d/$gid.inactive";
+		if ( file_exists ( "$epm_data/$fi" ) )
+		    rename ( "$epm_data/$fi",
+		             "$epm_data/$fl" );
+		elseif ( ! file_exists
+		               ( "$epm_data/$fl" ) )
+		{
+		    $r = @file_put_contents
+		        ( "$epm_data/$fl", '',
+			  FILE_APPEND );
+		    if ( $r === false )
+		        ERROR ( "cannot write $fl" );
+		}
+		write_info ( $uid_info );
+	    }
+
+	}
+	$edit = 'guests';
+    }
+    elseif ( isset ( $_POST['delete-guest'] ) )
+    {
+        if ( $data['LAST_EDIT'] != 'guests' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	$c = trim ( $_POST['delete-guest'] );
+	if ( ! preg_match ( '/^\d+$/', $c ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$guests = & $uid_info['guests'];
+	if ( $c >= count ( $guests ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$items = explode ( ' ', $guests[$c] );
+	$gid = $items[0];
+	array_splice ( $guests, $c, 1 );
+
+	$found = false;
+	echo ( 'GUESTS ' . json_encode ( $guests ) . '<BR>' );
+	foreach ( $guests as $g )
+	{
+	    $items = explode ( ' ', $g );
+	    if ( $items[0] == $gid )
+	    {
+	        $found = true;
+		break;
+	    }
+	}
+
+	if ( ! $found )
+	{
+	    $d = "admin/users/$uid";
+	    $fl = "$d/$gid.login";
+	    $fi = "$d/$gid.inactive";
+	    if ( ! file_exists ( "$epm_data/$fl" ) )
+		ERROR ( "$fl does not exist" );
+	    rename ( "$epm_data/$fl", "$epm_data/$fi" );
+	}
+
+	write_info ( $uid_info );
+
+	$edit = 'guests';
+    }
     elseif ( isset ( $_POST['tid-update'] ) )
     {
         if ( $data['LAST_EDIT'] != 'tid-profile' )
@@ -767,7 +856,7 @@
 	    $fi = "$d/$mid.inactive";
 	    if ( ! file_exists ( "$epm_data/$fl" ) )
 	        ERROR ( "$fl does not exist" );
-	    rename ( $fl, $fi );
+	    rename ( "$epm_data/$fl", "$epm_data/$fi" );
 
 	    $items = read_tids ( $mid, 'member' );
 	    $p = array_search ( $tid, $items );
@@ -1192,7 +1281,7 @@ EOT;
     </div>
 EOT;
 
-    $guests = & $tid_info['guests'];
+    $guests = & $uid_info['guests'];
     if ( $edit == 'guests' )
     {
 	$rows = guests_to_rows ( $guests, 'delete' );

@@ -507,6 +507,8 @@ function write_info ( & $info )
 	{
 	    if ( is_array ( $value ) )
 	    {
+	        if ( ! isset ( $old[$key] ) )
+		    $old[$key] = [];
 		$adds = array_diff
 		    ( $info[$key], $old[$key] );
 		foreach ( $adds as $item )
