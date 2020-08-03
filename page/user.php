@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 09:18:55 EDT 2020
+    // Date:	Mon Aug  3 03:40:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -285,6 +285,7 @@
         $edit = $_POST['edit'];
 	if ( ! in_array
 	          ( $edit, ['emails','uid-profile',
+		  	    'guests',
 		            'members', 'tid-profile'],
 	                   true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -809,13 +810,13 @@
     div.team-header {
 	background-color: var(--bg-dark-tan);
     }
-    div.email-addresses, div.members {
+    div.email-addresses, div.guests, div.members {
 	padding: var(--pad) 0px 0px 0px;
 	border: 1px solid black;
 	border-radius: var(--radius);
 	border-collapse: collapse;
     }
-    div.email-addresses {
+    div.email-addresses, div.guests {
 	background-color: var(--bg-green);
     }
     div.members {
@@ -1052,7 +1053,9 @@ EOT;
 		    Cancel Edit</button>
 EOT;
     }
-    elseif ( $edit == 'emails' )
+    elseif ( $edit == 'emails'
+             ||
+	     $edit == 'guests' )
     {
         $editing_user = true;
     	echo <<<EOT
@@ -1088,6 +1091,9 @@ EOT;
 	    <button type="submit"
 		    name='edit' value='emails'>
 		    Edit Emails</button>
+	    <button type="submit"
+		    name='edit' value='guests'>
+		    Edit Guests</button>
 EOT;
     }
     echo <<<EOT
@@ -1142,7 +1148,7 @@ EOT;
 	    ( $emails, $email, $act );
 	echo <<<EOT
 	<div class='email-addresses'>
-	<strong>$uname Your Email Addresses:</strong>
+	<strong>$uname Email Addresses:</strong>
 	<table class='indented'>
 	$rows
 	</table></div>
@@ -1184,6 +1190,62 @@ EOT;
     </table>
     </form>
     </div>
+EOT;
+
+    $guests = & $tid_info['guests'];
+    if ( $edit == 'guests' )
+    {
+	$rows = guests_to_rows ( $guests, 'delete' );
+	echo <<<EOT
+	<div class='guests'>
+	<form method='POST'
+	      action='user.php'>
+	<input type='hidden'
+	       name='id' value='$ID'>
+	<strong>Edit Your Guests:</strong>
+	<table class='indented'>
+	$rows
+EOT;
+	if ( count ( $guests ) < 6 )
+	{
+	    echo <<<EOT
+	    <tr><td>
+	    <input type='text'
+		   name='new-guest'
+		   value='' size='40'
+		   placeholder='New guest UID'
+		   title='Add another guest'
+		   onkeydown=
+		       'KEY_DOWN
+			  (event,"add-guest")'>
+	    <pre>    </pre>
+	    <button type='submit'
+		    name='add-guest'
+		    id='add-guest'>
+		    Add</button>
+	    </td></tr>
+EOT;
+	}
+	echo <<<EOT
+	</table>
+	</form>
+	</div>
+EOT;
+    }
+    elseif ( count ( $guests ) > 0 )
+    {
+	$rows = guests_to_rows ( $guests );
+	echo <<<EOT
+	<div class='guests '>
+	<strong>Guests:</strong>
+	<table class='indented'>
+	$rows
+	</table>
+	</div>
+EOT;
+    }
+
+    echo <<<EOT
     </div>
 EOT;
 

@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jul 29 05:32:19 EDT 2020
+// Date:    Mon Aug  3 03:19:51 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -40,6 +40,7 @@ $epm_info_fields =
 		      'Your User ID (short name by' .
 		      ' which others will know you)'],
 	    'emails' => [],
+	    'guests' => [],
 	    'full_name' => ['Full Name',8,40,
 	                    'John Doe',
 			    'Your Full Name'],
@@ -379,13 +380,12 @@ function split_member ( $member )
 }
 
 // Return the HTML for a $list of members, where each
-// member has the form [UID,EMAIL].  Each Member in
-// $list becomes a <tr><td>...</td></tr> segment in
-// the returned HTML.  If $act == 'delete', a `Delete'
-// button is added after each member with name=
-// 'delete-member' and value='C' where C is the index
-// of the row (0, 1, 2, ... ).  Note that UID may be
-// '' or EMAIL may be '', but not both.
+// member is a string (UID(EMAIL), UID, or (EMAIL)).
+// Each Member in $list becomes a <tr><td>...</td></tr>
+// segment in the returned HTML.  If $act == 'delete',
+// a `Delete' button is added after each member with
+// name='delete-member' and value='C' where C is the
+// index of the row (0, 1, 2, ... ).
 //
 function members_to_rows ( $list, $act = NULL )
 {
@@ -397,6 +397,27 @@ function members_to_rows ( $list, $act = NULL )
 	if ( $act == 'delete' )
 	    $r .= " <button type='submit'"
 	        . "         name='delete-member'"
+	        . "         value='$C'>"
+	        . "         Delete</button>";
+	$r .= '</td></tr>';
+	++ $C;
+    }
+    return $r;
+}
+
+// Ditto for guests but `delete-guest' is used instead
+// of `delete-member'.
+//
+function guests_to_rows ( $list, $act = NULL )
+{
+    $r = '';
+    $C = 0;
+    foreach ( $list as $guest )
+    {
+	$r .= "<tr><td>$guest";
+	if ( $act == 'delete' )
+	    $r .= " <button type='submit'"
+	        . "         name='delete-guest'"
 	        . "         value='$C'>"
 	        . "         Delete</button>";
 	$r .= '</td></tr>';
@@ -427,7 +448,9 @@ function read_info ( $type, $aid )
     foreach ( $epm_info_fields[$type]
               as $key => $items )
     {
-	if ( ! isset ( $info[$key] ) )
+	if ( ! isset ( $info[$key] )
+	     &&
+	     count ( $items ) > 0 )
 	    ERROR ( "$f has no $key" );
     }
 
