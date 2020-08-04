@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 15:35:02 EDT 2020
+    // Date:	Tue Aug  4 11:55:36 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -119,6 +119,9 @@
         global $ID;
 	echo ( "$ID $reply" );
 	DEBUG ( "REPLY $ID $reply" );
+	usleep ( 500000 ); // 0.5 second
+	    // All xhttp's must be individually
+	    // throttled.
 	exit;
     }
 

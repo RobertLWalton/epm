@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Aug  2 14:53:19 EDT 2020
+// Date:    Tue Aug  4 11:25:29 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -102,6 +102,29 @@ else
     $is_team = $_SESSION['EPM_IS_TEAM'];
     $lname = $_SESSION['EPM_EMAIL'];
     if ( $aid != $uid ) $lname = "$aid:$lname";
+
+    $epm_begin_time = microtime ( true );
+    function shutdown_statistics()
+    {
+        global $epm_data, $aid, $uid, $rw, $epm_self,
+	       $epm_begin_time;
+	$epm_end_time = microtime ( true );
+	if ( $rw )
+	    $f = "accounts/$aid/+read-write+";
+	else
+	    $f = "accounts/$aid/+read-only+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f",
+	      sprintf
+	          ( "%18.6f%18.6f %20s %s %s" . PHP_EOL,
+	            $epm_begin_time, $epm_end_time,
+                    $epm_self, $aid, $uid ),
+	      FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+    }
+    register_shutdown_function
+        ( 'shutdown_statistics' );
 
 
     // $RW_BUTTON must be inside a form with action set

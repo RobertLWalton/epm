@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 22:58:53 EDT 2020
+    // Date:	Tue Aug  4 11:53:40 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -131,7 +131,7 @@
 	    }
 	}
 
-	usleep ( 500000 );
+	usleep ( 2000000 ); // 2.0 second
 	$f = "$rundir/$runbase.stat";
 	$contents = @file_get_contents
 	    ( "$epm_data/$f" );

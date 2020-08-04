@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 12:36:26 EDT 2020
+    // Date:	Tue Aug  4 11:53:52 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -367,7 +367,7 @@
 	        echo "RELOAD\n";
 		exit;
 	    }
-	    usleep ( 500000 ); // 0.5 second
+	    usleep ( 1000000 ); // 1.0 second
 	    $r = update_workmap();
 	    if ( count ( $r ) > 0 )
 	    {
