@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Aug  4 11:25:29 EDT 2020
+// Date:    Tue Aug  4 13:41:27 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -102,57 +102,6 @@ else
     $is_team = $_SESSION['EPM_IS_TEAM'];
     $lname = $_SESSION['EPM_EMAIL'];
     if ( $aid != $uid ) $lname = "$aid:$lname";
-
-    $epm_begin_time = microtime ( true );
-    function shutdown_statistics()
-    {
-        global $epm_data, $aid, $uid, $rw, $epm_self,
-	       $epm_begin_time;
-	$epm_end_time = microtime ( true );
-	if ( $rw )
-	    $f = "accounts/$aid/+read-write+";
-	else
-	    $f = "accounts/$aid/+read-only+";
-	$r = @file_put_contents
-	    ( "$epm_data/$f",
-	      sprintf
-	          ( "%18.6f%18.6f %20s %s %s" . PHP_EOL,
-	            $epm_begin_time, $epm_end_time,
-                    $epm_self, $aid, $uid ),
-	      FILE_APPEND );
-	if ( $r === false )
-	    ERROR ( "cannot write $f" );
-    }
-    register_shutdown_function
-        ( 'shutdown_statistics' );
-
-
-    // $RW_BUTTON must be inside a form with action set
-    // to the appropriate page.
-    // 
-    $RW_BUTTON_RO = <<<EOT
-    <button type='submit' name='rw' value='ro'
-	    id='rw-button'
-	    formmethod='POST'
-	    title='current mode is read-write;
-click to change to read-only'>
-	    RO</button>
-EOT;
-    $RW_BUTTON_RW = <<<EOT
-    <button type='submit' name='rw' value='rw'
-	    id='rw-button'
-	    formmethod='POST'
-	    title='current mode is read-only;
-click to change to read-write'>
-	    RW</button>
-EOT;
-
-    if ( ! $is_team )
-        $RW_BUTTON = '';
-    elseif ( $rw )
-	$RW_BUTTON = $RW_BUTTON_RO;
-    else
-	$RW_BUTTON = $RW_BUTTON_RW;
 }
 
 // Each user can have only one session at a time.  When
@@ -373,6 +322,63 @@ if ( in_array ( $epm_page_type,
 // html output.
 //
 if ( isset ( $_POST['xhttp'] ) ) return;
+
+// If login has been done and this is not a +download+
+// or xhttp request, setup statistics and buttons.
+//
+if ( isset ( $aid ) )
+{
+    $epm_begin_time = microtime ( true );
+    function shutdown_statistics()
+    {
+        global $epm_data, $aid, $uid, $rw, $epm_self,
+	       $epm_begin_time;
+	$epm_end_time = microtime ( true );
+	if ( $rw )
+	    $f = "accounts/$aid/+read-write+";
+	else
+	    $f = "accounts/$aid/+read-only+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f",
+	      sprintf
+	          ( "%18.6f%18.6f %20s %s %s" . PHP_EOL,
+	            $epm_begin_time, $epm_end_time,
+                    $epm_self, $aid, $uid ),
+	      FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+    }
+    register_shutdown_function
+        ( 'shutdown_statistics' );
+
+
+    // $RW_BUTTON must be inside a form with action set
+    // to the appropriate page.
+    // 
+    $RW_BUTTON_RO = <<<EOT
+    <button type='submit' name='rw' value='ro'
+	    id='rw-button'
+	    formmethod='POST'
+	    title='current mode is read-write;
+click to change to read-only'>
+	    RO</button>
+EOT;
+    $RW_BUTTON_RW = <<<EOT
+    <button type='submit' name='rw' value='rw'
+	    id='rw-button'
+	    formmethod='POST'
+	    title='current mode is read-only;
+click to change to read-write'>
+	    RW</button>
+EOT;
+
+    if ( ! $is_team )
+        $RW_BUTTON = '';
+    elseif ( $rw )
+	$RW_BUTTON = $RW_BUTTON_RO;
+    else
+	$RW_BUTTON = $RW_BUTTON_RW;
+}
 
 echo <<<EOT
 <script>

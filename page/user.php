@@ -36,7 +36,12 @@
         // Lists of error and warning messages to be
 	// displayed.
 
-    if ( ! $new_user )
+    if ( $new_user )
+    {
+        $rw = true;
+	$RW_BUTTON = '';
+    }
+    else
     {
 	$aid = $_SESSION['EPM_AID'];
 	require "$epm_home/include/epm_list.php";
@@ -108,6 +113,7 @@
 	    $data['UID-INFO'] = [
 		'uid' => '',
 		'emails' => [$email],
+		'guests' => [],
 		'full_name' => '',
 		'organization' => '',
 		'location' => ''];
@@ -1085,9 +1091,15 @@ EOT;
     <table style='width:100%'>
     <tr>
 EOT;
+    if ( ! $new_user )
+        echo <<<EOT
+	<td>
+	<strong title='Login Name'>$lname</strong>
+	</td>
+EOT;
     if ( ! isset ( $edit ) )
         echo <<<EOT
-	<td style='text-align:left'>
+	<td>
 	<strong>Go To</strong>
 	<button type="submit"
 		formaction="project.php">

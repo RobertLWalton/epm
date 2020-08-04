@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug  4 11:55:36 EDT 2020
+    // Date:	Tue Aug  4 14:44:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -119,7 +119,7 @@
         global $ID;
 	echo ( "$ID $reply" );
 	DEBUG ( "REPLY $ID $reply" );
-	usleep ( 500000 ); // 0.5 second
+	usleep ( 300000 ); // 0.3 second
 	    // All xhttp's must be individually
 	    // throttled.
 	exit;
@@ -706,9 +706,6 @@ function GOT_LNAME()
         AID = matches[1];
 	EMAIL = matches[2];
     }
-    get_lname.style.display = 'none';
-    lname_out.innerText = LNAME;
-    show_lname.style.display = 'block';
     TICKET = storage.getItem(PATH + '\0' + LNAME);
     if ( TICKET == null )
         MANUAL_ID();
@@ -772,6 +769,10 @@ function CONFIRM ( message = '' )
 	ticket_error.style.display = 'block';
 	ticket_message.innerText = message;
     }
+    get_lname.style.display = 'none';
+    lname_out.innerText = LNAME;
+    show_lname.style.display = 'block';
+
     GET_CNUM_ENABLED = true;
     get_cnum.style.display = 'block';
     cnum_in.value = '';
