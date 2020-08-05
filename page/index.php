@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Aug  4 18:47:48 EDT 2020
+// Date:    Wed Aug  5 05:36:33 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -114,7 +114,10 @@ else
         $rw_handle = fopen
 	    ( "$epm_data/$rw_file", "c+" );
 	flock ( $rw_handle, LOCK_EX );
-        $rw = ( fread ( $rw_handle, 1000 ) == $uid );
+        $c = trim ( fread ( $rw_handle, 1000 ) );
+	    // For some reason we need to
+	    // trim this.
+        $rw = ( $c == $uid );
 	function rw_unlock()
 	{
 	    global $rw_handle;

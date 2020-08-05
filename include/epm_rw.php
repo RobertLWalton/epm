@@ -12,9 +12,11 @@
     // Upon receiving a POST with rw='MODE', require
     // this file.  If mode change cannot be
     // accomplished, appends messages to $errors.
-    // If the requirer wants to change mode anyway,
-    // just call force_rw() which is defined in this
-    // code.
+    //
+    // Upon receiving a POST with force-rw=..., require
+    // this file.  Mode, which must be read-only,
+    // will be changed to read-write and $errors will
+    // be left untouched.
 
     if ( ! isset ( $epm_data ) )
 	exit ( 'ACCESS ERROR: $epm_data not set' );
@@ -24,13 +26,20 @@
 	exit ( 'ACCESS ERROR: $rw not set' );
     if ( ! isset ( $is_team ) )
 	exit ( 'ACCESS ERROR: $is_team not set' );
-    if ( ! isset ( $_POST['rw'] ) )
-	exit ( "ACCESS ERROR: POST['rw'] not set" );
+
+    // WARNING: $uid may not be EPM_UID because this is
+    //		called by user.php.
+
+    if ( isset ( $_POST['rw'] ) )
+	$new_rw = $_POST['rw'];
+    elseif ( isset ( $_POST['force-rw'] ) )
+        $new_rw = 'rw';
+    else
+	exit ( 'UNACCEPTABLE HTTP POST' );
 
     if ( ! $is_team )
 	exit ( 'UNACCEPTABLE HTTP POST: NOT TEAM' );
 
-    $new_rw = $_POST['rw'];
     if ( $rw && $new_rw != 'ro' )
 	exit ( 'UNACCEPTABLE HTTP POST: BAD RW' );
     if ( ! $rw && $new_rw != 'rw' )
@@ -53,21 +62,19 @@
         $rw_handle = fopen
 	    ( "$epm_data/$rw_file", "c+" );
 	flock ( $rw_handle, LOCK_EX );
-	$u = fread ( $rw_handle, 1000 );
+	register_shutdown_function ( 'rw_unlock' );
 
-	function force_rw()
+	$u = trim ( fread ( $rw_handle, 1000 ) );
+	if ( $u == '' || isset ( $_POST['force-rw'] ) )
 	{
-	    global $rw_handle, $rw, $uid,
-	           $RW_BUTTON, $RW_BUTTON_RO;
-
+	    rewind ( $rw_handle );
 	    ftruncate ( $rw_handle, 0 );
-	    fwrite ( $rw_handle, $uid );
-	    register_shutdown_function ( 'rw_unlock' );
+	    fwrite ( $rw_handle, $_SESSION['EPM_UID'] );
+	        // Warning: $uid may not be EPM_UID
+		// because this is called by user.php.
 	    $rw = true;
 	    $RW_BUTTON = $RW_BUTTON_RO;
 	}
-	        
-	if ( $u == '' ) force_rw();
 	else
 	{
 	    $errors[] = "cannot switch to read-write"
@@ -85,9 +92,6 @@
 		$errors[] = "    and last used it $t"
 		          . " seconds ago";
 	    }
-
-	    // The requirer of this file can force
-	    // RW by calling force_rw().
 	}
     }
 

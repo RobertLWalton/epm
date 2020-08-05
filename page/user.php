@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug  4 18:55:10 EDT 2020
+    // Date:	Wed Aug  5 03:51:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -35,6 +35,9 @@
     $warnings = [];
         // Lists of error and warning messages to be
 	// displayed.
+    $force_rw = false;
+        // Set by $_POST['rw'] to ask if RW should be
+	// forced.
 
     if ( ! $new_user )
     {
@@ -122,7 +125,19 @@
 	}
     }
     elseif ( isset ( $_POST['rw'] ) )
+    {
 	require "$epm_home/include/epm_rw.php";
+	if ( count ( $errors ) > 0 )
+	    $force_rw = true;
+    }
+    elseif ( isset ( $_POST['force-rw'] ) )
+    {
+	require "$epm_home/include/epm_rw.php";
+    }
+    elseif ( isset ( $_POST['ignore-rw'] ) )
+    {
+	/* Do Nothing */
+    }
     elseif ( isset ( $_POST['user'] )
              &&
 	     $_POST['user'] != $uid )
@@ -1008,6 +1023,21 @@ function KEY_DOWN ( event, id )
 	}
 	echo "<br></div></div>";
     }
+
+    if ( $force_rw )
+        echo <<<EOT
+	<div class='errors'>
+	<strong>Do you want to force RW
+	        (read-write mode)?</strong>
+	<form action='user.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
+	<button type='submit' name='ignore-rw'>
+	    NO</button>
+	<button type='submit' name='force-rw'>
+	    YES</button>
+	</form>
+	</div>
+EOT;
 
     if ( $edit == 'new-uid' )
         echo <<<EOT
