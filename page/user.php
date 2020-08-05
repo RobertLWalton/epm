@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug  5 03:51:32 EDT 2020
+    // Date:	Wed Aug  5 13:29:01 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -61,6 +61,11 @@
     //		  'member' => member tids of UID
     //
     //	   EPM_DATA UID-INFO
+    //		This is the info of EPM_USER UID,
+    //		except when the latter is NULL during
+    //		new_user processing, when it is to
+    //		info of the not yet extant new user.
+    //
     //	        .info file contents containing:
     //
     //		uid		string
@@ -91,11 +96,11 @@
 	                         'TID' => NULL,
 				 'TID-LIST' => 'all'];
     $user = & $_SESSION['EPM_USER'];
-    $uid = & $user['UID'];
+    $UID = & $user['UID'];
     $tid = & $user['TID'];
     $tid_list = & $user['TID-LIST'];
-    if ( ! isset ( $uid ) && ! $new_user )
-        $uid = $_SESSION['EPM_UID'];
+    if ( ! isset ( $UID ) && ! $new_user )
+        $UID = $uid;
 
     // Set up $data.
     //
@@ -118,7 +123,7 @@
 	else
 	{
 	    $data['UID-INFO'] = read_info
-	        ( 'user', $uid );
+	        ( 'user', $UID );
 	    if ( isset ( $tid ) )
 		$data['TID-INFO'] = read_info
 		    ( 'team', $tid );
@@ -140,7 +145,7 @@
     }
     elseif ( isset ( $_POST['user'] )
              &&
-	     $_POST['user'] != $uid )
+	     $_POST['user'] != $UID )
     {
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -154,9 +159,9 @@
 	        "$new_uid is no longer a user id";
 	else
 	{
-	    $uid = $new_uid;
+	    $UID = $new_uid;
 	    $data['UID-INFO'] = read_info
-	        ( 'user', $uid );
+	        ( 'user', $UID );
 	}
     }
     elseif ( isset ( $_POST['team'] )
@@ -227,7 +232,10 @@
     $tid_info = & $data['TID-INFO'];
     $emails = & $uid_info['emails'];
 
-    $uid_editable = ( $new_user || $uid == $aid );
+    $uid_editable =
+        ( $new_user
+	  ||
+	  ( $uid == $aid && $UID == $uid ) );
 
     $no_team = ( ! isset ( $tid_info ) );
     $new_team = ( ! isset ( $tid ) && ! $no_team );
@@ -236,7 +244,8 @@
     //
     function compute_tids ( $tid_list )
     {
-        $uid = $_SESSION['EPM_UID'];
+        global $uid;
+
 	switch ( $tid_list )
 	{
 	case 'all':
@@ -262,16 +271,17 @@
 	}
     }
 
+    // Run a check that $UID's info and admin/email
+    // match.  WARN if not.  Correct if not and
+    // $uid_editable.
+    //
     if ( $epm_method == 'GET' && ! $new_user )
     {
-        if ( $uid != $user['UID'] )
-	    ERROR ( "bad {$user['UID']} info uid" );
-
 	email_map ( $map );
 	$actual = [];
 	foreach ( $map as $e => $u )
 	{
-	    if ( $u == $uid )
+	    if ( $u == $UID )
 	        $actual[] = $e;
 	}
 	if ( count ( array_diff ( $emails, $actual ) )
@@ -279,7 +289,7 @@
 	     count ( array_diff ( $actual, $emails ) )
 	     > 0 )
 	{
-	    WARN ( "$uid info emails !=" .
+	    WARN ( "$UID info emails !=" .
 	           " admin/email emails" );
 	    $emails = $actual;
 	    if ( $uid_editable )
@@ -309,12 +319,12 @@
     }
     elseif ( isset ( $_POST['uid-update'] ) )
     {
-        if ( ! $uid_editable )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'uid-profile' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( ! $uid_editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 
-	$old_uid = $uid;
+	$old_uid = $uid_info['uid'];
 	copy_info ( 'user', $_POST, $uid_info );
 	scrub_info ( 'user', $uid_info, $errors );
 
@@ -333,7 +343,7 @@
 		          . " using $new_uid as an"
 			  . " Account ID";
 	}
-	elseif ( $uid != $old_uid )
+	elseif ( $old_uid != $uid_info['uid'] )
 	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
 	if ( count ( $errors ) > 0 )
@@ -352,8 +362,13 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( isset ( $UID ) )
+	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
 	$uid = $uid_info['uid'];
+	if ( is_dir ( "$epm_data/admin/users/$uid" ) )
+	    exit ( "UNACCEPTABLE HTTP POST: UID COL" );
+
 	@mkdir ( "$epm_data/admin", 02770 );
 	@mkdir ( "$epm_data/admin/users", 02770 );
 	@mkdir ( "$epm_data/admin/users/$uid",
@@ -371,6 +386,7 @@
 	    ERROR ( "new user init_email" .
 	            " ( $uid, $email ) failed" );
 	write_info ( $uid_info );
+	$UID = $uid;
 
 	$d = "admin/users/$uid";
 	$log = "$d/$uid.login";
@@ -394,7 +410,6 @@
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_AID'] = $uid;
-	$_SESSION['EPM_RW'] = true;
 	$_SESSION['EPM_IS_TEAM'] = false;
 	    // Do this last as it certifies
 	    // the EMAIL and .info files exist.
@@ -410,9 +425,9 @@
     }
     elseif ( isset ( $_POST['NO-new-uid'] ) )
     {
-        if ( ! $uid_editable )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'new-uid' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$edit = 'uid-profile';
     }
@@ -420,10 +435,12 @@
              &&
 	     isset ( $_POST['new-email'] ) )
     {
-        if ( ! $uid_editable )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( ! $uid_editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $UID != $uid )
+	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
 	$e = trim ( $_POST['new-email'] );
 	if ( count ( $emails ) >= 
@@ -452,10 +469,12 @@
     }
     elseif ( isset ( $_POST['delete-email'] ) )
     {
-        if ( ! $uid_editable )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $data['LAST_EDIT'] != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( ! $uid_editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $UID != $uid )
+	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
 	$e = trim ( $_POST['delete-email'] );
     	if ( validate_email ( $e, $errors ) )
@@ -503,6 +522,10 @@
     {
         if ( $data['LAST_EDIT'] != 'guests' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( ! $uid_editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $UID != $uid )
+	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
 	$guests = & $uid_info['guests'];
 	$g = trim ( $_POST['new-guest'] );
@@ -554,6 +577,10 @@
     {
         if ( $data['LAST_EDIT'] != 'guests' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( ! $uid_editable )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $UID != $uid )
+	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
 	$c = trim ( $_POST['delete-guest'] );
 	if ( ! preg_match ( '/^\d+$/', $c ) )
@@ -993,8 +1020,8 @@ function KEY_DOWN ( event, id )
 <?php 
 
     $editing_user = false;
-    if ( $uid_editable ) $uname = 'Your';
-    else $uname = $uid;
+    if ( $UID == $uid ) $uname = 'Your';
+    else $uname = $UID;
 
     // NOTE: if ! $new_user and ! $rw then
     //       $edit == NULL.
@@ -1205,7 +1232,7 @@ EOT;
 EOT;
     else
     {
-	$options = values_to_options ( $users, $uid );
+	$options = values_to_options ( $users, $UID );
 	echo <<<EOT
 	<strong>User</strong>
 	<select name='user'
