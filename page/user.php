@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug  5 13:29:01 EDT 2020
+    // Date:	Wed Aug  5 14:27:54 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1165,7 +1165,7 @@ EOT;
     <td style='text-align:right'>
     <button type='button'
 	    onclick='VIEW("view.php")'>
-	View Users, Projects, and Problems</button>
+	View Actions</button>
 EOT;
     if ( ! isset ( $edit ) )
         echo <<<EOT
