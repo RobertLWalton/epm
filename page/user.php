@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug  5 14:27:54 EDT 2020
+    // Date:	Wed Aug  5 14:59:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -97,8 +97,8 @@
 				 'TID-LIST' => 'all'];
     $user = & $_SESSION['EPM_USER'];
     $UID = & $user['UID'];
-    $tid = & $user['TID'];
-    $tid_list = & $user['TID-LIST'];
+    $TID = & $user['TID'];
+    $TID_LIST = & $user['TID-LIST'];
     if ( ! isset ( $UID ) && ! $new_user )
         $UID = $uid;
 
@@ -124,9 +124,9 @@
 	{
 	    $data['UID-INFO'] = read_info
 	        ( 'user', $UID );
-	    if ( isset ( $tid ) )
+	    if ( isset ( $TID ) )
 		$data['TID-INFO'] = read_info
-		    ( 'team', $tid );
+		    ( 'team', $TID );
 	}
     }
     elseif ( isset ( $_POST['rw'] ) )
@@ -166,7 +166,7 @@
     }
     elseif ( isset ( $_POST['team'] )
              &&
-	     $_POST['team'] != $tid )
+	     $_POST['team'] != $TID )
     {
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -180,14 +180,14 @@
 	        "$new_tid is no longer a team id";
 	else
 	{
-	    $tid = $new_tid;
+	    $TID = $new_tid;
 	    $data['TID-INFO'] = read_info
-	        ( 'team', $tid );
+	        ( 'team', $TID );
 	}
     }
     elseif ( isset ( $_POST['tid-list'] )
              &&
-	     $_POST['tid-list'] != $tid_list )
+	     $_POST['tid-list'] != $TID_LIST )
     {
 	if ( isset ( $data['LAST_EDIT'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -199,8 +199,8 @@
 	                  ['all','member','manager'],
 			  true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$tid_list = $new_tid_list;
-	$tid = NULL;
+	$TID_LIST = $new_tid_list;
+	$TID = NULL;
 	$data['TID-INFO'] = NULL;
     }
     elseif ( isset ( $_POST['create-tid'] ) )
@@ -218,15 +218,17 @@
 		'team_name' => '',
 		'organization' => '',
 		'location' => ''];
-	    $tid = NULL;
+	    $TID = NULL;
 	    $edit = 'tid-profile';
 	}
     }
     else
 	$post_processed = false;
 
-    // The above establishes $uid_info, $tid_info,
-    // and $tid-list before the following is executed.
+    // The above establishes EPM_USER UID, TID,
+    // TID-LIST, $TID, $UID, and $TID_LIST,  and
+    // EPM_DATA UID-INFO and TID-INFO before the
+    // following is executed.
 
     $uid_info = & $data['UID-INFO'];
     $tid_info = & $data['TID-INFO'];
@@ -238,15 +240,15 @@
 	  ( $uid == $aid && $UID == $uid ) );
 
     $no_team = ( ! isset ( $tid_info ) );
-    $new_team = ( ! isset ( $tid ) && ! $no_team );
+    $new_team = ( ! isset ( $TID ) && ! $no_team );
 
-    // Compute list of teams in $tid_list.
+    // Compute list of teams in $TID_LIST.
     //
-    function compute_tids ( $tid_list )
+    function compute_tids ( $TID_LIST )
     {
         global $uid;
 
-	switch ( $tid_list )
+	switch ( $TID_LIST )
 	{
 	case 'all':
 	    return read_accounts ( 'team' );
@@ -259,14 +261,14 @@
 
     if ( ! $new_user && ! $new_team )
     {
-	$tids = compute_tids ( $tid_list );
+	$tids = compute_tids ( $TID_LIST );
 
 	if ( $no_team
 	     &&
 	     count ( $tids ) > 0 )
 	{
-	    $tid = $tids[0];
-	    $tid_info = read_info ( 'team', $tid );
+	    $TID = $tids[0];
+	    $tid_info = read_info ( 'team', $TID );
 	    $no_team = false;
 	}
     }
@@ -421,7 +423,7 @@
 	$aid = $_SESSION['EPM_AID'];
 	require "$epm_home/include/epm_list.php";
         $users = read_accounts ( 'user' );
-	$tids = compute_tids ( $tid_list );
+	$tids = compute_tids ( $TID_LIST );
     }
     elseif ( isset ( $_POST['NO-new-uid'] ) )
     {
@@ -593,7 +595,6 @@
 	array_splice ( $guests, $c, 1 );
 
 	$found = false;
-	echo ( 'GUESTS ' . json_encode ( $guests ) . '<BR>' );
 	foreach ( $guests as $g )
 	{
 	    $items = explode ( ' ', $g );
@@ -692,27 +693,27 @@
         if ( $tid_info['manager'] != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
-	$tid = $tid_info['tid'];
+	$TID = $tid_info['tid'];
 	$no_team = false;
 	$new_team = false;
 
 	@mkdir ( "$epm_data/admin", 02770 );
 	@mkdir ( "$epm_data/admin/teams", 02770 );
-	@mkdir ( "$epm_data/admin/teams/$tid",
+	@mkdir ( "$epm_data/admin/teams/$TID",
 		 02770 );
 	$m = umask ( 06 );
 	@mkdir ( "$epm_data/accounts", 02771 );
-	@mkdir ( "$epm_data/accounts/$tid", 02771 );
+	@mkdir ( "$epm_data/accounts/$TID", 02771 );
 	umask ( $m );
 
 	write_info ( $tid_info );
 
 	$items = read_tids ( $aid, 'manager' );
-	$items[] = $tid;
+	$items[] = $TID;
 	write_tids ( $items, $aid, 'manager' );
 
-	$tid_list = 'manager';
-	$tids = compute_tids ( $tid_list );
+	$TID_LIST = 'manager';
+	$tids = compute_tids ( $TID_LIST );
 	$edit = NULL;
     }
     elseif ( isset ( $_POST['new-manager'] ) )
@@ -720,23 +721,23 @@
         if ( $data['LAST_EDIT'] != 'new-manager' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
-	$tid = $tid_info['tid'];
+	$TID = $tid_info['tid'];
 
 	write_info ( $tid_info );
 
 	$items = read_tids ( $aid, 'manager' );
-	$pos = array_search ( $tid, $items );
+	$pos = array_search ( $TID, $items );
 	if ( $pos !== false )
 	    array_splice ( $items, $pos, 1 );
 	write_tids ( $items, $aid, 'manager' );
 
 	$mid = $tid_info['manager'];
 	$items = read_tids ( $mid, 'manager' );
-	$items[] = $tid;
+	$items[] = $TID;
 	write_tids ( $items, $mid, 'manager' );
 
-	$tid_list = 'all';
-	$tids = compute_tids ( $tid_list );
+	$TID_LIST = 'all';
+	$tids = compute_tids ( $TID_LIST );
 	$edit = NULL;
     }
     elseif ( isset ( $_POST['NO-new-tid'] ) )
@@ -804,9 +805,9 @@
 		    if ( count ( $items ) == 0 )
 		        $items = ['-'];
 		    if ( ! in_array
-		              ( $tid, $items, true ) )
+		              ( $TID, $items, true ) )
 		    {
-			$items[] = $tid;
+			$items[] = $TID;
 			write_email ( $items, $mmail );
 		    }
 		}
@@ -859,7 +860,7 @@
 		else
 		    $members[] = "$m";
 
-		$d = "admin/teams/$tid";
+		$d = "admin/teams/$TID";
 		$fl = "$d/$m.login";
 		$fi = "$d/$m.inactive";
 		if ( file_exists ( "$epm_data/$fi" ) )
@@ -875,7 +876,7 @@
 		}
 
 		$items = read_tids ( $m, 'member' );
-		$items[] = $tid;
+		$items[] = $TID;
 		write_tids ( $items, $m, 'member' );
 	    }
 
@@ -900,7 +901,7 @@
 	    split_member ( $members[$c] );
 	if ( $mid != '' )
 	{
-	    $d = "admin/teams/$tid";
+	    $d = "admin/teams/$TID";
 	    $fl = "$d/$mid.login";
 	    $fi = "$d/$mid.inactive";
 	    if ( ! file_exists ( "$epm_data/$fl" ) )
@@ -908,7 +909,7 @@
 	    rename ( "$epm_data/$fl", "$epm_data/$fi" );
 
 	    $items = read_tids ( $mid, 'member' );
-	    $p = array_search ( $tid, $items );
+	    $p = array_search ( $TID, $items );
 	    if ( $p !== false )
 		array_splice ( $items, $p, 1 );
 	    write_tids ( $items, $mid, 'member' );
@@ -1423,7 +1424,7 @@ EOT;
 EOT;
 	if ( isset ( $edit ) || $new_team )
 	{
-	    $tname = ( $new_team ? 'New' : $tid );
+	    $tname = ( $new_team ? 'New' : $TID );
 	    echo <<<EOT
 	    <strong>$tname Team Info</strong>
 EOT;
@@ -1438,7 +1439,7 @@ EOT;
 		  &&
 		  $tid_info['manager'] == $aid );
 
-	    switch ( $tid_list )
+	    switch ( $TID_LIST )
 	    {
 	    case 'all':
 		$all_select = 'selected';
@@ -1484,7 +1485,7 @@ EOT;
 	    else
 	    {
 		$tid_options =
-		    values_to_options ( $tids, $tid );
+		    values_to_options ( $tids, $TID );
 		echo <<<EOT
 		<form method='POST' action='user.php'
 		      id='team-form'>
@@ -1531,7 +1532,7 @@ EOT;
 	    if ( $new_team )
 		$style =
 		    'style="background-color:yellow"';
-	    $tname = ( isset ( $tid ) ? $tid : 'New' );
+	    $tname = ( isset ( $TID ) ? $TID : 'New' );
 	    echo <<<EOT
 	    <form method='POST' action='user.php'>
 	    <input type='hidden' name='id' value='$ID'>
@@ -1642,8 +1643,8 @@ EOT;
 	    $h = ( $new_team ?
 		       'Edit New Team Profile' :
 		   $edit == 'tid-profile' ?
-		       "Edit $tid Profile" :
-		   "$tid Profile" );
+		       "Edit $TID Profile" :
+		   "$TID Profile" );
 
 	    if ( $new_team )
 		$h = "<strong"
