@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Aug  4 13:41:27 EDT 2020
+// Date:    Tue Aug  4 18:47:48 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -93,15 +93,73 @@ if ( ! isset ( $_SESSION['EPM_AID'] ) )
          &&
 	 $epm_self != "/page/user.php" )
 	exit ( "UNACCEPTABLE HTTP $epm_method: SKIP" );
+
+    $rw = true;
+    $RW_BUTTON = '';
+        // Settings suitable for new user login.
+	// These are ignored by login.php, but may be
+	// used by user.php.
 }
 else
 {
     $aid = $_SESSION['EPM_AID'];
     $uid = $_SESSION['EPM_UID'];
-    $rw = $_SESSION['EPM_RW'];
-    $is_team = $_SESSION['EPM_IS_TEAM'];
     $lname = $_SESSION['EPM_EMAIL'];
     if ( $aid != $uid ) $lname = "$aid:$lname";
+
+    $is_team = $_SESSION['EPM_IS_TEAM'];
+    if ( $is_team )
+    {
+	$rw_file = "admin/teams/$aid/+rw+";
+        $rw_handle = fopen
+	    ( "$epm_data/$rw_file", "c+" );
+	flock ( $rw_handle, LOCK_EX );
+        $rw = ( fread ( $rw_handle, 1000 ) == $uid );
+	function rw_unlock()
+	{
+	    global $rw_handle;
+	    flock ( $rw_handle, LOCK_UN );
+	    fclose ( $rw_handle );
+	}
+	if ( $rw )
+	    register_shutdown_function
+	        ( 'rw_unlock' );
+		// The lock will be held till the
+		// end of the transaction.
+	else
+	    rw_unlock();
+    }
+    else
+        $rw = ( $aid == $uid );
+
+
+    // $RW_BUTTON must be inside a form with action set
+    // to the appropriate page.
+    // 
+    $RW_BUTTON_RO = <<<EOT
+    <button type='submit' name='rw' value='ro'
+	    id='rw-button'
+	    formmethod='POST'
+	    title='current mode is read-write;
+click to change to read-only'>
+	    RO</button>
+EOT;
+    $RW_BUTTON_RW = <<<EOT
+    <button type='submit' name='rw' value='rw'
+	    id='rw-button'
+	    formmethod='POST'
+	    title='current mode is read-only;
+click to change to read-write'>
+	    RW</button>
+EOT;
+
+    if ( ! $is_team )
+        $RW_BUTTON = '';
+    elseif ( $rw )
+	$RW_BUTTON = $RW_BUTTON_RO;
+    else
+	$RW_BUTTON = $RW_BUTTON_RW;
+
 }
 
 // Each user can have only one session at a time.  When
@@ -351,33 +409,6 @@ if ( isset ( $aid ) )
     register_shutdown_function
         ( 'shutdown_statistics' );
 
-
-    // $RW_BUTTON must be inside a form with action set
-    // to the appropriate page.
-    // 
-    $RW_BUTTON_RO = <<<EOT
-    <button type='submit' name='rw' value='ro'
-	    id='rw-button'
-	    formmethod='POST'
-	    title='current mode is read-write;
-click to change to read-only'>
-	    RO</button>
-EOT;
-    $RW_BUTTON_RW = <<<EOT
-    <button type='submit' name='rw' value='rw'
-	    id='rw-button'
-	    formmethod='POST'
-	    title='current mode is read-only;
-click to change to read-write'>
-	    RW</button>
-EOT;
-
-    if ( ! $is_team )
-        $RW_BUTTON = '';
-    elseif ( $rw )
-	$RW_BUTTON = $RW_BUTTON_RO;
-    else
-	$RW_BUTTON = $RW_BUTTON_RW;
 }
 
 echo <<<EOT

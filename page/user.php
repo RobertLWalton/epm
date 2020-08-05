@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug  3 15:13:50 EDT 2020
+    // Date:	Tue Aug  4 18:55:10 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -25,7 +25,7 @@
     LOCK ( "admin", LOCK_EX );
 
     $email = $_SESSION['EPM_EMAIL'];
-    $new_user = ( ! isset ( $_SESSION['EPM_UID'] ) );
+    $new_user = ( ! isset ( $aid ) );
     $edit = ( $new_user ? 'uid-profile' : NULL );
         // One of: NULL (just view), 'emails', 
 	// 'uid-profile', 'members', or 'tid-profile'.
@@ -36,14 +36,8 @@
         // Lists of error and warning messages to be
 	// displayed.
 
-    if ( $new_user )
+    if ( ! $new_user )
     {
-        $rw = true;
-	$RW_BUTTON = '';
-    }
-    else
-    {
-	$aid = $_SESSION['EPM_AID'];
 	require "$epm_home/include/epm_list.php";
         $users = read_accounts ( 'user' );
     }

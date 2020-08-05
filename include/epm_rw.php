@@ -2,7 +2,7 @@
 
     // File:	epm_rw.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jul 31 13:20:28 EDT 2020
+    // Date:	Tue Aug  4 19:48:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -12,82 +12,82 @@
     // Upon receiving a POST with rw='MODE', require
     // this file.  If mode change cannot be
     // accomplished, appends messages to $errors.
-    //
-    // WARNING: This file may release any existing LOCK.
+    // If the requirer wants to change mode anyway,
+    // just call force_rw() which is defined in this
+    // code.
 
     if ( ! isset ( $epm_data ) )
 	exit ( 'ACCESS ERROR: $epm_data not set' );
-    if ( ! isset ( $_SESSION['EPM_AID'] ) )
-	exit ( 'ACCESS ERROR: EPM_AID not set' );
-    if ( ! isset ( $_SESSION['EPM_RW'] ) )
-	exit ( 'ACCESS ERROR: EPM_RW not set' );
+    if ( ! isset ( $aid ) )
+	exit ( 'ACCESS ERROR: $aid not set' );
+    if ( ! isset ( $rw ) )
+	exit ( 'ACCESS ERROR: $rw not set' );
+    if ( ! isset ( $is_team ) )
+	exit ( 'ACCESS ERROR: $is_team not set' );
     if ( ! isset ( $_POST['rw'] ) )
-	exit ( 'ACCESS ERROR: POST rw not set' );
+	exit ( "ACCESS ERROR: POST['rw'] not set" );
+
+    if ( ! $is_team )
+	exit ( 'UNACCEPTABLE HTTP POST: NOT TEAM' );
 
     $new_rw = $_POST['rw'];
-    if ( ! in_array ( $new_rw, ['rw','ro'] ) )
-	exit ( 'UNACCEPTABLE HTTP POST: RW' );
+    if ( $rw && $new_rw != 'ro' )
+	exit ( 'UNACCEPTABLE HTTP POST: BAD RW' );
+    if ( ! $rw && $new_rw != 'rw' )
+	exit ( 'UNACCEPTABLE HTTP POST: BAD RW' );
 
-    $new_rw = ( $new_rw == 'rw' ? true : false );
+    // So we need to toggle $rw.
 
-    if ( $new_rw === $_SESSION['EPM_RW'] )
-        /* Do Nothing */;
-    elseif ( ! $is_team )
+    if ( $rw )
     {
-	$_SESSION['EPM_RW'] = $new_rw;
-        $rw = $new_rw;
+        ftruncate ( $rw_handle, 0 );
+	    // We leave $rw_handle locked because it
+	    // will be unlocked by shutdown and we do
+	    // not wish to code to allow rw_unlock to
+	    // be called twice.
+	$rw = false;
+	$RW_BUTTON = $RW_BUTTON_RW;
     }
     else
     {
-        $d = "admin/teams/" . $_SESSION['EPM_AID'];
-	if ( ! is_dir ( "$epm_data/$d" ) )
-	    exit ( 'UNACCEPTABLE HTTP POST: RW AID' );
-	LOCK ( $d, LOCK_EX );
-	$f = "$d/+read-write+";
-	$c = @file_get_contents ( "$epm_data/$f" );
-	if ( $c === false ) $c = '';
-	else $c = trim ( $c );
+        $rw_handle = fopen
+	    ( "$epm_data/$rw_file", "c+" );
+	flock ( $rw_handle, LOCK_EX );
+	$u = fread ( $rw_handle, 1000 );
 
-	if ( ! $new_rw )
+	function force_rw()
 	{
-	    if ( $c == $_SESSION['EPM_UID'] )
-	    {
-	        $r = @file_put_contents
-		    ( "$epm_data/$f", '' );
-	        if ( $r === false )
-		    ERROR ( "cannot write $f" );
-	    }
-	    $rw = false;
-	    $_SESSION['EPM_RW'] = $rw;
-	    $RW_BUTTON = $RW_BUTTON_RW;
+	    global $rw_handle, $rw, $uid,
+	           $RW_BUTTON, $RW_BUTTON_RO;
+
+	    ftruncate ( $rw_handle, 0 );
+	    fwrite ( $rw_handle, $uid );
+	    register_shutdown_function ( 'rw_unlock' );
+	    $rw = true;
+	    $RW_BUTTON = $RW_BUTTON_RO;
 	}
-	elseif ( $c != ''
-	         &&
-		 $c != $_SESSION['EPM_UID'] )
-	{
-	    $m = @filemtime ( "$epm_data/$f" );
-	    if ( $m === false )
-		ERROR ( "cannot stat $f" );
-	    $errors[] = "cannot switch to read-write"
-	              . " mode;";
-	    $errors[] = "    user $c has held"
-	              . " read-write mode since "
-		      . strftime
-		          ( $epm_time_format, $m )
-		      . ";";
-	    $errors[] = "    to force mode change"
-	              . " use User Page";
-	}
+	        
+	if ( $u == '' ) force_rw();
 	else
 	{
-	    $r = @file_put_contents
-		( "$epm_data/$f",
-		  $_SESSION['EPM_UID'] );
-	    if ( $r === false )
-		ERROR ( "cannot write $f" );
-	    $rw = true;
-	    $_SESSION['EPM_RW'] = $rw;
-	    $RW_BUTTON = $RW_BUTTON_RO;
+	    $errors[] = "cannot switch to read-write"
+	              . " mode;";
+	    $errors[] = "    user $u holds read-write"
+	              . " mode;";
+	    $m = @filemtime
+	        ( "$epm_data/accounts/$aid/" .
+		  "+read-write+" );
+	    if ( $m === false )
+		$errors[] = "    but has never used it";
+	    else
+	    {
+	        $t = time() - $m;
+		$errors[] = "    and last used it $t"
+		          . " seconds ago";
+	    }
+
+	    // The requirer of this file can force
+	    // RW by calling force_rw().
 	}
     }
 

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug  4 14:44:23 EDT 2020
+    // Date:	Tue Aug  4 18:50:33 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -384,7 +384,6 @@
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_EMAIL'] = $email;
-	$_SESSION['EPM_RW'] = ( $aid == '-' );
 	$_SESSION['EPM_IS_TEAM'] = ( $aid != '-' );
 
 	$log = "$dir/$uid.login";
