@@ -467,7 +467,7 @@ same {\tt AID:UID} login name.
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
 \TT{admin} & dir & \STACK{administrative\\files}
-	& login & \STACK{login\\user} & all \\ 
+	& login & \STACK{login\\user} & \STACK{index\\login\\user} \\ 
 \hline
 \TT{admin/+blocking+} & dir & \STACK{email blocking\\control file}
 	& (editor) & (editor ) & login \\ 
@@ -476,7 +476,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& (editor) & (editor ) & login \\ 
 \hline
 \TT{admin/+lock+} & lock & \STACK{administrative\\lock file}
-	& (lockers) & \STACK{login\\user} & (lockers) \\ 
+	& (updater) & \STACK{login\\user} & (updater) \\ 
 \hline
 \TT{admin/+random+} & lock & \STACK{random\\number\\generator}
 	& login & \STACK{login\\index} & \STACK{login\\index} \\ 
@@ -500,11 +500,11 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& user & \STACK{login\\user} & \STACK{login\\user} \\ 
 \hline
 \TT{\STACK{admin/users\\admin/teams}}
-        & dir & \STACK{administrative\\user\\directories}
+        & dir & \STACK{administrative\\user/team\\directories}
 	& user & user & \STACK{user\\login} \\ 
 \hline
 \TT{\STACK{admin/users/UID\\admin/teams/TID}}
-        & dir & \STACK{administrative\\UID user files}
+        & dir & \STACK{administrative\\account files}
 	& user & \STACK{user\\login} & \STACK{user\\login} \\ 
 \hline
 \STACK{
@@ -666,10 +666,16 @@ Name & Description & Creators & Updaters & Readers \\
 {\bf Login Page Files}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{admim/ticket/TICKET}	& create  & -      & read \\
-\TT{admim/email/EMAIL}	& -       & update & read \\
-\TT{admim/users/AID/UID.login}
-			& -       & append & stat \\
+\TT{admin/+blocked+}		& -	  & -      & read \\
+\TT{admin/motd.html}		& -	  & -      & read \\
+\TT{admin/+lock+}		& create  & update & read \\
+\TT{admin/+random+}		& create  & update & read
+\\[2ex]
+\TT{admin/browser/TICKET}	& create  & -      & read \\
+\TT{admin/email/EMAIL}		& -       & update & read \\
+\TT{admin/users/UID/UID.login}	& -       & append & stat \\
+\TT{admin/users/UID/GID.login}	& -       & append & stat \\
+\TT{admin/teams/TID/MID.login}	& -       & append & stat \\
 \end{tabular}
 \\[3ex]
 {\bf Login Page Session Data}
@@ -694,17 +700,20 @@ Name & Description & Creators & Updaters & Readers \\
 
 \begin{indpar}
 \begin{itemlist}
-\item[\TT{admin/browser/TICKET} (ticket file):] T TID EMAIL
+\item[\TT{admin/browser/TICKET} (ticket file):] T AID EMAIL
 \label{ADMIN/TICKET/TICKET} \\
 \begin{tabular}[t]{lp{4.0in}}
 TICKET & ticket proper; 32 hexadecimal digit ticket number \\
 T & ticket type; `c' for confirmation number; `a' for automatic \\
-TID & team ID or '-' if ticket is for user account \\
+AID & account ID: \\
+    & ~~~ team ID (TID) if ticket is for team member login \\
+    & ~~~ user ID (UID) if ticket is for guest login \\
+    & ~~~ '-' if ticket is for user login \\
 EMAIL & Email address (identifying user account) \\
 \end{tabular}
 \\
 \begin{itemize}
-\item When a person initially logs in to create an account,
+\item When a user initially logs in to create an account,
 the UID is not known when the ticket is created.
 \end{itemize}
 
@@ -725,28 +734,32 @@ TID & Team user ID (may be more than one) \\
 \end{tabular}
 \\
 \begin{itemize}
-\item This form of email file is created by the Team Page when
+\item This form of email file is created by the User Page when
 a team member is assigned the given EMAIL before the member
 has an account or EMAIL has been added to an existing account.
-The TID's list \underline{all} the team user IDs that
-\underline{might} have a member which is this EMAIL and not a UID.
+The TID's list \underline{all} the team IDs that
+\underline{might} in their {\tt TID.info} file
+have a member which has this EMAIL and no UID.
 A TID might be listed whose
-TID.info file no longer contains the EMAIL.
+{\tt TID.info} file no longer contains the EMAIL.
 \\[1ex]
 When the pre-login form is converted to a regular form,
 the list of TID's is used to convert any matching EMAIL members
-in TID.info files to UID(EMAIL) members.
+in {\tt TID.info} files to UID(EMAIL) members.
 \end{itemize}
 
-\item[\TT{admin/users/AID/UID.login} (login log):]~
-\label{ADMIN/USERS/AID/UID.LOGIN} \\
+\item[\TT{admin/users/UID/UID.login} (login log):]
+\item[\TT{admin/teams/TID/UID.login} (login log):]\vspace*{-1ex}
+\item[\TT{admin/users/UID/GID.login} (login log):]\vspace*{-1ex}~
+\label{ADMIN/USERS/UID/UID.LOGIN} \\
 Lines of format:\hspace{0.5in}TIME EMAIL IPADDR BROWSER \\
 \begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
-AID & Account ID; equals TID for teams, UID for users \\
 UID & User ID \\
-TIME & Session time (EPM\_TIME) for login \\
-EMAIL & Email address (EPM\_EMAIL) used for login \\
-IPADDR & IP address (EPM\_IPADDR) for session \\
+TID & Team ID \\
+GID & Guest User ID \\
+TIME & Session time for login (EPM\_TIME) \\
+EMAIL & Email address used for login (EPM\_EMAIL) \\
+IPADDR & IP address for session (EPM\_IPADDR) \\
 BROWSER & \STACK{
           \$\_SERVER['HTTP\_USER\_AGENT'] with `(...)'s\\
 	  removed and horizontal spaces replaced by `\TT{;}'s} \\
@@ -754,10 +767,13 @@ BROWSER & \STACK{
 \\
 \begin{itemize}
 \item
-A login with full name AID:UID is valid iff this file exists.
-\item This file name and modification time is stored in
-EPM\_ABORT and used to abort a session if another session
-logs in with the same AID:UID.
+A login with name AID:EMAIL is valid iff the file
+{\tt .../AID/UID.info} exists for UID the user ID associated
+with EMAIL.
+\item Upon login, the {\tt .info} file name and modification
+time are stored in EPM\_ABORT and used to abort a session if another session
+logs in with the same AID:EMAIL and appends to the file, thus
+increasing its modification time.
 \end{itemize}
 
 

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug  6 10:06:32 EDT 2020
+    // Date:	Thu Aug  6 16:34:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -409,6 +409,9 @@
 	if ( $mtime === false )
 	    ERROR ( "cannot stat $log" );
 	$_SESSION['EPM_ABORT'] = [$log,$mtime];
+	while ( time() == $mtime )
+	    usleep ( 100000 );
+	    // To be sure $mtime is unique.
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_AID'] = $uid;

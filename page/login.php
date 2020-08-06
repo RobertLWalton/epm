@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug  5 16:40:33 EDT 2020
+    // Date:	Thu Aug  6 16:34:02 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -427,6 +427,9 @@
 	if ( $mtime === false )
 	    ERROR ( "cannot stat $log" );
 	$_SESSION['EPM_ABORT'] = [$log,$mtime];
+	while ( time() == $mtime )
+	    usleep ( 100000 );
+	    // To be sure $mtime is unique.
 
 	$ticket = new_ticket ( 'a', $aid, $email );
 	reply ( "RENEW $ticket project.php" );
