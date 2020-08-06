@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug  5 14:59:11 EDT 2020
+    // Date:	Thu Aug  6 10:06:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1514,7 +1514,7 @@ EOT;
 		</form>
 EOT;
 	    }
-	    if ( $rw )
+	    if ( $rw && ! $is_team )
 		echo <<<EOT
 		<br>
 		<form method='POST' action='user.php'>
