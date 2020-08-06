@@ -148,8 +148,10 @@ users.  Comments in code files in turn supplement but do not, with
 the exception of parameters files,
 reiterate this document or the Help Page.
 
-Instructions for setting up an EPM server are in the
-{\tt include/maintenance\_parameters.php} file.
+Instructions for setting up an EPM server are in the file
+\begin{center}
+{\tt include/maintenance\_parameters.php}
+\end{center}
 
 \section{Definitions and Rules}
 
@@ -477,10 +479,12 @@ Name & Format & Description & Creators & Updaters & Readers \\
         & \STACK{message\\of the day \pagref{ADMIN/MOTD}}
 	& (editor) & (editor ) & login \\ 
 \hline
-\TT{admin/+lock+} & lock & \STACK{administrative\\lock file}
+\TT{admin/+lock+} & lock
+        & \STACK{administrative\\lock file \pagref{ADMIN/LOCK}}
 	& (updater) & \STACK{login\\user} & (updater) \\ 
 \hline
-\TT{admin/+random+} & lock & \STACK{random\\number\\generator}
+\TT{admin/+random+} & lock
+        & \STACK{random\\number\\generator \pagref{ADMIN/RANDOM}}
 	& login & \STACK{login\\index} & \STACK{login\\index} \\ 
 \hline
 \TT{admin/+actions+} & lines &
@@ -693,8 +697,6 @@ Name & Description & Creators & Updaters & Readers \\
                 & create  & -      & read \\
 \TT{EPM\_ABORT}
                 & create  & -      & - \\
-\TT{EPM\_RW}
-                & create  & -      & - \\
 \end{tabular}
 \end{center}
 
@@ -731,6 +733,22 @@ block that gives the `message of the day' on the Login Page.  Typically
 this file consists of some {\tt <p>} paragraphs.
 If the file does not exist, the {\tt <div>\ldots</div>}
 block is not created.
+
+\item[\TT{admin/+lock+}:]~
+\label{ADMIN/LOCK} \\
+All transactions within the {\tt admin} directory
+(i.e., all http requests that access files or subdirectories
+within {\tt admin})
+begin by calling the {\tt parameters.php} {\tt LOCK}
+function to lock the {\tt admin} directory.  This function locks the
+directory by creating if necessary and locking this {\tt +lock+} file
+for the course of the transaction.  Note there are \underline{no}
+EPM transactions longer than a single http request.
+
+\item[\TT{admin/+random+}:]~
+\label{ADMIN/RANDOM} \\
+The pseudo-random number generator in {\tt include/\EOL
+epm\_random.php} exclusively creates, updates, an reads this file.
 
 \item[\TT{admin/browser/TICKET} (ticket file):] T AID EMAIL
 \label{ADMIN/TICKET/TICKET} \\
@@ -815,42 +833,41 @@ changing its modification time.
 
 \subsubsection{Login Page Session Variables}
 
-\begin{indpar}
-\begin{tabular}[t]{lp{4.0in}}
+\begin{indpar}[0.2in]
+\begin{tabular}[t]{lp{4.5in}}
 \TT{EPM\_EMAIL}\label{EPM_EMAIL}
     & EMAIL entered by user into browser; set by Login Page when either
-      (1) sent by browser, or (2) browser sends TICKET which identifies
-      EMAIL.  Generally set before EPM\_UID set.
+      (1) EMAIL is to be transferred to user.php for a new user,
+      or (2) browser sends TICKET which identifies
+      EMAIL and EPM\_UID is being set.
 \\[0.5ex]
 \TT{EPM\_AID}\label{EPM_AID}
     & Account ID, either user or team; set by Login Page when a valid
       TICKET is received, and set by User Page for new users.
+      This equals EPM\_UID for a user login, is the team ID for
+      team member login, and is the host user ID of the EMAIL guest for
+      a guest login. 
 \\[0.5ex]
 \TT{EPM\_UID}\label{EPM_UID}
-    & User ID; equals EPM\_AID if that is a user ID.  Otherwise the full
-      account name is AID:UID where AID is a team ID.
-      Set when EPM\_AID is set.
+    & User ID associated with EPM\_EMAIL.
+      Set when EPM\_\EOL AID is set.
 \\[0.5ex]
 \TT{EPM\_IS\_TEAM}\label{EPM_IS_TEAM}
     & True iff EPM\_AID is team ID;
       Set when EPM\_AID is set.
 \\[0.5ex]
 \TT{EPM\_IPADDR}\label{EPM_IPADDR}
-    & Set to \$\_SERVER['REMOTE\_ADDR'] by Login Page if EPM\_AID is
+    & Set to \$\_SERVER['REMOTE\_ADDR'] by Login Page when EPM\_\EOL AID is
       not yet set.
 \\[0.5ex]
 \TT{EPM\_TIME}\label{EPM_TIME}
-    & Set to \$\_SERVER['REQUEST\_TIME'] formatted by \$epm\_format\_time
+    & Set to \$\_SERVER['REQUEST\_TIME'] formatted by \$epm\_\EOL format\_time
       by Login Page if EPM\_AID is not yet set.
 \\[0.5ex]
 \TT{EPM\_ABORT}\label{EPM_ABORT}
     & Set to [FILE,MTIME] where MTIME is the mod time of \$epm\_data/FILE
       and the session must abort if the mod time of this file changes.
       Here FILE is admin/users/AID/UID.login to which a line is appended
-      whenever EPM\_AID is set for a session.
-\\[0.5ex]
-\TT{EPM\_RW}\label{EPM_RW}
-    & Set to false for team login and true for user login.  Set
       whenever EPM\_AID is set for a session.
 \end{tabular}
 \end{indpar}
@@ -864,7 +881,7 @@ changing its modification time.
       user in and go to Project Page.
 \item Otherwise, give
       the browser a valid ticket, set EPM\_EMAIL,
-      and go to User Page.
+      and go to User Page to create new user.
 \end{enumerate}
 
 
