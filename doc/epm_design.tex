@@ -95,6 +95,7 @@
 \newcommand{\key}[1]{{\bf \em #1}}
 \newcommand{\EOL}{\penalty \exhyphenpenalty}
 \newcommand{\pagref}[1]{p\pageref{#1}}
+\newcommand{\sref}[2]{\ref{#1}.\ref{#2}}
 \newcommand{\FSTACK}[2]{{\tt \bfseries
     #1\begin{tabular}[t]{@{}l@{}}#2\end{tabular}}}
 \newcommand{\STACK}[1]{\begin{tabular}[t]{@{}l@{}}
@@ -115,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{August 2, 2020}
+\date{August 5, 2020}
  
 \maketitle
 
@@ -147,20 +148,25 @@ users.  Comments in code files in turn supplement but do not, with
 the exception of parameters files,
 reiterate this document or the Help Page.
 
+Instructions for setting up an EPM server are in the
+{\tt include/maintenance\_parameters.php} file.
+
 \section{Definitions and Rules}
 
-\subsection{Names}
+\subsection{Names}\label{NAMES}
 
 \begin{enumerate}
-\item Names chosen by the user consists of letters, digits,
+\item \key{User chosen names}\label{USER-CHOSEN-NAME}
+consists of letters, digits,
 dash({\tt -}), and underscore({\tt \_}), begin with a letter,
 and end with a letter or digit.
 See {\tt /include/parameters.php} {\tt \$epm\_name\_re}.
-\item Visible file basenames consist of letters, digits, dash({\tt -}), and
+\item \key{Visible file names} have basenames that
+consist of letters, digits, dash({\tt -}), and
 underscore({\tt \_}), begin with a letter or digit, and end
-with a letter or digit.  Visible extensions, if present, obey the
+with a letter or digit, and optional extensions that obey
 same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
-\item Visible problem file basenames end with the
+\item \key{Visible problem file names} have basenames that end with the
       problem name, which may optionally be preceded by a dash({\tt -}) but
       not by any other character.
 \item Invisible problem
@@ -169,6 +175,13 @@ same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
       email addresses have a file with a name that is the URL encoded email
       address, and browser tickets have a file with a name that is the
       32 hex digit ticket itself.
+\item \key{User IDs} and \key{team IDs}\label{AIDS} are user chosen names.
+      An \key{account ID} is either a user ID or a team ID.
+\item \key{E-mail addresses} may \underline{not} have the
+      characters {\tt <}, {\tt >}, {\tt "}, {\tt :}, or space
+      characters.
+\item A \key{login name} is either an e-mail address, or an
+      account ID followed by a {\tt :} followed by an e-mail address.
 \end{enumerate}
 
 \subsection{Times}
@@ -188,24 +201,26 @@ same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
 \subsection{Account IDs}
 
 \begin{enumerate}
-\item Account IDs (AIDs) are user choosen names.  They are unique to the
+\item \key{Account IDs}
+      (AIDs) are user chosen names (\sref{NAMES}{USER-CHOSEN-NAME}).
+      They are unique to the
       account and used for both external and internal identification.
       Once assigned, they cannot be changed.
-\item There are two kinds of AIDs: user UIDs for individual users,
-      and team TIDs for teams.
+\item There are two kinds of AIDs: \key{user UIDs} for individual users,
+      and \key{team TIDs} for teams (\sref{NAMES}{AIDS}).
 \end{enumerate}
 
 \subsection{Random IDs}
 
 \begin{enumerate}
-\item A random ID is a 32 hexadecimal digit number, or equivalently
+\item A \key{random ID} is a 32 hexadecimal digit number, or equivalently
       a 128-bit number.  Several are generated from /dev/random
       the first time the server is used, and thereafter they
       are generated as a pseudo-random sequence using previously
       generated values to aes-128-cbc encrypt previous values.
       See {\tt /include/epm\_random.php}.
 \item Browser TICKETS are random IDs.
-\item The \$ID variable is a random ID used to validate
+\item The \key{\$ID} variable is a random ID used to validate
       both POST and GET requests from pages.
       
       For each tab, and

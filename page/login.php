@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug  4 18:50:33 EDT 2020
+    // Date:	Wed Aug  5 16:40:33 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -36,7 +36,7 @@
     //           'BAD_AID':
     //           'BAD_EMAIL':
     //           'BLOCKED_EMAIL':
-    //           'NO_TEAM':
+    //           'NO_ACCOUNT':
     //           'NO_USER':
     //		     goto LNAME_ERROR
     //           'NEW': go to CONFIRM
@@ -49,9 +49,10 @@
     //           'NO_TICKET':
     //               go to TICKET_ERROR
     //           'BLOCKED_EMAIL':
-    //           'NO_TEAM':
+    //           'NO_ACCOUNT':
     //           'NO_USER':
-    //		 'USER_NOT_ON_TEAM':
+    //		 'USER_NOT_MEMBER':
+    //		 'USER_NOT_GUEST':
     //		     goto LNAME_ERROR
     //           'RENEW TICKET NEXT_PAGE':
     //		     go to FINISH
@@ -161,7 +162,7 @@
     // and confirmation is needed, and false otherwise.
     //
     // More specifically, if the email file does NOT
-    // exist, or if it contains only a blank lines or
+    // exist, or if it contains only blank lines or
     // if its first item is '-', then this function
     // just returns false. 
     //
@@ -170,7 +171,7 @@
     // login period has expired using $STIME.  If yes,
     // then if $t == 'c' the email file is updated to
     // have a new auto-login period beginning at $STIME,
-    // and this function return false, but if $t != 'c'
+    // and this function returns false, but if $t != 'c'
     // this function just returns true.  If not expired,
     // this function returns false.
     //
@@ -224,7 +225,10 @@
     }
 
     // Create new TICKET and its TICKET-FILE and return
-    // new bid.
+    // new TICKET.  The TICKET-FILE is admin/browser/
+    // TICKET and has contents "$t $aid $email" where $t
+    // is 'c' for a confirmation number TICKET and 'a'
+    // for an auto-confirmation TICKET.
     //
     function new_ticket ( $t, $aid, $email )
     {
@@ -267,7 +271,7 @@
 	       . $epm_root;
 	$lname = $email;
 	if ( $aid != '-' ) $lname = "$aid:$email";
-	$r = mail ( $email,
+	$r = @mail ( $email,
 	       "Your EPM Confirmation Number",
 	       "Your EPM $sname confirmation" .
 	       " number\r\n" .
@@ -276,7 +280,7 @@
 	       "     $ticket\r\n",
 	       "From: no_reply@$sname" );
 	if ( $r === false )
-	    ERROR ( "mailer failed" );
+	    ERROR ( "mail to $email failed" );
 
 	reply ( "$op" );
     }
@@ -322,9 +326,9 @@
 	    if ( ! preg_match ( $epm_name_re,
 	                        $aid ) )
 		reply ( 'BAD_AID' );
-	    $dir = "admin/teams/$aid";
+	    $dir = "accounts/$aid";
 	    if ( ! is_dir ( "$epm_data/$dir" ) )
-	        reply ( 'NO_TEAM' );
+	        reply ( 'NO_ACCOUNT' );
 	    read_email_file ( 'a', $email );
 	    if ( ! isset ( $uid ) )
 	        reply ( 'NO_USER' );
@@ -358,22 +362,35 @@
 	        ( $aid, $email, 'EXPIRED' );
 		// Does not return
 
+	$is_team = false;
 	if ( $aid != '-' )
 	{
-	    $dir = "admin/teams/$aid";
-	    if ( ! is_dir ( "$epm_data/$dir" ) )
-	        reply ( 'NO_TEAM' );
+	    $tdir = "admin/teams/$aid";
+	    $udir = "admin/users/$aid";
 	    if ( ! isset ( $uid ) )
 	        reply ( 'NO_USER' );
-	    if ( ! is_readable
-	               ( "$epm_data/$dir/$uid.login" ) )
-	        reply ( 'USER_NOT_ON_TEAM' );
+	    elseif ( is_dir ( "$epm_data/$tdir" ) )
+	    {
+		if ( ! is_readable
+		     ( "$epm_data/$tdir/$uid.login" ) )
+		    reply ( 'USER_NOT_MEMBER' );
+		$is_team = true;
+	    }
+	    elseif ( is_dir ( "$epm_data/$udir" ) )
+	    {
+		if ( ! is_readable
+		     ( "$epm_data/$udir/$uid.login" ) )
+		    reply ( 'USER_NOT_GUEST' );
+	    }
+	    else
+	        reply ( 'NO_ACCOUNT' );
+
 	    $_SESSION['EPM_AID'] = $aid;
 	}
 	elseif ( ! isset ( $uid ) )
 	{
 	    $_SESSION['EPM_EMAIL'] = $email;
-	    $ticket = new_ticket ( 'a', $aid, $email );
+	    $ticket = new_ticket ( 'a', '-', $email );
 	    reply ( "RENEW $ticket user.php" );
 	}
 	else
@@ -384,7 +401,7 @@
 
 	$_SESSION['EPM_UID'] = $uid;
 	$_SESSION['EPM_EMAIL'] = $email;
-	$_SESSION['EPM_IS_TEAM'] = ( $aid != '-' );
+	$_SESSION['EPM_IS_TEAM'] = $is_team;
 
 	$log = "$dir/$uid.login";
 	$IPADDR = $_SESSION['EPM_IPADDR'];
@@ -411,7 +428,6 @@
 	    ERROR ( "cannot stat $log" );
 	$_SESSION['EPM_ABORT'] = [$log,$mtime];
 
-	$_SESSION['EPM_EMAIL'] = $email;
 	$ticket = new_ticket ( 'a', $aid, $email );
 	reply ( "RENEW $ticket project.php" );
     }
@@ -430,14 +446,20 @@
     button, input, mark, span, pre {
         font-size: var(--large-font-size);
     }
+    #ticket_message, #lname_message,
+    #lname_out {
+	margin: var(--indent);
+        font-size: var(--large-font-size);
+    }
+
     #get_lname, #show_lname {
 	background-color: #96F9F3;
-	padding: var(--indent);
+	padding: var(--pad);
         font-size: var(--large-font-size);
     }
     #get_cnum {
 	background-color: #80FFCC;
-	padding: var(--indent);
+	padding: var(--pad);
         font-size: var(--large-font-size);
     }
 </style>
@@ -473,12 +495,12 @@ EOT;
 
 <div class='errors' id='ticket_error'
      style='display:none'>
-<pre id='ticket_message'></pre>
+<div id='ticket_message'></div>
 </div>
 
 <div class='errors' id='lname_error'
      style='display:none'>
-<pre id='lname_message'></pre>
+<div id='lname_message'></div>
 </div>
 
 <div id='get_lname' style.display='none'>
@@ -491,7 +513,7 @@ EOT;
        size='40'
        title='User-Email-Address
 or Team-ID:Member-User-Email-Address
-or User-ID:Coach-User-Email-Address'>
+or User-ID:Guest-User-Email-Address'>
 <button type='button' onclick='GOT_LNAME()'>
     Submit</button>
 <button type='button'
@@ -549,7 +571,10 @@ Please <input type='text' size='40' id='cnum_in'
 <?php require "$epm_home/include/epm_terms.html"; ?>
 </div>
 
+
 <script>
+
+// The rest of this file is script.
 
 var LOG = function(message) {};
 <?php if ( $epm_debug )
@@ -570,8 +595,10 @@ let lname_message =
 
 let get_lname = document.getElementById("get_lname");
 let lname_in = document.getElementById("lname_in");
-let lname_out = document.getElementById("lname_out");
+
 let show_lname = document.getElementById("show_lname");
+let lname_out = document.getElementById("lname_out");
+
 let get_cnum = document.getElementById("get_cnum");
 let cnum_in = document.getElementById("cnum_in");
 
@@ -648,9 +675,7 @@ let lname_re = /^([^:]+):(.+)$/;
 
 var GET_LNAME_ENABLED = false;
 var GET_CNUM_ENABLED = false;
-    // These are set to true to enable callback, and
-    // set false just before making callback, to avoid
-    // spurious callbacks.
+    // These are set to true to enable callback.
 
 var CNUM_SENT = false;
     // This is set true if AUTO_ID sent CNUM and
@@ -724,14 +749,15 @@ function NO_USER_ERROR()
 {
     LNAME_ERROR
          ( EMAIL + ' is not an email address of'
-		 + ' an existing personal account;'
+		 + ' an existing user account;'
 		 + ' before you can log into the team'
+		 + ' or be a guest'
 		 + ' you must do the following:'
 		 + ' if you have an account, log'
 		 + ' into it and add ' + EMAIL
 		 + ' to it; otherwise use ' + EMAIL
 		 + ' by itself as a login name and'
-		 + ' create a new personal account'
+		 + ' create a new user account'
 		 + ' for yourself' );
 }
 
@@ -742,16 +768,17 @@ function MANUAL_RESPONSE ( item )
 	    ( 'after sending ' + LNAME + ' to server' );
     else if ( item[0] == 'BAD_AID' )
         LNAME_ERROR
-	    ( AID + ' is badly formatted team ID' );
+	    ( AID + ' is badly formatted account ID' );
     else if ( item[0] == 'BAD_EMAIL' )
         LNAME_ERROR ( EMAIL + ' is badly formatted'
 	             + ' email address' );
     else if ( item[0] == 'BLOCKED_EMAIL' )
         LNAME_ERROR
 	    ( EMAIL + ' is a blocked email address' );
-    else if ( item[0] == 'NO_TEAM' )
+    else if ( item[0] == 'NO_ACCOUNT' )
         LNAME_ERROR
-	    ( AID + ' does not name an existing team' );
+	    ( AID + ' does not name an existing'
+	          + ' account' );
     else if ( item[0] == 'NO_USER' )
         NO_USER_ERROR();
     else if ( item[0] == 'NEW' )
@@ -864,14 +891,18 @@ function AUTO_RESPONSE ( item )
 	          ' re-confirm because your' +
 	          ' auto-login failed' );
     }
-    else if ( item[0] == 'NO_TEAM' )
-        LNAME_ERROR ( AID + ' does not name an existing'
-	                  + ' team' );
+    else if ( item[0] == 'NO_ACCOUNT' )
+        LNAME_ERROR
+	    ( AID + ' does not name an existing'
+	          + ' account' );
     else if ( item[0] == 'NO_USER' )
         NO_USER_ERROR();
-    else if ( item[0] == 'USER_NOT_ON_TEAM' )
+    else if ( item[0] == 'USER_NOT_MEMBER' )
         LNAME_ERROR ( 'User ' + EMAIL + ' is not on' +
 		      ' team ' + AID );
+    else if ( item[0] == 'USER_NOT_GUEST' )
+        LNAME_ERROR ( 'User ' + EMAIL + ' is not a' +
+		      ' guest of ' + AID );
     else if ( item[0] == 'BLOCKED_EMAIL' )
         LNAME ( EMAIL + ' is a blocked email address' );
     else
