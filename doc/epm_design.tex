@@ -95,7 +95,7 @@
 \newcommand{\key}[1]{{\bf \em #1}}
 \newcommand{\EOL}{\penalty \exhyphenpenalty}
 \newcommand{\pagref}[1]{p\pageref{#1}}
-\newcommand{\sref}[2]{\ref{#1}.\ref{#2}}
+\newcommand{\sref}[2]{(\ref{#1}.\ref{#2})}
 \newcommand{\FSTACK}[2]{{\tt \bfseries
     #1\begin{tabular}[t]{@{}l@{}}#2\end{tabular}}}
 \newcommand{\STACK}[1]{\begin{tabular}[t]{@{}l@{}}
@@ -116,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{August 5, 2020}
+\date{August 6, 2020}
  
 \maketitle
 
@@ -202,12 +202,12 @@ same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
 
 \begin{enumerate}
 \item \key{Account IDs}
-      (AIDs) are user chosen names (\sref{NAMES}{USER-CHOSEN-NAME}).
+      (AIDs) are user chosen names \sref{NAMES}{USER-CHOSEN-NAME}).
       They are unique to the
       account and used for both external and internal identification.
       Once assigned, they cannot be changed.
 \item There are two kinds of AIDs: \key{user UIDs} for individual users,
-      and \key{team TIDs} for teams (\sref{NAMES}{AIDS}).
+      and \key{team TIDs} for teams \sref{NAMES}{AIDS}.
 \end{enumerate}
 
 \subsection{Random IDs}
@@ -235,24 +235,27 @@ same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
       window contents.
 
       \$ID values are generated and checked by {\tt /page/index.php}
-      which is required by all page files.
+      which is required by all page files
+      \sref{TABS-AND-WINDOWS}{SEQUENCE-RULE}.
 \end{enumerate}
 
 \subsection{Tabs and Windows}
+\label{TABS-AND-WINDOWS}
 
 \begin{enumerate}
 \item There are specific tabs and windows for different kinds
-of transations.  The \TT{main} tab is for non-problem specific
-transations.  For each account problem there is a problem-specific
+of transactions.  The \TT{main} tab is for non-problem specific
+transactions.  For each account problem there is a problem-specific
 tab for transactions on that problem.  There is a \TT{view}
 pop-up window for looking at files and information, and a
-separate \TT{help} pop-up window for the Help Page and Guide Page.
+separate \TT{help} pop-up window for the Help and Guide Pages.
 
-\item Pages are assigned to windows.  E.g., the Login, Project,
+\item Pages are assigned to tabs or windows.  E.g., Login, Project,
 User, Manage, List Edit, and Favorites Edit Pages are assigned
-to the main tab, the
-Problem, Option, and Run Pages are assigned to problem tabs,
-and the View and Template Pages are assigned to the view pop-up
+to the main tab;
+Problem, Option, and Run Pages are assigned to problem tabs;
+the View and Template Pages are assigned to the view pop-up
+window; and Help and Guide Pages are assigned to the help pop-up
 window.
 
 \item \key{Page Rule}\label{PAGE-RULE}
@@ -260,7 +263,8 @@ At any given time a tab or window has a current page.
 The page is initially opened with a GET.  Subsequent
 transactions on that page are done with POSTs.  Each POST to
 a page is checked to be sure that page is the current page for
-its the tab or window type.  So if you have opened the Project Page
+its the tab or window type.  So, for example,
+if you have opened the Project Page
 in the main tab, you cannot POST to the User Page.
 
 \item \key{Sequence Rule}\label{SEQUENCE-RULE}
@@ -276,10 +280,14 @@ by random sequence \$IDs that are attached to each page.
 The next request must contain the current \$ID else the
 tab is orphaned.  For the main tab the Login Page initializes
 the tab's \$ID sequence.  For problem tabs the Problem Page
-initializes the sequence.
+initializes the sequence.  For the view window, the View Page
+initiates and uses sequencing, but other view window pages are single
+load pages that do no sequencing.  The help window pages are
+{\tt .html} pages that do no sequencing.
 \end{enumerate}
 
 \subsection{Directories}
+\label{DIRECTORIES}
 
 \begin{enumerate}
 \item There are three main directories:\label{MAIN-DIRECTORIES}
@@ -288,7 +296,7 @@ initializes the sequence.
       directory which is loaded from {\tt github}.
 
       \key{W, Web Directory}\label{W-DIRECTORY}:  This is the directory
-      named by the EPM server URL.  It contains
+      named by the EPM server URL.  It contains a symbolic link to
       the {\tt index.php} file that is
       the first file loaded when a user initially
       contacts the EPM server.
@@ -332,17 +340,20 @@ initializes the sequence.
 \end{enumerate}
 
 \subsection{Page Initialization}
+\label{PAGE-INITIALIZATION}
 
 \begin{enumerate}
-\item The web directory, W, contains the following:
+\item The web directory, W \sref{DIRECTORIES}{MAIN-DIRECTORIES},
+     contains the following:\label{W-CONTENTS}
 
   \hspace*{0.2in}\begin{tabular}{l}
-      symbolic link {\tt W/page} $\Longrightarrow$ {\tt H/page} \\
+      symbolic link {\tt W/page} $\longrightarrow$ {\tt H/page} \\
       symbolic link {\tt W/index.php}
-          $\Longrightarrow$ {\tt W/page/index.php} \\
-      {\tt W/parameters.php}, modified {\tt H/include/parameters.php} \\
+          $\longrightarrow$ {\tt W/page/index.php} \\
+      {\tt W/parameters.php}, modified copy of {\tt H/include/parameters.php} \\
       {\tt W/maintenance\_parameters.php}, \\
-      \hspace*{0.2in}modified {\tt H/include/maintenance\_parameters.php}, \\
+      \hspace*{0.2in}modified copy of
+           {\tt H/include/maintenance\_parameters.php}, \\
       \hspace*{0.2in}(only used off-line) \\
       \end{tabular}
 
@@ -361,7 +372,7 @@ initializes the sequence.
       {\tt +download+} for pages that download files
       so that {\tt <script>}
       in {\tt /page/\EOL index.php} which implements the help button
-      is surpressed (these pages do not POSTing and have
+      is surpressed (these pages do no POSTing and have
       no buttons).
 
 \item If the page is the first loaded in a tab or popup-window that POSTs,
@@ -376,7 +387,7 @@ initializes the sequence.
 \end{itemize}
 
 \item Upon being required, {\tt /page/index.php} executes the
-      following:
+      following in order:
 \begin{itemize}
 \item Computes:
 
@@ -401,8 +412,8 @@ initializes the sequence.
 \item If {\tt SELF} is either {\tt index.php} or {\tt page/index.php},
       re-routes the request to {\tt page/\EOL login.php}.
 
-\item Loads {\tt W/parameters.php} which in turn defines H and D:
-      see \pagref{MAIN-DIRECTORIES}.
+\item Loads {\tt W/parameters.php} which in turn defines H and D
+      \sref{DIRECTORIES}{MAIN-DIRECTORIES}.
 
 \item Runs the following checks and aborts invalid requests:
 \begin{itemize}
@@ -413,7 +424,7 @@ address as was used for login, unless the {\tt \$epm\_check\_ipaddr}
 parameter is false.
 \item Uses {\tt EPM\_ABORT} (\pagref{EPM_ABORT}) to check that
 no other session has been started after this session using the
-same login name (team and user ID for a team, or user ID for a user).
+same {\tt AID:UID} login name.
 \end{itemize}
 
 \item Defines functions and error handlers.
@@ -429,7 +440,8 @@ same login name (team and user ID for a team, or user ID for a user).
       to the {\tt /page/orphan.html} page to declare
       the tab or window orphaned.
 
-\item Except for pages of {\tt +download+} type, defines functions
+\item Except for pages of {\tt +download+} type and xhttp requests,
+      defines functions
       and parameters for use in creating buttons and launching
       widows, including {\tt <script>} functions.
 
@@ -1017,7 +1029,7 @@ The only way a user can interact with EPM is via transactions.
 Each transaction is executed by entering small amounts of text
 on a web page and clicking appropriately.
 
-The common transations are:
+The common transactions are:
 
 \begin{indpar}
 \BFITEM{download}  Download any file visible to the user.
