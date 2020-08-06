@@ -469,10 +469,12 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \TT{admin} & dir & \STACK{administrative\\files}
 	& login & \STACK{login\\user} & \STACK{index\\login\\user} \\ 
 \hline
-\TT{admin/+blocking+} & dir & \STACK{email blocking\\control file}
+\TT{admin/+blocking+} & dir
+        & \STACK{email blocking\\control file \pagref{ADMIN/BLOCKING}}
 	& (editor) & (editor ) & login \\ 
 \hline
-\TT{admin/motd.html} & html & \STACK{message\\of the day}
+\TT{admin/motd.html} & html
+        & \STACK{message\\of the day \pagref{ADMIN/MOTD}}
 	& (editor) & (editor ) & login \\ 
 \hline
 \TT{admin/+lock+} & lock & \STACK{administrative\\lock file}
@@ -511,7 +513,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \FSTACK{admin/}{users/UID/\\UID.login}\\
 \FSTACK{admin/}{teams/TID/\\UID.login}}
         & lines
-        & \STACK{log of logins\\\pagref{ADMIN/USERS/AID/UID.LOGIN}}
+        & \STACK{log of logins\\\pagref{ADMIN/USERS/XID/YID.LOGIN}}
 	& (updaters) & \STACK{login\\user} & (index)  \\ 
 \hline
 \STACK{
@@ -529,14 +531,6 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& team info \pagref{ADMIN/USERS/TID/TID.INFO}
 	& user & user & user \\ 
 \hline
-\STACK{
-\FSTACK{admin/}{users/UID/\\+actions+}\\
-\FSTACK{admin/}{teams/TID/\\+actions+}}
-        & lines
-        & \STACK{log of accounts's\\administrative\\
-	         actions \pagref{ADMINSTRATIVE-ACTIONS}}
-	& (updaters) & user & view \\ 
-\hline
 \end{tabular}
 \end{center}
 
@@ -546,6 +540,14 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
+\STACK{
+\FSTACK{admin/}{users/UID/\\+actions+}\\
+\FSTACK{admin/}{teams/TID/\\+actions+}}
+        & lines
+        & \STACK{log of accounts's\\administrative\\
+	         actions \pagref{ADMINSTRATIVE-ACTIONS}}
+	& (updaters) & user & view \\ 
+\hline
 \FSTACK{admin/}{users/UID/\\manager}
     & 1-line & \STACK{teams that UID\\manages \pagref{UID-MANAGER}}
     & user & user & user \\ 
@@ -598,10 +600,6 @@ Name & Format & Description & Creators & Updaters & Readers \\
         & dir & \STACK{working\\directory\\for runs}
 	& run & run & run \\
 \hline
-\FSTACK{accou}{nts/AID/\\PROBLEM/\\\ldots}
-        & various & \STACK{files visible\\to users}
-	& +problem+ & +problem+ & +problem+ \\
-\hline
 \end{tabular}
 \end{center}
 
@@ -611,6 +609,10 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\\ldots}
+        & various & \STACK{files visible\\to users}
+	& +problem+ & +problem+ & +problem+ \\
+\hline
 \TT{projects} & dir & \pagref{PROJECTS} & login & maint & \\ 
 \hline
 \TT{solutions} & dir & \pagref{SOLUTIONS} & login & maint & \\ 
@@ -666,7 +668,7 @@ Name & Description & Creators & Updaters & Readers \\
 {\bf Login Page Files}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{admin/+blocked+}		& -	  & -      & read \\
+\TT{admin/+blocking+}		& -	  & -      & read \\
 \TT{admin/motd.html}		& -	  & -      & read \\
 \TT{admin/+lock+}		& create  & update & read \\
 \TT{admin/+random+}		& create  & update & read
@@ -700,6 +702,36 @@ Name & Description & Creators & Updaters & Readers \\
 
 \begin{indpar}
 \begin{itemlist}
+\item[\TT{admin/+blocking+}:]~
+\label{ADMIN/BLOCKING} \\
+Lines of format:\hspace{0.5in}SIGN RE \\
+\begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
+SIGN & {\tt +} to not block, {\tt -} to block \\
+RE & regular expression matched to the entire email name
+     (e.g., {\tt .*} matches any email name and
+     {\tt .*\textbackslash.edu} matches any email
+     name ending in {\tt .edu})
+\end{tabular}
+\\
+\begin{itemize}
+\item The lines are read in order and the first line
+with RE matching the login name EMAIL is used to
+not block or block the EMAIL.  If no line matches,
+the EMAIL is \underline{not} blocked.
+\item Blank lines and whose first non-whitespace
+character is {\tt \#} are ignored.  Various forms
+of within-line whitespace are equivalent, and
+whitespace at beginning or end of a line is ignored.
+\end{itemize}
+
+\item[\TT{admin/motd.html}:]~
+\label{ADMIN/MOTD} \\
+An HTML file that is included inside a {\tt <div>\ldots</div>}
+block that gives the `message of the day' on the Login Page.  Typically
+this file consists of some {\tt <p>} paragraphs.
+If the file does not exist, the {\tt <div>\ldots</div>}
+block is not created.
+
 \item[\TT{admin/browser/TICKET} (ticket file):] T AID EMAIL
 \label{ADMIN/TICKET/TICKET} \\
 \begin{tabular}[t]{lp{4.0in}}
@@ -751,7 +783,7 @@ in {\tt TID.info} files to UID(EMAIL) members.
 \item[\TT{admin/users/UID/UID.login} (login log):]
 \item[\TT{admin/teams/TID/UID.login} (login log):]\vspace*{-1ex}
 \item[\TT{admin/users/UID/GID.login} (login log):]\vspace*{-1ex}~
-\label{ADMIN/USERS/UID/UID.LOGIN} \\
+\label{ADMIN/USERS/XID/YID.LOGIN} \\
 Lines of format:\hspace{0.5in}TIME EMAIL IPADDR BROWSER \\
 \begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
 UID & User ID \\
@@ -768,12 +800,13 @@ BROWSER & \STACK{
 \begin{itemize}
 \item
 A login with name AID:EMAIL is valid iff the file
-{\tt .../AID/UID.info} exists for UID the user ID associated
+{\tt .../AID/UID.login} exists for UID the user ID associated
 with EMAIL.
-\item Upon login, the {\tt .info} file name and modification
+\item Upon login, a line is appended to the appropriate
+the {\tt .login} file, and then that file's name and modification
 time are stored in EPM\_ABORT and used to abort a session if another session
 logs in with the same AID:EMAIL and appends to the file, thus
-increasing its modification time.
+changing its modification time.
 \end{itemize}
 
 
