@@ -116,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{August 6, 2020}
+\date{August 7, 2020}
  
 \maketitle
 
@@ -876,12 +876,22 @@ changing its modification time.
 \subsubsection{Login Page Transactions}
 
 \begin{enumerate}
-\item If regular form admin/emails/EMAIL exists for EMAIL provided by
-      user to browser, log existing
-      user in and go to Project Page.
-\item Otherwise, give
-      the browser a valid ticket, set EPM\_EMAIL,
-      and go to User Page to create new user.
+\item If regular form admin/emails/EMAIL exists
+      log existing user in and go to Project Page.  The browser
+      first gets a ticket which it sends to the server, and
+      the ticket specifies the EMAIL.
+\begin{enumerate}
+\item Browser can look EMAIL up in browser's local memory to get
+      ticket to send to server, or if this ticket does not exist
+      or is invalid,
+\item Browser can send EMAIL to server and get confirmation number back to use
+      as a ticket.
+\end{enumerate}
+\item Otherwise, if no regular form admin/emails/EMAIL exists, give
+      the browser a confirmation number to use as ticket, and upon
+      receiving this set EPM\_EMAIL and give the browser a new
+      automatic ticket and instruct the browser to
+      go to User Page to create new user.
 \end{enumerate}
 
 
@@ -891,22 +901,48 @@ changing its modification time.
 {\bf User Page Files}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{admim/browser/BID}	& create  & update & read \\
-\TT{admim/email/EMAIL}	& create  & update & read \\
-\TT{admim/users/AID/UID.login}
+\TT{admin/email/EMAIL}	& create  & update & read \\
+\TT{admin/users/UID/UID.info}
+			& create  & update & read \\
+\TT{admin/teams/TID/TID.info}
+			& create  & update & read \\
+\TT{admin/users/UID/UID.login}
 			& -       & append & stat \\
-\TT{admim/users/AID/UID.inactive}
+\TT{admin/users/UID/GID.login}
 			& -       & append & stat \\
+\TT{admin/teams/TID/UID.login}
+			& -       & append & stat \\
+\TT{admin/users/UID/UID.inactive}
+			& create  & -      & - \\
+\TT{admin/users/UID/GID.inactive}
+			& create  & -      & - \\
+\TT{admin/teams/TID/UID.inactive}
+			& create  & -      & - \\
+\TT{admin/users/UID/manager}
+			& create  & update & read \\
+\TT{admin/users/UID/member}
+			& create  & update & read \\
+\TT{admin/users/UID/+actions+}
+			& create  & append & - \\
+\TT{admin/teams/TID/+actions+}
+			& create  & append & - \\
+\TT{admin/+actions+}
+			& create  & append & - \\
 \end{tabular}
 \\[3ex]
 {\bf User Page Session Data}
 \\[1ex]
-\begin{tabular}{lllll}
+\begin{tabular}{llll}
+\TT{EPM\_USER}	& create  & update & read \\
+\TT{EPM\_DATA}	& create  & update & read \\
 \TT{EPM\_EMAIL}	& -       & -      & read \\
+\TT{EPM\_AID}	& create  & -      & read \\
 \TT{EPM\_UID}	& create  & -      & read \\
+\TT{EPM\_IS\_TEAM}
+                & create  & -      & read \\
 \TT{EPM\_IPADDR}& -       & -      & read \\
-\TT{EPM\_TIME}
-                & -       & -      & read \\
+\TT{EPM\_TIME}  & -       & -      & read \\
+\TT{EPM\_ABORT} & create  & -      & - \\
 \end{tabular}
 \end{center}
 
