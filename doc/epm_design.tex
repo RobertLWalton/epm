@@ -488,7 +488,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& login & \STACK{login\\index} & \STACK{login\\index} \\ 
 \hline
 \TT{admin/+actions+} & lines &
-        \STACK{log of\\administrative\\actions \pagref{ADMINISTRATIVE-ACTIONS}}
+        \STACK{log of\\administrative\\actions \pagref{ADMIN/XXXX/XID/ACTIONS}}
 	& (updaters) & user & view \\ 
 \hline
 \TT{admin/browser} & dir & \STACK{browser\\tickets}
@@ -524,7 +524,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \FSTACK{admin/}{users/UID/\\UID.inactive}\\
 \FSTACK{admin/}{teams/TID/\\UID.inactive}}
         & lines
-	& \STACK{inactive\\.login files \pagref{ADMIN/USERS/UID/PID.INACTIVE}}
+	& \STACK{inactive\\.login files \pagref{ADMIN/USERS/XID/YID.INACTIVE}}
 	& user & & \\ 
 \hline
 \FSTACK{admin/}{users/UID/\\UID.info} & json
@@ -549,20 +549,22 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \FSTACK{admin/}{teams/TID/\\+actions+}}
         & lines
         & \STACK{log of accounts's\\administrative\\
-	         actions \pagref{ADMINSTRATIVE-ACTIONS}}
+	         actions \pagref{ADMIN/XXXX/XID/ACTIONS}}
 	& (updaters) & user & view \\ 
 \hline
 \FSTACK{admin/}{users/UID/\\manager}
-    & 1-line & \STACK{teams that UID\\manages \pagref{UID-MANAGER}}
+    & 1-line & \STACK{teams that UID\\manages \pagref{ADMIN/USERS/UID/MANAGER}}
     & user & user & user \\ 
 \hline
 \FSTACK{admin/}{users/UID/\\member}
-    & 1-line & \STACK{teams of which\\UID is a\\member \pagref{UID-MEMBER}}
+    & 1-line & \STACK{teams of which\\UID is a
+                                    \\member \pagref{ADMIN/USERS/UID/MEMBER}}
     & user & user & user \\ 
 \hline
 \FSTACK{admi}{n/teams/TID/\\+read-write+}
-    & UID & \STACK{current\\read-write\\user \pagref{READ-WRITE-USER}}
-    & +main+ & +main+ & +main+ \\ 
+    & UID & \STACK{current\\read-write
+                          \\user \pagref{ADMIN/TEAMS/TID/READ-WRITE}}
+    & +main+ & +main+ & \STACK{+main+\\index} \\ 
 \hline
 \TT{accounts} & dir & \STACK{holds account\\subdirectories}
               & user & user & all \\ 
@@ -777,7 +779,7 @@ ATIME & Start time of newest (incomplete) auto-login period. \\
 \end{tabular}
 
 \item[\TT{admin/email/EMAIL} (pre-login email file):] - TID ...
-\label{ADMIN/EMAIL/EMAIL-ALTERNATE} \\
+\label{ADMIN/EMAIL/EMAIL-PRE-LOGIN} \\
 \begin{tabular}[t]{lp{4.0in}}
 EMAIL & Email address encoded with PHP rawurlencode \\
 TID & Team user ID (may be more than one) \\
@@ -922,6 +924,8 @@ changing its modification time.
 			& create  & update & read \\
 \TT{admin/users/UID/member}
 			& create  & update & read \\
+\TT{admin/teams/TID/+read-write+}
+			& create  & update & read \\
 \TT{admin/users/UID/+actions+}
 			& create  & append & - \\
 \TT{admin/teams/TID/+actions+}
@@ -950,17 +954,15 @@ changing its modification time.
 
 \begin{indpar}
 \begin{itemlist}
+\item[\TT{admin/email/EMAIL}:] see \pagref{ADMIN/EMAIL/EMAIL} 
 \item[\TT{admin/users/UID/UID.info} (user info file):]~
 \label{ADMIN/USERS/UID/UID.INFO} \\
 JSON file with the following components:
 \begin{tabular}[t]{ll}
-\TT{'uid'} & UID (PID for person, team UID for team) \\
-\TT{'sponsor'} & PID; missing if not team \\
-\TT{'manager'} & PID; missing if not team \\
-\TT{'emails'} & \TT{[} EMAIL \{ \TT{,} EMAIL \}\STAR{} \TT{]};
-                missing if team \\
-\TT{'members'} & \TT{[} MID \{ \TT{,} MID \}\STAR{} \TT{]};
-                missing if not team \\
+\TT{'uid'} & UID \\
+\TT{'emails'} & \TT{[} EMAIL \{ \TT{,} EMAIL \}\STAR{} \TT{]} \\
+\TT{'guests'} & \TT{[} GID \{ \TT{,} GID \}\STAR{} \TT{]}
+                (may be missing) \\
 \TT{'full\_name'} & TEXT \\
 \TT{'organization'} & TEXT \\
 \TT{'location'} & TEXT \\
@@ -969,9 +971,11 @@ JSON file with the following components:
 where
 \\
 \begin{tabular}[t]{lp{4.0in}}
-MID & member ID; PID if available or EMAIL not yet assigned to a user
-      account otherwise (EMAIL has `\TT{@}' and PID does not) \\
-TEXT & plain text \\
+UID & user ID (i.e., an account ID) for user; cannot be changed once
+      account is created \\
+EMAIL & e-mail address for user \\
+GID & UID for guest of user \\
+TEXT & plain text (with a minimum and maximum allowed length) \\
 \end{tabular}
 \\
 \begin{itemize}
@@ -982,11 +986,102 @@ UID.info files are searched and if any have MIDs matching
 the new account EMAIL, they are resolved to PIDs.
 \end{itemize}
 
-\item[\TT{admin/users/UID/PID.inactive}:]~
-\label{ADMIN/USERS/UID/PID.INACTIVE} \\
-Inactive {\tt .login} file, made by renaming {\tt .login}
-when UID is no longer a member
-of AID team.  May be reactivated.
+\item[\TT{admin/users/TID/TID.info} (user info file):]~
+\label{ADMIN/USERS/TID/TID.INFO} \\
+JSON file with the following components:
+\begin{tabular}[t]{ll}
+\TT{'tid'} & TID \\
+\TT{'manager'} & MANAGER \\
+\TT{'members'} & \TT{[} MEMBER \{ \TT{,} MEMBER \}\STAR{} \TT{]}
+                (may be missing) \\
+\TT{'full\_name'} & TEXT \\
+\TT{'organization'} & TEXT \\
+\TT{'location'} & TEXT \\
+\end{tabular}
+\\
+where
+\\
+\begin{tabular}[t]{lp{4.0in}}
+TID & team ID (i.e., an account ID) for team; cannot be changed once
+      account is created \\
+MANAGER & UID of the manager of team \\
+MEMBER & one of: \begin{tabular}[t]{l}
+                 MID \\
+		 (EMAIL) \\
+		 MID(EMAIL) \\
+		 \end{tabular} \\
+MID & UID of member of team \\
+EMAIL & EMAIL of member of team as of time member was added to team  \\
+TEXT & plain text (with a minimum and maximum allowed length) \\
+\end{tabular}
+\\
+\begin{itemize}
+\item A MEMBER may be specified as an EMAIL or a MID.
+If specified as an EMAIL, and a regular {\tt admin/email/EMAIL}
+(\pagref{ADMIN/EMAIL/EMAIL}) exists,
+the MID is added.  If specified as an EMAIL, and no
+regular {\tt admin/email/EMAIL} file exists, the TID is added to
+a pre-login {\tt admin/email/EMAIL} (\pagref{ADMIN/EMAIL/EMAIL-PRE-LOGIN}),
+which is created if it does not exist.
+\item When a user initially creates an account with an EMAIL for which
+a pre-login {\tt admin/email/EMAIL} file exists, the TID.info files
+for all TIDs listed in the pre-login file are searched for any MEMBERs
+of the form `(EMAIL)', and when one is found, its MID is added to it.
+Similarly if EMAIL is added to an existing user account.
+\end{itemize}
+
+\item[\TT{admin/users/UID/UID.login} (login log):]
+\item[\TT{admin/teams/TID/UID.login} (login log):]\vspace*{-1ex}
+\item[\TT{admin/users/UID/GID.login} (login log):]\vspace*{-1ex}
+see \pagref{ADMIN/USERS/XID/YID.LOGIN}
+
+\item[\TT{admin/teams/TID/UID.inactive}:]
+\item[\TT{admin/users/UID/GID.inactive}:]\vspace*{-1ex} ~
+\label{ADMIN/USERS/XID/YID.INACTIVE} \\
+Inactive {\tt .login} file, made by renaming {\tt .login} file
+when UID is no longer a member of TID team or GID is no longer
+a guest of UID.  May be reactivated by renaming to {\tt .login}
+file.
+
+\item[\TT{admin/users/UID/manager}:] ~
+\label{ADMIN/USERS/UID/MANAGER} \\
+A a list of single space separated TIDs of the teams of which
+user UID is a manager.
+
+\item[\TT{admin/users/UID/member}:] ~
+\label{ADMIN/USERS/UID/MEMBER} \\
+A a list of single space separated TIDs of the teams of which
+user UID is a member.
+
+\item[\TT{admin/teams/TID/+read-write+}:] ~
+\label{ADMIN/TEAMS/TID/READ-WRITE} \\
+Either a single UID of the team member whose login currently
+has read-write mode, or blank if no such.  This file is locked
+by itself, and is independent of any {\tt +lock+} file locking.
+
+\item[\TT{admin/users/UID/+actions+}:]
+\item[\TT{admin/teams/TID/+actions+}:]\vspace*{-1ex} ~
+\label{ADMIN/XXXX/XID/ACTIONS} \\
+Lines of format:\hspace{0.5in}TIME AID info KEY OP VALUE \\
+\begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
+TIME & Session time for login (EPM\_TIME) \\
+AID & equals UID or TID from file name \\
+KEY & {\tt .info} file JSON key \\
+OP & {\tt =} if non-list KEY reset, {\tt +} if addition to KEY's list,
+     {\tt -} if deletion from KEY's list \\
+VALUE & value given to non-list KEY, added to KEY's list,
+        or deleted from KEY's list \\
+\end{tabular}
+\\
+\begin{itemize}
+\item Updates to {\tt AID.info} file are logged by writting lines
+to {\tt admin/*/AID/+actions+} file.
+\end{itemize}
+
+\item[\TT{admin/+actions+}:] ~
+\label{ADMIN/ACTIONS} \\
+Any line writted to an {\tt admin/*/AID/+actions+} file is
+also written to this file.
 
 \end{itemlist}
 \end{indpar}
@@ -995,11 +1090,16 @@ of AID team.  May be reactivated.
 
 \begin{enumerate}
 \item If EPM\_UID not set, get data for new user and create
-      new user account if data acceptable.
-\item If EPM\_UID exists for a user account, display
-      user data and allow it to be edited.
-\item If EPM\_UID exists for a team account (as discovered
-      by reading UID.info), go to Team Page.
+      new user account if data acceptable.  Otherwise, or
+      after creating new user account, display {\tt .info}
+      data for all users and all teams.
+\item Allow the current user to edit their own {\tt .info} data.
+\item If the current user is the manager of a team, allow that
+      team's {\tt .info} data to be edited.
+\item Allow the current user to create a new team of which the
+      current user is a manager.
+\item NOTE: team member and guest logins cannot edit user or
+      team {\tt .info} or create new teams.
 \end{enumerate}
 
 \subsection{Problem}
