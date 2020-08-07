@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 15:01:31 EDT 2020
+    // Date:	Fri Aug  7 02:28:20 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1804,6 +1804,10 @@ EOT;
     </td>
     <td style='text-align:right'>
     $RW_BUTTON
+    <button type='button' id='refresh'
+            onclick='location.replace
+	        ("project.php?id=$ID")'>
+	&#8635;</button>
     <button type='button'
             onclick='HELP("project-page")'>
 	?</button>

@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Aug  5 05:36:33 EDT 2020
+// Date:    Fri Aug  7 03:00:21 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -416,6 +416,35 @@ if ( isset ( $aid ) )
 
 echo <<<EOT
 <script>
+
+document.onkeydown = REFRESH;
+
+function REFRESH ( event )
+{
+    let refresh = document.getElementById ( 'refresh' );
+        // Cannot compute this globally because
+	// id='refresh' button may not be loaded till
+	// after this code.
+    if ( refresh == null ) return;
+
+    if ( event.code == 'F5'
+         ||
+	 ( event.code == 'KeyR'
+	   &&
+	   event.ctrlKey ) )
+    {
+	event.preventDefault();
+	var e = refresh;
+	while ( e != null )
+	{
+	    let display = e.style.display;
+	    console.log ( 'Element ' + e.tagName + ' ' + display );
+	    if ( display == 'none' ) return;
+	    e = e.parentElement;
+	}
+	refresh.click();
+    }
+}
 
 // See HELP and VIEW below.
 //

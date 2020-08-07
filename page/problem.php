@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug  4 11:53:52 EDT 2020
+    // Date:	Thu Aug  6 22:53:39 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -772,6 +772,8 @@ EOT;
 	</form>
 EOT;
 
+    $refresh = "problem.php?problem=$problem"
+             . "&id=$ID";
     echo <<<EOT
     </td><td>
     <button type='button'
@@ -793,6 +795,9 @@ EOT;
     </form>
     <strong>Page</strong>
     </td><td style='text-align:right'>
+    <button type='button' id='refresh'
+            onclick='location.replace ("$refresh")'>
+	&#8635;</button>
     <button type='button'
             onclick='HELP("problem-page")'>
 	?</button>
