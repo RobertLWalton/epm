@@ -391,7 +391,7 @@ load pages that do no sequencing.  The help window pages are
 \item Upon being required, {\tt /page/index.php} executes the
       following in order:
 \begin{itemize}
-\item Computes:
+\item Compute:
 
       \hspace*{0.2in}\begin{tabular}{l}
 		\tt \$epm\_root = ROOT \\
@@ -412,22 +412,36 @@ load pages that do no sequencing.  The help window pages are
        \hspace*{0.2in}{\tt \$\_SERVER['DOCUMENT\_ROOT'] . ROOT}
 
 \item If {\tt SELF} is either {\tt index.php} or {\tt page/index.php},
-      re-routes the request to {\tt page/\EOL login.php}.
+      re-routes the request to {\tt page/\EOL login.php}.  The
+      request must be a 'GET' else it is not accepted.
 
 \item Loads {\tt W/parameters.php} which in turn defines H and D
       \sref{DIRECTORIES}{MAIN-DIRECTORIES}.
 
 \item Runs the following checks and aborts invalid requests:
 \begin{itemize}
-\item Checks that the session is logged in, unless the page being
-loaded is {\tt /page/\EOL login.php} or {\tt /page/user/php}.
 \item Checks that the client request is using the same IP
 address as was used for login, unless the {\tt \$epm\_check\_ipaddr}
 parameter is false.
+\item Checks that the session is logged in, unless the page being
+loaded is {\tt /page/\EOL login.php} or {\tt /page/user/php}.
 \item Uses {\tt EPM\_ABORT} (\pagref{EPM_ABORT}) to check that
 no other session has been started after this session using the
 same {\tt AID:UID} login name.
 \end{itemize}
+
+\item If the session has logged in, defines:
+\\[2ex]
+\hspace*{0.2in}\begin{minipage}{5in}
+\$aid = \$\_SESSION['EPM\_AID'] \\
+\$uid = \$SESSION['EPM\_UID'] \\
+\$lname = <login name> \\
+\$is\_team = \$\_SESSION['EPM\_IS\_TEAM'] \\
+\$rw = \begin{tabular}[t]{@{}l@{}}
+       true if page is read-write; false if read-only \\
+       (see {\tt page/index.php} and {\tt include/epm\_rw.php} for details)
+       \end{tabular}
+\end{minipage}
 
 \item Defines functions and error handlers.
 
@@ -442,6 +456,10 @@ same {\tt AID:UID} login name.
       to the {\tt /page/orphan.html} page to declare
       the tab or window orphaned.
 
+\item Except for pages of {\tt +download+} type and xhttp requests,
+      sets up shutdown function that will write statistics
+      into {\tt accounts/\EOL AID/\EOL +read-write+} or
+      {\tt accounts/\EOL AID/\EOL +read-only+}.
 \item Except for pages of {\tt +download+} type and xhttp requests,
       defines functions
       and parameters for use in creating buttons and launching
@@ -1100,6 +1118,7 @@ also written to this file.
       current user is a manager.
 \item NOTE: team member and guest logins cannot edit user or
       team {\tt .info} or create new teams.
+\item Allow a current read-only user to force a switch to read-write.
 \end{enumerate}
 
 \subsection{Problem}
