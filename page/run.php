@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug  4 11:53:40 EDT 2020
+    // Date:	Sat Aug  8 02:01:37 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -357,6 +357,8 @@
 	echo "<br></div></div>" . PHP_EOL;
     }
 
+    $refresh = "run.php?problem=$problem"
+             . "&id=$ID";
     echo <<<EOT
     <div class='manage' id='manage'>
     <table style='width:100%'>
@@ -384,6 +386,9 @@
     <pre class='problem'>$problem</pre></b>
     </td>
     <td style='text-align:right'>
+    <button type='button' id='refresh'
+            onclick='location.replace ("$refresh")'>
+	&#8635;</button>
     <button type='button'
             onclick='HELP("run-page")'>
 	?</button>

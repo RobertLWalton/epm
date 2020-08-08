@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 12:38:20 EDT 2020
+    // Date:	Sat Aug  8 02:11:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -327,6 +327,7 @@
     echo <<<EOT
     <div class='manage'>
     <table style='width:100%'>
+    <tr>
     <td style='width:30%;text-align:left'>
     <strong title='Login Name'>$lname</strong>
     </td>
@@ -364,10 +365,23 @@ EOT;
     <strong>Current Problem:</strong>&nbsp;
     <pre class='problem'>$problem</pre>
     <pre>   </pre>
+EOT;
+    if ( ! $edit )
+    {
+	$refresh = "option.php?problem=$problem"
+		 . "&id=$ID";
+	echo <<<EOT
+	<button type='button' id='refresh'
+		onclick='location.replace ("$refresh")'>
+	    &#8635;</button>
+EOT;
+    }
+    echo <<<EOT
     <button type='button'
             onclick='HELP("option-page")'>
 	?</button>
     </td>
+    </tr>
     </table>
     </div>
 EOT;
