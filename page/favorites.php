@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 12:54:51 EDT 2020
+    // Date:	Sat Aug  8 02:23:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -314,6 +314,10 @@ var LOG = function(message) {};
     <td>
     </td><td style='text-align:right'>
     $RW_BUTTON
+    <button type='button' id='refresh'
+            onclick='location.replace
+	        ("favorites.php?id=$ID")'>
+	&#8635;</button>
     <button type='button'
             onclick='HELP("favorites-page")'>
 	?</button>

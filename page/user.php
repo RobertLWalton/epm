@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug  6 16:34:22 EDT 2020
+    // Date:	Sat Aug  8 02:14:00 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1177,6 +1177,10 @@ EOT;
 	        formaction='logout.php'>
 	    Logout</button>
 	$RW_BUTTON
+	<button type='button' id='refresh'
+		onclick='location.replace
+		    ("user.php?id=$ID")'>
+	    &#8635;</button>
 EOT;
     echo <<<EOT
     <button type='button'

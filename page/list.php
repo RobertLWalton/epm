@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 12:46:50 EDT 2020
+    // Date:	Sat Aug  8 02:22:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -634,6 +634,10 @@ EOT;
     <td>
     </td><td style='text-align:right'>
     $RW_BUTTON
+    <button type='button' id='refresh'
+            onclick='location.replace
+	        ("list.php?id=$ID")'>
+	&#8635;</button>
     <button type='button'
             onclick='HELP("list-page")'>
 	?</button>

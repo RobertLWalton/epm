@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  2 10:06:22 EDT 2020
+    // Date:	Sat Aug  8 02:29:59 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -284,6 +284,10 @@ function INCLUDE ( checkbox, c )
     </td>
     <td>
     </td><td style='text-align:right'>
+    <button type='button' id='refresh'
+            onclick='location.replace
+	        ("view.php")'>
+	&#8635;</button>
     <button type='button'
             onclick='HELP("view-page")'>
 	?</button>
