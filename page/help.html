@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Aug  1 03:30:54 EDT 2020
+Date:	Sat Aug  8 02:48:32 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -166,6 +166,7 @@ vertical-align: top;
 <li><a href="#user-page">User Page</a> [main]
 <ul>
 <li><a href="#teams">Teams</a>
+<li><a href="#guests">Guests</a>
 </ul>
 
 <li><a href="#project-page">Project Page</a> [main]
@@ -362,6 +363,12 @@ Do NOT attempt to use an analogous method to create any other
 tabs or popup windows for your login session; use the buttons
 that create these instead.
 <p>
+<b>DO NOT USE</b> the browser Back or Forward buttons, as these
+will invalidate your tab.  You may use the refresh keys, or the
+&#8635; refresh button next to the ? help button.  Many pages
+can be put into an editing mode in which the &#8635; button disappears
+and the refresh keys are disabled.
+<p>
 EPM has two kinds of accounts: user accounts and team accounts.
 These behave similarly in most circumstances.
 Both kinds of accounts are named by an <b>account ID</b>, which is
@@ -479,18 +486,40 @@ You must have one or more email addresses associated with
 your account.  You use these to log into the account.
 It is well to have two or more, in case you lose access to
 one of them.
+<li><strong>Guests</strong>:<p class='list'>
+You may have <a href='#guests'>guests</a>
+which are other user accounts that
+can see but not change the contents of your account.
+A guest account is specified by giving the user ID of the account.
 </ul>
+</p>
+
+<a name="guests"><h2>Guests</h2></a>
+<p>
+If you are a guest of another user, you may log in as a guest
+using a login name of the form:
+<div style='text-align:center;padding:4px'>
+Host-ID:E-Mail-Address
+</div>
+<p>
+where Host-ID is the user ID of the user whose guest you are
+(your `host') and E-Mail-Address is one of the e-mail addresses
+associated with your own account.
+<p>
+Your guest login session is logged into the host account,
+but will only be able to see the contents of the host account,
+and will not be able to change the contents of the host account.
 </p>
 
 <a name="teams"><h2>Teams</h2></a>
 <p>
 A team account is like a user account except that:
 <ol>
-<li>A team account has members instead of e-mail addresses.
+<li>A team account has <strong>members</strong> instead of e-mail addresses.
     Members are user accounts named by user IDs or e-mail
     addresses that map to user IDs.
 <li>All the members of a team account can log into the
-    account at one time.  But only one login session can be
+    account at one time.  But only one of these login sessions can be
     read-write; the rest must be read-only.
 <li>When you log into a team account, you give a
     login name of the form:
@@ -501,6 +530,9 @@ A team account is like a user account except that:
     this login name is the account ID of the login session;
     the e-mail-address identifies you and specifies the
     user ID associated with the login session.
+<li>A team also has a <b>manager</b>, which is the account
+    that can edit the profile of the team and add or delete
+    team members.
 </ol>
 <p>
 Because a team account session is like a user account session
@@ -523,6 +555,13 @@ All the people logged into the same team account at one time
 should have open-mike audio communications, or a text-based equivalent,
 to make this work.
 <p>
+However there is an exception to this last paragraph to handle
+the case where a team member has forgetfully left their login session in
+read-write mode.  The <b>User Page</b> RW button is special, in that
+it will allow you to force the switch from read-only to read-write
+even if another user is read-write, by forcing that other user
+into read-only mode.
+<p>
 Any user can make a team using the User Page.  A team has a profile
 like a user profile, except that a team also has a
 <a name='manager'>manager</a>, that is the user account that can
@@ -537,6 +576,11 @@ and the associated user ID will be determined automatically
 when the e-mail address is associate with a user account.
 This allows team members to be added to the team before
 they have established user accounts on the EPM server.
+<p>
+When you are logged in as a team member, you cannot edit
+your own profile or the profile of teams of which you are
+a manager, and you cannot create new teams, even if you
+are in read-write mode.
 </p>
 
 
