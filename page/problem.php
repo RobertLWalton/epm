@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  9 04:35:12 EDT 2020
+    // Date:	Sun Aug  9 10:17:51 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1044,9 +1044,8 @@ EOT;
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
 	       name='delete_files' value=''>
-	<input type="submit" name="execute_deletes"
-	       value=
-		 "Delete Over-Struck Files">
+	<button type="submit" name="execute_deletes">
+		Delete Over-Struck Files</button>
 	</form>
 	</td><td style='text-align:right'>
 	<button type='button'

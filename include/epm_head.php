@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Aug  9 04:57:49 EDT 2020
+// Date:    Sun Aug  9 10:11:23 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -31,6 +31,7 @@ echo "<title>$title</title>";
 	    --indent: 1.3vw;
 	    --radius: 0.55vw;
 	    --pad: 0.55vw;
+	    --border-width: 0.25vw;
 	}
     }
     @media screen and ( min-width: 1366px ) {
@@ -42,6 +43,7 @@ echo "<title>$title</title>";
 	    --indent: 20px;
 	    --radius: 8px;
 	    --pad: 8px;
+	    --border-width: 3px;
 	}
     }
 
@@ -96,10 +98,14 @@ echo "<title>$title</title>";
     }
     button {
         padding: 1px 6px;
-        /* padding should be 0px 0px for Firefox
-	   but we cannot figure your how to
-	   set this for Firefox only.
-	 */
+	border-width: var(--border-width);
+	border-color: white;
+    }
+    select, input {
+        padding: 1px 6px;
+	border-width: var(--border-width);
+	border-color: gainsboro;
+	background-color: white;
     }
     pre {
 	display:inline;
