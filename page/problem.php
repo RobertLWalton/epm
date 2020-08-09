@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug  6 22:53:39 EDT 2020
+    // Date:	Sun Aug  9 04:35:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -754,7 +754,7 @@ EOT;
     <strong title='Login Name'>$lname</strong>
     </td><td>
 
-    <strong>Current Problem:</strong>&nbsp;
+    <strong>Problem:</strong>&nbsp;
     <pre class='problem'>$problem</pre></b>
 EOT;
 
@@ -770,6 +770,11 @@ EOT;
 		title='Delete Current Problem'>
 	Delete</button>
 	</form>
+EOT;
+
+    if ( isset ( $parent ) )
+        echo <<<EOT
+	<strong>(from project $parent)</strong>
 EOT;
 
     $refresh = "problem.php?problem=$problem"

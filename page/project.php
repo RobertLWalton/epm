@@ -1868,20 +1868,22 @@ EOT;
 	    <input type='hidden' name='id' value='$ID'>
 	    <button type='submit' name='op' value='push'
 		    title='$push_title'>
-	    Push
+	    Push to Project
 	    </button>
 	    <strong>or</strong>
 	    <button type='submit' name='op' value='pull'
 		    title='$pull_title'>
-	    Pull
+	    Pull From Project
 	    </button>
 	    </form>
 EOT;
-	if ( isset ( $listname ) )
+	if ( isset ( $listname )
+	     &&
+	     $problem_options != '' )
 	{
 	    if ( $rw )
 		echo <<<EOT
-		<strong>or Create Tab for Problem:
+		<strong>or Create Tab for:
 		        </strong>
 EOT;
 	    else
@@ -1889,22 +1891,24 @@ EOT;
 		<strong>and Create Tab for Problem:
 		        </strong>
 EOT;
-	    if ( $problem_options != '' ) echo <<<EOT
+	    echo <<<EOT
 	    <form method='POST' action='project.php'
 		  id='goto-form'>
 	    <input type='hidden' name='id' value='$ID'>
 	    <select name='goto'
 		    onchange='document.getElementById
-				("goto-form").submit()'>
+			    ("goto-form").submit()'>
 	    <option value=''>Select Problem</option>
 	    $problem_options
 	    </select></form>
 EOT;
-	    else echo <<<EOT
-	    selected list contains none of
-	          <mark>Your</mark> problems
-EOT;
         }
+	elseif ( isset ( $listname ) )
+	    echo <<<EOT
+	    <pre>    </pre>
+	    (list has NO problems you previously created or pulled)
+EOT;
+
 	if ( $rw )
 	    echo <<<EOT
 	    <br>

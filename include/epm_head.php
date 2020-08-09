@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jul 20 16:35:34 EDT 2020
+// Date:    Sun Aug  9 04:57:49 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -93,6 +93,10 @@ echo "<title>$title</title>";
 	display:inline;
         font-size: var(--font-size);
 	margin-bottom: calc(0.5*var(--font-size));
+    }
+    button {
+        padding: 0px;
+	/* For Firefox in particular */
     }
     pre {
 	display:inline;
