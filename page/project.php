@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Aug  7 02:28:20 EDT 2020
+    // Date:	Sun Aug  9 13:02:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -391,12 +391,17 @@
     }
 
     // Given a listname, return your problems that
-    // are in the list (i.e., that have PROJECT == '-')
-    // as an HTML <option> list.
+    // are in the list as an HTML <option> list.
+    // A problem is returned if its $problem directory
+    // exists and either its list entry project is
+    // '-' or it is the current parent of the $problem
+    // directory.
     //
     function listname_to_problem_options
 	    ( $listname, & $warnings )
     {
+	$map = read_problem_map();
+
 	$r = '';
 	foreach ( read_problem_list
 		      ( $listname, $warnings )
@@ -404,7 +409,11 @@
 	{
 	    list ( $time, $project, $problem ) =
 		$item;
-	    if ( $project == '-' )
+	    if ( ! isset ( $map[$problem] ) ) continue;
+
+	    if ( $project == '-'
+	         ||
+		 $project == $map[$problem] )
 		$r .= "<option value='$problem'>"
 		    . "$problem</option>";
 	}
