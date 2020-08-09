@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  9 10:17:51 EDT 2020
+    // Date:	Sun Aug  9 13:48:17 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -176,21 +176,22 @@
 	if (    $ftype == 'utf8'
 	     && isset ( $fsize ) )
 	{
-	    $fcontents = "$fname contents could"
-		       . " not be read\n";
 	    $fcontents = @file_get_contents
 	        ( $f, false, NULL, 0,
 		  $epm_file_maxsize );
-	    $flines =
-		count ( explode
-			    ( "\n", $fcontents ) )
-		- 1;
+	    if ( $fcontents === false )
+		$fcontents = "$fname contents could"
+			   . " not be read";
+	    $fexplode = explode ( "\n", $fcontents );
+	    $flines = count ( $fexplode );
+	    if ( $fexplode[$flines-1] == '' )
+	        -- $flines;
 	}
 	if ( isset ( $fsize ) && $fsize == 0 )
 	    $fcomment = '(Empty)';
 	elseif ( $ftype == 'utf8' )
 	{
-	    if (    $flines == 1
+	    if (    $flines <= 1
 		 &&    strlen ( rtrim ( $fcontents ) )
 		    <= 32 )
 		$fcomment = '{'
