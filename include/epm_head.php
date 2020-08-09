@@ -94,10 +94,6 @@ echo "<title>$title</title>";
         font-size: var(--font-size);
 	margin-bottom: calc(0.5*var(--font-size));
     }
-    button {
-        padding: 0px;
-	/* For Firefox in particular */
-    }
     pre {
 	display:inline;
         font-size: var(--font-size);
