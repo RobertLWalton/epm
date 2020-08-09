@@ -94,6 +94,13 @@ echo "<title>$title</title>";
         font-size: var(--font-size);
 	margin-bottom: calc(0.5*var(--font-size));
     }
+    button {
+        padding: 1px 6px;
+        /* padding should be 0px 0px for Firefox
+	   but we cannot figure your how to
+	   set this for Firefox only.
+	 */
+    }
     pre {
 	display:inline;
         font-size: var(--font-size);
