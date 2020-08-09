@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  9 13:02:44 EDT 2020
+    // Date:	Sun Aug  9 13:18:04 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1948,7 +1948,8 @@ EOT;
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
-	        <strong>Problems (select to push)
+	        <strong>Problems
+		        (select to push to project)
 		        </strong></th>
 	    <td><input type='button'
 	               onclick='SUBMIT_PUSH()'
@@ -2150,7 +2151,8 @@ EOT;
 	<table width='100%' id='problem-table'>
 	<tr id='pre-submit'>
 	    <th style='text-align:left'>
-	        <strong>Problems (select to pull)
+	        <strong>Problems
+		        (select to pull from project)
 		        </strong></th>
 	    <td><input type='button'
 	               onclick='SUBMIT_PULL()'
