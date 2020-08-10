@@ -3,7 +3,7 @@
 
 // File:	epm_latex
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jul 21 12:07:42 EDT 2020
+// Date:	Mon Aug 10 10:40:33 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -19,15 +19,25 @@ Executes
              nonstopmode -halt-on-error PPPP.tex \
 	     >PPPP.tout 2>PPPP.terr
 
-and if no error code return, returns exit code 0.
-Otherwise reads the PPPP.log file and
+and scans PPPP.log file for errors, appending any found
+to PPPP.terr.  An error in PPPP.log begins with one of
+the following:
 
-(1) Removes all lines before the first line beginning
-    with `!'.
-(2) Then removes all lines from the first line beginning
-    with `Here' up to the next line beginning with `!'.
-(3) Writes the remaining lines to PPPP.terr.
-(4) Returns the exit code returned by pdflatex.
+  (1) a line that has `!' as its first character
+  (2) a line that has `at lines DD--DD' at its end,
+      where DD denotes any sequence of digits
+  (3) a line that contains `while \\output is active'
+      
+An error ends with a blank line.
+
+If there are errors, this program also outputs page
+number lines that have the format `[NN]', where NN is
+the page number.  Errors generally occur in a page
+whose `[NN]' line either is the first preceding or the
+first following the error message.
+
+This program returns the exit code of pdflatex as its
+exit code.
 
 EOT;
 
@@ -46,8 +56,6 @@ $command = "pdflatex -record -no-shell-escape"
 
 exec ( $command, $discard, $code );
 
-if ( $code == 0 ) exit ( 0 );
-
 $LOG = "$PPPP.log";
 $ERR = "$PPPP.terr";
 $c = @file_get_contents ( $LOG  );
@@ -58,26 +66,58 @@ if ( $c === false )
     exit ( $code );
 }
 
-$state = 0;
+$in_error = false;
 $out = '';
+$errors = 0;
 foreach ( explode ( "\n", $c ) as $line )
 {
-    if ( $state == 0 && $line == '' ) continue;
-    if ( $state == 0 && $line[0] == '!' ) ++ $state;
-    if (    $state == 1
-         && substr ( $line, 0, 4 ) == 'Here' )
-        ++ $state;
-    if ( $state == 2 && $line == '' ) continue;
-    if ( $state == 2 && $line[0] == '!' ) ++ $state;
-    if ( $state == 1 || $state == 3 )
-        $out .= $line . PHP_EOL;
+    $line = rtrim ( $line );
+    if ( $line == '' )
+    {
+        if ( $in_error )
+	{
+	    $in_error = false;
+	    $out .= PHP_EOL;
+	}
+    }
+    elseif ( ! $in_error && $line[0] == '!' )
+    {
+	$in_error = true;
+	$out .= $line . PHP_EOL;
+	++ $errors;
+    }
+    elseif ( ! $in_error
+             &&
+	     preg_match
+	         ( '/at lines \d+\-\-\d+$/', $line ) )
+    {
+	$in_error = true;
+	$out .= $line . PHP_EOL;
+	++ $errors;
+    }
+    elseif ( ! $in_error
+             &&
+	     preg_match
+	         ( '/while \\\\output is active/',
+		   $line ) )
+    {
+	$in_error = true;
+	$out .= $line . PHP_EOL;
+	++ $errors;
+    }
+    elseif ( $in_error )
+	$out .= $line . PHP_EOL;
+    elseif ( preg_match ( '/\[(\d+)($|\D)/',
+                          $line, $matches ) )
+	$out .= "[{$matches[1]}]" . PHP_EOL;
 }
 
-if ( $out == '' )
+if ( $errors == 0 && $code != 0 )
     $out = "pdflatex returned $code but no errors found"
-         . " in $LOG file";
+         . " in $LOG file" . PHP_EOL;
 
-file_put_contents ( $ERR, $out, FILE_APPEND );
+if ( $errors != 0 )
+    file_put_contents ( $ERR, $out, FILE_APPEND );
 
 exit ( $code );
   
