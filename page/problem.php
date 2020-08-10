@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  9 13:48:17 EDT 2020
+    // Date:	Mon Aug 10 17:36:13 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -599,6 +599,12 @@ EOT;
         display: inline-block;
 	width: calc(10*var(--large-font-size));
     }
+    tr.kept {
+        background-color: var(--bg-dark-tan);
+    }
+    tr.show {
+        background-color: var(--bg-yellow);
+    }
 
 </style>
 
@@ -820,11 +826,15 @@ EOT;
 	// to click to show the file.
     $display_list = [];
 
+    $kept = [];
+    $show = [];
+    $working_files = [];
     if ( isset ( $work['DIR'] ) )
     {
 	$workdir = $work['DIR'];
 	$result = $work['RESULT'];
 	$kept = $work['KEPT'];
+	$show = $work['SHOW'];
 	if (    is_array ( $result )
 	     && $result == ['D',0] )
 	    $r = 'commands succeeded: ';
@@ -924,8 +934,14 @@ EOT;
 		if ( is_link ( $f ) )
 		    continue;
 
+		$class = '';
+		if ( in_array ( $fname, $kept ) )
+		    $class = 'kept';
+		elseif ( in_array ( $fname, $show ) )
+		    $class = 'show';
+
 		++ $count;
-		echo "<tr>";
+		echo "<tr class='$class'>";
 		echo "<td" .
 		     " style='text-align:right'>";
 		list ( $fext, $ftype, $fdisplay,
@@ -954,19 +970,11 @@ EOT;
 EOT;
 		}
 		else
-		{
-		    unset ( $show_map[$fname] );
-			// $fname is a working file
-			// so if an older version
-			// is a current file we
-			// do not want to show the
-			// older version.
 		    echo <<<EOT
 			<pre id='file$count'
 			    >$fname</pre>
 			</td>
 EOT;
-		}
 
 		if ( $fdisplay )
 		{
@@ -1079,8 +1087,17 @@ EOT;
     foreach ( problem_file_names( $probdir )
 	      as $fname )
     {
-	$count += 1;
-	echo "<tr>";
+
+	$class = '';
+	if ( in_array ( $fname, $kept ) )
+	    $class = 'kept';
+	elseif ( in_array ( $fname, $working_files ) )
+	    /* Do Nothing */;
+	elseif ( in_array ( $fname, $show ) )
+	    $class = 'show';
+
+	++ $count;
+	echo "<tr class='$class'>";
 	echo "<td style='text-align:right'>";
 	list ( $fext, $ftype,
 	       $fdisplay, $fshow, $flinkable,
@@ -1092,7 +1109,10 @@ EOT;
 
 	if ( $fshow )
 	{
-	    $show_map[$fname] = "show$count";
+	    if ( ! isset ( $show_map[$fname] ) )
+		$show_map[$fname] = "show$count";
+		// Working directory overrides
+		// problem directory.
 	    $fpage = $display_file_map[$ftype];
 	    echo <<<EOT
 		<button type='button'
@@ -1112,8 +1132,11 @@ EOT;
 EOT;
 	if ( $fdisplay )
 	{
-	    $show_map[$fname] =
-		"file{$count}_button";
+	    if ( ! isset ( $show_map[$fname] ) )
+		$show_map[$fname] =
+		    "file{$count}_button";
+		// Working directory overrides
+		// problem directory.
 	    echo <<<EOT
 		<td><button type='button'
 		     id='file{$count}_button'
@@ -1225,30 +1248,18 @@ EOT;
 	}
     }
 
-    if ( isset ( $work['SHOW'] ) )
+    if ( count ( $show ) > 0 )
     {
-	$show_files = $work['SHOW'];
 	$files = [];
 
-	foreach ( $show_files as $fname )
+	foreach ( $show as $fname )
 	{
 	    if ( isset ( $show_map[$fname] ) )
 		$files[] = $fname;
 	}
-	if ( count ( $files ) > 0
-	     &&
-	     ! $work['SHOWN'] )
+	if ( count ( $files ) > 0 )
 	{
 	    $id = $show_map[$files[0]];
-	    echo "<script>document" .
-		 ".getElementById('$id')" .
-		 ".click();" .
-		 "</script>";
-	     $work['SHOWN'] = true;
-	}
-	if ( count ( $files ) > 1 )
-	{
-	    $id = $show_map[$files[1]];
 	    echo "<script>document" .
 		 ".getElementById('$id')" .
 		 ".click();" .

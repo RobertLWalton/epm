@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 11:34:21 EDT 2020
+// Date:    Mon Aug 10 17:43:19 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -1892,8 +1892,6 @@ function finish_make_file ( & $warnings, & $errors )
         $errors[] = "command line {$r[0]} returned"
 	          . " exit code {$r[1]}: $m";
     }
-    if ( isset ( $control[2]['KEEP-ON-ERROR'] ) )
-	$errors_size = count ( $errors );
 
     if ( isset ( $control[2]['SHOW'] ) )
     {
@@ -1901,18 +1899,27 @@ function finish_make_file ( & $warnings, & $errors )
 	$d = "$epm_data/$workdir";
         foreach ( $control[2]['SHOW'] as $fname )
 	{
-	    if ( is_readable ( "$d/$fname" ) )
+	    $s = @filesize ( "$d/$fname" );
+	    if ( $s !== false && $s > 0 )
 	        $show[] = $fname;
 	}
     }
 
-    if ( count ( $errors ) > $errors_size )
+    $keep_on_error =
+        ( isset ( $control[2]['KEEP-ON-ERROR'] ) );
+
+    if ( ! $keep_on_error
+         &&
+	 count ( $errors ) > $errors_size )
         return;
 
     if ( isset ( $control[2]['CHECKS'] ) )
         execute_checks ( $control[2]['CHECKS'],
 	                 $errors );
-    if ( count ( $errors ) > $errors_size )
+
+    if ( ! $keep_on_error
+         &&
+	 count ( $errors ) > $errors_size )
         return;
 
     if ( isset ( $control[2]['KEEP'] ) )
