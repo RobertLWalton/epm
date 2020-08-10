@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jul 12 14:08:02 EDT 2020
+Date:	Mon Aug 10 02:35:09 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -415,14 +415,14 @@ of some project problem, as your problem name will become
 embedded in all your problem file names.  We will let
 PPPP stand for the problem name in what follows.
 <p>
-To create a problem you start with a solution, that is,
+Then create the problem on the Projects Page by typing
+its name into the `New Problem Name' box.  This will create
+a tab for the new problem.
+<p>
+A problem needs first a solution, that is,
 a program written in C, C++, JAVA, or PYTHON that will
 solve the problem.  It is also well to start with a problem
 specification written in LATEX.
-<p>
-You can create the problem on the Projects Page by typing
-its name into the `New Problem Name' box.  This will create
-a tab for the new problem.
 <p>
 From the new problem tab you can go to the `Downloads' Page.
 There you will find sample solutions, a sample problem
@@ -430,8 +430,8 @@ specification, and a template for writing problem specifications
 in LATEX.
 <p>When you have written your PPPP.c, PPPP.cc, PPPP.java, or PPPP.py
 solution file, upload it into
-the new problem tab, and it will compile.  Debug it until
-it has no compilation errors.
+the new problem tab, and it will compile.  Debug its compilation until
+there are no compilation errors.
 <p>
 Similarly when you have written your PPPP.tex problem specification
 file, upload it.  It will be compiled by pdflatex.  Debug it
@@ -441,6 +441,17 @@ The next step is to make a sample input file named `00-000-PPPP.in'.
 Upload it, and it will be run through your solution to produce
 the `00-000-PPPP.sout' solution output file.  If there are no
 detected errors in this, the .in and .sout files will be kept.
+<p>
+You should write your solution so it checks its input for
+formatting and out-of-bounds errors,
+and if it finds some, either halts (as with
+assert statements) or writes messages to the standard error output.
+Other solutions will do not do this, but your solution is the
+the judge's solution, and some code somewhere must check
+input for formatting errors.  If you do this, then when
+`00-000-PPPP.in' uploads with no errors, you will know it has
+the correct format and its numbers are within the proscribed
+ranges.
 <p>
 Note that for the moment we are ignoring the possibility of
 having special generate-PPPP and filter-PPPP programs for the
@@ -472,6 +483,35 @@ These debugging comment lines will appear in the .sout file and
 .fout file and will be ignored by the epm_score program that
 compares the .fout and .ftest files.
 <p>
+At this point the files in your problem will be as follows:
+<div style='text-align:center'>
+<strong>Files That Were Uploaded:</strong>
+<br>
+PPPP.tex
+<br>
+PPPP.c, PPPP.cc, PPPP.py, or PPPP.java
+<br>
+00-000-PPPP.in
+<br>
+<br>
+<strong>Files Made During Upload:</strong>
+<br>
+PPPP.pdf (on uploading PPPP.tex)
+<br>
+PPPP, PPPP.pyc, or PPPP.jar (on uploading PPPP.c, etc.)
+<br>
+00-000-PPPP.sout (on uploading 00-000-PPPP.in)
+<br>
+<br>
+<strong>Files Made From Other Files:</strong>
+<br>
+00-000-PPPP.fout (made from 00-000-PPPP.sout)
+<br>
+00-000-PPPP.ftest (made from 00-000-PPPP.fout)
+<br>
+00-000-PPPP.score (made from 00-000-PPPP.in)
+</div>
+<p>
 Next you should proceed to make more sample input files with
 names of the form `00-001-PPPP.in', `00-002-PPPP.in', etc.
 The `00-' at the beginning of the file name specifies that
@@ -491,11 +531,55 @@ you click it, the tab will switch to the Run Page and
 the .run file will be run.  The results will be displayed
 in a `sample-PPPP.rout' file.
 <p>
+Assuming you made only one additional sample .in file,
+at this point the files in your problem will be as follows:
+<div style='text-align:center'>
+<strong>Files That Were Uploaded:</strong>
+<br>
+PPPP.tex
+<br>
+PPPP.c, PPPP.cc, PPPP.py, or PPPP.java
+<br>
+00-000-PPPP.in
+<br>
+00-001-PPPP.in
+<br>
+sample-PPPP.run
+<br>
+<br>
+<strong>Files Made During Upload:</strong>
+<br>
+PPPP.pdf (on uploading PPPP.tex)
+<br>
+PPPP, PPPP.pyc, or PPPP.jar (on uploading PPPP.c, etc.)
+<br>
+00-000-PPPP.sout (on uploading 00-000-PPPP.in)
+<br>
+00-001-PPPP.sout (on uploading 00-001-PPPP.in)
+<br>
+<br>
+<strong>Files Made From Other Files:</strong>
+<br>
+00-000-PPPP.fout (made from 00-000-PPPP.sout)
+<br>
+00-001-PPPP.fout (made from 00-001-PPPP.sout)
+<br>
+00-000-PPPP.ftest (made from 00-000-PPPP.fout)
+<br>
+00-001-PPPP.ftest (made from 00-001-PPPP.fout)
+<br>
+00-000-PPPP.score (made from 00-000-PPPP.in)
+<br>
+00-001-PPPP.score (made from 00-001-PPPP.in)
+<br>
+sample-PPPP.rout (made from sample-PPPP.run)
+</div>
+<p>
 Next make the judge's hidden data `01-000-PPPP.in', etc.
 Often judge's data has larger test cases that must be
 generated randomly.  To do this, you must write a
 `generate-PPPP' program in C or C++.  There is a template
-and an example on the `Downloads Page'.  If you look at
+and examples on the `Downloads Page'.  If you look at
 other problems that have non-default generate programs,
 you can see what they do by clicking the `=>.txt' button
 on their `generate-...' lines.
@@ -511,14 +595,89 @@ make a `submit-PPPP.run' file that lists ALL the .in files,
 both sample and judge's hidden.  Test this last using its
 `Run' button.
 <p>
+At this point the following summarizes
+the files in your problem:
+<div style='text-align:center'>
+<strong>Files That Were Uploaded:</strong>
+<br>
+PPPP.tex
+<br>
+PPPP.c, PPPP.cc, PPPP.py, or PPPP.java
+<br>
+generate-PPPP.c or generate-PPPP.cc (if needed)
+<br>
+filter-PPPP.c or filter-PPPP.cc (if needed)
+<br>
+00-000-PPPP.in
+<br>
+..............
+<br>
+sample-PPPP.run
+<br>
+submit-PPPP.run
+<br>
+<br>
+<strong>Files Made By Clicks:</strong>
+<br>
+00-000-PPPP.fout
+<br>
+................
+<br>
+00-000-PPPP.ftest
+<br>
+................
+<br>
+sample-PPPP.rout (by clicking Run button)
+<br>
+submit-PPPP.rout (by clicking Run button)
+</div>
+<p>
 Once you have debugged `submit-PPPP.run' and have a good
 looking problem specification in `PPPP.pdf', you can push
 the problem to a project and see if others will try to
 solve it.  To see how to push the problem, go to the
 Help Page, click on the Table of Contents down-arrow,
 and click on Pushing Problems under Project Page.
-</p>
+<p>
+When you push the problem the following files will be
+copied to the project problem directory so that others
+can use them:
+<div style='text-align:center'>
+PPPP.pdf
+<br>
+generate-PPPP
+<br>
+filter-PPPP
+<br>
+00-000-PPPP.in
+<br>
+..............
+<br>
+00-000-PPPP.ftest
+<br>
+..............
+<br>
+sample-PPPP.run
+<br>
+submit-PPPP.run
+</div>
 
+<p>
+In addition the following source files are saved in a
+subdirectory of the project problem directory so they
+will be available to maintain the project problem in the
+future:
+<div style='text-align:center'>
+PPPP.tex
+<br>
+PPPP.c, PPPP.cc, PPPP.py, or PPPP.java
+<br>
+generate-PPPP.c or generate-PPPP.cc (if uploaded)
+<br>
+filter-PPPP.c or filter-PPPP.cc (if uploaded)
+</div>
+
+</p>
 
 </div>
 
