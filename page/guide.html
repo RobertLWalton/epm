@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Aug 10 02:35:09 EDT 2020
+Date:	Mon Aug 10 13:08:22 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -443,12 +443,12 @@ the `00-000-PPPP.sout' solution output file.  If there are no
 detected errors in this, the .in and .sout files will be kept.
 <p>
 You should write your solution so it checks its input for
-formatting and out-of-bounds errors,
+formatting and number-out-of-bounds errors,
 and if it finds some, either halts (as with
 assert statements) or writes messages to the standard error output.
-Other solutions will do not do this, but your solution is the
+Other solutions will do not do this, but your solution is a
 the judge's solution, and some code somewhere must check
-input for formatting errors.  If you do this, then when
+the input for formatting errors.  If you do this, then when
 `00-000-PPPP.in' uploads with no errors, you will know it has
 the correct format and its numbers are within the proscribed
 ranges.
@@ -461,8 +461,18 @@ The system will automatically
 supply default versions of these which just copy their input
 to their output (though the default generate-PPPP removes comments).
 <p>
-Read your `00-000-PPPP.sout' file and see if it is correct.  When
-you think it is, on its line click `=>.fout' to make the
+Read your `00-000-PPPP.sout' file and see if it is correct.
+So how do you know it is correct?  Well, the best way is
+to put debugging statements in your code that output extra
+information.  Any output line that begins with
+`!!**' is treated as a comment line and ignored, so you can
+output as much debugging information as you like in these lines.
+These debugging comment lines will appear in the .sout file and
+.fout file and will be ignored by the epm_score program that
+compares the .fout and .ftest files.
+<p>
+When you think `00-000-PPPP.sout' is correct,
+on its line click `=>.fout' to make the
 filtered output file `00-000-PPPP.fout', and then on the line
 for that file click on `=>.ftest' to make the `00-000-PPPP.ftest'
 file that is the judge's test data.  The .ftest file is
@@ -474,16 +484,7 @@ Of course the score will necessarily be `Completely Correct',
 since your .ftest file is a copy of your .fout file, and
 the score is computed by comparing these two files.
 <p>
-So how do you know your code is correct?  Well, the best way is
-to put debugging statements in your code that output extra
-information.  Any output line that begins with
-`!!**' is treated as a comment line and ignored, so you can
-output as much debugging information as you like in these lines.
-These debugging comment lines will appear in the .sout file and
-.fout file and will be ignored by the epm_score program that
-compares the .fout and .ftest files.
-<p>
-At this point the files in your problem will be as follows:
+Now the files in your problem will be as follows:
 <div style='text-align:center'>
 <strong>Files That Were Uploaded:</strong>
 <br>
@@ -595,6 +596,13 @@ make a `submit-PPPP.run' file that lists ALL the .in files,
 both sample and judge's hidden.  Test this last using its
 `Run' button.
 <p>
+To get `submit-PPPP.run' to work, you may need to adjust
+the problem options on the problem Option Page.  For example,
+you may need to increase the allowed CPU time.  Allow
+more time for JAVA and PYTHON solutions than for C/C++
+solutions.  For example, you may wish to use the ratios
+1:2:3 for C/C++:JAVA:PYTHON times.
+<p>
 At this point the following summarizes
 the files in your problem:
 <div style='text-align:center'>
@@ -624,6 +632,10 @@ submit-PPPP.run
 ................
 <br>
 00-000-PPPP.ftest
+<br>
+................
+<br>
+00-000-PPPP.score
 <br>
 ................
 <br>
@@ -660,6 +672,8 @@ filter-PPPP
 sample-PPPP.run
 <br>
 submit-PPPP.run
+<br>
+PPPP.optn (problem containing options that you changed)
 </div>
 
 <p>

@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jul 21 11:36:23 EDT 2020
+// Date:	Mon Aug 10 13:35:13 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -28,6 +28,8 @@ epm [-n] perms project [problem]
 epm [-n] perms -projects
 epm [-n] perms -admin
 epm [-n] perms -lists
+epm [-n] perms -home
+epm [-n] perms -web
 epm [-n] perms -all
 
 epm [-n] *account* account [problem]
@@ -284,6 +286,10 @@ elseif ( $op == 'perms' )
         set_perms_admin ( $dryrun );
     elseif ( $argv[2] == '-lists' )
         set_perms_lists ( $dryrun );
+    elseif ( $argv[2] == '-home' )
+        set_perms_home ( $dryrun );
+    elseif ( $argv[2] == '-web' )
+        set_perms_web ( $dryrun );
     elseif ( $argv[2] == '-all' )
         set_perms_all ( $dryrun );
     elseif ( $argv[2] == '-projects' )
