@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug 11 04:26:24 EDT 2020
+    // Date:	Tue Aug 11 13:14:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -58,9 +58,11 @@
     // most recent first, that are in the given
     // directory.  Only the last component of each
     // name is returned.  The directory is relative
-    // to $epm_data.
+    // to $epm_data.  Allow file names that are link
+    // names only if $allow_links is true.
     //
-    function problem_file_names ( $dir )
+    function problem_file_names
+        ( $dir, $allow_links = true )
     {
         global $epm_data, $display_file_type,
 	       $epm_filename_re;
@@ -79,6 +81,10 @@
 	    if ( ! isset ( $display_file_type[$ext] ) )
 		continue;
 	    $f = "$dir/$fname";
+	    if ( ! $allow_links
+	         &&
+		 is_link ( "$epm_data/$f" ) )
+	        continue;
 	    $mtime = @filemtime ( "$epm_data/$f" );
 	    if ( $mtime === false )
 	    {
@@ -820,20 +826,25 @@ EOT;
 
     $count = 0;
     $show_map = [];
-	// $show_map[$fname] => id
+    $display_map = [];
+	// $show_map[$fname] => id or
+	// $display_map[$fname] => id
 	// maps file name last component to the
 	// button id that identifies the button
-	// to click to show the file.
+	// to click to show/display the file.
     $display_list = [];
 
     $kept = [];
+    $kept_count = 0;
     $show = [];
     $working_files = [];
+    $working_has_show = false;
     if ( isset ( $work['DIR'] ) )
     {
 	$workdir = $work['DIR'];
 	$result = $work['RESULT'];
 	$kept = $work['KEPT'];
+	$kept_count = count ( $kept );
 	$show = $work['SHOW'];
 	if (    is_array ( $result )
 	     && $result == ['D',0] )
@@ -897,7 +908,7 @@ EOT;
 	echo "</div>";
 
 	$working_files =
-	    problem_file_names( $workdir );
+	    problem_file_names( $workdir, false );
 
 	if ( count ( $working_files ) > 0 )
 	{
@@ -931,14 +942,13 @@ EOT;
 	    foreach ( $working_files as $fname )
 	    {
 		$f = "$epm_data/$workdir/$fname";
-		if ( is_link ( $f ) )
-		    continue;
 
-		$class = '';
-		if ( in_array ( $fname, $kept ) )
-		    $class = 'kept';
-		elseif ( in_array ( $fname, $show ) )
-		    $class = 'show';
+		$show_fname =
+		    in_array ( $fname, $show );
+		             
+		$class = ( $show_fname ? 'show' : '' );
+		if ( $show_fname )
+		    $working_has_show = true;
 
 		++ $count;
 		echo "<tr class='$class'>";
@@ -952,8 +962,7 @@ EOT;
 
 		if ( $fshow )
 		{
-		    $show_map[$fname] =
-			"show$count";
+		    $show_map[$fname] = "show$count";
 		    $fpage =
 			$display_file_map[$ftype];
 		    echo <<<EOT
@@ -978,7 +987,7 @@ EOT;
 
 		if ( $fdisplay )
 		{
-		    $show_map[$fname] =
+		    $display_map[$fname] =
 			"file{$count}_button";
 		    echo <<<EOT
 			<td><button type='button'
@@ -1088,9 +1097,18 @@ EOT;
 	      as $fname )
     {
 
+        $is_working = in_array
+	    ( $fname, $working_files );
+
 	$class = '';
-	if ( in_array ( $fname, $kept ) )
+	if ( $is_working )
+	    /* Do Nothing */;
+	elseif ( in_array ( $fname, $kept ) )
 	    $class = 'kept';
+	elseif ( $kept_count == 0 )
+	    /* Do Nothing */;
+	elseif ( in_array ( $fname, $show ) )
+	    $class = 'show';
 
 	++ $count;
 	echo "<tr class='$class'>";
@@ -1105,7 +1123,7 @@ EOT;
 
 	if ( $fshow )
 	{
-	    if ( ! isset ( $show_map[$fname] ) )
+	    if ( ! $is_working && $kept_count > 0 )
 		$show_map[$fname] = "show$count";
 		// Working directory overrides
 		// problem directory.
@@ -1128,8 +1146,8 @@ EOT;
 EOT;
 	if ( $fdisplay )
 	{
-	    if ( ! isset ( $show_map[$fname] ) )
-		$show_map[$fname] =
+	    if ( ! $is_working && $kept_count > 0 )
+		$display_map[$fname] =
 		    "file{$count}_button";
 		// Working directory overrides
 		// problem directory.
@@ -1250,17 +1268,47 @@ EOT;
 
 	foreach ( $show as $fname )
 	{
-	    if ( isset ( $show_map[$fname] ) )
+	    if ( isset ( $show_map[$fname] )
+	         ||
+		 isset ( $display_map[$fname] ) )
 		$files[] = $fname;
 	}
-	if ( count ( $files ) > 0 )
+	$ids = [];
+	if ( count ( $files ) >= 2 )
 	{
-	    $id = $show_map[$files[0]];
-	    echo "<script>document" .
-		 ".getElementById('$id')" .
-		 ".click();" .
-		 "</script>";
+	    if ( isset ( $display_map[$files[0]] )
+		 &&
+		 isset ( $display_map[$files[1]] ) )
+		 $ids = [$display_map[$files[0]],
+		         $display_map[$files[1]]];
+	    elseif ( isset ( $show_map[$files[0]] )
+	             &&
+		     isset ( $display_map[$files[1]] ) )
+		 $ids = [$show_map[$files[0]],
+		         $display_map[$files[1]]];
+	    elseif ( isset ( $display_map[$files[0]] )
+		     &&
+		     isset ( $show_map[$files[1]] ) )
+		 $ids = [$display_map[$files[0]],
+		         $show_map[$files[1]]];
+	    else
+	         $ids = [$show_map[$files[0]]];
 	}
+	elseif ( count ( $files ) == 1 )
+	{
+	    if ( isset ( $display_map[$files[0]] ) )
+	        $ids = [$display_map[$files[0]]];
+	    else
+	        $ids = [$show_map[$files[0]]];
+	}
+
+	if ( $working_has_show ) $ids[] =
+	    'working_button';
+
+	foreach ( $ids as $id )
+	    echo "<script>document" .
+		 ".getElementById('$id').click();" .
+		 "</script>";
     }
 
     echo <<<EOT
@@ -1431,12 +1479,8 @@ EOT;
 	    if ( $r === true )
 		echo "REQUEST_UPDATE();";
 	    if ( ! is_array ( $r ) || $r != ['D',0] )
-	    {
 		 echo "document.getElementById" .
 		      "('commands_button').click();";
-		 echo "document.getElementById" .
-		      "('working_button').click();";
-	    }
 	}
     ?>
 
