@@ -8,15 +8,13 @@
 	     "  $BIN/epm_sandbox $SSARGS $SSJTIME \\",
 	     "    -status XXXX-PPPP.sstat java \\",
 	     "    $JFLAGS \\",
-	     "    jar PPPP.jar $DARGS \\",
+	     "    -jar PPPP.jar $DARGS \\",
 	     "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
 	     "chmod o-r . PPPP.jar"],
 
 "LOCAL-REQUIRES": ["XXXX-PPPP.in", "PPPP.jar"],
 "REQUIRES": ["generate-PPPP"],
 "CREATABLE": ["generate-PPPP"],
-"CHECKS":    ["EMPTY XXXX-PPPP.gerr",
-              "EMPTY XXXX-PPPP.serr"],
 "KEEP":    ["XXXX-PPPP.sout"],
 "SHOW":    ["XXXX-PPPP.gerr", "XXXX-PPPP.serr", "XXXX-PPPP.sout"]
 

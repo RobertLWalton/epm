@@ -2,8 +2,8 @@
 
 "COMMANDS": ["${BIN}/epm_latex PPPP" ],
 "CONDITION": "UPLOAD PPPP.tex",
-"KEEP":    ["PPPP.pdf","PPPP.tout","PPPP.tex"],
-"SHOW":    ["PPPP.terr", "PPPP.pdf", "PPPP.tout"],
-"CHECKS":  ["EMPTY PPPP.terr"]
+"KEEP":    ["PPPP.pdf","PPPP.tex"],
+"SHOW":    [["PPPP.terr","PPPP.tex"],
+	    "PPPP.pdf"]
 
 }

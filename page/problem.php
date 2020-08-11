@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug 10 17:36:13 EDT 2020
+    // Date:	Tue Aug 11 04:26:24 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1091,10 +1091,6 @@ EOT;
 	$class = '';
 	if ( in_array ( $fname, $kept ) )
 	    $class = 'kept';
-	elseif ( in_array ( $fname, $working_files ) )
-	    /* Do Nothing */;
-	elseif ( in_array ( $fname, $show ) )
-	    $class = 'show';
 
 	++ $count;
 	echo "<tr class='$class'>";

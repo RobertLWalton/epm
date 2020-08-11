@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Aug 10 17:43:19 EDT 2020
+// Date:    Tue Aug 11 04:27:10 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -1893,36 +1893,59 @@ function finish_make_file ( & $warnings, & $errors )
 	          . " exit code {$r[1]}: $m";
     }
 
+    if ( isset ( $control[2]['KEEP-ON-ERROR'] ) )
+        $errors_size = count ( $errors );
+	// Ignore previous errors, in particular,
+	// exit code error.
+
     if ( isset ( $control[2]['SHOW'] ) )
     {
-        $show = & $work['SHOW'];
 	$d = "$epm_data/$workdir";
-        foreach ( $control[2]['SHOW'] as $fname )
+	$found = NULL;
+	$found_last = true;
+        foreach ( $control[2]['SHOW'] as $item )
 	{
+	    if ( isset ( $found ) )
+	    {
+	        // Specify if $found was not last $item.
+		//
+	        $found_last = false;
+		break;
+	    }
+
+	    // x => [x], [] => $found
+	    //
+	    if ( ! is_array ( $item ) )
+	        $item = [$item];
+	    elseif ( count ( $item ) == 0 )
+	    {
+	        $found = $item;
+		continue;
+	    }
+
+	    $fname = $item[0];
 	    $s = @filesize ( "$d/$fname" );
 	    if ( $s !== false && $s > 0 )
-	        $show[] = $fname;
+		$found = $item;
 	}
+
+	if ( ! $found_last )
+	{
+	    if ( count ( $found ) == 0 )
+	    {
+	        $t = $work['TEMPLATE'];
+	        ERROR ( "$t SHOW has [] before end" );
+	    }
+	    $fname = $found[0];
+	    $errors[] = "$fname is not empty";
+	}
+
+	$work['SHOW'] = $found;
     }
 
-    $keep_on_error =
-        ( isset ( $control[2]['KEEP-ON-ERROR'] ) );
-
-    if ( ! $keep_on_error
+    if ( isset ( $control[2]['KEEP'] )
          &&
-	 count ( $errors ) > $errors_size )
-        return;
-
-    if ( isset ( $control[2]['CHECKS'] ) )
-        execute_checks ( $control[2]['CHECKS'],
-	                 $errors );
-
-    if ( ! $keep_on_error
-         &&
-	 count ( $errors ) > $errors_size )
-        return;
-
-    if ( isset ( $control[2]['KEEP'] ) )
+	 count ( $errors ) == $errors_size )
         move_keep ( $control[2]['KEEP'], $errors );
 }
 
