@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug 11 13:14:58 EDT 2020
+    // Date:	Tue Aug 11 16:51:27 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -19,7 +19,7 @@
     $epm_page_type = '+problem+';
     require __DIR__ . '/index.php';
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     if ( ! isset ( $_REQUEST['problem'] ) )
 	exit ( "ACCESS: illegal $epm_method" .
@@ -30,6 +30,11 @@
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
         exit ( "problem $problem no longer exists" );
+
+    if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
+        $_SESSION['EPM_PROBLEM'] =
+	    ['ORDER' => 'lexigraphic'];
+    $order = & $_SESSION['EPM_PROBLEM']['ORDER'];
 
     require "$epm_home/include/epm_make.php";
 
@@ -65,7 +70,7 @@
         ( $dir, $allow_links = true )
     {
         global $epm_data, $display_file_type,
-	       $epm_filename_re;
+	       $epm_filename_re, $order;
 
 	clearstatcache();
 	$map = [];
@@ -85,17 +90,32 @@
 	         &&
 		 is_link ( "$epm_data/$f" ) )
 	        continue;
-	    $mtime = @filemtime ( "$epm_data/$f" );
-	    if ( $mtime === false )
+
+	    switch ( $order )
 	    {
-	        if ( is_link ( "$epm_data/$f" ) )
-		    WARN ( "dangling link $f" );
-		else
-		    WARN ( "stat failed for $f" );
-	    }
-	    else $map[$fname] = $mtime;
+	    case 'lexigraphic':
+	        $value = $fname;
+	        break;
+	    case 'recent':
+		$value = @filemtime ( "$epm_data/$f" );
+		if ( $value === false )
+		{
+		    if ( is_link ( "$epm_data/$f" ) )
+			WARN ( "dangling link $f" );
+		    else
+			WARN ( "stat failed for $f" );
+		    continue;
+		}
+		break;
+	    case 'extension':
+	        $value = "$ext:$fname";
+		}
+
+	    $map[$fname] = $value;
 	}
-	arsort ( $map, SORT_NUMERIC );
+	$SORT = ( $order == 'recent' ? SORT_NUMERIC
+	                             : SORT_STRING );
+	arsort ( $map, $SORT );
 	    // Note, keys cannot be floating point and
 	    // files often share modification times.
 	$names = [];
@@ -390,6 +410,16 @@
 	    $r = update_work_results ( 0 );
 	}
     }
+    elseif ( isset ( $_POST['order'] ) )
+    {
+        $new_order = $_POST['order'];
+	if ( ! in_array ( $new_order, ['lexigraphic',
+	                               'recent',
+				       'extension'] ) )
+	    echo ( "ACCESS: illegal POST to" .
+	           " problem.php" );
+	$order = $new_order;
+    }
     elseif ( ! $rw )
         /* Do Nothing */;
     elseif ( isset ( $_POST['delete_problem'] ) )
@@ -592,6 +622,10 @@ EOT;
     }
     div.file-contents {
 	background-color: var(--bg-green);
+    }
+    select.order {
+        background-color: inherit;
+	border: 1px black solid;
     }
     td.time {
 	color: var(--hl-purple);
@@ -824,6 +858,18 @@ EOT;
     </div>
 EOT;
 
+    $order_options = '';
+    foreach ( ['lexigraphic' => '(reverse lex order)',
+	       'recent' => '(most recent first)',
+	       'extension' => '(extension order)']
+	      as $key => $label )
+    {
+	$selected = ( $key == $order ? 'selected' : '' );
+	$order_options .=
+	    "<option value='$key' $selected>" .
+	    "$label</option>";
+    }
+
     $count = 0;
     $show_map = [];
     $display_map = [];
@@ -927,7 +973,18 @@ EOT;
 		</button>
 	    <strong>Working Files of Last Executed
 		Commands
-		(most recent first):</strong>
+		<form method='POST' action='problem.php'
+		      id='working-order-form'>
+		<input type='hidden'
+		       name='id' value='$ID'>
+		<input type='hidden'
+		       name='problem' value='$problem'>
+		<select name='order' class='order'
+		    onchange='document.getElementById
+		      ("working-order-form").submit()'>
+		$order_options
+		</select></form>
+	    </strong>
 	    </td><td style='text-align:right'>
 	    <button type='button'
 		    onclick='HELP("problem-working")'>
@@ -1030,7 +1087,17 @@ EOT;
 	    <pre id='problems_mark'>&uarr;</pre>
 	    </button>
     <strong>Current Problem Files
-	(most recent first):</strong>
+	<form method='POST' action='problem.php'
+	      id='problem-order-form'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden'
+	       name='problem' value='$problem'>
+	<select name='order' class='order'
+		onchange='document.getElementById
+		    ("problem-order-form").submit()'>
+	$order_options
+	</select></form>
+    </strong>
     </td>
 EOT;
     if ( $rw )
