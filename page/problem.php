@@ -33,7 +33,7 @@
 
     if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
         $_SESSION['EPM_PROBLEM'] =
-	    ['ORDER' => 'lexigraphic'];
+	    ['ORDER' => 'extension'];
     $order = & $_SESSION['EPM_PROBLEM']['ORDER'];
 
     require "$epm_home/include/epm_make.php";
@@ -104,7 +104,7 @@
 			WARN ( "dangling link $f" );
 		    else
 			WARN ( "stat failed for $f" );
-		    continue;
+		    continue 2;
 		}
 		break;
 	    case 'extension':
@@ -158,7 +158,7 @@
     //	   (Empty) iff the file is empty
     //     {FILE-CONTENTS} iff the file has 1 line
     //         that after being right trimmed has
-    //	       <= 32 characters
+    //	       <= 56 characters
     //	   (Lines ###) iff the above do not apply and
     //         the file is UTF8 with ### lines
     //
@@ -219,7 +219,7 @@
 	{
 	    if (    $flines <= 1
 		 &&    strlen ( rtrim ( $fcontents ) )
-		    <= 32 )
+		    <= 56 )
 		$fcomment = '{'
 			  . rtrim ( $fcontents )
 			  . '}';
