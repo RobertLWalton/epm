@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  8 02:14:00 EDT 2020
+    // Date:	Wed Aug 12 04:44:41 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1241,11 +1241,14 @@ EOT;
     else
     {
 	$options = values_to_options ( $users, $UID );
+	$title = 'Select user whose info you wish'
+	       . ' to view';
 	echo <<<EOT
 	<strong>User</strong>
 	<select name='user'
 		onchange='document.getElementById
-			    ("user-form").submit()'>
+			    ("user-form").submit()'
+		title='$title'>
 	$options
 	</select>
 	<strong>Info</strong>
@@ -1382,7 +1385,7 @@ EOT;
 		   name='new-guest'
 		   value='' size='40'
 		   placeholder='New guest UID'
-		   title='Add another guest'
+		   title='Give user ID of another guest'
 		   onkeydown=
 		       'KEY_DOWN
 			  (event,"add-guest")'>
@@ -1459,6 +1462,8 @@ EOT;
 		break;
 	    }
 
+	    $title = 'Select list from which you will'
+	           . ' select a team';
 	    echo <<<EOT
 	    <form method='POST' action='user.php'
 		  id='tid-list-form'>
@@ -1466,7 +1471,8 @@ EOT;
 	    <strong>Select Team List:</strong>
 	    <select name='tid-list'
 		    onchange='document.getElementById
-			("tid-list-form").submit()'>
+			("tid-list-form").submit()'
+		    title='$title'>
 	    <option value='all' $all_select>
 		all teams</option>
 	    <option value='manager' $manager_select>
@@ -1493,15 +1499,19 @@ EOT;
 	    {
 		$tid_options =
 		    values_to_options ( $tids, $TID );
+		$title = 'Select team whose info you'
+		       . ' wish to view';
 		echo <<<EOT
+		<strong>Team</strong>
 		<form method='POST' action='user.php'
 		      id='team-form'>
 		<input type='hidden' name='id'
 		       value='$ID'>
 		<select
-		     name='team'
-		     onchange='document.getElementById
-				("team-form").submit()'>
+		    name='team'
+		    onchange='document.getElementById
+				("team-form").submit()'
+		    title='$title'>
 		$tid_options
 		</select>
 		<strong>Info</strong>
@@ -1588,9 +1598,12 @@ EOT;
 		if (   count ( $members )
 		     < $epm_max_members )
 		{
-		    $title =
-			 "Add another member to" .
-			 " the team";
+		    $title = 'Give email or user ID of'
+		           . ' new team member;' . "\n"
+			   . 'You can give email even'
+			   . ' if team member does not'
+			   . ' yet have an account';
+
 		    $holder =
 			 "New member UID or EMAIL";
 		    echo <<<EOT
