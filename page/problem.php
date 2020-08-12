@@ -19,7 +19,7 @@
     $epm_page_type = '+problem+';
     require __DIR__ . '/index.php';
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     if ( ! isset ( $_REQUEST['problem'] ) )
 	exit ( "ACCESS: illegal $epm_method" .

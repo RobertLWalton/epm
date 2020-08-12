@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Aug  9 10:11:23 EDT 2020
+// Date:    Wed Aug 12 14:55:16 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -122,7 +122,7 @@ echo "<title>$title</title>";
     }
     div.manage {
 	background-color: var(--bg-cyan);
-	padding-bottom: calc(0.5*var(--font-size));
+	padding: calc(0.5*var(--font-size)) 0px;
     }
     div.checkbox {
         height: var(--font-size);

@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug 12 04:44:41 EDT 2020
+    // Date:	Wed Aug 12 14:55:45 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -18,7 +18,7 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     require "$epm_home/include/epm_user.php";
 
@@ -1016,10 +1016,6 @@ function KEY_DOWN ( event, id )
 
 </head>
 <body>
-<div style='background-color:orange;
-	    text-align:center'>
-<strong>This Page is Under Re-Construction.</strong>
-</div>
 
 <?php 
 
