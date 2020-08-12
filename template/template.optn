@@ -2,7 +2,7 @@
 //
 // File:    template.optn.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Aug  9 14:49:44 EDT 2020
+// Date:    Wed Aug 12 09:47:12 EDT 2020
 
 {
     "GXXOPT": { "description":
@@ -180,8 +180,8 @@
     "SSJDTIME": { "description":
                     "debugging solution sandbox"
 		    " argument for JAVA" },
-    "jdstime-arg": { "values": ["-SIGQUIT STIME"],
-	             "default": "-SIGQUIT STIME",
+    "jdstime-arg": { "values": ["-SIGQUIT SJTIME"],
+	             "default": "-SIGQUIT SJTIME",
 		     "description":
 		        "limit solution CPU time"
 		        " (required)",
@@ -190,8 +190,8 @@
     "SSPDTIME": { "description":
                     "debugging solution sandbox"
 		    " argument for PYTHON" },
-    "pdstime-arg": { "values": ["-SIGABRT STIME"],
-	             "default": "-SIGABRT STIME",
+    "pdstime-arg": { "values": ["-SIGABRT SPTIME"],
+	             "default": "-SIGABRT SPTIME",
 		     "description":
 		        "limit solution CPU time"
 		        " (required)",

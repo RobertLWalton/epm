@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug 11 22:30:31 EDT 2020
+    // Date:	Wed Aug 12 14:12:36 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -589,6 +589,14 @@ EOT;
 	    exit;
 	}
     }
+    elseif ( isset ( $_POST['delete_working'] ) )
+    {
+        if ( $work['DIR'] )
+	{
+	    cleanup_dir ( $work['DIR'], $warnings );
+	    $work = [];
+	}
+    }
     elseif ( isset ( $_POST['delete_files'] ) )
     {
     	// Work was done above.
@@ -963,6 +971,9 @@ EOT;
 
 	if ( count ( $working_files ) > 0 )
 	{
+	    $delete_title = 'Delete working'
+	                  . ' directory/files and'
+			  . ' command history';
 	    echo <<<EOT
 	    <div class='work_display'
 		 id='work-display'>
@@ -977,20 +988,40 @@ EOT;
 		<pre id='working_mark'>&darr;</pre>
 		</button>
 	    <strong>Working Files of Last Executed
-		Commands
-		<form method='POST' action='problem.php'
-		      id='working-order-form'>
-		<input type='hidden'
-		       name='id' value='$ID'>
-		<input type='hidden'
-		       name='problem' value='$problem'>
-		<select name='order' class='order'
-		    onchange='document.getElementById
-		      ("working-order-form").submit()'
-		    title='Select file listing order'>
-		$order_options
-		</select></form>
-	    </strong>
+		Commands</strong>
+	    <form method='POST' action='problem.php'
+		  id='working-order-form'>
+	    <input type='hidden'
+		   name='id' value='$ID'>
+	    <input type='hidden'
+		   name='problem' value='$problem'>
+	    <select name='order' class='order'
+		onchange='document.getElementById
+		  ("working-order-form").submit()'
+		title='Select file listing order'>
+	    $order_options
+	    </select></form>
+	    <pre>   </pre>
+	    <!-- for some reason the following form
+	         includes the above <select> if we
+		 use type='submit' for the <button>
+	    -->
+	    <form method='POST' action='problem.php'
+	          id='delete-working-form'>
+	    <input type='hidden'
+		   name='id' value='$ID'>
+	    <input type='hidden'
+		   name='problem' value='$problem'>
+	    <input type='hidden'
+		   name='delete_working'>
+	    </form>
+	    <button type='button'
+	            onclick='document.getElementById
+		        ("delete-working-form")
+			.submit()'
+		    title='$delete_title'>
+	    Delete Working Files and Command History
+	    </button>
 	    </td><td style='text-align:right'>
 	    <button type='button'
 		    onclick='HELP("problem-working")'>
