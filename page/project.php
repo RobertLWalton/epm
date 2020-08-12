@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  9 13:18:04 EDT 2020
+    // Date:	Tue Aug 11 22:29:00 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1815,7 +1815,8 @@ EOT;
     $RW_BUTTON
     <button type='button' id='refresh'
             onclick='location.replace
-	        ("project.php?id=$ID")'>
+	        ("project.php?id=$ID")'
+	    title='Refresh Current Page'>
 	&#8635;</button>
     <button type='button'
             onclick='HELP("project-page")'>
@@ -1897,16 +1898,18 @@ EOT;
 EOT;
 	    else
 		echo <<<EOT
-		<strong>and Create Tab for Problem:
+		<strong>and Create Tab for:
 		        </strong>
 EOT;
+	    $title = 'Select Problem from Problem List';
 	    echo <<<EOT
 	    <form method='POST' action='project.php'
 		  id='goto-form'>
 	    <input type='hidden' name='id' value='$ID'>
 	    <select name='goto'
 		    onchange='document.getElementById
-			    ("goto-form").submit()'>
+			    ("goto-form").submit()'
+		    title='$title'>
 	    <option value=''>Select Problem</option>
 	    $problem_options
 	    </select></form>

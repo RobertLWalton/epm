@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug 11 16:51:27 EDT 2020
+    // Date:	Tue Aug 11 22:30:31 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -805,6 +805,14 @@ EOT;
     <pre class='problem'>$problem</pre></b>
 EOT;
 
+    if ( isset ( $parent ) )
+        echo <<<EOT
+	<strong>(from project $parent)</strong>
+EOT;
+    echo <<<EOT
+    </td><td>
+EOT;
+
     if ( $rw )
         echo <<<EOT
 	<form action='problem.php' method='POST'>
@@ -814,23 +822,20 @@ EOT;
 	<button type='submit'
 		name='delete_problem'
 		value='$problem'
-		title='Delete Current Problem'>
-	Delete</button>
+		title='Delete this problem'>
+	Delete Problem</button>
 	</form>
-EOT;
-
-    if ( isset ( $parent ) )
-        echo <<<EOT
-	<strong>(from project $parent)</strong>
 EOT;
 
     $refresh = "problem.php?problem=$problem"
              . "&id=$ID";
+    $title = 'View downloadable sample solutions'
+           . ' and templates';
     echo <<<EOT
-    </td><td>
     <button type='button'
-	    onclick='VIEW("downloads/index.html")'>
-	Downloads</button>
+	    onclick='VIEW("downloads/index.html")'
+	    title='$title'>
+	View Downloads</button>
 
     </td><td>
     <strong>Go To</strong>
@@ -981,7 +986,8 @@ EOT;
 		       name='problem' value='$problem'>
 		<select name='order' class='order'
 		    onchange='document.getElementById
-		      ("working-order-form").submit()'>
+		      ("working-order-form").submit()'
+		    title='Select file listing order'>
 		$order_options
 		</select></form>
 	    </strong>
@@ -1094,7 +1100,8 @@ EOT;
 	       name='problem' value='$problem'>
 	<select name='order' class='order'
 		onchange='document.getElementById
-		    ("problem-order-form").submit()'>
+		    ("problem-order-form").submit()'
+		title='Select file listing order'>
 	$order_options
 	</select></form>
     </strong>
