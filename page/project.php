@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug 11 22:29:00 EDT 2020
+    // Date:	Wed Aug 12 15:29:17 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1791,15 +1791,12 @@ EOT;
 
     <div id='done-response' style='display:none'>
     <strong style='color:red'>Done!</strong>
-    <pre>    </pre>
-    <strong>Go To:</strong>
     <button type='submit'
 	    formaction='project.php'>
-	    Project</button>
+	    Finish</button>
+    <pre>    </pre>
     </div>
-    <div id='not-done-response' style='display:inline'>
     <strong>Go To</strong>
-    </div>
     <button type='submit'
 	    formaction='list.php'>
 	    Edit Lists</button>
@@ -1813,9 +1810,8 @@ EOT;
     </td>
     <td style='text-align:right'>
     $RW_BUTTON
-    <button type='button' id='refresh'
-            onclick='location.replace
-	        ("project.php?id=$ID")'
+    <button type='submit' id='refresh'
+            formaction='project.php'
 	    title='Refresh Current Page'>
 	&#8635;</button>
     <button type='button'
@@ -2120,8 +2116,6 @@ EOT;
 	        goto_row.style.display = 'table-row';
 	        check_row.style.display = 'none';
 	        done_response.style.display = 'inline';
-	        not_done_response.style.display =
-		    'none';
 		return;
 	    }
 	    checkbox.style.backgroundColor =
@@ -2373,9 +2367,6 @@ EOT;
 	var done_response =
 	    document.getElementById
 	        ('done-response');
-	var not_done_response =
-	    document.getElementById
-	        ('not-done-response');
 
 	var submit = false;
 	var current_row = -1;

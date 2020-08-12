@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Aug 10 13:08:22 EDT 2020
+Date:	Wed Aug 12 16:09:10 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -107,6 +107,8 @@ margin-top: 0;
 }
 table.top-align td {
 vertical-align: top;
+padding-left: 5px;
+padding-right: 5px;
 }
 .indented {
 margin-left: 20px;
@@ -300,6 +302,10 @@ to the Project Page.
 <p>
 The buttons marked ? access the Help Page, which has
 detailed documentation for various pages and parts of pages.
+The buttons marked &#8635; refresh the current page, as will
+the control-R and F5 refresh keys, but sometimes refreshing the current
+page is not allowed, and when this happens the &#8635; will
+disappear and the refresh keys will do nothing.
 </p>
 
 <a name="solving-a-problem"><h1>Solving a Problem</h1></a>
@@ -308,7 +314,7 @@ To solve a problem, you first want to `pull' the problem
 from a project.  Go to the Project Page and select
 the problem list you want to pull the problem from.
 For example, select `demos Problems'.  Then click the
-`Pull' button.
+`Pull From Project' button.
 <p>
 Next click the oval of the problem you want to pull.
 For example, click the `reverser' oval, which will turn
@@ -316,9 +322,8 @@ black.  Next click the `Submit' button.  The black oval
 should turn green indicating success, and `Done!' should
 appear.
 <p>
-Now go back to the Project page and select the `Your Problems'
-problem list.  This was empty but now has `reverser' in it.
-In the `Create Tab for Problem' selector, select `reverser'.
+After seeing `Done!', click on `Finish'.
+Then in the `Create Tab for' problem selector, select `reverser'.
 A new `reverser Problem Page' tab will be created.  You now
 have two tabs, the one just created and the original
 `Project Page' tab.
@@ -327,7 +332,7 @@ Go to the `reverser Problem Page' tab and click on `reverser.pdf'
 to see the problem specification.
 <p>
 You can write your own solution, or you can click on
-`Downloads' to get a window with demos problems solutions of
+`View Downloads' to get a window with demos problems solutions of
 various kinds.  You need to get a solution on your own
 computer, at which point you use `Upload a File' to
 upload the solution to your reverser problem.  When it is uploaded
@@ -350,13 +355,8 @@ Each file in your problem directory has a line in the
 and each working file from the last executed command has
 a line in the `Working Files ...' section.
 After a set of commands execute, one or two files, either
-kept or working,
-are automatically shown, but you can show
-any of your problem directory files or working files that
-are ASCII text or pdf by clicking either the file name if
-it is a button, or the downward arrow after the file name.
-An exception is a very short one-line file whose entire contents is displayed
-in { } brackets at the end of the file's Problem Page line.
+kept or working, are high-lighted, and may be automatically
+shown.
 <p>
 Lines for files with names of the form `00-*-reverser.in'
 are inputs for sample test cases.  If you click on the
@@ -364,13 +364,53 @@ are inputs for sample test cases.  If you click on the
 test case will be computed in the `00-*-reverser.score'
 file.
 <p>
+You can show
+any of your problem directory files or working files that
+are ASCII text or pdf by clicking either the file name if
+it is a button, or the downward arrow after the file name.
+An exception is a very short one-line file whose entire contents is displayed
+in { } brackets at the end of the file's Problem Page line.
+<p>
+If there are no errors in an operation, only the kept files are high-lighted
+by making their lines dark-tan instead of light-tan.  These
+files are always in the `Current Problem Files' section,
+and except for PDF files, are usually not automatically shown.
+<p>
+If there are errors in an operation,
+no files are kept, and some of the working files are
+high-lighted with yellow.  These yellow
+high-lighted files are the files you should
+look at to see what the errors were.  Often these files
+are automatically shown.
+<p>
 In general the operations you perform consists of
-making one file from another file, and typically the two
+either uploading a file or
+making one file from another file.  When making one
+file from another, and the two
 file names are identical but for their extensions.
-In addition to making the .score file you can also make
-a .sin solution input file, a .sout solution output file,
-and a .fout filtered solution output file.  For the
-`reverser' problem
+In addition to making the .score file you can make
+files with the following extensions:
+<table class='top-align indented'>
+<tr><td>.sin</td><td>solution input file<br>
+                      actual input to your solution program<br>
+		      made by filtering .in file through generate-* program
+		      </td></tr>
+<tr><td>.sout</td><td>solution output file<br>
+                      actual output from your solution program
+		      </td></tr>
+<tr><td>.fout</td><td>filtered solution output file<br>
+		      made by filtering .sout and sin files through
+		      filter-* program<br>
+		      compared with judge's supplied .ftest file
+		      to compute .score file 
+		      </td></tr>
+<tr><td>.dout</td><td>debugging output<br>
+		      made by inputting .sin file to your solution<br>
+		      running under a debugger to find lines<br>
+		      that segment fault or are in an infinite loop
+		      </td></tr>
+</table>
+For the `reverser' problem
 the .sin file is identical to the .in file with comments
 removed, and the .fout file is identical to the .sout file.
 <p>
