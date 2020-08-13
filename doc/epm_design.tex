@@ -262,12 +262,18 @@ window.
 
 \item \key{Page Rule}\label{PAGE-RULE}
 At any given time a tab or window has a current page.
-The page is initially opened with a GET.  Subsequent
-transactions on that page are done with POSTs.  Each POST to
-a page is checked to be sure that page is the current page for
+A GET can change the current page.  All
+transactions done with POSTs
+are checked to be sure their page is the current page for
 its the tab or window type.  So, for example,
-if you have opened the Project Page
-in the main tab, you cannot POST to the User Page.
+if you have just done a GET to the Project Page,
+you cannot POST to the User Page.  Or if you have
+just done a GET to the Option Page with problem=PPPP,
+you cannot do a POST to the Problem Page with problem=PPPP.
+
+This rule is checked by {\tt index.php} which is required
+at the beginning of all pages in tabs or windows that
+access the server state.
 
 \item \key{Sequence Rule}\label{SEQUENCE-RULE}
 Transactions within a tab are sequenced, so that
@@ -286,6 +292,15 @@ initializes the sequence.  For the view window, the View Page
 initiates and uses sequencing, but other view window pages are
 no-post pages that do no sequencing.  The help window pages are
 {\tt .html} pages that do no sequencing.
+
+This rule is checked by {\tt index.php} which is required
+at the beginning of all pages in tabs or windows that
+access the server state.
+
+\item \key{Stateless Pages}\label{STATELESS-PAGES}
+The Help Page, Guide Page, and Downloads Page are stateless.
+They access just read-only files in the Home Directory
+\sref{DIRECTORIES}{H-DIRECTORY}.
 \end{enumerate}
 
 \subsection{Directories}
@@ -294,7 +309,7 @@ no-post pages that do no sequencing.  The help window pages are
 \begin{enumerate}
 \item There are three main directories:\label{MAIN-DIRECTORIES}
 
-      \key{H, Home Directory}:  This is the {\tt epm}
+      \key{H, Home Directory}:\label{H-DIRECTORY}  This is the {\tt epm}
       directory which is loaded from {\tt github}.
 
       \key{W, Web Directory}\label{W-DIRECTORY}:  This is the directory
@@ -475,6 +490,76 @@ same {\tt AID:UID} login name.
 
 \end{enumerate}
 
+\subsection{Locking}
+
+In EPM each request is an independent transaction.  Locking
+is needed to keep two requests from interferring with each other.
+
+\begin{enumerate}
+
+\item \key{Session Locking} At the beginning of each request
+the PHP {\tt session\_start()} function is called.  This locks
+the session file (where session data is stored).  As a consequence,
+given two requests to the same session, one must complete before
+the other starts.
+
+\item \key{Tab Uniqueness}
+A session is logged into a particular
+account.  Each tab has a type, either `main'
+or the name of a problem in the session account.
+The Sequence Rule \sref{TABS-AND-WINDOWS}{SEQUENCE-RULE}
+ensures that there is at most one tab of each type at a given
+time.
+
+More specifically, if a second tab of a give type is opened by
+the user for the session, the second tab gets a new sequence of
+\$ID numbers for the tab type, and when the first tab makes a request, its
+now obsolete \$ID number is detected (by {\tt index.php}) and
+the tab contents are replaced by the {\tt orphan.php} page that
+announces that the tab is \key{orphaned} and should be closed.
+
+A similar thing happens if two windows of `view' type exist
+with pages that execute POSTs.  `View' windows make no changes
+in the EPM file system, but do have their own session variables.
+
+\item \key{Tab Independence}
+The pages in each
+tab, for the most part, operate on different data from the pages
+in other tabs.  A problem tab operates mostly on the problem
+directory in the account, and the `main' tab operates mostly on
+everything else.  Therefore, since there is at most one tab of
+each type (by the previous paragraphs), most requests are independent
+of each other.
+
+\item \key{Administrative Locking}
+Requests that access the administrative files in the {\tt admin}
+directory tree begin by getting a lock on the {\tt admin}
+directory, which the request holds to the end of the request.
+See the LOCK function in {\tt parameters.php}.
+
+If the request is read-only the lock is shared.  Otherwise it
+is exclusive.
+
+The {\tt admin/teams/TID/+read-write+} files are excluded from
+this paragraph and are locked separately.
+
+\item \key{Read-Write Locking}
+For team member logins the {\tt admin/teams/TID/+read-write+}
+file is locked at the beginning of a request.  If it is
+determined that the account is currently read-only, this file
+is unlocked immediately, else it is unlocked at the end of the
+request.
+
+If a read-only request attempts to become read-write, the file
+is re-locked and remains locked till the end of the request.
+
+This sequences requests from read-write team logins for the
+same team, even if the requests are made by different team
+members in different sessions.
+
+\end{enumerate}
+
+
 \subsection{Security}
 
 There are two ways to breach an EPM server:
@@ -504,7 +589,22 @@ Not only are is there session state, such as the current
 user logged into the session, but there is state in the
 EPM server data file system.
 
+The Page Rule \sref{TABS-AND-WINDOWS}{PAGE-RULE}
+allows a GET to initialize session data that is used
+by POSTs to the same page in the same tab or window,
+without concern that a POST for the tab or window
+will be to a different page than the GET page.  This
+simplifies request checking.
 
+The Sequence Rule \sref{TABS-AND-WINDOWS}{SEQUENCE-RULE}
+does not help with security or request checking.  Request
+checking is about a legally logged in user making a
+series of legal transactions and then submitting an
+illegal transaction in an attempt to hack the server.
+
+Request checking is just about checking the request type and
+request parameters to ensure that the request is legal given the
+current state of the server.
 
 \end{itemize}
 
