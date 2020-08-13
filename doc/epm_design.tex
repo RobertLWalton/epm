@@ -116,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{August 7, 2020}
+\date{August 13, 2020}
  
 \maketitle
 
@@ -283,8 +283,8 @@ The next request must contain the current \$ID else the
 tab is orphaned.  For the main tab the Login Page initializes
 the tab's \$ID sequence.  For problem tabs the Problem Page
 initializes the sequence.  For the view window, the View Page
-initiates and uses sequencing, but other view window pages are single
-load pages that do no sequencing.  The help window pages are
+initiates and uses sequencing, but other view window pages are
+no-post pages that do no sequencing.  The help window pages are
 {\tt .html} pages that do no sequencing.
 \end{enumerate}
 
@@ -294,7 +294,7 @@ load pages that do no sequencing.  The help window pages are
 \begin{enumerate}
 \item There are three main directories:\label{MAIN-DIRECTORIES}
 
-      \key{H, Home Directory}:  This is the {\tt /epm}
+      \key{H, Home Directory}:  This is the {\tt epm}
       directory which is loaded from {\tt github}.
 
       \key{W, Web Directory}\label{W-DIRECTORY}:  This is the directory
@@ -351,7 +351,7 @@ load pages that do no sequencing.  The help window pages are
   \hspace*{0.2in}\begin{tabular}{l}
       symbolic link {\tt W/page} $\longrightarrow$ {\tt H/page} \\
       symbolic link {\tt W/index.php}
-          $\longrightarrow$ {\tt W/page/index.php} \\
+          $\longrightarrow$ {\tt page/index.php} \\
       {\tt W/parameters.php}, modified copy of {\tt H/include/parameters.php} \\
       {\tt W/maintenance\_parameters.php}, \\
       \hspace*{0.2in}modified copy of
@@ -424,7 +424,7 @@ load pages that do no sequencing.  The help window pages are
 address as was used for login, unless the {\tt \$epm\_check\_ipaddr}
 parameter is false.
 \item Checks that the session is logged in, unless the page being
-loaded is {\tt /page/\EOL login.php} or {\tt /page/user/php}.
+loaded is {\tt /page/\EOL login.php} or {\tt /page/user.php}.
 \item Uses {\tt EPM\_ABORT} (\pagref{EPM_ABORT}) to check that
 no other session has been started after this session using the
 same {\tt AID:UID} login name.
@@ -473,10 +473,40 @@ same {\tt AID:UID} login name.
 
 \end{itemize}
 
-
-      
-
 \end{enumerate}
+
+\subsection{Security}
+
+There are two ways to breach an EPM server:
+
+\begin{itemize}
+
+\item \key{Session Hi-Jacking} ~ The session is identified
+by the cookie which is a random number.  To hi-jack a session,
+the hacker must intercept the cookie.  A good way to 
+protect against this is to get a certificate for the EPM
+server so the server uses https.
+
+As alternate protection, the {\tt parameters.php} file
+contains a parameter which if set will cause the session
+to insist that all requests made to it come from the same
+IP address.  This might cause problems for legitimate mobile browsers,
+but should prevent session hi-jacking.
+
+\item \key{Illegal Requesting} ~ Since it is easy to get an EPM
+server account, a user can try to breach the server by issuing
+an illegal request from a legitimate session.  Therefore each
+request must be checked to be sure it is legal.  If not,
+an exit with 'UNACCEPTABLE ...' message is executed.
+
+An EPM session is definitely \underline{not} stateless.
+Not only are is there session state, such as the current
+user logged into the session, but there is state in the
+EPM server data file system.
+
+
+
+\end{itemize}
 
 \section{Data Files}
 
