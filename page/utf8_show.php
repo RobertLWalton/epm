@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  1 16:28:12 EDT 2020
+    // Date:	Thu Aug 13 02:34:28 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -33,6 +33,9 @@
     td.linenumber {
 	background-color:#b3e6ff;
 	text-align:right;
+    }
+    pre {
+        margin: 0px;
     }
 </style>
 
