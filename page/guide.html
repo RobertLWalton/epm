@@ -3,7 +3,7 @@
 <!--
 File:	guide.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Aug 12 16:09:10 EDT 2020
+Date:	Wed Aug 12 23:12:29 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -383,7 +383,7 @@ high-lighted files are the files you should
 look at to see what the errors were.  Often these files
 are automatically shown.
 <p>
-In general the operations you perform consists of
+In general the operations you perform consist of
 either uploading a file or
 making one file from another file.  When making one
 file from another, and the two
@@ -393,15 +393,15 @@ files with the following extensions:
 <table class='top-align indented'>
 <tr><td>.sin</td><td>solution input file<br>
                       actual input to your solution program<br>
-		      made by filtering .in file through generate-* program
+		      made by filtering .in file through the generate-* program
 		      </td></tr>
 <tr><td>.sout</td><td>solution output file<br>
                       actual output from your solution program
 		      </td></tr>
 <tr><td>.fout</td><td>filtered solution output file<br>
-		      made by filtering .sout and sin files through
-		      filter-* program<br>
-		      compared with judge's supplied .ftest file
+		      made by filtering .sout and .sin files through
+		      the filter-* program<br>
+		      compared with judge supplied .ftest file
 		      to compute .score file 
 		      </td></tr>
 <tr><td>.dout</td><td>debugging output<br>
@@ -413,6 +413,19 @@ files with the following extensions:
 For the `reverser' problem
 the .sin file is identical to the .in file with comments
 removed, and the .fout file is identical to the .sout file.
+<p>
+The best way to debug your program is to put
+statements in your code that output extra
+information.  Any output line that begins with
+`!!**' is treated as a comment line and ignored, so you can
+output as much debugging information as you like in these lines.
+Debugging comment lines will appear in the .sout file and
+.fout file and will be ignored by the epm_score program that
+compares the .fout and .ftest files.
+<p>
+On the other hand if your program blows up or runs out of
+CPU time, and you want to know the line number of the statement
+executing when your program failed, you can make a .dout file.
 <p>
 After the scores for the sample test cases are all
 `Completely Correct', the problem can be submitted by
@@ -428,7 +441,7 @@ total result will be displayed in the `submit-reverser.rout'
 file.
 <p>
 If there is an error in a test case during a `Submit',
-the test case .in and .fout files will be linked into
+the test case .in and .ftest files will be linked into
 your Problems Page so you can debug the test case as
 you would a sample test case.
 <p>
@@ -438,7 +451,7 @@ has errors.  If you look at a `reverser' solution, you will see that
 it has a section where different types of errors
 can be easily introduced either by defining a single macro
 or by changing the value of a single variable.  If you use
-this to introduce an error in the solution, then you can
+this to introduce an error in the solution, you can then
 try using the erroneous solution to produce
 `.score' files on the `reverser Problem Page' or `.rout' files
 on the `reverser Run Page'.
@@ -473,8 +486,8 @@ solution file, upload it into
 the new problem tab, and it will compile.  Debug its compilation until
 there are no compilation errors.
 <p>
-Similarly when you have written your PPPP.tex problem specification
-file, upload it.  It will be compiled by pdflatex.  Debug it
+Similarly write a LATEX PPPP.tex problem specification
+file and upload it.  It will be compiled by pdflatex.  Debug it
 until it has no errors.
 <p>
 The next step is to make a sample input file named `00-000-PPPP.in'.
@@ -487,7 +500,7 @@ formatting and number-out-of-bounds errors,
 and if it finds some, either halts (as with
 assert statements) or writes messages to the standard error output.
 Other solutions will do not do this, but your solution is a
-the judge's solution, and some code somewhere must check
+judge's solution, and some code somewhere must check
 the input for formatting errors.  If you do this, then when
 `00-000-PPPP.in' uploads with no errors, you will know it has
 the correct format and its numbers are within the proscribed
@@ -556,7 +569,7 @@ PPPP, PPPP.pyc, or PPPP.jar (on uploading PPPP.c, etc.)
 Next you should proceed to make more sample input files with
 names of the form `00-001-PPPP.in', `00-002-PPPP.in', etc.
 The `00-' at the beginning of the file name specifies that
-it is sample input that will be give to all users who
+it is sample input that will be given to all users who
 try to solve the problem.   Names beginning `01-', `02-',
 etc are judging inputs that are hidden from users who are
 trying to solve the problem.
@@ -617,7 +630,7 @@ sample-PPPP.rout (made from sample-PPPP.run)
 </div>
 <p>
 Next make the judge's hidden data `01-000-PPPP.in', etc.
-Often judge's data has larger test cases that must be
+Sometimes judge's data has larger test cases that must be
 generated randomly.  To do this, you must write a
 `generate-PPPP' program in C or C++.  There is a template
 and examples on the `Downloads Page'.  If you look at
@@ -625,8 +638,19 @@ other problems that have non-default generate programs,
 you can see what they do by clicking the `=>.txt' button
 on their `generate-...' lines.
 <p>
-You may also need to make a `filter-PPPP' program, again
-writing in C or C++.  There is a template and example on
+Sometimes there may be more than one correct solution output
+and you may need to write a `filter-PPPP' program in
+in C or C++ to check the output.  For example, if the
+solution is supposed to be a shortest path through a graph,
+the filter program may read the graph from the .sin file
+and the solution from the .sout file, check that the
+solution path is actually a graph path, and if yes output
+the path length, but otherwise output error messages.
+Then if the .sout file contains only actual paths, it and
+the .ftest file will contain only path lengths, and these
+may be compared to see if they match.
+<p>
+There is a `filter-PPPP' source template and an example on
 the `Downloads Page', and you can see what other problems
 do by clicking the `=>.txt' button on their `filter-...'
 lines.
@@ -638,7 +662,7 @@ both sample and judge's hidden.  Test this last using its
 <p>
 To get `submit-PPPP.run' to work, you may need to adjust
 the problem options on the problem Option Page.  For example,
-you may need to increase the allowed CPU time.  Allow
+you may need to increase the allowed CPU time.  Be sure to allow
 more time for JAVA and PYTHON solutions than for C/C++
 solutions.  For example, you may wish to use the ratios
 1:2:3 for C/C++:JAVA:PYTHON times.
@@ -713,7 +737,7 @@ sample-PPPP.run
 <br>
 submit-PPPP.run
 <br>
-PPPP.optn (problem containing options that you changed)
+PPPP.optn (invisible file containing options that you changed)
 </div>
 
 <p>
