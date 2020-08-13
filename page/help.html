@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Aug  9 14:30:41 EDT 2020
+Date:	Thu Aug 13 11:33:32 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -122,6 +122,9 @@ border-spacing: 20px 0;
 table.extension td {
 vertical-align: top;
 }
+table.login-name {
+margin: 2em;
+}
 </style>
 
 </head>
@@ -160,7 +163,7 @@ vertical-align: top;
 
 <li><a href="#login-page">Login Page</a> [main]
 <ul>
-<li><a href="#login-email">User Email Address</a>
+<li><a href="#login-e-mail">User E-Mail Address</a>
 <li><a href="#browser-ticket">Browser Ticket</a>
 </ul>
 <li><a href="#user-page">User Page</a> [main]
@@ -327,13 +330,44 @@ context.fillText ( '.score file', 115, 430 );
 <a name="login-page"><h1>Login Page</h1></a>
 
 <p>
-The <b>Login Page</b> manages login using email addresses to
-identify a user and confirmation numbers to create tickets for
-the user in the user's browser.  Once you have logged in, an
-EPM server session for your user ID is attached to your browser,
-a browser ticket for future use is attached to you e-mail address,
-and your e-mail
-address is attached to your user ID.
+To log into an EPM account,
+you open the URL of the EPM server you wish to access
+and load its <b>Login Page</b>.  This page accepts a
+    <a name='login-name'>login name</a> of the one of the forms:
+<br>
+<table class='login-name'>
+<tr><td>User-E-Mail-Address</td><td>User Account</td></tr>
+<tr><td>Team-ID:Member-E-Mail-Address</td>
+    <td>Team Member in Team Account</td></tr>
+<tr><td>User-ID:Guest-E-Mail-Address</td>
+    <td>Guest in User Account</td></tr>
+</table>
+<p>
+EPM has two kinds of accounts: user accounts and team accounts.
+These behave similarly in most circumstances.
+Both kinds of accounts are named by an
+<a name='account-ID'>account ID</a>, which is
+either a <a name='user-ID'>user ID</a> or a <a name='team-ID'>team ID</a>.
+E-mail addresses map to user IDs, and a single user can have several
+e-mail addresses.  Teams have members, which
+are user accounts.  A user may have guests, which are other users
+who are allowed to see the user's account but not change it.
+<a href="#guests">Guests</a> and <a href='#teams'>teams</a>
+are discussed separately.
+<p>
+An account is on an <a name='EPM-server'>EPM server</a>.
+EPM servers are named
+by the document root URL used to access them, and EPM servers with
+different names are independent of each other (even
+if they are running on the same computer).
+<p>
+Once you have logged in, an
+EPM server <a name='session'>session</a>
+for your login name is attached to your browser,
+and a ticket for future use with the login name is stored in your browser
+local memory.  The ticket enables you to log in again using the
+same login name and browser without having to receive a confirmation
+number by e-mail.
 <p>
 Your session is allocated:
 <ul>
@@ -369,24 +403,6 @@ will invalidate your tab.  You may use the refresh keys, or the
 can be put into an editing mode in which the &#8635; button disappears
 and the refresh keys are disabled.
 <p>
-EPM has two kinds of accounts: user accounts and team accounts.
-These behave similarly in most circumstances.
-Both kinds of accounts are named by an <b>account ID</b>, which is
-either a <b>user ID</b> or a <b>team ID</b>.
-User accounts also have associated e-mail addresses used to
-identify the user on login.  Teams have instead members, which
-are user accounts.  User sessions are associated with just
-a user ID.  Team sessions have both a team ID, that serves
-as the session account ID, and an extra user ID, identifying
-the user that logged into the team account.
-<a href="#teams">Teams</a> are discussed separately.
-<p>
-An account is on an <a name='EPM-server'>EPM server</a>.
-EPM servers are named
-by the document root URL used to access them, and EPM servers with
-different names are independent of each other (even
-if they are running on the same computer).
-<p>
 To change the account ID of
 a session you must explicitly log out,
 and then you must log back in.  You can log out using
@@ -396,15 +412,15 @@ problem tabs and popup windows that you have.
 Or you can simply close and reopen your browser.
 </p>
 
-<a name="login-email"><h2>User Email Address</h2></a>
+<a name="login-e-mail"><h2>User E-Mail Address</h2></a>
 <p>
-You can have up to 3 <b>email addresses</b> that map to your
+You can have up to 3 <b>e-mail addresses</b> that map to your
 user ID, and hence to your account on the EPM server.
-Confirmation numbers will be sent to these email addresses
+Confirmation numbers will be sent to these e-mail addresses
 in order to create <a href="#browser-ticket">Browser Tickets</a>.
 <p>
 If you are making a new account, enter an appropriate
-email address.  After entering the confirmation number sent
+e-mail address.  After entering the confirmation number sent
 to that address, you will be routed to the
 <a href="#user-page">User Page</a> to complete the process
 of establishing a new account.
@@ -413,16 +429,14 @@ of establishing a new account.
 <a name="browser-ticket"><h2>Browser Ticket</h2></a>
 <p>
 A browser <b>ticket</b> is stored in the browser local memory
-and enables an account to log in by giving only the email
-address associated with ticket.  There is a separate
+and enables an account to log in by giving only the login name
+associated with ticket.  There is a separate
 ticket for each <a href='#EPM-server'>EPM server</a>,
-each browser, 
-each email address, and each team ID used to log in to the EPM server.
-When you log in as a user, and not as a team member, the team ID is
-missing.
+each browser, and each login name.
 <p>
-When you first log in your browser has no ticket.  Therefore
-the server emails you a ticket called a <b>confirmation number</b>,
+When you first use a login name with your browser, your browser
+has no ticket.  Therefore
+the server e-mails you a ticket called a <b>confirmation number</b>,
 which you enter into the browser.  The browser sends this
 to the server, which logs the browser in.
 <p>
@@ -431,17 +445,15 @@ the server accepts the ticket and logs the browser in,
 then the server sends the broswer a replacement ticket.  A
 ticket can be used only once.  Should the server reject a ticket,
 it will give you another confirmation number.
-
 <p>
-When you first log in with a given email address,
-your first <b>auto-login period</b> for that email address begins.
+When you first log using a given e-mail address,
+your first <b>auto-login period</b> for that e-mail address begins.
 During this period the server accepts tickets associated
-with the email address from browsers that have them.
-At the end of this period
-the server cancels all tickets associated with the
-email address and emails you a confirmation number when you
-request a new login.  The server also starts a new auto-login
-period.  The first auto-login period is 2 days, the second
+with the e-mail address from browsers that have them.
+At the end of this period the server e-mails you a confirmation
+number when you next log in using the e-mail address, and
+starts a new auto-login period when it recieves the confirmation
+number.  The first auto-login period is 2 days, the second
 is 7 days, and all the rest are 30 days.
 </p>
 
@@ -456,7 +468,7 @@ appears on the User Page.
 	       available to other users of the same EPM
 	       server,
                except that current policy is that
-	       the non-domain parts of email addresses
+	       the non-domain parts of e-mail addresses
 	       will be replaced by dots(...), e.g.,
 	       jdoe@gurgle.com will become `...@gurgle.com'.
 
@@ -481,8 +493,8 @@ such as the ACM or if nothing more limited is available, Facebook.
 The location of your organization, e.g., town, state, and
 country, or if the organization is nebulous, like the ACM
 or Facebook, your own location.
-<li><strong>Email Addresses</strong>:<p class='list'>
-You must have one or more email addresses associated with
+<li><strong>E-Mail Addresses</strong>:<p class='list'>
+You must have one or more e-mail addresses associated with
 your account.  You use these to log into the account.
 It is well to have two or more, in case you lose access to
 one of them.
