@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug 12 15:29:17 EDT 2020
+    // Date:	Fri Aug 14 02:29:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -350,7 +350,7 @@
     //
     //     send-changes=yes
     //	       Send changes from previous compile (this
-    //         can happen after WARN response).  What
+    //         can happen after WARN response).
     //
     //     execute=yes
     //	       Execute compiled push or pull.
@@ -1462,7 +1462,11 @@ EOT;
 			  . " tabs during this $op";
 
 	    if ( count ( $errors ) == 0 )
+	    {
 		execute_commands ( $errors );
+		if ( $op == 'pull' )
+		    touch ( "$epm_data/$f" );
+	    }
 	    if ( count ( $errors ) > 0 )
 	    {
 		echo "ERROR $ID\n";

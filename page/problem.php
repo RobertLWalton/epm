@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug 12 14:12:36 EDT 2020
+    // Date:	Fri Aug 14 02:36:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -362,6 +362,7 @@
 	    if ( ! @unlink ( "$epm_data/$g" ) )
 		$errors[] = "could not delete $g";
 	}
+	touch ( "$epm_data/$probdir/+altered+" );
     }
 
     // Process POST requests.

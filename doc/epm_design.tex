@@ -116,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{August 13, 2020}
+\date{August 14, 2020}
  
 \maketitle
 
@@ -556,6 +556,60 @@ is re-locked and remains locked till the end of the request.
 This sequences requests from read-write team logins for the
 same team, even if the requests are made by different team
 members in different sessions.
+
+\item \key{Project Problem Locking}
+A project problem directory is locked using the
+LOCK function in {\tt parameters.php}
+during a push or pull involving the directory.
+For pushing this is an exclusive lock; for pulling it is a shared
+lock.
+
+A push or pull can involve two requests:
+first to compile actions and the second to execute them
+(there can be a third request in between that simply presents
+information stored in the session data by the first request).
+If the project problem directory changes between requests,
+because of push to the directory by another user, the second
+request could cause data inconsistency.  To prevent this the
+the exclusive LOCK time of the directory is monitored to check if some
+other session has exclusively locked the directory between requests,
+and if so, the second execute request is aborted with an error message.
+
+\item \key{Local Problem Locking}
+When a file is uploaded into a problem or made from another file
+in the problem, a background job is executed.
+Similarly when a {\tt .run} file is run, the run is a background job.
+The local problem directory is not modified by a background job
+until the job finished, at which time some files may be saved in
+the local problem directory.
+
+If the problem has a parent, a shared lock is
+obtained on the parent using LOCK at the start of the background
+job, and the LOCK time is checked at the end of the job to be sure
+it has not changed.  If it has, a push to the parent was done
+during the job, an error is declared for the job,
+and the job results are not saved in the problem local directory.
+
+
+Pulls to a local problem directory an be run in the `main' tab
+while a background job is run in the local problem directory in
+its problem tab.  To prevent conflict, every time the problem
+directory is altered its {\tt +altered+} file is touched.
+The modification time of this is checked to detect conflicts
+and abort either the execution request for a pull or the
+finishing of an otherwise sucessful background job.
+Local problem directories can be altered when a background
+job keeps files, when the Problem Page deletes files, or when
+the Project Page pulls to the local problem.
+
+Then when a push or pull detects a change in the modification
+time of {\tt +altered+} between the request that compiles
+commands for the push or pull and the request to execute them,
+the execution request is aborted with an error message.
+
+Similarly if a background job detects a change between starting
+and finishing, it is aborted at its finish with an error message.
+
 
 \end{enumerate}
 
