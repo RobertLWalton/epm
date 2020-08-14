@@ -511,6 +511,19 @@ the session file (where session data is stored).  As a consequence,
 given two requests to the same session, one must complete before
 the other starts.
 
+\item \key{Atomic Files}
+Some files are shared between sessions but only need to be
+read and written atomically, so that they maintain their
+format specifications, and need no other locking:
+\begin{itemize}
+\item {\tt .list} files containing problem lists.  Only one
+session can write such a file, but many may read it.
+\item {\tt +priv+} files containing privileges.  Its possible
+but rare for such a file to be writtable by several sessions if it has
+multiple owners, but if these collide, `last-writter-wins' is
+an acceptable implementation.  These files can have many readers.
+\end{itemize}
+
 \item \key{Tab Uniqueness}
 A session is logged into a particular
 account.  Each tab has a type, either `main'
