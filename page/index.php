@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Aug  8 02:10:41 EDT 2020
+// Date:    Fri Aug 14 12:03:03 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -289,8 +289,8 @@ function EPM_ERROR_HANDLER
 
 set_error_handler ( 'EPM_ERROR_HANDLER' );
 
-// DEBUG, LOCK, and UNLOCK functions are in
-// parameters.php because they are shared with
+// DEBUG, LOCK, READ_ATOMIC, and WRITE_ATOMIC functions
+// are in parameters.php because they are shared with
 // bin/epm_run.
 
 // If this is a download page, return to that

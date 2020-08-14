@@ -495,6 +495,14 @@ same {\tt AID:UID} login name.
 In EPM each request is an independent transaction.  Locking
 is needed to keep two requests from interferring with each other.
 
+Some EPM operations consist of multiple requests.  However,
+only the last of these requests modifies EPM server state
+(that is not in a working subdirectory dedicated to the operation).
+So the strategy is to have this last request check whether
+other conflicting requests happened during the operation, and
+if yes, the last request aborts, does not change EPM state, and produces
+an error message.
+
 \begin{enumerate}
 
 \item \key{Session Locking} At the beginning of each request
@@ -515,7 +523,7 @@ More specifically, if a second tab of a give type is opened by
 the user for the session, the second tab gets a new sequence of
 \$ID numbers for the tab type, and when the first tab makes a request, its
 now obsolete \$ID number is detected (by {\tt index.php}) and
-the tab contents are replaced by the {\tt orphan.php} page that
+the tab contents are replaced by the {\tt orphan.php} page which
 announces that the tab is \key{orphaned} and should be closed.
 
 A similar thing happens if two windows of `view' type exist
@@ -528,7 +536,7 @@ tab, for the most part, operate on different data from the pages
 in other tabs.  A problem tab operates mostly on the problem
 directory in the account, and the `main' tab operates mostly on
 everything else.  Therefore, since there is at most one tab of
-each type (by the previous paragraphs), most requests are independent
+each type, by Tab Uniqueness, most requests are independent
 of each other.
 
 \item \key{Administrative Locking}

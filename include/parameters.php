@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Aug  3 14:24:58 EDT 2020
+// Date:    Fri Aug 14 11:50:43 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -308,16 +308,19 @@ else
 // is no lock).  The microtime is stored as a floating
 // point string.
 //
-// The lock is released by UNLOCK or on shutdown.  LOCK
-// also releases any previous lock (there can be at most
-// one lock).
+// The lock is released on shutdown.  LOCK also releases
+// any previous lock (there can be at most one lock).
 //
 $epm_lock = NULL;
 function LOCK ( $dir, $type )
 {
     global $epm_data, $epm_lock;
 
-    if ( isset ( $epm_lock ) ) UNLOCK();
+    if ( isset ( $epm_lock ) )
+    {
+        flock ( $epm_lock, LOCK_UN );
+	@fclose ( $epm_lock );
+    }
     $f = "$dir/+lock+";
     $epm_lock = fopen ( "$epm_data/$f", 'w+' );
     if ( $epm_lock === false )
@@ -337,14 +340,51 @@ function LOCK ( $dir, $type )
     return $value;
 }
 
-function UNLOCK()
+// Read/write a file atomically.  File names should be
+// absolute.
+//
+// It is assumed that the file size will never be larger
+// than $epm_file_maxsize.  Errors result in false being
+// returned but no error messages.  This happens in
+// particular if a file being read does not exist.
+//
+$epm_atomic = NULL;
+function READ_ATOMIC ( $filename )
 {
-    global $epm_lock;
-
-    if ( ! isset ( $epm_lock ) ) return;
-    flock ( $epm_lock, LOCK_UN );
-    $epm_lock = NULL;
+    global $epm_atomic, $epm_file_maxsize;
+    $epm_atomic = @fopen ( $filename, 'r' );
+    if ( $epm_atomic === false ) return false;
+    flock ( $epm_atomic, LOCK_SH );
+    $c = @fread ( $epm_atomic, $epm_file_maxsize );
+    flock ( $epm_atomic, LOCK_UN );
+    @fclose ( $epm_atomic );
+    $epm_atomic = NULL;
+    return $c;
 }
-register_shutdown_function ( 'UNLOCK' );
+function WRITE_ATOMIC ( $filename, $contents )
+{
+    global $epm_atomic, $epm_file_maxsize;
+    $epm_atomic = @fopen ( $filename, 'w' );
+    if ( $epm_atomic === false ) return false;
+    flock ( $epm_atomic, LOCK_EX );
+    $c = @fwrite ( $epm_atomic, $contents,
+                   $epm_file_maxsize );
+    flock ( $epm_atomic, LOCK_UN );
+    @fclose ( $epm_atomic );
+    $epm_atomic = NULL;
+    return $c;
+}
+
+function LOCK_SHUTDOWN()
+{
+    global $epm_lock, $epm_atomic;
+
+    if ( isset ( $epm_lock ) )
+	@flock ( $epm_lock, LOCK_UN );
+    if ( isset ( $epm_atomic ) )
+	@flock ( $epm_atomic, LOCK_UN );
+}
+register_shutdown_function ( 'LOCK_SHUTDOWN' );
+
 
 ?>
