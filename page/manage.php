@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  8 02:19:22 EDT 2020
+    // Date:	Fri Aug 14 13:25:09 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -308,7 +308,7 @@
 		{
 		    $f = "/projects/$project/$problem/"
 		       . "+priv+";
-		    $r = @file_put_contents
+		    $r = ATOMIC_WRITE
 		        ( "$epm_data/$f",
 			  $edited_contents );
 		    if ( $r === false )
@@ -370,7 +370,7 @@
 		if ( $is_owner || $warn == 'yes' )
 		{
 		    $f = "/projects/$project/+priv+";
-		    $r = @file_put_contents
+		    $r = ATOMIC_WRITE
 		        ( "$epm_data/$f",
 			  $edited_contents );
 		    if ( $r === false )
@@ -681,7 +681,7 @@ EOT;
     if ( isset ( $project ) && isset ( $problem ) )
     {
         $f =  "/projects/$project/$problem/+priv+";
-        $priv_file_contents = @file_get_contents
+        $priv_file_contents = ATOMIC_READ
 	    ( "$epm_data/$f" );
         if ( $priv_file_contents === false )
 	    $priv_file_contents = " \n";
@@ -735,7 +735,7 @@ EOT;
     }
     if ( isset ( $project ) )
     {
-        $priv_file_contents = @file_get_contents
+        $priv_file_contents = ATOMIC_READ
 	    ( "$epm_data/projects/$project/+priv+" );
         if ( $priv_file_contents === false )
 	    $priv_file_contents = " \n";

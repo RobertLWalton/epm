@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 21 11:30:00 EDT 2020
+    // Date:	Fri Aug 14 13:38:03 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -174,7 +174,7 @@
 
 	if ( ! file_exists ( "$epm_data/$fname" ) )
 	    return;
-	$c = @file_get_contents ( "$epm_data/$fname" );
+	$c = ATOMIC_READ ( "$epm_data/$fname" );
 	if ( $c === false )
 	    ERROR ( "cannot read existant $fname" );
 	process_privs
@@ -437,7 +437,7 @@
 	    umask ( $m );
 	}
 
-	$r = @file_put_contents ( "$epm_data/$f", '' );
+	$r = ATOMIC_WRITE ( "$epm_data/$f", '' );
 	if ( $r === false )
 	    ERROR ( "could not write $f" );
 	$time = @filemtime ( "$epm_data/$f" );
@@ -553,8 +553,7 @@
         global $epm_data;
 	$list = [];
 	$map = [];
-	$c = @file_get_contents
-	    ( "$epm_data/$filename" );
+	$c = ATOMIC_READ ( "$epm_data/$filename" );
 	if ( $c !== false )
 	{
 	    $c = explode ( "\n", $c );
@@ -625,8 +624,7 @@
 	    $lines[] = "{$map[$key]} $root $leaf";
 	}
 
-	$c = @file_get_contents
-	    ( "$epm_data/$filename" );
+	$c = ATOMIC_READ ( "$epm_data/$filename" );
 	if ( $c !== false )
 	{
 	    $flines = explode ( "\n", $c );
@@ -665,8 +663,7 @@
 	$c = '';
 	foreach ( $lines as $line )
 	    $c .= $line . PHP_EOL;
-	$r = @file_put_contents
-	         ( "$epm_data/$filename", $c );
+	$r = ATOMIC_WRITE ( "$epm_data/$filename", $c );
 	if ( $r === false )
 	    ERROR ( "cannot write $filename" );
     }
@@ -715,8 +712,7 @@
 	    }
 	}
 
-	$c = @file_get_contents
-	    ( "$epm_data/$filename" );
+	$c = ATOMIC_READ ( "$epm_data/$filename" );
 	if ( $c === false ) $c = '';
 	$c = explode ( "\n", $c );
 	    // If $c was '' it is now ['']
@@ -730,8 +726,7 @@
 	if ( $description != '' )
 	    $r .= PHP_EOL . $description;
 
-	$r = @file_put_contents
-	         ( "$epm_data/$filename", $r );
+	$r = ATOMIC_WRITE ( "$epm_data/$filename", $r );
 	if ( $r === false )
 	    ERROR ( "cannot write $filename" );
     }
@@ -743,8 +738,7 @@
     {
         global $epm_data;
 
-	$c = @file_get_contents
-	    ( "$epm_data/$filename" );
+	$c = ATOMIC_READ ( "$epm_data/$filename" );
 	if ( $c === false ) return '';
 
 	$c = explode ( "\n", $c );

@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Aug 14 11:50:43 EDT 2020
+// Date:    Fri Aug 14 13:22:37 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -349,7 +349,7 @@ function LOCK ( $dir, $type )
 // particular if a file being read does not exist.
 //
 $epm_atomic = NULL;
-function READ_ATOMIC ( $filename )
+function ATOMIC_READ ( $filename )
 {
     global $epm_atomic, $epm_file_maxsize;
     $epm_atomic = @fopen ( $filename, 'r' );
@@ -361,7 +361,7 @@ function READ_ATOMIC ( $filename )
     $epm_atomic = NULL;
     return $c;
 }
-function WRITE_ATOMIC ( $filename, $contents )
+function ATOMIC_WRITE ( $filename, $contents )
 {
     global $epm_atomic, $epm_file_maxsize;
     $epm_atomic = @fopen ( $filename, 'w' );

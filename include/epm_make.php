@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Aug 11 04:27:10 EDT 2020
+// Date:    Fri Aug 14 13:37:47 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -1478,78 +1478,6 @@ function get_command_results ( $base, $dir, $wait = 0 )
 
 	$r = is_running ( $pid );
 	$c = @file_get_contents ( $shout );
-    }
-}
-
-// Execute CHECKS.  Append failures to $errors.
-//
-// The different types of checks are:
-//
-//	EMPTY filename
-//	    Checks that file exists and is empty.
-//
-//	SUCCESS filename
-//	    Checks that file ends with:
-//		::D 0 DONE
-//	    and is less than 1 megabyte in size.
-//
-// Non-existant files are treated as empty (zero length)
-// files.
-//
-function execute_checks ( $checks, & $errors )
-{
-    global $epm_data, $work, $_SESSION;
-
-    $workdir = $work['DIR'];
-
-    foreach ( $checks as $check )
-    {
-        if ( ! preg_match ( '/^\s*(\S+)\s+(\S+)\s*$/',
-	                    $check, $matches ) )
-	{
-	    $errors[] = "malformed CHECKS item: $check";
-	    continue;
-	}
-	$test = $matches[1];
-	$file = "$workdir/$matches[2]";
-
-	$size = @filesize ( "$epm_data/$file" );
-	if ( $size === false ) $size = 0;
-
-	if ( $test == 'EMPTY' )
-	{
-	    if ( $size != 0 )
-		$errors[] = "file $file is not empty";
-	    continue;
-	}
-
-	if ( $size > 1024 * 1024 )
-	{
-	    $errors[] = "file $file too large"
-	               . " ($size > 1 megabyte)";
-	    continue;
-	}
-
-	$contents = @file_get_contents
-	    ( "$epm_data/$file" );
-	if ( $contents === false ) $contents = '';
-
-	if ( $test == 'SUCCESS' )
-	{
-	    if ( !  preg_match ( '/::D 0 DONE$/',
-	                         $contents ) )
-	    {
-		$name = pathinfo
-		    ( $file, PATHINFO_FILENAME );
-		$errors[] =
-		    "execution of commands in" .
-		    " $name.sh failed";
-	    }
-	    continue;
-	}
-	
-
-	$errors[] = "bad test in CHECKS item: $check";
     }
 }
 
