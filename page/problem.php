@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Aug 14 02:36:32 EDT 2020
+    // Date:	Sat Aug 15 04:21:13 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -113,11 +113,14 @@
 
 	    $map[$fname] = $value;
 	}
-	$SORT = ( $order == 'recent' ? SORT_NUMERIC
-	                             : SORT_STRING );
-	arsort ( $map, $SORT );
-	    // Note, keys cannot be floating point and
-	    // files often share modification times.
+
+	if ( $order == 'recent' )
+	    arsort ( $map, SORT_NUMERIC );
+		// Note, keys cannot be floating point
+		// and files often share modification
+		// times.
+	else
+	    asort ( $map, SORT_STRING );
 	$names = [];
 	foreach ( $map as $key => $value )
 	    $names[] = $key;
@@ -873,7 +876,7 @@ EOT;
 EOT;
 
     $order_options = '';
-    foreach ( ['lexigraphic' => '(reverse lex order)',
+    foreach ( ['lexigraphic' => '(alphabetic order)',
 	       'recent' => '(most recent first)',
 	       'extension' => '(extension order)']
 	      as $key => $label )
