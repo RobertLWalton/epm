@@ -116,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{August 14, 2020}
+\date{August 15, 2020}
  
 \maketitle
 
@@ -560,7 +560,7 @@ These pages both begin by getting an exclusive lock on the
 
 Administrative files with other or extra considerations are:
 \begin{itemize}
-\item {\tt admin/teams/TID/+read-write+} files: these are themselves
+\item {\tt admin/teams/TID/+read-write+} files: These are themselves
 locked by {\tt page/\EOL index.php} and {\tt include/\EOL epm\_rw.php}.
 \item {\tt admin/users/UID/UID.info} files.  These are written
 atomically by the User Page and read atomically by the Problem Page
@@ -598,7 +598,8 @@ request could cause data inconsistency.  To prevent this
 the exclusive LOCK time of the directory is monitored to check if some
 other session has exclusively locked the directory between the
 first and last requests of an operation.
-If so, the last execute request is aborted with an error message.
+If so, the last request is aborted with an error message and
+does not execute.
 
 \item \key{Local Problem Locking}
 When a file is uploaded into a problem or made from another file
@@ -627,14 +628,6 @@ Local problem directories can be altered when a background
 job keeps files, when the Problem Page deletes files, or when
 the Project Page pulls to the local problem.
 
-Then when a push or pull detects a change in the modification
-time of {\tt +altered+} between the request that compiles
-commands for the push or pull and the request to execute them,
-the execution request is aborted with an error message.
-
-Similarly if a background job detects a change between starting
-and finishing, it is aborted at its finish with an error message.
-
 
 \end{enumerate}
 
@@ -657,29 +650,22 @@ to insist that all requests made to it come from the same
 IP address.  This might cause problems for legitimate mobile browsers,
 but should prevent session hi-jacking.
 
-\item \key{Illegal Requesting} ~ Since it is easy to get an EPM
-server account, a user can try to breach the server by issuing
+\item \key{Illegal Requesting} ~ Since it is easy to get a user
+account on an EPM server, a user can try to breach the server by issuing
 an illegal request from a legitimate session.  Therefore each
 request must be checked to be sure it is legal.  If not,
-an exit with 'UNACCEPTABLE ...' message is executed.
+an exit with 'UNACCEPTABLE HTTP ...' message is executed.
 
 An EPM session is definitely \underline{not} stateless.
-Not only are is there session state, such as the current
+Not only is there session state, such as the current
 user logged into the session, but there is state in the
 EPM server data file system.
 
 The Page Rule \sref{TABS-AND-WINDOWS}{PAGE-RULE}
-allows a GET to initialize session data that is used
-by POSTs to the same page in the same tab or window,
-without concern that a POST for the tab or window
-will be to a different page than the GET page.  This
-simplifies request checking.
-
-The Sequence Rule \sref{TABS-AND-WINDOWS}{SEQUENCE-RULE}
-does not help with security or request checking.  Request
-checking is about a legally logged in user making a
-series of legal transactions and then submitting an
-illegal transaction in an attempt to hack the server.
+and Sequence Rule \sref{TABS-AND-WINDOWS}{SEQUENCE-RULE}
+work together to ensure that a page POSTed to will be
+be the same page loaded by the last GET to the tab or
+window doing the POST.  This simplifies request checking.
 
 Request checking is just about checking the request type and
 request parameters to ensure that the request is legal given the
