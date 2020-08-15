@@ -512,9 +512,9 @@ given two requests to the same session, one must complete before
 the other starts.
 
 \item \key{Atomic Files}
-Some files are shared between sessions but only need to be
+Some files are shared between sessions and need to be
 read and written atomically, so that they maintain their
-format specifications, and need no other locking:
+format specifications, but need no other locking:
 \begin{itemize}
 \item {\tt .list} files containing problem lists.  Only one
 session can write such a file, but many may read it.
@@ -546,23 +546,26 @@ in the EPM file system, but do have their own session variables.
 \item \key{Tab Independence}
 The pages in each
 tab, for the most part, operate on different data from the pages
-in other tabs.  A problem tab operates mostly on the problem
+in other tabs.  A problem tab operates mostly on its problem
 directory in the account, and the `main' tab operates mostly on
 everything else.  Therefore, since there is at most one tab of
 each type, by Tab Uniqueness, most requests are independent
 of each other.
 
 \item \key{Administrative Locking}
-Requests that access the administrative files in the {\tt admin}
-directory tree begin by getting a lock on the {\tt admin}
-directory, which the request holds to the end of the request.
-See the LOCK function in {\tt parameters.php}.
+Administrative files are those in the {\tt admin} directory tree.
+Only the Login Page and User Page access most administrative files
+These pages both begin by getting an exclusive lock on the
+{\tt admin} directory using the LOCK function in {\tt parameters.php}.
 
-If the request is read-only the lock is shared.  Otherwise it
-is exclusive.
-
-The {\tt admin/teams/TID/+read-write+} files are excluded from
-this paragraph and are locked separately.
+Administrative files with other or extra considerations are:
+\begin{itemize}
+\item {\tt admin/teams/TID/+read-write+} files: these are themselves
+locked by {\tt page/\EOL index.php} and {\tt include/\EOL epm\_rw.php}.
+\item {\tt admin/users/UID/UID.info} files.  These are written
+atomically by the User Page and read atomically by the Problem Page
+in order to ensure the integrity of their format.
+\end{itemize}
 
 \item \key{Read-Write Locking}
 For team member logins the {\tt admin/teams/TID/+read-write+}
@@ -585,16 +588,17 @@ during a push or pull involving the directory.
 For pushing this is an exclusive lock; for pulling it is a shared
 lock.
 
-A push or pull can involve two requests:
-first to compile actions and the second to execute them
-(there can be a third request in between that simply presents
+A push or pull can involve several requests:
+the first to compile actions and the last to execute them
+(there can be a request in between that simply presents
 information stored in the session data by the first request).
 If the project problem directory changes between requests,
-because of push to the directory by another user, the second
-request could cause data inconsistency.  To prevent this the
+because of a push to the directory by another user, the last
+request could cause data inconsistency.  To prevent this
 the exclusive LOCK time of the directory is monitored to check if some
-other session has exclusively locked the directory between requests,
-and if so, the second execute request is aborted with an error message.
+other session has exclusively locked the directory between the
+first and last requests of an operation.
+If so, the last execute request is aborted with an error message.
 
 \item \key{Local Problem Locking}
 When a file is uploaded into a problem or made from another file

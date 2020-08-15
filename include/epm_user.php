@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Aug  3 15:04:19 EDT 2020
+// Date:    Fri Aug 14 21:28:20 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -550,7 +550,7 @@ function write_info ( & $info )
     $c = json_encode ( $info, JSON_PRETTY_PRINT );
     if ( $c === false )
 	ERROR ( 'cannot json_encode $info' );
-    $r = @file_put_contents ( "$epm_data/$f", $c );
+    $r = ATOMIC_WRITE ( "$epm_data/$f", $c );
     if ( $r === false )
 	ERROR ( "cannot write $f" );
 
