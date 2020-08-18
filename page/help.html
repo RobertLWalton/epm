@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Aug 18 11:57:19 EDT 2020
+Date:	Tue Aug 18 16:07:20 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -32,6 +32,11 @@ make no warranty and accept no liability for EPM.
 	height: 5%;
 	margin: 0px;
     }
+    pre.code {
+	display: block;
+	font-size: 14pt;
+	margin-left: 2em;
+    }
     #title {
         display:none;
     }
@@ -53,6 +58,11 @@ make no warranty and accept no liability for EPM.
     }
     div.header {
         display: none;
+    }
+    pre.code {
+	display: block;
+	font-size: 12pt;
+	margin-left: 2em;
     }
     #title {
         font-size: 24pt;
@@ -142,8 +152,10 @@ margin: 2em;
 <strong>Table of Contents</strong>
 </td>
 <td>
-<button type='button' onclick='BACK()'><b>&#8678;</b></button>
-<button type='button' onclick='FORWARD()'><b>&#8680;</b></button>
+<button type='button' onclick='BACK()'
+        title='Go Back'><b>&#8678;</b></button>
+<button type='button' onclick='FORWARD()'
+        title='Go Forward'><b>&#8680;</b></button>
 </td>
 <td style='text-align:right'>
 <strong>Other Documents:</strong>
@@ -868,6 +880,12 @@ These files and links are stored in your problem
 directory and can be viewed, used, or deleted.  They are displayed
 in the `Current Problem File' table, one line per file or link.
 <p>
+The order in which the file lines appear can be changed.  The
+default is `<b>extension order</b>' which sorts on file extension
+first and file basename second.  You can also have the file lines
+sorted in `<b>most recent first</b>' or `<b>alphabetic order</b>'
+(i.e., basename first, extension second).
+<p>
 Current problem <a name='file-names'><b>file names</b></a> must have particular
 <a href='#file-extensions'>extensions</a> that specify their role within
 the problem.  The rest of a file name can contain
@@ -943,9 +961,9 @@ files directly from the parent directory.
 The general scheme for producing a XXXX-PPPP.score file
 containing a score from a XXXX-PPPP.in test case input file and
 an executable solution PPPP is:
-<pre style='display:block;font-size:14pt;margin-left:28px'>
+<pre class='code'>
 generate-PPPP &lt;XXXX-PPPP.in &gt;XXXX-PPPP.sin
-PPPP &lt;XXXX-PPPP.in &gt;XXXX-PPPP.sout
+PPPP &lt;XXXX-PPPP.sin &gt;XXXX-PPPP.sout
 filter-PPPP &lt;XXXX-PPPP.sin 3&lt;XXXX-PPPP.sout &gt;XXXX-PPPP.fout
 epm_score XXXX-PPPP.fout XXXX-PPPP.ftest &gt;XXXX-PPPP.score
 </pre>
@@ -963,7 +981,7 @@ filtered solution output to the .ftest test filtered
 solution output provided by the judge to produce the .score file.
 The actual commands used to execute all this are more complex
 because the generate, solution, and filter programs are run in sandboxes,
-as they are or may be uploaded.  The solution program is of course
+as they may be uploaded.  The solution program is of course
 provided by the problem solver, but the generate and filter
 programs are provided by the problem setter (the person who
 creates the problem).
@@ -994,9 +1012,6 @@ creates the problem).
 <tr><td>PPPP.pdf</td><td>Document PDF File,
                      made from PPPP.tex file;
                      may be supplied by parent</td></tr>
-<tr><td>PPPP.tout</td><td>LATEX output file listing errors,
-                     some just informative,
-                     made from PPPP.tex file</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.in file
 		     by generate program and compiled solution
@@ -1025,12 +1040,13 @@ creates the problem).
                      made from XXXX&#8209;PPPP.in test case input file
 		     by generate program</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
-                     made from XXXX&#8209;PPPP.in file
-		     by generate program and compiled solution
+                     made from XXXX&#8209;PPPP.sin file
+		     by compiled solution
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.dout</td><td>Debugging Output File,
                      made from XXXX&#8209;PPPP.sin file
-		     by the compiled solution; designed to
+		     by the compiled solution and for C/C++
+		     the solution source code; designed to
 		     identify the line number of the statement where
 		     a CPU time limit signal or program fault
 		     occurred
@@ -1041,22 +1057,16 @@ creates the problem).
 		     by filter program
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
-                     made by the problem setter
-		     from XXXX&#8209;PPPP.fout file
-		     by simple copying (WARNING: affects scoring);
+                     made by simply copying
+		     the XXXX&#8209;PPPP.fout file
+		     (WARNING: affects scoring; made by problem
+		     setter; NOT made by problem solver);
 		     may be supplied by parent
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.score</td><td>Scoring Output File,
                      made from XXXX&#8209;PPPP.fout
                      and XXXX&#8209;PPPP.ftest files
-		     by scoring program, or
-                     made from XXXX&#8209;PPPP.sout
-                     and XXXX&#8209;PPPP.ftest files
-		     by filter and scoring programs, or
-                     made from XXXX&#8209;PPPP.in
-                     and XXXX&#8209;PPPP.ftest files
-		     by generate, solution, filter
-		     and scoring programs
+		     by scoring program
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.rout</td><td>Run output file,
                      made from XXXX&#8209;PPPP.run
@@ -1098,6 +1108,8 @@ creates the problem).
 <br>
 <strong>Working Files That Are Not Empty:</strong><br>
 <table class='extension'>
+<tr><td>PPPP.tout</td><td>LATEX output file
+                     made from PPPP.tex file</td></tr>
 <tr><td>PPPP.log</td><td>Log file of a LATEX compilation,
                          made from PPPP.tex file; like .tout
 			 file but with extra information</td></tr>
@@ -1113,10 +1125,11 @@ creates the problem).
 <p>
 The generate, filter, monitor, and scoring programs all follow
 the conventions that a line beginning `!!' is special, that
-a .in input file a line beginning `!!##' is a comment line and
-is removed so the solution never sees it,
-and that .sout solution output lines beginning `!!**' are
-comment lines that may be used for debugging output.
+input (.in) file lines beginning with `!!##' are comment lines
+and are removed (by the generate program) so the solution never sees them,
+and that solution output (.sout) file lines beginning with `!!**' are
+comment lines that may be used for debugging output (and are
+ignored by the scoring program).
 <p>
 Other lines beginning with `!!' should only be used in .in input
 files with generate programs that understand how to interpret them.
@@ -1127,7 +1140,8 @@ If you are writting your own problem, you may write a generate
 program (e.g., generate-PPPP.cc) that treats lines beginning with
 `!!<some-leter>' as instructions to generate a sequence of
 input lines, typically using a pseudo-random number generated
-built into the generate program (so it cannot be changed later)
+built into the generate program (so it will not change when
+standard libraries are updated)
 and seeded by a number in the input instruction line.
 <p>
 For example, `!!L seed m n' could generate a line containing
@@ -1189,7 +1203,8 @@ However this does not apply to solution source files: e.g.,
 you can have PPPP.c and PPPP.java at the same time.
 <p>
 When choosing names YYYY-PPPP.c for your solutions, you must
-avoid having YYYY end in `-generate', `-filter', or `-monitor',
+avoid having YYYY be any of `generate', `filter', or `monitor'
+or end in `-generate', `-filter', or `-monitor',
 as such files are treated not as solutions but as generate,
 filter, or monitor programs.
 </p>
@@ -1210,6 +1225,17 @@ The indications take the form of footnotes marked by
 <span class='notemark'>*</span>,
 <span class='notemark'>**</span>,
 <span class='notemark'>***</span>, etc.
+<p>
+The lines of kept files in the
+<a href="#current-problem-files">Current Problem Files</a>
+section
+are also highlighted by using a darker background color.  Some
+of these files, particularly PDF files, are automatically shown
+in a separate window.
+<p>
+The `<b>Delete Working Files and Command History</b>' button
+deletes this section and stops any kept files from being
+highlighted or automatically shown.
 </p>
 
 <a name="problem-working"><h2>Working Files of Last Executed Commands</h2></a>
@@ -1220,12 +1246,17 @@ same manner as the files in the
 <a href="#current-problem-files">Current Problem Files</a>
 section.
 <p>
+Working files that should be examined after an unsuccessful run
+are highlighted in yellow.  Some of these files may be automatically
+displayed.
+<p>
 Files that are kept on successful uploads or makes will
 remain as (usually non-empty)
 working files on unsuccessful uploads or makes.
 <p>
-Working files are deleted when a new set of commands is executed
-or when a .run file is run.
+Working files are deleted when a new set of commands is executed,
+when a .run file is run, or when the
+`<b>Delete Working Files and Command History</b>' button is clicked.
 </p>
 
 <a name="run-page"><h1>Run Page</h1></a>
