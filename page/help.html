@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Aug 18 20:27:55 EDT 2020
+Date:	Wed Aug 19 16:38:44 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1466,6 +1466,23 @@ template must have the `UPLOAD PPPP.cc' condition.
 As another example, a template used when a .run file is submitted
 must have the `SUBMIT' condition.
 Much of the time only templates with no conditions are selected.
+<p>
+After commands created by a template are executed, the list
+of <b>checks</b> defined by the template are processed.  Each
+check has the form [f1,f2,...] for file names f1, f2, ..., or the
+check is a single file name f which is equivalent to [f].
+For all the checks but the last, the check is ignored if f1
+does not exist or has zero size.  Generally f1 is an error file.
+If a check that is not the last is NOT ignored, then `f1 is not empty'
+is added to the error messages for the execution, and the first two
+showable files in the list f1, f2, ... are automatically shown.
+<p>
+The last check differs in that it is ignored only if the execution
+has errors, and otherwise is the list of files to be automatically
+shown.
+<p>
+Finally the template specifies a <b>keep</b> list of files that
+are to be kept if there are no errors in an execution.
 </p>
 
 <a name="list-page"><h1>List Page</h1></a>
