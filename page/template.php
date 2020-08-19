@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  8 02:30:31 EDT 2020
+    // Date:	Tue Aug 18 20:41:13 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -176,12 +176,23 @@ EOT;
 	    $description .= "<pre>$c</pre><br>";
 	$description .= "</div><div class='requires'>";
 	foreach ( ['REQUIRES', 'CREATABLE',
-	           'LOCAL-REQUIRES', 'REMOTE-REQUIRES']
+	           'LOCAL-REQUIRES', 'REMOTE-REQUIRES',
+		   'KEEP', 'SHOW']
 			  as $key )
 	{
 	    if ( ! isset ( $j[$key] ) ) continue;
+	    $keylist = [];
+	    foreach ( $j[$key] as $item )
+	    {
+	        if ( is_array ( $item ) )
+		    $keylist[] = "["
+		               . implode ( ",", $item )
+			       . "]";
+		else
+		    $keylist[] = $item;
+	    }
 	    $description .= "$key: <pre>"
-	                  . implode ( ", ", $j[$key] )
+	                  . implode ( ", ", $keylist )
 			  . "</pre><br>";
 	}
 	if ( isset ( $j['CONDITION'] ) )
