@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Aug 14 13:37:47 EDT 2020
+// Date:    Wed Aug 19 16:02:47 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -1724,10 +1724,15 @@ function start_make_file
 // wait.  If the run has died, has an error, or is still
 // running, an error message is appended to $errors.
 //
-// Next files in control SHOW that are readable in
-// $work['DIR'] are appended to the file list in
-// $work['SHOW'].  Note that readability is checked
-// before any files are moved to $probdir.
+// Next control CHECKS are processed.  Each check has
+// the form of a list [f1,f2,...] (a check that is a
+// single file f is equivalent to [f]).  All but the
+// last check means that if f1 exists and is non-empty,
+// then its being non-empty is an error, and f1, f2, ...
+// should be automatically shown.  The last check means
+// that if there are no errors, its f1, f2, ... are to
+// be shown.  Files to be shown are appended to
+// $work['SHOW'] if they are readable.
 //
 // Then if there have been errors and KEEP-ON-ERROR is
 // not set, this function exits.
@@ -1826,12 +1831,12 @@ function finish_make_file ( & $warnings, & $errors )
 	// Ignore previous errors, in particular,
 	// exit code error.
 
-    if ( isset ( $control[2]['SHOW'] ) )
+    if ( isset ( $control[2]['CHECKS'] ) )
     {
 	$d = "$epm_data/$workdir";
 	$found = NULL;
 	$found_last = true;
-        foreach ( $control[2]['SHOW'] as $item )
+        foreach ( $control[2]['CHECKS'] as $item )
 	{
 	    if ( isset ( $found ) )
 	    {
@@ -1868,7 +1873,11 @@ function finish_make_file ( & $warnings, & $errors )
 	    $errors[] = "$fname is not empty";
 	}
 
-	$work['SHOW'] = $found;
+	foreach ( $found as $fname )
+	{
+	    if ( is_readable ( "$d/$fname" ) )
+		$work['SHOW'][] = $fname;
+	}
     }
 
     if ( isset ( $control[2]['KEEP'] )

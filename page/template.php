@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug 18 20:41:13 EDT 2020
+    // Date:	Wed Aug 19 15:52:50 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -177,7 +177,7 @@ EOT;
 	$description .= "</div><div class='requires'>";
 	foreach ( ['REQUIRES', 'CREATABLE',
 	           'LOCAL-REQUIRES', 'REMOTE-REQUIRES',
-		   'KEEP', 'SHOW']
+		   'KEEP', 'CHECKS']
 			  as $key )
 	{
 	    if ( ! isset ( $j[$key] ) ) continue;
