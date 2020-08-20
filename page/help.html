@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Aug 19 16:38:44 EDT 2020
+Date:	Wed Aug 19 20:46:59 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1615,32 +1615,32 @@ When you first alter the favorites list, the `Go To ... Page'
 buttons are replaced by `SAVE' and `RESET' buttons.
 Changes you make are not recorded until you click `SAVE'.
 Clicking `RESET' restores Favorites to its previous state.
-You must then use one of these two buttons to get the `Go To ... Page'
+You must use one of these two buttons to get the `Go To ... Page'
 buttons to reappear.
 </p>
 
 <a name="view-page"><h1>View Page</h1></a>
 <p>
-The View Page allows you to see information about all users
-(not yet yourself), all project, and all problems.
+The View Page allows you to see lists of actions that involve
+a user, a project, or a project problem.
 <p>
-To view information about a user select the user.
+To view actions involving a user select the user.
 <p>
-To view information about a project select the project.
+To view actions involving a project select the project.
 <p>
-To view information about a problem, first select a problem
-list, and then select a problem from that list.
+To view actions involving a project problem, first select a problem
+list, and then select a project problem from that list.
 <p>
-Much of the information is in the form of action lists.
+The actions are displayed as action lists.
 You can exclude actions of particular types from these lists
-by clicking the `Include Action Types' ovals to turn
+by clicking the `Include' ovals to turn
 white any action types you want to exclude.
 <p>
 The actions are generally self explanatory.  For the submit
 actions, the 3 decimal digit number followed immediately
 by `s' is the maximum solution execution time in seconds.
 <p>
-Projects for which you have no privileges will NOT be
+Projects for which you do not have view privilege will NOT be
 visible on the View Page.  Such projects are usually used
 to prepare programming contest problems.
 </p>
@@ -1649,8 +1649,8 @@ to prepare programming contest problems.
 <p>
 The Manage Page allows you to view project and project problem
 privileges, to change these if you have owner privilege for
-a project or project problem, and to move problems between
-projects.
+a project or project problem.  The Manage Page also allows
+you to move problems between projects.
 <p>
 By selecting a project, you an look at the privilege file
 of the project, and if you have owner privilege for the project,
@@ -1679,11 +1679,14 @@ The following are the possible project privileges:
 		     the project problems to be included in
 		     the user's Favorites</td></tr>
 <tr><td>move&#8209;from</td><td>allows problems to be moved from the project
-                     (if move-to and re-push privileges allow)
+				to other projects
 		     </td></tr>
 <tr><td>move&#8209;to</td><td>allows problems to be moved to the project
-		      (if move-from and re-push privileges allow)
+                              from other projects
 		      </td></tr>
+<tr><td>download</td><td>allows a .tgz tar file to be made containing
+                     the project directory contents
+		     </td></tr>
 </table>
 </p>
 <p>
@@ -1693,26 +1696,26 @@ The following are the possible project problem privileges:
                          the project problem</td></tr>
 <tr><td>re&#8209;push</td><td>allows user to push a user problem
                               which has this project problem as its
-			      parent; also allows a user to move
-			      this project problem to another project
-			      (if move-from and move-to
-			      privileges allow)
+			      parent
                               </td></tr>
+<tr><td>download</td><td>allows a .tgz tar file to be made containing
+                     the project problem directory contents
+		     </td></tr>
 </table>
 <p>
 To determine privileges, lines in privilege files are processed in
 the order
 <ol>
-<li> Superuser line: `+ owner $epm_superuser';
-    here $epm_superuser is a parameter of the EPM Server, and
-    is a regular expression that is matched with the current
-    user ID to see if the current user has `owner' privileges
-    for everything.
-<li> project problem file lines, if the privileges
+<li> the $epm_priv_prefix EPM server parameter lines
+     (the parameter value is processed as if it were the
+     contents of a file)
+<li> project privilege file lines
+<li> project problem privilege file lines, if the privileges
      of a project problem are being determined
      (as opposed to the privileges of just a project)
-<li> project file lines
 </ol>
+The $epm_priv_prefix parameter is used to grant owner privileges to
+EPM server administrators.
 <p>
 A privilege file line is one of the following:
 <ul>

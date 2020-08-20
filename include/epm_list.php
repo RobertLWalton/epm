@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Aug 14 13:38:03 EDT 2020
+    // Date:	Thu Aug 20 04:04:38 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -238,12 +238,12 @@
 	$no_errors = ! isset ( $errors );
         prefix_priv_map ( $map, $errors );
 	read_priv_file
+	    ( $map, "projects/$project/+priv+",
+	      $epm_project_privs, $errors );
+	read_priv_file
 	    ( $map,
 	      "projects/$project/$problem/+priv+",
 	      $epm_problem_privs, $errors );
-	read_priv_file
-	    ( $map, "projects/$project/+priv+",
-	      $epm_project_privs, $errors );
 	if ( $no_errors && isset ( $errors )
 	                && count ( $errors ) > 0 )
 	    ERROR ( implode ( PHP_EOL, $errors ) );
@@ -258,14 +258,14 @@
     {
         global $epm_problem_privs, $epm_project_privs;
         prefix_priv_map ( $map, $errors );
+	read_priv_file
+	    ( $map, "projects/$project/+priv+",
+	      $epm_project_privs, $errors );
 	process_privs
 	    ( $map, $contents, $epm_problem_privs,
 	      $errors,
 	      "In proposed $project $problem" .
 	      " problem privilege file:" );
-	read_priv_file
-	    ( $map, "projects/$project/+priv+",
-	      $epm_project_privs, $errors );
     }
 
     // Return the list of projects that have one of

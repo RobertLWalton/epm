@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Aug 14 13:22:37 EDT 2020
+// Date:    Thu Aug 20 04:31:31 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -145,8 +145,8 @@ $epm_parent_re =
 
 $epm_project_privs =
     ['owner','push-new','pull-new','re-pull',
-     'view','move-to','move-from'];
-$epm_problem_privs = ['owner','re-push'];
+     'view','move-to','move-from','download'];
+$epm_problem_privs = ['owner','re-push','download'];
     // Privileges allowed in a project +priv+ or
     // project problem +priv+ file.
 

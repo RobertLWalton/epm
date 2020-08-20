@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Aug 14 13:25:09 EDT 2020
+    // Date:	Thu Aug 20 04:53:15 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -11,72 +11,6 @@
 
     // Displays and edits privileges, deletes and
     // renames project problems and projects.
-
-    // Permissions are granted by +priv+ files in
-    // project and project problems.  If a user has a
-    // privilege for a project, the user also has the
-    // privilege for all problems in the project.
-    //
-    // The privileges are:
-    //
-    //    Project and Project Problem Permissions:
-    //
-    //	    owner	Right to change +priv+ file
-    //			of project or problem.
-    //
-    //    Project Permissions:
-    //
-    //	    push-new	Right to push new problems into
-    //			project.
-    //
-    //	    pull-new	Right to pull project problem
-    //			that is NOT the parent of the
-    //			user problem being pulled,
-    //			which may not pre-exist.
-    //
-    //	    re-pull	Right to pull project problem
-    //			that IS the parent of the user
-    //                  problem being pulled.
-    //
-    //	    view	Right to view actions attached
-    //			to the project.
-    //
-    //    Project Problem Permissions:
-    //
-    //	    re-push	Right to re-push problem.
-    //
-    // Note that an owner does not have other permis-
-    // sions, but must change the +priv+ files to
-    // grant needed privileges to her/himself.
-    //
-    // A +priv+ file consists of entries of the form:
-    //
-    //	    S PRIV RE
-    //
-    // where PRIV is one of the privilege names, S is
-    // + to grant the privilege or - to deny it, and
-    // RE is a regular expression matched against the
-    // user's AID.  A +priv+ file line whose RE matches
-    // the current AID is said to be matching.  The
-    // +priv+ files are read one line at a time, and
-    // the first matching line for a particular permis-
-    // sion determines the result.  If there are no
-    // matching lines, privilege is denied.
-    // 
-    // Problem privileges are determined by reading
-    // the problem +priv+ file followed by the project
-    // +priv+ file, and using the first matching line,
-    // if any.  Thus the owner of a problem has more
-    // control over the problem than the owner of the
-    // project in which the problem lies.
-    //
-    // When a new problem is pushed, the problem is
-    // given a +priv+ file giving the pusher all of
-    // the above privileges.
-    //
-    // Lines in +priv+ files beginning with '#" are
-    // treated as comment lines and are ignored, as
-    // are blank lines.  REs cannot contain whitespace.
 
     // Session Data
     // ------- ----
@@ -228,6 +162,10 @@
 		$problem = $prob;
 	    }
 	}
+	elseif ( ! $rw )
+	    /* Do Nothing */;
+	    // From this point on posts are ignored if
+	    // $rw is false.
         elseif ( isset ( $_POST['download'] ) )
 	{
 	    if ( ! isset ( $problem )
@@ -243,11 +181,11 @@
 	    {
 		problem_priv_map
 		    ( $pmap, $project, $problem ); 
-		if ( ! isset ( $pmap['re-push'] )
+		if ( ! isset ( $pmap['download'] )
 		     ||
-		     $pmap['re-push'] != '+' )
+		     $pmap['download'] != '+' )
 		    $errors[] = "you do not have"
-		              . " re-push privilege"
+		              . " download privilege"
 			      . " on $project $problem";
 		else
 		{
@@ -275,10 +213,6 @@
 		    $download = "$n.tgz";
 	    }
 	}
-	elseif ( ! $rw )
-	    /* Do Nothing */;
-	    // From this point on posts are ignored if
-	    // $rw is false.
         elseif ( isset ( $_POST['warning'] )
 	         &&
 		 $_POST['warning'] == 'no' )
