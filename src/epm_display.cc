@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 21 13:09:36 EDT 2020
+// Date:	Sat Aug 22 05:10:40 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -389,165 +389,290 @@ vector operator ^ ( vector v, double angle )
     return r;
 }
 
+ostream & s << ( ostream & s, const vector & v )
+{
+    return s << "(" << v.x << "," << v.y << ")";
+}
+
 // Current page data.
 //
+struct color
+{
+    const char * name;
+    unsigned value;
+};
+
+color background;
+double scale;
+double top_margin, right_margin, bottom_margin,
+       left_margin; // In inches.
+int R, C;
+double height, width;    // logical
+double pheight, pwidth;  // physical
+
+
 struct command { command * next; char command; };
-enum width { SMALL = 1, MEDIUM = 2, LARGE = 3 };
-enum head { NEITHER = 0, BEGIN = 1, END = 2, BOTH = 3 };
-enum color { BLACK = 0, DARK_GRAY = 1,
-             MEDIUM_GRAY = 2, LIGHT_GRAY = 3 };
-struct qualifiers
+
+enum options {
+    BOLD		= 1 << 0,
+    ITALIC		= 1 << 1,
+    TOP 		= 1 << 2,
+    BOTTOM		= 1 << 3,
+    LEFT		= 1 << 4,
+    RIGHT		= 1 << 5,
+    BOX_WHITE		= 1 << 6,
+    CIRCLE_WHITE	= 1 << 7,
+    OUTLINE		= 1 << 8,
+    DOTTED		= 1 << 9,
+    DASHED		= 1 << 10,
+    FILL_SOLID		= 1 << 11,
+    FILL_CROSS		= 1 << 12,
+    FILL_RIGHT		= 1 << 13,
+    FILL_LEFT		= 1 << 14,
+    START_NONE		= 1 << 15,
+    START_ARROW		= 1 << 16,
+    START_REVERSE	= 1 << 17,
+    START_DOT		= 1 << 18,
+    STOP_NONE		= 1 << 19,
+    STOP_ARROW		= 1 << 20,
+    STOP_REVERSE	= 1 << 21,
+    STOP_DOT		= 1 << 22
+};
+char optchar[21] = "bitblrxco.-sx/\\nardnard";
+struct font : public command
 {
-    width w;
-    head dot;
-    head forward;
-    head rearward;
     color c;
-};
-struct point : public command
-{
-    vector p; // At p.
-    qualifiers q;
-};
-struct line : public command
-{
-    vector p1, p2;  // From p1 to p2.
-    qualifiers q;
-};
-struct arc : public command
-{
-    vector c;  // Center.
-    vector a;  // (x axis, y axis )
-    double r;
-    vector g;  // (g1,g2)
-    qualifiers q;
+    options o;
+	static options opt = ( BOLD + ITALIC );
+    double size;
+    double space;  // in ems
+    const char * family_name;
+    const char * cairo_family_name;
+        // These last are not allocated.
 };
 struct text : public command
 {
-    vector p; // At p.
-    string t; // Text to display.
-    qualifiers q;
-};
-struct margin : public command
-{
-    double t, b, l, r;
-};
-
-// List of all commands:
-//
-command * commands;
-
-// Delete first command.
-//
-void delete_command ( void )
-{
-    if ( commands == NULL ) return;
-    command * next = commands->next;
-
-    switch ( commands->command )
+    color c;
+    options o;
+	static options opt =
+	    ( TOP + BOTTOM + LEFT + RIGHT +
+	      BOX_WHITE + CIRCLE_WHITE + OUTLINE );
+    double space;  // in ems.
+    vector p;
+    const char * text;
+    text ( void )
     {
-    case 'P':
-	delete (point *) commands;
-	break;
-    case 'L':
-	delete (line *) commands;
-	break;
-    case 'A':
-	delete (arc *) commands;
-	break;
-    case 'T':
-	delete (text *) commands;
-	break;
-    case 'M':
-	delete (margin *) commands;
-	break;
-    default:
-	assert ( ! "deleting bad command" );
+        this->text = NULL;
     }
-    commands = next;
+    ~ text ( void )
+    {
+        delete[] this->text;
+    }
+};
+struct path : public command
+{
+    color c;
+    options o;
+	static options opt =
+	    ( DOTTED + DASHED +
+	      FILL_SOLID + FILL_CROSS +
+	      FILL_RIGHT + FILL_LEFT );
+	static options start_opt =
+	    ( START_ARROW + START_REVERSE + START_DOT );
+	static options stop_opt =
+	    ( START_ARROW + START_REVERSE + START_DOT );
+    vector p;
+    double width;
+};
+struct line : public command
+{
+    vector p;
+};
+struct curve : public command
+{
+    vector p1, p2, p3;
+};
+struct arc : public command
+{
+    vector c;
+    double r;
+    double g1, g2;
+};
+struct ellipse : public command
+{
+    vector c;
+    vector r;
+    double a;
+    double g1, g2;
+};
+struct dot : public command
+{
+    color c;
+    vector p;
+    double r;
+};
+
+// List of all commands in a page:
+//
+command * head = NULL, * foot = NULL,
+        * level[101] = { NULL };
+
+// Delete all commands in a list.
+//
+void delete_command ( command * list )
+{
+    while ( list )
+    {
+	switch ( list->command )
+	{
+	case 'f':
+	    delete (font *) list;
+	    break;
+	case 't':
+	    delete (text *) list;
+	    break;
+	case 'p':
+	    delete (path *) list;
+	    break;
+	case 'l':
+	    delete (line *) list;
+	    break;
+	case 'c':
+	    delete (curve *) list;
+	    break;
+	case 'a':
+	    delete (arc *) list;
+	    break;
+	case 'e':
+	    delete (ellipse *) list;
+	    break;
+	case 'd':
+	    delete (dot *) list;
+	    break;
+	default:
+	    assert ( ! "deleting bad command" );
+	}
+	list = next;
+    }
 }
+
+void init_page ( void )
+{
+TBD
+}
+
+// Print options for debugging:
+//
+ostream & poptions ( ostream & s, options opt )
+{
+    if ( opt == 0 ) return s;
+    else s << " ";
+    int s = strlen ( optchar );
+    for ( int i = 0; i < s; ++ i )
+        if ( opt & ( 1 << i ) ) s << optchar[i];
+    return s;
+}
+
 
 // Print command for debugging.
 //
-ostream & print_command_and_qualifiers
-	( ostream & s, char command,
-	  const qualifiers & q )
+ostream & print_command ( ostream & s, command * com )
 {
-    s << command
-      << ( q.w == SMALL ?  "S" :
-           q.w == MEDIUM ? "M" :
-           q.w == LARGE ?  "L" :
-                           "W?" )
-      << ( q.dot == NEITHER ? "" :
-           q.dot == BEGIN ?   "DB" :
-           q.dot == END ?     "DE" :
-           q.dot == BOTH ?    "D" :
-	                      "D?" )
-      << ( q.forward == NEITHER ? "" :
-           q.forward == BEGIN ?   "FB" :
-           q.forward == END ?     "FE" :
-           q.forward == BOTH ?    "F" :
-	                          "F?" )
-      << ( q.rearward == NEITHER ? "" :
-           q.rearward == BEGIN ?   "RB" :
-           q.rearward == END ?     "RE" :
-           q.rearward == BOTH ?    "R" :
-	                           "R?" )
-      << ( q.c == BLACK ? "" :
-           q.c == DARK_GRAY ?   "GGG" :
-           q.c == MEDIUM_GRAY ? "GG" :
-           q.c == LIGHT_GRAY ?  "G" :
-	                        "G?" );
-    return s;
-}
-//
-ostream & operator << ( ostream & s, const command & c )
-{
-    switch ( c.command )
+    switch ( c->command )
     {
-    case 'P':
-    {
-        point & P = * (point *) & c;
-	return print_command_and_qualifiers
-	       ( s, P.command, P.q )
-	    << " " << P.p.x << " " << P.p.y;
-    }
-    case 'L':
-    {
-        line & L = * (line *) & c;
-	return print_command_and_qualifiers
-	       ( s, L.command, L.q )
-	    << " " << L.p1.x << " " << L.p1.y
-	    << " " << L.p2.x << " " << L.p2.y;
-    }
-    case 'A':
-    {
-        arc & A = * (arc *) & c;
-	return print_command_and_qualifiers
-	       ( s, A.command, A.q )
-	    << " " << A.c.x << " " << A.c.y
-	    << " " << A.a.x << " " << A.a.y
-	    << " " << A.r
-	    << " " << A.g.x << " " << A.g.y;
-    }
-    case 'T':
-    {
-        text & T = * (text *) & c;
-	return print_command_and_qualifiers
-	       ( s, T.command, T.q )
-	    << " " << T.p.x << " " << T.p.y
-	    << " " << T.t;
-    }
-    case 'M':
-    {
-        margin & M = * (margin *) & c;
-	return s << M.command << " "
-	         << M.t << " " << M.b << " "
-		 << M.l << " " << M.r;
-    }
+    case 'f':
+        {
+	    font * f = (font *) com;
+	    s << "f" << f->c.name
+	      << poptions ( f->o & font::opt )
+	      << " " << f->size * 72 << "pt"
+	      << " " << f->space << "em"
+	      << " " << f->p.x
+	      << " " << f->p.y
+	      << " " << f->family;
+	}
+	break;
+    case 't':
+        {
+	    text * t = (text *) com;
+	    s << "t" << t->c.name
+	      << poptions ( t->o & text::opt )
+	      << " " << t->space << "em"
+	      << " " << t->p.x
+	      << " " << t->p.y
+	      << " " << t->text;
+	}
+	break;
+    case 'p':
+        {
+	    path * p = (path *) com;
+	    s << "p" << p->c.name
+	      << poptions ( p->o & path::opt )
+	      << poptions ( p->o & path::start_opt )
+	      << poptions ( p->o & path::stop_opt )
+	      << " " << p->p.x
+	      << " " << p->p.y
+	      << " " << p->width * 72 << "pt";
+	}
+	break;
+    case 'l':
+        {
+	    line * l = (line *) com;
+	    s << "l"
+	      << " " << l->p.x
+	      << " " << l->p.y;
+	}
+	break;
+    case 'c':
+        {
+	    curve * c =  (curve *) com;
+	    s << "c"
+	      << " " << l->p1.x
+	      << " " << l->p1.y
+	      << " " << l->p2.x
+	      << " " << l->p2.y
+	      << " " << l->p3.x
+	      << " " << l->p3.y;
+	}
+	break;
+    case 'a':
+        {
+	    arc * a = (arc *) com;
+	    s << "a"
+	      << " " << a->c.x
+	      << " " << a->c.y
+	      << " " << a->r
+	      << " " << a->g1
+	      << " " << a->g2;
+	}
+	break;
+    case 'e':
+        {
+	    ellipse * e = (ellipse *) com;
+	    s << "e"
+	      << " " << e->c.x
+	      << " " << e->c.y
+	      << " " << e->r.x
+	      << " " << e->r.y
+	      << " " << e->a
+	      << " " << e->g1
+	      << " " << e->g2;
+	}
+	break;
+    case 'd':
+        {
+	    dot * d = (dot *) com;
+	    s << "d"
+	      << " " << d->c.name
+	      << " " << d->p.x
+	      << " " << d->p.y
+	      << " " << d->r;
+	}
+	break;
     default:
-        return s << "BAD COMMAND " << c.command;
+	cout << "bad command" << com->command;
     }
+    return s;
 }
 
 // Read page commands.  Return true if read and false if
