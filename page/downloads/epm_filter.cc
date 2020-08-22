@@ -2,7 +2,7 @@
 //
 // File:	epm_filter.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Jun 24 14:22:23 EDT 2020
+// Date:	Sat Aug 22 15:16:26 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -46,6 +46,7 @@ void error ( const char * format... )
     va_start ( args, format );
     cout << "ERROR: line: " << line_number << ": ";
     vprintf ( format, args );
+    va_end ( args );
     cout << endl;
 }
  

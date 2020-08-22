@@ -2,7 +2,7 @@
 //
 // File:	epm_generate.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Mon Jul 13 05:35:45 EDT 2020
+// Date:	Sat Aug 22 15:16:54 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -40,6 +40,7 @@ void error ( const char * format... )
     va_start ( args, format );
     cerr << "ERROR: line: " << line_number << ": ";
     vfprintf ( stderr, format, args );
+    va_end ( args );
     cerr << endl;
     exit ( 1 );
 }

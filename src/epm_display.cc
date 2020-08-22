@@ -22,6 +22,7 @@
 #include <sstream>
 
 #include <cstdlib>
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 #include <cctype>
@@ -36,6 +37,7 @@ using std::ws;
 using std::istream;
 using std::ostream;
 using std::ifstream;
+using std::istringstream;
 using std::min;
 using std::max;
 using std::string;
@@ -45,10 +47,38 @@ extern "C" {
 #include <cairo-pdf.h>
 }
 
+// Current page data.
+//
+struct color
+{
+    const char * name;
+    unsigned value;
+};
+
+color colors = {
+#    include "epm_colors.h"
+    , { "", 0 }, {"", 0 }
+        // So we can print groups of 3.
+};
+
+// Return color from colors array with given name,
+// or if none, return color with name "".
+//
+const color & find_color ( const char * name )
+{
+    color * c = colors;
+    while ( c->name[0] != 0 )
+    {
+        if ( strcmp ( c->name, name ) == 0 )
+	    break;
+    }
+    return * c;
+}
+
 bool debug = false;
 # define dout if ( debug ) cerr
 
-const char * const documentation = "\n"
+const char * const documentation[2] = { "\n"
 "hpcm_display [-RxC] [-debug] [file]\n"
 "\n"
 "    This program displays line drawings defined\n"
@@ -97,32 +127,7 @@ const char * const documentation = "\n"
 "\n"
 "    Many commands have a `color' parameter.  The\n"
 "    possible colors are:\n"
-"\n"
-"        aqua            aquamarine      azure\n"
-"        beige           bisque          black\n"
-"        blue            brown           chartreuse\n"
-"        chocolate       coral           cornsilk\n"
-"        crimson         cyan            darkblue\n"
-"        darkgray        darkgrey        darkgreen\n"
-"        darkkhaki       darkmagenta     darkorange\n"
-"        darkorchid      darkred         darksalmon\n"
-"        darkturquoise   darkviolet      deeppink\n"
-"        dimgray         dimgrey         fuchsia\n"
-"        gold            gray            grey\n"
-"        green           indigo          ivory\n"
-"        khaki           lavender        lightblue\n"
-"        lightcoral      lightcyan       lightgray\n"
-"        lightgrey       lightgreen      lightpink\n"
-"        lightsalmon     lightyellow     lime\n"
-"        linen           magenta         maroon\n"
-"        moccasin        navy            olive\n"
-"        orange          orchid          peru\n"
-"        pink            plum            purple\n"
-"        red             salmon          sienna\n"
-"        silver          snow            tan\n"
-"        teal            thistle         tomato\n"
-"        turquoise       violet          wheat\n"
-"        white           yellow\n"
+"\n",
 "\n"
 "    These are defined as per the HTML standard.\n"
 "\n"
@@ -234,12 +239,12 @@ const char * const documentation = "\n"
 "    Head and Foot Commands:\n"
 "    ---- --- ---- --------\n"
 "\n"
-"        t TEXT1\\TEXT2\\TEXT3\n"
+"        text TEXT1\\TEXT2\\TEXT3\n"
 "           Display text as a line.  TEXT1 is left\n"
 "           adjusted; TEXT2 is centered; TEXT3 is\n"
 "           right adjusted.\n"
 "\n"
-"        s SPACE\n"
+"        space SPACE\n"
 "           Insert whitespace of SPACE height.\n"
 "\n"
 "        These commands can only appear on the head or\n"
@@ -250,7 +255,7 @@ const char * const documentation = "\n"
 "    ---- --------\n"
 "\n"
 "\n"
-"        t [COLOR] [OPTIONS] [SPACE] X Y TEXT\\...\n"
+"        text [COLOR] [OPTIONS] [SPACE] X Y TEXT\\...\n"
 "          Display text at point (X,Y) which must\n"
 "          be in body coordinates.\n"
 "          OPTIONS are:\n"
@@ -275,7 +280,7 @@ const char * const documentation = "\n"
 "          by backslashes (\\).  Lines are always\n"
 "          centered with respect to each other.\n"
 "\n"
-"        p [COLOR] [OPTION] [START STOP] [X Y]"
+"        path [COLOR] [OPTION] [START STOP] [X Y]"
                                         " [WIDTH]\n"
 "          Begin a path at (X,Y) which must be in\n"
 "          body coordinates.\n"
@@ -301,17 +306,17 @@ const char * const documentation = "\n"
 "          If X, Y not given, the next command in\n"
 "          path must be `a' or `e'.\n"
 "\n"
-"        l X Y\n"
+"        line X Y\n"
 "          Continue path by straight line to (X,Y)\n"
 "          which must be in body coordinates.\n"
 "\n"
-"        c X1 Y1 X2 Y2 X3 Y3\n"
+"        curve X1 Y1 X2 Y2 X3 Y3\n"
 "          Continue path by a curve to (X3,Y3)\n"
 "          with control points (X1,Y1) and (X2,Y2)\n"
 "          where all points must be in body coordi-\n"
 "          nates.\n"
 "\n"
-"        a XC YC R [G1 G2]\n"
+"        arc XC YC R [G1 G2]\n"
 "          Start or continue path by a circular arc\n"
 "          with center (XC,YC), radius R, and if\n"
 "          given start point at angle G1 and stop\n"
@@ -329,7 +334,7 @@ const char * const documentation = "\n"
 "          to G1 or G2 does not affect the designa-\n"
 "          ted points.\n"
 "\n"
-"        e XC YC RX RY A [G1 G2]\n"
+"        ellipse XC YC RX RY A [G1 G2]\n"
 "          Like `a' but for an elliptical arc drawn\n"
 "          as follows.\n"
 "\n"
@@ -341,7 +346,7 @@ const char * const documentation = "\n"
 "          the whole is rotated by `A' degrees.\n"
 "\n"
 "    The -RxC option overrides the `layout' command.\n"
-;
+} ;
 
 // Vectors:
 //
@@ -393,23 +398,6 @@ ostream & s << ( ostream & s, const vector & v )
 {
     return s << "(" << v.x << "," << v.y << ")";
 }
-
-// Current page data.
-//
-struct color
-{
-    const char * name;
-    unsigned value;
-};
-
-color background;
-double scale;
-double top_margin, right_margin, bottom_margin,
-       left_margin; // In inches.
-int R, C;
-double height, width;    // logical
-double pheight, pwidth;  // physical
-
 
 struct command { command * next; char command; };
 
@@ -512,14 +500,133 @@ struct dot : public command
     double r;
 };
 
+// Layout Parameters
+//
+color L_background;
+double L_scale;
+double L_top, L_right, L_bottom, L_left; // In inches.
+double L_height, L_width;
+int R, C;
+
+struct font
+{
+    char name[100];
+    color c;
+    options o;
+    char * family;
+    char * cairo_family;
+    double size;
+    double space;
+};
+
+struct line
+{
+    char name[100];
+    color c;
+    options o;
+    double width;
+};
+
+typedef map<const char *, const font *> font_dt;
+typedef map<const char *, const line *> line_dt;
+font_dt font_dictionary;
+line_dt line_dictionary;
+
+font default_fonts[] = {
+    {
+	"large-bold",
+	BOLD,
+	"serif",
+	"cairo:serif",
+	14.0/72,
+	1.15
+    },
+    {
+	"large-bold",
+	BOLD,
+	"serif",
+	"cairo:serif",
+	12.0/72,
+	1.15
+    },
+    {
+	"large-bold",
+	BOLD,
+	"serif",
+	"cairo:serif",
+	10.0/72,
+	1.15
+    },
+    {
+	"large",
+	0,
+	"serif",
+	"cairo:serif",
+	14.0/72,
+	1.15
+    },
+    {
+	"large",
+	0,
+	"serif",
+	"cairo:serif",
+	12.0/72,
+	1.15
+    }
+};
+
+font small_normal = {
+    "large",
+    0,
+    "serif",
+    "cairo:serif",
+    10.0/72,
+    1.15
+};
+
+void init_layout ( void )
+{
+    
+    L_background = find_color ( "white" );
+    L_scale = 1.0;
+    L_height = 11.0;
+    L_width = 8.5;
+    L_top = L_right = L_bottom = L_left = 0.25;
+    R = C = 1;
+
+    for ( font_dt::iterator it = font_dict.begin();
+          it != font_dict.end(); ++ it )
+        delete (font *) it->second;
+
+    for ( line_dt::iterator it = line_dict.begin();
+          it != line_dict.end(); ++ it )
+        delete (line *) it->second;
+
+    font_dictionary.clear();
+
+    size_t len = sizeof ( default_fonts )
+               / sizeof ( default_fonts[1] );
+    for ( size_t i = 0; i < len; ++ i )
+        map[& default_fonts[i].name] =
+	    & default_fonts[i];
+}
+
+// Page Data
+//
+color background;
+double scale;
+double top, right, bottom, left; // In inches.
+double height, width;
+
+
 // List of all commands in a page:
 //
 command * head = NULL, * foot = NULL,
         * level[101] = { NULL };
 
-// Delete all commands in a list.
+// Delete all commands in a list and set list NULL.
 //
-void delete_command ( command * list )
+void delete_commands ( command * & list )
 {
     while ( list )
     {
@@ -554,11 +661,24 @@ void delete_command ( command * list )
 	}
 	list = next;
     }
+    list = NULL;
 }
 
 void init_page ( void )
 {
-TBD
+    background = G_background;
+    scale = G_scale;
+    height = G_height / R;
+    width = G_width / C;
+    top = G_top / R;
+    bottom = G_bottom / R;
+    right = G_right / C;
+    left = G_left / C;
+
+    delete_commands ( head );
+    delete_commands ( foot );
+    for ( int i = 1; i <= 100; ++ i )
+        delete_commands ( level[i] );
 }
 
 // Print options for debugging:
@@ -583,7 +703,7 @@ ostream & print_command ( ostream & s, command * com )
     case 'f':
         {
 	    font * f = (font *) com;
-	    s << "f" << f->c.name
+	    s << "font" << f->c.name
 	      << poptions ( f->o & font::opt )
 	      << " " << f->size * 72 << "pt"
 	      << " " << f->space << "em"
@@ -595,7 +715,7 @@ ostream & print_command ( ostream & s, command * com )
     case 't':
         {
 	    text * t = (text *) com;
-	    s << "t" << t->c.name
+	    s << "text" << t->c.name
 	      << poptions ( t->o & text::opt )
 	      << " " << t->space << "em"
 	      << " " << t->p.x
@@ -606,7 +726,7 @@ ostream & print_command ( ostream & s, command * com )
     case 'p':
         {
 	    path * p = (path *) com;
-	    s << "p" << p->c.name
+	    s << "path" << p->c.name
 	      << poptions ( p->o & path::opt )
 	      << poptions ( p->o & path::start_opt )
 	      << poptions ( p->o & path::stop_opt )
@@ -618,7 +738,7 @@ ostream & print_command ( ostream & s, command * com )
     case 'l':
         {
 	    line * l = (line *) com;
-	    s << "l"
+	    s << "line"
 	      << " " << l->p.x
 	      << " " << l->p.y;
 	}
@@ -626,7 +746,7 @@ ostream & print_command ( ostream & s, command * com )
     case 'c':
         {
 	    curve * c =  (curve *) com;
-	    s << "c"
+	    s << "curve"
 	      << " " << l->p1.x
 	      << " " << l->p1.y
 	      << " " << l->p2.x
@@ -638,7 +758,7 @@ ostream & print_command ( ostream & s, command * com )
     case 'a':
         {
 	    arc * a = (arc *) com;
-	    s << "a"
+	    s << "arc"
 	      << " " << a->c.x
 	      << " " << a->c.y
 	      << " " << a->r
@@ -649,7 +769,7 @@ ostream & print_command ( ostream & s, command * com )
     case 'e':
         {
 	    ellipse * e = (ellipse *) com;
-	    s << "e"
+	    s << "ellipse"
 	      << " " << e->c.x
 	      << " " << e->c.y
 	      << " " << e->r.x
@@ -662,7 +782,7 @@ ostream & print_command ( ostream & s, command * com )
     case 'd':
         {
 	    dot * d = (dot *) com;
-	    s << "d"
+	    s << "dot"
 	      << " " << d->c.name
 	      << " " << d->p.x
 	      << " " << d->p.y
@@ -758,154 +878,124 @@ void skip ( istream & in )
             isspace ( c ) && c != '\n' )
         in.get();
 }
+string line;
+unsigned line_number = 0;
+const int MAX_LINE_LENGTH = 56;
+
+void error ( const char * format, va_list args )
+{
+    cerr << "ERROR in line " << line_number
+         << ":" << endl << "    " << line << endl;
+    fprintf ( stderr, "    " );
+    p += vsprintf ( p, format, args );
+    fprintf ( stderr, "\n" );
+}
+
+void error ( const char * format... )
+{
+    va_list args;
+    va_start ( args, format );
+    error ( format, args );
+    va_end ( args );
+}
+
+void fatal ( const char * format... )
+{
+    cerr << "FATAL ";
+    va_list args;
+    va_start ( args, format );
+    error ( format, args );
+    va_end ( args );
+    exit ( 1 );
+}
+
+const char * whitespace = " \t\f\v\n\r";
 bool read_page ( istream & in )
 {
-    while ( commands != NULL )
-        delete_command();
-        
-    bool done = false;
-    bool started = false;
-    bool past_header = false;
-    while ( ! done )
+    init_page();
+
+    while ( true )
     {
-	int op = in.peek();
+        getline ( in, line );
+	if ( ! in )
+	{
+	    cerr << "WARNING: unexpected end of file;"
+	         << " * inserted" << endl;
+	    line = "*";
+	}
+	else
+	    ++ line_number;
 
-        if ( in.eof() )
-	{
-	    if ( ! started ) break;
-	    else return false;
-	}
+	// Skip comments.
+	//
+	size_t first = line.find_first_not_of
+	    ( whitespace );
+	if ( first == string::npos ) continue;
+	if ( line[first] == '#' ) continue;
+	if ( line[first] == '!' ) continue;
 
-	if ( op == 'H' && past_header )
-	    break;
-	if ( op != 'H' ) past_header = true;
-	started = true;
+	istringstream lin ( line );
 
-	++ line_number;
-	int errors = 0;
-#	define ERROR(s) { \
-	    cerr << "ERROR in line " << line_number \
-	         << ": " << s << " - line ignored" \
-		 << endl; \
-	    ++ errors; \
-	    }
+	string op;
+	in >> op;
 
-	switch ( op )
+	if ( op == "background" )
 	{
-	case 'P':
-	{
-	    point & P = * new point();
-	    P.next = commands;
-	    commands = & P;
-	    in >> P.command;
-	    assert ( P.command == 'P' );
-	    read_qualifiers ( in, P.q, false );
-	    in >> P.p.x >> P.p.y;
-	    break;
 	}
-	case 'L':
+	else if ( op == "scale" )
 	{
-	    line & L = * new line();
-	    L.next = commands;
-	    commands = & L;
-	    in >> L.command;
-	    assert ( L.command == 'L' );
-	    read_qualifiers ( in, L.q );
-	    in >> L.p1.x >> L.p1.y >> L.p2.x >> L.p2.y;
-	    break;
 	}
-	case 'A':
+	else if ( op == "margin" )
 	{
-	    arc & A = * new arc();
-	    A.next = commands;
-	    commands = & A;
-	    in >> A.command;
-	    assert ( A.command == 'A' );
-	    read_qualifiers ( in, A.q );
-	    in >> A.c.x >> A.c.y >> A.a.x >> A.a.y
-	       >> A.r >> A.g.x >> A.g.y;
-	    if ( in.good() )
-	    {
-	        if ( A.a.x <= 0 )
-		    ERROR ( "x semi-axis < 0" )
-	        if ( A.a.y <= 0 )
-		    ERROR ( "y semi-axis < 0" )
-	    }
-	    break;
 	}
-	case 'T':
+	else if ( op == "layout" )
 	{
-	    text & T = * new text();
-	    T.next = commands;
-	    commands = & T;
-	    in >> T.command;
-	    assert ( T.command == 'T' );
-	    read_qualifiers ( in, T.q );
-	    in >> T.p.x >> T.p.y;
-	    while ( in.peek() != '\n' )
-	        T.t.push_back ( in.get() );
-	    int f = 0, l = T.t.size();
-	    while ( f < l && isspace ( T.t[f] ) )
-	        ++ f;
-	    while ( f < l && isspace ( T.t[l-1] ) )
-	        ++ l;
-	    T.t = T.t.substr ( f, l - f );
-	    break;
 	}
-	case 'M':
+	else if ( op == "head" )
 	{
-	    margin & M = * new margin();
-	    M.next = commands;
-	    commands = & M;
-	    in >> M.command;
-	    assert ( M.command == 'M' );
-	    in >> M.t >> M.b >> M.l >> M.r;
-	    break;
 	}
-	default:
+	else if ( op == "foot" )
 	{
-	    cerr << "ERROR in line " << line_number
-	         << "; cannot understand command `"
-		 << (char) in.peek()
-		 << "' line ignored" << endl;
-	    string line;
-	    getline ( in, line );
+	}
+	else if ( op == "level" )
+	{
+	}
+	else if ( op == "font" )
+	{
+	}
+	else if ( op == "text" )
+	{
+	}
+	else if ( op == "space" )
+	{
+	}
+	else if ( op == "path" )
+	{
+	}
+	else if ( op == "line" )
+	{
+	}
+	else if ( op == "curve" )
+	{
+	}
+	else if ( op == "arc" )
+	{
+	}
+	else if ( op == "ellipse" )
+	{
+	}
+	else if ( op == "dot" )
+	{
+	}
+	else if ( op == "*" )
+	    break;
+	else
+	{
+	    error ( "cannot understand %s;"
+	            "line ignored", op.c_str() );
 	    continue;
 	}
-	}
-#       undef ERROR
-
-	if ( ! in.good() )
-	{
-	    cerr << "ERROR in line " << line_number
-		 << ": line - ignored"
-		 << endl;
-	    delete_command();
-
-	    in.clear();
-	    string extra;
-	    getline ( in, extra );
-	}
-	else if ( errors > 0 )
-	{
-	    delete_command();
-
-	    in.clear();
-	    string extra;
-	    getline ( in, extra );
-	}
-	else if ( skip ( in ), in.get() != '\n' )
-	{
-	    cerr << "ERROR in line " << line_number
-		 << ": extra stuff at end of line"
-		    " - ignored"
-		 << endl;
-	    string extra;
-	    getline ( in, extra );
-	    cerr << "STUFF: " << extra << endl;
-	}
     }
-    return true;
 }
 
 // For pdf output, units are 1/72".
@@ -1323,7 +1413,16 @@ void draw_page ( void )
 void print_documentation ( int exit_code )
 {
     FILE * out = popen ( "less -F", "w" );
-    fputs ( documentation, out );
+    fputs ( documentation[0], out );
+
+    int len = sizeof ( colors ) / sizeof ( color );
+    for ( int i = 0; i + 3 <= len; i += 3 )
+	fprintf ( out, "    %-16s%-16s%-16s\n",
+	          colors[i].name,
+	          colors[i+1].name,
+	          colors[i+2].name );
+
+    fputs ( documentation[1], out );
     pclose ( out );
     exit ( exit_code );
 }
