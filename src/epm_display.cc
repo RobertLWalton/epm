@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 23 16:04:30 EDT 2020
+// Date:	Sun Aug 23 17:20:58 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -726,7 +726,7 @@ struct arc : public command // == 'a'
 };
 struct dot : public command // == 'd'
 {
-    color c;
+    stroke * s;
     vector p;
     double r;
 };
@@ -741,6 +741,7 @@ struct ellipse : public command // == 'p'
     vector c;
     vector r;
 };
+
 color background;
 double scale;
 double top, right, bottom, left; // In inches.
@@ -753,6 +754,115 @@ double height, width;
 //
 command * head = NULL, * foot = NULL,
         * level[101] = { NULL };
+
+
+// Print all commands in a list for debugging.
+//
+void print_commands ( command * & list )
+{
+    if ( list == NULL ) return;
+    command * current = list;
+    command * first = current->next;
+    do
+    {
+        command * next = current->next;
+
+	switch ( next->command )
+	{
+	case 't':
+	{
+	    text * t = (text *) next;
+	    cout << "text " << t->f->name
+	         << " " << t->o
+		 << " " << t->p
+		 << " " << t->t
+		 << endl;
+	    break;
+	}
+	case 'S':
+	{
+	    space * s = (space *) next;
+	    cout << "space " << s->s << "in"
+		 << endl;
+	    break;
+	}
+	case 's':
+	{
+	    start * s = (start *) next;
+	    cout << "start " << s->s->name
+		 << " " << s->p
+		 << endl;
+	    break;
+	}
+	case 'l':
+	{
+	    line * l = (line *) next;
+	    cout << "line " << l->p
+		 << endl;
+	    break;
+	}
+	case 'c':
+	{
+	    curve * c = (curve *) next;
+	    cout << "curve " << c->p[0]
+	         << " " << c->p[1]
+	         << " " << c->p[2]
+		 << endl;
+	    break;
+	}
+	case 'e':
+	    cout << "end" << endl;
+	    break;
+	case 'a':
+	{
+	    arc * a = (arc *) next;
+	    cout << "arc " << a->s->name
+	         << " " << a->c
+	         << " " << a->r
+	         << " " << a->a
+	         << " " << a->g1
+	         << " " << a->g2
+		 << endl;
+	    break;
+	}
+	case 'd':
+	{
+	    dot * d = (dot *) next;
+	    cout << "dot " << d->s->name
+	         << " " << d->p
+	         << " " << d->r
+		 << endl;
+	    break;
+	}
+	case 'r':
+	{
+	    rectangle * r = (rectangle *) next;
+	    cout << "rectangle " << r->s->name
+	         << " " << r->p[0]
+	         << " " << r->p[1]
+	         << " " << r->p[2]
+	         << " " << r->p[3]
+		 << endl;
+	    break;
+	}
+	case 'p':
+	{
+	    ellipse * e = (ellipse *) next;
+	    cout << "ellipse " << e->s->name
+	         << " " << e->c
+	         << " " << e->r
+		 << endl;
+	    break;
+	}
+	default:
+	    cout << "bad command " << next->command
+	         << endl;
+	}
+
+	current = next;
+
+    } while ( current != first );
+}
 
 // Delete all commands in a list and set list NULL.
 //
@@ -826,200 +936,18 @@ void init_page ( void )
 }
 
 
-// Print command for debugging.
-//
-ostream & print_command ( ostream & s, command * com )
-{
-    switch ( c->command )
-    {
-    case 'f':
-        {
-	    font * f = (font *) com;
-	    s << "font" << f->c.name
-	      << poptions ( f->o & font::opt )
-	      << " " << f->size * 72 << "pt"
-	      << " " << f->space << "em"
-	      << " " << f->p.x
-	      << " " << f->p.y
-	      << " " << f->family;
-	}
-	break;
-    case 't':
-        {
-	    text * t = (text *) com;
-	    s << "text" << t->c.name
-	      << poptions ( t->o & text::opt )
-	      << " " << t->space << "em"
-	      << " " << t->p.x
-	      << " " << t->p.y
-	      << " " << t->text;
-	}
-	break;
-    case 'p':
-        {
-	    path * p = (path *) com;
-	    s << "path" << p->c.name
-	      << poptions ( p->o & path::opt )
-	      << poptions ( p->o & path::start_opt )
-	      << poptions ( p->o & path::stop_opt )
-	      << " " << p->p.x
-	      << " " << p->p.y
-	      << " " << p->width * 72 << "pt";
-	}
-	break;
-    case 'l':
-        {
-	    line * l = (line *) com;
-	    s << "line"
-	      << " " << l->p.x
-	      << " " << l->p.y;
-	}
-	break;
-    case 'c':
-        {
-	    curve * c =  (curve *) com;
-	    s << "curve"
-	      << " " << l->p1.x
-	      << " " << l->p1.y
-	      << " " << l->p2.x
-	      << " " << l->p2.y
-	      << " " << l->p3.x
-	      << " " << l->p3.y;
-	}
-	break;
-    case 'a':
-        {
-	    arc * a = (arc *) com;
-	    s << "arc"
-	      << " " << a->c.x
-	      << " " << a->c.y
-	      << " " << a->r
-	      << " " << a->g1
-	      << " " << a->g2;
-	}
-	break;
-    case 'e':
-        {
-	    ellipse * e = (ellipse *) com;
-	    s << "ellipse"
-	      << " " << e->c.x
-	      << " " << e->c.y
-	      << " " << e->r.x
-	      << " " << e->r.y
-	      << " " << e->a
-	      << " " << e->g1
-	      << " " << e->g2;
-	}
-	break;
-    case 'd':
-        {
-	    dot * d = (dot *) com;
-	    s << "dot"
-	      << " " << d->c.name
-	      << " " << d->p.x
-	      << " " << d->p.y
-	      << " " << d->r;
-	}
-	break;
-    default:
-	cout << "bad command" << com->command;
-    }
-    return s;
-}
-
 // Read page commands.  Return true if read and false if
 // end of file.
 //
-int line_number = 0;
-
-void read_qualifiers
-    ( istream & in,
-      qualifiers & q, bool heads_allowed = true )
-{
-    head * last_head = NULL;
-    q.w = SMALL;
-    q.dot = NEITHER;
-    q.forward = NEITHER;
-    q.rearward = NEITHER;
-    q.c = BLACK;
-    while ( ! isspace ( in.peek() ) )
-    {
-	int c = in.get();
-	bool found = true;
-	switch ( c )
-	{
-	case 'S': q.w = SMALL;
-	          break;
-	case 'M': q.w = MEDIUM;
-	          break;
-	case 'L': q.w = LARGE;
-	          break;
-	case 'G': q.c = (color) ( ( q.c + 3 ) % 4 );
-	          break;
-	default:  found = false;
-	}
-	if ( ! found && heads_allowed )
-	{
-	    found = true;
-	    switch ( c )
-	    {
-	    case 'D': q.dot = BOTH;
-		      last_head = & q.dot;
-		      break;
-	    case 'F': q.forward = BOTH;
-		      last_head = & q.forward;
-		      break;
-	    case 'R': q.rearward = BOTH;
-		      last_head = & q.rearward;
-		      break;
-	    case 'B':
-	    case 'E':
-		      if ( last_head == NULL )
-			  cerr << "ERROR in line "
-			       << line_number
-			       << ": no preceeding"
-			          " D, F, or R - `"
-			       << (char) c
-			       << "' ignored" << endl;
-		      else if ( * last_head != BOTH )
-			  cerr << "ERROR in line "
-			       << line_number
-			       << ": B and E conflict"
-			          " - `"
-			       << (char) c
-			       << "' ignored" << endl;
-		      else
-			  * last_head =
-			      ( c == 'B' ? BEGIN
-			                 : END );
-		      break;
-	    default:  found = false;  
-	    }
-	}
-
-	if ( ! found )
-	    cerr << "ERROR in line " << line_number
-		 << ": unknown qualifer `" << (char) c
-		 << "' - ignored" << endl;
-    }
-}
-void skip ( istream & in )
-{
-    int c;
-    while ( c = in.peek(),
-            isspace ( c ) && c != '\n' )
-        in.get();
-}
 string line;
 unsigned line_number = 0;
-const int MAX_LINE_LENGTH = 56;
 
 void error ( const char * format, va_list args )
 {
     cerr << "ERROR in line " << line_number
          << ":" << endl << "    " << line << endl;
     fprintf ( stderr, "    " );
-    p += vsprintf ( p, format, args );
+    vfprintf ( stderr, format, args );
     fprintf ( stderr, "\n" );
 }
 
@@ -1041,16 +969,23 @@ void fatal ( const char * format... )
     exit ( 1 );
 }
 
+// Read section.
+//
+enum section { END_OF_FILE, LAYOUT, PAGE };
 const char * whitespace = " \t\f\v\n\r";
-bool read_page ( istream & in )
+section read_page ( istream & in )
 {
-    init_page();
+
+    section s = END_OF_FILE;
+    command ** list;
 
     while ( true )
     {
         getline ( in, line );
 	if ( ! in )
 	{
+	    if ( s == END_OF_FILE ) return s;
+
 	    cerr << "WARNING: unexpected end of file;"
 	         << " * inserted" << endl;
 	    line = "*";
@@ -1071,6 +1006,32 @@ bool read_page ( istream & in )
 	string op;
 	in >> op;
 
+	if ( s == END_OF_FILE )
+	{
+	    // First op of section.
+	    //
+	    if ( op == "layout" )
+	    {
+	        s = LAYOUT;
+		init_layout();
+	    }
+	    else
+	    {
+	        s = PAGE;
+		init_page();
+		list = & level[50];
+	    }
+	}
+
+	if ( op == "layout" && s == LAYOUT )
+	{
+	}
+	else if ( op == "font" && s == LAYOUT )
+	{
+	}
+	else if ( op == "stroke" && s == LAYOUT )
+	{
+	}
 	if ( op == "background" )
 	{
 	}
@@ -1080,51 +1041,48 @@ bool read_page ( istream & in )
 	else if ( op == "margin" )
 	{
 	}
-	else if ( op == "layout" )
+	else if ( op == "head" && s == PAGE )
 	{
 	}
-	else if ( op == "head" )
+	else if ( op == "foot" && s == PAGE )
 	{
 	}
-	else if ( op == "foot" )
+	else if ( op == "level" && s == PAGE )
 	{
 	}
-	else if ( op == "level" )
+	else if ( op == "text" && s == PAGE )
 	{
 	}
-	else if ( op == "font" )
+	else if ( op == "space" && s == PAGE )
 	{
 	}
-	else if ( op == "text" )
+	else if ( op == "start" && s == PAGE )
 	{
 	}
-	else if ( op == "space" )
+	else if ( op == "line" && s == PAGE )
 	{
 	}
-	else if ( op == "path" )
+	else if ( op == "curve" && s == PAGE )
 	{
 	}
-	else if ( op == "line" )
+	else if ( op == "arc" && s == PAGE )
 	{
 	}
-	else if ( op == "curve" )
+	else if ( op == "ellipse" && s == PAGE )
 	{
 	}
-	else if ( op == "arc" )
-	{
-	}
-	else if ( op == "ellipse" )
-	{
-	}
-	else if ( op == "dot" )
+	else if ( op == "dot" && s == PAGE )
 	{
 	}
 	else if ( op == "*" )
 	    break;
 	else
 	{
-	    error ( "cannot understand %s;"
-	            "line ignored", op.c_str() );
+	    error ( "cannot understand %s"
+	            " in %s section;"
+	            " line ignored",
+		    op.c_str(),
+		    s == LAYOUT ? "layout" : "page" );
 	    continue;
 	}
     }
