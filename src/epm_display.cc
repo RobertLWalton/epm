@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 23 09:26:28 EDT 2020
+// Date:	Sun Aug 23 15:14:54 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -17,6 +17,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <map>
 #include <algorithm>
 #include <string>
 #include <sstream>
@@ -38,6 +39,7 @@ using std::istream;
 using std::ostream;
 using std::ifstream;
 using std::istringstream;
+using std::map;
 using std::min;
 using std::max;
 using std::string;
@@ -55,7 +57,7 @@ struct color
     unsigned value;
 };
 
-color colors = {
+color colors[] = {
 #    include "epm_colors.h"
     , { "", 0 }, {"", 0 }
         // So we can print groups of 3.
@@ -154,7 +156,8 @@ const char * const documentation[2] = { "\n"
 "    ------ --------\n"
 "\n"
 "      These commands can be given in a layout\n"
-"      section.  The `background', `scale', and `margin'
+"      section.  The `background', `scale', and"
+				" `margin'\n"
 "      commands may also be used in a page section to\n"
 "      override some layout parameters for the page.\n"
 "      The `layout' command must be the first\n"
@@ -196,8 +199,8 @@ const char * const documentation[2] = { "\n"
 "              between text lines and must have em\n"
 "              units; default 1.15em\n"
 "\n"
-"      line NAME [WIDTH] [COLOR] [OPT]\n"
-"        Defines a named line type.\n"
+"      stroke NAME [WIDTH] [COLOR] [OPT]\n"
+"        Defines a named line stroke.\n"
 "\n"
 "        WIDTH is the line width.  Default for non-\n"
 "              fill lines is 1pt, and for fill\n"
@@ -363,6 +366,23 @@ const char * const documentation[2] = { "\n"
 "        recognized.\n"
 } ;
 
+void print_documentation ( int exit_code )
+{
+    FILE * out = popen ( "less -F", "w" );
+    fputs ( documentation[0], out );
+
+    int len = sizeof ( colors ) / sizeof ( color );
+    for ( int i = 0; i + 3 <= len; i += 3 )
+	fprintf ( out, "    %-16s%-16s%-16s\n",
+	          colors[i].name,
+	          colors[i+1].name,
+	          colors[i+2].name );
+
+    fputs ( documentation[1], out );
+    pclose ( out );
+    exit ( exit_code );
+}
+
 // Vectors:
 //
 struct vector { double x, y; };
@@ -409,7 +429,7 @@ vector operator ^ ( vector v, double angle )
     return r;
 }
 
-ostream & s << ( ostream & s, const vector & v )
+ostream & operator << ( ostream & s, const vector & v )
 {
     return s << "(" << v.x << "," << v.y << ")";
 }
@@ -417,103 +437,27 @@ ostream & s << ( ostream & s, const vector & v )
 struct command { command * next; char command; };
 
 enum options {
+    NO_OPTIONS          = 0,
     BOLD		= 1 << 0,
     ITALIC		= 1 << 1,
-    TOP 		= 1 << 2,
-    BOTTOM		= 1 << 3,
-    LEFT		= 1 << 4,
-    RIGHT		= 1 << 5,
-    BOX_WHITE		= 1 << 6,
-    CIRCLE_WHITE	= 1 << 7,
-    OUTLINE		= 1 << 8,
-    DOTTED		= 1 << 9,
-    DASHED		= 1 << 10,
-    FILL_SOLID		= 1 << 11,
-    FILL_CROSS		= 1 << 12,
-    FILL_RIGHT		= 1 << 13,
-    FILL_LEFT		= 1 << 14,
-    START_NONE		= 1 << 15,
-    START_ARROW		= 1 << 16,
-    START_REVERSE	= 1 << 17,
-    START_DOT		= 1 << 18,
-    STOP_NONE		= 1 << 19,
-    STOP_ARROW		= 1 << 20,
-    STOP_REVERSE	= 1 << 21,
-    STOP_DOT		= 1 << 22
+    DOTTED		= 1 << 2,
+    DASHED		= 1 << 3,
+    BEGIN_ARROW		= 1 << 4,
+    MIDDLE_ARROW	= 1 << 5,
+    END_ARROW		= 1 << 6,
+    FILL_SOLID		= 1 << 7,
+    FILL_CROSS		= 1 << 8,
+    FILL_RIGHT		= 1 << 9,
+    FILL_LEFT		= 1 << 10,
+    TOP 		= 1 << 11,
+    BOTTOM		= 1 << 12,
+    LEFT		= 1 << 13,
+    RIGHT		= 1 << 14,
+    BOX_WHITE		= 1 << 15,
+    CIRCLE_WHITE	= 1 << 16,
+    OUTLINE		= 1 << 17,
 };
-char optchar[21] = "bitblrxco.-sx/\\nardnard";
-struct font : public command
-{
-    color c;
-    options o;
-	static options opt = ( BOLD + ITALIC );
-    double size;
-    double space;  // in ems
-    const char * family_name;
-    const char * cairo_family_name;
-        // These last are not allocated.
-};
-struct text : public command
-{
-    color c;
-    options o;
-	static options opt =
-	    ( TOP + BOTTOM + LEFT + RIGHT +
-	      BOX_WHITE + CIRCLE_WHITE + OUTLINE );
-    double space;  // in ems.
-    vector p;
-    const char * text;
-    text ( void )
-    {
-        this->text = NULL;
-    }
-    ~ text ( void )
-    {
-        delete[] this->text;
-    }
-};
-struct path : public command
-{
-    color c;
-    options o;
-	static options opt =
-	    ( DOTTED + DASHED +
-	      FILL_SOLID + FILL_CROSS +
-	      FILL_RIGHT + FILL_LEFT );
-	static options start_opt =
-	    ( START_ARROW + START_REVERSE + START_DOT );
-	static options stop_opt =
-	    ( START_ARROW + START_REVERSE + START_DOT );
-    vector p;
-    double width;
-};
-struct line : public command
-{
-    vector p;
-};
-struct curve : public command
-{
-    vector p1, p2, p3;
-};
-struct arc : public command
-{
-    vector c;
-    double r;
-    double g1, g2;
-};
-struct ellipse : public command
-{
-    vector c;
-    vector r;
-    double a;
-    double g1, g2;
-};
-struct dot : public command
-{
-    color c;
-    vector p;
-    double r;
-};
+const char * optchar = "bi.-bmesx/\\tblrxco";
 
 // Layout Parameters
 //
@@ -523,18 +467,24 @@ double L_top, L_right, L_bottom, L_left; // In inches.
 double L_height, L_width;
 int R, C;
 
+options font_options = (options) ( BOLD + ITALIC );
 struct font
 {
     char name[100];
     color c;
     options o;
-    char * family;
+    const char * family;
     char cairo_family[100];
     double size;
     double space;
 };
 
-struct line
+options stroke_options = (options)
+    ( DOTTED + DASHED +
+      BEGIN_ARROW + MIDDLE_ARROW + END_ARROW +
+      FILL_SOLID + FILL_CROSS +
+      FILL_RIGHT + FILL_LEFT );
+struct stroke
 {
     char name[100];
     color c;
@@ -543,23 +493,24 @@ struct line
 };
 
 typedef map<const char *, const font *> font_dt;
-typedef map<const char *, const line *> line_dt;
+typedef map<const char *, const stroke *> stroke_dt;
 font_dt font_dict;
-line_dt line_dict;
+stroke_dt stroke_dict;
 typedef font_dt::iterator font_it;
-typedef line_dt::iterator line_it;
+typedef stroke_dt::iterator stroke_it;
 
 // Make a new font with given name, discarding any
 // previous font with that name.
 //
-make_font ( const char * name, color c, options o,
-            const char * family,
-	    double size, double space )
+void make_font ( const char * name,
+                 color c, options o,
+                 const char * family,
+	         double size, double space )
 {
     font_it it = font_dict.find ( name );
     if ( it != font_dict.end() )
         font_dict.erase ( it );
-    font f * = new font;
+    font * f = new font;
     assert (    strlen ( name ) + 1
              <= sizeof ( f->name ) );
     strcpy ( f->name, name );
@@ -575,24 +526,24 @@ make_font ( const char * name, color c, options o,
     font_dict[f->name] = f;
 }
 
-// Make a new line with given name, discarding any
-// previous line with that name.
+// Make a new stroke with given name, discarding any
+// previous stroke with that name.
 //
-make_line ( const char * name, color c, options o,
-	    double width )
+void make_stroke ( const char * name,
+                   color c, options o, double width )
 {
-    line_it it = line_dict.find ( name );
-    if ( it != line_dict.end() )
-        line_dict.erase ( it );
-    line l * = new line;
+    stroke_it it = stroke_dict.find ( name );
+    if ( it != stroke_dict.end() )
+        stroke_dict.erase ( it );
+    stroke * s = new stroke;
     assert (    strlen ( name ) + 1
-             <= sizeof ( l->name ) );
-    strcpy ( l->name, name );
-    l->c = c;
-    l->o = o;
-    l->width = width;
+             <= sizeof ( s->name ) );
+    strcpy ( s->name, name );
+    s->c = c;
+    s->o = o;
+    s->width = width;
 
-    line_dict[l->name] = l;
+    stroke_dict[s->name] = s;
 }
 
 
@@ -610,14 +561,14 @@ void init_layout ( int R, int C )
           it != font_dict.end(); ++ it )
         delete (font *) it->second;
 
-    for ( line_dt::iterator it = line_dict.begin();
-          it != line_dict.end(); ++ it )
-        delete (line *) it->second;
+    for ( stroke_dt::iterator it = stroke_dict.begin();
+          it != stroke_dict.end(); ++ it )
+        delete (stroke *) it->second;
 
-    font_dictionary.clear();
-    line_dictionary.clear();
+    font_dict.clear();
+    stroke_dict.clear();
 
-    black = find_color ( "black" );
+    color black = find_color ( "black" );
 
     if ( C == 1 )
     {
@@ -631,26 +582,26 @@ void init_layout ( int R, int C )
 	            BOLD, "serif",
 	            10.0/72, 1.15 );
         make_font ( "large", black,
-	            0, "serif",
+	            NO_OPTIONS, "serif",
 	            14.0/72, 1.15 );
         make_font ( "normal", black,
-	            0, "serif",
+	            NO_OPTIONS, "serif",
 	            12.0/72, 1.15 );
         make_font ( "small", black,
-	            0, "serif",
+	            NO_OPTIONS, "serif",
 	            10.0/72, 1.15 );
-	make_line ( "wide", blank,
-		    0, 2.0/72 );
-	make_line ( "normal", blank,
-		    0, 1.0/72 );
-	make_line ( "narrow", blank,
-		    0, 0.5/72 );
-	make_line ( "wide-dashed", blank,
-		    DASHED, 2.0/72 );
-	make_line ( "normal-dashed", blank,
-		    DASHED, 1.0/72 );
-	make_line ( "narrow-dashed", blank,
-		    DASHED, 0.5/72 );
+	make_stroke ( "wide", black,
+		      NO_OPTIONS, 2.0/72 );
+	make_stroke ( "normal", black,
+		      NO_OPTIONS, 1.0/72 );
+	make_stroke ( "narrow", black,
+		      NO_OPTIONS, 0.5/72 );
+	make_stroke ( "wide-dashed", black,
+		      DASHED, 2.0/72 );
+	make_stroke ( "normal-dashed", black,
+		      DASHED, 1.0/72 );
+	make_stroke ( "narrow-dashed", black,
+		      DASHED, 0.5/72 );
     }
     else
     {
@@ -664,31 +615,77 @@ void init_layout ( int R, int C )
 	            BOLD, "serif",
 	            8.0/72, 1.15 );
         make_font ( "large", black,
-	            0, "serif",
+	            NO_OPTIONS, "serif",
 	            12.0/72, 1.15 );
         make_font ( "normal", black,
-	            0, "serif",
+	            NO_OPTIONS, "serif",
 	            10.0/72, 1.15 );
         make_font ( "small", black,
-	            0, "serif",
+	            NO_OPTIONS, "serif",
 	            8.0/72, 1.15 );
-	make_line ( "wide", blank,
-		    0, 1.0/72 );
-	make_line ( "normal", blank,
-		    0, 0.5/72 );
-	make_line ( "narrow", blank,
-		    0, 0.25/72 );
-	make_line ( "wide-dashed", blank,
-		    DASHED, 1.0/72 );
-	make_line ( "normal-dashed", blank,
-		    DASHED, 0.5/72 );
-	make_line ( "narrow-dashed", blank,
-		    DASHED, 0.25/72 );
+	make_stroke ( "wide", black,
+		      NO_OPTIONS, 1.0/72 );
+	make_stroke ( "normal", black,
+		      NO_OPTIONS, 0.5/72 );
+	make_stroke ( "narrow", black,
+		      NO_OPTIONS, 0.25/72 );
+	make_stroke ( "wide-dashed", black,
+		      DASHED, 1.0/72 );
+	make_stroke ( "normal-dashed", black,
+		      DASHED, 0.5/72 );
+	make_stroke ( "narrow-dashed", black,
+		      DASHED, 0.25/72 );
     }
 }
 
+// TBD
+
 // Page Data
 //
+options text_options = (options)
+    ( TOP + BOTTOM + LEFT + RIGHT +
+      BOX_WHITE + CIRCLE_WHITE + OUTLINE );
+struct text : public command
+{
+    font * f;
+    options o;
+    vector p;
+    const char * t;
+    text ( void )
+    {
+        this->t = NULL;
+    }
+    ~ text ( void )
+    {
+        delete[] this->t;
+    }
+};
+struct start : public command
+{
+    stroke * s;
+    vector p;
+};
+struct line : public command
+{
+    vector p;
+};
+struct curve : public command
+{
+    vector p1, p2, p3;
+};
+struct arc : public command
+{
+    vector c;
+    vector r;
+    double a;
+    double g1, g2;
+};
+struct dot : public command
+{
+    color c;
+    vector p;
+    double r;
+};
 color background;
 double scale;
 double top, right, bottom, left; // In inches.
@@ -1484,23 +1481,6 @@ void draw_page ( void )
 	    break;
 	}
     }
-}
-
-void print_documentation ( int exit_code )
-{
-    FILE * out = popen ( "less -F", "w" );
-    fputs ( documentation[0], out );
-
-    int len = sizeof ( colors ) / sizeof ( color );
-    for ( int i = 0; i + 3 <= len; i += 3 )
-	fprintf ( out, "    %-16s%-16s%-16s\n",
-	          colors[i].name,
-	          colors[i+1].name,
-	          colors[i+2].name );
-
-    fputs ( documentation[1], out );
-    pclose ( out );
-    exit ( exit_code );
 }
 
 // Main program.
