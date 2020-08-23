@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 23 15:14:54 EDT 2020
+// Date:	Sun Aug 23 16:04:30 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -265,7 +265,7 @@ const char * const documentation[2] = { "\n"
 "    Head and Foot Commands:\n"
 "    ---- --- ---- --------\n"
 "\n"
-"        These commands can only appear on the head or\n"
+"        These commands can only appear on the head\n"
 "        or foot list.\n"
 "\n"
 "        text TEXT1\\TEXT2\\TEXT3\n"
@@ -307,7 +307,7 @@ const char * const documentation[2] = { "\n"
 "        by backslashes (\\).  Lines are always\n"
 "        centered with respect to each other.\n"
 "\n"
-"      start LINE X Y\n"
+"      start STROKE X Y\n"
 "        Begin a path at (X,Y) which must be in\n"
 "        body coordinates.\n"
 "\n"
@@ -330,7 +330,7 @@ const char * const documentation[2] = { "\n"
 "        continue the path (i.e., any command but\n"
 "        `line' or `curve').\n"
 "\n"
-"      arc LINE XC YC RX RY A [G1 G2]\n"
+"      arc STROKE XC YC RX RY A [G1 G2]\n"
 "        Draw an elliptical arc of given line type as\n"
 "        follows.\n"
 "\n"
@@ -350,19 +350,19 @@ const char * const documentation[2] = { "\n"
 "        If G1 and G2 are not given they default to\n"
 "        0 and 360 respectively.\n"
 "\n"
-"        A fill option in LINE is only recognized if\n"
-"        G1 and G2 are not given.\n"
+"        A fill option in STROKE is only recognized\n"
+"        if G1 and G2 are not given.\n"
 "\n"
-"      rectangle LINE XMIN XMAX YMIN YMAX\n"
-"        Draw a rectangle with given LINE type and\n"
+"      rectangle STROKE XMIN XMAX YMIN YMAX\n"
+"        Draw a rectangle with given STROKE type and\n"
 "        minumum and maximum X and Y coordinates.\n"
-"        Arrow options in LINE are not recognized.\n"
+"        Arrow options in STROKE are not recognized.\n"
 "\n"
-"      ellipse LINE XMIN XMAX YMIN YMAX\n"
-"        Draw an ellipse with given LINE type and\n"
+"      ellipse STROKE XMIN XMAX YMIN YMAX\n"
+"        Draw an ellipse with given STROKE type and\n"
 "        minumum and maximum X and Y coordinates.\n"
 "        The ellipse axes are parallel to the X and\n"
-"        Y axes.  Arrow options in LINE are not\n"
+"        Y axes.  Arrow options in STROKE are not\n"
 "        recognized.\n"
 } ;
 
@@ -434,8 +434,6 @@ ostream & operator << ( ostream & s, const vector & v )
     return s << "(" << v.x << "," << v.y << ")";
 }
 
-struct command { command * next; char command; };
-
 enum options {
     NO_OPTIONS          = 0,
     BOLD		= 1 << 0,
@@ -458,6 +456,18 @@ enum options {
     OUTLINE		= 1 << 17,
 };
 const char * optchar = "bi.-bmesx/\\tblrxco";
+
+// Print options for debugging:
+//
+ostream & operator << ( ostream & s, options opt )
+{
+    if ( opt == 0 ) return s;
+    else s << " ";
+    int len = strlen ( optchar );
+    for ( int i = 0; i < len; ++ i )
+        if ( opt & ( 1 << i ) ) s << optchar[i];
+    return s;
+}
 
 // Layout Parameters
 //
@@ -544,6 +554,40 @@ void make_stroke ( const char * name,
     s->width = width;
 
     stroke_dict[s->name] = s;
+}
+
+// Print fonts for debugging.
+//
+void print_fonts ( void )
+{
+    for ( font_dt::iterator it = font_dict.begin();
+          it != font_dict.end(); ++ it )
+    {
+        const font * f = it->second;
+	cout << "font " << f->name
+	     << " " << 72 * f->size << "pt"
+	     << " " << f->c.name
+	     << " " << f->o
+	     << " " << f->family
+	     << " " << f->space << "em"
+	     << endl;
+    }
+}
+
+// Print strokes for debugging.
+//
+void print_strokes ( void )
+{
+    for ( stroke_dt::iterator it = stroke_dict.begin();
+          it != stroke_dict.end(); ++ it )
+    {
+        const stroke * s = it->second;
+	cout << "stroke " << s->name
+	     << " " << 72 * s->width << "pt"
+	     << " " << s->c.name
+	     << " " << s->o
+	     << endl;
+    }
 }
 
 
@@ -638,53 +682,64 @@ void init_layout ( int R, int C )
     }
 }
 
-// TBD
-
 // Page Data
 //
+struct command { command * next; char command; };
+
 options text_options = (options)
     ( TOP + BOTTOM + LEFT + RIGHT +
       BOX_WHITE + CIRCLE_WHITE + OUTLINE );
-struct text : public command
+struct text : public command // == 't'
 {
     font * f;
     options o;
     vector p;
-    const char * t;
-    text ( void )
-    {
-        this->t = NULL;
-    }
-    ~ text ( void )
-    {
-        delete[] this->t;
-    }
+    string t;
 };
-struct start : public command
+struct space : public command // == 'S'
+{
+    double s;
+};
+struct start : public command // == 's'
 {
     stroke * s;
     vector p;
 };
-struct line : public command
+struct line : public command // == 'l'
 {
     vector p;
 };
-struct curve : public command
+struct curve : public command // == 'c'
 {
-    vector p1, p2, p3;
+    vector p[3];
 };
-struct arc : public command
+struct end : public command // == 'e'
 {
+};
+struct arc : public command // == 'a'
+{
+    stroke * s;
     vector c;
     vector r;
     double a;
     double g1, g2;
 };
-struct dot : public command
+struct dot : public command // == 'd'
 {
     color c;
     vector p;
     double r;
+};
+struct rectangle : public command // == 'r'
+{
+    stroke * s;
+    vector p[4];
+};
+struct ellipse : public command // == 'p'
+{
+    stroke * s;
+    vector c;
+    vector r;
 };
 color background;
 double scale;
@@ -692,7 +747,9 @@ double top, right, bottom, left; // In inches.
 double height, width;
 
 
-// List of all commands in a page:
+// List of all commands in a page.  The list variable
+// points at the last element which points at the first
+// element with its next member.
 //
 command * head = NULL, * foot = NULL,
         * level[101] = { NULL };
@@ -701,69 +758,71 @@ command * head = NULL, * foot = NULL,
 //
 void delete_commands ( command * & list )
 {
-    while ( list )
+    command * last = list;
+    if ( last == NULL ) return;
+
+    command * current = last;
+    do
     {
+        command * next = current->next;
+
 	switch ( list->command )
 	{
-	case 'f':
-	    delete (font *) list;
-	    break;
 	case 't':
-	    delete (text *) list;
+	    delete (text *) current;
 	    break;
-	case 'p':
-	    delete (path *) list;
+	case 'S':
+	    delete (space *) current;
+	    break;
+	case 's':
+	    delete (start *) current;
 	    break;
 	case 'l':
-	    delete (line *) list;
+	    delete (line *) current;
 	    break;
 	case 'c':
-	    delete (curve *) list;
-	    break;
-	case 'a':
-	    delete (arc *) list;
+	    delete (curve *) current;
 	    break;
 	case 'e':
-	    delete (ellipse *) list;
+	    delete (end *) current;
+	    break;
+	case 'a':
+	    delete (arc *) current;
 	    break;
 	case 'd':
-	    delete (dot *) list;
+	    delete (dot *) current;
+	    break;
+	case 'r':
+	    delete (rectangle *) current;
+	    break;
+	case 'p':
+	    delete (ellipse *) current;
 	    break;
 	default:
 	    assert ( ! "deleting bad command" );
 	}
-	list = next;
-    }
+
+	current = next;
+    } while ( current != last );
+
     list = NULL;
 }
 
 void init_page ( void )
 {
-    background = G_background;
-    scale = G_scale;
-    height = G_height / R;
-    width = G_width / C;
-    top = G_top / R;
-    bottom = G_bottom / R;
-    right = G_right / C;
-    left = G_left / C;
+    background = L_background;
+    scale = L_scale;
+    height = L_height / R;
+    width = L_width / C;
+    top = L_top / R;
+    bottom = L_bottom / R;
+    right = L_right / C;
+    left = L_left / C;
 
     delete_commands ( head );
     delete_commands ( foot );
     for ( int i = 1; i <= 100; ++ i )
         delete_commands ( level[i] );
-}
-
-// Print options for debugging:
-//
-ostream & poptions ( ostream & s, options opt )
-{
-    if ( opt == 0 ) return s;
-    else s << " ";
-    int s = strlen ( optchar );
-    for ( int i = 0; i < s; ++ i )
-        if ( opt & ( 1 << i ) ) s << optchar[i];
-    return s;
 }
 
 
