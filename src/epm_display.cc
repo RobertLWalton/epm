@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Aug 22 05:10:40 EDT 2020
+// Date:	Sat Aug 22 22:27:20 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -514,7 +514,7 @@ struct font
     color c;
     options o;
     char * family;
-    char * cairo_family;
+    char cairo_family[100];
     double size;
     double space;
 };
@@ -529,70 +529,67 @@ struct line
 
 typedef map<const char *, const font *> font_dt;
 typedef map<const char *, const line *> line_dt;
-font_dt font_dictionary;
-line_dt line_dictionary;
+font_dt font_dict;
+line_dt line_dict;
+typedef font_dt::iterator font_it;
+typedef line_dt::iterator line_it;
 
-font default_fonts[] = {
-    {
-	"large-bold",
-	BOLD,
-	"serif",
-	"cairo:serif",
-	14.0/72,
-	1.15
-    },
-    {
-	"large-bold",
-	BOLD,
-	"serif",
-	"cairo:serif",
-	12.0/72,
-	1.15
-    },
-    {
-	"large-bold",
-	BOLD,
-	"serif",
-	"cairo:serif",
-	10.0/72,
-	1.15
-    },
-    {
-	"large",
-	0,
-	"serif",
-	"cairo:serif",
-	14.0/72,
-	1.15
-    },
-    {
-	"large",
-	0,
-	"serif",
-	"cairo:serif",
-	12.0/72,
-	1.15
-    }
-};
-
-font small_normal = {
-    "large",
-    0,
-    "serif",
-    "cairo:serif",
-    10.0/72,
-    1.15
-};
-
-void init_layout ( void )
+// Make a new font with given name, discarding any
+// previous font with that name.
+//
+make_font ( const char * name, color c, options o,
+            const char * family,
+	    double size, double space )
 {
-    
+    font_it it = font_dict.find ( name );
+    if ( it != font_dict.end() )
+        font_dict.erase ( it );
+    font f * = new font;
+    assert (    strlen ( name ) + 1
+             <= sizeof ( f->name ) );
+    strcpy ( f->name, name );
+    f->c = c;
+    f->o = o;
+    f->family = family;
+    assert (    strlen ( family ) + 7
+             <= sizeof ( f->cairo_family ) );
+    sprintf ( f->cairo_family, "cairo:%s", family );
+    f->size = size;
+    f->space = space;
+
+    font_dict[f->name] = f;
+}
+
+// Make a new line with given name, discarding any
+// previous line with that name.
+//
+make_line ( const char * name, color c, options o,
+	    double width )
+{
+    line_it it = line_dict.find ( name );
+    if ( it != line_dict.end() )
+        line_dict.erase ( it );
+    line l * = new line;
+    assert (    strlen ( name ) + 1
+             <= sizeof ( l->name ) );
+    strcpy ( l->name, name );
+    l->c = c;
+    l->o = o;
+    l->width = width;
+
+    line_dict[l->name] = l;
+}
+
+
+void init_layout ( int R, int C )
+{
     L_background = find_color ( "white" );
     L_scale = 1.0;
     L_height = 11.0;
     L_width = 8.5;
     L_top = L_right = L_bottom = L_left = 0.25;
-    R = C = 1;
+    ::R = R;
+    ::C = C;
 
     for ( font_dt::iterator it = font_dict.begin();
           it != font_dict.end(); ++ it )
@@ -603,12 +600,76 @@ void init_layout ( void )
         delete (line *) it->second;
 
     font_dictionary.clear();
+    line_dictionary.clear();
 
-    size_t len = sizeof ( default_fonts )
-               / sizeof ( default_fonts[1] );
-    for ( size_t i = 0; i < len; ++ i )
-        map[& default_fonts[i].name] =
-	    & default_fonts[i];
+    black = find_color ( "black" );
+
+    if ( C == 1 )
+    {
+        make_font ( "large-bold", black,
+	            BOLD, "serif",
+	            14.0/72, 1.15 );
+        make_font ( "bold", black,
+	            BOLD, "serif",
+	            12.0/72, 1.15 );
+        make_font ( "small-bold", black,
+	            BOLD, "serif",
+	            10.0/72, 1.15 );
+        make_font ( "large", black,
+	            0, "serif",
+	            14.0/72, 1.15 );
+        make_font ( "normal", black,
+	            0, "serif",
+	            12.0/72, 1.15 );
+        make_font ( "small", black,
+	            0, "serif",
+	            10.0/72, 1.15 );
+	make_line ( "wide", blank,
+		    0, 2.0/72 );
+	make_line ( "normal", blank,
+		    0, 1.0/72 );
+	make_line ( "narrow", blank,
+		    0, 0.5/72 );
+	make_line ( "wide-dashed", blank,
+		    DASHED, 2.0/72 );
+	make_line ( "normal-dashed", blank,
+		    DASHED, 1.0/72 );
+	make_line ( "narrow-dashed", blank,
+		    DASHED, 0.5/72 );
+    }
+    else
+    {
+        make_font ( "large-bold", black,
+	            BOLD, "serif",
+	            12.0/72, 1.15 );
+        make_font ( "bold", black,
+	            BOLD, "serif",
+	            10.0/72, 1.15 );
+        make_font ( "small-bold", black,
+	            BOLD, "serif",
+	            8.0/72, 1.15 );
+        make_font ( "large", black,
+	            0, "serif",
+	            12.0/72, 1.15 );
+        make_font ( "normal", black,
+	            0, "serif",
+	            10.0/72, 1.15 );
+        make_font ( "small", black,
+	            0, "serif",
+	            8.0/72, 1.15 );
+	make_line ( "wide", blank,
+		    0, 1.0/72 );
+	make_line ( "normal", blank,
+		    0, 0.5/72 );
+	make_line ( "narrow", blank,
+		    0, 0.25/72 );
+	make_line ( "wide-dashed", blank,
+		    DASHED, 1.0/72 );
+	make_line ( "normal-dashed", blank,
+		    DASHED, 0.5/72 );
+	make_line ( "narrow-dashed", blank,
+		    DASHED, 0.25/72 );
+    }
 }
 
 // Page Data
