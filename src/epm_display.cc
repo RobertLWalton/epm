@@ -1037,6 +1037,8 @@ bool get_double ( void )
     return true;
 }
 
+// Read long integer without units.
+//
 bool read_long ( const char * name, long & var,
                  long low, long high,
                  bool missing_allowed = true )
@@ -1044,7 +1046,7 @@ bool read_long ( const char * name, long & var,
     if ( ! get_long() )
     {
         if ( missing_allowed ) return true;
-	error ( "%s missing or unrecognizable", name );
+	error ( "%s missing", name );
 	return false;
     }
     if ( units != "" )
@@ -1060,6 +1062,91 @@ bool read_long ( const char * name, long & var,
 	return false;
     }
     var = token_long;
+    return true;
+}
+
+// Read double body coordinates without units.
+//
+bool read_double ( const char * name, double & var,
+                   double low, double high,
+                   bool missing_allowed = true )
+{
+    if ( ! get_double() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    if ( units != "" )
+    {
+	error ( "%s should not have units %s",
+	        name, units.c_str() );
+	return false;
+    }
+    if ( token_double < low || token_double > high )
+    {
+        error ( "%s out of range [%f,%f]",
+	        name, low, high );
+	return false;
+    }
+    var = token_double;
+    return true;
+}
+
+// Read double length with units.
+//
+bool read_length ( const char * name, double & var,
+                   double low, double high,
+                   bool missing_allowed = true )
+{
+    if ( ! get_double() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    if ( units == "pt" )
+        token_double /= 72;
+    else if ( units != "in" )
+    {
+	error ( "%s should have pt or in units",
+	        name );
+	return false;
+    }
+    if ( token_double < low || token_double > high )
+    {
+        error ( "%s out of range [%f,%f]",
+	        name, low, high );
+	return false;
+    }
+    var = token_double;
+    return true;
+}
+
+// Read double with em units.
+//
+bool read_em ( const char * name, double & var,
+               double low, double high,
+               bool missing_allowed = true )
+{
+    if ( ! get_double() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    if ( units != "em" )
+    {
+	error ( "%s should have em units", name );
+	return false;
+    }
+    if ( token_double < low || token_double > high )
+    {
+        error ( "%s out of range [%f,%f]",
+	        name, low, high );
+	return false;
+    }
+    var = token_double;
     return true;
 }
 
