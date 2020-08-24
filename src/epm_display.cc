@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 23 17:20:58 EDT 2020
+// Date:	Sun Aug 23 20:47:42 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -936,8 +936,7 @@ void init_page ( void )
 }
 
 
-// Read page commands.  Return true if read and false if
-// end of file.
+// Current line for error routines.
 //
 string line;
 unsigned line_number = 0;
@@ -967,6 +966,108 @@ void fatal ( const char * format... )
     error ( format, args );
     va_end ( args );
     exit ( 1 );
+}
+
+// Current line and token for read routines.
+//
+istringstream lin;
+string token;
+long token_long;
+double token_double;
+string units;
+    // Token is next sequence of non-whitespace
+    // characters, or "" if none;
+    //
+    // Get_long sets token_long to integer at
+    // beginning of token and sets units to remainder
+    // of token, or returns false if no integer
+    // at beginning of token.
+    //
+    // Get_double sets token_double similarly.
+
+// If there is currently no token, get the next token.
+// Set token = "" if there is no next token.  Return
+// true iff there is a next token.
+//
+bool get_token ( void )
+{
+    if ( token != "" ) return true;
+
+    lin >> token;
+    if ( lin.fail() )
+    {
+        token = "";
+	return false;
+    }
+    else
+        return true;
+}
+
+// Get token, get integer from beginning of token,
+// set units to remainder of token, set token to
+// missing, and return true.
+//
+// Or return false and leave token alone if there
+// is no next token or no integer at beginning of
+// next token.
+//
+bool get_long ( void )
+{
+    if ( ! get_token() ) return false;
+    char * endp;
+    const char * beginp = token.c_str();
+    token_long = strtol ( beginp, & endp, 10 );
+    if ( beginp == endp ) return false;
+    units = token.substr ( endp - beginp );
+    token = "";
+    return true;
+}
+
+// Ditto for double.
+//
+bool get_double ( void )
+{
+    if ( ! get_token() ) return false;
+    char * endp;
+    const char * beginp = token.c_str();
+    token_double = strtod ( beginp, & endp );
+    if ( beginp == endp ) return false;
+    units = token.substr ( endp - beginp );
+    token = "";
+    return true;
+}
+
+bool read_long ( const char * name, long & var,
+                 long low, long high,
+                 bool missing_allowed = true )
+{
+    if ( ! get_long() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing or unrecognizable", name );
+	return false;
+    }
+    if ( units != "" )
+    {
+	error ( "%s should not have units %s",
+	        name, units.c_str() );
+	return false;
+    }
+    if ( token_long < low || token_long > high )
+    {
+        error ( "%s out of range [%ld,%ld]",
+	        name, low, high );
+	return false;
+    }
+    var = token_long;
+    return true;
+}
+
+void check_extra ( void )
+{
+    if ( get_token() )
+	error ( "extra stuff %s... at end of line",
+		token.c_str() );
 }
 
 // Read section.
@@ -1001,20 +1102,18 @@ section read_page ( istream & in )
 	if ( line[first] == '#' ) continue;
 	if ( line[first] == '!' ) continue;
 
-	istringstream lin ( line );
+	lin.str ( line );
+	token = "";
 
 	string op;
-	in >> op;
+	lin >> op;
 
 	if ( s == END_OF_FILE )
 	{
 	    // First op of section.
 	    //
 	    if ( op == "layout" )
-	    {
 	        s = LAYOUT;
-		init_layout();
-	    }
 	    else
 	    {
 	        s = PAGE;
@@ -1025,9 +1124,53 @@ section read_page ( istream & in )
 
 	if ( op == "layout" && s == LAYOUT )
 	{
+	    long R, C;
+	    double HEIGHT, WIDTH; 
+
+	    if ( read_long ( "R", R, 1, 40 )
+	         &&
+		 read_long ( "C", C, 1, 20, false ) )
+	    {
+	        init_layout ( R, C );
+		if ( read_length
+		         ( "HEIGHT", HEIGHT,
+			   1e-12, 1000 )
+		     &&
+		     read_length
+			 ( "WIDTH", WIDTH,
+			   1e-12, 1000, false ) )
+		{
+		    L_height = HEIGHT;
+		    L_width = WIDTH;
+		    check_extra();
+		}
+	    }
+	    else
+	        init_layout ( 1, 1 );
 	}
 	else if ( op == "font" && s == LAYOUT )
 	{
+	    string NAME, COLOR = "black",
+	                 FAMILY = "serif";
+	    double SIZE, SPACE = 1.15;
+	    options OPT = NO_OPTIONS;
+
+	    if ( ! read_string ( "NAME", NAME, false ) )
+	        continue;
+	    if ( ! read_length ( "SIZE", SIZE,
+	                         1e-12, 100, false ) )
+	        continue;
+
+	    read_color ( "COLOR", COLOR )
+	    &&
+	    read_options ( "OPT", OPT, font_options )
+	    &&
+	    read_family ( "FAMILY", FAMILY )
+	    &&
+	    read_em ( "SPACE", SPACE, 1, 1000 )
+
+	    make_font ( NAME, SIZE, COLOR, OPT,
+	                FAMILY, SPACE );
 	}
 	else if ( op == "stroke" && s == LAYOUT )
 	{
