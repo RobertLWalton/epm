@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 23 20:47:42 EDT 2020
+// Date:	Mon Aug 24 11:29:25 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -49,6 +49,8 @@ extern "C" {
 #include <cairo-pdf.h>
 }
 
+const size_t MAX_NAME_LENGTH = 40;
+
 // Current page data.
 //
 struct color
@@ -63,6 +65,13 @@ color colors[] = {
         // So we can print groups of 3.
 };
 
+const char * families[] = {
+    "serif",
+    "sans-serif",
+    "monospace",
+    NULL
+};
+
 // Return color from colors array with given name,
 // or if none, return color with name "".
 //
@@ -75,6 +84,19 @@ const color & find_color ( const char * name )
 	    break;
     }
     return * c;
+}
+
+// Verify family name and return it, or return NULL
+// if name is not a family name.
+//
+const char * find_family ( const char * name )
+{
+    const char ** f = families;
+    while ( * f )
+    {
+	if ( strcmp ( name, * f ) == 0 ) break;
+    }
+    return * f;
 }
 
 bool debug = false;
@@ -480,11 +502,11 @@ int R, C;
 options font_options = (options) ( BOLD + ITALIC );
 struct font
 {
-    char name[100];
+    char name[MAX_NAME_LENGTH+1];
     color c;
     options o;
     const char * family;
-    char cairo_family[100];
+    char cairo_family[MAX_NAME_LENGTH+1];
     double size;
     double space;
 };
@@ -496,7 +518,7 @@ options stroke_options = (options)
       FILL_RIGHT + FILL_LEFT );
 struct stroke
 {
-    char name[100];
+    char name[MAX_NAME_LENGTH+1];
     color c;
     options o;
     double width;
@@ -512,18 +534,20 @@ typedef stroke_dt::iterator stroke_it;
 // Make a new font with given name, discarding any
 // previous font with that name.
 //
-void make_font ( const char * name,
+void make_font ( string name,
+		 double size,
                  color c, options o,
                  const char * family,
-	         double size, double space )
+	         double space )
 {
-    font_it it = font_dict.find ( name );
+    const char * n = name.c_str();
+    font_it it = font_dict.find ( n );
     if ( it != font_dict.end() )
         font_dict.erase ( it );
     font * f = new font;
-    assert (    strlen ( name ) + 1
+    assert (    strlen ( n ) + 1
              <= sizeof ( f->name ) );
-    strcpy ( f->name, name );
+    strcpy ( f->name, n );
     f->c = c;
     f->o = o;
     f->family = family;
@@ -539,16 +563,17 @@ void make_font ( const char * name,
 // Make a new stroke with given name, discarding any
 // previous stroke with that name.
 //
-void make_stroke ( const char * name,
+void make_stroke ( string name,
                    color c, options o, double width )
 {
-    stroke_it it = stroke_dict.find ( name );
+    const char * n = name.c_str();
+    stroke_it it = stroke_dict.find ( n );
     if ( it != stroke_dict.end() )
         stroke_dict.erase ( it );
     stroke * s = new stroke;
-    assert (    strlen ( name ) + 1
+    assert (    strlen ( n ) + 1
              <= sizeof ( s->name ) );
-    strcpy ( s->name, name );
+    strcpy ( s->name, n );
     s->c = c;
     s->o = o;
     s->width = width;
@@ -616,24 +641,19 @@ void init_layout ( int R, int C )
 
     if ( C == 1 )
     {
-        make_font ( "large-bold", black,
+        make_font ( "large-bold", 14.0/72, black,
 	            BOLD, "serif",
-	            14.0/72, 1.15 );
-        make_font ( "bold", black,
-	            BOLD, "serif",
-	            12.0/72, 1.15 );
-        make_font ( "small-bold", black,
-	            BOLD, "serif",
-	            10.0/72, 1.15 );
-        make_font ( "large", black,
-	            NO_OPTIONS, "serif",
-	            14.0/72, 1.15 );
-        make_font ( "normal", black,
-	            NO_OPTIONS, "serif",
-	            12.0/72, 1.15 );
-        make_font ( "small", black,
-	            NO_OPTIONS, "serif",
-	            10.0/72, 1.15 );
+	            1.15 );
+        make_font ( "bold", 12.0/72, black,
+	            BOLD, "serif", 1.15 );
+        make_font ( "small-bold", 10.0/72, black,
+	            BOLD, "serif", 1.15 );
+        make_font ( "large", 14.0/72, black,
+	            NO_OPTIONS, "serif", 1.15 );
+        make_font ( "normal", 12.0/72, black,
+	            NO_OPTIONS, "serif", 1.15 );
+        make_font ( "small", 10.0/72, black,
+	            NO_OPTIONS, "serif", 1.15 );
 	make_stroke ( "wide", black,
 		      NO_OPTIONS, 2.0/72 );
 	make_stroke ( "normal", black,
@@ -649,24 +669,18 @@ void init_layout ( int R, int C )
     }
     else
     {
-        make_font ( "large-bold", black,
-	            BOLD, "serif",
-	            12.0/72, 1.15 );
-        make_font ( "bold", black,
-	            BOLD, "serif",
-	            10.0/72, 1.15 );
-        make_font ( "small-bold", black,
-	            BOLD, "serif",
-	            8.0/72, 1.15 );
-        make_font ( "large", black,
-	            NO_OPTIONS, "serif",
-	            12.0/72, 1.15 );
-        make_font ( "normal", black,
-	            NO_OPTIONS, "serif",
-	            10.0/72, 1.15 );
-        make_font ( "small", black,
-	            NO_OPTIONS, "serif",
-	            8.0/72, 1.15 );
+        make_font ( "large-bold", 12.0/72, black,
+	            BOLD, "serif", 1.15 );
+        make_font ( "bold", 10.0/72, black,
+	            BOLD, "serif", 1.15 );
+        make_font ( "small-bold", 8.0/72, black,
+	            BOLD, "serif", 1.15 );
+        make_font ( "large", 12.0/72, black,
+	            NO_OPTIONS, "serif", 1.15 );
+        make_font ( "normal", 10.0/72, black,
+	            NO_OPTIONS, "serif", 1.15 );
+        make_font ( "small", 8.0/72, black,
+	            NO_OPTIONS, "serif", 1.15 );
 	make_stroke ( "wide", black,
 		      NO_OPTIONS, 1.0/72 );
 	make_stroke ( "normal", black,
@@ -1093,6 +1107,30 @@ bool read_double ( const char * name, double & var,
     return true;
 }
 
+bool read_name ( const char * name,
+                 string & var,
+                 bool missing_allowed = true )
+{
+    if ( ! get_token() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    if ( token.length() > MAX_NAME_LENGTH )
+    {
+	string s = token.substr ( 0, MAX_NAME_LENGTH )
+	                .append ( "..." );
+	error ( "%s value %s too long a name",
+	        name, s.c_str() );
+	token = "";
+	return false;
+    }
+    var = token;
+    token = "";
+    return true;
+}
+
 // Read double length with units.
 //
 bool read_length ( const char * name, double & var,
@@ -1115,7 +1153,7 @@ bool read_length ( const char * name, double & var,
     }
     if ( token_double < low || token_double > high )
     {
-        error ( "%s out of range [%f,%f]",
+        error ( "%s out of range [%fin,%fin]",
 	        name, low, high );
 	return false;
     }
@@ -1142,11 +1180,101 @@ bool read_em ( const char * name, double & var,
     }
     if ( token_double < low || token_double > high )
     {
-        error ( "%s out of range [%f,%f]",
+        error ( "%s out of range [%fem,%fem]",
 	        name, low, high );
 	return false;
     }
     var = token_double;
+    return true;
+}
+
+bool read_color ( const char * name, color & var,
+                  bool missing_allowed = true )
+{
+    if ( ! get_token() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    color val = find_color ( token.c_str() );
+    if ( val.name == "" )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    var = val;
+    token = "";
+    return true;
+}
+
+bool read_family ( const char * name,
+                   const char * & var,
+                   bool missing_allowed = true )
+{
+    if ( ! get_token() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    const char * val = find_family ( name );
+    if ( val == NULL )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    var = val;
+    token = "";
+    return true;
+}
+
+bool read_options ( const char * name,
+                    options & var,
+		    options allowed_options,
+                    bool missing_allowed = true )
+{
+    if ( ! get_token() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    options val = NO_OPTIONS;
+
+    int char_count = 0;
+    int opt_count = 0;
+    for ( int i = 0; optchar[i] != 0; ++ i )
+    {
+        if ( ( allowed_options & ( 1 << i ) ) == 0 )
+	    continue;
+	size_t pos = token.find_first_of ( optchar[i] );
+	if ( pos != string::npos )
+	{
+	    ++ opt_count;
+	    val = (options) ( val | ( 1 << i ) );
+	    do
+	    {
+		++ char_count;
+	        pos = token.find_first_of
+		    ( optchar[i], pos + 1 );
+	    } while ( pos != string::npos );
+	}
+    }
+    if ( char_count != token.length() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    if ( char_count != opt_count )
+        error ( "duplicate option flags in %s value %s",
+	        name, token.c_str() );
+
+    var = val;
+    token = "";
     return true;
 }
 
@@ -1161,11 +1289,13 @@ void check_extra ( void )
 //
 enum section { END_OF_FILE, LAYOUT, PAGE };
 const char * whitespace = " \t\f\v\n\r";
-section read_page ( istream & in )
+section read_section ( istream & in )
 {
 
     section s = END_OF_FILE;
     command ** list;
+
+    color black = find_color ( "black" );
 
     while ( true )
     {
@@ -1237,24 +1367,22 @@ section read_page ( istream & in )
 	}
 	else if ( op == "font" && s == LAYOUT )
 	{
-	    string NAME, COLOR = "black",
-	                 FAMILY = "serif";
+	    string NAME;
+	    color COLOR = black;
+	    const char * FAMILY = "serif";
 	    double SIZE, SPACE = 1.15;
 	    options OPT = NO_OPTIONS;
 
-	    if ( ! read_string ( "NAME", NAME, false ) )
+	    if ( ! read_name ( "NAME", NAME, false ) )
 	        continue;
 	    if ( ! read_length ( "SIZE", SIZE,
-	                         1e-12, 100, false ) )
+	                         3.0/72, 30, false ) )
 	        continue;
 
-	    read_color ( "COLOR", COLOR )
-	    &&
-	    read_options ( "OPT", OPT, font_options )
-	    &&
-	    read_family ( "FAMILY", FAMILY )
-	    &&
-	    read_em ( "SPACE", SPACE, 1, 1000 )
+	    read_color ( "COLOR", COLOR );
+	    read_options ( "OPT", OPT, font_options );
+	    read_family ( "FAMILY", FAMILY );
+	    read_em ( "SPACE", SPACE, 1, 100 );
 
 	    make_font ( NAME, SIZE, COLOR, OPT,
 	                FAMILY, SPACE );
