@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Mon Aug 24 11:29:25 EDT 2020
+// Date:	Mon Aug 24 16:12:54 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -50,6 +50,7 @@ extern "C" {
 }
 
 const size_t MAX_NAME_LENGTH = 40;
+const double MAX_BODY_COORDINATE = 1e30 ;
 
 // Current page data.
 //
@@ -564,7 +565,7 @@ void make_font ( string name,
 // previous stroke with that name.
 //
 void make_stroke ( string name,
-                   color c, options o, double width )
+                   double width, color c, options o )
 {
     const char * n = name.c_str();
     stroke_it it = stroke_dict.find ( n );
@@ -654,18 +655,18 @@ void init_layout ( int R, int C )
 	            NO_OPTIONS, "serif", 1.15 );
         make_font ( "small", 10.0/72, black,
 	            NO_OPTIONS, "serif", 1.15 );
-	make_stroke ( "wide", black,
-		      NO_OPTIONS, 2.0/72 );
-	make_stroke ( "normal", black,
-		      NO_OPTIONS, 1.0/72 );
-	make_stroke ( "narrow", black,
-		      NO_OPTIONS, 0.5/72 );
-	make_stroke ( "wide-dashed", black,
-		      DASHED, 2.0/72 );
-	make_stroke ( "normal-dashed", black,
-		      DASHED, 1.0/72 );
-	make_stroke ( "narrow-dashed", black,
-		      DASHED, 0.5/72 );
+	make_stroke ( "wide", 2.0/72,
+	               black, NO_OPTIONS );
+	make_stroke ( "normal", 1.0/72,
+	               black, NO_OPTIONS );
+	make_stroke ( "narrow", 0.5/72,
+	               black, NO_OPTIONS );
+	make_stroke ( "wide-dashed", 2.0/72,
+	              black, DASHED );
+	make_stroke ( "normal-dashed", 1.0/72,
+	              black, DASHED );
+	make_stroke ( "narrow-dashed", 0.5/72,
+	              black, DASHED );
     }
     else
     {
@@ -681,31 +682,39 @@ void init_layout ( int R, int C )
 	            NO_OPTIONS, "serif", 1.15 );
         make_font ( "small", 8.0/72, black,
 	            NO_OPTIONS, "serif", 1.15 );
-	make_stroke ( "wide", black,
-		      NO_OPTIONS, 1.0/72 );
-	make_stroke ( "normal", black,
-		      NO_OPTIONS, 0.5/72 );
-	make_stroke ( "narrow", black,
-		      NO_OPTIONS, 0.25/72 );
-	make_stroke ( "wide-dashed", black,
-		      DASHED, 1.0/72 );
-	make_stroke ( "normal-dashed", black,
-		      DASHED, 0.5/72 );
-	make_stroke ( "narrow-dashed", black,
-		      DASHED, 0.25/72 );
+
+	make_stroke ( "wide", 1.0/72,
+	               black, NO_OPTIONS );
+	make_stroke ( "normal", 0.5/72,
+	               black, NO_OPTIONS );
+	make_stroke ( "narrow", 0.25/72,
+	               black, NO_OPTIONS );
+	make_stroke ( "wide-dashed", 1.0/72,
+	              black, DASHED );
+	make_stroke ( "normal-dashed", 0.5/72,
+	              black, DASHED );
+	make_stroke ( "narrow-dashed", 0.25/72,
+	              black, DASHED );
     }
 }
 
 // Page Data
 //
-struct command { command * next; char command; };
+struct command
+{
+    char c;
+    bool continued;
+        // Start, line, etc command that is continued
+	// until the next `end' command.
+    command * next;
+};
 
 options text_options = (options)
     ( TOP + BOTTOM + LEFT + RIGHT +
       BOX_WHITE + CIRCLE_WHITE + OUTLINE );
 struct text : public command // == 't'
 {
-    font * f;
+    const font * f;
     options o;
     vector p;
     string t;
@@ -716,7 +725,7 @@ struct space : public command // == 'S'
 };
 struct start : public command // == 's'
 {
-    stroke * s;
+    const stroke * s;
     vector p;
 };
 struct line : public command // == 'l'
@@ -732,7 +741,7 @@ struct end : public command // == 'e'
 };
 struct arc : public command // == 'a'
 {
-    stroke * s;
+    const stroke * s;
     vector c;
     vector r;
     double a;
@@ -740,7 +749,7 @@ struct arc : public command // == 'a'
 };
 struct dot : public command // == 'd'
 {
-    stroke * s;
+    const stroke * s;
     vector p;
     double r;
 };
@@ -781,7 +790,7 @@ void print_commands ( command * & list )
     {
         command * next = current->next;
 
-	switch ( next->command )
+	switch ( next->c )
 	{
 	case 't':
 	{
@@ -869,7 +878,7 @@ void print_commands ( command * & list )
 	    break;
 	}
 	default:
-	    cout << "bad command " << next->command
+	    cout << "bad command " << next->c
 	         << endl;
 	}
 
@@ -890,7 +899,7 @@ void delete_commands ( command * & list )
     {
         command * next = current->next;
 
-	switch ( list->command )
+	switch ( list->c )
 	{
 	case 't':
 	    delete (text *) current;
@@ -950,15 +959,15 @@ void init_page ( void )
 }
 
 
-// Current line for error routines.
+// Current command line for error routines.
 //
-string line;
+string comline;
 unsigned line_number = 0;
 
 void error ( const char * format, va_list args )
 {
     cerr << "ERROR in line " << line_number
-         << ":" << endl << "    " << line << endl;
+         << ":" << endl << "    " << comline << endl;
     fprintf ( stderr, "    " );
     vfprintf ( stderr, format, args );
     fprintf ( stderr, "\n" );
@@ -1079,7 +1088,7 @@ bool read_long ( const char * name, long & var,
     return true;
 }
 
-// Read double body coordinates without units.
+// Read double body coordinates without units or scale.
 //
 bool read_double ( const char * name, double & var,
                    double low, double high,
@@ -1278,6 +1287,61 @@ bool read_options ( const char * name,
     return true;
 }
 
+bool read_font ( const char * name,
+	         const font * & var,
+	         bool missing_allowed = true )
+{
+    if ( ! get_token() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    font_it val = font_dict.find ( token.c_str() );
+    if ( val == font_dict.end() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    var = val->second;
+    token = "";
+    return true;
+}
+
+bool read_stroke ( const char * name,
+	           const stroke * & var,
+	           bool missing_allowed = true )
+{
+    if ( ! get_token() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    stroke_it val = stroke_dict.find ( token.c_str() );
+    if ( val == stroke_dict.end() )
+    {
+        if ( missing_allowed ) return true;
+	error ( "%s missing", name );
+	return false;
+    }
+    var = val->second;
+    token = "";
+    return true;
+}
+
+// Read what is left in lin.  Assumes token == "".
+//
+void read_text ( const char * name,
+		 string & text )
+{
+    if ( token != "" )
+        error ( "%s ignored", token.c_str() );
+     
+    getline ( lin, text );
+}
+
 void check_extra ( void )
 {
     if ( get_token() )
@@ -1289,37 +1353,85 @@ void check_extra ( void )
 //
 enum section { END_OF_FILE, LAYOUT, PAGE };
 const char * whitespace = " \t\f\v\n\r";
+command ** current_list;
+
+// Attach command to end of current_list.  Returns
+// false if this cannot be dones because command is
+// continuing and has no previous start.  This
+// cannot happen if continuing is false.
+//
+bool attach ( command * com, char c,
+              bool continued = false,
+	      bool continuing = false )
+{
+    command * last = * current_list;
+    if ( last == NULL )
+    {
+        if ( continuing )
+	{
+	    error ( "need a `start' command before"
+	            " this command" );
+	    return false;
+	}
+	* current_list = com->next = com;
+    }
+    else
+    {
+        if ( continuing && ! last->continued )
+	{
+	    error ( "need a `start' command before"
+	            " this command" );
+	    return false;
+	}
+        else if ( ! continuing && last->continued )
+	{
+	    end * e = new end;
+	    e->c = 'e';
+	    e->continued = false;
+	    e->next = last->next;
+	    last->next = e;
+	    last = * current_list = e;
+	 }
+	 com->next = last->next;
+	 last->next = com;
+	 * current_list = com;
+    }
+        
+    com->c = c;
+    com->continued = continued;
+    return true;
+}
+
 section read_section ( istream & in )
 {
 
     section s = END_OF_FILE;
-    command ** list;
 
     color black = find_color ( "black" );
 
     while ( true )
     {
-        getline ( in, line );
+        getline ( in, comline );
 	if ( ! in )
 	{
 	    if ( s == END_OF_FILE ) return s;
 
 	    cerr << "WARNING: unexpected end of file;"
 	         << " * inserted" << endl;
-	    line = "*";
+	    comline = "*";
 	}
 	else
 	    ++ line_number;
 
 	// Skip comments.
 	//
-	size_t first = line.find_first_not_of
+	size_t first = comline.find_first_not_of
 	    ( whitespace );
 	if ( first == string::npos ) continue;
-	if ( line[first] == '#' ) continue;
-	if ( line[first] == '!' ) continue;
+	if ( comline[first] == '#' ) continue;
+	if ( comline[first] == '!' ) continue;
 
-	lin.str ( line );
+	lin.str ( comline );
 	token = "";
 
 	string op;
@@ -1335,7 +1447,7 @@ section read_section ( istream & in )
 	    {
 	        s = PAGE;
 		init_page();
-		list = & level[50];
+		current_list = & level[50];
 	    }
 	}
 
@@ -1359,19 +1471,22 @@ section read_section ( istream & in )
 		{
 		    L_height = HEIGHT;
 		    L_width = WIDTH;
-		    check_extra();
 		}
 	    }
 	    else
+	    {
 	        init_layout ( 1, 1 );
+		continue;
+	    }
 	}
 	else if ( op == "font" && s == LAYOUT )
 	{
 	    string NAME;
+	    double SIZE;
 	    color COLOR = black;
-	    const char * FAMILY = "serif";
-	    double SIZE, SPACE = 1.15;
 	    options OPT = NO_OPTIONS;
+	    const char * FAMILY = "serif";
+	    double SPACE = 1.15;
 
 	    if ( ! read_name ( "NAME", NAME, false ) )
 	        continue;
@@ -1389,39 +1504,262 @@ section read_section ( istream & in )
 	}
 	else if ( op == "stroke" && s == LAYOUT )
 	{
+	    string NAME;
+	    double WIDTH = -1;
+	    color COLOR = black;
+	    options OPT = NO_OPTIONS;
+
+	    if ( ! read_name ( "NAME", NAME, false ) )
+	        continue;
+
+	    read_length ( "WIDTH", WIDTH, 0, 1 );
+	    read_color ( "COLOR", COLOR );
+	    read_options ( "OPT", OPT, stroke_options );
+
+	    if ( WIDTH == -1 )
+	        WIDTH = ( OPT & ( FILL_SOLID |
+		                  FILL_CROSS |
+				  FILL_RIGHT |
+				  FILL_LEFT ) ?
+		          0 : 1.0/72 );
+
+
+	    make_stroke ( NAME, WIDTH, COLOR, OPT );
 	}
 	if ( op == "background" )
 	{
+	    color COLOR;
+	    if ( ! read_color ( "COLOR", COLOR, false ) )
+	        continue;
+	    if ( s == LAYOUT )
+	        L_background = COLOR;
+	    else
+	        background = COLOR;
 	}
 	else if ( op == "scale" )
 	{
+	    double S;
+	    if ( ! read_double
+	            ( "S", S, 0.001, 1000, false ) )
+	        continue;
+	    if ( s == LAYOUT )
+	        L_scale = S;
+	    else
+	        scale = S;
 	}
 	else if ( op == "margin" )
 	{
+	    double TOP, RIGHT, BOTTOM, LEFT;
+	    if ( ! read_length
+	               ( "TOP", TOP, 0, 100, false ) )
+	        continue;
+	    if ( ! read_length
+	               ( "RIGHT", RIGHT, 0, 100 ) )
+	        RIGHT = BOTTOM = LEFT = TOP;
+	    else
+	    if ( ! read_length
+	               ( "BOTTOM", BOTTOM, 0, 100 ) )
+		BOTTOM = TOP, LEFT = RIGHT;
+	    if ( ! read_length
+	               ( "LEFT", LEFT, 0, 100, false ) )
+		LEFT = RIGHT;
+	    if ( s == LAYOUT )
+	    {
+	        if ( L_top < TOP ) L_top = TOP;
+	        if ( L_right < RIGHT ) L_right = RIGHT;
+	        if ( L_bottom < BOTTOM ) L_bottom = BOTTOM;
+	        if ( L_left < LEFT ) L_left = LEFT;
+	    }
+	    else
+	    {
+	        if ( top < TOP ) top = TOP;
+	        if ( right < RIGHT ) right = RIGHT;
+	        if ( bottom < BOTTOM ) bottom = BOTTOM;
+	        if ( left < LEFT ) left = LEFT;
+	    }
 	}
 	else if ( op == "head" && s == PAGE )
 	{
+	    current_list = & head;
 	}
 	else if ( op == "foot" && s == PAGE )
 	{
+	    current_list = & foot;
 	}
 	else if ( op == "level" && s == PAGE )
 	{
+	    long N;
+	    if ( ! read_long ( "N", N, 1, 100, false ) )
+	        continue;
+	    current_list = & level[N];
 	}
 	else if ( op == "text" && s == PAGE )
 	{
+	    const font * FONT;
+	    options OPT = NO_OPTIONS;
+	    double X = 0, Y = 0;
+	    string TEXT;
+
+	    if ( ! read_font ( "FONT", FONT, false ) )
+	        continue;
+	    if ( current_list != & head
+	         &&
+		 current_list != & foot )
+	    {
+	        read_options
+		    ( "OPT", OPT, text_options );
+		if ( ! read_double
+		           ( "X", X,
+			     - MAX_BODY_COORDINATE,
+			     + MAX_BODY_COORDINATE,
+			     false ) )
+		    continue;
+		if ( ! read_double
+		           ( "Y", Y,
+			     - MAX_BODY_COORDINATE,
+			     + MAX_BODY_COORDINATE,
+			     false ) )
+		    continue;
+	    }
+	    read_text ( "TEXT", TEXT );
+
+	    text * t = new text;
+	    attach ( t, 't' );
+	    t->f = FONT;
+	    t->o = OPT;
+	    t->p = { X, Y };
+	    t->t = TEXT;
 	}
 	else if ( op == "space" && s == PAGE )
 	{
+	    if ( current_list != & head
+	         &&
+		 current_list != & foot )
+	    {
+	        error ( "command not allowed in body" );
+		continue;
+	    }
+
+	    double SPACE;
+	    if ( ! read_length ( "SPACE", SPACE,
+	                         0, 100, false ) )
+		continue;
+
+	    space * sp = new space;
+	    attach ( sp, 'S' );
+	    sp->s = SPACE;
 	}
 	else if ( op == "start" && s == PAGE )
 	{
+	    if ( current_list == & head
+	         ||
+		 current_list == & foot )
+	    {
+	        error ( "command not allowed in head"
+		        " or foot" );
+		continue;
+	    } 
+	    const stroke * STROKE;
+	    double X, Y;
+	    if ( ! read_stroke
+	               ( "STROKE", STROKE, false )
+		 ||
+		 ! read_double
+		       ( "X", X,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false )
+		 ||
+		 ! read_double
+		       ( "Y", Y,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+	        continue;
+
+	    start * st = new start;
+	    attach ( st, 's', true );
+	    st->s = STROKE;
+	    st->p = { X, Y };
 	}
 	else if ( op == "line" && s == PAGE )
 	{
+	    if ( current_list == & head
+	         ||
+		 current_list == & foot )
+	    {
+	        error ( "command not allowed in head"
+		        " or foot" );
+		continue;
+	    } 
+	    double X, Y;
+	    if ( ! read_double
+		       ( "X", X,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false )
+		 ||
+		 ! read_double
+		       ( "Y", Y,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+	        continue;
+
+	    line * l = new line;
+	    if ( ! attach ( l, 'l', true, true ) )
+	    {
+	        delete l;
+	        continue;
+	    }
+	    l->p = { X, Y };
 	}
 	else if ( op == "curve" && s == PAGE )
 	{
+	    if ( current_list == & head
+	         ||
+		 current_list == & foot )
+	    {
+	        error ( "command not allowed in head"
+		        " or foot" );
+		continue;
+	    } 
+
+	    curve * c = new curve;
+	    bool OK = true;
+	    for ( int i = 0; i < 3; ++ i )
+	    {
+	        char Xname[3], Yname[3];
+		sprintf ( Xname, "X%d", i + 1 );
+		sprintf ( Yname, "Y%d", i + 1 );
+	        if ( ! read_double
+			   ( Xname, c->p[i].x,
+			     - MAX_BODY_COORDINATE,
+			     + MAX_BODY_COORDINATE,
+			     false )
+		     ||
+		     ! read_double
+			   ( Yname, c->p[i].y,
+			     - MAX_BODY_COORDINATE,
+			     + MAX_BODY_COORDINATE,
+			     false ) )
+		{
+		    OK = false;
+		    break;
+		}
+		    continue;
+	    }
+	    if ( ! OK )
+	    {
+	        delete c;
+		continue;
+	    }
+
+	    if ( ! attach ( c, 'c', true, true ) )
+	    {
+	        delete c;
+	        continue;
+	    }
 	}
 	else if ( op == "arc" && s == PAGE )
 	{
@@ -1443,6 +1781,7 @@ section read_section ( istream & in )
 		    s == LAYOUT ? "layout" : "page" );
 	    continue;
 	}
+	check_extra();
     }
 }
 
@@ -1550,7 +1889,7 @@ void compute_bounds ( void )
     for ( command * c = commands; c != NULL;
                                   c = c->next )
     {
-        switch ( c->command )
+        switch ( c->c )
 	{
 	case 'P':
 	{
@@ -1726,7 +2065,7 @@ void draw_page ( void )
 				  c = c->next )
     {
 	dout << "EXECUTE " << * c << endl;
-	switch ( c->command )
+	switch ( c->c )
 	{
 	case 'P':
 	{
