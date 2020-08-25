@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Mon Aug 24 16:12:54 EDT 2020
+// Date:	Mon Aug 24 20:57:29 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -755,14 +755,8 @@ struct dot : public command // == 'd'
 };
 struct rectangle : public command // == 'r'
 {
-    stroke * s;
+    const stroke * s;
     vector p[4];
-};
-struct ellipse : public command // == 'p'
-{
-    stroke * s;
-    vector c;
-    vector r;
 };
 
 color background;
@@ -868,15 +862,6 @@ void print_commands ( command * & list )
 		 << endl;
 	    break;
 	}
-	case 'p':
-	{
-	    ellipse * e = (ellipse *) next;
-	    cout << "ellipse " << e->s->name
-	         << " " << e->c
-	         << " " << e->r
-		 << endl;
-	    break;
-	}
 	default:
 	    cout << "bad command " << next->c
 	         << endl;
@@ -927,9 +912,6 @@ void delete_commands ( command * & list )
 	    break;
 	case 'r':
 	    delete (rectangle *) current;
-	    break;
-	case 'p':
-	    delete (ellipse *) current;
 	    break;
 	default:
 	    assert ( ! "deleting bad command" );
@@ -1763,12 +1745,238 @@ section read_section ( istream & in )
 	}
 	else if ( op == "arc" && s == PAGE )
 	{
+	    if ( current_list == & head
+	         ||
+		 current_list == & foot )
+	    {
+	        error ( "command not allowed in head"
+		        " or foot" );
+		continue;
+	    } 
+
+	    const stroke * STROKE;
+	    double XC, YC, RX, RY, A, G1 = 0, G2 = 360;
+
+	    if ( ! read_stroke
+	               ( "STROKE", STROKE, false ) )
+		continue;
+	    if ( ! read_double
+	               ( "XC", XC,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "YC", YC,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "RX", RX,
+			 0, + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "RY", RY,
+			 0, + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "A", A,
+			 - 1000 * 360, + 1000 * 360,
+			 false ) )
+		continue;
+	    if ( read_double
+	             ( "G1", G1,
+		       - 1000 * 360, + 1000 * 360 )
+		 &&
+		 ! read_double
+	             ( "G2", G2,
+		       - 1000 * 360, + 1000 * 360,
+		       false ) )
+		continue;
+
+	    arc * a = new arc;
+	    attach ( a, 'a' );
+	    a->s = STROKE;
+	    a->c = { XC, YC };
+	    a->r = { RX, RY };
+	    a->a = A;
+	    a->g1 = G1;
+	    a->g2 = G2;
+	}
+	else if ( op == "rectangle" && s == PAGE )
+	{
+	    if ( current_list == & head
+	         ||
+		 current_list == & foot )
+	    {
+	        error ( "command not allowed in head"
+		        " or foot" );
+		continue;
+	    } 
+
+	    const stroke * STROKE;
+	    double XMIN, XMAX, YMIN, YMAX;
+
+	    if ( ! read_stroke
+	               ( "STROKE", STROKE, false ) )
+		continue;
+	    if ( ! read_double
+	               ( "XMIN", XMIN,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "XMAX", XMAX,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "YMIN", YMIN,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "YMAX", YMAX,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+
+	    if ( XMIN > XMAX )
+	    {
+	        error ( "XMIN > XMAX" );
+		continue;
+	    }
+	    if ( YMIN > YMAX )
+	    {
+	        error ( "YMIN > YMAX" );
+		continue;
+	    }
+
+	    rectangle * r = new rectangle;
+	    attach ( r, 'r' );
+	    r->s = STROKE;
+	    r->p[0] = { XMIN, YMIN };
+	    r->p[1] = { XMAX, YMIN };
+	    r->p[2] = { XMAX, YMAX };
+	    r->p[3] = { XMIN, YMAX };
 	}
 	else if ( op == "ellipse" && s == PAGE )
 	{
+	    if ( current_list == & head
+	         ||
+		 current_list == & foot )
+	    {
+	        error ( "command not allowed in head"
+		        " or foot" );
+		continue;
+	    } 
+
+	    const stroke * STROKE;
+	    double XMIN, XMAX, YMIN, YMAX;
+
+	    if ( ! read_stroke
+	               ( "STROKE", STROKE, false ) )
+		continue;
+	    if ( ! read_double
+	               ( "XMIN", XMIN,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "XMAX", XMAX,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "YMIN", YMIN,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "YMAX", YMAX,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+
+	    if ( XMIN > XMAX )
+	    {
+	        error ( "XMIN > XMAX" );
+		continue;
+	    }
+	    if ( YMIN > YMAX )
+	    {
+	        error ( "YMIN > YMAX" );
+		continue;
+	    }
+	    double XC = ( XMAX + XMIN ) / 2;
+	    double YC = ( YMAX + YMIN ) / 2;
+	    double RX = ( XMAX - XMIN ) / 2;
+	    double RY = ( YMAX - YMIN ) / 2;
+
+	    arc * a = new arc;
+	    attach ( a, 'a' );
+	    a->s = STROKE;
+	    a->c = { XC, YC };
+	    a->r = { RX, RY };
+	    a->a = 0;
+	    a->g1 = 0;
+	    a->g2 = 360;
 	}
 	else if ( op == "dot" && s == PAGE )
 	{
+	    if ( current_list == & head
+	         ||
+		 current_list == & foot )
+	    {
+	        error ( "command not allowed in head"
+		        " or foot" );
+		continue;
+	    } 
+
+	    const stroke * STROKE;
+	    double XC, YC, R;
+
+	    if ( ! read_stroke
+	               ( "STROKE", STROKE, false ) )
+		continue;
+	    if ( ! read_double
+	               ( "XC", XC,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "YC", YC,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "R", R,
+			 0,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+
+	    arc * a = new arc;
+	    attach ( a, 'a' );
+	    a->s = STROKE;
+	    a->c = { XC, YC };
+	    a->r = { R, R };
+	    a->a = 0;
+	    a->g1 = 0;
+	    a->g2 = 360;
 	}
 	else if ( op == "*" )
 	    break;
