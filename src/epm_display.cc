@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Aug 25 04:38:52 EDT 2020
+// Date:	Tue Aug 25 05:44:30 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -205,7 +205,8 @@ const char * const documentation[2] = { "\n"
 "        height and width, and default to 11in and\n"
 "        8.5in, respectively.\n"
 "\n"
-"        ALL is the physical page margin on all sides.\n"
+"        ALL is the physical page margin on all"
+                                         " sides.\n"
 "        VERTICAL is the top and bottom margin, while\n"
 "        HORIZONTAL is the left and right margin.\n"
 "        TOP, RIGHT, BOTTOM, and LEFT are the 4\n"
@@ -518,6 +519,19 @@ ostream & operator << ( ostream & s, const margins & m )
     return s;
 }
 
+struct bounds
+{
+    vector ll, ur;
+};
+
+// Print bounds for debugging:
+//
+ostream & operator << ( ostream & s, const bounds & b )
+{
+    s << b.ll << " " << b.ur;
+    return s;
+}
+
 // Layout Parameters
 //
 int R, C;
@@ -529,6 +543,7 @@ margins L_margins;
 double D_scale;
 color D_background;
 margins D_margins;
+bounds D_bounds;
 
 options font_options = (options) ( BOLD + ITALIC );
 struct font
@@ -659,11 +674,9 @@ void init_layout ( int R, int C )
     L_margins.left = 0.75;
 
     D_scale = 1;
-    D_margins.top = 0;
-    D_margins.right = 0;
-    D_margins.bottom = 0;
-    D_margins.left = 0;
     D_background = find_color ( "white" );
+    D_margins = { 0, 0, 0, 0 };
+    D_bounds = { { NAN, NAN }, { NAN, NAN } };
 
     for ( font_dt::iterator it = font_dict.begin();
           it != font_dict.end(); ++ it )
@@ -795,7 +808,8 @@ struct rectangle : public command // == 'r'
 //
 color P_background;
 double P_scale;
-margins P_margins; // In inches.
+margins P_margins;
+bounds P_bounds;
 double P_height, P_width;
 
 
@@ -955,6 +969,8 @@ void init_page ( void )
     P_width = L_width - L_margins.left
                       - L_margins.right;
     P_width /= C;
+    P_margins = D_margins;
+    P_bounds = D_bounds;
 
     delete_commands ( head );
     delete_commands ( foot );
@@ -1570,7 +1586,8 @@ section read_section ( istream & in )
 	if ( op == "background" )
 	{
 	    color COLOR;
-	    if ( ! read_color ( "COLOR", COLOR, false ) )
+	    if ( ! read_color
+	               ( "COLOR", COLOR, false ) )
 	        continue;
 	    if ( s == LAYOUT )
 	        D_background = COLOR;
@@ -1594,6 +1611,34 @@ section read_section ( istream & in )
 	        read_margins ( D_margins, false );
 	    else
 	        read_margins ( P_margins, false );
+	}
+	else if ( op == "bounds" )
+	{
+	    bounds b;
+	    if ( ! read_double ( "LLX", b.ll.x,
+			         - MAX_BODY_COORDINATE,
+			         + MAX_BODY_COORDINATE,
+			         false ) )
+		continue;
+	    if ( ! read_double ( "LLY", b.ll.y,
+			         - MAX_BODY_COORDINATE,
+			         + MAX_BODY_COORDINATE,
+			         false ) )
+		continue;
+	    if ( ! read_double ( "URX", b.ur.x,
+			         - MAX_BODY_COORDINATE,
+			         + MAX_BODY_COORDINATE,
+			         false ) )
+		continue;
+	    if ( ! read_double ( "URX", b.ur.y,
+			         - MAX_BODY_COORDINATE,
+			         + MAX_BODY_COORDINATE,
+			         false ) )
+		continue;
+	    if ( s == LAYOUT )
+	        D_bounds = b;
+	    else
+	        P_bounds = b;
 	}
 	else if ( op == "head" && s == PAGE )
 	{
