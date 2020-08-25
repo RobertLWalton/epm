@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Aug 25 05:44:30 EDT 2020
+// Date:	Tue Aug 25 14:59:21 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -43,6 +43,7 @@ using std::map;
 using std::min;
 using std::max;
 using std::string;
+using std::isnan;
 
 extern "C" {
 #include <unistd.h>
@@ -59,6 +60,7 @@ struct color
 {
     const char * name;
     unsigned value;
+    double red, green, blue;
 };
 
 color colors[] = {
@@ -66,6 +68,16 @@ color colors[] = {
     , { "", 0 }, {"", 0 }
         // So we can print groups of 3.
 };
+
+void init_colors ( void )
+{
+    for ( color * c = colors; c->name[0] != 0; ++ c )
+    {
+        c->red = 0xFF & ( c->value >> 16 );
+        c->green = 0xFF & ( c->value >> 8 );
+        c->blue = 0xFF & ( c->value >> 0 );
+    }
+}
 
 const char * families[] = {
     "serif",
@@ -77,15 +89,15 @@ const char * families[] = {
 // Return color from colors array with given name,
 // or if none, return color with name "".
 //
-const color & find_color ( const char * name )
+const color * find_color ( const char * name )
 {
     color * c = colors;
-    while ( c->name[0] != 0 )
+    for ( ; c->name[0] != 0; ++ c )
     {
         if ( strcmp ( c->name, name ) == 0 )
-	    break;
+	    return c;
     }
-    return * c;
+    return c;
 }
 
 // Verify family name and return it, or return NULL
@@ -541,7 +553,7 @@ margins L_margins;
 // Default page parameters from layout section.
 //
 double D_scale;
-color D_background;
+const color * D_background;
 margins D_margins;
 bounds D_bounds;
 
@@ -549,12 +561,15 @@ options font_options = (options) ( BOLD + ITALIC );
 struct font
 {
     char name[MAX_NAME_LENGTH+1];
-    color c;
+    double size;
+    const color * c;
     options o;
     const char * family;
-    char cairo_family[MAX_NAME_LENGTH+1];
-    double size;
     double space;
+
+    char cairo_family[MAX_NAME_LENGTH+1];
+    cairo_font_slant_t cairo_slant;
+    cairo_font_weight_t cairo_weight;
 };
 
 options stroke_options = (options)
@@ -565,7 +580,7 @@ options stroke_options = (options)
 struct stroke
 {
     char name[MAX_NAME_LENGTH+1];
-    color c;
+    const color * c;
     options o;
     double width;
 };
@@ -582,7 +597,7 @@ typedef stroke_dt::iterator stroke_it;
 //
 void make_font ( string name,
 		 double size,
-                 color c, options o,
+                 const color * c, options o,
                  const char * family,
 	         double space )
 {
@@ -603,6 +618,13 @@ void make_font ( string name,
     f->size = size;
     f->space = space;
 
+    f->cairo_slant =
+        ( o & ITALIC ? CAIRO_FONT_SLANT_ITALIC :
+                       CAIRO_FONT_SLANT_NORMAL );
+    f->cairo_weight =
+        ( o & BOLD ? CAIRO_FONT_WEIGHT_BOLD :
+                     CAIRO_FONT_WEIGHT_NORMAL );
+
     font_dict[f->name] = f;
 }
 
@@ -610,7 +632,8 @@ void make_font ( string name,
 // previous stroke with that name.
 //
 void make_stroke ( string name,
-                   double width, color c, options o )
+                   double width,
+		   const color * c, options o )
 {
     const char * n = name.c_str();
     stroke_it it = stroke_dict.find ( n );
@@ -637,7 +660,7 @@ void print_fonts ( void )
         const font * f = it->second;
 	cout << "font " << f->name
 	     << " " << 72 * f->size << "pt"
-	     << " " << f->c.name
+	     << " " << f->c->name
 	     << " " << f->o
 	     << " " << f->family
 	     << " " << f->space << "em"
@@ -655,7 +678,7 @@ void print_strokes ( void )
         const stroke * s = it->second;
 	cout << "stroke " << s->name
 	     << " " << 72 * s->width << "pt"
-	     << " " << s->c.name
+	     << " " << s->c->name
 	     << " " << s->o
 	     << endl;
     }
@@ -689,7 +712,7 @@ void init_layout ( int R, int C )
     font_dict.clear();
     stroke_dict.clear();
 
-    color black = find_color ( "black" );
+    const color * black = find_color ( "black" );
 
     if ( C == 1 )
     {
@@ -806,7 +829,7 @@ struct rectangle : public command // == 'r'
 
 // Page Parameters.
 //
-color P_background;
+const color * P_background;
 double P_scale;
 margins P_margins;
 bounds P_bounds;
@@ -1247,7 +1270,8 @@ bool read_margins ( margins & var,
     return true;
 }
 
-bool read_color ( const char * name, color & var,
+bool read_color ( const char * name,
+                  const color * & var,
                   bool missing_allowed = true )
 {
     if ( ! get_token() )
@@ -1256,8 +1280,8 @@ bool read_color ( const char * name, color & var,
 	    error ( "%s missing", name );
 	return false;
     }
-    color val = find_color ( token.c_str() );
-    if ( val.name == "" )
+    const color * val = find_color ( token.c_str() );
+    if ( val->name == "" )
     {
         if ( missing_allowed ) return true;
 	error ( "%s missing", name );
@@ -1462,7 +1486,7 @@ section read_section ( istream & in )
 
     section s = END_OF_FILE;
 
-    color black = find_color ( "black" );
+    const color * black = find_color ( "black" );
 
     while ( true )
     {
@@ -1540,7 +1564,7 @@ section read_section ( istream & in )
 	{
 	    string NAME;
 	    double SIZE;
-	    color COLOR = black;
+	    const color * COLOR = black;
 	    options OPT = NO_OPTIONS;
 	    const char * FAMILY = "serif";
 	    double SPACE = 1.15;
@@ -1563,7 +1587,7 @@ section read_section ( istream & in )
 	{
 	    string NAME;
 	    double WIDTH = -1;
-	    color COLOR = black;
+	    const color * COLOR = black;
 	    options OPT = NO_OPTIONS;
 
 	    if ( ! read_name ( "NAME", NAME, false ) )
@@ -1585,7 +1609,7 @@ section read_section ( istream & in )
 	}
 	if ( op == "background" )
 	{
-	    color COLOR;
+	    const color * COLOR;
 	    if ( ! read_color
 	               ( "COLOR", COLOR, false ) )
 	        continue;
@@ -2073,6 +2097,33 @@ section read_section ( istream & in )
     }
 }
 
+// Compute height of head or foot.
+//
+double compute_height ( command * list )
+{
+    double h = 0;
+    command * current = list;
+    if ( current == NULL ) return 0;
+    do
+    {
+        current = current->next;
+	if ( current->c == 't' )
+	{
+	    text * t = (text *) current;
+	    h += t->f->size * t->f->space;
+	}
+	else if ( current->c == 'S' )
+	{
+	    space * s = (space *) current;
+	    h += s->s;
+	}
+	else
+	    assert ( ! "height bad command" );
+
+    } while ( current != list );
+    return h;
+}
+
 // Compute the bounding box of all the body points
 // in the level lists.  Text, wide lines, and exotic
 // curves may go outside the box.  For arcs, the
@@ -2094,6 +2145,7 @@ void compute_bounding_box ( void )
 	command * current = level[i];
 	if ( current != NULL ) do
 	{
+	    current = current->next;
 	    switch ( current->c )
 	    {
 	    case 't':
@@ -2151,39 +2203,11 @@ void compute_bounding_box ( void )
 	    default:
 		assert ( ! "bounding bad command" );
 	    }
-	    current = current->next;
 	} while ( current != level[i] );
     }
 #   undef BOUND
 }
 
-
-// For pdf output, units are 1/72".
-
-// You MUST declare the entire paper size, 8.5x11",
-// else you get a non-centered printout.
-
-const double page_height = 11*72;	    // 11.0"
-const double page_width = 8*72 + 72/2;	    // 8.5"
-
-const double top_margin = 36;		    // 0.5"
-const double bottom_margin = 36;	    // 0.5"
-const double side_margin = 54;		    // 0.75"
-const double separation = 8;		    // 8/72"
-const double title_large_font_size = 16;    // 16/72"
-const double title_small_font_size = 10;    // 10/72"
-const double text_large_font_size = 16;     // 16/72"
-const double text_medium_font_size = 12;    // 12/72"
-const double text_small_font_size = 8;      // 8/72"
-
-const double page_line_size = 1;    	    // 1/72"
-const double page_dot_size = 2;    	    // 2/72"
-
-const double print_box = page_width - 2 * side_margin;
-
-// PDF Options
-//
-int R = 1, C = 1;
 
 // cairo_write_func_t to write data to cout.
 //
@@ -2201,120 +2225,171 @@ cairo_status_t write_to_cout
 // Drawing data.
 //
 cairo_t * context;
+
+// These units are in inches with y increasing from
+// top to bottom.
+//
 double head_left, head_top, head_height, head_width,
        body_top, body_height, body_left, body_width,
        foot_top, foot_height, foot_left, foot_width;
-double xscale, yscale, left, bottom;
 
-double xmin, xmax, ymin, ymax;
-    // Bounds on x and y over all commands.
-    // Used to set scale.  Does NOT account
-    // for width of lines or points.  Bounds
-    // entire ellipse and not just the arc.
-
-double tmax, bmax, lmax, rmax;
-    // Margins for top(t), bottom(b), left(l), and
-    // right(r).  Max of all margins is used.  Margins
-    // are in same units as xmin, ... .
-
-void compute_bounds ( void )
+void draw_head_or_foot
+    ( command * list,
+      double left, double top, double width )
 {
-    xmin = ymin = DBL_MAX;
-    xmax = ymax = DBL_MIN;
-    tmax = bmax = lmax = rmax = 0;
+    double center = 72 * ( left + width / 2 );
 
-#   define BOUND(v) \
-	 dout << "BOUND " << (v).x << " " << (v).y \
-	      << endl; \
-         if ( (v).x < xmin ) xmin = (v).x; \
-         if ( (v).x > xmax ) xmax = (v).x; \
-         if ( (v).y < ymin ) ymin = (v).y; \
-         if ( (v).y > ymax ) ymax = (v).y;
-
-    for ( command * c = commands; c != NULL;
-                                  c = c->next )
+    command * current = list;
+    if ( current != NULL ) do
     {
-        switch ( c->c )
+        current = current->next;
+	switch ( current->c )
 	{
-	case 'P':
+	case 'S':
 	{
-	    point & P = * (point *) c;
-	    BOUND ( P.p );
-	    break;
+	    space * s = (space *) current;
+	    top += s->s;
 	}
-	case 'L':
+	case 't':
 	{
-	    line & L = * (line *) c;
-	    BOUND ( L.p1 );
-	    BOUND ( L.p2 );
-	    break;
-	}
-	case 'A':
-	{
-	    // Compute bounding rectangle of ellipse,
-	    // rotate it by A.r, translate it by A.c,
-	    // and bound the corners.
-	    //
-	    arc & A = * (arc *) c;
-	    vector d1 = A.a;
-	    vector d2 = { d1.x, - d1.y };
-	    vector ll = - d1;
-	    vector lr =   d2;
-	    vector ur =   d1;
-	    vector ul = - d2;
-	    BOUND ( A.c + ( ll^A.r ) );
-	    BOUND ( A.c + ( lr^A.r ) );
-	    BOUND ( A.c + ( ur^A.r ) );
-	    BOUND ( A.c + ( ul^A.r ) );
-	    break;
-	}
-	case 'T':
-	{
-	    // Add text center point to bounds.  We
-	    // CANNOT compute bounding rectangle for
-	    // text as text extent is in different units
-	    // than our bounds and we do not know
-	    // conversion factors at this time.
-	    // 
-	    text & T = * (text *) c;
-	    BOUND ( T.p );
-	    break;
-	}
-	case 'M':
-	{
-	    // Max margins.
-	    // 
-	    margin & M = * (margin *) c;
-	    if ( M.t > tmax ) tmax = M.t;
-	    if ( M.b > bmax ) bmax = M.b;
-	    if ( M.l > lmax ) lmax = M.l;
-	    if ( M.r > rmax ) rmax = M.r;
-	    break;
+	    text * t = (text *) current;
+	    const font * f = t->f;
+	    top = f->size * f->space; 
+	    const color * c = f->c;
+
+	    cairo_set_source_rgb
+	        ( context, c->red, c->green, c->blue );
+		           
+	    cairo_select_font_face
+	        ( context, f->cairo_family,
+		           f->cairo_slant,
+			   f->cairo_weight );
+	    cairo_set_font_size
+	        ( context, 72 * f->size );
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
+
+	    cairo_text_extents_t te;
+	    cairo_text_extents
+	        ( context, t->t.c_str(), & te );
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
+	    cairo_move_to
+		( context, 
+		  center - te.width/2, 72 * top );
+	    cairo_show_text ( context, t->t.c_str() );
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
 	}
 	default:
-	    assert ( ! "bounding bad command" );
+	    assert ( ! "bad draw head/foot command" );
 	}
-    }
-#   undef BOUND
 
-    xmin -= lmax; xmax += rmax;
-    ymin -= bmax; ymax += tmax;
-
-    dout <<  "XMIN " << xmin << " XMAX " << xmax
-         << " YMIN " << ymin << " YMAX " << ymax
-         << endl; 
+    } while ( current != list );
 }
 
-# define CONVERT(p) \
-    left + ((p).x - xmin) * xscale, \
-    bottom - ((p).y - ymin) * yscale
-
-// Set color of graph_c.
+// These units are in inches with y increasing from
+// top to bottom.
 //
-void set_color ( color c )
+double xleft, ybottom;
+
+// These units are in pt (1/72 inch) with y increasing
+// from top to bottom.
+//
+double xscale, yscale, left, bottom;
+
+// Convert vector point p to x, y cairo coordinate
+// pair.  p is in body coordinates with y increasing
+// from bottom to top.  Cairo coordinates are in
+// pt units with y increasing from top to bottom.
+//
+# define CONVERT(p) \
+    left + ((p).x - xleft) * xscale, \
+    bottom - ((p).y - ybottom) * yscale
+
+void draw_page ( double P_left, double P_top )
 {
-    double rgb = 0.25 * c;
-    cairo_set_source_rgb ( graph_c, rgb, rgb, rgb );
+    head_top = P_top + P_margins.top / 2;
+    head_height = compute_height ( head );
+    body_top = P_top + P_margins.top + head_height;
+
+    foot_height = compute_height ( foot );
+    foot_top = P_top + P_height - foot_height
+             - P_margins.bottom / 2;
+    body_height = P_top + P_height - foot_height
+                - P_margins.bottom
+		- body_top;
+
+    head_left = P_left;
+    head_width = P_width;
+    foot_left = P_left;
+    foot_width = P_width;
+    body_left = P_left + P_margins.left;
+    body_width = P_width - P_margins.left
+                         - P_margins.right;
+
+    // First compute xscale and yscale in inch
+    // coordinates.
+    //
+    if ( isnan ( P_bounds.ll.x ) )
+    {
+        compute_bounding_box();
+
+	double dx = xmax - xmin;
+	double dy = ymax - ymin;
+	if ( dx == 0 ) dx = 1;
+	if ( dy == 0 ) dy = 1;
+	xscale = body_width / dx;
+	yscale = body_height / dy;
+
+	if ( ! isnan ( P_scale ) )
+	{
+	    if ( yscale < xscale * P_scale )
+	    {
+		xscale = yscale / P_scale;
+		double new_body_width =
+		    dx * xscale;
+		body_left +=
+		    ( body_width - new_body_width ) / 2;
+		body_width = new_body_width;
+	    }
+	    else if ( yscale > xscale * P_scale )
+	    {
+		yscale = xscale * P_scale;
+		double new_body_height =
+		    dy * yscale;
+		body_top +=
+		      ( body_height - new_body_height )
+		    / 2;
+		body_height = new_body_height;
+	    }
+	}
+
+	xleft = xmin;
+	ybottom = ymin;
+    }
+    else
+    {
+        
+    }
+
+    left *= 72;
+    bottom *= 72;
+    xscale *= 72;
+    yscale *= 72;
+
+    dout << "LEFT " << left
+	 << " XSCALE " << xscale
+	 << " BOTTOM " << bottom
+	 << " YSCALE " << yscale
+	 << endl;
+
+    draw_head_or_foot
+        ( head, head_left, head_top, head_width );
+    draw_head_or_foot
+        ( foot, foot_left, foot_top, foot_width );
+    for ( int i = 1; i <= MAX_LEVEL; ++ i )
+        draw_level ( level[i] );
 }
 
 // Draw dot at position p with width w.
@@ -2546,8 +2621,9 @@ void draw_page ( void )
 //
 int main ( int argc, char ** argv )
 {
+    init_colors();
+
     cairo_surface_t * page = NULL;
-    bool interactive = false;
 
     // Process options.
 
