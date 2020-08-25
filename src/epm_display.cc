@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Aug 25 14:59:21 EDT 2020
+// Date:	Tue Aug 25 17:56:39 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -73,9 +73,9 @@ void init_colors ( void )
 {
     for ( color * c = colors; c->name[0] != 0; ++ c )
     {
-        c->red = 0xFF & ( c->value >> 16 );
-        c->green = 0xFF & ( c->value >> 8 );
-        c->blue = 0xFF & ( c->value >> 0 );
+        c->red = ( 0xFF & ( c->value >> 16 ) ) / 255.0;
+        c->green = ( 0xFF & ( c->value >> 8 ) ) / 255.0;
+        c->blue = ( 0xFF & ( c->value >> 0 ) ) / 255.0;
     }
 }
 
@@ -2306,6 +2306,104 @@ double xscale, yscale, left, bottom;
 # define CONVERT(p) \
     left + ((p).x - xleft) * xscale, \
     bottom - ((p).y - ybottom) * yscale
+
+void draw_level ( command * list )
+{
+    command * current = list;
+    const stroke * s;
+    if ( current != NULL ) do
+    {
+        current = current->next;
+	switch ( current->c )
+	{
+	case 't':
+	{
+	    text * t = (text *) current;
+	    const font * f = t->f;
+	    const color * c = f->c;
+
+	    cairo_set_source_rgb
+	        ( context, c->red, c->green, c->blue );
+		           
+	    cairo_select_font_face
+	        ( context, f->cairo_family,
+		           f->cairo_slant,
+			   f->cairo_weight );
+	    cairo_set_font_size
+	        ( context, 72 * f->size );
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
+
+	    cairo_text_extents_t te;
+	    cairo_text_extents
+	        ( context, t->t.c_str(), & te );
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
+	    vector pc = { CONVERT ( t->p ) };
+	    cairo_move_to
+		( context, 
+		  pc.x - te.width/2,
+		  pc.y + te.height/2 ); 
+	    cairo_show_text ( context, t->t.c_str() );
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
+	}
+	case 's':
+	{
+	    start * st = (start *) current;
+	    s = st->s;
+	    cairo_move_to
+	        ( context, CONVERT ( st->p ) );
+	    break;
+	}
+	case 'l':
+	{
+	    line * l = (line *) current;
+	    cairo_line_to
+	        ( context, CONVERT ( l->p ) );
+	    break;
+	}
+	case 'c':
+	{
+	    curve * c = (curve *) current;
+	    cairo_curve_to
+	        ( context, CONVERT ( c->p[0] ),
+		           CONVERT ( c->p[1] ),
+			   CONVERT ( c->p[2] ) ); 
+	    break;
+	}
+	case 'e':
+	{
+	    cairo_set_line_width
+	        ( context, 72 * s->width );
+	    const color * c = s->c;
+	    cairo_set_source_rgb
+	        ( context, c->red, c->green, c->blue );
+	    if ( s->o & ( FILL_SOLID |
+		          FILL_CROSS |
+			  FILL_RIGHT |
+			  FILL_LEFT ) )
+		cairo_fill ( context );
+	    else
+		cairo_stroke ( context );
+	    break;
+	}
+	case 'a':
+	{
+	    arc * a = (arc *) current;
+	    break;
+	}
+	case 'r':
+	{
+	    rectangle * r = (rectangle *) current;
+	    break;
+	}
+	default:
+	    assert ( ! "bad draw level command" );
+	}
+
+    } while ( current != list );
+}
 
 void draw_page ( double P_left, double P_top )
 {
