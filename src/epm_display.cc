@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Aug 25 03:46:17 EDT 2020
+// Date:	Tue Aug 25 04:38:52 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -51,6 +51,7 @@ extern "C" {
 
 const size_t MAX_NAME_LENGTH = 40;
 const double MAX_BODY_COORDINATE = 1e30 ;
+const int MAX_LEVEL = 100;
 
 // Current page data.
 //
@@ -784,12 +785,6 @@ struct arc : public command // == 'a'
     double a;
     double g1, g2;
 };
-struct dot : public command // == 'd'
-{
-    const stroke * s;
-    vector p;
-    double r;
-};
 struct rectangle : public command // == 'r'
 {
     const stroke * s;
@@ -881,15 +876,6 @@ void print_commands ( command * & list )
 		 << endl;
 	    break;
 	}
-	case 'd':
-	{
-	    dot * d = (dot *) next;
-	    cout << "dot " << d->s->name
-	         << " " << d->p
-	         << " " << d->r
-		 << endl;
-	    break;
-	}
 	case 'r':
 	{
 	    rectangle * r = (rectangle *) next;
@@ -946,9 +932,6 @@ void delete_commands ( command * & list )
 	case 'a':
 	    delete (arc *) current;
 	    break;
-	case 'd':
-	    delete (dot *) current;
-	    break;
 	case 'r':
 	    delete (rectangle *) current;
 	    break;
@@ -975,7 +958,7 @@ void init_page ( void )
 
     delete_commands ( head );
     delete_commands ( foot );
-    for ( int i = 1; i <= 100; ++ i )
+    for ( int i = 1; i <= MAX_LEVEL; ++ i )
         delete_commands ( level[i] );
 }
 
@@ -2045,6 +2028,91 @@ section read_section ( istream & in )
     }
 }
 
+// Compute the bounding box of all the body points
+// in the level lists.  Text, wide lines, and exotic
+// curves may go outside the box.  For arcs, the
+// corners of the bounding rectangle are used.
+//
+double xmin, xmax, ymin, ymax;
+void compute_bounding_box ( void )
+{
+    xmin = ymin = DBL_MAX;
+    xmax = ymax = DBL_MIN;
+#   define BOUND(v) \
+	if ( xmin > v.x ) xmin = v.x; \
+	if ( xmax < v.x ) xmax = v.x; \
+	if ( ymin > v.y ) ymin = v.y; \
+	if ( ymax < v.y ) ymax = v.y
+
+    for ( int i = 1; i <= MAX_LEVEL; ++ i )
+    {
+	command * current = level[i];
+	if ( current != NULL ) do
+	{
+	    switch ( current->c )
+	    {
+	    case 't':
+	    {
+		text * t = (text *) current;
+		BOUND ( t->p );
+		break;
+	    }
+	    case 's':
+	    {
+		start * s = (start *) current;
+		BOUND ( s->p );
+		break;
+	    }
+	    case 'l':
+	    {
+		line * l = (line *) current;
+		BOUND ( l->p );
+		break;
+	    }
+	    case 'c':
+	    {
+		curve * c = (curve *) current;
+		BOUND ( c->p[0] );
+		BOUND ( c->p[1] );
+		BOUND ( c->p[2] );
+		break;
+	    }
+	    case 'e':
+		break;
+	    case 'a':
+	    {
+		arc * a = (arc *) current;
+		vector d[4] = {
+		    { - a->r.x, - a->r.y },
+		    { + a->r.x, - a->r.y },
+		    { + a->r.x, + a->r.y },
+		    { - a->r.x, + a->r.y } };
+		for ( int j = 0; j < 4; ++ j )
+		{
+		    vector p = a->c + d[j]^(a->a);
+		    BOUND ( p );
+		}
+		break;
+	    }
+	    case 'r':
+	    {
+		rectangle * r = (rectangle *) current;
+		BOUND ( r->p[0] );
+		BOUND ( r->p[1] );
+		BOUND ( r->p[2] );
+		BOUND ( r->p[3] );
+		break;
+	    }
+	    default:
+		assert ( ! "bounding bad command" );
+	    }
+	    current = current->next;
+	} while ( current != level[i] );
+    }
+#   undef BOUND
+}
+
+
 // For pdf output, units are 1/72".
 
 // You MUST declare the entire paper size, 8.5x11",
@@ -2072,34 +2140,6 @@ const double print_box = page_width - 2 * side_margin;
 //
 int R = 1, C = 1;
 
-// Parse -LBRxC and return true on success and false
-// on failure.
-//
-bool pdfoptions ( const char * name )
-{
-    long R = 1, C = 1;
-    while ( * name )
-    {
-	if ( '0' <= * name && * name <= '9' )
-	{
-	    char * endp;
-	    R = strtol ( name, & endp, 10 );
-	    if ( endp == name ) return false;
-	    if ( R < 1 || R > 30 ) return false;
-	    name = endp;
-	    if ( * name ++ != 'x' ) return false;
-	    C = strtol ( name, & endp, 10 );
-	    if ( endp == name ) return false;
-	    if ( C < 1 || C > 30 ) return false;
-	    name = endp;
-	}
-	else return false;
-    }
-    ::R = R;
-    ::C = C;
-    return true;
-}
-
 // cairo_write_func_t to write data to cout.
 //
 cairo_status_t write_to_cout
@@ -2115,14 +2155,11 @@ cairo_status_t write_to_cout
 
 // Drawing data.
 //
-cairo_t * title_c;
-double title_font_size,
-       title_left, title_top, title_height, title_width,
-       graph_top, graph_height,
-       graph_left, graph_width;
-cairo_t * graph_c;
+cairo_t * context;
+double head_left, head_top, head_height, head_width,
+       body_top, body_height, body_left, body_width,
+       foot_top, foot_height, foot_left, foot_width;
 double xscale, yscale, left, bottom;
-double dot_size, line_size;
 
 double xmin, xmax, ymin, ymax;
     // Bounds on x and y over all commands.
