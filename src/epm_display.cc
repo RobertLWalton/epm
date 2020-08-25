@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Mon Aug 24 20:57:29 EDT 2020
+// Date:	Tue Aug 25 03:46:17 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -189,6 +189,9 @@ const char * const documentation[2] = { "\n"
 "      defaults (and NOT to their previous values).\n"
 "\n"
 "      layout [R C [HEIGHT WIDTH]]\n"
+"      layout R C HEIGHT WIDTH ALL\n"
+"      layout R C HEIGHT WIDTH VERTICAL HORIZONAL\n"
+"      layout R C HEIGHT WIDTH TOP RIGHT BOTTOM LEFT\n"
 "        Must be first command of a layout section.\n"
 "\n"
 "        May cause multiple logical pages to be put\n"
@@ -200,6 +203,14 @@ const char * const documentation[2] = { "\n"
 "        HEIGHT and WIDTH are the physical page\n"
 "        height and width, and default to 11in and\n"
 "        8.5in, respectively.\n"
+"\n"
+"        ALL is the physical page margin on all sides.\n"
+"        VERTICAL is the top and bottom margin, while\n"
+"        HORIZONTAL is the left and right margin.\n"
+"        TOP, RIGHT, BOTTOM, and LEFT are the 4\n"
+"        specific margins.  Defaults are TOP = 0.5in,\n"
+"        BOTTOM = 0.5in, LEFT = 0.75in, RIGHT =\n"
+"        0.75in.\n"
 "\n"
 "      font NAME SIZE [COLOR] [OPT] [FAMILY] [SPACE]\n"
 "        Defines a named font.\n"
@@ -291,7 +302,7 @@ const char * const documentation[2] = { "\n"
 "        These commands can only appear on the head\n"
 "        or foot list.\n"
 "\n"
-"        text TEXT1\\TEXT2\\TEXT3\n"
+"        text FONT TEXT1\\TEXT2\\TEXT3\n"
 "           Display text as a line.  TEXT1 is left\n"
 "           adjusted; TEXT2 is centered; TEXT3 is\n"
 "           right adjusted.\n"
@@ -492,13 +503,31 @@ ostream & operator << ( ostream & s, options opt )
     return s;
 }
 
+struct margins
+{
+    double top, right, bottom, left;
+};
+
+// Print margins for debugging:
+//
+ostream & operator << ( ostream & s, const margins & m )
+{
+    s << m.top << " " << m.right << " " << m.bottom
+               << " " << m.left;
+    return s;
+}
+
 // Layout Parameters
 //
-color L_background;
-double L_scale;
-double L_top, L_right, L_bottom, L_left; // In inches.
-double L_height, L_width;
 int R, C;
+double L_height, L_width;
+margins L_margins;
+
+// Default page parameters from layout section.
+//
+double D_scale;
+color D_background;
+margins D_margins;
 
 options font_options = (options) ( BOLD + ITALIC );
 struct font
@@ -619,13 +648,21 @@ void print_strokes ( void )
 
 void init_layout ( int R, int C )
 {
-    L_background = find_color ( "white" );
-    L_scale = 1.0;
-    L_height = 11.0;
-    L_width = 8.5;
-    L_top = L_right = L_bottom = L_left = 0.25;
     ::R = R;
     ::C = C;
+    L_height = 11.0;
+    L_width = 8.5;
+    L_margins.top = 0.5;
+    L_margins.right = 0.75;
+    L_margins.bottom = 0.5;
+    L_margins.left = 0.75;
+
+    D_scale = 1;
+    D_margins.top = 0;
+    D_margins.right = 0;
+    D_margins.bottom = 0;
+    D_margins.left = 0;
+    D_background = find_color ( "white" );
 
     for ( font_dt::iterator it = font_dict.begin();
           it != font_dict.end(); ++ it )
@@ -759,10 +796,12 @@ struct rectangle : public command // == 'r'
     vector p[4];
 };
 
-color background;
-double scale;
-double top, right, bottom, left; // In inches.
-double height, width;
+// Page Parameters.
+//
+color P_background;
+double P_scale;
+margins P_margins; // In inches.
+double P_height, P_width;
 
 
 // List of all commands in a page.  The list variable
@@ -925,14 +964,14 @@ void delete_commands ( command * & list )
 
 void init_page ( void )
 {
-    background = L_background;
-    scale = L_scale;
-    height = L_height / R;
-    width = L_width / C;
-    top = L_top / R;
-    bottom = L_bottom / R;
-    right = L_right / C;
-    left = L_left / C;
+    P_background = D_background;
+    P_scale = D_scale;
+    P_height = L_height - L_margins.top
+                        - L_margins.bottom;
+    P_height /= R;
+    P_width = L_width - L_margins.left
+                      - L_margins.right;
+    P_width /= C;
 
     delete_commands ( head );
     delete_commands ( foot );
@@ -989,6 +1028,7 @@ string units;
     // at beginning of token.
     //
     // Get_double sets token_double similarly.
+const char * whitespace = " \t\f\v\n\r";
 
 // If there is currently no token, get the next token.
 // Set token = "" if there is no next token.  Return
@@ -1050,8 +1090,8 @@ bool read_long ( const char * name, long & var,
 {
     if ( ! get_long() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     if ( units != "" )
@@ -1078,8 +1118,8 @@ bool read_double ( const char * name, double & var,
 {
     if ( ! get_double() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     if ( units != "" )
@@ -1104,8 +1144,8 @@ bool read_name ( const char * name,
 {
     if ( ! get_token() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     if ( token.length() > MAX_NAME_LENGTH )
@@ -1130,8 +1170,8 @@ bool read_length ( const char * name, double & var,
 {
     if ( ! get_double() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     if ( units == "pt" )
@@ -1160,8 +1200,8 @@ bool read_em ( const char * name, double & var,
 {
     if ( ! get_double() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     if ( units != "em" )
@@ -1179,13 +1219,42 @@ bool read_em ( const char * name, double & var,
     return true;
 }
 
+// Read margin parameters.  The paramter names are
+// ALL, VERTICAL, HORIZONTAL, TOP, RIGHT, BOTTOM, and
+// LEFT, as appropriate.  Set default values before
+// calling.
+//
+bool read_margins ( margins & var,
+                    bool missing_allowed = true )
+{
+    if ( ! get_token() )
+    {
+        if ( ! missing_allowed )
+	    error ( "missing margins (ALL, ...)" );
+	return false;
+    }
+    if ( ! read_length ( "ALL", var.top, 0, 100 ) )
+        return false;
+    if ( ! read_length ( "HORIZONTAL", var.right,
+                          0, 100 ) )
+	var.right = var.bottom = var.left
+	          = var.top;
+    else if ( ! read_length ( "BOTTOM", var.bottom,
+                               0, 100 ) )
+	var.bottom = var.top, var.left = var.right;
+    else if ( ! read_length ( "LEFT", var.bottom,
+                               0, 100, false ) )
+	var.left = var.right;
+    return true;
+}
+
 bool read_color ( const char * name, color & var,
                   bool missing_allowed = true )
 {
     if ( ! get_token() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     color val = find_color ( token.c_str() );
@@ -1206,8 +1275,8 @@ bool read_family ( const char * name,
 {
     if ( ! get_token() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     const char * val = find_family ( name );
@@ -1229,8 +1298,8 @@ bool read_options ( const char * name,
 {
     if ( ! get_token() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     options val = NO_OPTIONS;
@@ -1256,8 +1325,8 @@ bool read_options ( const char * name,
     }
     if ( char_count != token.length() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     if ( char_count != opt_count )
@@ -1275,8 +1344,8 @@ bool read_font ( const char * name,
 {
     if ( ! get_token() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     font_it val = font_dict.find ( token.c_str() );
@@ -1297,8 +1366,8 @@ bool read_stroke ( const char * name,
 {
     if ( ! get_token() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     stroke_it val = stroke_dict.find ( token.c_str() );
@@ -1314,6 +1383,7 @@ bool read_stroke ( const char * name,
 }
 
 // Read what is left in lin.  Assumes token == "".
+// Trims whitespace from ends of output.
 //
 void read_text ( const char * name,
 		 string & text )
@@ -1321,7 +1391,12 @@ void read_text ( const char * name,
     if ( token != "" )
         error ( "%s ignored", token.c_str() );
      
+    lin >> ws;
     getline ( lin, text );
+    size_t last = text.find_last_not_of
+	( whitespace );
+    if ( last != string::npos )
+        text.erase ( last + 1 );
 }
 
 void check_extra ( void )
@@ -1334,7 +1409,6 @@ void check_extra ( void )
 // Read section.
 //
 enum section { END_OF_FILE, LAYOUT, PAGE };
-const char * whitespace = " \t\f\v\n\r";
 command ** current_list;
 
 // Attach command to end of current_list.  Returns
@@ -1453,6 +1527,8 @@ section read_section ( istream & in )
 		{
 		    L_height = HEIGHT;
 		    L_width = WIDTH;
+
+		    read_margins ( L_margins );
 		}
 	    }
 	    else
@@ -1514,9 +1590,9 @@ section read_section ( istream & in )
 	    if ( ! read_color ( "COLOR", COLOR, false ) )
 	        continue;
 	    if ( s == LAYOUT )
-	        L_background = COLOR;
+	        D_background = COLOR;
 	    else
-	        background = COLOR;
+	        P_background = COLOR;
 	}
 	else if ( op == "scale" )
 	{
@@ -1525,40 +1601,16 @@ section read_section ( istream & in )
 	            ( "S", S, 0.001, 1000, false ) )
 	        continue;
 	    if ( s == LAYOUT )
-	        L_scale = S;
+	        D_scale = S;
 	    else
-	        scale = S;
+	        P_scale = S;
 	}
 	else if ( op == "margin" )
 	{
-	    double TOP, RIGHT, BOTTOM, LEFT;
-	    if ( ! read_length
-	               ( "TOP", TOP, 0, 100, false ) )
-	        continue;
-	    if ( ! read_length
-	               ( "RIGHT", RIGHT, 0, 100 ) )
-	        RIGHT = BOTTOM = LEFT = TOP;
-	    else
-	    if ( ! read_length
-	               ( "BOTTOM", BOTTOM, 0, 100 ) )
-		BOTTOM = TOP, LEFT = RIGHT;
-	    if ( ! read_length
-	               ( "LEFT", LEFT, 0, 100, false ) )
-		LEFT = RIGHT;
 	    if ( s == LAYOUT )
-	    {
-	        if ( L_top < TOP ) L_top = TOP;
-	        if ( L_right < RIGHT ) L_right = RIGHT;
-	        if ( L_bottom < BOTTOM ) L_bottom = BOTTOM;
-	        if ( L_left < LEFT ) L_left = LEFT;
-	    }
+	        read_margins ( D_margins, false );
 	    else
-	    {
-	        if ( top < TOP ) top = TOP;
-	        if ( right < RIGHT ) right = RIGHT;
-	        if ( bottom < BOTTOM ) bottom = BOTTOM;
-	        if ( left < LEFT ) left = LEFT;
-	    }
+	        read_margins ( P_margins, false );
 	}
 	else if ( op == "head" && s == PAGE )
 	{
@@ -2055,7 +2107,10 @@ cairo_status_t write_to_cout
       const unsigned char * data, unsigned int length )
 {
     cout.write ( (const char *) data, length );
-    return CAIRO_STATUS_SUCCESS;
+    if ( cout )
+	return CAIRO_STATUS_SUCCESS;
+    else
+        return CAIRO_STATUS_WRITE_ERROR;
 }
 
 // Drawing data.
