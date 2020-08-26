@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Aug 25 21:14:45 EDT 2020
+// Date:	Wed Aug 26 02:00:26 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -24,6 +24,7 @@
 //     Page Section Data
 //     Read Routines
 //     Page Draw Routines
+//     Main Program
 
 // Setup
 // -----
@@ -1456,14 +1457,12 @@ void check_extra ( void )
 
 // Read section.
 //
-enum section { END_OF_FILE, LAYOUT, PAGE };
-command ** current_list;
-
 // Attach command to end of current_list.  Returns
 // false if this cannot be dones because command is
 // continuing and has no previous start.  This
 // cannot happen if continuing is false.
 //
+command ** current_list;
 bool attach ( command * com, char c,
               bool continued = false,
 	      bool continuing = false )
@@ -1505,7 +1504,8 @@ bool attach ( command * com, char c,
     com->continued = continued;
     return true;
 }
-
+//
+enum section { END_OF_FILE, LAYOUT, PAGE };
 section read_section ( istream & in )
 {
 
@@ -2120,6 +2120,8 @@ section read_section ( istream & in )
 	}
 	check_extra();
     }
+
+    return s;
 }
 
 // Page Draw Routines
@@ -2763,7 +2765,6 @@ int main ( int argc, char ** argv )
 
     // Process options.
 
-    bool RxC_found = false;
     while ( argc >= 2 && argv[1][0] == '-' )
     {
 
@@ -2778,16 +2779,6 @@ int main ( int argc, char ** argv )
 	    //
 	    print_documentation ( 0 );
 	}
-        else if ( pdfoptions ( name ) )
-	{
-	    if ( RxC_found )
-	    {
-		cout << "At most one -RxC allowed"
-		     << endl;
-		exit (1);
-	    }
-	    RxC_found = true;
-	}
 	else
 	{
 	    cout << "Cannot understand -" << name
@@ -2797,10 +2788,6 @@ int main ( int argc, char ** argv )
 
 	++ argv, -- argc;
     }
-
-    page = cairo_pdf_surface_create_for_stream
-		( write_to_cout, NULL,
-		  page_width, page_height );
 
     // Exit with error status unless there is exactly
     // one program argument left.
@@ -2814,101 +2801,62 @@ int main ( int argc, char ** argv )
 
     // Open file.
     //
-    ifstream in;
+    istream * in = & cin;
+    ifstream fin;
     const char * file = NULL;
     if ( argc == 2 )
     {
         file = argv[1];
-	in.open ( file );
-	if ( ! in )
+	fin.open ( file );
+	if ( ! fin )
 	{
 	    cout << "Cannot open " << file << endl;
 	    exit ( 1 );
 	}
+	in = & fin;
     }
 
-    // 4 is the max number of allowed cairo contexts.
-    // This seems to be undocumented?
-    //
-    title_c = cairo_create ( page );
-    cairo_set_source_rgb ( title_c, 0.0, 0.0, 0.0 );
-    cairo_select_font_face ( title_c, "sans-serif",
-                             CAIRO_FONT_SLANT_NORMAL,
-			     CAIRO_FONT_WEIGHT_BOLD );
-    title_font_size =
-        ( C == 1 ? title_large_font_size :
-	           title_small_font_size );
-    cairo_set_font_size ( title_c, title_font_size );
-    assert (    cairo_status ( title_c )
-	     == CAIRO_STATUS_SUCCESS );
-
-    graph_c = cairo_create ( page );
-    cairo_set_source_rgb ( graph_c, 0.0, 0.0, 0.0 );
-    cairo_select_font_face ( graph_c, "sans-serif",
-                             CAIRO_FONT_SLANT_NORMAL,
-			     CAIRO_FONT_WEIGHT_BOLD );
-    assert (    cairo_status ( graph_c )
-	     == CAIRO_STATUS_SUCCESS );
-
-    double case_width = page_width
-		      - 2 * side_margin
-		      - ( C - 1 ) * separation;
-    case_width /= C;
-    double case_height =
-	page_height - top_margin
-		    - bottom_margin
-		    - ( R - 1 ) * separation; 
-    case_height /= R;
-
-    title_width = case_width;
-    title_height = 2 * title_font_size;
-
-    graph_height = case_height
-		 - 2 * title_font_size;
-    graph_width = case_width;
-
-    line_size = page_line_size;
-    dot_size = page_dot_size;
-
-    int curR = 1, curC = 1;
-    while ( read_page
-		( file != NULL ?
-		  * (istream *) & in :
-		  cin ) )
+    init_layout ( 1, 1 );
+    section s = LAYOUT;
+    while ( s == LAYOUT )
     {
-	title_top = top_margin
-		  + case_height * ( curR - 1 )
-		  + separation * ( curR - 1 );
-	title_left = side_margin
-		   + case_width * ( curC - 1 )
-		   + separation * ( curC - 1 );
+	page = cairo_pdf_surface_create_for_stream
+		    ( write_to_cout, NULL,
+		      72 * L_width, 72 * L_height );
+	context = cairo_create ( page );
 
-	graph_top = top_margin
-		  + case_height * ( curR - 1 )
-		  + separation * ( curR - 1 )
-		  + 2 * title_font_size;
-	graph_left = side_margin
-		   + case_width * ( curC - 1 )
-		   + separation * ( curC - 1 );
-
-	compute_bounds();
-	draw_page();
-	if ( ++ curC > C )
+	double left = L_margins.left;
+	double top = L_margins.top;
+	double width = ( L_width - L_margins.left
+	                         - L_margins.right )
+		     / C;
+	double height = ( L_height - L_margins.top
+	                           - L_margins.bottom )
+		      / R;
+	int curR = 0, curC = 0;
+	while ( true )
 	{
-	    curC = 1;
-	    if ( ++ curR > R )
+	    section s = read_section ( * in );
+	    if ( s != PAGE ) break;
+	    draw_page ( left + curC * width,
+	                top + curR * height );
+	    if ( ++ curC >= C )
 	    {
-		curR = 1;
-		cairo_show_page ( title_c );
+		curC = 0;
+		if ( ++ curR >= R )
+		{
+		    curR = 0;
+		    cairo_show_page ( context );
+		}
 	    }
 	}
-    }
-    if ( curR != 1 || curC != 1 )
-	cairo_show_page ( title_c );
 
-    cairo_destroy ( title_c );
-    cairo_destroy ( graph_c );
-    cairo_surface_destroy ( page );
+	if ( curR != 0 || curC != 0 )
+	    cairo_show_page ( context );
+
+	cairo_destroy ( context );
+	cairo_surface_destroy ( page );
+    }
 
     // Return from main function without error.
 
