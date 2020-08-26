@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Aug 25 17:56:39 EDT 2020
+// Date:	Tue Aug 25 21:14:45 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -11,9 +11,23 @@
 // Compile with:
 //
 //	g++ -I /usr/include/cairo \
-//	    -o hpcm_display \
+/	    -o hpcm_display \
 //	    hpcm_display.cc -lcairo
 
+// Table of Contents
+//
+//     Setup
+//     Vectors
+//     Basic Data
+//     Documentation
+//     Layout Section Data
+//     Page Section Data
+//     Read Routines
+//     Page Draw Routines
+
+// Setup
+// -----
+//
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -54,8 +68,63 @@ const size_t MAX_NAME_LENGTH = 40;
 const double MAX_BODY_COORDINATE = 1e30 ;
 const int MAX_LEVEL = 100;
 
-// Current page data.
+bool debug = false;
+# define dout if ( debug ) cerr
+
+// Vectors:
 //
+struct vector { double x, y; };
+
+vector operator + ( vector v1, vector v2 )
+{
+    vector r = { v1.x + v2.x, v1.y + v2.y };
+    return r;
+}
+
+vector operator - ( vector v1, vector v2 )
+{
+    vector r = { v1.x - v2.x, v1.y - v2.y };
+    return r;
+}
+
+vector operator - ( vector v )
+{
+    vector r = { - v.x, - v.y };
+    return r;
+}
+
+vector operator * ( double s, vector v )
+{
+    vector r = { s * v.x, s * v.y };
+    return r;
+}
+
+double operator * ( vector v1, vector v2 )
+{
+    return v1.x * v2.x + v1.y * v2.y;
+}
+
+// Rotate v by angle.
+//
+// WARING: ^ has lower precedence than + or -.
+//
+vector operator ^ ( vector v, double angle )
+{
+    double s = sin ( M_PI * angle / 180 );
+    double c = cos ( M_PI * angle / 180 );
+    vector r = { c * v.x - s * v.y,
+                 s * v.x + c * v.y };
+    return r;
+}
+
+ostream & operator << ( ostream & s, const vector & v )
+{
+    return s << "(" << v.x << "," << v.y << ")";
+}
+
+// Basic Data
+// ----- ----
+
 struct color
 {
     const char * name;
@@ -113,8 +182,70 @@ const char * find_family ( const char * name )
     return * f;
 }
 
-bool debug = false;
-# define dout if ( debug ) cerr
+enum options {
+    NO_OPTIONS          = 0,
+    BOLD		= 1 << 0,
+    ITALIC		= 1 << 1,
+    DOTTED		= 1 << 2,
+    DASHED		= 1 << 3,
+    BEGIN_ARROW		= 1 << 4,
+    MIDDLE_ARROW	= 1 << 5,
+    END_ARROW		= 1 << 6,
+    FILL_SOLID		= 1 << 7,
+    FILL_CROSS		= 1 << 8,
+    FILL_RIGHT		= 1 << 9,
+    FILL_LEFT		= 1 << 10,
+    TOP 		= 1 << 11,
+    BOTTOM		= 1 << 12,
+    LEFT		= 1 << 13,
+    RIGHT		= 1 << 14,
+    BOX_WHITE		= 1 << 15,
+    CIRCLE_WHITE	= 1 << 16,
+    OUTLINE		= 1 << 17,
+};
+const char * optchar = "bi.-bmesx/\\tblrxco";
+
+// Print options for debugging:
+//
+ostream & operator << ( ostream & s, options opt )
+{
+    if ( opt == 0 ) return s;
+    else s << " ";
+    int len = strlen ( optchar );
+    for ( int i = 0; i < len; ++ i )
+        if ( opt & ( 1 << i ) ) s << optchar[i];
+    return s;
+}
+
+struct margins
+{
+    double top, right, bottom, left;
+};
+
+// Print margins for debugging:
+//
+ostream & operator << ( ostream & s, const margins & m )
+{
+    s << m.top << " " << m.right << " " << m.bottom
+               << " " << m.left;
+    return s;
+}
+
+struct bounds
+{
+    vector ll, ur;
+};
+
+// Print bounds for debugging:
+//
+ostream & operator << ( ostream & s, const bounds & b )
+{
+    s << b.ll << " " << b.ur;
+    return s;
+}
+
+// Documentation
+// -------------
 
 const char * const documentation[2] = { "\n"
 "hpcm_display [-debug] [file]\n"
@@ -430,119 +561,9 @@ void print_documentation ( int exit_code )
     pclose ( out );
     exit ( exit_code );
 }
-
-// Vectors:
-//
-struct vector { double x, y; };
-
-vector operator + ( vector v1, vector v2 )
-{
-    vector r = { v1.x + v2.x, v1.y + v2.y };
-    return r;
-}
-
-vector operator - ( vector v1, vector v2 )
-{
-    vector r = { v1.x - v2.x, v1.y - v2.y };
-    return r;
-}
-
-vector operator - ( vector v )
-{
-    vector r = { - v.x, - v.y };
-    return r;
-}
-
-vector operator * ( double s, vector v )
-{
-    vector r = { s * v.x, s * v.y };
-    return r;
-}
-
-double operator * ( vector v1, vector v2 )
-{
-    return v1.x * v2.x + v1.y * v2.y;
-}
-
-// Rotate v by angle.
-//
-// WARING: ^ has lower precedence than + or -.
-//
-vector operator ^ ( vector v, double angle )
-{
-    double s = sin ( M_PI * angle / 180 );
-    double c = cos ( M_PI * angle / 180 );
-    vector r = { c * v.x - s * v.y,
-                 s * v.x + c * v.y };
-    return r;
-}
-
-ostream & operator << ( ostream & s, const vector & v )
-{
-    return s << "(" << v.x << "," << v.y << ")";
-}
-
-enum options {
-    NO_OPTIONS          = 0,
-    BOLD		= 1 << 0,
-    ITALIC		= 1 << 1,
-    DOTTED		= 1 << 2,
-    DASHED		= 1 << 3,
-    BEGIN_ARROW		= 1 << 4,
-    MIDDLE_ARROW	= 1 << 5,
-    END_ARROW		= 1 << 6,
-    FILL_SOLID		= 1 << 7,
-    FILL_CROSS		= 1 << 8,
-    FILL_RIGHT		= 1 << 9,
-    FILL_LEFT		= 1 << 10,
-    TOP 		= 1 << 11,
-    BOTTOM		= 1 << 12,
-    LEFT		= 1 << 13,
-    RIGHT		= 1 << 14,
-    BOX_WHITE		= 1 << 15,
-    CIRCLE_WHITE	= 1 << 16,
-    OUTLINE		= 1 << 17,
-};
-const char * optchar = "bi.-bmesx/\\tblrxco";
-
-// Print options for debugging:
-//
-ostream & operator << ( ostream & s, options opt )
-{
-    if ( opt == 0 ) return s;
-    else s << " ";
-    int len = strlen ( optchar );
-    for ( int i = 0; i < len; ++ i )
-        if ( opt & ( 1 << i ) ) s << optchar[i];
-    return s;
-}
-
-struct margins
-{
-    double top, right, bottom, left;
-};
-
-// Print margins for debugging:
-//
-ostream & operator << ( ostream & s, const margins & m )
-{
-    s << m.top << " " << m.right << " " << m.bottom
-               << " " << m.left;
-    return s;
-}
-
-struct bounds
-{
-    vector ll, ur;
-};
-
-// Print bounds for debugging:
-//
-ostream & operator << ( ostream & s, const bounds & b )
-{
-    s << b.ll << " " << b.ur;
-    return s;
-}
+
+// Layout Section Data
+// ------ ------- ----
 
 // Layout Parameters
 //
@@ -771,8 +792,9 @@ void init_layout ( int R, int C )
 	              black, DASHED );
     }
 }
-
-// Page Data
+
+// Page Section Data
+// ---- ------- ----
 //
 struct command
 {
@@ -1001,6 +1023,9 @@ void init_page ( void )
         delete_commands ( level[i] );
 }
 
+
+// Read Routines
+// ---- --------
 
 // Current command line for error routines.
 //
@@ -2096,6 +2121,9 @@ section read_section ( istream & in )
 	check_extra();
     }
 }
+
+// Page Draw Routines
+// ---- ---- --------
 
 // Compute height of head or foot.
 //
@@ -2208,19 +2236,6 @@ void compute_bounding_box ( void )
 #   undef BOUND
 }
 
-
-// cairo_write_func_t to write data to cout.
-//
-cairo_status_t write_to_cout
-    ( void * closure,
-      const unsigned char * data, unsigned int length )
-{
-    cout.write ( (const char *) data, length );
-    if ( cout )
-	return CAIRO_STATUS_SUCCESS;
-    else
-        return CAIRO_STATUS_WRITE_ERROR;
-}
 
 // Drawing data.
 //
@@ -2490,6 +2505,12 @@ void draw_page ( double P_left, double P_top )
         draw_level ( level[i] );
 }
 
+
+// Obsolete Code
+// -------- ----
+
+#ifdef OBSOLETE
+
 // Draw dot at position p with width w.
 //
 void draw_dot ( vector p, width w )
@@ -2713,6 +2734,23 @@ void draw_page ( void )
 	    break;
 	}
     }
+}
+#endif
+
+// Main Program
+// ---- -------
+
+// cairo_write_func_t to write data to cout.
+//
+cairo_status_t write_to_cout
+    ( void * closure,
+      const unsigned char * data, unsigned int length )
+{
+    cout.write ( (const char *) data, length );
+    if ( cout )
+	return CAIRO_STATUS_SUCCESS;
+    else
+        return CAIRO_STATUS_WRITE_ERROR;
 }
 
 // Main program.
