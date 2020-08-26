@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Aug 26 02:00:26 EDT 2020
+// Date:	Wed Aug 26 14:15:22 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2159,9 +2159,12 @@ double compute_height ( command * list )
 // curves may go outside the box.  For arcs, the
 // corners of the bounding rectangle are used.
 //
-double xmin, xmax, ymin, ymax;
 void compute_bounding_box ( void )
 {
+    double & xmin = P_bounds.ll.x;
+    double & ymin = P_bounds.ll.y;
+    double & xmax = P_bounds.ur.x;
+    double & ymax = P_bounds.ur.y;
     xmin = ymin = DBL_MAX;
     xmax = ymax = DBL_MIN;
 #   define BOUND(v) \
@@ -2447,46 +2450,46 @@ void draw_page ( double P_left, double P_top )
     // coordinates.
     //
     if ( isnan ( P_bounds.ll.x ) )
-    {
         compute_bounding_box();
 
-	double dx = xmax - xmin;
-	double dy = ymax - ymin;
-	if ( dx == 0 ) dx = 1;
-	if ( dy == 0 ) dy = 1;
-	xscale = body_width / dx;
-	yscale = body_height / dy;
+    double dx = P_bounds.ur.x - P_bounds.ll.x;
+    double dy = P_bounds.ur.y - P_bounds.ll.y;
+    if ( dx == 0 ) dx = 1;
+    if ( dy == 0 ) dy = 1;
+    xscale = body_width / dx;
+    yscale = body_height / dy;
 
-	if ( ! isnan ( P_scale ) )
-	{
-	    if ( yscale < xscale * P_scale )
-	    {
-		xscale = yscale / P_scale;
-		double new_body_width =
-		    dx * xscale;
-		body_left +=
-		    ( body_width - new_body_width ) / 2;
-		body_width = new_body_width;
-	    }
-	    else if ( yscale > xscale * P_scale )
-	    {
-		yscale = xscale * P_scale;
-		double new_body_height =
-		    dy * yscale;
-		body_top +=
-		      ( body_height - new_body_height )
-		    / 2;
-		body_height = new_body_height;
-	    }
-	}
-
-	xleft = xmin;
-	ybottom = ymin;
-    }
-    else
+    if ( ! isnan ( P_scale ) )
     {
-        
+	double ratio = fabs ( yscale )
+	             / fabs ( xscale );
+	if ( ratio < P_scale )
+	{
+	    // Must decrease magnitude of xscale.
+	    //
+	    xscale *= ratio / P_scale;
+	    double new_body_width = dx * xscale;
+	    body_left +=
+		( body_width - new_body_width ) / 2;
+	    body_width = new_body_width;
+	}
+	else if ( ratio > P_scale )
+	{
+	    // Must decrease magnitude of yscale.
+	    //
+	    yscale *= P_scale / ratio;
+	    double new_body_height = dy * yscale;
+	    body_top +=
+		  ( body_height - new_body_height )
+		/ 2;
+	    body_height = new_body_height;
+	}
     }
+
+    left = body_left;
+    bottom = body_top + body_height;
+    xleft = P_bounds.ll.x;
+    ybottom = P_bounds.ll.y;
 
     left *= 72;
     bottom *= 72;
