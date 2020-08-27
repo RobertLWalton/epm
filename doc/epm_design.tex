@@ -116,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{August 15, 2020}
+\date{August 27, 2020}
  
 \maketitle
 
@@ -692,12 +692,12 @@ Name & Format & Description & Creators & Updaters & Readers \\
         & \STACK{message\\of the day \pagref{ADMIN/MOTD}}
 	& (editor) & (editor ) & login \\ 
 \hline
-\TT{admin/+lock+} & lock
+\TT{admin/+lock+} & time
         & \STACK{administrative\\lock file \pagref{ADMIN/LOCK}}
-	& (updater) & \STACK{login\\user} & (updater) \\ 
+	& (updaters) & \STACK{login\\user} & (updaters) \\ 
 \hline
-\TT{admin/+random+} & lock
-        & \STACK{random\\number\\generator \pagref{ADMIN/RANDOM}}
+\TT{admin/+random+} & binary
+        & \STACK{random number\\data \pagref{ADMIN/RANDOM}}
 	& login & \STACK{login\\index} & \STACK{login\\index} \\ 
 \hline
 \TT{admin/+actions+} & lines &
@@ -724,14 +724,14 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 \TT{\STACK{admin/users/UID\\admin/teams/TID}}
         & dir & \STACK{administrative\\account files}
-	& user & \STACK{user\\login} & \STACK{user\\login} \\ 
+	& user & user & \STACK{user\\login} \\ 
 \hline
 \STACK{
 \FSTACK{admin/}{users/UID/\\UID.login}\\
 \FSTACK{admin/}{teams/TID/\\UID.login}}
         & lines
         & \STACK{log of logins\\\pagref{ADMIN/USERS/XID/YID.LOGIN}}
-	& (updaters) & \STACK{login\\user} & (index)  \\ 
+	& (updaters) & \STACK{login\\user} & (index$^*$)  \\ 
 \hline
 \STACK{
 \FSTACK{admin/}{users/UID/\\UID.inactive}\\
@@ -742,13 +742,15 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 \FSTACK{admin/}{users/UID/\\UID.info} & json
 	& user info \pagref{ADMIN/USERS/UID/UID.INFO}
-	& user & user & user \\ 
+	& user & user & \STACK{user\\problem} \\ 
 \hline
 \FSTACK{admin/}{teams/TID/\\TID.info} & json
 	& team info \pagref{ADMIN/USERS/TID/TID.INFO}
 	& user & user & user \\ 
 \hline
 \end{tabular}
+\\[1ex]
+$^*$ reads modification time
 \end{center}
 
 \begin{center}
@@ -834,9 +836,20 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 \TT{projects} & dir & \pagref{PROJECTS} & login & maint & \\ 
 \hline
-\TT{solutions} & dir & \pagref{SOLUTIONS} & login & maint & \\ 
+\TT{lists} & dir & \STACK{links to\\published\\lists} & list & list
+           & \STACK{favorites\\list\\project\\view\\manage} \\ 
+\hline
+\TT{default} & dir & \STACK{default\\program\\binaries} & setup &  & \\ 
+\hline
+\TT{+web-save+} & dir & backup of W & backup & backup & backup \\ 
+\hline
+\TT{+web+} & link & link to W & setup &  & \\ 
+\hline
 \hline
 \end{tabular}
+\\[1ex]
+setup is setup function of epm/bin/epm \\
+backup is backup function of epm/bin/epm \\
 \end{center}
 
 \section{Session Variables}

@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug 19 15:52:50 EDT 2020
+    // Date:	Thu Aug 27 02:00:35 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -123,7 +123,7 @@
     <td style='text-align:right'>
     <button type='button' id='refresh'
             onclick='location.replace
-	        ("template.php?id=$ID")'>
+	        ("template.php")'>
 	&#8635;</button>
     <button type='button'
             onclick='HELP("template-page")'>
