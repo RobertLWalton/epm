@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  8 02:11:18 EDT 2020
+    // Date:	Thu Aug 27 02:22:15 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -27,8 +27,6 @@
         exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_template.php";
-    $_SESSION['EPM_PERMISSION']['option']['template'] =
-        true;
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
