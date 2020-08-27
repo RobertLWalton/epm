@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Wed Aug 26 14:15:22 EDT 2020
+// Date:	Thu Aug 27 10:59:32 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -66,7 +66,7 @@ extern "C" {
 }
 
 const size_t MAX_NAME_LENGTH = 40;
-const double MAX_BODY_COORDINATE = 1e30 ;
+const double MAX_BODY_COORDINATE = 0.90 * DBL_MAX;
 const int MAX_LEVEL = 100;
 
 bool debug = false;
@@ -76,31 +76,31 @@ bool debug = false;
 //
 struct vector { double x, y; };
 
-vector operator + ( vector v1, vector v2 )
+inline vector operator + ( vector v1, vector v2 )
 {
     vector r = { v1.x + v2.x, v1.y + v2.y };
     return r;
 }
 
-vector operator - ( vector v1, vector v2 )
+inline vector operator - ( vector v1, vector v2 )
 {
     vector r = { v1.x - v2.x, v1.y - v2.y };
     return r;
 }
 
-vector operator - ( vector v )
+inline vector operator - ( vector v )
 {
     vector r = { - v.x, - v.y };
     return r;
 }
 
-vector operator * ( double s, vector v )
+inline vector operator * ( double s, vector v )
 {
     vector r = { s * v.x, s * v.y };
     return r;
 }
 
-double operator * ( vector v1, vector v2 )
+inline double operator * ( vector v1, vector v2 )
 {
     return v1.x * v2.x + v1.y * v2.y;
 }
@@ -109,7 +109,7 @@ double operator * ( vector v1, vector v2 )
 //
 // WARING: ^ has lower precedence than + or -.
 //
-vector operator ^ ( vector v, double angle )
+inline vector operator ^ ( vector v, double angle )
 {
     double s = sin ( M_PI * angle / 180 );
     double c = cos ( M_PI * angle / 180 );
@@ -118,7 +118,8 @@ vector operator ^ ( vector v, double angle )
     return r;
 }
 
-ostream & operator << ( ostream & s, const vector & v )
+inline ostream & operator <<
+	( ostream & s, const vector & v )
 {
     return s << "(" << v.x << "," << v.y << ")";
 }
@@ -129,8 +130,8 @@ ostream & operator << ( ostream & s, const vector & v )
 struct color
 {
     const char * name;
-    unsigned value;
-    double red, green, blue;
+    unsigned value;		// HTML value
+    double red, green, blue;	// cairo value
 };
 
 color colors[] = {
@@ -149,26 +150,25 @@ void init_colors ( void )
     }
 }
 
+// Return color from colors array with given name,
+// or return NULL if none.
+//
+const color * find_color ( const char * name )
+{
+    for ( color * c = colors; c->name[0] != 0; ++ c )
+    {
+        if ( strcmp ( c->name, name ) == 0 )
+	    return c;
+    }
+    return NULL;
+}
+
 const char * families[] = {
     "serif",
     "sans-serif",
     "monospace",
     NULL
 };
-
-// Return color from colors array with given name,
-// or if none, return color with name "".
-//
-const color * find_color ( const char * name )
-{
-    color * c = colors;
-    for ( ; c->name[0] != 0; ++ c )
-    {
-        if ( strcmp ( c->name, name ) == 0 )
-	    return c;
-    }
-    return c;
-}
 
 // Verify family name and return it, or return NULL
 // if name is not a family name.
@@ -185,33 +185,42 @@ const char * find_family ( const char * name )
 
 enum options {
     NO_OPTIONS          = 0,
+
+    // Font Options:
+    //
     BOLD		= 1 << 0,
     ITALIC		= 1 << 1,
+
+    // Stroke Options:
+    //
     DOTTED		= 1 << 2,
     DASHED		= 1 << 3,
-    BEGIN_ARROW		= 1 << 4,
-    MIDDLE_ARROW	= 1 << 5,
-    END_ARROW		= 1 << 6,
-    FILL_SOLID		= 1 << 7,
-    FILL_CROSS		= 1 << 8,
-    FILL_RIGHT		= 1 << 9,
-    FILL_LEFT		= 1 << 10,
-    TOP 		= 1 << 11,
-    BOTTOM		= 1 << 12,
-    LEFT		= 1 << 13,
-    RIGHT		= 1 << 14,
-    BOX_WHITE		= 1 << 15,
-    CIRCLE_WHITE	= 1 << 16,
-    OUTLINE		= 1 << 17,
+    CLOSED		= 1 << 4,
+    BEGIN_ARROW		= 1 << 5,
+    MIDDLE_ARROW	= 1 << 6,
+    END_ARROW		= 1 << 7,
+    FILL_SOLID		= 1 << 8,
+    FILL_CROSS		= 1 << 9,
+    FILL_RIGHT		= 1 << 10,
+    FILL_LEFT		= 1 << 11,
+
+    // Text Options:
+    //
+    TOP 		= 1 << 12,
+    BOTTOM		= 1 << 13,
+    LEFT		= 1 << 14,
+    RIGHT		= 1 << 15,
+    BOX_WHITE		= 1 << 16,
+    CIRCLE_WHITE	= 1 << 17,
+    OUTLINE		= 1 << 18,
 };
-const char * optchar = "bi.-bmesx/\\tblrxco";
+const char * optchar = "bi" ".-cbmesx/\\" "tblrxco";
 
 // Print options for debugging:
 //
 ostream & operator << ( ostream & s, options opt )
 {
     if ( opt == 0 ) return s;
-    else s << " ";
     int len = strlen ( optchar );
     for ( int i = 0; i < len; ++ i )
         if ( opt & ( 1 << i ) ) s << optchar[i];
@@ -388,6 +397,7 @@ const char * const documentation[2] = { "\n"
 "        OPT is one of:\n"
 "            .   dotted line\n"
 "            -   dashed line\n"
+"            c   close path\n"
 "            b   arrow head at beginning of segment\n"
 "            m   arrow head in middle of segment\n"
 "            e   arrow head at end of segment\n"
@@ -403,7 +413,9 @@ const char * const documentation[2] = { "\n"
 "      scale S\n"
 "        Sets the default scale S for each page.\n"
 "        S is the Y/X scale ratio for the scales\n"
-"        of body coordinates; defaults to 1.\n"
+"        of body coordinates; defaults to NAN which\n"
+"        allows whatever ratio fills the entire body\n"
+"        of the page.\n"
 "\n"
 "      margin ALL\n"
 "      margin VERTICAL HORIZONTAL\n"
@@ -509,6 +521,11 @@ const char * const documentation[2] = { "\n"
 "        any command at the same level that does not\n"
 "        continue the path (i.e., any command but\n"
 "        `line' or `curve').\n"
+"\n"
+"	 If the path stroke has a fill or close\n"
+"        option, this command draws a line from the\n"
+"        end of the path to its beginning, in order\n"
+"        to close the path.\n"
 "\n"
 "      arc STROKE XC YC RX RY A [G1 G2]\n"
 "        Draw an elliptical arc of given line type as\n"
@@ -626,7 +643,10 @@ void make_font ( string name,
     const char * n = name.c_str();
     font_it it = font_dict.find ( n );
     if ( it != font_dict.end() )
+    {
+	delete it->second;
         font_dict.erase ( it );
+    }
     font * f = new font;
     assert (    strlen ( n ) + 1
              <= sizeof ( f->name ) );
@@ -660,7 +680,10 @@ void make_stroke ( string name,
     const char * n = name.c_str();
     stroke_it it = stroke_dict.find ( n );
     if ( it != stroke_dict.end() )
+    {
+	delete it->second;
         stroke_dict.erase ( it );
+    }
     stroke * s = new stroke;
     assert (    strlen ( n ) + 1
              <= sizeof ( s->name ) );
@@ -676,7 +699,7 @@ void make_stroke ( string name,
 //
 void print_fonts ( void )
 {
-    for ( font_dt::iterator it = font_dict.begin();
+    for ( font_it it = font_dict.begin();
           it != font_dict.end(); ++ it )
     {
         const font * f = it->second;
@@ -694,7 +717,7 @@ void print_fonts ( void )
 //
 void print_strokes ( void )
 {
-    for ( stroke_dt::iterator it = stroke_dict.begin();
+    for ( stroke_it it = stroke_dict.begin();
           it != stroke_dict.end(); ++ it )
     {
         const stroke * s = it->second;
@@ -718,16 +741,16 @@ void init_layout ( int R, int C )
     L_margins.bottom = 0.5;
     L_margins.left = 0.75;
 
-    D_scale = 1;
-    D_background = find_color ( "white" );
+    D_scale = NAN;
+    D_background = NULL;
     D_margins = { 0, 0, 0, 0 };
     D_bounds = { { NAN, NAN }, { NAN, NAN } };
 
-    for ( font_dt::iterator it = font_dict.begin();
+    for ( font_it it = font_dict.begin();
           it != font_dict.end(); ++ it )
         delete (font *) it->second;
 
-    for ( stroke_dt::iterator it = stroke_dict.begin();
+    for ( stroke_it it = stroke_dict.begin();
           it != stroke_dict.end(); ++ it )
         delete (stroke *) it->second;
 
@@ -859,9 +882,10 @@ bounds P_bounds;
 double P_height, P_width;
 
 
-// List of all commands in a page.  The list variable
-// points at the last element which points at the first
-// element with its next member.
+// List of all commands in a page.  If not NULL, the
+// list variable points at the last command which
+// points at the first command with its next member,
+// so the commands are in a circular list.
 //
 command * head = NULL, * foot = NULL,
         * level[101] = { NULL };
@@ -869,20 +893,18 @@ command * head = NULL, * foot = NULL,
 
 // Print all commands in a list for debugging.
 //
-void print_commands ( command * & list )
+void print_commands ( command * list )
 {
-    if ( list == NULL ) return;
     command * current = list;
-    command * first = current->next;
     do
     {
-        command * next = current->next;
+        command * current = current->next;
 
-	switch ( next->c )
+	switch ( current->c )
 	{
 	case 't':
 	{
-	    text * t = (text *) next;
+	    text * t = (text *) current;
 	    cout << "text " << t->f->name
 	         << " " << t->o
 		 << " " << t->p
@@ -892,14 +914,14 @@ void print_commands ( command * & list )
 	}
 	case 'S':
 	{
-	    space * s = (space *) next;
+	    space * s = (space *) current;
 	    cout << "space " << s->s << "in"
 		 << endl;
 	    break;
 	}
 	case 's':
 	{
-	    start * s = (start *) next;
+	    start * s = (start *) current;
 	    cout << "start " << s->s->name
 		 << " " << s->p
 		 << endl;
@@ -907,14 +929,14 @@ void print_commands ( command * & list )
 	}
 	case 'l':
 	{
-	    line * l = (line *) next;
+	    line * l = (line *) current;
 	    cout << "line " << l->p
 		 << endl;
 	    break;
 	}
 	case 'c':
 	{
-	    curve * c = (curve *) next;
+	    curve * c = (curve *) current;
 	    cout << "curve " << c->p[0]
 	         << " " << c->p[1]
 	         << " " << c->p[2]
@@ -926,7 +948,7 @@ void print_commands ( command * & list )
 	    break;
 	case 'a':
 	{
-	    arc * a = (arc *) next;
+	    arc * a = (arc *) current;
 	    cout << "arc " << a->s->name
 	         << " " << a->c
 	         << " " << a->r
@@ -938,7 +960,7 @@ void print_commands ( command * & list )
 	}
 	case 'r':
 	{
-	    rectangle * r = (rectangle *) next;
+	    rectangle * r = (rectangle *) current;
 	    cout << "rectangle " << r->s->name
 	         << " " << r->p[0]
 	         << " " << r->p[1]
@@ -948,24 +970,19 @@ void print_commands ( command * & list )
 	    break;
 	}
 	default:
-	    cout << "bad command " << next->c
+	    cout << "bad command " << current->c
 	         << endl;
 	}
 
-	current = next;
-
-    } while ( current != first );
+    } while ( current != list );
 }
 
 // Delete all commands in a list and set list NULL.
 //
 void delete_commands ( command * & list )
 {
-    command * last = list;
-    if ( last == NULL ) return;
-
-    command * current = last;
-    do
+    command * current = list;
+    if ( current != NULL ) do
     {
         command * next = current->next;
 
@@ -999,8 +1016,7 @@ void delete_commands ( command * & list )
 	    assert ( ! "deleting bad command" );
 	}
 
-	current = next;
-    } while ( current != last );
+    } while ( current != list );
 
     list = NULL;
 }
@@ -1009,14 +1025,15 @@ void init_page ( void )
 {
     P_background = D_background;
     P_scale = D_scale;
+    P_margins = D_margins;
+    P_bounds = D_bounds;
+
     P_height = L_height - L_margins.top
                         - L_margins.bottom;
     P_height /= R;
     P_width = L_width - L_margins.left
                       - L_margins.right;
     P_width /= C;
-    P_margins = D_margins;
-    P_bounds = D_bounds;
 
     delete_commands ( head );
     delete_commands ( foot );
@@ -1032,33 +1049,6 @@ void init_page ( void )
 //
 string comline;
 unsigned line_number = 0;
-
-void error ( const char * format, va_list args )
-{
-    cerr << "ERROR in line " << line_number
-         << ":" << endl << "    " << comline << endl;
-    fprintf ( stderr, "    " );
-    vfprintf ( stderr, format, args );
-    fprintf ( stderr, "\n" );
-}
-
-void error ( const char * format... )
-{
-    va_list args;
-    va_start ( args, format );
-    error ( format, args );
-    va_end ( args );
-}
-
-void fatal ( const char * format... )
-{
-    cerr << "FATAL ";
-    va_list args;
-    va_start ( args, format );
-    error ( format, args );
-    va_end ( args );
-    exit ( 1 );
-}
 
 // Current line and token for read routines.
 //
@@ -1078,17 +1068,53 @@ string units;
     // Get_double sets token_double similarly.
 const char * whitespace = " \t\f\v\n\r";
 
+// Helper function for error functions.
+//
+void error ( const char * format, va_list args )
+{
+    cerr << "ERROR in line " << line_number
+         << ":" << endl << "    " << comline << endl;
+    fprintf ( stderr, "    " );
+    vfprintf ( stderr, format, args );
+    fprintf ( stderr, "\n" );
+}
+
+// Output non-fatal error to cerr.
+//
+void error ( const char * format... )
+{
+    va_list args;
+    va_start ( args, format );
+    error ( format, args );
+    va_end ( args );
+}
+
+// Output fatal error to cerr and exit(1).
+//
+void fatal ( const char * format... )
+{
+    cerr << "FATAL ";
+    va_list args;
+    va_start ( args, format );
+    error ( format, args );
+    va_end ( args );
+    exit ( 1 );
+}
+
 // If there is currently no token, get the next token.
 // Set token = "" if there is no next token.  Return
 // true iff there is a next token.
 //
-bool get_token ( void )
+inline bool get_token ( void )
 {
     if ( token != "" ) return true;
 
     lin >> token;
     if ( lin.fail() )
     {
+        // lin >> token fails if it finds no non-white-
+	// space character before eof.
+	//
         token = "";
 	return false;
     }
@@ -1096,15 +1122,14 @@ bool get_token ( void )
         return true;
 }
 
-// Get token, get integer from beginning of token,
-// set units to remainder of token, set token to
-// missing, and return true.
+// If there is a next token with an integer at its
+// beginning, return the integer in token_long and the
+// remainder of the token after the integer in `units',
+// skip over the token, and return true.
 //
-// Or return false and leave token alone if there
-// is no next token or no integer at beginning of
-// next token.
+// Otherwise do nothing but return false.
 //
-bool get_long ( void )
+inline bool get_long ( void )
 {
     if ( ! get_token() ) return false;
     char * endp;
@@ -1118,7 +1143,7 @@ bool get_long ( void )
 
 // Ditto for double.
 //
-bool get_double ( void )
+inline bool get_double ( void )
 {
     if ( ! get_token() ) return false;
     char * endp;
@@ -1307,7 +1332,7 @@ bool read_color ( const char * name,
 	return false;
     }
     const color * val = find_color ( token.c_str() );
-    if ( val->name == "" )
+    if ( val == NULL )
     {
         if ( missing_allowed ) return true;
 	error ( "%s missing", name );
