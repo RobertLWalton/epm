@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Aug 27 10:59:32 EDT 2020
+// Date:	Thu Aug 27 17:33:37 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -10,8 +10,9 @@
 
 // Compile with:
 //
-//	g++ -I /usr/include/cairo \
-/	    -o hpcm_display \
+//	g++ [-O3] [-g] \
+//	    -I /usr/include/cairo \
+//	    -o hpcm_display \
 //	    hpcm_display.cc -lcairo
 
 // Table of Contents
@@ -68,6 +69,11 @@ extern "C" {
 const size_t MAX_NAME_LENGTH = 40;
 const double MAX_BODY_COORDINATE = 0.90 * DBL_MAX;
 const int MAX_LEVEL = 100;
+const char * whitespace = " \t\f\v\n\r";
+const char * namechars = "abcdefghijklmnopqrstuvwxyz"
+                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+			 "0123456789"
+			 "-_";
 
 bool debug = false;
 # define dout if ( debug ) cerr
@@ -527,7 +533,8 @@ const char * const documentation[2] = { "\n"
 "        end of the path to its beginning, in order\n"
 "        to close the path.\n"
 "\n"
-"      arc STROKE XC YC RX RY A [G1 G2]\n"
+"      arc STROKE XC YC RX RY [A [G1 G2]]\n"
+"      arc STROKE XC YC R\n"
 "        Draw an elliptical arc of given line type as\n"
 "        follows.\n"
 "\n"
@@ -544,18 +551,21 @@ const char * const documentation[2] = { "\n"
 "        wise by A degrees, and lastly the whole is\n"
 "        translated moving (0,0) to (XC,YC).\n"
 "\n"
-"        If G1 and G2 are not given they default to\n"
-"        0 and 360 respectively.\n"
+"        If R is given, RX = RY = R and the arc is a\n"
+"        complete circle.  Otherwise the arc is part\n"
+"        of an allipse, A defaults to 0, G1 defaults\n"
+"        to 0, and G2 defaults to 360.\n"
 "\n"
-"        A fill option in STROKE is only recognized\n"
-"        if G1 and G2 are not given.\n"
+"        A fill or close option in STROKE draws a\n"
+"        straight line from G1 to G2 (of possibly\n"
+"        zero length).\n"
 "\n"
-"      rectangle STROKE XMIN XMAX YMIN YMAX\n"
+"      rectangle STROKE XMIN YMIN XMAX YMAX\n"
 "        Draw a rectangle with given STROKE type and\n"
 "        minumum and maximum X and Y coordinates.\n"
 "        Arrow options in STROKE are not recognized.\n"
 "\n"
-"      ellipse STROKE XMIN XMAX YMIN YMAX\n"
+"      ellipse STROKE XMIN YMIN XMAX YMAX\n"
 "        Draw an ellipse with given STROKE type and\n"
 "        minumum and maximum X and Y coordinates.\n"
 "        The ellipse axes are parallel to the X and\n"
@@ -640,6 +650,8 @@ void make_font ( string name,
                  const char * family,
 	         double space )
 {
+    assert ( c != NULL );
+
     const char * n = name.c_str();
     font_it it = font_dict.find ( n );
     if ( it != font_dict.end() )
@@ -677,6 +689,8 @@ void make_stroke ( string name,
                    double width,
 		   const color * c, options o )
 {
+    assert ( c != NULL );
+
     const char * n = name.c_str();
     stroke_it it = stroke_dict.find ( n );
     if ( it != stroke_dict.end() )
@@ -758,6 +772,7 @@ void init_layout ( int R, int C )
     stroke_dict.clear();
 
     const color * black = find_color ( "black" );
+    assert ( black != NULL );
 
     if ( C == 1 )
     {
@@ -1066,7 +1081,6 @@ string units;
     // at beginning of token.
     //
     // Get_double sets token_double similarly.
-const char * whitespace = " \t\f\v\n\r";
 
 // Helper function for error functions.
 //
@@ -1157,6 +1171,20 @@ inline bool get_double ( void )
 
 // Read long integer without units.
 //
+// If the next token does not begin with an integer,
+// leave the token alone are return false.  If in
+// addition missing_allowed is false, print an error
+// message of the form `NAME is missing'.
+//
+// Otherwise check for errors and if none set var
+// to the integer and return true.  If there are
+// errors leave var alone and return false.  But
+// in these cases the token is skipped over.
+//
+// For this function the possible errors are having
+// units or the integer being outside the range
+// [low,high].
+//
 bool read_long ( const char * name, long & var,
                  long low, long high,
                  bool missing_allowed = true )
@@ -1183,7 +1211,9 @@ bool read_long ( const char * name, long & var,
     return true;
 }
 
-// Read double body coordinates without units or scale.
+// Read double without units or scale.
+//
+// Similar to read_long.
 //
 bool read_double ( const char * name, double & var,
                    double low, double high,
@@ -1203,7 +1233,7 @@ bool read_double ( const char * name, double & var,
     }
     if ( token_double < low || token_double > high )
     {
-        error ( "%s out of range [%f,%f]",
+        error ( "%s out of range [%g,%g]",
 	        name, low, high );
 	return false;
     }
@@ -1211,31 +1241,11 @@ bool read_double ( const char * name, double & var,
     return true;
 }
 
-bool read_name ( const char * name,
-                 string & var,
-                 bool missing_allowed = true )
-{
-    if ( ! get_token() )
-    {
-        if ( ! missing_allowed )
-	    error ( "%s missing", name );
-	return false;
-    }
-    if ( token.length() > MAX_NAME_LENGTH )
-    {
-	string s = token.substr ( 0, MAX_NAME_LENGTH )
-	                .append ( "..." );
-	error ( "%s value %s too long a name",
-	        name, s.c_str() );
-	token = "";
-	return false;
-    }
-    var = token;
-    token = "";
-    return true;
-}
-
 // Read double length with units.
+//
+// Similar to read_long but for double and requires
+// either `pt' or `in' units, setting var to the
+// value in inches.
 //
 bool read_length ( const char * name, double & var,
                    double low, double high,
@@ -1257,7 +1267,7 @@ bool read_length ( const char * name, double & var,
     }
     if ( token_double < low || token_double > high )
     {
-        error ( "%s out of range [%fin,%fin]",
+        error ( "%s out of range [%gin,%gin]",
 	        name, low, high );
 	return false;
     }
@@ -1266,6 +1276,9 @@ bool read_length ( const char * name, double & var,
 }
 
 // Read double with em units.
+//
+// Similar to read_long but for double and requires
+// `em' units.  Sets var to the value in these units.
 //
 bool read_em ( const char * name, double & var,
                double low, double high,
@@ -1284,11 +1297,55 @@ bool read_em ( const char * name, double & var,
     }
     if ( token_double < low || token_double > high )
     {
-        error ( "%s out of range [%fem,%fem]",
+        error ( "%s out of range [%gem,%gem]",
 	        name, low, high );
 	return false;
     }
     var = token_double;
+    return true;
+}
+
+// If no next token exits return false.  If in addition
+// missing_allowed is false, print an error message of
+// the form `NAME is missing'.
+//
+// Otherwise check for errors and if none set var to the
+// next token and return true, but if errors leave var
+// alone and return false.  In either case the token is
+// skipped over.
+//
+// The possible error is a token longer than MAX_NAME_
+// LENGTH.
+//
+bool read_name ( const char * name,
+                 string & var,
+                 bool missing_allowed = true )
+{
+    if ( ! get_token() )
+    {
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
+	return false;
+    }
+    if ( token.length() > MAX_NAME_LENGTH )
+    {
+	string s = token.substr ( 0, MAX_NAME_LENGTH )
+	                .append ( "..." );
+	error ( "%s value %s too long a name",
+	        name, s.c_str() );
+	token = "";
+	return false;
+    }
+    if (    token.find_first_not_of ( namechars )
+         != string::npos )
+    {
+	error ( "%s has character other than"
+	        " letter, digit, `-', or `_'", name );
+	token = "";
+	return false;
+    }
+    var = token;
+    token = "";
     return true;
 }
 
@@ -1297,16 +1354,22 @@ bool read_em ( const char * name, double & var,
 // LEFT, as appropriate.  Set default values before
 // calling.
 //
+// Begins by reading a length as per read_length
+// and passing that the missing_allowed parameter.
+// Returns false if that returns false.
+//
+// Otherwise continues reading the remaining 0 to 3
+// margins using read_length, allowing them to be
+// missing and stopping at the first one that is
+// missing.  The case of 3 values total generates a
+// `LEFT is missing' error message but sets the left
+// margin equal to the right margin.
+//
 bool read_margins ( margins & var,
                     bool missing_allowed = true )
 {
-    if ( ! get_token() )
-    {
-        if ( ! missing_allowed )
-	    error ( "missing margins (ALL, ...)" );
-	return false;
-    }
-    if ( ! read_length ( "ALL", var.top, 0, 100 ) )
+    if ( ! read_length ( "ALL", var.top, 0, 100,
+                         missing_allowed ) )
         return false;
     if ( ! read_length ( "HORIZONTAL", var.right,
                           0, 100 ) )
@@ -1321,6 +1384,14 @@ bool read_margins ( margins & var,
     return true;
 }
 
+// If there is no next token or the next token is not
+// a color name, exits and returns false.  If the token
+// exists it is NOT skipped.  If in addition missing_
+// allowed is false, prints an error message of the
+// form `NAME is missing'.
+//
+// Otherwise stores the color in var and returns true.
+//
 bool read_color ( const char * name,
                   const color * & var,
                   bool missing_allowed = true )
@@ -1334,8 +1405,8 @@ bool read_color ( const char * name,
     const color * val = find_color ( token.c_str() );
     if ( val == NULL )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     var = val;
@@ -1343,6 +1414,8 @@ bool read_color ( const char * name,
     return true;
 }
 
+// Ditto but for font family names instead of colors.
+//
 bool read_family ( const char * name,
                    const char * & var,
                    bool missing_allowed = true )
@@ -1356,8 +1429,8 @@ bool read_family ( const char * name,
     const char * val = find_family ( name );
     if ( val == NULL )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     var = val;
@@ -1365,6 +1438,16 @@ bool read_family ( const char * name,
     return true;
 }
 
+// Ditto but for options instead of colors.
+//
+// To be recognized as options, a token must contain
+// only option characters enabled by allowed_options.
+//
+// If the token is a legal set of options, but has
+// duplicate characters, an error message is produced
+// but the token is accepted as if the duplicates were
+// removed.
+//
 bool read_options ( const char * name,
                     options & var,
 		    options allowed_options,
@@ -1412,6 +1495,10 @@ bool read_options ( const char * name,
     return true;
 }
 
+// Like read_color but for font names looked up in the
+// dictionary of fonts defined by the last layout
+// section.
+//
 bool read_font ( const char * name,
 	         const font * & var,
 	         bool missing_allowed = true )
@@ -1425,8 +1512,8 @@ bool read_font ( const char * name,
     font_it val = font_dict.find ( token.c_str() );
     if ( val == font_dict.end() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     var = val->second;
@@ -1434,6 +1521,10 @@ bool read_font ( const char * name,
     return true;
 }
 
+// Like read_color but for stroke names looked up in the
+// dictionary of stokes defined by the last layout
+// section.
+//
 bool read_stroke ( const char * name,
 	           const stroke * & var,
 	           bool missing_allowed = true )
@@ -1447,8 +1538,8 @@ bool read_stroke ( const char * name,
     stroke_it val = stroke_dict.find ( token.c_str() );
     if ( val == stroke_dict.end() )
     {
-        if ( missing_allowed ) return true;
-	error ( "%s missing", name );
+        if ( ! missing_allowed )
+	    error ( "%s missing", name );
 	return false;
     }
     var = val->second;
@@ -1456,8 +1547,10 @@ bool read_stroke ( const char * name,
     return true;
 }
 
-// Read what is left in lin.  Assumes token == "".
-// Trims whitespace from ends of output.
+// Read what is left in lin.  If token != "", generates
+// an error message indicating the token is being
+// ignored.  Trims whitespace from ends of output.  May
+// produce "".
 //
 void read_text ( const char * name,
 		 string & text )
@@ -1473,6 +1566,9 @@ void read_text ( const char * name,
         text.erase ( last + 1 );
 }
 
+// If there are any tokens left, generates and erro
+// message noting they should not exist.
+//
 void check_extra ( void )
 {
     if ( get_token() )
@@ -1480,17 +1576,15 @@ void check_extra ( void )
 		token.c_str() );
 }
 
-// Read section.
-//
 // Attach command to end of current_list.  Returns
 // false if this cannot be dones because command is
 // continuing and has no previous start.  This
 // cannot happen if continuing is false.
 //
 command ** current_list;
-bool attach ( command * com, char c,
-              bool continued = false,
-	      bool continuing = false )
+inline bool attach ( command * com, char c,
+                     bool continued = false,
+	             bool continuing = false )
 {
     command * last = * current_list;
     if ( last == NULL )
@@ -1529,14 +1623,21 @@ bool attach ( command * com, char c,
     com->continued = continued;
     return true;
 }
+
+// Read section.  Return END_OF_FILE if no section
+// left in input, or LAYOUT if section was layout
+// section, or PAGE if section was page section.
 //
 enum section { END_OF_FILE, LAYOUT, PAGE };
 section read_section ( istream & in )
 {
 
     section s = END_OF_FILE;
+    bool in_body = false;
+    bool in_head_or_foot = false;
 
     const color * black = find_color ( "black" );
+    assert ( black != NULL );
 
     while ( true )
     {
@@ -1570,9 +1671,7 @@ section read_section ( istream & in )
 	{
 	    // First op of section.
 	    //
-	    if ( op == "layout" )
-	        s = LAYOUT;
-	    else
+	    if ( op != "layout" )
 	    {
 	        s = PAGE;
 		init_page();
@@ -1580,8 +1679,10 @@ section read_section ( istream & in )
 	    }
 	}
 
-	if ( op == "layout" && s == LAYOUT )
+	if ( op == "layout" && s == END_OF_FILE )
 	{
+	    s = LAYOUT;
+
 	    long R, C;
 	    double HEIGHT, WIDTH; 
 
@@ -1717,17 +1818,24 @@ section read_section ( istream & in )
 	else if ( op == "head" && s == PAGE )
 	{
 	    current_list = & head;
+	    in_head_or_foot = true;
+	    in_body = false;
 	}
 	else if ( op == "foot" && s == PAGE )
 	{
 	    current_list = & foot;
+	    in_head_or_foot = true;
+	    in_body = false;
 	}
 	else if ( op == "level" && s == PAGE )
 	{
 	    long N;
-	    if ( ! read_long ( "N", N, 1, 100, false ) )
+	    if ( ! read_long
+	               ( "N", N, 1, MAX_LEVEL, false ) )
 	        continue;
 	    current_list = & level[N];
+	    in_head_or_foot = false;
+	    in_body = true;
 	}
 	else if ( op == "text" && s == PAGE )
 	{
@@ -1738,9 +1846,7 @@ section read_section ( istream & in )
 
 	    if ( ! read_font ( "FONT", FONT, false ) )
 	        continue;
-	    if ( current_list != & head
-	         &&
-		 current_list != & foot )
+	    if ( in_body )
 	    {
 	        read_options
 		    ( "OPT", OPT, text_options );
@@ -1766,16 +1872,8 @@ section read_section ( istream & in )
 	    t->p = { X, Y };
 	    t->t = TEXT;
 	}
-	else if ( op == "space" && s == PAGE )
+	else if ( op == "space" && in_head_or_foot )
 	{
-	    if ( current_list != & head
-	         &&
-		 current_list != & foot )
-	    {
-	        error ( "command not allowed in body" );
-		continue;
-	    }
-
 	    double SPACE;
 	    if ( ! read_length ( "SPACE", SPACE,
 	                         0, 100, false ) )
@@ -1785,16 +1883,8 @@ section read_section ( istream & in )
 	    attach ( sp, 'S' );
 	    sp->s = SPACE;
 	}
-	else if ( op == "start" && s == PAGE )
+	else if ( op == "start" && in_body )
 	{
-	    if ( current_list == & head
-	         ||
-		 current_list == & foot )
-	    {
-	        error ( "command not allowed in head"
-		        " or foot" );
-		continue;
-	    } 
 	    const stroke * STROKE;
 	    double X, Y;
 	    if ( ! read_stroke
@@ -1818,16 +1908,8 @@ section read_section ( istream & in )
 	    st->s = STROKE;
 	    st->p = { X, Y };
 	}
-	else if ( op == "line" && s == PAGE )
+	else if ( op == "line" && in_body )
 	{
-	    if ( current_list == & head
-	         ||
-		 current_list == & foot )
-	    {
-	        error ( "command not allowed in head"
-		        " or foot" );
-		continue;
-	    } 
 	    double X, Y;
 	    if ( ! read_double
 		       ( "X", X,
@@ -1850,17 +1932,8 @@ section read_section ( istream & in )
 	    }
 	    l->p = { X, Y };
 	}
-	else if ( op == "curve" && s == PAGE )
+	else if ( op == "curve" && in_body )
 	{
-	    if ( current_list == & head
-	         ||
-		 current_list == & foot )
-	    {
-	        error ( "command not allowed in head"
-		        " or foot" );
-		continue;
-	    } 
-
 	    curve * c = new curve;
 	    bool OK = true;
 	    for ( int i = 0; i < 3; ++ i )
@@ -1883,7 +1956,6 @@ section read_section ( istream & in )
 		    OK = false;
 		    break;
 		}
-		    continue;
 	    }
 	    if ( ! OK )
 	    {
@@ -1892,24 +1964,13 @@ section read_section ( istream & in )
 	    }
 
 	    if ( ! attach ( c, 'c', true, true ) )
-	    {
 	        delete c;
-	        continue;
-	    }
 	}
-	else if ( op == "arc" && s == PAGE )
+	else if ( op == "arc" && in_body )
 	{
-	    if ( current_list == & head
-	         ||
-		 current_list == & foot )
-	    {
-	        error ( "command not allowed in head"
-		        " or foot" );
-		continue;
-	    } 
-
 	    const stroke * STROKE;
-	    double XC, YC, RX, RY, A, G1 = 0, G2 = 360;
+	    double XC, YC, RX, RY,
+	           A= 0, G1 = 0, G2 = 360;
 
 	    if ( ! read_stroke
 	               ( "STROKE", STROKE, false ) )
@@ -1927,21 +1988,21 @@ section read_section ( istream & in )
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "RX", RX,
+	               ( "R", RX,
 			 0, + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
 	               ( "RY", RY,
-			 0, + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
-	               ( "A", A,
-			 - 1000 * 360, + 1000 * 360,
-			 false ) )
-		continue;
+		         0, + MAX_BODY_COORDINATE ) )
+
+	        RY = RX;
+	    else
 	    if ( read_double
+	             ( "A", A,
+		       - 1000 * 360, + 1000 * 360 )
+		 &&
+	         read_double
 	             ( "G1", G1,
 		       - 1000 * 360, + 1000 * 360 )
 		 &&
@@ -1960,17 +2021,8 @@ section read_section ( istream & in )
 	    a->g1 = G1;
 	    a->g2 = G2;
 	}
-	else if ( op == "rectangle" && s == PAGE )
+	else if ( op == "rectangle" && in_body )
 	{
-	    if ( current_list == & head
-	         ||
-		 current_list == & foot )
-	    {
-	        error ( "command not allowed in head"
-		        " or foot" );
-		continue;
-	    } 
-
 	    const stroke * STROKE;
 	    double XMIN, XMAX, YMIN, YMAX;
 
@@ -1984,13 +2036,13 @@ section read_section ( istream & in )
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "XMAX", XMAX,
+	               ( "YMIN", YMIN,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "YMIN", YMIN,
+	               ( "XMAX", XMAX,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
@@ -2021,17 +2073,8 @@ section read_section ( istream & in )
 	    r->p[2] = { XMAX, YMAX };
 	    r->p[3] = { XMIN, YMAX };
 	}
-	else if ( op == "ellipse" && s == PAGE )
+	else if ( op == "ellipse" && in_body )
 	{
-	    if ( current_list == & head
-	         ||
-		 current_list == & foot )
-	    {
-	        error ( "command not allowed in head"
-		        " or foot" );
-		continue;
-	    } 
-
 	    const stroke * STROKE;
 	    double XMIN, XMAX, YMIN, YMAX;
 
@@ -2045,13 +2088,13 @@ section read_section ( istream & in )
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "XMAX", XMAX,
+	               ( "YMIN", YMIN,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "YMIN", YMIN,
+	               ( "XMAX", XMAX,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
@@ -2087,60 +2130,18 @@ section read_section ( istream & in )
 	    a->g1 = 0;
 	    a->g2 = 360;
 	}
-	else if ( op == "dot" && s == PAGE )
-	{
-	    if ( current_list == & head
-	         ||
-		 current_list == & foot )
-	    {
-	        error ( "command not allowed in head"
-		        " or foot" );
-		continue;
-	    } 
-
-	    const stroke * STROKE;
-	    double XC, YC, R;
-
-	    if ( ! read_stroke
-	               ( "STROKE", STROKE, false ) )
-		continue;
-	    if ( ! read_double
-	               ( "XC", XC,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
-	               ( "YC", YC,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
-	               ( "R", R,
-			 0,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-
-	    arc * a = new arc;
-	    attach ( a, 'a' );
-	    a->s = STROKE;
-	    a->c = { XC, YC };
-	    a->r = { R, R };
-	    a->a = 0;
-	    a->g1 = 0;
-	    a->g2 = 360;
-	}
 	else if ( op == "*" )
 	    break;
 	else
 	{
+	    const char * place =
+	        ( s != PAGE ? "layout section" :
+	          current_list == & head ? "page head" :
+	          current_list == & foot ? "page foot" :
+		                  "page body" );
 	    error ( "cannot understand %s"
-	            " in %s section;"
-	            " line ignored",
-		    op.c_str(),
-		    s == LAYOUT ? "layout" : "page" );
+	            " in %s; line ignored",
+		    op.c_str(), place );
 	    continue;
 	}
 	check_extra();
