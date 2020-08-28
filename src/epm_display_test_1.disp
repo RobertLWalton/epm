@@ -7,7 +7,7 @@ stroke solid-blue 4pt blue s
 stroke solid-green 2pt green s
 font very-large 16pt b
 scale 1
-margin 10pt 0pt
+margin 10pt
 *
 head
 text very-large Line Test
@@ -67,4 +67,5 @@ arc solid-blue 0 1 0.5 0.25 0 0 90
 start solid-red 0 0
 line  1 0
 line  1 1
+end
 *

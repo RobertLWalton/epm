@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 28 14:13:54 EDT 2020
+// Date:	Fri Aug 28 14:54:27 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -959,11 +959,11 @@ void print_commands ( command * list )
 	{
 	    arc * a = (arc *) current;
 	    cout << "arc " << a->s->name
-	         << " " << a->c
-	         << " " << a->r
-	         << " " << a->a
-	         << " " << a->g1
-	         << " " << a->g2
+		 << " " << a->c
+		 << " " << a->r
+		 << " " << a->a
+		 << " " << a->g1
+		 << " " << a->g2
 		 << endl;
 	    break;
 	}
@@ -1680,6 +1680,8 @@ section read_section ( istream & in )
 	{
 	    s = LAYOUT;
 
+	    dout << endl << "Layout:" << endl;
+
 	    long R, C;
 	    double HEIGHT, WIDTH; 
 
@@ -1728,8 +1730,10 @@ section read_section ( istream & in )
 	    read_family ( "FAMILY", FAMILY );
 	    read_em ( "SPACE", SPACE, 1, 100 );
 
-	    make_font ( NAME, SIZE, COLOR, OPT,
-	                FAMILY, SPACE );
+	    const font * f = make_font
+	        ( NAME, SIZE, COLOR, OPT,
+		  FAMILY, SPACE );
+	    if ( debug ) print_font ( f );
 	}
 	else if ( op == "stroke" && s == LAYOUT )
 	{
@@ -1978,41 +1982,41 @@ section read_section ( istream & in )
 	           A= 0, G1 = 0, G2 = 360;
 
 	    if ( ! read_stroke
-	               ( "STROKE", STROKE, false ) )
+		       ( "STROKE", STROKE, false ) )
 		continue;
 	    if ( ! read_double
-	               ( "XC", XC,
+		       ( "XC", XC,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "YC", YC,
+		       ( "YC", YC,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "R", RX,
+		       ( "R", RX,
 			 0, + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "RY", RY,
-		         0, + MAX_BODY_COORDINATE ) )
+		       ( "RY", RY,
+			 0, + MAX_BODY_COORDINATE ) )
 
-	        RY = RX;
+		RY = RX;
 	    else
 	    if ( read_double
-	             ( "A", A,
+		     ( "A", A,
 		       - 1000 * 360, + 1000 * 360 )
 		 &&
-	         read_double
-	             ( "G1", G1,
+		 read_double
+		     ( "G1", G1,
 		       - 1000 * 360, + 1000 * 360 )
 		 &&
 		 ! read_double
-	             ( "G2", G2,
+		     ( "G2", G2,
 		       - 1000 * 360, + 1000 * 360,
 		       false ) )
 		continue;
@@ -2485,8 +2489,9 @@ void draw_level ( int i )
 	        // Because cairo y increases from top
 		// to bottom, cairo angles are negatives
 		// of our angles.
+
 	    cairo_translate
-	        ( context, CONVERT ( a->c ) );
+		( context, CONVERT ( a->c ) );
 	    cairo_rotate
 	        ( context, - M_PI * a->a / 180 );
 	    cairo_scale
@@ -2603,7 +2608,8 @@ void draw_page ( double P_left, double P_top )
 	vector cll = { CONVERT ( P_bounds.ll ) };
 	vector cur = { CONVERT ( P_bounds.ur ) };
 
-	cout << "BOUNDS:    " << P_bounds.ll << " = "
+	cout << endl << "Page:" << endl;
+	cout << "BOUNDS:    " << P_bounds.ll << " - "
 	     << P_bounds.ur << endl;
 	cout << "PHYSICAL:  " << ll << " - " << ur
 	     << endl;
