@@ -1,0 +1,70 @@
+layout 3 2
+stroke red 2pt red
+stroke blue 4pt blue c
+stroke green 2pt green
+stroke solid-red 2pt red s
+stroke solid-blue 4pt blue s
+stroke solid-green 2pt green s
+font very-large 16pt b
+scale 1
+margin 10pt 0pt
+*
+head
+text very-large Line Test
+level 2
+bounds -1.1 -1.1 +1.1 +1.1
+start blue -1 -1
+line +1 -1
+line +1 +1
+line -1 +1
+end
+start red -1 -1
+line 0 0
+line +1 -1
+end
+start green -1 +1
+line 0 0
+line +1 +1
+end
+*
+head
+text very-large Fill/Overlay Test
+level 1
+start solid-red 0 0
+line 1 3
+line 2 0
+end
+level 2
+start solid-blue 0 0
+line 1 2
+line 2 0
+end
+level 3
+start solid-green 0 0
+line 1 1
+line 2 0
+end
+*
+layout 2 1
+stroke solid-blue blue s
+stroke solid-red red s
+margin 0.1in 0in
+scale 1
+*
+text normal 1.5 1.5 HELLO
+arc solid-red 0 2 0.5 0.25 0 0 90
+arc normal 0 1.5 0.5 0.25 0 360 450
+arc solid-blue 0 1 0.5 0.25 0 360 90
+start solid-blue 0 0
+line  1 0
+line  1 1
+end
+level 51
+arc solid-red 0.5 0.5 0.2
+bounds 0 0 2 2
+*
+arc solid-blue 0 1 0.5 0.25 0 0 90
+start solid-red 0 0
+line  1 0
+line  1 1
+*

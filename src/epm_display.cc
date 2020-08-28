@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 28 06:50:55 EDT 2020
+// Date:	Fri Aug 28 14:13:54 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -541,9 +541,11 @@ const char * const documentation[2] = { "\n"
 "        First the a circular arc of unit radius is\n"
 "        drawn with center (0,0).  The begin point\n"
 "        is at angle G1 and the end point is at\n"
-"        angle G2.  Any multiple of 360 added to G1\n"
-"        or G2 does not affect the points, but may\n"
-"        affect the arc direction.\n"
+"        angle G2.  If G2 > G1 the arc goes counter-\n"
+"        clockwise; if G2 < G1 the arc goes clock-\n"
+"        wise.  Any multiple of 360 added to G1 or G2\n"
+"        does not affect the points, but may affect\n"
+"        the arc direction.\n"
 "\n"
 "        Then transformations are applied.  First\n"
 "        the X and Y axes are scaled by RX and RY;\n"
@@ -2316,6 +2318,7 @@ void draw_head_or_foot
 	{
 	    space * s = (space *) current;
 	    top += s->s;
+	    break;
 	}
 	case 't':
 	{
@@ -2347,6 +2350,7 @@ void draw_head_or_foot
 	    cairo_show_text ( context, t->t.c_str() );
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
+	    break;
 	}
 	default:
 	    assert ( ! "bad draw head/foot command" );
@@ -2443,6 +2447,7 @@ void draw_level ( int i )
 	    cairo_show_text ( context, t->t.c_str() );
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
+	    break;
 	}
 	case 's':
 	{
@@ -2489,11 +2494,16 @@ void draw_level ( int i )
 		  fabs ( xscale ) * a->r.x,
 		  fabs ( yscale ) * a->r.y );
 	    cairo_new_path ( context );
-	    cairo_arc_negative ( context,
-	                         0, 0,
-			         1,
-			         - M_PI * a->g1 / 180,
-			         - M_PI * a->g2 / 180 );
+	    if ( a->g1 < a->g2 )
+		cairo_arc_negative
+		    ( context, 0, 0, 1,
+		      - M_PI * a->g1 / 180,
+		      - M_PI * a->g2 / 180 );
+	    else if ( a->g1 > a->g2 )
+		cairo_arc
+		    ( context, 0, 0, 1,
+		      - M_PI * a->g1 / 180,
+		      - M_PI * a->g2 / 180 );
 	    cairo_identity_matrix ( context );
 	    apply_stroke ( a->s );
 	    break;
@@ -2938,14 +2948,18 @@ int main ( int argc, char ** argv )
 	    print_stroke ( it->second );
     }
 
+    page = cairo_pdf_surface_create_for_stream
+		( write_to_cout, NULL,
+		  72 * L_width, 72 * L_height );
+    context = cairo_create ( page );
+
     section s = LAYOUT;
     while ( s == LAYOUT )
     {
-
-	page = cairo_pdf_surface_create_for_stream
-		    ( write_to_cout, NULL,
-		      72 * L_width, 72 * L_height );
-	context = cairo_create ( page );
+	cairo_pdf_surface_set_size
+	    ( page, 72 * L_width, 72 * L_height ); 
+	assert (    cairo_status ( context )
+		 == CAIRO_STATUS_SUCCESS );
 
 	double left = L_margins.left;
 	double top = L_margins.top;
@@ -2975,10 +2989,10 @@ int main ( int argc, char ** argv )
 
 	if ( curR != 0 || curC != 0 )
 	    cairo_show_page ( context );
-
-	cairo_destroy ( context );
-	cairo_surface_destroy ( page );
     }
+
+    cairo_destroy ( context );
+    cairo_surface_destroy ( page );
 
     dout << bytes << " bytes of pdf" << endl;
 
