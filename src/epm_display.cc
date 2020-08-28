@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Aug 27 22:23:23 EDT 2020
+// Date:	Thu Aug 27 22:42:15 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -1601,6 +1601,8 @@ inline bool attach ( command * com, char c,
 	}
         else if ( ! continuing && last->continued )
 	{
+	    dout << "end inserted before line "
+	         << line_number << endl;
 	    end * e = new end;
 	    e->c = 'e';
 	    e->continued = false;
@@ -1644,8 +1646,7 @@ section read_section ( istream & in )
 	         << " * inserted" << endl;
 	    comline = "*";
 	}
-	else
-	    ++ line_number;
+	++ line_number;
 
 	// Skip comments.
 	//
@@ -1962,6 +1963,12 @@ section read_section ( istream & in )
 	    if ( ! attach ( c, 'c', true, true ) )
 	        delete c;
 	}
+	else if ( op == "end" && in_body )
+	{
+	    end * e = new end;
+	    if ( ! attach ( e, 'e', false, true ) )
+	        delete e;
+	}
 	else if ( op == "arc" && in_body )
 	{
 	    const stroke * STROKE;
@@ -2127,7 +2134,21 @@ section read_section ( istream & in )
 	    a->g2 = 360;
 	}
 	else if ( op == "*" )
+	{
+	    command * last = * current_list;
+	    if ( last->continued )
+	    {
+		dout << "end inserted before line "
+		     << line_number << endl;
+		end * e = new end;
+		e->c = 'e';
+		e->continued = false;
+		e->next = last->next;
+		last->next = e;
+		* current_list = e;
+	     }
 	    break;
+	}
 	else
 	{
 	    const char * place =
@@ -2931,6 +2952,8 @@ int main ( int argc, char ** argv )
 	cairo_destroy ( context );
 	cairo_surface_destroy ( page );
     }
+
+    dout << bytes << " bytes of pdf" << endl;
 
     // Return from main function without error.
 
