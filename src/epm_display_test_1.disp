@@ -45,6 +45,14 @@ line 1 1
 line 2 0
 end
 *
+head
+text very-large Fill/Overlay Test
+level 1
+start solid-red 0 0
+arc solid-red 0 0 1 2
+arc solid-red 4 4 2 1
+end
+*
 layout 2 1
 stroke solid-blue blue s
 stroke solid-red red s
@@ -52,18 +60,18 @@ margin 0.1in 0in
 scale 1
 *
 text normal 1.5 1.5 HELLO
+start solid-blue 0 0
 arc solid-red 0 2 0.5 0.25 0 0 90
 arc normal 0 1.5 0.5 0.25 0 360 450
 arc solid-blue 0 1 0.5 0.25 0 360 90
-start solid-blue 0 0
 line  1 0
 line  1 1
 end
-level 51
-arc solid-red 0.5 0.5 0.2
+# level 51
+# arc solid-red 0.5 0.5 0.2
 bounds 0 0 2 2
 *
-arc solid-blue 0 1 0.5 0.25 0 0 90
+# arc solid-blue 0 1 0.5 0.25 0 0 90
 start solid-red 0 0
 line  1 0
 line  1 1

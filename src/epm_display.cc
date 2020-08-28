@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 28 14:54:27 EDT 2020
+// Date:	Fri Aug 28 18:29:18 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2142,6 +2142,7 @@ section read_section ( istream & in )
 	else if ( op == "*" )
 	{
 	    if (    s == PAGE
+	         && (* current_list) != NULL
 	         && (* current_list)->continued )
 	    {
 		dout << "end inserted before line "
@@ -2490,6 +2491,8 @@ void draw_level ( int i )
 		// to bottom, cairo angles are negatives
 		// of our angles.
 
+	    cairo_save ( context );
+	    cairo_new_path ( context );
 	    cairo_translate
 		( context, CONVERT ( a->c ) );
 	    cairo_rotate
@@ -2509,7 +2512,7 @@ void draw_level ( int i )
 		    ( context, 0, 0, 1,
 		      - M_PI * a->g1 / 180,
 		      - M_PI * a->g2 / 180 );
-	    cairo_identity_matrix ( context );
+	    cairo_restore ( context );
 	    apply_stroke ( a->s );
 	    break;
 	}
