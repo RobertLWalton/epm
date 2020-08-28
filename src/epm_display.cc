@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 28 04:30:58 EDT 2020
+// Date:	Fri Aug 28 05:19:31 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2377,6 +2377,24 @@ double xscale, yscale, left, bottom;
     left + ((p).x - xleft) * xscale, \
     bottom - ((p).y - ybottom) * yscale
 
+inline void apply_stroke ( const stroke * s )
+{
+    cairo_set_line_width
+	( context, 72 * s->width );
+    const color * c = s->c;
+    cairo_set_source_rgb
+	( context, c->red, c->green, c->blue );
+    if ( s->o & CLOSED )
+	cairo_close_path ( context );
+    if ( s->o & ( FILL_SOLID |
+		  FILL_CROSS |
+		  FILL_RIGHT |
+		  FILL_LEFT ) )
+	cairo_fill ( context );
+    else
+	cairo_stroke ( context );
+}
+
 void draw_level ( int i )
 {
     if ( debug && level[i] != NULL )
@@ -2452,25 +2470,30 @@ void draw_level ( int i )
 	}
 	case 'e':
 	{
-	    cairo_set_line_width
-	        ( context, 72 * s->width );
-	    const color * c = s->c;
-	    cairo_set_source_rgb
-	        ( context, c->red, c->green, c->blue );
-	    if ( s->o & CLOSED )
-	        cairo_close_path ( context );
-	    if ( s->o & ( FILL_SOLID |
-		          FILL_CROSS |
-			  FILL_RIGHT |
-			  FILL_LEFT ) )
-		cairo_fill ( context );
-	    else
-		cairo_stroke ( context );
+	    apply_stroke ( s );
 	    break;
 	}
 	case 'a':
 	{
 	    arc * a = (arc *) current;
+	        // Because cairo y increases from top
+		// to bottom, cairo angles are negatives
+		// of our angles.
+	    cairo_translate
+	        ( context, CONVERT ( a->c ) );
+	    cairo_rotate
+	        ( context, - M_PI * a->a / 180 );
+	    cairo_scale
+	        ( context,
+		  fabs ( xscale ) * a->r.x,
+		  fabs ( yscale ) * a->r.y );
+	    cairo_arc_negative ( context,
+	                         0, 0,
+			         1,
+			         - M_PI * a->g1 / 180,
+			         - M_PI * a->g2 / 180 );
+	    cairo_identity_matrix ( context );
+	    apply_stroke ( a->s );
 	    break;
 	}
 	case 'r':
