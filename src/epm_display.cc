@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 28 05:19:31 EDT 2020
+// Date:	Fri Aug 28 06:50:55 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2448,6 +2448,7 @@ void draw_level ( int i )
 	{
 	    start * st = (start *) current;
 	    s = st->s;
+	    cairo_new_path ( context );
 	    cairo_move_to
 	        ( context, CONVERT ( st->p ) );
 	    break;
@@ -2487,6 +2488,7 @@ void draw_level ( int i )
 	        ( context,
 		  fabs ( xscale ) * a->r.x,
 		  fabs ( yscale ) * a->r.y );
+	    cairo_new_path ( context );
 	    cairo_arc_negative ( context,
 	                         0, 0,
 			         1,
