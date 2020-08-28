@@ -1661,6 +1661,7 @@ section read_section ( istream & in )
 	if ( comline[first] == '#' ) continue;
 	if ( comline[first] == '!' ) continue;
 
+	lin.clear();
 	lin.str ( comline );
 	token = "";
 
@@ -1676,6 +1677,7 @@ section read_section ( istream & in )
 	        s = PAGE;
 		init_page();
 		current_list = & level[50];
+		in_body = true;
 	    }
 	}
 

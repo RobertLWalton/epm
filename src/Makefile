@@ -23,7 +23,7 @@ epm_score:	epm_score.cc
 
 epm_display:	epm_display.cc
 	g++ -I /usr/include/cairo \
-	    -O3 -o epm_display \
+	    -g -o epm_display \
 	    epm_display.cc -lcairo
 
 epm_monitor:	epm_monitor.cc
