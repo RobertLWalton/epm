@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Aug 27 17:33:37 EDT 2020
+// Date:	Thu Aug 27 20:02:46 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2245,7 +2245,8 @@ void compute_bounding_box ( void )
 		    { - a->r.x, + a->r.y } };
 		for ( int j = 0; j < 4; ++ j )
 		{
-		    vector p = a->c + d[j]^(a->a);
+		    vector p = a->c + ( d[j]^(a->a) );
+		        // ^ has lower precedence than +
 		    BOUND ( p );
 		}
 		break;
@@ -2280,9 +2281,16 @@ double head_left, head_top, head_height, head_width,
        foot_top, foot_height, foot_left, foot_width;
 
 void draw_head_or_foot
-    ( command * list,
+    ( command * list, const char * name,
       double left, double top, double width )
 {
+
+    if ( debug && list != NULL )
+    {
+        cout << endl << name << ":" << endl;
+	print_commands ( list );
+    }
+
     double center = 72 * ( left + width / 2 );
 
     command * current = list;
@@ -2300,7 +2308,7 @@ void draw_head_or_foot
 	{
 	    text * t = (text *) current;
 	    const font * f = t->f;
-	    top = f->size * f->space; 
+	    top += f->size * f->space; 
 	    const color * c = f->c;
 
 	    cairo_set_source_rgb
@@ -2334,13 +2342,16 @@ void draw_head_or_foot
     } while ( current != list );
 }
 
-// These units are in inches with y increasing from
-// top to bottom.
+// (xleft,ybottom) is the lower left point of the body
+// in body coordinates.
 //
 double xleft, ybottom;
 
-// These units are in pt (1/72 inch) with y increasing
-// from top to bottom.
+// (left,bottom) is the lower left point of the body
+// in physical coordinates.
+//
+// The unit of these numbers is pt (1/72 inch) with y
+// increasing from top to bottom.
 //
 double xscale, yscale, left, bottom;
 
@@ -2353,9 +2364,17 @@ double xscale, yscale, left, bottom;
     left + ((p).x - xleft) * xscale, \
     bottom - ((p).y - ybottom) * yscale
 
-void draw_level ( command * list )
+void draw_level ( int i )
 {
-    command * current = list;
+    if ( debug && level[i] != NULL )
+    {
+        cout << endl
+	     << "Level " << i << ":"
+	     << endl;
+	print_commands ( level[i] );
+    }
+
+    command * current = level[i];
     const stroke * s;
     if ( current != NULL ) do
     {
@@ -2425,6 +2444,8 @@ void draw_level ( command * list )
 	    const color * c = s->c;
 	    cairo_set_source_rgb
 	        ( context, c->red, c->green, c->blue );
+	    if ( s->o & CLOSED )
+	        cairo_close_path ( context );
 	    if ( s->o & ( FILL_SOLID |
 		          FILL_CROSS |
 			  FILL_RIGHT |
@@ -2448,7 +2469,7 @@ void draw_level ( command * list )
 	    assert ( ! "bad draw level command" );
 	}
 
-    } while ( current != list );
+    } while ( current != level[i] );
 }
 
 void draw_page ( double P_left, double P_top )
@@ -2522,18 +2543,34 @@ void draw_page ( double P_left, double P_top )
     xscale *= 72;
     yscale *= 72;
 
-    dout << "LEFT " << left
-	 << " XSCALE " << xscale
-	 << " BOTTOM " << bottom
-	 << " YSCALE " << yscale
-	 << endl;
+    if ( debug )
+    {
+        vector ll = { body_left,
+	              body_top + body_height };
+	vector ur = { body_left + body_width,
+	              body_top };
+	ll = 72 * ll;
+	ur = 72 * ur;
+
+	vector cll = { CONVERT ( P_bounds.ll ) };
+	vector cur = { CONVERT ( P_bounds.ur ) };
+
+	cout << "BOUNDS:    " << P_bounds.ll << " = "
+	     << P_bounds.ur << endl;
+	cout << "PHYSICAL:  " << ll << " - " << ur
+	     << endl;
+	cout << "CONVERTED: " << cll << " - " << cur
+	     << endl;
+    }
 
     draw_head_or_foot
-        ( head, head_left, head_top, head_width );
+        ( head, "Head",
+	  head_left, head_top, head_width );
     draw_head_or_foot
-        ( foot, foot_left, foot_top, foot_width );
+        ( foot, "Foot",
+	  foot_left, foot_top, foot_width );
     for ( int i = 1; i <= MAX_LEVEL; ++ i )
-        draw_level ( level[i] );
+        draw_level ( i );
 }
 
 
@@ -2773,15 +2810,19 @@ void draw_page ( void )
 
 // cairo_write_func_t to write data to cout.
 //
+unsigned long bytes = 0;
 cairo_status_t write_to_cout
     ( void * closure,
       const unsigned char * data, unsigned int length )
 {
-    cout.write ( (const char *) data, length );
-    if ( cout )
-	return CAIRO_STATUS_SUCCESS;
-    else
-        return CAIRO_STATUS_WRITE_ERROR;
+    bytes += length;
+    if ( ! debug )
+    {
+	cout.write ( (const char *) data, length );
+	if ( ! cout )
+	    return CAIRO_STATUS_WRITE_ERROR;
+    }
+    return CAIRO_STATUS_SUCCESS;
 }
 
 // Main program.
@@ -2818,7 +2859,7 @@ int main ( int argc, char ** argv )
 	++ argv, -- argc;
     }
 
-    // Exit with error status unless there is exactly
+    // Exit with error status unless there is at most
     // one program argument left.
 
     if ( argc > 2 )
