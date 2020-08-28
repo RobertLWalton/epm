@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Aug 27 22:42:15 EDT 2020
+// Date:	Fri Aug 28 04:30:58 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -622,7 +622,7 @@ struct font
 };
 
 options stroke_options = (options)
-    ( DOTTED + DASHED +
+    ( DOTTED + DASHED + CLOSED +
       BEGIN_ARROW + MIDDLE_ARROW + END_ARROW +
       FILL_SOLID + FILL_CROSS +
       FILL_RIGHT + FILL_LEFT );
@@ -642,13 +642,15 @@ typedef font_dt::iterator font_it;
 typedef stroke_dt::iterator stroke_it;
 
 // Make a new font with given name, discarding any
-// previous font with that name.
+// previous font with that name.  Return the new
+// font.
 //
-void make_font ( string name,
-		 double size,
-                 const color * c, options o,
-                 const char * family,
-	         double space )
+const font * make_font ( string name,
+		         double size,
+                         const color * c,
+			 options o,
+                         const char * family,
+	                 double space )
 {
     assert ( c != NULL );
 
@@ -677,14 +679,18 @@ void make_font ( string name,
                      CAIRO_FONT_WEIGHT_NORMAL );
 
     font_dict[f->name] = f;
+
+    return f;
 }
 
 // Make a new stroke with given name, discarding any
-// previous stroke with that name.
+// previous stroke with that name.  Return the new
+// stroke.
 //
-void make_stroke ( string name,
-                   double width,
-		   const color * c, options o )
+const stroke * make_stroke ( string name,
+                             double width,
+		             const color * c,
+			     options o )
 {
     assert ( c != NULL );
 
@@ -701,40 +707,32 @@ void make_stroke ( string name,
     s->width = width;
 
     stroke_dict[s->name] = s;
+
+    return s;
 }
 
 // Print fonts for debugging.
 //
-void print_fonts ( void )
+void print_font ( const font * f )
 {
-    for ( font_it it = font_dict.begin();
-          it != font_dict.end(); ++ it )
-    {
-        const font * f = it->second;
-	cout << "font " << f->name
-	     << " " << 72 * f->size << "pt"
-	     << " " << f->c->name
-	     << " " << f->o
-	     << " " << f->family
-	     << " " << f->space << "em"
-	     << endl;
-    }
+    cout << "font " << f->name
+	 << " " << 72 * f->size << "pt"
+	 << " " << f->c->name
+	 << " " << f->o
+	 << " " << f->family
+	 << " " << f->space << "em"
+	 << endl;
 }
 
 // Print strokes for debugging.
 //
-void print_strokes ( void )
+void print_stroke ( const stroke * s )
 {
-    for ( stroke_it it = stroke_dict.begin();
-          it != stroke_dict.end(); ++ it )
-    {
-        const stroke * s = it->second;
-	cout << "stroke " << s->name
-	     << " " << 72 * s->width << "pt"
-	     << " " << s->c->name
-	     << " " << s->o
-	     << endl;
-    }
+    cout << "stroke " << s->name
+	 << " " << 72 * s->width << "pt"
+	 << " " << s->c->name
+	 << " " << s->o
+	 << endl;
 }
 
 
@@ -1753,9 +1751,11 @@ section read_section ( istream & in )
 		          0 : 1.0/72 );
 
 
-	    make_stroke ( NAME, WIDTH, COLOR, OPT );
+	    const stroke * strk =
+	        make_stroke ( NAME, WIDTH, COLOR, OPT );
+	    if ( debug ) print_stroke ( strk );
 	}
-	if ( op == "background" )
+	else if ( op == "background" )
 	{
 	    const color * COLOR;
 	    if ( ! read_color
@@ -2135,17 +2135,13 @@ section read_section ( istream & in )
 	}
 	else if ( op == "*" )
 	{
-	    command * last = * current_list;
-	    if ( last->continued )
+	    if (    s == PAGE
+	         && (* current_list)->continued )
 	    {
 		dout << "end inserted before line "
 		     << line_number << endl;
 		end * e = new end;
-		e->c = 'e';
-		e->continued = false;
-		e->next = last->next;
-		last->next = e;
-		* current_list = e;
+		attach ( e, 'e', false, true );
 	     }
 	    break;
 	}
@@ -2904,16 +2900,22 @@ int main ( int argc, char ** argv )
     }
 
     init_layout ( 1, 1 );
+    if ( debug )
+    {
+	cout << endl << "Fonts:" << endl;
+	for ( font_it it = font_dict.begin();
+	      it != font_dict.end(); ++ it )
+	    print_font ( it->second );
+
+	cout << endl << "Strokes:" << endl;
+	for ( stroke_it it = stroke_dict.begin();
+	      it != stroke_dict.end(); ++ it )
+	    print_stroke ( it->second );
+    }
+
     section s = LAYOUT;
     while ( s == LAYOUT )
     {
-        if ( debug )
-	{
-	    cout << endl << "Fonts:" << endl;
-	    print_fonts();
-	    cout << endl << "Strokes:" << endl;
-	    print_strokes();
-	}
 
 	page = cairo_pdf_surface_create_for_stream
 		    ( write_to_cout, NULL,
