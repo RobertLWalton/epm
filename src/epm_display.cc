@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Aug 27 20:02:46 EDT 2020
+// Date:	Thu Aug 27 22:23:23 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -609,7 +609,7 @@ bounds D_bounds;
 options font_options = (options) ( BOLD + ITALIC );
 struct font
 {
-    char name[MAX_NAME_LENGTH+1];
+    string name;
     double size;
     const color * c;
     options o;
@@ -628,14 +628,14 @@ options stroke_options = (options)
       FILL_RIGHT + FILL_LEFT );
 struct stroke
 {
-    char name[MAX_NAME_LENGTH+1];
+    string name;
     const color * c;
     options o;
     double width;
 };
 
-typedef map<const char *, const font *> font_dt;
-typedef map<const char *, const stroke *> stroke_dt;
+typedef map<string, const font *> font_dt;
+typedef map<string, const stroke *> stroke_dt;
 font_dt font_dict;
 stroke_dt stroke_dict;
 typedef font_dt::iterator font_it;
@@ -652,17 +652,14 @@ void make_font ( string name,
 {
     assert ( c != NULL );
 
-    const char * n = name.c_str();
-    font_it it = font_dict.find ( n );
+    font_it it = font_dict.find ( name );
     if ( it != font_dict.end() )
     {
 	delete it->second;
         font_dict.erase ( it );
     }
     font * f = new font;
-    assert (    strlen ( n ) + 1
-             <= sizeof ( f->name ) );
-    strcpy ( f->name, n );
+    f->name = name;
     f->c = c;
     f->o = o;
     f->family = family;
@@ -691,17 +688,14 @@ void make_stroke ( string name,
 {
     assert ( c != NULL );
 
-    const char * n = name.c_str();
-    stroke_it it = stroke_dict.find ( n );
+    stroke_it it = stroke_dict.find ( name );
     if ( it != stroke_dict.end() )
     {
 	delete it->second;
         stroke_dict.erase ( it );
     }
     stroke * s = new stroke;
-    assert (    strlen ( n ) + 1
-             <= sizeof ( s->name ) );
-    strcpy ( s->name, n );
+    s->name = name;
     s->c = c;
     s->o = o;
     s->width = width;
@@ -913,7 +907,7 @@ void print_commands ( command * list )
     command * current = list;
     do
     {
-        command * current = current->next;
+        current = current->next;
 
 	switch ( current->c )
 	{
@@ -1509,7 +1503,7 @@ bool read_font ( const char * name,
 	    error ( "%s missing", name );
 	return false;
     }
-    font_it val = font_dict.find ( token.c_str() );
+    font_it val = font_dict.find ( token );
     if ( val == font_dict.end() )
     {
         if ( ! missing_allowed )
@@ -1535,7 +1529,7 @@ bool read_stroke ( const char * name,
 	    error ( "%s missing", name );
 	return false;
     }
-    stroke_it val = stroke_dict.find ( token.c_str() );
+    stroke_it val = stroke_dict.find ( token );
     if ( val == stroke_dict.end() )
     {
         if ( ! missing_allowed )
@@ -2892,6 +2886,14 @@ int main ( int argc, char ** argv )
     section s = LAYOUT;
     while ( s == LAYOUT )
     {
+        if ( debug )
+	{
+	    cout << endl << "Fonts:" << endl;
+	    print_fonts();
+	    cout << endl << "Strokes:" << endl;
+	    print_strokes();
+	}
+
 	page = cairo_pdf_surface_create_for_stream
 		    ( write_to_cout, NULL,
 		      72 * L_width, 72 * L_height );
@@ -2908,7 +2910,7 @@ int main ( int argc, char ** argv )
 	int curR = 0, curC = 0;
 	while ( true )
 	{
-	    section s = read_section ( * in );
+	    s = read_section ( * in );
 	    if ( s != PAGE ) break;
 	    draw_page ( left + curC * width,
 	                top + curR * height );
