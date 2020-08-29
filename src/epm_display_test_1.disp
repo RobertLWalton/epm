@@ -158,6 +158,23 @@ arc solid-red 5 10 0.1
 text large-bold lxo 5 10 left
 text large-bold rxo 5 10 right
 *
+bounds 0 0 4 5
+background lightblue
+head
+text large-bold Text Circle Test
+level 2
+start normal 2 5
+line 2 0
+end
+start normal 0 1
+line 4 1
+end
+start normal 0 4
+line 4 4
+end
+text large-bold co 2 1 X
+text large-bold co 2 4 XXX\YYYYYY\XXX
+*
 layout 2 1
 stroke solid-blue blue s
 stroke solid-red red s

@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Aug 29 16:46:49 EDT 2020
+// Date:	Sat Aug 29 17:28:23 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2690,15 +2690,16 @@ void draw_level ( int i )
 		    double dist =
 		        sqrt ( dh*dh + dw*dw );
 		    if ( RADIUS < dist ) RADIUS = dist;
-		    dh += h;
+		    dh -= h;
 		    dist = sqrt ( dh*dh + dw*dw );
 		    if ( RADIUS < dist ) RADIUS = dist;
 		}
-		RADIUS += delta;
+		RADIUS += 0.2 * delta;
 		cairo_new_path ( context );
 		cairo_arc ( context,
 		            box_ul.x + box_width / 2,
-			    box_ul.y + box_height / 2,
+			    box_ul.y + box_height / 2
+			             + 0.2 * h,
 			    RADIUS, 0, 2 * M_PI );
 		cairo_set_source_rgb
 		    ( context, 1, 1, 1 );
@@ -2708,7 +2709,8 @@ void draw_level ( int i )
 		    cairo_new_path ( context );
 		    cairo_arc ( context,
 				box_ul.x + box_width / 2,
-				box_ul.y + box_height / 2,
+				box_ul.y + box_height / 2
+				         + 0.2 * h,
 				RADIUS, 0, 2 * M_PI );
 		    cairo_set_source_rgb
 			( context, 0, 0, 0 );
@@ -2761,7 +2763,7 @@ void draw_level ( int i )
 	    double txw;
 	    if ( align == LEFT )
 	        txx = box_ul.x, txw = 0;
-	    else if ( align = RIGHT )
+	    else if ( align == RIGHT )
 	        txx = box_ul.x + box_width, txw = -1;
 	    else
 	        txx = box_ul.x + box_width / 2,
