@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 28 23:38:10 EDT 2020
+// Date:	Sat Aug 29 01:13:51 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <string>
 #include <sstream>
+#include <vector>
 
 #include <cstdlib>
 #include <cstdarg>
@@ -60,6 +61,8 @@ using std::min;
 using std::max;
 using std::string;
 using std::isnan;
+// std::vector is not here as vector is used for
+// another purpose.
 
 extern "C" {
 #include <unistd.h>
@@ -277,14 +280,15 @@ const char * const documentation[2] = { "\n"
 "    the context for page sections.  This context\n"
 "    includes default background color and margins\n"
 "    for pages, and descriptions of fonts and types\n"
-"    of lines (solid, dashed, etc.) that can be used\n"
-"    by commands within a page section.\n"
+"    of line strokes (solid, dashed, etc.) that can\n"
+"    be used by commands within a page section.\n"
 "\n"
 "    Each page section specifies one page.\n"
 "\n"
 "    The page is divided into three sections: a\n"
 "    head, a body, and a foot, in that order from\n"
-"    top to bottom.\n"
+"    top to bottom.  (But not necessarily in that\n"
+"    order in the input).\n"
 "\n"
 "    The command lines for a page are read and saved\n"
 "    in lists.  There is one list for the head and\n"
@@ -299,27 +303,26 @@ const char * const documentation[2] = { "\n"
 "    for example, a white bounding box for some text\n"
 "    can overlay a line that the text describes.\n"
 "\n"
-"    The head and foot commands control font para-\n"
-"    meters and output lines and extra space between\n"
-"    lines.\n"
+"    The head and foot commands output centered text\n"
+"    lines and extra space between these lines.\n"
 "\n"
 "    For body commands, some numbers have units and\n"
-"    some are `body coordinates'.  The latter are\n"
-"    arbitrary, and are scaled automatically so the\n"
-"    bounding box of all points with such coordi-\n"
-"    nates, plus some space for margins, fits in the\n"
-"    area between the head and foot.  The ratio of\n"
-"    the X and Y scales defaults to 1, but can be\n"
-"    set otherwise.\n"
+"    some do not.  Body coordinates has not units\n"
+"    and can be scaled automatically so the bounding\n"
+"    box of all points with such coordinates fits\n"
+"    in the area between the head and foot.  The\n"
+"    ratio of X and Y scales, which with automatic\n"
+"    scaling could be anything, can be forced to a\n"
+"    particular value, such as 1.\n"
 "\n"
 "    Numbers that represent lengths can have the `pt'\n"
-"    suffix meaning `points' (1/72 inch), the `in'\n"
-"    suffix meaning `inches', `em' meaning the\n"
-"    font point size at the time the number used,\n"
-"    or no suffix, meaning the number is a body\n"
-"    coordinate (and must be associated with the X\n"
-"    or Y axis).  Body coordinates are not permitted\n"
-"    in the head or foot.\n"
+"    suffix meaning `points' (1/72 inch) or the `in'\n"
+"    suffix meaning `inches'.   Some number, such as\n"
+"    those used to determine text line spacing, have\n"
+"    `em' units.  One em is the font size at the time\n"
+"    the number used.  Body coordinates have no\n"
+"    units, are associated with the X or Y axis, and\n"
+"    are not permitted in the head or foot.\n"
 "\n"
 "    Many commands have a `color' parameter.  The\n"
 "    possible colors are:\n"
@@ -339,10 +342,12 @@ const char * const documentation[2] = { "\n"
 "    ------ --------\n"
 "\n"
 "      These commands can be given in a layout\n"
-"      section.  The `background', `scale', and"
-				" `margin'\n"
-"      commands may also be used in a page section to\n"
-"      override some layout parameters for the page.\n"
+"      section.  The `background', `scale',"
+                                    " `margins',\n"
+"      and `bounds' commands may also be used in a\n"
+"      page section to override the associated\n"
+"      layout parameters for the page.\n"
+"\n"
 "      The `layout' command must be the first\n"
 "      command of a layout section.  Parameter values\n"
 "      not given in a layout section revert to their\n"
@@ -380,9 +385,7 @@ const char * const documentation[2] = { "\n"
 "             and is normally given in points;\n"
 "             capital letters are typically 0.7em\n"
 "             high and lower case x is typically\n"
-"             0.5em high; defaults:\n"
-"                14pt for head\n"
-"                10pt for other lists\n"
+"             0.5em high\n"
 "        OPT is some of (default is none of):\n"
 "            b for bold\n"
 "            i for italic\n"
@@ -392,14 +395,15 @@ const char * const documentation[2] = { "\n"
 "            monospace\n"
 "        SPACE is the horizontal space\n"
 "              between text lines and must have em\n"
-"              units; default 1.15em\n"
+"              units; default 1.15em, meaning 1.15\n"
+"              time SIZE.\n"
 "\n"
 "      stroke NAME [WIDTH] [COLOR] [OPT]\n"
 "        Defines a named line stroke.\n"
 "\n"
 "        WIDTH is the line width.  Default for non-\n"
 "              fill lines is 1pt, and for fill\n"
-"              lines is 0.\n"
+"              lines is 0pt.\n"
 "        OPT is one of:\n"
 "            .   dotted line\n"
 "            -   dashed line\n"
@@ -423,19 +427,19 @@ const char * const documentation[2] = { "\n"
 "        allows whatever ratio fills the entire body\n"
 "        of the page.\n"
 "\n"
-"      margin ALL\n"
-"      margin VERTICAL HORIZONTAL\n"
-"      margin TOP RIGHT BOTTOM LEFT\n"
+"      margins ALL\n"
+"      margins VERTICAL HORIZONTAL\n"
+"      margins TOP RIGHT BOTTOM LEFT\n"
 "        Sets the default margins for the body of\n"
-"        each page.  Lengths must be absolute.\n"
+"        each page.  Margins are lengths.\n"
 "\n"
 "    List Switching Commands:\n"
 "    ---- --------- --------\n"
 "\n"
-"      These commands switch lists in page section.\n"
-"      A section that does not begin with one of\n"
-"      these commands or with a `layout' command is\n"
-"      assumed to begin with a `level 50' command.\n"
+"      These commands switch lists in a page section.\n"
+"      A page section begins with an implicit"
+                         " `level 50'\n"
+"      command.\n"
 "\n"
 "        head\n"
 "          Start or continue the head list.\n"
@@ -445,19 +449,17 @@ const char * const documentation[2] = { "\n"
 "\n"
 "        level N\n"
 "          Start or continue list n, where\n"
-"          1 <= n <= 100.  Push n into the level\n"
-"          stack.\n"
+"          1 <= n <= 100.  Push previous level into\n"
+"          the level stack.\n"
 "\n"
 "        level\n"
 "          Start or continue list m, where m is at\n"
 "          the top of the level stack.  Pop the\n"
 "          level stack.\n"
 "\n"
-"        There is an implicit `level 50' command\n"
-"        just before the beginning of input.  A page\n"
-"        need not have any head or foot.  Body coor-\n"
-"        dinates are not permitted in the head or\n"
-"        foot.\n"
+"        A page need not have any head or foot.\n"
+"        Body coordinates are not permitted in the\n"
+"        head or foot.\n"
 "\n"
 "\n"
 "    Head and Foot Commands:\n"
@@ -1617,8 +1619,7 @@ inline bool attach ( command * com, char c,
 	}
         else if ( ! continuing && last->continued )
 	{
-	    dout << "end inserted before line "
-	         << line_number << endl;
+	    error ( "missing `end' inserted" );
 	    end * e = new end;
 	    e->c = 'e';
 	    e->continued = false;
@@ -1650,6 +1651,8 @@ section read_section ( istream & in )
 
     const color * black = find_color ( "black" );
     assert ( black != NULL );
+
+    std::vector<long> level_stack;
 
     while ( true )
     {
@@ -1799,7 +1802,7 @@ section read_section ( istream & in )
 	    else
 	        P_scale = S;
 	}
-	else if ( op == "margin" )
+	else if ( op == "margins" )
 	{
 	    if ( s == LAYOUT )
 	        read_margins ( D_margins, false );
@@ -1849,12 +1852,27 @@ section read_section ( istream & in )
 	else if ( op == "level" && s == PAGE )
 	{
 	    long N;
-	    if ( ! read_long
-	               ( "N", N, 1, MAX_LEVEL, false ) )
-	        continue;
-	    current_list = & level[N];
+	    if ( ! read_long ( "N", N, 1, MAX_LEVEL ) )
+	    {
+	        if ( level_stack.empty() )
+		    error ( "level stack is empty" );
+		else
+		{
+		    N = level_stack.back();
+		    current_list = & level[N];
+		    level_stack.pop_back();
+		}
+	    }
+	    else
+	    {
+	        level_stack.push_back
+		    ( current_list - level );
+		current_list = & level[N];
+	    }
 	    in_head_or_foot = false;
 	    in_body = true;
+	    dout << "current level is "
+	         << current_list - level << endl;
 	}
 	else if ( op == "text" && s == PAGE )
 	{
@@ -2189,8 +2207,7 @@ section read_section ( istream & in )
 	         && (* current_list) != NULL
 	         && (* current_list)->continued )
 	    {
-		dout << "end inserted before line "
-		     << line_number << endl;
+		error ( "missing `end' inserted" );
 		end * e = new end;
 		attach ( e, 'e', false, true );
 	     }
@@ -2688,6 +2705,17 @@ void draw_level ( int i )
 
 void draw_page ( double P_left, double P_top )
 {
+    if ( P_background != NULL )
+    {
+        const color * c = P_background;
+	cairo_set_source_rgb
+	    ( context, c->red, c->green, c->blue );
+	cairo_rectangle
+	    ( context,
+	      72 * P_left, 72 * P_top,
+	      72 * P_width, 72 * P_height );
+	cairo_fill ( context );
+    }
     head_top = P_top + P_margins.top / 2;
     head_height = compute_height ( head );
     body_top = P_top + P_margins.top + head_height;

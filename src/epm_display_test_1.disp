@@ -7,12 +7,13 @@ stroke solid-blue 4pt blue s
 stroke solid-green 2pt green s
 font very-large 16pt b
 scale 1
-margin 10pt
+margins 10pt
 *
 head
 text very-large Line Test
 level 2
 bounds -1.1 -1.1 +1.1 +1.1
+background ivory
 start blue -1 -1
 line +1 -1
 line +1 +1
@@ -27,6 +28,7 @@ line 0 0
 line +1 +1
 end
 *
+background cornsilk
 head
 text very-large Fill/Overlay Test
 level 1
@@ -45,6 +47,8 @@ line 1 1
 line 2 0
 end
 *
+background lightpink
+bounds -1 -1 1 1
 head
 text very-large Arc Path Continuation Test
 level 1
@@ -62,20 +66,21 @@ end
 start green 0 -1
 line 0 +1
 end
-bounds -1 -1 1 1
 *
 layout 2 1
 stroke solid-blue blue s
 stroke solid-red red s
-margin 0.1in 0in
+margins 0.1in 0in
 scale 1
 *
+level 2
 text normal 1.5 1.5 HELLO
-start solid-blue 0 0
+start solid-red 0 0
+level 3
 arc solid-red 0 2 0.5 0.25 0 0 90
 arc normal 0 1.5 0.5 0.25 0 360 450
 arc solid-blue 0 1 0.5 0.25 0 360 90
-start solid-red 0 0
+level
 line  1 0
 line  1 1
 end
