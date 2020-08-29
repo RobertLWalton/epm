@@ -115,6 +115,27 @@ start narrow 1 0
 line 1 4
 end
 *
+bounds 0 0 10 12
+head
+text large-bold Text Alignment Test
+level 2
+arc solid-red 5 1 0.1
+text normal tl 5 1 top-left
+text normal tr 5 1 top-right
+text normal bl 5 1 bottom-left
+text normal br 5 1 bottom-right
+arc solid-red 5 4 0.1
+text large-bold tl 5 4 TOP-LEFT
+text large-bold tr 5 4 TOP-RIGHT
+text large-bold bl 5 4 BOTTOM-LEFT
+text large-bold br 5 4 BOTTOM-RIGHT
+arc solid-red 5 7 0.1
+text large-bold t 5 7 TOP
+text large-bold b 5 7 BOTTOM
+arc solid-red 5 10 0.1
+text large-bold l 5 10 left
+text large-bold r 5 10 right
+*
 layout 2 1
 stroke solid-blue blue s
 stroke solid-red red s

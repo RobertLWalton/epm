@@ -2609,7 +2609,7 @@ void draw_level ( int i )
 	    const color * c = f->c;
 	    vector p = { CONVERT ( t->p ) };
 	    double h = 72 * f->size * f->space;
-	    double delta = 72 * 0.15 * f->size;
+	    double delta = 72 * 0.5 * f->size;
 
 	    std::vector<string> tx;
 	    size_t beg = 0;
@@ -2661,11 +2661,11 @@ void draw_level ( int i )
 	    options align = NO_OPTIONS;
 
 	    if ( t->o & TOP )
-	        box_ul.y = p.y + delta;
+	        box_ul.y = p.y + delta - 0.3 * h;
 	    else if ( t->o & BOTTOM )
 	        box_ul.y = p.y - n * h - delta;
 	    else
-	        box_ul.y = p.y - n * h / 2 + 0.1 * h;
+	        box_ul.y = p.y - n * h / 2 - 0.2 * h;
 	    if ( t->o & LEFT )
 	    {
 	        box_ul.x = p.x - box_width - delta;
