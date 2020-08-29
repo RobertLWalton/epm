@@ -2607,10 +2607,35 @@ void draw_level ( int i )
 	    text * t = (text *) current;
 	    const font * f = t->f;
 	    const color * c = f->c;
+	    vector p = { CONVERT ( t->p ) };
+	    double h = 72 * f->size * f->space;
+	    double delta = 72 * 0.15 * f->size;
 
-	    cairo_set_source_rgb
-	        ( context, c->red, c->green, c->blue );
-		           
+	    std::vector<string> tx;
+	    size_t beg = 0;
+	    while ( true )
+	    {
+		size_t end =
+		    t->t.find_first_of ( '\\', beg );
+	        if ( end == string::npos )
+		{
+		    tx.push_back
+		        ( t->t.substr ( beg ) );
+		    break;
+		}
+		else
+		{
+		    tx.push_back
+		        ( t->t.substr
+			      ( beg, end - beg ) );
+		    beg = end + 1;
+		}
+	    }
+	    int n = tx.size();
+	    double box_width = 0;
+	    double box_height = n * h;
+
+	    std::vector<double> tx_width;
 	    cairo_select_font_face
 	        ( context, f->cairo_family,
 		           f->cairo_slant,
@@ -2621,16 +2646,135 @@ void draw_level ( int i )
 		     == CAIRO_STATUS_SUCCESS );
 
 	    cairo_text_extents_t te;
-	    cairo_text_extents
-	        ( context, t->t.c_str(), & te );
+	    for ( int i = 0; i < n; ++ i )
+	    {
+		cairo_text_extents
+		    ( context, tx[i].c_str(), & te );
+		tx_width.push_back ( te.width );
+		if ( box_width < te.width )
+		    box_width = te.width;
+	    }
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
-	    vector pc = { CONVERT ( t->p ) };
-	    cairo_move_to
-		( context, 
-		  pc.x - te.width/2,
-		  pc.y + 0.4 * te.height ); 
-	    cairo_show_text ( context, t->t.c_str() );
+
+	    vector box_ul = { 0, 0 };
+	    options align = NO_OPTIONS;
+
+	    if ( t->o & TOP )
+	        box_ul.y = p.y + delta;
+	    else if ( t->o & BOTTOM )
+	        box_ul.y = p.y - n * h - delta;
+	    else
+	        box_ul.y = p.y - n * h / 2 + 0.1 * h;
+	    if ( t->o & LEFT )
+	    {
+	        box_ul.x = p.x - box_width - delta;
+		align = RIGHT;
+	    }
+	    else if ( t->o & RIGHT )
+	    {
+	        box_ul.x = p.x + delta;
+		align = LEFT;
+	    }
+	    else
+	        box_ul.x = p.x - box_width / 2;
+
+	    if ( t->o & CIRCLE_WHITE )
+	    {
+	        align = NO_OPTIONS;
+		double RADIUS = 0;
+		double dh = box_height / 2;
+		for ( int i = 0; i < n; ++ i )
+		{
+		    double dw = tx_width[i] / 2;
+		    double dist =
+		        sqrt ( dh*dh + dw*dw );
+		    if ( RADIUS < dist ) RADIUS = dist;
+		    dh += h;
+		    dist = sqrt ( dh*dh + dw*dw );
+		    if ( RADIUS < dist ) RADIUS = dist;
+		}
+		RADIUS += delta;
+		cairo_new_path ( context );
+		cairo_arc ( context,
+		            box_ul.x + box_width / 2,
+			    box_ul.y + box_height / 2,
+			    RADIUS, 0, 2 * M_PI );
+		cairo_set_source_rgb
+		    ( context, 1, 1, 1 );
+		cairo_fill ( context );
+		if ( t->o & OUTLINE )
+		{
+		    cairo_new_path ( context );
+		    cairo_arc ( context,
+				box_ul.x + box_width / 2,
+				box_ul.y + box_height / 2,
+				RADIUS, 0, 2 * M_PI );
+		    cairo_set_source_rgb
+			( context, 0, 0, 0 );
+		    cairo_set_line_width
+		        ( context, 1 );  // 1pt
+		    cairo_stroke ( context );
+		}
+	    }
+	    else if ( t->o & BOX_WHITE )
+	    {
+		align = NO_OPTIONS;
+		cairo_new_path ( context );
+		cairo_rectangle
+		    ( context,
+		      box_ul.x - delta,
+		      box_ul.y - delta,
+		      box_width + 2 * delta,
+		      box_height + 2 * delta );
+		cairo_set_source_rgb
+		    ( context, 1, 1, 1 );
+		cairo_fill ( context );
+		if ( t->o & OUTLINE )
+		{
+		    cairo_new_path ( context );
+		    cairo_rectangle
+			( context,
+			  box_ul.x - delta,
+			  box_ul.y - delta,
+			  box_width + 2 * delta,
+			  box_height + 2 * delta );
+		    cairo_set_source_rgb
+			( context, 0, 0, 0 );
+		    cairo_set_line_width
+		        ( context, 1 );  // 1pt
+		    cairo_stroke ( context );
+		}
+	    }
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
+
+	    cairo_set_source_rgb
+	        ( context, c->red, c->green, c->blue );
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
+
+	    // text x position is:
+	    //     txx + txw * line-width
+	    //
+	    double txx;
+	    double txw;
+	    if ( align == LEFT )
+	        txx = box_ul.x, txw = 0;
+	    else if ( align = RIGHT )
+	        txx = box_ul.x + box_width, txw = -1;
+	    else
+	        txx = box_ul.x + box_width / 2,
+		txw = -0.5;
+	    for ( int i = 0; i < n; ++ i )
+	    {
+	        cairo_move_to
+		    ( context,
+		      txx + txw * tx_width[i],
+		      box_ul.y + ( i + 1 ) * h );
+		cairo_show_text
+		    ( context, tx[i].c_str() );
+	    }
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
 	    break;
