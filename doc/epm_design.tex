@@ -116,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{August 27, 2020}
+\date{August 29, 2020}
  
 \maketitle
 
@@ -870,6 +870,9 @@ Name & Description & Creators & Updaters & Readers \\
 \TT{EPM\_IS\_TEAM} & \STACK{true iff AID\\is team ID}
                    & \STACK{login\\user} & & index \\ 
 \hline
+\TT{EPM\_PAGE[id\_type]} & \STACK{current\\session\\page}
+                 & index & index & index \\ 
+\hline
 \TT{EPM\_IPADDR} & \STACK{session\\IP address}
                  & login & & \STACK{index\\login\\user} \\ 
 \hline
@@ -881,6 +884,39 @@ Name & Description & Creators & Updaters & Readers \\
 \hline
 \TT{EPM\_ABORT} & \STACK{session\\abort info}
                  & \STACK{login\\user} & & index \\ 
+\hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Description & Creators & Updaters & Readers \\
+\hline\hline
+\TT{EPM\_MAIN} & \STACK{temporary\\data for\\current\\+main+\\page}
+                & \STACK{project\\user\\list\\favorites\\manage}
+		& (creators) & (creators) \\ 
+\hline
+\TT{EPM\_PROJECT} & \STACK{permanent\\data for\\project}
+                & project & project & project \\
+\hline
+\TT{EPM\_USER} & \STACK{permanent\\data for\\user}
+                & user & user & user \\
+\hline
+\TT{EPM\_MANAGE} & \STACK{permanent\\data for\\manage}
+                & manage & manage & manage \\
+\hline
+\TT{EPM\_VIEW} & \STACK{permanent\\data for\\view}
+                & view & view & view \\
+\hline
+\TT{EPM\_PROBLEM[problem]} & \STACK{permanent\\data for\\problem}
+                & problem & problem & problem \\
+\hline
+\TT{EPM\_WORK[problem]} & \STACK{data for\\current\\background\\task}
+                & problem & problem & problem \\
+\hline
+\TT{EPM\_RUN[problem]} & \STACK{data for\\current\\background\\run}
+                & run & run & run \\
 \hline
 \end{tabular}
 \end{center}
