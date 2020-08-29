@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 28 23:30:17 EDT 2020
+// Date:	Fri Aug 28 23:38:10 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -528,7 +528,7 @@ const char * const documentation[2] = { "\n"
 "        continue the path (i.e., any command but\n"
 "        `line' or `curve').\n"
 "\n"
-"	 If the path stroke has a fill or close\n"
+"        If the path stroke has a fill or close\n"
 "        option, this command draws a line from the\n"
 "        end of the path to its beginning, in order\n"
 "        to close the path.\n"
@@ -561,6 +561,14 @@ const char * const documentation[2] = { "\n"
 "        A fill or close option in STROKE draws a\n"
 "        straight line from G1 to G2 (of possibly\n"
 "        zero length).\n"
+"\n"
+"      arc RX RY A G1 G2\n"
+"        Continue the current path with an arc such\n"
+"        that the point designated by G1 is the last\n"
+"        point on the path so far.  The path is con-\n"
+"        tinued from this point to the point designa-\n"
+"        ted by G2.  The arc is drawn as for the\n"
+"        previous arc command.\n"
 "\n"
 "      rectangle STROKE XMIN YMIN XMAX YMAX\n"
 "        Draw a rectangle with given STROKE type and\n"
