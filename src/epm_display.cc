@@ -2625,7 +2625,7 @@ void draw_level ( int i )
 	    cairo_move_to
 		( context, 
 		  pc.x - te.width/2,
-		  pc.y + te.height/2 ); 
+		  pc.y + 0.4 * te.height ); 
 	    cairo_show_text ( context, t->t.c_str() );
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
