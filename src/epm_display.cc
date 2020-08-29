@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Aug 29 01:13:51 EDT 2020
+// Date:	Sat Aug 29 04:58:20 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -677,9 +677,11 @@ const font * make_font ( string name,
     f->c = c;
     f->o = o;
     f->family = family;
+    // Putting cairo: in front of these does not
+    // work, so cairo_family == family.
     assert (    strlen ( family ) + 7
              <= sizeof ( f->cairo_family ) );
-    sprintf ( f->cairo_family, "cairo:%s", family );
+    sprintf ( f->cairo_family, "%s", family );
     f->size = size;
     f->space = space;
 
@@ -2484,6 +2486,20 @@ void draw_head_or_foot
 	    top += f->size * f->space; 
 	    const color * c = f->c;
 
+	    string tx[3];
+	    size_t pos1 = t->t.find_first_of ( '\\' );
+	    size_t pos2 = t->t.find_last_of ( '\\' );
+	    if ( pos1 == string::npos )
+	        tx[1] = t->t;
+	    else
+	    {
+	        tx[0] = t->t.substr ( 0, pos1 );
+		tx[2] = t->t.substr ( pos2 + 1 );
+		if ( pos1 != pos2 )
+		    tx[1] = t->t.substr
+		        ( pos1 + 1, pos2 - pos1 - 1 );
+	    }
+
 	    cairo_set_source_rgb
 	        ( context, c->red, c->green, c->blue );
 		           
@@ -2496,17 +2512,26 @@ void draw_head_or_foot
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
 
-	    cairo_text_extents_t te;
-	    cairo_text_extents
-	        ( context, t->t.c_str(), & te );
-	    assert (    cairo_status ( context )
-		     == CAIRO_STATUS_SUCCESS );
-	    cairo_move_to
-		( context, 
-		  center - te.width/2, 72 * top );
-	    cairo_show_text ( context, t->t.c_str() );
-	    assert (    cairo_status ( context )
-		     == CAIRO_STATUS_SUCCESS );
+	    for ( int i = 0; i < 3; ++ i )
+	    {
+	        if ( tx[i] == "" ) continue;
+		cairo_text_extents_t te;
+		cairo_text_extents
+		    ( context, tx[i].c_str(), & te );
+		assert (    cairo_status ( context )
+			 == CAIRO_STATUS_SUCCESS );
+		cairo_move_to
+		    ( context, 
+		      i == 0 ? 72 * left :
+		      i == 1 ? center - te.width/2 :
+		               72 * ( left + width )
+			       - te.width,
+		      72 * top );
+		cairo_show_text
+		    ( context, tx[i].c_str() );
+		assert (    cairo_status ( context )
+			 == CAIRO_STATUS_SUCCESS );
+	    }
 	    break;
 	}
 	default:
