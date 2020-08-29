@@ -46,12 +46,23 @@ line 2 0
 end
 *
 head
-text very-large Fill/Overlay Test
+text very-large Arc Path Continuation Test
 level 1
-start solid-red 0 0
-arc solid-red 0 0 1 2
-arc solid-red 4 4 2 1
+start solid-red 1 0
+arc 1 1 0 0 90 
+line 0 0
 end
+start solid-blue -1 0
+arc 1 1 0 180 270 
+line 0 0
+end
+start green -1 0
+line +1 0
+end
+start green 0 -1
+line 0 +1
+end
+bounds -1 -1 1 1
 *
 layout 2 1
 stroke solid-blue blue s
@@ -64,6 +75,7 @@ start solid-blue 0 0
 arc solid-red 0 2 0.5 0.25 0 0 90
 arc normal 0 1.5 0.5 0.25 0 360 450
 arc solid-blue 0 1 0.5 0.25 0 360 90
+start solid-red 0 0
 line  1 0
 line  1 1
 end
@@ -75,5 +87,6 @@ bounds 0 0 2 2
 start solid-red 0 0
 line  1 0
 line  1 1
+bounds 0 0 2 2
 end
 *

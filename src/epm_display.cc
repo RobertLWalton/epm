@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Fri Aug 28 18:29:18 EDT 2020
+// Date:	Fri Aug 28 23:30:17 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -958,13 +958,21 @@ void print_commands ( command * list )
 	case 'a':
 	{
 	    arc * a = (arc *) current;
-	    cout << "arc " << a->s->name
-		 << " " << a->c
-		 << " " << a->r
-		 << " " << a->a
-		 << " " << a->g1
-		 << " " << a->g2
-		 << endl;
+	    if ( a->s == NULL )
+		cout << "arc"
+		     << " " << a->r
+		     << " " << a->a
+		     << " " << a->g1
+		     << " " << a->g2
+		     << endl;
+	    else
+		cout << "arc " << a->s->name
+		     << " " << a->c
+		     << " " << a->r
+		     << " " << a->a
+		     << " " << a->g1
+		     << " " << a->g2
+		     << endl;
 	    break;
 	}
 	case 'r':
@@ -1977,52 +1985,80 @@ section read_section ( istream & in )
 	}
 	else if ( op == "arc" && in_body )
 	{
-	    const stroke * STROKE;
-	    double XC, YC, RX, RY,
-	           A= 0, G1 = 0, G2 = 360;
+	    const stroke * STROKE = NULL;
+	    double XC = 0, YC = 0, RX, RY,
+	           A = 0, G1 = 0, G2 = 360;
 
-	    if ( ! read_stroke
-		       ( "STROKE", STROKE, false ) )
-		continue;
+	    if ( read_stroke ( "STROKE", STROKE ) )
+	    {
+		if ( ! read_double
+			   ( "XC", XC,
+			     - MAX_BODY_COORDINATE,
+			     + MAX_BODY_COORDINATE,
+			     false ) )
+		    continue;
+		if ( ! read_double
+			   ( "YC", YC,
+			     - MAX_BODY_COORDINATE,
+			     + MAX_BODY_COORDINATE,
+			     false ) )
+		    continue;
+		if ( ! read_double
+			   ( "R", RX,
+			     0, + MAX_BODY_COORDINATE,
+			     false ) )
+		    continue;
+		if ( ! read_double
+			   ( "RY", RY,
+			     0,
+			     + MAX_BODY_COORDINATE ) )
+		    RY = RX;
+		else
+		if ( read_double
+			 ( "A", A,
+			   - 1000 * 360, + 1000 * 360 )
+		     &&
+		     read_double
+			 ( "G1", G1,
+			   - 1000 * 360, + 1000 * 360 )
+		     &&
+		     ! read_double
+			 ( "G2", G2,
+			   - 1000 * 360, + 1000 * 360,
+			   false ) )
+		    continue;
+	    }
+	    else // No STROKE
 	    if ( ! read_double
-		       ( "XC", XC,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
-		       ( "YC", YC,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
-		       ( "R", RX,
+		       ( "RX", RX,
 			 0, + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
+			 false )
+		 ||
+	         ! read_double
 		       ( "RY", RY,
-			 0, + MAX_BODY_COORDINATE ) )
-
-		RY = RX;
-	    else
-	    if ( read_double
-		     ( "A", A,
-		       - 1000 * 360, + 1000 * 360 )
-		 &&
-		 read_double
-		     ( "G1", G1,
-		       - 1000 * 360, + 1000 * 360 )
-		 &&
+			 0, + MAX_BODY_COORDINATE,
+			 false )
+		 ||
+	         ! read_double
+		       ( "A", A,
+		         - 1000 * 360, + 1000 * 360,
+			 false )
+		 ||
 		 ! read_double
-		     ( "G2", G2,
-		       - 1000 * 360, + 1000 * 360,
-		       false ) )
+		       ( "G1", G1,
+		         - 1000 * 360, + 1000 * 360,
+			 false )
+		 ||
+		 ! read_double
+		       ( "G2", G2,
+		         - 1000 * 360, + 1000 * 360,
+		         false ) )
 		continue;
 
 	    arc * a = new arc;
-	    attach ( a, 'a' );
+	    attach ( a, 'a',
+	             STROKE == NULL,
+		     STROKE == NULL );
 	    a->s = STROKE;
 	    a->c = { XC, YC };
 	    a->r = { RX, RY };
@@ -2205,7 +2241,9 @@ double compute_height ( command * list )
 // curves may go outside the box.  For arcs, the
 // corners of the bounding rectangle are used.
 //
-void compute_bounding_box ( void )
+// Returns number of points checked.
+//
+int compute_bounding_box ( void )
 {
     double & xmin = P_bounds.ll.x;
     double & ymin = P_bounds.ll.y;
@@ -2213,11 +2251,14 @@ void compute_bounding_box ( void )
     double & ymax = P_bounds.ur.y;
     xmin = ymin = DBL_MAX;
     xmax = ymax = DBL_MIN;
+    int count = 0;
+
 #   define BOUND(v) \
 	if ( xmin > v.x ) xmin = v.x; \
 	if ( xmax < v.x ) xmax = v.x; \
 	if ( ymin > v.y ) ymin = v.y; \
-	if ( ymax < v.y ) ymax = v.y
+	if ( ymax < v.y ) ymax = v.y; \
+	++ count
 
     for ( int i = 1; i <= MAX_LEVEL; ++ i )
     {
@@ -2263,11 +2304,18 @@ void compute_bounding_box ( void )
 		    { + a->r.x, - a->r.y },
 		    { + a->r.x, + a->r.y },
 		    { - a->r.x, + a->r.y } };
-		for ( int j = 0; j < 4; ++ j )
+		if ( a->s != NULL )
+		    for ( int j = 0; j < 4; ++ j )
+		    {
+			vector p = a->c
+			         + ( d[j]^(a->a) );
+			    // ^ has lower precedence
+			    // than +
+			BOUND ( p );
+		    }
+		else
 		{
-		    vector p = a->c + ( d[j]^(a->a) );
-		        // ^ has lower precedence than +
-		    BOUND ( p );
+		    // TBD
 		}
 		break;
 	    }
@@ -2286,12 +2334,91 @@ void compute_bounding_box ( void )
 	} while ( current != level[i] );
     }
 #   undef BOUND
+
+    return count;
 }
 
 
 // Drawing data.
 //
 cairo_t * context;
+
+// Print current matrix for debugging.
+//
+void print_matrix ( cairo_t * context,
+                    const char * name = NULL )
+{
+    cairo_matrix_t matrix;
+
+    if ( name != NULL )
+        cout << endl << name << ":" << endl;
+
+    cairo_get_matrix ( context, & matrix );
+    vector x = { matrix.xx, matrix.yx };
+    vector y = { matrix.xy, matrix.yy };
+    vector t = { matrix.x0, matrix.y0 };
+    cout << x << "*x + " << y << "*y + " << t << endl;
+}
+
+// Print current path for debugging.
+//
+void print_path ( cairo_t * context,
+                  const char * name = NULL )
+{
+    cairo_path_t * path;
+    cairo_path_data_t * data;
+
+    if ( name != NULL )
+        cout << endl << name << ":" << endl;
+
+    path = cairo_copy_path ( context );
+    for ( int i = 0; i < path->num_data; )
+    {
+        data = & path->data[i];
+	i += data->header.length;
+	switch ( data->header.type )
+	{
+	case CAIRO_PATH_MOVE_TO:
+	{
+	    vector p = { data[1].point.x,
+	                 data[1].point.y };
+	    cout << "move to " << p << endl;
+	    break;
+	}
+	case CAIRO_PATH_LINE_TO:
+	{
+	    vector p = { data[1].point.x,
+	                 data[1].point.y };
+	    cout << "line to " << p << endl;
+	    break;
+	}
+	case CAIRO_PATH_CURVE_TO:
+	{
+	    vector p[3] = {
+	        { data[1].point.x, data[1].point.y },
+	        { data[2].point.x, data[2].point.y },
+	        { data[3].point.x, data[3].point.y } };
+	    cout << "curve to"
+	         << " " << p[0]
+	         << " " << p[1]
+	         << " " << p[2]
+		 << endl;
+	    break;
+	}
+	case CAIRO_PATH_CLOSE_PATH:
+	{
+	    cout << "close" << endl;
+	    break;
+	}
+	default:
+	    cout << "unknown path element type "
+	         << data->header.type << endl;
+        }
+    }
+    cairo_path_destroy ( path );
+    cout << "Matrix: ";
+    print_matrix ( context );
+}
 
 // These units are in inches with y increasing from
 // top to bottom.
@@ -2491,17 +2618,38 @@ void draw_level ( int i )
 		// to bottom, cairo angles are negatives
 		// of our angles.
 
-	    cairo_save ( context );
-	    cairo_new_path ( context );
-	    cairo_translate
-		( context, CONVERT ( a->c ) );
+	    cairo_matrix_t matrix;
+	    cairo_get_matrix ( context, & matrix );
+
+	    if ( a->s == NULL )
+	    {
+	        vector p1;
+		cairo_get_current_point
+		    ( context, & p1.x, & p1.y );
+		vector p2 = { 1, 0 };
+		p2 =
+		    { fabs ( xscale ) * a->r.x * p2.x,
+		      fabs ( yscale ) * a->r.y * p2.y };
+		p2 = p2 ^ a->g1;
+
+		cairo_translate
+		    ( context,
+		      p1.x - p2.x, p1.y - p2.y );
+	    }
+	    else
+	    {
+		cairo_new_path ( context );
+		cairo_translate
+		    ( context, CONVERT ( a->c ) );
+	    }
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
 	    cairo_rotate
 	        ( context, - M_PI * a->a / 180 );
 	    cairo_scale
 	        ( context,
 		  fabs ( xscale ) * a->r.x,
 		  fabs ( yscale ) * a->r.y );
-	    cairo_new_path ( context );
 	    if ( a->g1 < a->g2 )
 		cairo_arc_negative
 		    ( context, 0, 0, 1,
@@ -2512,8 +2660,10 @@ void draw_level ( int i )
 		    ( context, 0, 0, 1,
 		      - M_PI * a->g1 / 180,
 		      - M_PI * a->g2 / 180 );
-	    cairo_restore ( context );
-	    apply_stroke ( a->s );
+	    cairo_set_matrix ( context, & matrix );
+	    assert (    cairo_status ( context )
+		     == CAIRO_STATUS_SUCCESS );
+	    if ( a->s != NULL ) apply_stroke ( a->s );
 	    break;
 	}
 	case 'r':
@@ -2553,7 +2703,13 @@ void draw_page ( double P_left, double P_top )
     // coordinates.
     //
     if ( isnan ( P_bounds.ll.x ) )
-        compute_bounding_box();
+    {
+        int count = compute_bounding_box();
+	if ( count < 4 )
+	    fatal ( "only %d points available to"
+	            " automatically compute bounding"
+		    " box (need >= 4)", count );
+    }
 
     double dx = P_bounds.ur.x - P_bounds.ll.x;
     double dy = P_bounds.ur.y - P_bounds.ll.y;
@@ -2588,6 +2744,7 @@ void draw_page ( double P_left, double P_top )
 	    body_height = new_body_height;
 	}
     }
+
 
     left = body_left;
     bottom = body_top + body_height;
