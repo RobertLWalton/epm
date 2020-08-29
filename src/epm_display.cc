@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Aug 29 05:29:29 EDT 2020
+// Date:	Sat Aug 29 16:46:49 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2724,9 +2724,9 @@ void draw_level ( int i )
 		cairo_rectangle
 		    ( context,
 		      box_ul.x - delta,
-		      box_ul.y - delta,
+		      box_ul.y,
 		      box_width + 2 * delta,
-		      box_height + 2 * delta );
+		      box_height + delta );
 		cairo_set_source_rgb
 		    ( context, 1, 1, 1 );
 		cairo_fill ( context );
@@ -2736,9 +2736,9 @@ void draw_level ( int i )
 		    cairo_rectangle
 			( context,
 			  box_ul.x - delta,
-			  box_ul.y - delta,
+			  box_ul.y,
 			  box_width + 2 * delta,
-			  box_height + 2 * delta );
+			  box_height + delta );
 		    cairo_set_source_rgb
 			( context, 0, 0, 0 );
 		    cairo_set_line_width
