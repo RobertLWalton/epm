@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Aug 29 04:58:20 EDT 2020
+// Date:	Sat Aug 29 05:29:29 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -469,6 +469,8 @@ const char * const documentation[2] = { "\n"
 "        or foot list.\n"
 "\n"
 "        text FONT TEXT1\\TEXT2\\TEXT3\n"
+"        text FONT TEXT1\\TEXT3\n"
+"        text FONT TEXT2\n"
 "           Display text as a line.  TEXT1 is left\n"
 "           adjusted; TEXT2 is centered; TEXT3 is\n"
 "           right adjusted.\n"
@@ -504,8 +506,10 @@ const char * const documentation[2] = { "\n"
 "             with a line of width 1pt\n"
 "\n"
 "        The TEXT is broken into lines separated\n"
-"        by backslashes (\\).  Lines are always\n"
-"        centered with respect to each other.\n"
+"        by backslashes (\\).  With `l' lines are\n"
+"        right adjusted; with `r' they are left\n"
+"        adjusted; and with neither they are"
+                                   " centered.\n"
 "\n"
 "      start STROKE X Y\n"
 "        Begin a path at (X,Y) which must be in\n"
