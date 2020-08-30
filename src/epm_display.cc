@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 30 14:00:59 EDT 2020
+// Date:	Sun Aug 30 17:27:17 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -356,10 +356,10 @@ const char * const documentation[2] = { "\n"
 "      not given in a layout section revert to their\n"
 "      defaults (and NOT to their previous values).\n"
 "\n"
-"      layout [R C [HEIGHT WIDTH]]\n"
-"      layout R C HEIGHT WIDTH ALL\n"
-"      layout R C HEIGHT WIDTH VERTICAL HORIZONAL\n"
-"      layout R C HEIGHT WIDTH TOP RIGHT BOTTOM LEFT\n"
+"      layout [R C [WIDTH HEIGHT]]\n"
+"      layout R C WIDTH HEIGHT ALL\n"
+"      layout R C WIDTH HEIGHT VERTICAL HORIZONAL\n"
+"      layout R C WIDTH HEIGHT TOP RIGHT BOTTOM LEFT\n"
 "        Must be first command of a layout section.\n"
 "\n"
 "        May cause multiple logical pages to be put\n"
@@ -368,7 +368,7 @@ const char * const documentation[2] = { "\n"
 "        logical pages per physical page.  Defaults\n"
 "        are R = 1, C = 1.\n"
 "\n"
-"        HEIGHT and WIDTH are the physical page\n"
+"        WIDTH and HEIGHT are the physical page\n"
 "        height and width, and default to 11in and\n"
 "        8.5in, respectively.\n"
 "\n"
@@ -598,9 +598,9 @@ const char * const documentation[2] = { "\n"
 "        ted by G2.  The arc is drawn as for the\n"
 "        previous arc command.\n"
 "\n"
-"      rectangle STROKE XMIN YMIN XMAX YMAX\n"
+"      rectangle STROKE X1 Y1 X2 Y2\n"
 "        Draw a rectangle with given STROKE type and\n"
-"        minumum and maximum X and Y coordinates.\n"
+"        opposing corners (X1,Y1) and (X2,Y2).\n"
 "        Arrow options in STROKE are not recognized.\n"
 "\n"
 "      ellipse STROKE XMIN YMIN XMAX YMAX\n"
@@ -937,7 +937,8 @@ struct arc : public command // == 'a'
 struct rectangle : public command // == 'r'
 {
     const stroke * s;
-    vector p[4];
+    vector p;
+    double width, height;
 };
 
 // Page Parameters.
@@ -1037,10 +1038,9 @@ void print_commands ( command * list )
 	{
 	    rectangle * r = (rectangle *) current;
 	    cout << "    rectangle " << r->s->name
-	         << " " << r->p[0]
-	         << " " << r->p[1]
-	         << " " << r->p[2]
-	         << " " << r->p[3]
+	         << " " << r->p
+	         << " " << r->width
+	         << " " << r->height
 		 << endl;
 	    break;
 	}
@@ -1750,7 +1750,7 @@ section read_section ( istream & in )
 	    s = LAYOUT;
 
 	    long R, C;
-	    double HEIGHT, WIDTH; 
+	    double  WIDTH, HEIGHT; 
 
 	    if ( read_long ( "R", R, 1, 40 )
 	         &&
@@ -1758,15 +1758,15 @@ section read_section ( istream & in )
 	    {
 	        init_layout ( R, C );
 		if ( read_length
-		         ( "HEIGHT", HEIGHT,
+		         ( "WIDTH", WIDTH,
 			   1e-12, 1000 )
 		     &&
 		     read_length
-			 ( "WIDTH", WIDTH,
+			 ( "HEIGHT", HEIGHT,
 			   1e-12, 1000, false ) )
 		{
-		    L_height = HEIGHT;
 		    L_width = WIDTH;
+		    L_height = HEIGHT;
 
 		    read_margins ( L_margins );
 		}
@@ -2141,54 +2141,42 @@ section read_section ( istream & in )
 	else if ( op == "rectangle" && in_body )
 	{
 	    const stroke * STROKE;
-	    double XMIN, XMAX, YMIN, YMAX;
+	    double X1, Y1, X2, Y2;
 
 	    if ( ! read_stroke
 	               ( "STROKE", STROKE, false ) )
 		continue;
 	    if ( ! read_double
-	               ( "XMIN", XMIN,
+	               ( "X1", X1,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "YMIN", YMIN,
+	               ( "Y1", Y1,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "XMAX", XMAX,
+	               ( "X2", X2,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "YMAX", YMAX,
+	               ( "Y2", Y2,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
-
-	    if ( XMIN > XMAX )
-	    {
-	        error ( "XMIN > XMAX" );
-		continue;
-	    }
-	    if ( YMIN > YMAX )
-	    {
-	        error ( "YMIN > YMAX" );
-		continue;
-	    }
 
 	    rectangle * r = new rectangle;
 	    attach ( r, 'r' );
 	    r->s = STROKE;
-	    r->p[0] = { XMIN, YMIN };
-	    r->p[1] = { XMAX, YMIN };
-	    r->p[2] = { XMAX, YMAX };
-	    r->p[3] = { XMIN, YMAX };
+	    r->p = { min ( X1, X2 ), max ( Y1, Y2 ) };
+	    r->width = fabs ( X1 - X2 );
+	    r->height = fabs ( Y1 - Y2 );
 	}
 	else if ( op == "ellipse" && in_body )
 	{
@@ -2278,10 +2266,10 @@ section read_section ( istream & in )
 	cout << "    R = " << R <<
 		   " C = " << C << endl
 	     << "    Physical Page:" << endl
-	     << "        height "
-	     << L_height << "in" << endl
 	     << "        width "
 	     << L_width << "in" << endl
+	     << "        height "
+	     << L_height << "in" << endl
 	     << "        margins"
 	     << " " << L_margins.top << "in"
 	     << " " << L_margins.right << "in"
@@ -2373,10 +2361,10 @@ int compute_bounding_box ( void )
     int count = 0;
 
 #   define BOUND(v) \
-	if ( xmin > v.x ) xmin = v.x; \
-	if ( xmax < v.x ) xmax = v.x; \
-	if ( ymin > v.y ) ymin = v.y; \
-	if ( ymax < v.y ) ymax = v.y; \
+	if ( xmin > (v).x ) xmin = (v).x; \
+	if ( xmax < (v).x ) xmax = (v).x; \
+	if ( ymin > (v).y ) ymin = (v).y; \
+	if ( ymax < (v).y ) ymax = (v).y; \
 	++ count
 
     for ( int i = 1; i <= MAX_LEVEL; ++ i )
@@ -2465,10 +2453,15 @@ int compute_bounding_box ( void )
 	    case 'r':
 	    {
 		rectangle * r = (rectangle *) current;
-		BOUND ( r->p[0] );
-		BOUND ( r->p[1] );
-		BOUND ( r->p[2] );
-		BOUND ( r->p[3] );
+		vector d[4] = {
+		    { 0       , 0           },
+		    { 0       , - r->height },
+		    { r->width, 0           },
+		    { r->width, - r->height } };
+		for ( int j = 0; j < 4; ++ j )
+		{
+		    BOUND ( r->p + d[j] );
+		}
 		break;
 	    }
 	    default:
@@ -2975,7 +2968,7 @@ void draw_level ( int i )
 		     == CAIRO_STATUS_SUCCESS );
 	    cairo_scale ( context, xscale, - yscale );
 	    cairo_rotate
-	        ( context, M_PI * a->a / 180 );
+	        ( context, - M_PI * a->a / 180 );
 	    cairo_scale ( context, a->r.x, a->r.y );
 
 	    // (x,y) in the arc plane means (x,-y) in
@@ -3003,6 +2996,11 @@ void draw_level ( int i )
 	case 'r':
 	{
 	    rectangle * r = (rectangle *) current;
+	    cairo_rectangle
+	        ( context, CONVERT ( r->p ),
+		           fabs ( xscale) * r->width,
+		           fabs ( yscale) * r->height );
+	    apply_stroke ( r->s );
 	    break;
 	}
 	default:
@@ -3119,8 +3117,8 @@ void draw_page ( double P_left, double P_top )
 	//      << endl;
 
 	cout << endl << "Logical Page:" << endl
-	     << "    height " << P_height << "in"
-	     << " width " << P_width << "in"
+	     << "    width " << P_width << "in"
+	     << " height " << P_height << "in"
 	     << endl
 	     << "    margins"
 	     << " " << P_margins.top << "in"

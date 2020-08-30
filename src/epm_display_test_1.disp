@@ -1,6 +1,7 @@
 layout 3 2
 stroke red 2pt red
 stroke blue 4pt blue c
+stroke purple 2pt purple
 stroke green 2pt green
 stroke black-close 1pt black c
 stroke solid-red 2pt red s
@@ -84,6 +85,24 @@ end
 start green 0 -1
 line 0 +1
 end
+*
+background wheat
+bounds 0 0 10 10
+head
+text large-bold Rectangle, Ellipse, Arc Test
+level 1
+rectangle green 1 1 3 2
+arc red 2 3 0.5 0.5 0
+arc red 2 5 0.5 1.0 0
+arc red 2 5 0.5 1.0 45
+arc red 2 5 0.5 1.0 90
+arc red 2 5 0.5 1.0 135
+arc purple 2 7 0.5 1.0 45 0 30
+arc purple 2 7 0.5 1.0 45 60 90
+arc purple 2 7 0.5 1.0 45 120 150
+arc purple 2 7 0.5 1.0 45 180 210
+arc purple 2 7 0.5 1.0 45 240 270
+arc purple 2 7 0.5 1.0 45 300 330
 *
 background lightsalmon
 bounds 0 0 10 10
