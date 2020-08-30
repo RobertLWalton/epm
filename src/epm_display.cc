@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Aug 29 21:57:32 EDT 2020
+// Date:	Sun Aug 30 04:27:05 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -729,11 +729,11 @@ const stroke * make_stroke ( string name,
     return s;
 }
 
-// Print fonts for debugging.
+// Print font for debugging.
 //
 void print_font ( const font * f )
 {
-    cout << "font " << f->name
+    cout << "    font " << f->name
 	 << " " << 72 * f->size << "pt"
 	 << " " << f->c->name
 	 << " " << f->o
@@ -742,11 +742,11 @@ void print_font ( const font * f )
 	 << endl;
 }
 
-// Print strokes for debugging.
+// Print stroke for debugging.
 //
 void print_stroke ( const stroke * s )
 {
-    cout << "stroke " << s->name
+    cout << "    stroke " << s->name
 	 << " " << 72 * s->width << "pt"
 	 << " " << s->c->name
 	 << " " << s->o
@@ -840,6 +840,14 @@ void init_layout ( int R, int C )
 	make_stroke ( "narrow-dashed", 0.25/72,
 	              black, DASHED );
     }
+    make_stroke ( "solid", 0,
+		  black, FILL_SOLID );
+    make_stroke ( "cross-hatch", 0,
+		  black, FILL_CROSS );
+    make_stroke ( "left-hatch", 0,
+		  black, FILL_LEFT );
+    make_stroke ( "right-hatch", 0,
+		  black, FILL_RIGHT );
 }
 
 // Page Section Data
@@ -930,7 +938,7 @@ void print_commands ( command * list )
 	case 't':
 	{
 	    text * t = (text *) current;
-	    cout << "text " << t->f->name
+	    cout << "    text " << t->f->name
 	         << " " << t->o
 		 << " " << t->p
 		 << " " << t->t
@@ -940,14 +948,14 @@ void print_commands ( command * list )
 	case 'S':
 	{
 	    space * s = (space *) current;
-	    cout << "space " << s->s << "in"
+	    cout << "    space " << s->s << "in"
 		 << endl;
 	    break;
 	}
 	case 's':
 	{
 	    start * s = (start *) current;
-	    cout << "start " << s->s->name
+	    cout << "    start " << s->s->name
 		 << " " << s->p
 		 << endl;
 	    break;
@@ -955,34 +963,34 @@ void print_commands ( command * list )
 	case 'l':
 	{
 	    line * l = (line *) current;
-	    cout << "line " << l->p
+	    cout << "    line " << l->p
 		 << endl;
 	    break;
 	}
 	case 'c':
 	{
 	    curve * c = (curve *) current;
-	    cout << "curve " << c->p[0]
+	    cout << "    curve " << c->p[0]
 	         << " " << c->p[1]
 	         << " " << c->p[2]
 		 << endl;
 	    break;
 	}
 	case 'e':
-	    cout << "end" << endl;
+	    cout << "    end" << endl;
 	    break;
 	case 'a':
 	{
 	    arc * a = (arc *) current;
 	    if ( a->s == NULL )
-		cout << "arc"
+		cout << "    arc"
 		     << " " << a->r
 		     << " " << a->a
 		     << " " << a->g1
 		     << " " << a->g2
 		     << endl;
 	    else
-		cout << "arc " << a->s->name
+		cout << "    arc " << a->s->name
 		     << " " << a->c
 		     << " " << a->r
 		     << " " << a->a
@@ -994,7 +1002,7 @@ void print_commands ( command * list )
 	case 'r':
 	{
 	    rectangle * r = (rectangle *) current;
-	    cout << "rectangle " << r->s->name
+	    cout << "    rectangle " << r->s->name
 	         << " " << r->p[0]
 	         << " " << r->p[1]
 	         << " " << r->p[2]
@@ -1003,7 +1011,7 @@ void print_commands ( command * list )
 	    break;
 	}
 	default:
-	    cout << "bad command " << current->c
+	    cout << "    bad command " << current->c
 	         << endl;
 	}
 
@@ -1703,9 +1711,9 @@ section read_section ( istream & in )
 
 	if ( op == "layout" && s == END_OF_FILE )
 	{
-	    s = LAYOUT;
-
 	    dout << endl << "Layout:" << endl;
+
+	    s = LAYOUT;
 
 	    long R, C;
 	    double HEIGHT, WIDTH; 
@@ -1877,8 +1885,6 @@ section read_section ( istream & in )
 	    }
 	    in_head_or_foot = false;
 	    in_body = true;
-	    dout << "current level is "
-	         << current_list - level << endl;
 	}
 	else if ( op == "text" && s == PAGE )
 	{
@@ -2233,6 +2239,39 @@ section read_section ( istream & in )
 	}
 	check_extra();
     }
+
+    if ( debug && s == LAYOUT )
+	cout << "    R = " << R <<
+		   " C = " << C << endl
+	     << "    Physical Page:" << endl
+	     << "        height "
+	     << L_height << "in" << endl
+	     << "        width "
+	     << L_width << "in" << endl
+	     << "        margins"
+	     << " " << L_margins.top << "in"
+	     << " " << L_margins.right << "in"
+	     << " " << L_margins.bottom << "in"
+	     << " " << L_margins.left << "in"
+	     << endl
+	     << "    Logical Page Defaults:"
+	     << endl
+	     << "        margins"
+	     << " " << D_margins.top << "in"
+	     << " " << D_margins.right << "in"
+	     << " " << D_margins.bottom << "in"
+	     << " " << D_margins.left << "in"
+	     << endl
+	     << "        bounds"
+	     << " " << D_bounds.ll << " - "
+	     << " " << D_bounds.ur
+	     << endl
+	     << "        scale " << D_scale
+	     << endl
+	     << "        background "
+	     << ( D_background == NULL ? "none" :
+	          D_background->name )
+	     << endl;
 
     return s;
 }
@@ -2967,12 +3006,30 @@ void draw_page ( double P_left, double P_top )
 	vector cll = { CONVERT ( P_bounds.ll ) };
 	vector cur = { CONVERT ( P_bounds.ur ) };
 
-	cout << endl << "Page:" << endl;
-	cout << "BOUNDS:    " << P_bounds.ll << " - "
-	     << P_bounds.ur << endl;
-	cout << "PHYSICAL:  " << ll << " - " << ur
-	     << endl;
-	cout << "CONVERTED: " << cll << " - " << cur
+	// cout << "PHYSICAL " << ll << " - " << ur
+	//      << endl;
+	// cout << "CONVERTED " << cll << " - " << cur
+	//      << endl;
+
+	cout << endl << "Logical Page:" << endl
+	     << "    height " << P_height << "in"
+	     << " width " << P_width << "in"
+	     << endl
+	     << "    margins"
+	     << " " << P_margins.top << "in"
+	     << " " << P_margins.right << "in"
+	     << " " << P_margins.bottom << "in"
+	     << " " << P_margins.left << "in"
+	     << endl
+	     << "    bounds"
+	     << " " << P_bounds.ll << " - "
+	     << " " << P_bounds.ur
+	     << endl
+	     << "    scale " << P_scale
+	     << endl
+	     << "    background "
+	     << ( P_background == NULL ? "none" :
+	          P_background->name )
 	     << endl;
     }
 
@@ -3302,12 +3359,12 @@ int main ( int argc, char ** argv )
     init_layout ( 1, 1 );
     if ( debug )
     {
-	cout << endl << "Fonts:" << endl;
+	cout << endl << "Default Fonts:" << endl;
 	for ( font_it it = font_dict.begin();
 	      it != font_dict.end(); ++ it )
 	    print_font ( it->second );
 
-	cout << endl << "Strokes:" << endl;
+	cout << endl << "Default Strokes:" << endl;
 	for ( stroke_it it = stroke_dict.begin();
 	      it != stroke_dict.end(); ++ it )
 	    print_stroke ( it->second );
@@ -3359,7 +3416,7 @@ int main ( int argc, char ** argv )
     cairo_destroy ( context );
     cairo_surface_destroy ( page );
 
-    dout << bytes << " bytes of pdf" << endl;
+    dout << bytes << " bytes of pdf available" << endl;
 
     // Return from main function without error.
 
