@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 30 13:01:55 EDT 2020
+// Date:	Sun Aug 30 14:00:59 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -833,6 +833,12 @@ void init_layout ( int R, int C )
 	              black, DASHED );
 	make_stroke ( "narrow-dashed", 0.5/72,
 	              black, DASHED );
+	make_stroke ( "wide-dotted", 2.0/72,
+	              black, DOTTED );
+	make_stroke ( "normal-dotted", 1.0/72,
+	              black, DOTTED );
+	make_stroke ( "narrow-dotted", 0.5/72,
+	              black, DOTTED );
     }
     else
     {
@@ -861,6 +867,12 @@ void init_layout ( int R, int C )
 	              black, DASHED );
 	make_stroke ( "narrow-dashed", 0.25/72,
 	              black, DASHED );
+	make_stroke ( "wide-dotted", 1.0/72,
+	              black, DOTTED );
+	make_stroke ( "normal-dotted", 0.5/72,
+	              black, DOTTED );
+	make_stroke ( "narrow-dotted", 0.25/72,
+	              black, DOTTED );
     }
     make_stroke ( "solid", 0,
 		  black, FILL_SOLID );
@@ -2681,6 +2693,25 @@ inline void apply_stroke ( const stroke * s )
 		  FILL_RIGHT |
 		  FILL_LEFT ) )
 	cairo_fill ( context );
+    else if ( s->o & DASHED )
+    {
+	double dashes[2] = { 4, 2 };
+	cairo_set_dash ( context, dashes, 2, 0 );
+	cairo_stroke ( context );
+	cairo_set_dash ( context, NULL, 0, 0 );
+    }
+    else if ( s->o & DOTTED )
+    {
+	double dashes[2] = { 0, 3 };
+	    // dot separation is 2pt
+	cairo_set_line_cap
+	    ( context, CAIRO_LINE_CAP_ROUND );
+	cairo_set_dash ( context, dashes, 2, 0 );
+	cairo_stroke ( context );
+	cairo_set_dash ( context, NULL, 0, 0 );
+	cairo_set_line_cap
+	    ( context, CAIRO_LINE_CAP_BUTT );
+    }
     else
 	cairo_stroke ( context );
 }
