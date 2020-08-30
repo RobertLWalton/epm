@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 30 05:47:53 EDT 2020
+// Date:	Sun Aug 30 13:01:55 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2328,6 +2328,21 @@ double compute_height ( command * list )
     return h;
 }
 
+// Return midpoint of Bezier cubic curve computed from
+// 4 points.
+//
+vector midpoint
+	( vector p1, vector p2, vector p3, vector p4 )
+{
+    p1 = 0.5 * ( p1 + p2 );
+    p2 = 0.5 * ( p2 + p3 );
+    p3 = 0.5 * ( p3 + p4 );
+    p1 = 0.5 * ( p1 + p2 );
+    p2 = 0.5 * ( p2 + p3 );
+    p1 = 0.5 * ( p1 + p2 );
+    return p1;
+}
+
 // Compute the bounding box of all the body points
 // in the level lists.  Text, wide lines, and exotic
 // curves may go outside the box.  For arcs, the
@@ -2355,6 +2370,9 @@ int compute_bounding_box ( void )
     for ( int i = 1; i <= MAX_LEVEL; ++ i )
     {
 	command * current = level[i];
+	vector p = { NAN, NAN };
+	    // Current location of path in body
+	    // coordinates.
 	if ( current != NULL ) do
 	{
 	    current = current->next;
@@ -2370,20 +2388,24 @@ int compute_bounding_box ( void )
 	    {
 		start * s = (start *) current;
 		BOUND ( s->p );
+		p = s->p;
 		break;
 	    }
 	    case 'l':
 	    {
 		line * l = (line *) current;
 		BOUND ( l->p );
+		p = l->p;
 		break;
 	    }
 	    case 'c':
 	    {
 		curve * c = (curve *) current;
-		BOUND ( c->p[0] );
-		BOUND ( c->p[1] );
+		p = midpoint
+		    ( p, c->p[0], c->p[1], c->p[2] );
+		BOUND ( p );
 		BOUND ( c->p[2] );
+		p = c->p[2];
 		break;
 	    }
 	    case 'e':
@@ -2391,23 +2413,40 @@ int compute_bounding_box ( void )
 	    case 'a':
 	    {
 		arc * a = (arc *) current;
+		vector c;
+		if ( a->s != NULL )
+		    c = a->c;
+		else
+		{
+		    vector ux = { 1, 0 };
+
+		    vector p1 = ux ^ a->g1;
+		    p1 = { a->r.x * p1.x,
+		           a->r.y * p1.y };
+		    p1 = p1 ^ a->a;
+
+		    vector p2 = ux ^ a->g2;
+		    p2 = { a->r.x * p2.x,
+		           a->r.y * p2.y };
+		    p2 = p2 ^ a->a;
+
+		    // c + p1 == p
+		    // new p = c + p2
+		    //
+		    c = p - p1;
+		    p = c + p2;
+		}
 		vector d[4] = {
 		    { - a->r.x, - a->r.y },
 		    { + a->r.x, - a->r.y },
 		    { + a->r.x, + a->r.y },
 		    { - a->r.x, + a->r.y } };
-		if ( a->s != NULL )
-		    for ( int j = 0; j < 4; ++ j )
-		    {
-			vector p = a->c
-			         + ( d[j]^(a->a) );
-			    // ^ has lower precedence
-			    // than +
-			BOUND ( p );
-		    }
-		else
+		for ( int j = 0; j < 4; ++ j )
 		{
-		    // TBD
+		    vector q = c + ( d[j]^(a->a) );
+			// ^ has lower precedence
+			// than +
+		    BOUND ( q );
 		}
 		break;
 	    }
@@ -2875,12 +2914,22 @@ void draw_level ( int i )
 	        vector p1;
 		cairo_get_current_point
 		    ( context, & p1.x, & p1.y );
-		vector p2 = { 1, 0 };
-		p2 =
-		    { fabs ( xscale ) * a->r.x * p2.x,
-		      fabs ( yscale ) * a->r.y * p2.y };
-		p2 = p2 ^ a->g1;
 
+		vector p2 = { 1, 0 };
+		p2 = p2 ^ a->g1;
+		p2 = { a->r.x * p2.x, a->r.y * p2.y };
+		p2 = p2 ^ a->a;
+		// If we new the center c in body
+		// coordinates, then we want
+		//     CONVERT ( c + p2 ) == p1.
+		// Therefore we want to translate by
+		//     CONVERT ( c ) =
+		//         p1 - SCALE ( p2 )
+		// where 
+		//   CONVERT ( c + p2 ) =
+		//       CONVERT ( c ) + SCALE ( p2 )
+		//
+		p2 = { xscale * p2.x, - yscale * p2.y };
 		cairo_translate
 		    ( context,
 		      p1.x - p2.x, p1.y - p2.y );
@@ -2893,12 +2942,17 @@ void draw_level ( int i )
 	    }
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
+	    cairo_scale ( context, xscale, - yscale );
 	    cairo_rotate
-	        ( context, - M_PI * a->a / 180 );
-	    cairo_scale
-	        ( context,
-		  fabs ( xscale ) * a->r.x,
-		  fabs ( yscale ) * a->r.y );
+	        ( context, M_PI * a->a / 180 );
+	    cairo_scale ( context, a->r.x, a->r.y );
+
+	    // (x,y) in the arc plane means (x,-y) in
+	    // our plane, and angle A in the arc plane
+	    // means angle -A in our plane.  We draw
+	    // the arc and then flip the y axis.
+	    //
+	    cairo_scale ( context, 1, -1 );
 	    if ( a->g1 < a->g2 )
 		cairo_arc_negative
 		    ( context, 0, 0, 1,

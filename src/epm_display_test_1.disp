@@ -2,6 +2,7 @@ layout 3 2
 stroke red 2pt red
 stroke blue 4pt blue c
 stroke green 2pt green
+stroke black-close 1pt black c
 stroke solid-red 2pt red s
 stroke solid-blue 4pt blue s
 stroke solid-green 2pt green s
@@ -61,9 +62,21 @@ start solid-red 1 0
 arc 1 1 0 0 90 
 line 0 0
 end
+start solid-green 0 1
+arc 1 1 0 90 135 
+line 0 0
+end
+start green -1 0
+arc 1 1 0 180 135 
+line 0 0
+end
 start solid-blue -1 0
 arc 1 1 0 180 270 
 line 0 0
+end
+start black-close 0.1 -0.5
+arc 0.2 0.1 0 180 360
+arc 0.2 0.1 0 180 0
 end
 start green -1 0
 line +1 0
