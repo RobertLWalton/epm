@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Aug 29 17:28:23 EDT 2020
+// Date:	Sat Aug 29 21:57:32 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2701,23 +2701,18 @@ void draw_level ( int i )
 			    box_ul.y + box_height / 2
 			             + 0.2 * h,
 			    RADIUS, 0, 2 * M_PI );
-		cairo_set_source_rgb
-		    ( context, 1, 1, 1 );
-		cairo_fill ( context );
 		if ( t->o & OUTLINE )
 		{
-		    cairo_new_path ( context );
-		    cairo_arc ( context,
-				box_ul.x + box_width / 2,
-				box_ul.y + box_height / 2
-				         + 0.2 * h,
-				RADIUS, 0, 2 * M_PI );
+		    cairo_fill_preserve ( context );
 		    cairo_set_source_rgb
 			( context, 0, 0, 0 );
 		    cairo_set_line_width
 		        ( context, 1 );  // 1pt
-		    cairo_stroke ( context );
+		    cairo_stroke_preserve ( context );
 		}
+		cairo_set_source_rgb
+		    ( context, 1, 1, 1 );
+		cairo_fill ( context );
 	    }
 	    else if ( t->o & BOX_WHITE )
 	    {
@@ -2729,24 +2724,17 @@ void draw_level ( int i )
 		      box_ul.y,
 		      box_width + 2 * delta,
 		      box_height + delta );
-		cairo_set_source_rgb
-		    ( context, 1, 1, 1 );
-		cairo_fill ( context );
 		if ( t->o & OUTLINE )
 		{
-		    cairo_new_path ( context );
-		    cairo_rectangle
-			( context,
-			  box_ul.x - delta,
-			  box_ul.y,
-			  box_width + 2 * delta,
-			  box_height + delta );
 		    cairo_set_source_rgb
 			( context, 0, 0, 0 );
 		    cairo_set_line_width
 		        ( context, 1 );  // 1pt
-		    cairo_stroke ( context );
+		    cairo_stroke_preserve ( context );
 		}
+		cairo_set_source_rgb
+		    ( context, 1, 1, 1 );
+		cairo_fill ( context );
 	    }
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
