@@ -226,13 +226,13 @@ end
 start red 3 3
 curve 3 6 3 6 4 4
 end
-start red 3 7
+start normal blue 3 7
 curve 3 8 4 8 4 9
 end
-start red 5 7
+start normal blue 5 7
 curve 5 9 6 7 6 9
 end
-start red 7 7
+start normal blue 7 7
 curve 7 10 8 6 8 9
 end
 *
