@@ -5,9 +5,12 @@ stroke purple 2pt purple
 stroke orange 2pt orange
 stroke green 2pt green
 stroke black-close 1pt black c
-stroke solid-red 2pt red s
-stroke solid-blue 4pt blue s
-stroke solid-green 2pt green s
+stroke solid-red 0pt red s
+stroke solid-blue 0pt blue s
+stroke solid-green 0pt green s
+stroke dotted-red 0pt red d
+stroke horizontal-blue 0pt blue h
+stroke vertical-green 0pt green v
 scale 1
 margins 10pt
 *
@@ -53,6 +56,18 @@ level 3
 start solid-green 0 0
 line 1 1
 line 2 0
+end
+start dotted-red 1 4
+line 2 1
+line 3 4
+end
+start horizontal-blue 2 1
+line 4 1
+line 3 4
+end
+start vertical-green 3 4
+line 5 4
+line 4 1
 end
 *
 background lightpink

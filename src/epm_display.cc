@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 30 22:38:03 EDT 2020
+// Date:	Mon Aug 31 02:33:45 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -136,11 +136,61 @@ inline ostream & operator <<
 // Basic Data
 // ----- ----
 
+enum options {
+    NO_OPTIONS          = 0,
+
+    // Font Options:
+    //
+    BOLD		= 1 << 0,
+    ITALIC		= 1 << 1,
+
+    // Stroke Options:
+    //
+    DOTTED		= 1 << 2,
+    DASHED		= 1 << 3,
+    CLOSED		= 1 << 4,
+    BEGIN_ARROW		= 1 << 5,
+    MIDDLE_ARROW	= 1 << 6,
+    END_ARROW		= 1 << 7,
+    FILL_SOLID		= 1 << 8,
+    FILL_DOTTED		= 1 << 9,
+    FILL_HORIZONTAL	= 1 << 10,
+    FILL_VERTICAL	= 1 << 11,
+
+    // Text Options:
+    //
+    TOP 		= 1 << 12,
+    BOTTOM		= 1 << 13,
+    LEFT		= 1 << 14,
+    RIGHT		= 1 << 15,
+    BOX_WHITE		= 1 << 16,
+    CIRCLE_WHITE	= 1 << 17,
+    OUTLINE		= 1 << 18,
+};
+const char * optchar = "bi" ".-cbmesdhv" "tblrxco";
+
+// Print options for debugging:
+//
+ostream & operator << ( ostream & s, options opt )
+{
+    if ( opt == 0 ) return s;
+    int len = strlen ( optchar );
+    for ( int i = 0; i < len; ++ i )
+        if ( opt & ( 1 << i ) ) s << optchar[i];
+    return s;
+}
+
 struct color
 {
     const char * name;
     unsigned value;		// HTML value
     double red, green, blue;	// cairo value
+    cairo_pattern_t * dotted;
+        // source with dots of this color
+    cairo_pattern_t * horizontal;
+        // source with horizontal stripes of this color
+    cairo_pattern_t * vertical;
+        // source with vertical stripes of this color
 };
 
 color colors[] = {
@@ -156,7 +206,53 @@ void init_colors ( void )
         c->red = ( 0xFF & ( c->value >> 16 ) ) / 255.0;
         c->green = ( 0xFF & ( c->value >> 8 ) ) / 255.0;
         c->blue = ( 0xFF & ( c->value >> 0 ) ) / 255.0;
+	c->dotted = NULL;
     }
+}
+
+void set_fill
+	( cairo_t * context, const color * c,
+	                     options o )
+{
+    cairo_pattern_t ** p = ( cairo_pattern_t ** )
+        ( o & FILL_DOTTED     ? & c->dotted :
+          o & FILL_HORIZONTAL ? & c->horizontal :
+          o & FILL_VERTICAL   ? & c->vertical :
+	  NULL );
+    assert ( p != NULL );
+
+    if ( * p == NULL )
+    {
+	// Banding seems unavoidable on displays but
+	// seems to be no problem on printers.  No
+	// effect was observed in experiments to adjust
+	// sizes to an integral number of pixels.
+	//
+	cairo_surface_t * s =
+	    cairo_pdf_surface_create ( NULL, 2, 2 );
+	cairo_t * temp = cairo_create ( s );
+	cairo_set_source_rgb
+	    ( temp, c->red, c->green, c->blue );
+	if ( o & FILL_DOTTED )
+	    cairo_rectangle ( temp, 0, 0, 1, 1 );
+	else if ( o & FILL_HORIZONTAL )
+	    cairo_rectangle ( temp, 0, 0, 2, 1 );
+	else
+	    cairo_rectangle ( temp, 0, 0, 1, 2 );
+	cairo_fill ( temp );
+	assert (    cairo_status ( temp )
+		 == CAIRO_STATUS_SUCCESS );
+	cairo_destroy ( temp );
+        * p = cairo_pattern_create_for_surface ( s );
+	cairo_pattern_set_extend
+	    ( * p, CAIRO_EXTEND_REPEAT );
+	cairo_surface_destroy ( s );
+	assert (    cairo_pattern_status ( * p )
+		 == CAIRO_STATUS_SUCCESS );
+    }
+    cairo_set_source ( context, * p );
+    assert (    cairo_status ( context )
+	     == CAIRO_STATUS_SUCCESS );
 }
 
 // Return color from colors array with given name,
@@ -190,50 +286,6 @@ const char * find_family ( const char * name )
 	if ( strcmp ( name, * f ) == 0 ) break;
     }
     return * f;
-}
-
-enum options {
-    NO_OPTIONS          = 0,
-
-    // Font Options:
-    //
-    BOLD		= 1 << 0,
-    ITALIC		= 1 << 1,
-
-    // Stroke Options:
-    //
-    DOTTED		= 1 << 2,
-    DASHED		= 1 << 3,
-    CLOSED		= 1 << 4,
-    BEGIN_ARROW		= 1 << 5,
-    MIDDLE_ARROW	= 1 << 6,
-    END_ARROW		= 1 << 7,
-    FILL_SOLID		= 1 << 8,
-    FILL_CROSS		= 1 << 9,
-    FILL_RIGHT		= 1 << 10,
-    FILL_LEFT		= 1 << 11,
-
-    // Text Options:
-    //
-    TOP 		= 1 << 12,
-    BOTTOM		= 1 << 13,
-    LEFT		= 1 << 14,
-    RIGHT		= 1 << 15,
-    BOX_WHITE		= 1 << 16,
-    CIRCLE_WHITE	= 1 << 17,
-    OUTLINE		= 1 << 18,
-};
-const char * optchar = "bi" ".-cbmesx/\\" "tblrxco";
-
-// Print options for debugging:
-//
-ostream & operator << ( ostream & s, options opt )
-{
-    if ( opt == 0 ) return s;
-    int len = strlen ( optchar );
-    for ( int i = 0; i < len; ++ i )
-        if ( opt & ( 1 << i ) ) s << optchar[i];
-    return s;
 }
 
 struct margins
@@ -415,9 +467,9 @@ const char * const documentation[2] = { "\n"
 "            m   arrow head in middle of segment\n"
 "            e   arrow head at end of segment\n"
 "            s   fill with solid color\n"
-"            x   fill with cross hatch\n"
-"            /   fill with right leaning hatch\n"
-"            \\   fill with left leaning hatch\n"
+"            d   fill with dots\n"
+"            h   fill with horizontal bars\n"
+"            v   fill with vertical bars\n"
 "\n"
 "      background COLOR\n"
 "        Sets the default background color for each\n"
@@ -660,8 +712,8 @@ struct font
 options stroke_options = (options)
     ( DOTTED + DASHED + CLOSED +
       BEGIN_ARROW + MIDDLE_ARROW + END_ARROW +
-      FILL_SOLID + FILL_CROSS +
-      FILL_RIGHT + FILL_LEFT );
+      FILL_SOLID + FILL_DOTTED +
+      FILL_HORIZONTAL + FILL_VERTICAL );
 struct stroke
 {
     string name;
@@ -875,11 +927,11 @@ void init_layout ( int R, int C )
     make_stroke ( "solid", 0,
 		  black, FILL_SOLID );
     make_stroke ( "cross-hatch", 0,
-		  black, FILL_CROSS );
+		  black, FILL_DOTTED );
     make_stroke ( "left-hatch", 0,
-		  black, FILL_LEFT );
+		  black, FILL_VERTICAL );
     make_stroke ( "right-hatch", 0,
-		  black, FILL_RIGHT );
+		  black, FILL_HORIZONTAL );
 }
 
 // Page Section Data
@@ -1816,9 +1868,9 @@ section read_section ( istream & in )
 
 	    if ( WIDTH == -1 )
 	        WIDTH = ( OPT & ( FILL_SOLID |
-		                  FILL_CROSS |
-				  FILL_RIGHT |
-				  FILL_LEFT ) ?
+		                  FILL_DOTTED |
+				  FILL_HORIZONTAL |
+				  FILL_VERTICAL ) ?
 		          0 : 1.0/72 );
 
 
@@ -2674,14 +2726,19 @@ inline void apply_stroke ( const stroke * s )
     cairo_set_line_width
 	( context, 72 * s->width );
     const color * c = s->c;
-    cairo_set_source_rgb
-	( context, c->red, c->green, c->blue );
+    if ( s->o & ( FILL_DOTTED |
+		  FILL_HORIZONTAL |
+		  FILL_VERTICAL ) )
+	set_fill ( context, c, s->o );
+    else
+	cairo_set_source_rgb
+	    ( context, c->red, c->green, c->blue );
     if ( s->o & CLOSED )
 	cairo_close_path ( context );
     if ( s->o & ( FILL_SOLID |
-		  FILL_CROSS |
-		  FILL_RIGHT |
-		  FILL_LEFT ) )
+		  FILL_DOTTED |
+		  FILL_HORIZONTAL |
+		  FILL_VERTICAL ) )
 	cairo_fill ( context );
     else if ( s->o & DASHED )
     {
