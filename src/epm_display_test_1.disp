@@ -2,6 +2,7 @@ layout 3 2
 stroke red 2pt red
 stroke blue 4pt blue c
 stroke purple 2pt purple
+stroke orange 2pt orange
 stroke green 2pt green
 stroke black-close 1pt black c
 stroke solid-red 2pt red s
@@ -91,18 +92,38 @@ bounds 0 0 10 10
 head
 text large-bold Rectangle, Ellipse, Arc Test
 level 1
-rectangle green 1 1 3 2
+rectangle green 2 1 2 1
 arc red 2 3 0.5 0.5 0
 arc red 2 5 0.5 1.0 0
 arc red 2 5 0.5 1.0 45
 arc red 2 5 0.5 1.0 90
 arc red 2 5 0.5 1.0 135
-arc purple 2 7 0.5 1.0 45 0 30
-arc purple 2 7 0.5 1.0 45 60 90
-arc purple 2 7 0.5 1.0 45 120 150
-arc purple 2 7 0.5 1.0 45 180 210
-arc purple 2 7 0.5 1.0 45 240 270
-arc purple 2 7 0.5 1.0 45 300 330
+arc purple 5 8 0.5 1.0 45 0 30
+arc purple 5 8 0.6 1.2 45 30 60
+arc purple 5 8 0.7 1.4 45 60 90
+arc purple 5 8 0.8 1.6 45 90 120
+arc purple 5 8 0.9 1.8 45 120 150
+arc purple 5 8 1.0 2.0 45 150 180
+arc purple 5 8 1.1 2.2 45 180 210
+arc purple 5 8 1.2 2.4 45 210 240
+arc purple 5 8 1.3 2.6 45 240 270
+arc purple 5 8 1.4 2.8 45 270 300
+arc purple 5 8 1.5 3.0 45 300 330
+arc purple 5 8 1.6 3.2 45 330 360
+start orange 5 3
+arc 0.5 1.0 45 0 30
+arc 0.6 1.2 45 30 60
+#arc 0.7 1.4 45 60 90
+#arc 0.8 1.6 45 90 120
+#arc 0.9 1.8 45 120 150
+#arc 1.0 2.0 45 150 180
+#arc 1.1 2.2 45 180 210
+#arc 1.2 2.4 45 210 240
+#arc 1.3 2.6 45 240 270
+#arc 1.4 2.8 45 270 300
+#arc 1.5 3.0 45 300 330
+#arc 1.6 3.2 45 330 360
+end
 *
 background lightsalmon
 bounds 0 0 10 10

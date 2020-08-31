@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 30 17:27:17 EDT 2020
+// Date:	Sun Aug 30 21:21:33 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -586,6 +586,9 @@ const char * const documentation[2] = { "\n"
 "        of an allipse, A defaults to 0, G1 defaults\n"
 "        to 0, and G2 defaults to 360.\n"
 "\n"
+"        All numbers are either in body coordinates\n"
+"        or are angles in degrees.\n"
+"\n"
 "        A fill or close option in STROKE draws a\n"
 "        straight line from G1 to G2 (of possibly\n"
 "        zero length).\n"
@@ -598,17 +601,12 @@ const char * const documentation[2] = { "\n"
 "        ted by G2.  The arc is drawn as for the\n"
 "        previous arc command.\n"
 "\n"
-"      rectangle STROKE X1 Y1 X2 Y2\n"
-"        Draw a rectangle with given STROKE type and\n"
-"        opposing corners (X1,Y1) and (X2,Y2).\n"
-"        Arrow options in STROKE are not recognized.\n"
-"\n"
-"      ellipse STROKE XMIN YMIN XMAX YMAX\n"
-"        Draw an ellipse with given STROKE type and\n"
-"        minumum and maximum X and Y coordinates.\n"
-"        The ellipse axes are parallel to the X and\n"
-"        Y axes.  Arrow options in STROKE are not\n"
-"        recognized.\n"
+"      rectangle STROKE XC YC WIDTH HEIGHT\n"
+"        Draw a rectangle with given STROKE type,\n"
+"        center (XC,YC), WIDTH and HEIGHT.  All\n"
+"        numbers, including WIDTH and HEIGHT, are in\n"
+"        body coordinates.  Arrow options in STROKE\n"
+"        are not recognized.\n"
 } ;
 
 void print_documentation ( int exit_code )
@@ -937,7 +935,7 @@ struct arc : public command // == 'a'
 struct rectangle : public command // == 'r'
 {
     const stroke * s;
-    vector p;
+    vector c;
     double width, height;
 };
 
@@ -1038,7 +1036,7 @@ void print_commands ( command * list )
 	{
 	    rectangle * r = (rectangle *) current;
 	    cout << "    rectangle " << r->s->name
-	         << " " << r->p
+	         << " " << r->c
 	         << " " << r->width
 	         << " " << r->height
 		 << endl;
@@ -2141,42 +2139,40 @@ section read_section ( istream & in )
 	else if ( op == "rectangle" && in_body )
 	{
 	    const stroke * STROKE;
-	    double X1, Y1, X2, Y2;
+	    double XC, YC, WIDTH, HEIGHT;
 
 	    if ( ! read_stroke
 	               ( "STROKE", STROKE, false ) )
 		continue;
 	    if ( ! read_double
-	               ( "X1", X1,
+	               ( "XC", XC,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "Y1", Y1,
+	               ( "YC", YC,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "X2", X2,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
+	               ( "WIDTH", WIDTH,
+			 0, + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 	    if ( ! read_double
-	               ( "Y2", Y2,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
+	               ( "HEIGHT", HEIGHT,
+			 0, + MAX_BODY_COORDINATE,
 			 false ) )
 		continue;
 
 	    rectangle * r = new rectangle;
 	    attach ( r, 'r' );
 	    r->s = STROKE;
-	    r->p = { min ( X1, X2 ), max ( Y1, Y2 ) };
-	    r->width = fabs ( X1 - X2 );
-	    r->height = fabs ( Y1 - Y2 );
+	    r->c = { XC, YC };
+	    r->width = WIDTH;
+	    r->height = HEIGHT;
 	}
 	else if ( op == "ellipse" && in_body )
 	{
@@ -2454,13 +2450,14 @@ int compute_bounding_box ( void )
 	    {
 		rectangle * r = (rectangle *) current;
 		vector d[4] = {
-		    { 0       , 0           },
-		    { 0       , - r->height },
-		    { r->width, 0           },
-		    { r->width, - r->height } };
+		    { - r->width / 2, - r->height / 2 },
+		    { + r->width / 2, - r->height / 2 },
+		    { + r->width / 2, + r->height / 2 },
+		    { - r->width / 2, + r->height / 2 }
+		};
 		for ( int j = 0; j < 4; ++ j )
 		{
-		    BOUND ( r->p + d[j] );
+		    BOUND ( r->c + d[j] );
 		}
 		break;
 	    }
@@ -2996,8 +2993,12 @@ void draw_level ( int i )
 	case 'r':
 	{
 	    rectangle * r = (rectangle *) current;
+	    vector c = { CONVERT ( r->c ) };
+	    vector d =
+	        { - fabs ( xscale ) * r->width / 2,
+		  - fabs ( yscale ) * r->height / 2 };
 	    cairo_rectangle
-	        ( context, CONVERT ( r->p ),
+	        ( context, c.x + d.x, c.y + d.y,
 		           fabs ( xscale) * r->width,
 		           fabs ( yscale) * r->height );
 	    apply_stroke ( r->s );
