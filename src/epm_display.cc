@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Mon Aug 31 02:33:45 EDT 2020
+// Date:	Mon Aug 31 14:28:50 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -559,10 +559,11 @@ const char * const documentation[2] = { "\n"
 "      `scale', and `bounds' commands described above\n"
 "      can also appear in a page section.\n"
 "\n"
-"      text FONT [OPT] X Y TEXT\\...\n"
+"      text FONT [COLOR] [OPT] X Y TEXT\\...\n"
 "        Display text at point (X,Y) which must\n"
 "        be in body coordinates.\n"
 "        FONT is font name.\n"
+"        COLOR, if given, overrides COLOR of FONT.\n"
 "        OPT are some of:\n"
 "          t  display 0.15em below y\n"
 "          b  display 0.15em above y\n"
@@ -585,9 +586,10 @@ const char * const documentation[2] = { "\n"
 "        adjusted; and with neither they are"
                                    " centered.\n"
 "\n"
-"      start STROKE X Y\n"
+"      start STROKE [COLOR] [OPT] X Y\n"
 "        Begin a path at (X,Y) which must be in\n"
-"        body coordinates.\n"
+"        body coordinates.  COLOR and OPT, if given,\n"
+"        override the COLOR and OPTions of STROKE.\n"
 "\n"
 "      line X Y\n"
 "        Continue path by straight line to (X,Y)\n"
@@ -613,10 +615,13 @@ const char * const documentation[2] = { "\n"
 "        end of the path to its beginning, in order\n"
 "        to close the path.\n"
 "\n"
-"      arc STROKE XC YC RX RY [A [G1 G2]]\n"
-"      arc STROKE XC YC R\n"
-"        Draw an elliptical arc of given line type as\n"
-"        follows.\n"
+"      arc STROKE [COLOR] [OPT] XC YC RX RY"
+                                   " [A [G1 G2]]\n"
+"      arc STROKE [COLOR] [OPT] XC YC R\n"
+"        Draw an elliptical arc of given STROKE type.\n"
+"        COLOR and OPT, if given, override the COLOR\n"
+"        and OPTions of STROKE.  Arrow options are\n"
+"        ignored.\n"
 "\n"
 "        First the a circular arc of unit radius is\n"
 "        drawn with center (0,0).  The begin point\n"
@@ -654,11 +659,13 @@ const char * const documentation[2] = { "\n"
 "        previous arc command.\n"
 "\n"
 "      rectangle STROKE XC YC WIDTH HEIGHT\n"
-"        Draw a rectangle with given STROKE type,\n"
-"        center (XC,YC), WIDTH and HEIGHT.  All\n"
-"        numbers, including WIDTH and HEIGHT, are in\n"
-"        body coordinates.  Arrow options in STROKE\n"
-"        are not recognized.\n"
+"        Draw a rectangle of given STROKE type.\n"
+"        COLOR and OPT, if given, override the COLOR\n"
+"        and OPTions of STROKE.  The rectangle has\n"
+"        center (XC,YC) and given WIDTH and HEIGHT.\n"
+"        All numbers, including WIDTH and HEIGHT, are\n"
+"        in body coordinates.  Arrow options in\n"
+"        STROKE are not recognized.\n"
 } ;
 
 void print_documentation ( int exit_code )
@@ -952,6 +959,7 @@ options text_options = (options)
 struct text : public command // == 't'
 {
     const font * f;
+    const color * c;
     options o;
     vector p;
     string t;
@@ -963,6 +971,8 @@ struct space : public command // == 'S'
 struct start : public command // == 's'
 {
     const stroke * s;
+    const color * c;
+    options o;
     vector p;
 };
 struct line : public command // == 'l'
@@ -979,6 +989,8 @@ struct end : public command // == 'e'
 struct arc : public command // == 'a'
 {
     const stroke * s;
+    const color * col;
+    options o;
     vector c;
     vector r;
     double a;
@@ -987,6 +999,8 @@ struct arc : public command // == 'a'
 struct rectangle : public command // == 'r'
 {
     const stroke * s;
+    const color * col;
+    options o;
     vector c;
     double width, height;
 };
@@ -1023,9 +1037,12 @@ void print_commands ( command * list )
 	case 't':
 	{
 	    text * t = (text *) current;
-	    cout << "    text " << t->f->name
-	         << " " << t->o
-		 << " " << t->p
+	    cout << "    text " << t->f->name;
+	    if ( t->c != NULL )
+	        cout << " " << t->c->name;
+	    if ( t->o != NO_OPTIONS )
+	        cout << " " << t->o;
+	    cout << " " << t->p
 		 << " " << t->t
 		 << endl;
 	    break;
@@ -1040,8 +1057,12 @@ void print_commands ( command * list )
 	case 's':
 	{
 	    start * s = (start *) current;
-	    cout << "    start " << s->s->name
-		 << " " << s->p
+	    cout << "    start " << s->s->name;
+	    if ( s->c != NULL )
+	        cout << " " << s->c->name;
+	    if ( s->o != NO_OPTIONS )
+	        cout << " " << s->o;
+	    cout << " " << s->p
 		 << endl;
 	    break;
 	}
@@ -1075,20 +1096,30 @@ void print_commands ( command * list )
 		     << " " << a->g2
 		     << endl;
 	    else
-		cout << "    arc " << a->s->name
-		     << " " << a->c
+	    {
+		cout << "    arc " << a->s->name;
+		if ( a->col != NULL )
+		    cout << " " << a->col->name;
+		if ( a->o != NO_OPTIONS )
+		    cout << " " << a->o;
+		cout << " " << a->c
 		     << " " << a->r
 		     << " " << a->a
 		     << " " << a->g1
 		     << " " << a->g2
 		     << endl;
+	    }
 	    break;
 	}
 	case 'r':
 	{
 	    rectangle * r = (rectangle *) current;
-	    cout << "    rectangle " << r->s->name
-	         << " " << r->c
+	    cout << "    rectangle " << r->s->name;
+	    if ( r->col != NULL )
+		cout << " " << r->col->name;
+	    if ( r->o != NO_OPTIONS )
+		cout << " " << r->o;
+	    cout << " " << r->c
 	         << " " << r->width
 	         << " " << r->height
 		 << endl;
@@ -1973,6 +2004,7 @@ section read_section ( istream & in )
 	else if ( op == "text" && s == PAGE )
 	{
 	    const font * FONT;
+	    const color * COLOR = NULL;
 	    options OPT = NO_OPTIONS;
 	    double X = 0, Y = 0;
 	    string TEXT;
@@ -1981,6 +2013,7 @@ section read_section ( istream & in )
 	        continue;
 	    if ( in_body )
 	    {
+		read_color ( "COLOR", COLOR );
 	        read_options
 		    ( "OPT", OPT, text_options );
 		if ( ! read_double
@@ -2001,6 +2034,7 @@ section read_section ( istream & in )
 	    text * t = new text;
 	    attach ( t, 't' );
 	    t->f = FONT;
+	    t->c = COLOR;
 	    t->o = OPT;
 	    t->p = { X, Y };
 	    t->t = TEXT;
@@ -2019,11 +2053,15 @@ section read_section ( istream & in )
 	else if ( op == "start" && in_body )
 	{
 	    const stroke * STROKE;
+	    const color * COLOR = NULL;
+	    options OPT = NO_OPTIONS;
 	    double X, Y;
 	    if ( ! read_stroke
-	               ( "STROKE", STROKE, false )
-		 ||
-		 ! read_double
+	               ( "STROKE", STROKE, false ) )
+	        continue;
+	    read_color ( "COLOR", COLOR );
+	    read_options ( "OPT", OPT, stroke_options ); 
+	    if ( ! read_double
 		       ( "X", X,
 			 - MAX_BODY_COORDINATE,
 			 + MAX_BODY_COORDINATE,
@@ -2039,6 +2077,8 @@ section read_section ( istream & in )
 	    start * st = new start;
 	    attach ( st, 's', true );
 	    st->s = STROKE;
+	    st->c = COLOR;
+	    st->o = OPT;
 	    st->p = { X, Y };
 	}
 	else if ( op == "line" && in_body )
@@ -2108,11 +2148,16 @@ section read_section ( istream & in )
 	else if ( op == "arc" && in_body )
 	{
 	    const stroke * STROKE = NULL;
+	    const color * COLOR = NULL;
+	    options OPT = NO_OPTIONS;
 	    double XC = 0, YC = 0, RX, RY,
 	           A = 0, G1 = 0, G2 = 360;
 
 	    if ( read_stroke ( "STROKE", STROKE ) )
 	    {
+		read_color ( "COLOR", COLOR );
+		read_options
+		    ( "OPT", OPT, stroke_options );
 		if ( ! read_double
 			   ( "XC", XC,
 			     - MAX_BODY_COORDINATE,
@@ -2182,6 +2227,8 @@ section read_section ( istream & in )
 	             STROKE == NULL,
 		     STROKE == NULL );
 	    a->s = STROKE;
+	    a->col = COLOR;
+	    a->o = OPT;
 	    a->c = { XC, YC };
 	    a->r = { RX, RY };
 	    a->a = A;
@@ -2191,11 +2238,15 @@ section read_section ( istream & in )
 	else if ( op == "rectangle" && in_body )
 	{
 	    const stroke * STROKE;
+	    const color * COLOR;
+	    options OPT;
 	    double XC, YC, WIDTH, HEIGHT;
 
 	    if ( ! read_stroke
 	               ( "STROKE", STROKE, false ) )
 		continue;
+	    read_color ( "COLOR", COLOR );
+	    read_options ( "OPT", OPT, stroke_options );
 	    if ( ! read_double
 	               ( "XC", XC,
 			 - MAX_BODY_COORDINATE,
@@ -2222,66 +2273,11 @@ section read_section ( istream & in )
 	    rectangle * r = new rectangle;
 	    attach ( r, 'r' );
 	    r->s = STROKE;
+	    r->col = COLOR;
+	    r->o = OPT;
 	    r->c = { XC, YC };
 	    r->width = WIDTH;
 	    r->height = HEIGHT;
-	}
-	else if ( op == "ellipse" && in_body )
-	{
-	    const stroke * STROKE;
-	    double XMIN, XMAX, YMIN, YMAX;
-
-	    if ( ! read_stroke
-	               ( "STROKE", STROKE, false ) )
-		continue;
-	    if ( ! read_double
-	               ( "XMIN", XMIN,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
-	               ( "YMIN", YMIN,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
-	               ( "XMAX", XMAX,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-	    if ( ! read_double
-	               ( "YMAX", YMAX,
-			 - MAX_BODY_COORDINATE,
-			 + MAX_BODY_COORDINATE,
-			 false ) )
-		continue;
-
-	    if ( XMIN > XMAX )
-	    {
-	        error ( "XMIN > XMAX" );
-		continue;
-	    }
-	    if ( YMIN > YMAX )
-	    {
-	        error ( "YMIN > YMAX" );
-		continue;
-	    }
-	    double XC = ( XMAX + XMIN ) / 2;
-	    double YC = ( YMAX + YMIN ) / 2;
-	    double RX = ( XMAX - XMIN ) / 2;
-	    double RY = ( YMAX - YMIN ) / 2;
-
-	    arc * a = new arc;
-	    attach ( a, 'a' );
-	    a->s = STROKE;
-	    a->c = { XC, YC };
-	    a->r = { RX, RY };
-	    a->a = 0;
-	    a->g1 = 0;
-	    a->g2 = 360;
 	}
 	else if ( op == "*" )
 	{
@@ -2642,7 +2638,8 @@ void draw_head_or_foot
 	    text * t = (text *) current;
 	    const font * f = t->f;
 	    top += f->size * f->space; 
-	    const color * c = f->c;
+	    const color * c = t->c;
+	    if ( c == NULL ) c = f->c;
 
 	    string tx[3];
 	    size_t pos1 = t->t.find_first_of ( '\\' );
@@ -2721,33 +2718,36 @@ double xscale, yscale, left, bottom;
     left + ((p).x - xleft) * xscale, \
     bottom - ((p).y - ybottom) * yscale
 
-inline void apply_stroke ( const stroke * s )
+inline void apply_stroke
+	( const stroke * s, const color * c = NULL,
+	                    options o = NO_OPTIONS )
 {
+    if ( o == NO_OPTIONS ) o = s->o;
+    if ( c == NULL ) c = s->c;
     cairo_set_line_width
 	( context, 72 * s->width );
-    const color * c = s->c;
-    if ( s->o & ( FILL_DOTTED |
-		  FILL_HORIZONTAL |
-		  FILL_VERTICAL ) )
-	set_fill ( context, c, s->o );
+    if ( o & ( FILL_DOTTED |
+	       FILL_HORIZONTAL |
+	       FILL_VERTICAL ) )
+	set_fill ( context, c, o );
     else
 	cairo_set_source_rgb
 	    ( context, c->red, c->green, c->blue );
-    if ( s->o & CLOSED )
+    if ( o & CLOSED )
 	cairo_close_path ( context );
-    if ( s->o & ( FILL_SOLID |
-		  FILL_DOTTED |
-		  FILL_HORIZONTAL |
-		  FILL_VERTICAL ) )
+    if ( o & ( FILL_SOLID |
+	       FILL_DOTTED |
+	       FILL_HORIZONTAL |
+	       FILL_VERTICAL ) )
 	cairo_fill ( context );
-    else if ( s->o & DASHED )
+    else if ( o & DASHED )
     {
 	double dashes[2] = { 4, 2 };
 	cairo_set_dash ( context, dashes, 2, 0 );
 	cairo_stroke ( context );
 	cairo_set_dash ( context, NULL, 0, 0 );
     }
-    else if ( s->o & DOTTED )
+    else if ( o & DOTTED )
     {
 	double dashes[2] = { 0, 3 };
 	    // dot separation is 2pt
@@ -2774,7 +2774,7 @@ void draw_level ( int i )
     }
 
     command * current = level[i];
-    const stroke * s;
+    const start * s;
     if ( current != NULL ) do
     {
         current = current->next;
@@ -2784,7 +2784,8 @@ void draw_level ( int i )
 	{
 	    text * t = (text *) current;
 	    const font * f = t->f;
-	    const color * c = f->c;
+	    const color * c = t->c;
+	    if ( c == NULL ) c = f->c;
 	    vector p = { CONVERT ( t->p ) };
 	    double h = 72 * f->size * f->space;
 	    double delta = 72 * 0.5 * f->size;
@@ -2950,7 +2951,7 @@ void draw_level ( int i )
 	case 's':
 	{
 	    start * st = (start *) current;
-	    s = st->s;
+	    s = st;
 	    cairo_new_path ( context );
 	    cairo_move_to
 	        ( context, CONVERT ( st->p ) );
@@ -2974,7 +2975,7 @@ void draw_level ( int i )
 	}
 	case 'e':
 	{
-	    apply_stroke ( s );
+	    apply_stroke ( s->s, s->c, s->o );
 	    break;
 	}
 	case 'a':
@@ -3044,7 +3045,8 @@ void draw_level ( int i )
 	    cairo_set_matrix ( context, & matrix );
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
-	    if ( a->s != NULL ) apply_stroke ( a->s );
+	    if ( a->s != NULL )
+	        apply_stroke ( a->s, a->col, a->o );
 	    break;
 	}
 	case 'r':
@@ -3058,7 +3060,7 @@ void draw_level ( int i )
 	        ( context, c.x + d.x, c.y + d.y,
 		           fabs ( xscale) * r->width,
 		           fabs ( yscale) * r->height );
-	    apply_stroke ( r->s );
+	    apply_stroke ( r->s, r->col, r->o );
 	    break;
 	}
 	default:
