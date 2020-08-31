@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Aug 30 21:21:33 EDT 2020
+// Date:	Sun Aug 30 22:38:03 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2940,7 +2940,7 @@ void draw_level ( int i )
 		p2 = p2 ^ a->g1;
 		p2 = { a->r.x * p2.x, a->r.y * p2.y };
 		p2 = p2 ^ a->a;
-		// If we new the center c in body
+		// If we knew the center c in body
 		// coordinates, then we want
 		//     CONVERT ( c + p2 ) == p1.
 		// Therefore we want to translate by
@@ -2965,7 +2965,7 @@ void draw_level ( int i )
 		     == CAIRO_STATUS_SUCCESS );
 	    cairo_scale ( context, xscale, - yscale );
 	    cairo_rotate
-	        ( context, - M_PI * a->a / 180 );
+	        ( context, M_PI * a->a / 180 );
 	    cairo_scale ( context, a->r.x, a->r.y );
 
 	    // (x,y) in the arc plane means (x,-y) in

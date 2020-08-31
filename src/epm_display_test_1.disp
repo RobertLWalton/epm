@@ -93,6 +93,7 @@ head
 text large-bold Rectangle, Ellipse, Arc Test
 level 1
 rectangle green 2 1 2 1
+rectangle green 2 1 1 2
 arc red 2 3 0.5 0.5 0
 arc red 2 5 0.5 1.0 0
 arc red 2 5 0.5 1.0 45
@@ -113,17 +114,25 @@ arc purple 5 8 1.6 3.2 45 330 360
 start orange 5 3
 arc 0.5 1.0 45 0 30
 arc 0.6 1.2 45 30 60
-#arc 0.7 1.4 45 60 90
-#arc 0.8 1.6 45 90 120
-#arc 0.9 1.8 45 120 150
-#arc 1.0 2.0 45 150 180
-#arc 1.1 2.2 45 180 210
-#arc 1.2 2.4 45 210 240
-#arc 1.3 2.6 45 240 270
-#arc 1.4 2.8 45 270 300
-#arc 1.5 3.0 45 300 330
-#arc 1.6 3.2 45 330 360
+arc 0.7 1.4 45 60 90
+arc 0.8 1.6 45 90 120
+arc 0.9 1.8 45 120 150
+arc 1.0 2.0 45 150 180
+arc 1.1 2.2 45 180 210
+arc 1.2 2.4 45 210 240
+arc 1.3 2.6 45 240 270
+arc 1.4 2.8 45 270 300
+arc 1.5 3.0 45 300 330
+arc 1.6 3.2 45 330 360
 end
+rectangle narrow 9 5 0.2 8
+rectangle narrow 9 5 0.3 7
+rectangle narrow 9 5 0.4 6
+rectangle narrow 9 5 0.5 5
+rectangle narrow 9 5 0.6 4
+rectangle narrow 9 5 0.7 3
+rectangle narrow 9 5 0.8 2
+rectangle narrow 9 5 0.9 1
 *
 background lightsalmon
 bounds 0 0 10 10
@@ -178,6 +187,39 @@ line 7 9
 line 7 7
 end
 text normal 8 0.5 Solid
+*
+background silver
+bounds 0 0 10 10
+head
+text large-bold Curve Test
+level 2
+start green 1 1
+curve 1 2 1 2 2 2
+end
+start green 1 3
+curve 1 6 -1 4 2 4
+end
+start green 1 5
+curve 1 5.5 1.5 6 2 6
+end
+start green 1 7
+curve 1 7.1 1.9 8 2 8
+end
+start red 3 1
+curve 2 2 3 3 4 2
+end
+start red 3 3
+curve 3 6 3 6 4 4
+end
+start red 3 7
+curve 3 8 4 8 4 9
+end
+start red 5 7
+curve 5 9 6 7 6 9
+end
+start red 7 7
+curve 7 10 8 6 8 9
+end
 *
 background lightcyan
 head
