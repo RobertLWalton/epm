@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Sep  1 04:40:49 EDT 2020
+// Date:	Tue Sep  1 07:26:56 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2779,12 +2779,14 @@ inline void apply_stroke
 	cairo_stroke ( context );
 }
 
-void draw_arrow ( point p, vector dv, double width )
+// Draw arrow head at p in direction dv with wing
+// length 6pt.
+//
+void draw_arrow ( point p, vector dv )
 {
     p = { CONVERT ( p ) };
     dv = { SCALE ( dv ) };
-    dv = ( 1 / sqrt ( dv*dv ) ) * dv;
-    dv = 4 * width * dv;
+    dv = ( 6 / sqrt ( dv*dv ) ) * dv;
     point p1 = p + ( dv ^ +135 );
     point p2 = p + ( dv ^ -135 );
     cairo_move_to ( context, p1.x, p1.y );
@@ -2792,6 +2794,9 @@ void draw_arrow ( point p, vector dv, double width )
     cairo_line_to ( context, p2.x, p2.y );
 }
 
+// Draw all the arrows for one stroke that started at s.
+// The stroke should already have been drawn.
+//
 void draw_arrows ( const start * s )
 {
     options o = s->o;
@@ -2804,12 +2809,15 @@ void draw_arrows ( const start * s )
     cairo_new_path ( context );
     point p = s->p;
     const command * current = s;
-    while ( true )
+    bool done = false;
+    while ( ! done )
     {
         switch ( current->c )
 	{
 	case 'e':
 	{
+	    done = true;
+
 	    if ( ( o & ( FILL_SOLID |
 	                 FILL_DOTTED |
 	                 FILL_HORIZONTAL |
@@ -2818,10 +2826,9 @@ void draw_arrows ( const start * s )
 	        break;
 	    if ( o & MIDDLE_ARROW )
 	        draw_arrow ( 0.5 * ( p + s->p ),
-		             s->p - p, s->s->width );
+		             s->p - p );
 	    if ( o & END_ARROW )
-	        draw_arrow ( s->p,
-		             s->p - p, s->s->width );
+	        draw_arrow ( s->p, s->p - p );
 	    break;
 	}
 	case 'l':
@@ -2829,11 +2836,11 @@ void draw_arrows ( const start * s )
 	    const line * l = (const line *) current;
 	    if ( o & MIDDLE_ARROW )
 	        draw_arrow ( 0.5 * ( p + l->p ),
-		             l->p - p, s->s->width );
+		             l->p - p );
 	    if ( o & END_ARROW )
-	        draw_arrow ( l->p,
-		             l->p - p, s->s->width );
+	        draw_arrow ( l->p, l->p - p );
 	    p = l->p;
+	    break;
 	}
 	case 'c':
 	{
@@ -2844,13 +2851,13 @@ void draw_arrows ( const start * s )
 		point pmid = midpoint
 		    ( dv,
 		      p, c->p[0], c->p[1], c->p[2] );
-	        draw_arrow ( pmid, dv, s->s->width );
+	        draw_arrow ( pmid, dv );
 	    }
 	    if ( o & END_ARROW )
 	        draw_arrow ( c->p[2],
-		             c->p[2] - c->p[1],
-			     s->s->width );
+		             c->p[2] - c->p[1] );
 	    p = c->p[2];
+	    break;
 	}
 	case 'a':
 	{
@@ -2872,14 +2879,14 @@ void draw_arrows ( const start * s )
 		vector v = ux ^ gmid;
 		vector dv;
 		if ( a->g1 > a->g2 )
-		    dv = v ^ +90;
-		else
 		    dv = v ^ -90;
+		else
+		    dv = v ^ +90;
 		v = { a->r.x * v.x, a->r.y * v.y };
 		dv = { a->r.x * dv.x, a->r.y * dv.y };
 		v = v ^ a->a;
 		dv = dv ^ a->a;
-		draw_arrow ( c + v, dv, s->s->width );
+		draw_arrow ( c + v, dv );
 	    }
 
 	    vector v = ux ^ a->g2;
@@ -2890,15 +2897,16 @@ void draw_arrows ( const start * s )
 	    {
 		vector dv;
 		if ( a->g1 > a->g2 )
-		    dv = ux ^ ( a->g2 + 90 );
-		else
 		    dv = ux ^ ( a->g2 - 90 );
+		else
+		    dv = ux ^ ( a->g2 + 90 );
 		dv = { a->r.x * dv.x, a->r.y * dv.y };
 		dv = dv ^ a->a;
-		draw_arrow ( c + v, dv, s->s->width );
+		draw_arrow ( c + v, dv );
 	    }
 
 	    p = c + v;
+	    break;
 	}
 	}
 
@@ -2911,7 +2919,7 @@ void draw_arrows ( const start * s )
     else
 	cairo_set_source_rgb
 	    ( context, c->red, c->green, c->blue );
-    cairo_set_line_width ( context, s->s->width );
+    cairo_set_line_width ( context, 72 * s->s->width );
     cairo_stroke ( context );
 }
 

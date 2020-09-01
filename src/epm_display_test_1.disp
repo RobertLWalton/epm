@@ -236,6 +236,42 @@ start normal blue 7 7
 curve 7 10 8 6 8 9
 end
 *
+background lightblue
+bounds 0 0 10 10
+head
+text large-bold Arrow Test
+level 2
+start red ec 1 1
+line 1 2
+line 2 2
+line 2 1
+end
+start green mc 1 3
+line 1 4
+line 2 4
+line 2 3
+end
+start narrow blue mc 1 5
+line 1 6
+curve 1 6.5 2 6.5 2 6
+line 2 5
+end
+start narrow orange ec 3 5
+line 3 6
+curve 3 6.5 4 6.5 4 6
+line 4 5
+end
+start normal purple mc 3 3
+line 3 3.7
+arc 0.5 0.7 0 180 0
+line 4 3
+end
+start normal yellow ec 3 1
+line 3 1.7
+arc 0.5 0.7 0 180 0
+line 4 1
+end
+*
 background lightcyan
 head
 text large-bold Text Test
