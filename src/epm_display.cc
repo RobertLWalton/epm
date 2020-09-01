@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Sep  1 02:56:22 EDT 2020
+// Date:	Tue Sep  1 03:51:41 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -989,10 +989,15 @@ struct end : public command // == 'e'
 };
 struct arc : public command // == 'a'
 {
+    // Data if not continuing ( s != NULL )
+    //
     const stroke * s;
     const color * col;
     options o;
     point c;
+
+    // Data if continuing or not continuing.
+    //
     vector r;
     double a;
     double g1, g2;
@@ -2375,18 +2380,20 @@ double compute_height ( command * list )
 }
 
 // Return midpoint of Bezier cubic curve computed from
-// 4 points.
+// 4 points.  Also return the direction dv of the
+// curve at the midpoint.
 //
 point midpoint
-	( point p1, point p2, point p3, point p4 )
+	( vector & dv,
+	  point p1, point p2, point p3, point p4 )
 {
     p1 = 0.5 * ( p1 + p2 );
     p2 = 0.5 * ( p2 + p3 );
     p3 = 0.5 * ( p3 + p4 );
     p1 = 0.5 * ( p1 + p2 );
     p2 = 0.5 * ( p2 + p3 );
-    p1 = 0.5 * ( p1 + p2 );
-    return p1;
+    dv = p2 - p1;
+    return 0.5 * ( p1 + p2 );
 }
 
 // Compute the bounding box of all the body points
@@ -2447,8 +2454,10 @@ int compute_bounding_box ( void )
 	    case 'c':
 	    {
 		curve * c = (curve *) current;
+		vector dv;
 		p = midpoint
-		    ( p, c->p[0], c->p[1], c->p[2] );
+		    ( dv,
+		      p, c->p[0], c->p[1], c->p[2] );
 		BOUND ( p );
 		BOUND ( c->p[2] );
 		p = c->p[2];
@@ -2772,6 +2781,15 @@ inline void apply_stroke
 
 void draw_arrow ( point p, vector dv, double width )
 {
+    p = { CONVERT ( p ) };
+    dv = { SCALE ( dv ) };
+    dv = ( 1 / sqrt ( dv*dv ) ) * dv;
+    dv = 4 * width * dv;
+    point p1 = p + ( dv ^ +135 );
+    point p2 = p + ( dv ^ -135 );
+    cairo_move_to ( context, p1.x, p1.y );
+    cairo_line_to ( context, p.x, p.y );
+    cairo_line_to ( context, p2.x, p2.y );
 }
 
 void draw_arrows ( const start * s )
@@ -2783,14 +2801,116 @@ void draw_arrows ( const start * s )
     if ( ( o & ( MIDDLE_ARROW | END_ARROW ) ) == 0 )
         return;
 
+    cairo_new_path ( context );
     point p = s->p;
-    const command * com = s;
+    const command * current = s;
     while ( true )
     {
-        switch ( com->c )
+        switch ( current->c )
 	{
+	case 'e':
+	{
+	    if ( ( o & ( FILL_SOLID |
+	                 FILL_DOTTED |
+	                 FILL_HORIZONTAL |
+	                 FILL_VERTICAL |
+			 CLOSED ) ) == 0 )
+	        break;
+	    if ( o & MIDDLE_ARROW )
+	        draw_arrow ( 0.5 * ( p + s->p ),
+		             s->p - p, s->s->width );
+	    if ( o & END_ARROW )
+	        draw_arrow ( s->p,
+		             s->p - p, s->s->width );
+	    break;
+	}
+	case 'l':
+	{
+	    const line * l = (const line *) current;
+	    if ( o & MIDDLE_ARROW )
+	        draw_arrow ( 0.5 * ( p + l->p ),
+		             l->p - p, s->s->width );
+	    if ( o & END_ARROW )
+	        draw_arrow ( l->p,
+		             l->p - p, s->s->width );
+	    p = l->p;
+	}
+	case 'c':
+	{
+	    const curve * c = (const curve *) current;
+	    if ( o & MIDDLE_ARROW )
+	    {
+	        vector dv;
+		point pmid = midpoint
+		    ( dv,
+		      p, c->p[0], c->p[1], c->p[2] );
+	        draw_arrow ( pmid, dv, s->s->width );
+	    }
+	    if ( o & END_ARROW )
+	        draw_arrow ( c->p[2],
+		             c->p[2] - c->p[1],
+			     s->s->width );
+	    p = c->p[2];
+	}
+	case 'a':
+	{
+	    const arc * a = (const arc *) current;
+	    point ux = { 1, 0 };
+
+	    vector v1 = ux ^ a->g1;
+	    v1 = { a->r.x * v1.x,
+		   a->r.y * v1.y };
+	    v1 = v1 ^ a->a;
+
+	    // c + v1 == p
+	    //
+	    point c = p - v1;  // Center
+
+	    if ( o & MIDDLE_ARROW )
+	    {
+		double gmid = ( a->g1 + a->g2 ) / 2;
+		vector v = ux ^ gmid;
+		vector dv;
+		if ( a->g1 > a->g2 )
+		    dv = v ^ +90;
+		else
+		    dv = v ^ -90;
+		v = { a->r.x * v.x, a->r.y * v.y };
+		dv = { a->r.x * dv.x, a->r.y * dv.y };
+		v = v ^ a->a;
+		dv = dv ^ a->a;
+		draw_arrow ( c + v, dv, s->s->width );
+	    }
+
+	    vector v = ux ^ a->g2;
+	    v = { a->r.x * v.x, a->r.y * v.y };
+	    v = v ^ a->a;
+
+	    if ( o & END_ARROW )
+	    {
+		vector dv;
+		if ( a->g1 > a->g2 )
+		    dv = v ^ +90;
+		else
+		    dv = v ^ -90;
+		dv = { a->r.x * dv.x, a->r.y * dv.y };
+		dv = dv ^ a->a;
+		draw_arrow ( c + v, dv, s->s->width );
+	    }
+
+	    p = c + v;
+	}
 	}
     }
+    if ( ( o & FILL_SOLID )
+         &&
+	 ( o & OUTLINE ) )
+	cairo_set_source_rgb ( context, 0, 0, 0 );
+    else
+	cairo_set_source_rgb
+	    ( context, c->red, c->green, c->blue );
+    cairo_set_line_width ( context, s->s->width );
+    cairo_stroke ( context );
 }
 
 void draw_level ( int i )
