@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Mon Aug 31 14:28:50 EDT 2020
+// Date:	Tue Sep  1 02:56:22 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -84,6 +84,7 @@ bool debug = false;
 // Vectors:
 //
 struct vector { double x, y; };
+typedef vector point;
 
 inline vector operator + ( vector v1, vector v2 )
 {
@@ -304,7 +305,7 @@ ostream & operator << ( ostream & s, const margins & m )
 
 struct bounds
 {
-    vector ll, ur;
+    point ll, ur;
 };
 
 // Print bounds for debugging:
@@ -961,7 +962,7 @@ struct text : public command // == 't'
     const font * f;
     const color * c;
     options o;
-    vector p;
+    point p;
     string t;
 };
 struct space : public command // == 'S'
@@ -973,15 +974,15 @@ struct start : public command // == 's'
     const stroke * s;
     const color * c;
     options o;
-    vector p;
+    point p;
 };
 struct line : public command // == 'l'
 {
-    vector p;
+    point p;
 };
 struct curve : public command // == 'c'
 {
-    vector p[3];
+    point p[3];
 };
 struct end : public command // == 'e'
 {
@@ -991,7 +992,7 @@ struct arc : public command // == 'a'
     const stroke * s;
     const color * col;
     options o;
-    vector c;
+    point c;
     vector r;
     double a;
     double g1, g2;
@@ -1001,7 +1002,7 @@ struct rectangle : public command // == 'r'
     const stroke * s;
     const color * col;
     options o;
-    vector c;
+    point c;
     double width, height;
 };
 
@@ -2060,7 +2061,8 @@ section read_section ( istream & in )
 	               ( "STROKE", STROKE, false ) )
 	        continue;
 	    read_color ( "COLOR", COLOR );
-	    read_options ( "OPT", OPT, stroke_options ); 
+	    read_options
+	        ( "OPT", OPT, stroke_options ); 
 	    if ( ! read_double
 		       ( "X", X,
 			 - MAX_BODY_COORDINATE,
@@ -2375,8 +2377,8 @@ double compute_height ( command * list )
 // Return midpoint of Bezier cubic curve computed from
 // 4 points.
 //
-vector midpoint
-	( vector p1, vector p2, vector p3, vector p4 )
+point midpoint
+	( point p1, point p2, point p3, point p4 )
 {
     p1 = 0.5 * ( p1 + p2 );
     p2 = 0.5 * ( p2 + p3 );
@@ -2414,7 +2416,7 @@ int compute_bounding_box ( void )
     for ( int i = 1; i <= MAX_LEVEL; ++ i )
     {
 	command * current = level[i];
-	vector p = { NAN, NAN };
+	point p = { NAN, NAN };
 	    // Current location of path in body
 	    // coordinates.
 	if ( current != NULL ) do
@@ -2457,19 +2459,19 @@ int compute_bounding_box ( void )
 	    case 'a':
 	    {
 		arc * a = (arc *) current;
-		vector c;
+		point c;
 		if ( a->s != NULL )
 		    c = a->c;
 		else
 		{
-		    vector ux = { 1, 0 };
+		    point ux = { 1, 0 };
 
-		    vector p1 = ux ^ a->g1;
+		    point p1 = ux ^ a->g1;
 		    p1 = { a->r.x * p1.x,
 		           a->r.y * p1.y };
 		    p1 = p1 ^ a->a;
 
-		    vector p2 = ux ^ a->g2;
+		    point p2 = ux ^ a->g2;
 		    p2 = { a->r.x * p2.x,
 		           a->r.y * p2.y };
 		    p2 = p2 ^ a->a;
@@ -2487,7 +2489,7 @@ int compute_bounding_box ( void )
 		    { - a->r.x, + a->r.y } };
 		for ( int j = 0; j < 4; ++ j )
 		{
-		    vector q = c + ( d[j]^(a->a) );
+		    point q = c + ( d[j]^(a->a) );
 			// ^ has lower precedence
 			// than +
 		    BOUND ( q );
@@ -2561,21 +2563,21 @@ void print_path ( cairo_t * context,
 	{
 	case CAIRO_PATH_MOVE_TO:
 	{
-	    vector p = { data[1].point.x,
-	                 data[1].point.y };
+	    point p = { data[1].point.x,
+	                data[1].point.y };
 	    cout << "move to " << p << endl;
 	    break;
 	}
 	case CAIRO_PATH_LINE_TO:
 	{
-	    vector p = { data[1].point.x,
-	                 data[1].point.y };
+	    point p = { data[1].point.x,
+	                data[1].point.y };
 	    cout << "line to " << p << endl;
 	    break;
 	}
 	case CAIRO_PATH_CURVE_TO:
 	{
-	    vector p[3] = {
+	    point p[3] = {
 	        { data[1].point.x, data[1].point.y },
 	        { data[2].point.x, data[2].point.y },
 	        { data[3].point.x, data[3].point.y } };
@@ -2709,7 +2711,7 @@ double xleft, ybottom;
 //
 double xscale, yscale, left, bottom;
 
-// Convert vector point p to x, y cairo coordinate
+// Convert point p to x, y cairo coordinate
 // pair.  p is in body coordinates with y increasing
 // from bottom to top.  Cairo coordinates are in
 // pt units with y increasing from top to bottom.
@@ -2717,6 +2719,11 @@ double xscale, yscale, left, bottom;
 # define CONVERT(p) \
     left + ((p).x - xleft) * xscale, \
     bottom - ((p).y - ybottom) * yscale
+
+// Ditto but for vector v and not a point.
+//
+# define SCALE(v) \
+    (v).x * xscale, - (v).y * yscale
 
 inline void apply_stroke
 	( const stroke * s, const color * c = NULL,
@@ -2763,6 +2770,29 @@ inline void apply_stroke
 	cairo_stroke ( context );
 }
 
+void draw_arrow ( point p, vector dv, double width )
+{
+}
+
+void draw_arrows ( const start * s )
+{
+    const color * c = s->c;
+    if ( c == NULL ) c = s->s->c;
+    options o = s->o;
+    if ( o == NO_OPTIONS ) o = s->s->o;
+    if ( ( o & ( MIDDLE_ARROW | END_ARROW ) ) == 0 )
+        return;
+
+    point p = s->p;
+    const command * com = s;
+    while ( true )
+    {
+        switch ( com->c )
+	{
+	}
+    }
+}
+
 void draw_level ( int i )
 {
     if ( debug && level[i] != NULL )
@@ -2786,7 +2816,7 @@ void draw_level ( int i )
 	    const font * f = t->f;
 	    const color * c = t->c;
 	    if ( c == NULL ) c = f->c;
-	    vector p = { CONVERT ( t->p ) };
+	    point p = { CONVERT ( t->p ) };
 	    double h = 72 * f->size * f->space;
 	    double delta = 72 * 0.5 * f->size;
 
@@ -2836,7 +2866,7 @@ void draw_level ( int i )
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
 
-	    vector box_ul = { 0, 0 };
+	    point box_ul = { 0, 0 };
 	    options align = NO_OPTIONS;
 
 	    if ( t->o & TOP )
@@ -2990,7 +3020,7 @@ void draw_level ( int i )
 
 	    if ( a->s == NULL )
 	    {
-	        vector p1;
+	        point p1;
 		cairo_get_current_point
 		    ( context, & p1.x, & p1.y );
 
@@ -3008,7 +3038,7 @@ void draw_level ( int i )
 		//   CONVERT ( c + p2 ) =
 		//       CONVERT ( c ) + SCALE ( p2 )
 		//
-		p2 = { xscale * p2.x, - yscale * p2.y };
+		p2 = { SCALE ( p2 ) };
 		cairo_translate
 		    ( context,
 		      p1.x - p2.x, p1.y - p2.y );
@@ -3052,7 +3082,7 @@ void draw_level ( int i )
 	case 'r':
 	{
 	    rectangle * r = (rectangle *) current;
-	    vector c = { CONVERT ( r->c ) };
+	    point c = { CONVERT ( r->c ) };
 	    vector d =
 	        { - fabs ( xscale ) * r->width / 2,
 		  - fabs ( yscale ) * r->height / 2 };
@@ -3161,15 +3191,15 @@ void draw_page ( double P_left, double P_top )
 
     if ( debug )
     {
-        vector ll = { body_left,
-	              body_top + body_height };
-	vector ur = { body_left + body_width,
-	              body_top };
+        point ll = { body_left,
+	             body_top + body_height };
+	point ur = { body_left + body_width,
+	             body_top };
 	ll = 72 * ll;
 	ur = 72 * ur;
 
-	vector cll = { CONVERT ( P_bounds.ll ) };
-	vector cur = { CONVERT ( P_bounds.ur ) };
+	point cll = { CONVERT ( P_bounds.ll ) };
+	point cur = { CONVERT ( P_bounds.ur ) };
 
 	// cout << "PHYSICAL " << ll << " - " << ur
 	//      << endl;
