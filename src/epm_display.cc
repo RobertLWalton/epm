@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Sep  1 03:51:41 EDT 2020
+// Date:	Tue Sep  1 04:40:49 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2794,12 +2794,12 @@ void draw_arrow ( point p, vector dv, double width )
 
 void draw_arrows ( const start * s )
 {
-    const color * c = s->c;
-    if ( c == NULL ) c = s->s->c;
     options o = s->o;
     if ( o == NO_OPTIONS ) o = s->s->o;
     if ( ( o & ( MIDDLE_ARROW | END_ARROW ) ) == 0 )
         return;
+    const color * c = s->c;
+    if ( c == NULL ) c = s->s->c;
 
     cairo_new_path ( context );
     point p = s->p;
@@ -2890,9 +2890,9 @@ void draw_arrows ( const start * s )
 	    {
 		vector dv;
 		if ( a->g1 > a->g2 )
-		    dv = v ^ +90;
+		    dv = ux ^ ( a->g2 + 90 );
 		else
-		    dv = v ^ -90;
+		    dv = ux ^ ( a->g2 - 90 );
 		dv = { a->r.x * dv.x, a->r.y * dv.y };
 		dv = dv ^ a->a;
 		draw_arrow ( c + v, dv, s->s->width );
@@ -2901,6 +2901,8 @@ void draw_arrows ( const start * s )
 	    p = c + v;
 	}
 	}
+
+	current = current->next;
     }
     if ( ( o & FILL_SOLID )
          &&
@@ -3126,6 +3128,7 @@ void draw_level ( int i )
 	case 'e':
 	{
 	    apply_stroke ( s->s, s->c, s->o );
+	    draw_arrows ( s );
 	    break;
 	}
 	case 'a':
