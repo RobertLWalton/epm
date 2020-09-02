@@ -403,7 +403,8 @@ They access just read-only files in the Home Directory
       
 \end{itemize}
 
-\item Upon being required, {\tt /page/index.php} executes the
+\item \label{INDEX-ACTIONS}
+      Upon being required, {\tt /page/index.php} executes the
       following in order:
 \begin{itemize}
 \item Compute:
@@ -675,12 +676,20 @@ current state of the server.
 
 \section{Data Files}
 
+[xxx] means file modification time is read by xxx
+
 \begin{center}
 \small
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
+\TT{error.log} & lines & error log \pagref{ERROR.LOG}
+	& (all) & (all) &  \\ 
+\hline
+\TT{debug.log} & lines & debugging log \pagref{DEBUG.LOG}
+	& (all) & (all) &  \\ 
+\hline
 \TT{admin} & dir & \STACK{administrative\\files}
 	& login & \STACK{login\\user} & \STACK{index\\login\\user} \\ 
 \hline
@@ -731,7 +740,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \FSTACK{admin/}{teams/TID/\\UID.login}}
         & lines
         & \STACK{log of logins\\\pagref{ADMIN/USERS/XID/YID.LOGIN}}
-	& (updaters) & \STACK{login\\user} & (index$^*$)  \\ 
+	& (updaters) & \STACK{login\\user} & [index]  \\ 
 \hline
 \STACK{
 \FSTACK{admin/}{users/UID/\\UID.inactive}\\
@@ -749,8 +758,6 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& user & user & user \\ 
 \hline
 \end{tabular}
-\\[1ex]
-$^*$ reads modification time
 \end{center}
 
 \begin{center}
@@ -776,9 +783,9 @@ Name & Format & Description & Creators & Updaters & Readers \\
                                     \\member \pagref{ADMIN/USERS/UID/MEMBER}}
     & user & user & user \\ 
 \hline
-\FSTACK{admi}{n/teams/TID/\\+read-write+}
+\FSTACK{admi}{n/teams/TID/\\+rw+}
     & UID & \STACK{current\\read-write
-                          \\user \pagref{ADMIN/TEAMS/TID/READ-WRITE}}
+                          \\user \pagref{ADMIN/TEAMS/TID/RW}}
     & +main+ & +main+ & \STACK{+main+\\index} \\ 
 \hline
 \TT{accounts} & dir & \STACK{holds account\\subdirectories}
@@ -795,6 +802,16 @@ Name & Format & Description & Creators & Updaters & Readers \\
         & lines & \STACK{log of account\\problem\\related\\actions}
 	& (updaters) & \STACK{project\\run} & view \\ 
 \hline
+\FSTACK{accoun}{ts/AID/\\+read-write+}
+        & lines & \STACK{log of account\\read-write mode\\requests
+	          \pagref{ACCOUNTS/AID/READ-WRITE}}
+	& index & index & [+main+] \\ 
+\hline
+\FSTACK{accoun}{ts/AID/\\+read-only+}
+        & lines & \STACK{log of account\\read-only mode\\requests
+	          \pagref{ACCOUNTS/AID/READ-ONLY}}
+	& index & index & [+main+] \\ 
+\hline
 \FSTACK{accou}{nts/AID/\\PROBLEM}
         & dir & \STACK{account\\problem\\directory}
 	& project & \STACK{+problem+\\project} & \STACK{+problem+\\project} \\ 
@@ -805,21 +822,11 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+altered+}
         & empty & \STACK{alteration\\indicator \pagref{PROBLEM/ALTERED}}
-	& (updaters) & \STACK{problem\\run} & (updaters) \\ 
+	& (updaters) & \STACK{problem\\run} & [updaters] \\ 
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+changes+}
         & lines & \STACK{log of changes\\made by pulls}
 	& project & project & \\ 
-\hline
-\FSTACK{accou}{nts/AID/\\PROBLEM/\\+work+}
-        & dir & \STACK{working\\directory\\for jobs}
-	& \STACK{problem\\run}
-	& \STACK{problem\\run}
-	& \STACK{problem\\run} \\ 
-\hline
-\FSTACK{accou}{nts/AID/\\PROBLEM/\\+run+}
-        & dir & \STACK{working\\directory\\for runs}
-	& run & run & run \\
 \hline
 \end{tabular}
 \end{center}
@@ -830,6 +837,16 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\+work+}
+        & dir & \STACK{working\\directory\\for jobs}
+	& \STACK{problem\\run}
+	& \STACK{problem\\run}
+	& \STACK{problem\\run} \\ 
+\hline
+\FSTACK{accou}{nts/AID/\\PROBLEM/\\+run+}
+        & dir & \STACK{working\\directory\\for runs}
+	& run & run & run \\
+\hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\\ldots}
         & various & \STACK{files visible\\to users}
 	& +problem+ & +problem+ & +problem+ \\
@@ -946,6 +963,7 @@ server and reroutes these accesses to the login page.
 \\[1ex]
 \begin{tabular}{lllll}
 \TT{error.log}			& create  & append & - \\
+\TT{debug.log}			& -  & - & - \\
 \TT{admin/teams/AID/+rw+}       & create  & lock   & read \\
 \TT{accounts/AID/+read-write+}  & create  & append & - \\
 \TT{accounts/AID/+read-only+}   & create  & append & - \\
@@ -968,6 +986,54 @@ server and reroutes these accesses to the login page.
 $^*$ \$id\_type is "+main+" for main tab page,\\
 PROBLEM name for problem tab page, and \\
 "+view+" for view window page
+\\[3ex]
+{\bf Index Page Global Data}
+\begin{minipage}{5in}
+The following are global variables set just before index.php
+is required by another page.
+\end{minipage}
+\\[1ex]
+\begin{tabular}{lp{4.5in}}
+\TT{\$epm\_page\_type}	& One of: \begin{tabular}[t]{ll}
+                          +main+ & main tab page \\
+			  +problem+ & some problem tab page \\
+			  +view+ & view window page \\
+			  +no-post+ & view window page that \\
+			            & does no POSTs \\
+			  +download+ & page that just downloads a file \\
+			  \end{tabular}
+\\[0.5ex]
+\TT{\$epm\_ID\_init}	& If set re-initializes \$ID generator;
+                          see \$ID below. \\
+\end{tabular}
+\\[1ex]
+\begin{minipage}{5in}
+These are global variables defined by index.php when it is
+required at the beginning of an EPM .php page, and usable
+by the remainder of that page.  For other such parameters,
+see the include/parameters.php file.
+\end{minipage}
+\\[1ex]
+\begin{tabular}{lp{4.0in}}
+\TT{\$epm\_method}	& the request method, either 'GET' or 'POST' \\
+\STACK{\TT{\$epm\_root}\\\TT{\$epm\_self}}
+    & ROOT and SELF, where the URL used to access a page is HOST/ROOT/SELF
+      and SELF either has the form /page/... or the form /index.php \\
+\TT{\$epm\_web}	& the EPM web directory W \sref{DIRECTORIES}{MAIN-DIRECTORIES}
+			\\
+\TT{\$rw}	& true if request is being processed in read-write mode;
+                  false if in read-only mode \\
+\TT{\$aid}	& AID (\$\_SESSION['EPM\_AID']) if set \\
+\TT{\$uid}	& UID (\$\_SESSION['EPM\_UID']) if set \\
+\TT{\$lname}	& login name, either AID if AID == UID, or AID:EMAIL
+                  if AID != UID \\
+\TT{\$is\_team}	& true iff AID is a team ID so login is a team member login
+		  (\$\_SESSION['EPM\_IS\_TEAM']) \\
+\TT{\$ID}	& the identifier which must be presented by the next
+                  request (as ?id=\$ID) unless the next page requested
+		  sets \$epm\_ID\_init; see EPM\_ID\_GEN on
+		  \pagref{EPM_ID_GEN}
+\end{tabular}
 
 \end{center}
 
@@ -975,7 +1041,8 @@ PROBLEM name for problem tab page, and \\
 
 \begin{indpar}
 \begin{itemlist}
-\item[\TT{error.log}:]~ \\
+\item[\TT{error.log}:]~
+\label{ERROR.LOG} \\
 Records all PHP error messages that would normally
 be in the HTTP server log, including messages generated
 by the ERROR and WARN functions (see index.php).
@@ -985,30 +1052,40 @@ Contains lines of format:%
 
 followed by a stack trace.  Here
 \begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
-CLASS & \{USER,EPM,SYSTEM\}\_\{WARNING,NOTICE,ERROR\} \\
+CLASS & \small \{USER,EPM,SYSTEM\}\_\{WARNING,NOTICE,ERROR\} \\
 ERRNO & PHP error number \\
 SELF  & page name relative to W (EPM\_SELF)\\
 AID   & account ID, or EMAIL if account ID not available \\
 TIME  & session time (EPM\_TIME), if available
 \end{tabular}
 
-\item[\TT{admin/teams/AID/+rw+}:] See \pagref{TBD}
+\item[\TT{debug.log}:]~
+\label{DEBUG.LOG} \\
+Contains lines output by the DEBUG function in parameters.php.
+Not actually specific to index.php or any page.
+See \$epm\_debug and the DEBUG function in parameters.php.
+
+\item[\TT{admin/teams/AID/+rw+}:] See \pagref{ADMIN/TEAMS/TID/RW}
 
 \item[\TT{accounts/AID/+read-only+}:]
-\item[\TT{accounts/AID/+read-write+}:]\vspace*{-1ex}~\\
+\item[\TT{accounts/AID/+read-write+}:]\vspace*{-1ex}~
+\label{ACCOUNTS/AID/READ-ONLY}
+\label{ACCOUNTS/AID/READ-WRITE} \\
 One line is appended at the end of each http request, of
 the form:\\
 \hspace*{0.5in}BEGIN-TIME END-TIME SELF AID UID
 \\
 where
-\begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
-BEGIN-TIME & request processing start time in 0.000001 seconds \\
-END-TIME & request processing end time in 0.000001 seconds \\
+\begin{tabular}[t]{@{\hspace{0.2in}}lp{3.7in}}
+BEGIN-TIME & request processing start time in seconds \\
+END-TIME & request processing end time in seconds \\
 SELF  & page name relative to W (EPM\_SELF)\\
 AID   & account ID \\
 UID   & user ID \\
 \end{tabular}
-\\
+\\[1ex]
+Times are typically to the nearest microsecond.
+\\[1ex]
 The +read-write+ file is written if the request is
 read-write at its end, or the +read-only+ file is
 written if the request is read-only.  The modification
@@ -1021,6 +1098,42 @@ Download and xhttp requests are not recorded.
 \end{itemlist}
 \end{indpar}
 
+\subsubsection{Index Page Session Variables}
+
+\begin{indpar}[0.2in]
+In the following \$id\_type is \$epm\_page\_type
+when the latter is '+main+' or '+view+' and the problem
+name when the latter is '+problem+'.
+\begin{itemlist}
+\item[\TT{EPM\_PAGE[\$id\_type]}:]~
+\label{EPM_PAGE} \\
+      The \$epm\_self value of the last 'GET'
+      for the \$id\_type.
+      Checked on 'POST's to be sure they target the
+      page of the last 'GET' for the given \$id\_type.
+
+\item[\TT{EPM\_ID\_GEN[\$id\_type]}:]~
+\label{EPM_ID_GEN} \\
+      The list [VALUE, KEY, IV] used to generate \$ID
+      values.  The next \$ID value is VALUE.  When it
+      is set, a new VALUE is generated by encrypting the
+      old VALUE by KEY with IV as
+      the initialization vector (it is always 0 and
+      is encluded here as an optimization).
+      Re-initialized for pages that set \$epm\_ID\_init;
+      checked for other pages of \$epm\_page\_type
+      "+main", "+problem+", or "+view+".
+
+
+\end{itemlist}
+\end{indpar}
+
+For session variables just read by index.php, see other
+EPM pages.
+
+\subsubsection{Index Page Transactions}
+
+See Page Initialization \sref{PAGE-INITIALIZATION}{INDEX-ACTIONS}.
 
 \subsection{Login Page}
 
@@ -1285,7 +1398,7 @@ changing its modification time.
 			& create  & update & read \\
 \TT{admin/users/UID/member}
 			& create  & update & read \\
-\TT{admin/teams/TID/+read-write+}
+\TT{admin/teams/TID/+rw+}
 			& create  & update & read \\
 \TT{admin/users/UID/+actions+}
 			& create  & append & - \\
@@ -1414,11 +1527,15 @@ user UID is a manager.
 A a list of single space separated TIDs of the teams of which
 user UID is a member.
 
-\item[\TT{admin/teams/TID/+read-write+}:] ~
-\label{ADMIN/TEAMS/TID/READ-WRITE} \\
+\item[\TT{admin/teams/TID/+rw+}:] ~
+\label{ADMIN/TEAMS/TID/RW} \\
 Either a single UID of the team member whose login currently
 has read-write mode, or blank if no such.  This file is locked
-by itself, and is independent of any {\tt +lock+} file locking.
+by itself for exclusive use by team member login requests,
+and this is independent of any {\tt +lock+} file locking.
+The lock is released immediately for read-only requests, but
+is held to the end of read-write requests.
+
 
 \item[\TT{admin/users/UID/+actions+}:]
 \item[\TT{admin/teams/TID/+actions+}:]\vspace*{-1ex} ~
