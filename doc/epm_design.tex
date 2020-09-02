@@ -950,8 +950,76 @@ server and reroutes these accesses to the login page.
 \TT{accounts/AID/+read-write+}  & create  & append & - \\
 \TT{accounts/AID/+read-only+}   & create  & append & - \\
 \end{tabular}
+\\[3ex]
+{\bf Index Page Session Data}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{EPM\_IPADDR}	& -  & -      & read \\
+\TT{EPM\_AID}		& -  & -      & read \\
+\TT{EPM\_UID}		& -  & -      & read \\
+\TT{EPM\_EMAIL}		& -  & -      & read \\
+\TT{EPM\_IS\_TEAM}	& -  & -      & read \\
+\TT{EPM\_ABORT}		& -  & -      & read \\
+\TT{EPM\_TIME}		& -  & -      & read \\
+\TT{EPM\_PAGE[\$id\_type$^*$]}	& create  & update  & read \\
+\TT{EPM\_ID\_GEN[\$id\_type$^*$]}	& create  & update  & read \\
+\end{tabular}
+\\[1ex]
+$^*$ \$id\_type is "+main+" for main tab page,\\
+PROBLEM name for problem tab page, and \\
+"+view+" for view window page
 
 \end{center}
+
+\subsubsection{Index Page File Formats}
+
+\begin{indpar}
+\begin{itemlist}
+\item[\TT{error.log}:]~ \\
+Records all PHP error messages that would normally
+be in the HTTP server log, including messages generated
+by the ERROR and WARN functions (see index.php).
+
+Contains lines of format:%
+\hspace{0.2in}CLASS ERRNO SELF AID (TIME)
+
+followed by a stack trace.  Here
+\begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
+CLASS & \{USER,EPM,SYSTEM\}\_\{WARNING,NOTICE,ERROR\} \\
+ERRNO & PHP error number \\
+SELF  & page name relative to W (EPM\_SELF)\\
+AID   & account ID, or EMAIL if account ID not available \\
+TIME  & session time (EPM\_TIME), if available
+\end{tabular}
+
+\item[\TT{admin/teams/AID/+rw+}:] See \pagref{TBD}
+
+\item[\TT{accounts/AID/+read-only+}:]
+\item[\TT{accounts/AID/+read-write+}:]\vspace*{-1ex}~\\
+One line is appended at the end of each http request, of
+the form:\\
+\hspace*{0.5in}BEGIN-TIME END-TIME SELF AID UID
+\\
+where
+\begin{tabular}[t]{@{\hspace{0.2in}}lp{3.9in}}
+BEGIN-TIME & request processing start time in 0.000001 seconds \\
+END-TIME & request processing end time in 0.000001 seconds \\
+SELF  & page name relative to W (EPM\_SELF)\\
+AID   & account ID \\
+UID   & user ID \\
+\end{tabular}
+\\
+The +read-write+ file is written if the request is
+read-write at its end, or the +read-only+ file is
+written if the request is read-only.  The modification
+time of the +read-write+ file is used to determine the
+last time the account made a read-write request.
+
+Download and xhttp requests are not recorded.
+
+
+\end{itemlist}
+\end{indpar}
 
 
 \subsection{Login Page}
