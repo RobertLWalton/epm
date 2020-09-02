@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Sep  1 07:26:56 EDT 2020
+// Date:	Tue Sep  1 21:28:44 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -150,25 +150,33 @@ enum options {
     DOTTED		= 1 << 2,
     DASHED		= 1 << 3,
     CLOSED		= 1 << 4,
-    BEGIN_ARROW		= 1 << 5,
-    MIDDLE_ARROW	= 1 << 6,
-    END_ARROW		= 1 << 7,
-    FILL_SOLID		= 1 << 8,
-    FILL_DOTTED		= 1 << 9,
-    FILL_HORIZONTAL	= 1 << 10,
-    FILL_VERTICAL	= 1 << 11,
+    MIDDLE_ARROW	= 1 << 5,
+    END_ARROW		= 1 << 6,
+    FILL_SOLID		= 1 << 7,
+    FILL_DOTTED		= 1 << 8,
+    FILL_HORIZONTAL	= 1 << 9,
+    FILL_VERTICAL	= 1 << 10,
 
     // Text Options:
     //
-    TOP 		= 1 << 12,
-    BOTTOM		= 1 << 13,
-    LEFT		= 1 << 14,
-    RIGHT		= 1 << 15,
-    BOX_WHITE		= 1 << 16,
-    CIRCLE_WHITE	= 1 << 17,
-    OUTLINE		= 1 << 18,
+    TOP 		= 1 << 11,
+    BOTTOM		= 1 << 12,
+    LEFT		= 1 << 13,
+    RIGHT		= 1 << 14,
+    BOX_WHITE		= 1 << 15,
+    CIRCLE_WHITE	= 1 << 16,
+
+    // Text and Stroke Options
+    //
+    OUTLINE		= 1 << 17
 };
-const char * optchar = "bi" ".-cbmesdhv" "tblrxco";
+const char * optchar = "bi" ".-cmesdhv" "tblrxco";
+const options ARROW_OPTIONS = (options)
+    ( MIDDLE_ARROW + END_ARROW );
+const options FILL_OPTIONS = (options)
+    ( FILL_SOLID + FILL_DOTTED + FILL_HORIZONTAL
+                               + FILL_VERTICAL );
+
 
 // Print options for debugging:
 //
@@ -464,7 +472,6 @@ const char * const documentation[2] = { "\n"
 "            .   dotted line\n"
 "            -   dashed line\n"
 "            c   close path\n"
-"            b   arrow head at beginning of segment\n"
 "            m   arrow head in middle of segment\n"
 "            e   arrow head at end of segment\n"
 "            s   fill with solid color\n"
@@ -719,9 +726,8 @@ struct font
 
 options stroke_options = (options)
     ( DOTTED + DASHED + CLOSED +
-      BEGIN_ARROW + MIDDLE_ARROW + END_ARROW +
-      FILL_SOLID + FILL_DOTTED +
-      FILL_HORIZONTAL + FILL_VERTICAL );
+      ARROW_OPTIONS +
+      FILL_OPTIONS + OUTLINE );
 struct stroke
 {
     string name;
@@ -1904,10 +1910,7 @@ section read_section ( istream & in )
 	    read_options ( "OPT", OPT, stroke_options );
 
 	    if ( WIDTH == -1 )
-	        WIDTH = ( OPT & ( FILL_SOLID |
-		                  FILL_DOTTED |
-				  FILL_HORIZONTAL |
-				  FILL_VERTICAL ) ?
+	        WIDTH = ( OPT & FILL_OPTIONS ?
 		          0 : 1.0/72 );
 
 
@@ -2751,11 +2754,25 @@ inline void apply_stroke
 	    ( context, c->red, c->green, c->blue );
     if ( o & CLOSED )
 	cairo_close_path ( context );
-    if ( o & ( FILL_SOLID |
-	       FILL_DOTTED |
-	       FILL_HORIZONTAL |
-	       FILL_VERTICAL ) )
-	cairo_fill ( context );
+    if ( o & FILL_OPTIONS )
+    {
+	if ( o & OUTLINE )
+	{
+	    cairo_fill_preserve ( context );
+	    if ( ( o & CLOSED ) == 0 )
+		cairo_close_path ( context );
+	    if ( o & FILL_SOLID )
+		cairo_set_source_rgb
+		    ( context, 0, 0, 0 );
+	    else
+		cairo_set_source_rgb
+		    ( context,
+		      c->red, c->green, c->blue ); 
+	    cairo_stroke ( context );
+	}
+	else
+	    cairo_fill ( context );
+    }
     else if ( o & DASHED )
     {
 	double dashes[2] = { 4, 2 };
@@ -2801,7 +2818,7 @@ void draw_arrows ( const start * s )
 {
     options o = s->o;
     if ( o == NO_OPTIONS ) o = s->s->o;
-    if ( ( o & ( MIDDLE_ARROW | END_ARROW ) ) == 0 )
+    if ( ( o & ARROW_OPTIONS ) == 0 )
         return;
     const color * c = s->c;
     if ( c == NULL ) c = s->s->c;
@@ -2818,11 +2835,8 @@ void draw_arrows ( const start * s )
 	{
 	    done = true;
 
-	    if ( ( o & ( FILL_SOLID |
-	                 FILL_DOTTED |
-	                 FILL_HORIZONTAL |
-	                 FILL_VERTICAL |
-			 CLOSED ) ) == 0 )
+	    if (    ( o & ( FILL_OPTIONS | CLOSED ) )
+	         == 0 )
 	        break;
 	    if ( o & MIDDLE_ARROW )
 	        draw_arrow ( 0.5 * ( p + s->p ),

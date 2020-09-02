@@ -69,6 +69,14 @@ start vertical-green 3 4
 line 5 4
 line 4 1
 end
+start green so 5 3
+line 7 3
+line 6 5
+end
+start green ho 5 3
+line 7 3
+line 6 1
+end
 *
 background lightpink
 bounds -1 -1 1 1
