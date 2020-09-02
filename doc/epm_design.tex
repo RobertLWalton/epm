@@ -1135,6 +1135,8 @@ EPM pages.
 
 See Page Initialization \sref{PAGE-INITIALIZATION}{INDEX-ACTIONS}.
 
+\newpage
+
 \subsection{Login Page}
 
 \begin{center}
@@ -1370,6 +1372,7 @@ changing its modification time.
       go to User Page to create new user.
 \end{enumerate}
 
+\newpage
 
 \subsection{User Page}
 
@@ -1581,41 +1584,70 @@ also written to this file.
 \item Allow a current read-only user to force a switch to read-write.
 \end{enumerate}
 
-\subsection{Problem}
+\newpage
+
+\subsection{Problem Page}
 
 \begin{center}
-{\bf Problem Page Files}
+{\bf Problem Page Visible Files}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{users/UID/PROBLEM}	                & create  & update & read & delete
+\TT{accounts/AID/PROBLEM}	        & create  & update & read & delete
+\\[0.5ex]
+\TT{accounts/AID/PROBLEM/PROBLEM.tex}	& upload  & -      & read & delete \\
+\TT{accounts/AID/PROBLEM/PROBLEM.pdf}	& create  & -      & read & delete
+\\[0.5ex]
+\TT{accounts/AID/PROBLEM/PROBLEM.c}	& upload  & -      & read & delete \\
+\TT{accounts/AID/PROBLEM/PROBLEM.cc}	& upload  & -      & read & delete \\
+\TT{accounts/AID/PROBLEM/PROBLEM.java}	& upload  & -      & read & delete \\
+\TT{accounts/AID/PROBLEM/PROBLEM.py}	& upload  & -      & read & delete \\
+\TT{accounts/AID/PROBLEM/PROBLEM}	& create  & -      & read & delete \\
+\TT{accounts/AID/PROBLEM/PROBLEM.jar}	& create  & -      & read & delete \\
+\TT{accounts/AID/PROBLEM/PROBLEM.pyc}	& create  & -      & read & delete
+\\[0.5ex]
+\TT{accounts/AID/PROBLEM/YYYY-PROBLEM.c} & upload  & -     & read & delete \\
+\TT{accounts/AID/PROBLEM/YYYY-PROBLEM.cc} & upload  & -    & read & delete \\
+\TT{accounts/AID/PROBLEM/YYYY-PROBLEM.java} & upload  & -  & read & delete \\
+\TT{accounts/AID/PROBLEM/YYYY-PROBLEM.py} & upload & -     & read & delete \\
+\TT{accounts/AID/PROBLEM/YYYY-PROBLEM}	& create  & -      & read & delete \\
+\TT{accounts/AID/PROBLEM/YYYY-PROBLEM.jar} & create  & -   & read & delete \\
+\TT{accounts/AID/PROBLEM/YYYY-PROBLEM.pyc} & create  & -   & read & delete
+\\[0.5ex]
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.in} & upload  & -    & read & delete \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.sin} & create  & -   & read & delete \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.sout} & create  & -  & read & delete \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.fout} & create  & -  & read & delete \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.ftest} & create  & - & read & delete \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.dout} & create  & -  & read & delete \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.score} & create  & - & read & delete \\
+\\[0.5ex]
+\TT{accounts/AID/PROBLEM/ZZZZ-PROBLEM.run} 	  & -  & - & read & -
+\end{tabular}
 \\[1ex]
-\TT{users/UID/PROBLEM/PROBLEM.tex}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/PROBLEM.pdf}	& create  & -      & read & delete
+Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
+\\\bigskip
+{\bf Problem Page Parent Files}
 \\[1ex]
-\TT{users/UID/PROBLEM/PROBLEM.c}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/PROBLEM.cc}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/PROBLEM.java}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/PROBLEM.py}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/PROBLEM}		& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/PROBLEM.class}	& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/PROBLEM.pyc}	& create  & -      & read & delete
+\begin{tabular}{lllll}
+\TT{projects/PROJECT/PROBLEM}	        	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/PROBLEM.pdf}    	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/PROBLEM.optn}    	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/generate-PROBLEM} 	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/filter-PROBLEM} 	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/display-PROBLEM} 	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/monitor-PROBLEM} 	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/XXXX-PROBLEM.in}	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/XXXX-PROBLEM.ftest} & -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/ZZZZ-PROBLEM.run} & -  & - & read & -
 \\[1ex]
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.c}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.cc}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.java}& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.py}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM}	& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.class}
-					& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.pyc}	& create  & -      & read & delete
+\end{tabular}
+\\\bigskip
+{\bf Problem Page Maintenance Files}
 \\[1ex]
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.in}	& upload  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.sin}	& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.sout}& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.fout}& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.ftest}& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.dout}& create  & -      & read & delete \\
-\TT{users/UID/PROBLEM/XXXX-PROBLEM.score}& create  & -      & read & delete \\
+\begin{tabular}{lllll}
+\TT{accounts/AID/PROBLEM/+parent+}		& -  & - & read & delete \\
+\TT{accounts/AID/PROBLEM/PROBLEM.optn}		& -  & - & read & delete
+\\[1ex]
 \end{tabular}
 \\[3ex]
 {\bf Problem Page Session Data}
