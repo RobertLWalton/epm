@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug 15 04:21:13 EDT 2020
+    // Date:	Wed Sep  2 20:50:14 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -31,10 +31,10 @@
     if ( ! is_dir ( "$epm_data/$probdir" ) )
         exit ( "problem $problem no longer exists" );
 
-    if ( ! isset ( $_SESSION['EPM_PROBLEM'] ) )
-        $_SESSION['EPM_PROBLEM'] =
+    if ( ! isset ( $_SESSION['EPM_PROBLEM'][$problem] ) )
+        $_SESSION['EPM_PROBLEM'][$problem] =
 	    ['ORDER' => 'extension'];
-    $order = & $_SESSION['EPM_PROBLEM']['ORDER'];
+    $order = & $_SESSION['EPM_PROBLEM'][$problem]['ORDER'];
 
     require "$epm_home/include/epm_make.php";
 
