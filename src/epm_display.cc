@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Sep  1 21:28:44 EDT 2020
+// Date:	Wed Sep  2 21:14:07 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -45,7 +45,10 @@
 #include <cstring>
 #include <cctype>
 #include <cfloat>
-#include <cmath>
+#include <math.h>  // Needed to force isnan to be in the
+		   // global name space in CentOS 8 so
+		   // we don't have to use std::isnan
+		   // which will not work in CentOS 7.
 #include <cassert>
 using std::cout;
 using std::endl;
@@ -60,7 +63,6 @@ using std::map;
 using std::min;
 using std::max;
 using std::string;
-using std::isnan;
 // std::vector is not here as vector is used for
 // another purpose.
 
