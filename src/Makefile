@@ -2,7 +2,7 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Sun Jun 28 11:31:22 EDT 2020
+# Date:		Wed Sep  2 21:00:29 EDT 2020
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
@@ -24,6 +24,7 @@ epm_score:	epm_score.cc
 epm_display:	epm_display.cc
 	g++ -I /usr/include/cairo \
 	    -g -o epm_display \
+	    -std=c++11 \
 	    epm_display.cc -lcairo
 
 epm_monitor:	epm_monitor.cc
