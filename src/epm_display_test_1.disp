@@ -346,7 +346,7 @@ arc solid-red 5 10 0.1
 text large-bold l 5 10 left
 text large-bold r 5 10 right
 *
-bounds 0 0 10 12
+bounds 0 0 11 12
 background lightgreen
 head
 text large-bold Text Box Test
@@ -356,17 +356,17 @@ text normal tlxo 5 1 top-left
 text normal trxo 5 1 top-right
 text normal blxo 5 1 bottom-left
 text normal brxo 5 1 bottom-right
-arc solid-red 5 4 0.1
-text large-bold tlxo 5 4 TOP-LEFT
-text large-bold trxo 5 4 TOP-RIGHT
-text large-bold blxo 5 4 BOTTOM-LEFT
-text large-bold brxo 5 4 BOTTOM-RIGHT
-arc solid-red 5 7 0.1
-text large-bold txo 5 7 TOP
-text large-bold bxo 5 7 BOTTOM
-arc solid-red 5 10 0.1
-text large-bold lxo 5 10 left
-text large-bold rxo 5 10 right
+arc solid-red 5.2 4.2 0.1
+text large-bold tlxo 5.2 4.2 TOP-LEFT
+text large-bold trxo 5.2 4.2 TOP-RIGHT
+text large-bold blxo 5.2 4.2 BOTTOM-LEFT
+text large-bold brxo 5.2 4.2 BOTTOM-RIGHT
+arc solid-red 5 8 0.1
+text large-bold txo 5 8 TOP
+text large-bold bxo 5 8 BOTTOM
+arc solid-red 5 11 0.1
+text large-bold lxo 5 11 left
+text large-bold rxo 5 11 right
 *
 bounds 0 0 4 5
 background lightblue
