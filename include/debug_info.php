@@ -27,6 +27,10 @@ if ( ! isset ( $_POST['xhttp'] ) )
     echo "SERVER: "; print_r ( $__server ); echo "<br>";
     echo "UMASK: "; printf ( '0%o', umask() );
                     echo "<br>";
+    if ( isset ( $data ) )
+    {
+	echo "DATA: "; var_dump ( $data ); echo "<br>";
+    }
 }
 
 ?>

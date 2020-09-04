@@ -3,6 +3,7 @@
     echo '$_FILES: '; print_r ( $_FILES ); echo '<br>' . PHP_EOL;
     $upload = $_FILES['uploaded_file'];
     foreach ( $upload['error'] as $key => $error )
+    if ( $_POST['B'] == 'B2' )
     {
         if ( $error == UPLOAD_ERR_NO_FILE ) continue; 
 	echo 'NAME: ' . $upload['name'][$key] . '<BR>';

@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  8 02:23:18 EDT 2020
+    // Date:	Fri Sep  4 17:31:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -17,9 +17,9 @@
     // Session Data
     // ------- ----
 
-    // Session data is in EPM_DATA as follows:
+    // Session data is in $data as follows:
     //
-    //	   EPM_DATA LIST
+    //	   $data LIST
     //		List whose elements correspond to lines
     //		that may be included in the favorites
     //		list.  Each element has the form:
@@ -39,7 +39,7 @@
     //
     //	   indices=INDICES
     //		Here INDICES are the indices in
-    //		EPM_DATA LIST of the elements to be
+    //		$data LIST of the elements to be
     //		included in +favorites+, in order,
     //		separated by ':'s, with '' denoting
     //		the empty list.
@@ -58,13 +58,7 @@
 
     require "$epm_home/include/epm_list.php";
 
-    if ( $epm_method == 'GET' )
-        $_SESSION['EPM_DATA'] = [
-	    'LIST' => [] ];
-    elseif ( ! isset ( $_SESSION['EPM_DATA'] ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
-
-    $data = & $_SESSION['EPM_DATA'];
+    if ( $epm_method == 'GET' ) $data['LIST'] = [];
     $list = & $data['LIST'];
 
     $errors = [];    // Error messages to be shown.
@@ -87,7 +81,6 @@
 
 	if ( $op == 'save' )
 	{
-	    $list = $data['LIST'];
 	    $count = count ( $list );
 	    $flist = [];
 	    $indices = $_POST['indices'];
@@ -203,8 +196,7 @@
 	    $fmap[$key] = $time;
     }
 
-    $data['LIST'] = [];
-    $list = & $data['LIST'];
+    $list = [];
     foreach ( $fmap as $key => $time )
     {
         list ( $name, $basename ) =

@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug 20 04:53:15 EDT 2020
+    // Date:	Fri Sep  4 17:22:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -42,13 +42,11 @@
 	if ( ! isset ( $_SESSION['EPM_MANAGE'] ) )
 	    $_SESSION['EPM_MANAGE'] =
 	        [ 'LISTNAME' => NULL ];
-	$_SESSION['EPM_DATA'] =
-		[ 'PROJECT' => NULL,
-		  'PROBLEM' => NULL ];
+	$data['PROJECT'] = NULL;
+	$data['PROBLEM'] = NULL;
     }
 
     $listname = & $_SESSION['EPM_MANAGE']['LISTNAME'];
-    $data = & $_SESSION['EPM_DATA'];
     $project = & $data['PROJECT'];
     $problem = & $data['PROBLEM'];
         // If $problem is set and $project is not,

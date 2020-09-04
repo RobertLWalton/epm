@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug 12 14:55:45 EDT 2020
+    // Date:	Fri Sep  4 16:35:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -60,7 +60,7 @@
     //		  'manager' => manager tids of UID
     //		  'member' => member tids of UID
     //
-    //	   EPM_DATA UID-INFO
+    //	   $data UID-INFO
     //		This is the info of EPM_USER UID,
     //		except when the latter is NULL during
     //		new_user processing, when it is to
@@ -74,7 +74,7 @@
     //		organization	string
     //		location	string
     //
-    //	   EPM_DATA TID-INFO
+    //	   $data TID-INFO
     //		NULL if no team
     //	        .info file contents containing:
     //
@@ -85,7 +85,7 @@
     //		organization	string
     //		location	string
     //
-    //	   EPM_DATA LAST_EDIT
+    //	   $data LAST_EDIT
     //		Value of $edit for the last page
     //		served.
  
@@ -102,11 +102,9 @@
     if ( ! isset ( $UID ) && ! $new_user )
         $UID = $uid;
 
-    // Set up $data.
+    // Set up $data, processing GET and those POSTs
+    // that set $data.
     //
-    if ( $epm_method == 'GET' )
-	$_SESSION['EPM_DATA'] = [];
-    $data = & $_SESSION['EPM_DATA'];
     $post_processed = true;
     if ( $epm_method == 'GET' )
     {
@@ -227,7 +225,7 @@
 
     // The above establishes EPM_USER UID, TID,
     // TID-LIST, $TID, $UID, and $TID_LIST,  and
-    // EPM_DATA UID-INFO and TID-INFO before the
+    // $data UID-INFO and TID-INFO before the
     // following is executed.
 
     $uid_info = & $data['UID-INFO'];

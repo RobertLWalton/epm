@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Aug 14 02:29:22 EDT 2020
+    // Date:	Fri Sep  4 16:24:15 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -232,13 +232,13 @@
     // Session Data
     // ------- ----
 
-    // Session data is in EPM_DATA as follows:
+    // Session data is as follows:
     //
     //     EPM_PROJECT LISTNAME
     //		Name of selected problem list.
     //		Preserved accross GETs of this page.
     //
-    //     EPM_DATA OP
+    //     $data OP
     //		One of:
     //		    NULL
     //		    'push'
@@ -246,15 +246,15 @@
     //
     // During a push or pull operation:
     //
-    //     EPM_DATA PROBLEM
+    //     $data PROBLEM
     //		Name of problem being pushed or pulled.
     //
-    //     EPM_DATA PROJECT
+    //     $data PROJECT
     //		Name of project into which problem is
     //		being pushed or from which it is being
     //		pulled.
     //
-    //     EPM_DATA COMMANDS
+    //     $data COMMANDS
     //		List of commands to be executed by
     //		execute_commands to accomplish the
     //		current push/pull operation.  Commands
@@ -262,18 +262,18 @@
     //		the current directory and 06 the current
     //		mask.
     //
-    //     EPM_DATA CHANGES
+    //     $data CHANGES
     //		String to be appended to +changes+ file
     //		after commands are executed.  Also
     //		displayed to user when change-approval
     //		is required.
     //
-    //	   EPM_DATA LOCK
+    //	   $data LOCK
     //		Time returned by LOCK before compile
     //		of projects/PROJECT/PROBLEM directory,
     //		if it exists.
     //
-    //	   EPM_DATA ALTERED
+    //	   $data ALTERED
     //		Filemtime of accounts/AID/PROBLEM/
     //          +altered+ before compile, or 0 if file
     //		does not exist.
@@ -384,7 +384,7 @@
 
     if ( $epm_method == 'GET' )
     {
-        $_SESSION['EPM_DATA'] = [ 'OP' => NULL ];
+        $data['OP'] = NULL;
 	if ( ! isset ( $_SESSION['EPM_PROJECT'] ) )
 	    $_SESSION['EPM_PROJECT'] =
 	        [ 'LISTNAME' => NULL ];
@@ -639,7 +639,7 @@ EOT;
 	return $action;
     }
 
-    // Compute EPM_DATA CHANGES, COMMANDS, PROJECT,
+    // Compute $data CHANGES, COMMANDS, PROJECT,
     // and PROBLEM to be used to push $problem to
     // $project.  If $problem has a parent, it is an
     // error if the parent is not $project.  It is an
@@ -871,7 +871,7 @@ EOT;
 	$data['COMMANDS'] = $commands;
     }
 
-    // Compute EPM_DATA CHANGES, COMMANDS, PROJECT,
+    // Compute $data CHANGES, COMMANDS, PROJECT,
     // and PROBLEM to be used to pull $problem from
     // $project.  If $problem has been pulled, it is
     // and error if it has not been pulled from
@@ -1041,7 +1041,7 @@ EOT;
 	$data['COMMANDS'] = $commands;
     }
 
-    // Execute EPM_DATA COMMANDS.  Errors cause abort
+    // Execute $data COMMANDS.  Errors cause abort
     // and append to $errors.
     //
     // The supported commands are:
@@ -1173,7 +1173,7 @@ EOT;
 	return $r;
     }
 
-    // Write EPM_DATA CHANGES to destination
+    // Write $data CHANGES to destination
     // +changes+ file and push action item to
     // +actions+ files.
     //
@@ -1226,7 +1226,7 @@ EOT;
 	    ERROR ( "cannot write $f" );
     }
 
-    // Write EPM_DATA CHANGES to destination
+    // Write $data CHANGES to destination
     // +changes+ file and action to source +actions+
     // files.
     //
@@ -1277,7 +1277,6 @@ EOT;
 	    ERROR ( "cannot write $g" );
     }
 
-    $data = & $_SESSION['EPM_DATA'];
     $op = & $data['OP'];
     $listname = & $_SESSION['EPM_PROJECT']['LISTNAME'];
 

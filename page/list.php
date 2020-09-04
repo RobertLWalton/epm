@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  8 02:22:23 EDT 2020
+    // Date:	Fri Sep  4 17:25:37 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -16,14 +16,14 @@
     // Session Data
     // ------- ----
 
-    // Session data is in EPM_DATA as follows:
+    // Session data is in $data as follows:
     //
-    //	   EPM_DATA NAMES
+    //	   $data NAMES
     //		[name1,name2] where nameJ is in the
     //		format PROJECT:BASENAME or is ''
     //		for no-list.
     //
-    //     EPM_DATA ELEMENTS
+    //     $data ELEMENTS
     //		A list of the elements of the form
     //
     //			[TIME PROJECT PROBLEM]
@@ -42,7 +42,7 @@
     // following values.
     //
     //	    indices='index0;index1'
-    //		Here indexJ is the indices in EPM_DATA
+    //		Here indexJ is the indices in $data
     //		ELEMENTS of list J, with the indices
     //		separated by `:', and '' denoting the
     //		empty list.
@@ -100,13 +100,11 @@
     require "$epm_home/include/epm_list.php";
 
     if ( $epm_method == 'GET' )
-        $_SESSION['EPM_DATA'] = [
-	    'NAMES' => ['',''],
-	    'ELEMENTS' => [] ];
-    elseif ( ! isset ( $_SESSION['EPM_DATA'] ) )
-        exit ( 'UNACCEPTABLE HTTP POST' );
+    {
+	$data['NAMES'] = ['',''];
+	$data['ELEMENTS'] = [];
+    }
 
-    $data = & $_SESSION['EPM_DATA'];
     $names = & $data['NAMES'];
     $elements = & $data['ELEMENTS'];
 
@@ -662,8 +660,7 @@ EOT;
     </form>
     </div>
 EOT;
-    $data['ELEMENTS'] = [];
-    $elements = & $data['ELEMENTS'];
+    $elements = [];
     $upload_file_title = 'Selected List Description'
 		       . ' (.dsc) File to be Uploaded';
     foreach ( [0,1] as $J )
