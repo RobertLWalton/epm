@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Sep  2 20:50:14 EDT 2020
+    // Date:	Fri Sep  4 04:02:38 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -29,14 +29,29 @@
     $probdir = "accounts/$aid/$problem";
 
     if ( ! is_dir ( "$epm_data/$probdir" ) )
-        exit ( "problem $problem no longer exists" );
+        exit ( "problem $problem no longer exists<br>" .
+	       "please close tab" );
 
-    if ( ! isset ( $_SESSION['EPM_PROBLEM'][$problem] ) )
+    if ( ! isset ( $_SESSION['EPM_PROBLEM']
+                            [$problem] ) )
         $_SESSION['EPM_PROBLEM'][$problem] =
 	    ['ORDER' => 'extension'];
-    $order = & $_SESSION['EPM_PROBLEM'][$problem]['ORDER'];
+    $order = & $_SESSION['EPM_PROBLEM'][$problem]
+    				       ['ORDER'];
 
     require "$epm_home/include/epm_make.php";
+        // This sets $work and $run
+
+    $work_executing = ( isset ( $work['DIR'] )
+	                &&
+	                ( ! isset ( $work['RESULT'] )
+	                  ||
+	                  $work['RESULT'] === true ) );
+    $run_executing = ( isset ( $run['DIR'] )
+	               &&
+	               ( ! isset ( $run['RESULT'] )
+	                 ||
+	                 $run['RESULT'] === true ) );
 
     $parent = NULL;
     $d = "$probdir/+parent+";
@@ -314,35 +329,40 @@
         // True to ask whether current problem is to be
 	// deleted.
 
-    if ( isset ( $epm_page_init ) )
+    // NOTE: GETs with running executions that are
+    // not $epm_page_init are rejected here.
+    //
+    if ( $epm_method == 'GET' )
     {
-        if ( isset ( $work['DIR'] )
-	     &&
-	     ( ! isset ( $work['RESULT'] )
-	       ||
-	       $work['RESULT'] === true ) )
+        if ( $work_executing || $run_executing )
 	{
-	    $m = abort_dir ( $work['DIR'] );
-	    if ( $m != '' ) $warnings[] = $m;
-	}
-        if ( isset ( $run['DIR'] )
-	     &&
-	     ( ! isset ( $run['RESULT'] )
-	       ||
-	       $run['RESULT'] === true ) )
-	{
-	    $m = abort_dir ( $run['DIR'] );
-	    if ( $m != '' ) $warnings[] = $m;
-	}
+	    if ( ! $epm_page_init )
+		exit ( "ACCESS: illegal GET to" .
+		       " problem.php" );
 
-	if ( count ( $warnings ) > 0 )
-	    usleep ( 3000000 ); // 3 seconds
-	    // Let orphaned tab into schedule so it
-	    // can process any last update POST and/or
-	    // receive orphaned response
-	$work = [];
-	$run = [];
+	    if ( count ( $warnings ) > 0 )
+		usleep ( 3000000 ); // 3 seconds
+		// Let orphaned tab into schedule so it
+		// can process any request it started
+		// before this request orphaned it.
+
+	    if ( $work_executing )
+	    {
+		$m = abort_dir ( $work['DIR'] );
+		if ( $m != '' ) $warnings[] = $m;
+	    }
+	    if ( $run_executing )
+	    {
+		$m = abort_dir ( $run['DIR'] );
+		if ( $m != '' ) $warnings[] = $m;
+	    }
+
+	    $work = [];
+	    $run = [];
+	}
+	$_SESSION['EPM_STATE'][$problem] = [];
     }
+    $state = & $_SESSION['EPM_STATE'][$problem];
 
     // Process file deletions for other posts.
     //
@@ -350,20 +370,25 @@
     {
 	$files = $_POST['delete_files'];
 	$files = explode ( ',', $files );
-	$fnames = problem_file_names ( $probdir );
-	foreach ( $files as $f )
+	foreach ( $files as $fname )
 	{
-	    if ( $f == '' ) continue;
-	    if ( ! in_array ( $f, $fnames, true ) )
+	    if ( $fname == '' ) continue;
+	    if ( ! preg_match
+	               ( $epm_filename_re, $fname ) )
 		exit ( "ACCESS: illegal POST to" .
 		       " problem.php" );
-	}
-	foreach ( $files as $f )
-	{
-	    if ( $f == '' ) continue;
-	    $g = "$probdir/$f";
-	    if ( ! @unlink ( "$epm_data/$g" ) )
-		$errors[] = "could not delete $g";
+	    $ext = pathinfo
+	        ( $fname, PATHINFO_EXTENSION );
+	    if ( ! isset ( $display_file_type[$ext] ) )
+		exit ( "ACCESS: illegal POST to" .
+		       " problem.php" );
+	    $f = "$probdir/$fname";
+	    if ( ! file_exists ( "$epm_data/$f" )
+	         &&
+		 ! is_link ( "$epm_data/$f" ) )
+	        $errors[] = "$fname no longer exists";
+	    elseif ( ! @unlink ( "$epm_data/$f" ) )
+		ERROR ( "could not delete $f" );
 	}
 	touch ( "$epm_data/$probdir/+altered+" );
     }
