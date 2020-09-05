@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep  4 16:35:29 EDT 2020
+    // Date:	Sat Sep  5 01:57:33 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -26,11 +26,6 @@
 
     $email = $_SESSION['EPM_EMAIL'];
     $new_user = ( ! isset ( $aid ) );
-    $edit = ( $new_user ? 'uid-profile' : NULL );
-        // One of: NULL (just view), 'emails', 
-	// 'uid-profile', 'members', or 'tid-profile'.
-	// Set here for GET processing; changed below
-	// by POST processing.
     $errors = [];
     $warnings = [];
         // Lists of error and warning messages to be
@@ -44,6 +39,9 @@
 	require "$epm_home/include/epm_list.php";
         $users = read_accounts ( 'user' );
     }
+    elseif ( ! $rw )
+        ERROR ( "new user and ! \$rw" );
+	// Just checking on index.php.
 
     // Data:
     //
@@ -85,9 +83,16 @@
     //		organization	string
     //		location	string
     //
-    //	   $data LAST_EDIT
-    //		Value of $edit for the last page
-    //		served.
+    //	   $state
+    //		normal
+    //		emails (edit $UID == $uid emails)
+    //		uid-profile (edit $UID == $uid profile)
+    //		guests (edit $UID == $uid guests )
+    //		members (edit $TID members)
+    //		tid-profile (edit $TID profile)
+    //		new-uid (ask if new user UID ok)
+    //		new-tid (ask if new team TID ok)
+    //		new-manager (ask if new team manager ok)
  
     // Set up $user.
     //
@@ -108,6 +113,9 @@
     $post_processed = true;
     if ( $epm_method == 'GET' )
     {
+        if ( $state != 'normal' )
+	    ERROR ( "\$state = '$state' != 'normal'" );
+	    // Just checking up on index.php.
         if ( $new_user )
 	{
 	    $data['UID-INFO'] = [
@@ -117,6 +125,7 @@
 		'full_name' => '',
 		'organization' => '',
 		'location' => ''];
+	    $state = 'uid-profile';
 	}
 	else
 	{
@@ -127,6 +136,8 @@
 		    ( 'team', $TID );
 	}
     }
+    elseif ( $state != 'normal' )
+        /* Ignore the following POSTs */;
     elseif ( isset ( $_POST['rw'] ) )
     {
 	require "$epm_home/include/epm_rw.php";
@@ -145,8 +156,6 @@
              &&
 	     $_POST['user'] != $UID )
     {
-	if ( isset ( $data['LAST_EDIT'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
@@ -166,8 +175,6 @@
              &&
 	     $_POST['team'] != $TID )
     {
-	if ( isset ( $data['LAST_EDIT'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
@@ -187,8 +194,6 @@
              &&
 	     $_POST['tid-list'] != $TID_LIST )
     {
-	if ( isset ( $data['LAST_EDIT'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
@@ -203,8 +208,6 @@
     }
     elseif ( isset ( $_POST['create-tid'] ) )
     {
-	if ( isset ( $data['LAST_EDIT'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	if ( $rw )
@@ -217,7 +220,7 @@
 		'organization' => '',
 		'location' => ''];
 	    $TID = NULL;
-	    $edit = 'tid-profile';
+	    $state = 'tid-profile';
 	}
     }
     else
@@ -240,28 +243,28 @@
     $no_team = ( ! isset ( $tid_info ) );
     $new_team = ( ! isset ( $TID ) && ! $no_team );
 
-    // Compute list of teams in $TID_LIST.
+    // Compute in $tids the list of teams in $TID_LIST.
     //
-    function compute_tids ( $TID_LIST )
+    $tids = [];
+    function compute_tids()
     {
-        global $uid;
+        global $tids, $TID_LIST, $uid, $TID,
+	       $tid_info, $no_team;
 
 	switch ( $TID_LIST )
 	{
 	case 'all':
-	    return read_accounts ( 'team' );
+	    $tids = read_accounts ( 'team' );
+	    break;
 	case 'manager':
-	    return read_tids ( $uid, 'manager' );
+	    $tids = read_tids ( $uid, 'manager' );
+	    break;
 	case 'member':
-	    return read_tids ( $uid, 'member' );
+	    $tids = read_tids ( $uid, 'member' );
+	    break;
 	}
-    }
 
-    if ( ! $new_user && ! $new_team )
-    {
-	$tids = compute_tids ( $TID_LIST );
-
-	if ( $no_team
+	if ( ! isset ( $tid_info )
 	     &&
 	     count ( $tids ) > 0 )
 	{
@@ -270,6 +273,9 @@
 	    $no_team = false;
 	}
     }
+
+    if ( ! $new_user && ! $new_team )
+	compute_tids();
 
     // Run a check that $UID's info and admin/email
     // match.  WARN if not.  Correct if not and
@@ -298,15 +304,11 @@
     }
 
     if ( $epm_method == 'GET' || ! $rw )
-    {
-	// Do nothing.  Display user info or edit
-	// new user profile.
-	//
-	// We ensure that if ! $new_user and ! $rw
-	// then $edit == NULL.
-    }
+        /* Do nothing */;
     elseif ( isset ( $_POST['edit'] ) )
     {
+	if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
         $edit = $_POST['edit'];
 	if ( ! in_array
 	          ( $edit, ['emails','uid-profile',
@@ -314,12 +316,11 @@
 		            'members', 'tid-profile'],
 	                   true ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	if ( isset ( $data['LAST_EDIT'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
+	$state = $edit;
     }
     elseif ( isset ( $_POST['uid-update'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'uid-profile' )
+        if ( $state != 'uid-profile' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -347,18 +348,18 @@
 	    exit ( "UNACCEPTABLE HTTP POST: UID" );
 
 	if ( count ( $errors ) > 0 )
-	    $edit = 'uid-profile';
+	    $state = 'uid-profile';
 	elseif ( $new_user )
-	    $edit = 'new-uid';
+	    $state = 'new-uid';
 	else
 	{
 	    write_info ( $uid_info );
-	    $edit = NULL;
+	    $state = 'normal';
 	}
     }
     elseif ( isset ( $_POST['new-uid'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'new-uid' )
+        if ( $state != 'new-uid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -419,26 +420,27 @@
 	$rw = true;
 	$is_team = false;
 
-	$edit = NULL;
 	$new_user = false;
 	$aid = $_SESSION['EPM_AID'];
 	require "$epm_home/include/epm_list.php";
         $users = read_accounts ( 'user' );
-	$tids = compute_tids ( $TID_LIST );
+	compute_tids();
+
+	$state = 'normal';
     }
     elseif ( isset ( $_POST['NO-new-uid'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'new-uid' )
+        if ( $state != 'new-uid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$edit = 'uid-profile';
+	$state = 'uid-profile';
     }
     elseif ( isset ( $_POST['add-email'] )
              &&
 	     isset ( $_POST['new-email'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'emails' )
+        if ( $state != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -468,11 +470,10 @@
 		write_info ( $uid_info );
 	    }
 	}
-	$edit = 'emails';
     }
     elseif ( isset ( $_POST['delete-email'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'emails' )
+        if ( $state != 'emails' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -517,13 +518,12 @@
 		write_info ( $uid_info );
 	    }
 	}
-	$edit = 'emails';
     }
     elseif ( isset ( $_POST['add-guest'] )
              &&
 	     isset ( $_POST['new-guest'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'guests' )
+        if ( $state != 'guests' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -574,11 +574,10 @@
 	    }
 
 	}
-	$edit = 'guests';
     }
     elseif ( isset ( $_POST['delete-guest'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'guests' )
+        if ( $state != 'guests' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( ! $uid_editable )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -617,12 +616,10 @@
 	}
 
 	write_info ( $uid_info );
-
-	$edit = 'guests';
     }
     elseif ( isset ( $_POST['tid-update'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'tid-profile' )
+        if ( $state != 'tid-profile' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	$old_tid = $tid_info['tid'];
@@ -675,21 +672,21 @@
 	}
 
 	if ( count ( $errors ) > 0 )
-	    $edit = 'tid-profile';
+	    $state = 'tid-profile';
 	elseif ( $new_team )
-	    $edit = 'new-tid';
+	    $state = 'new-tid';
 	elseif ( $new_manager != $old_manager )
-	    $edit = 'new-manager';
+	    $state = 'new-manager';
 	else
 	{
 	    write_info ( $tid_info );
-	    $edit = NULL;
+	    $state = 'normal';
 	}
 
     }
     elseif ( isset ( $_POST['new-tid'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'new-tid' )
+        if ( $state != 'new-tid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $tid_info['manager'] != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -714,12 +711,13 @@
 	write_tids ( $items, $aid, 'manager' );
 
 	$TID_LIST = 'manager';
-	$tids = compute_tids ( $TID_LIST );
-	$edit = NULL;
+	compute_tids();
+
+	$state = 'normal';
     }
     elseif ( isset ( $_POST['new-manager'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'new-manager' )
+        if ( $state != 'new-manager' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	$TID = $tid_info['tid'];
@@ -738,29 +736,30 @@
 	write_tids ( $items, $mid, 'manager' );
 
 	$TID_LIST = 'all';
-	$tids = compute_tids ( $TID_LIST );
-	$edit = NULL;
+	compute_tids();
+
+	$state = 'normal';
     }
     elseif ( isset ( $_POST['NO-new-tid'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'new-tid' )
+        if ( $state != 'new-tid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $tid_info['manager'] != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$edit = 'tid-profile';
+	$state = 'tid-profile';
     }
     elseif ( isset ( $_POST['NO-new-manager'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'new-manager' )
+        if ( $state != 'new-manager' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         $tid_info['manager'] = $aid;
-	$edit = 'tid-profile';
+	$state = 'tid-profile';
     }
     elseif ( isset ( $_POST['add-member'] )
              &&
 	     isset ( $_POST['new-member'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'members' )
+        if ( $state != 'members' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $tid_info['manager'] != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -883,11 +882,10 @@
 
 	    write_info ( $tid_info );
 	}
-	$edit = 'members';
     }
     elseif ( isset ( $_POST['delete-member'] ) )
     {
-        if ( $data['LAST_EDIT'] != 'members' )
+        if ( $state != 'members' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $tid_info['manager'] != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -917,13 +915,9 @@
 	}
 	array_splice ( $members, $c, 1 );
 	write_info ( $tid_info );
-
-	$edit = 'members';
     }
     elseif ( ! $post_processed )
 	exit ( 'UNACCEPTABLE HTTP POST' );
-
-    $data['LAST_EDIT'] = $edit;
 
 ?>
 
@@ -1018,11 +1012,11 @@ function KEY_DOWN ( event, id )
 <?php 
 
     $editing_user = false;
-    if ( $UID == $uid ) $uname = 'Your';
+    if ( $new_user || $UID == $uid ) $uname = 'Your';
     else $uname = $UID;
 
     // NOTE: if ! $new_user and ! $rw then
-    //       $edit == NULL.
+    //       $state == 'normal'.
 
     if ( count ( $errors ) > 0 )
     {
@@ -1064,7 +1058,7 @@ function KEY_DOWN ( event, id )
 	</div>
 EOT;
 
-    if ( $edit == 'new-uid' )
+    if ( $state == 'new-uid' )
         echo <<<EOT
 	<div class='errors'>
 	<strong>You are about to save your user info
@@ -1083,7 +1077,7 @@ EOT;
 	</div>
 EOT;
 
-    if ( $edit == 'new-manager' )
+    if ( $state == 'new-manager' )
         echo <<<EOT
 	<div class='errors'>
 	<strong>You are about save team info that
@@ -1102,7 +1096,7 @@ EOT;
 	</div>
 EOT;
 
-    if ( $edit == 'new-tid' )
+    if ( $state == 'new-tid' )
         echo <<<EOT
 	<div class='errors'>
 	<strong>You are about to save the team's info
@@ -1123,9 +1117,9 @@ EOT;
 
     if ( $rw && $uid_editable
              && count ( $emails ) == 1
-	     && ( ! isset ( $edit )
+	     && ( $state == 'normal'
 		  ||
-		  $edit == 'emails' ) )
+		  $state == 'emails' ) )
         echo <<<EOT
 	<div class='warnings'>
         <strong>Its a good idea to add a
@@ -1146,7 +1140,7 @@ EOT;
 	<strong title='Login Name'>$lname</strong>
 	</td>
 EOT;
-    if ( ! isset ( $edit ) )
+    if ( $state == 'normal' )
         echo <<<EOT
 	<td>
 	<strong>Go To</strong>
@@ -1165,7 +1159,7 @@ EOT;
 	    onclick='VIEW("view.php")'>
 	View Actions</button>
 EOT;
-    if ( ! isset ( $edit ) )
+    if ( $state == 'normal' )
         echo <<<EOT
 	<button type="submit"
 	        formaction='logout.php'>
@@ -1193,7 +1187,7 @@ EOT;
           id='user-form'>
     <input type='hidden' name='id' value='$ID'>
 EOT;
-    if ( $edit == 'uid-profile' )
+    if ( $state == 'uid-profile' )
     {
         $editing_user = true;
         $style = '';
@@ -1215,9 +1209,9 @@ EOT;
 		    Cancel Edit</button>
 EOT;
     }
-    elseif ( $edit == 'emails'
+    elseif ( $state == 'emails'
              ||
-	     $edit == 'guests' )
+	     $state == 'guests' )
     {
         $editing_user = true;
     	echo <<<EOT
@@ -1228,7 +1222,7 @@ EOT;
 		Finish Editing</button>
 EOT;
     }
-    elseif ( isset ( $edit ) )
+    elseif ( $state != 'normal' )
     	echo <<<EOT
 	<strong>$uname Info</strong>
 EOT;
@@ -1266,7 +1260,7 @@ EOT;
     </div>
 EOT;
 
-    if ( $edit == 'emails' )
+    if ( $state == 'emails' )
     {
 	$rows = emails_to_rows
 	    ( $emails, $email, 'delete' );
@@ -1322,11 +1316,11 @@ EOT;
 
     $exclude = NULL;
     if ( $new_user ) $exclude = [];
-    elseif ( $edit == 'uid-profile' )
+    elseif ( $state == 'uid-profile' )
 	$exclude = ['uid'];
 
     $rows = info_to_rows ( $uid_info, $exclude );
-    $h = ( $edit == 'uid-profile' ?
+    $h = ( $state == 'uid-profile' ?
 	   'Edit Your Profile' :
 	   "$uname Profile" );
 
@@ -1358,7 +1352,7 @@ EOT;
 EOT;
 
     $guests = & $uid_info['guests'];
-    if ( $edit == 'guests' )
+    if ( $state == 'guests' )
     {
 	$rows = guests_to_rows ( $guests, 'delete' );
 	echo <<<EOT
@@ -1426,13 +1420,17 @@ EOT;
 	<div class='teams'>
 	<div class='team-header'>
 EOT;
-	if ( isset ( $edit ) || $new_team )
+	if ( $state != 'normal' )
 	{
 	    $tname = ( $new_team ? 'New' : $TID );
 	    echo <<<EOT
 	    <strong>$tname Team Info</strong>
 EOT;
 	}
+	elseif ( $new_team )
+	    ERROR ( "\$state == 'normal'" .
+	            " && \$new_team" );
+	    // Just checking
 	else
 	{
 	    $all_select = '';
@@ -1537,7 +1535,7 @@ EOT;
 EOT;
 	}
 
-	if ( $edit == 'tid-profile' )
+	if ( $state == 'tid-profile' )
 	{
 	    $style = '';
 	    if ( $new_team )
@@ -1559,7 +1557,7 @@ EOT;
 	    </form>
 EOT;
 	}
-	elseif ( $edit == 'members' )
+	elseif ( $state == 'members' )
 	    echo <<<EOT
 	    <form method='POST' action='user.php'>
 	    <input type='hidden' name='id' value='$ID'>
@@ -1575,7 +1573,7 @@ EOT;
 	if ( isset ( $tid_info ) )
 	{
 	    $members = & $tid_info['members'];
-	    if ( $edit == 'members' )
+	    if ( $state == 'members' )
 	    {
 		$rows = members_to_rows
 		    ( $members, 'delete' );
@@ -1649,14 +1647,14 @@ EOT;
 	    $exclude = NULL;
 	    if ( $new_team )
 		$exclude = ['manager'];
-	    elseif ( $edit == 'tid-profile' )
+	    elseif ( $state == 'tid-profile' )
 		$exclude = ['tid'];
 
 	    $rows = info_to_rows
 		( $tid_info, $exclude );
 	    $h = ( $new_team ?
 		       'Edit New Team Profile' :
-		   $edit == 'tid-profile' ?
+		   $state == 'tid-profile' ?
 		       "Edit $TID Profile" :
 		   "$TID Profile" );
 

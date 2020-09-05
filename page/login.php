@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug  6 16:34:02 EDT 2020
+    // Date:	Sat Sep  5 03:46:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -35,6 +35,7 @@
     //     * Receive one of:
     //           'BAD_AID':
     //           'BAD_EMAIL':
+    //           'UNKNOWN_EMAIL':
     //           'BLOCKED_EMAIL':
     //           'NO_ACCOUNT':
     //           'NO_USER':
@@ -48,6 +49,7 @@
     //           'BAD_TICKET':
     //           'NO_TICKET':
     //               go to TICKET_ERROR
+    //           'UNKNOWN_EMAIL':
     //           'BLOCKED_EMAIL':
     //           'NO_ACCOUNT':
     //           'NO_USER':
@@ -280,7 +282,7 @@
 	       "     $ticket\r\n",
 	       "From: no_reply@$sname" );
 	if ( $r === false )
-	    ERROR ( "mail to $email failed" );
+	    reply ( 'UNKNOWN_EMAIL' );
 
 	reply ( "$op" );
     }
@@ -540,15 +542,15 @@ or User-ID:Guest-User-Email-Address'>
 <tr><td style='width:90%'>
 <strong>Login Name:<pre>   </pre>
 <span id='lname_out'></span></strong>
-</td><td style='width:10%;text-align:right'>
-<button type='button' onclick='HELP("login-page")'>
-?</button>
-</td></tr></table>
-<br>
+<pre>    </pre>
 <button type='button'
         onclick='location.assign("login.php")'>
 Change Login Name
 </button>
+</td><td style='width:10%;text-align:right'>
+<button type='button' onclick='HELP("login-page")'>
+?</button>
+</td></tr></table>
 </div>
 
 <div id='get_cnum' style.display='none'>
@@ -774,7 +776,11 @@ function MANUAL_RESPONSE ( item )
 	    ( AID + ' is badly formatted account ID' );
     else if ( item[0] == 'BAD_EMAIL' )
         LNAME_ERROR ( EMAIL + ' is badly formatted'
-	             + ' email address' );
+	                    + ' email address' );
+    else if ( item[0] == 'UNKNOWN_EMAIL' )
+        LNAME_ERROR ( EMAIL + ' is unknown email'
+	                    + ' user or mailer is'
+			    + ' not working' );
     else if ( item[0] == 'BLOCKED_EMAIL' )
         LNAME_ERROR
 	    ( EMAIL + ' is a blocked email address' );
@@ -906,8 +912,13 @@ function AUTO_RESPONSE ( item )
     else if ( item[0] == 'USER_NOT_GUEST' )
         LNAME_ERROR ( 'User ' + EMAIL + ' is not a' +
 		      ' guest of ' + AID );
+    else if ( item[0] == 'UNKNOWN_EMAIL' )
+        LNAME_ERROR ( EMAIL + ' is unknown email'
+	                    + ' user or mailer is'
+			    + ' not working' );
     else if ( item[0] == 'BLOCKED_EMAIL' )
-        LNAME ( EMAIL + ' is a blocked email address' );
+        LNAME_ERROR ( EMAIL + ' is a blocked email' +
+	                      ' address' );
     else
 	MALFORMED_RESPONSE ( 'to auto-login' );
 }

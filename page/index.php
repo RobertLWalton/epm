@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Sep  4 16:22:02 EDT 2020
+// Date:    Sat Sep  5 01:56:30 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -320,7 +320,7 @@ if ( in_array ( $epm_page_type,
 
     if ( $epm_method == 'GET' )
 	$_SESSION['EPM_PAGE'][$id_type] =
-	    [ "SELF" => $epm_self, "STATE" => "initial"];
+	    [ "SELF" => $epm_self, "STATE" => "normal"];
     elseif ( ! isset ( $_SESSION['EPM_PAGE']
                                 [$id_type]['SELF'] ) )
 	exit ( "UNACCEPTABLE HTTP $epm_method:" .
@@ -329,6 +329,7 @@ if ( in_array ( $epm_page_type,
              != $epm_self )
 	exit ( "UNACCEPTABLE HTTP $epm_method: PAGE" );
     $data = & $_SESSION['EPM_PAGE'][$id_type];
+    $state = & $data['STATE'];
 
     if ( isset ( $epm_ID_init )
          &&
