@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep  6 16:40:10 EDT 2020
+    // Date:	Sun Sep  6 17:29:39 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1264,7 +1264,6 @@ EOT;
     elseif ( $state == 'emails'
              ||
 	     $state == 'guests' )
-    {
     	echo <<<EOT
 	<strong>Your Info</strong>
 	<br>
@@ -1272,7 +1271,10 @@ EOT;
 	        formmethod='GET'>
 		Finish Editing</button>
 EOT;
-    }
+    elseif ( $state == 'new-uid' )
+    	echo <<<EOT
+	<strong>Your Info</strong>
+EOT;
     else
     {
 	$options = values_to_options ( $users, $UID );
@@ -1362,7 +1364,8 @@ EOT;
     }
 
     $exclude = NULL;
-    if ( $new_user ) $exclude = [];
+    if ( $new_user && $state != 'new-uid' )
+        $exclude = [];
     elseif ( $state == 'uid-profile' )
 	$exclude = ['uid'];
 
