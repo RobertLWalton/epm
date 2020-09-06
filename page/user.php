@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep  6 09:29:14 EDT 2020
+    // Date:	Sun Sep  6 16:40:10 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -315,7 +315,8 @@
 	}
     }
 
-    if ( ! $new_user && ! $new_team )
+    if (    ! $new_user
+         && ! in_array ( $state, $tid_edit_states ) )
 	compute_tids();
 
     $uid_editable = false;
