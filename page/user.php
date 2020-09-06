@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep  6 17:29:39 EDT 2020
+    // Date:	Sun Sep  6 17:38:56 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -307,7 +307,9 @@
 	    $tid_info = NULL;
 	    $no_team = true;
 	}
-	else
+	elseif ( ! isset ( $TID )
+	         ||
+		 ! in_array ( $TID, $tids ) )
 	{
 	    $TID = $tids[0];
 	    $tid_info = read_info ( 'team', $TID );
@@ -1683,7 +1685,7 @@ EOT;
 		</div>
 EOT;
 	    $exclude = NULL;
-	    if ( $new_team )
+	    if ( $new_team && $state != 'new-tid' )
 		$exclude = ['manager'];
 	    elseif ( $state == 'tid-profile' )
 		$exclude = ['tid'];
