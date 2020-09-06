@@ -2,7 +2,7 @@
 
     // File:	epm_rw.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep  6 09:57:15 EDT 2020
+    // Date:	Sun Sep  6 16:54:35 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -39,11 +39,20 @@
 
     if ( ! $is_team )
 	exit ( 'UNACCEPTABLE HTTP POST: NOT TEAM' );
-
-    if ( $rw && $new_rw != 'ro' )
-	exit ( 'UNACCEPTABLE HTTP POST: BAD RW' );
-    if ( ! $rw && $new_rw != 'rw' )
-	exit ( 'UNACCEPTABLE HTTP POST: BAD RW' );
+        
+    if ( $rw )
+    {
+	if ( $new_rw != 'ro' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+    }
+    else
+    {
+        if ( $new_rw == 'ro' ) return;
+	    // Can happen if another team member grabs
+	    // read-write from you.
+	elseif ( $new_rw != 'rw' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+    }
 
     // So we need to toggle $rw.
 

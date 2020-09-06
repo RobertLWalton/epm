@@ -18,7 +18,7 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     require "$epm_home/include/epm_user.php";
 
