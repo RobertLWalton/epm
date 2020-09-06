@@ -2,7 +2,7 @@
 
     // File:	epm_rw.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Aug  4 19:48:58 EDT 2020
+    // Date:	Sun Sep  6 09:57:15 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -69,9 +69,7 @@
 	{
 	    rewind ( $rw_handle );
 	    ftruncate ( $rw_handle, 0 );
-	    fwrite ( $rw_handle, $_SESSION['EPM_UID'] );
-	        // Warning: $uid may not be EPM_UID
-		// because this is called by user.php.
+	    fwrite ( $rw_handle, $uid );
 	    $rw = true;
 	    $RW_BUTTON = $RW_BUTTON_RO;
 	}
