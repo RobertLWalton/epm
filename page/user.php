@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep  6 17:38:56 EDT 2020
+    // Date:	Sun Sep  6 17:56:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -243,6 +243,16 @@
     $no_team = ( ! isset ( $tid_info ) );
     $new_team = ( ! isset ( $TID ) && ! $no_team );
 
+    $uid_editable = false;
+        // True if buttons to start editing $uid_info
+	// are enabled.
+    $tid_editable = false;
+        // True if buttons to start editing $tid_info
+	// are enabled.
+    $tid_creatable = false;
+        // True if buttons to create new team are
+	// enabled.
+
     // Do some state invariant checking.
     //
     if ( $new_user
@@ -269,7 +279,6 @@
 	    ERROR
 	        ( "! \$rw and bad \$state = $state" );
     }
-
     if ( ( $state == 'tid-profile' ||
            $state == 'members' ||
 	   $state == 'new-tid' )
@@ -282,11 +291,11 @@
 
     // Compute in $tids the list of teams in $TID_LIST.
     //
-    $tids = [];
     function compute_tids()
     {
         global $tids, $TID_LIST, $UID, $TID,
-	       $tid_info, $no_team;
+	       $tid_info, $no_team,
+	       $new_user, $state, $tid_edit_states;
 
 	switch ( $TID_LIST )
 	{
@@ -300,6 +309,10 @@
 	    $tids = read_tids ( $UID, 'member' );
 	    break;
 	}
+
+	if ( in_array ( $state, $tid_edit_states ) )
+	    return;
+	if ( $new_user ) return;
 
 	if ( count ( $tids ) == 0 )
 	{
@@ -317,19 +330,9 @@
 	}
     }
 
-    if (    ! $new_user
-         && ! in_array ( $state, $tid_edit_states ) )
-	compute_tids();
-
-    $uid_editable = false;
-        // True if buttons to start editing $uid_info
-	// are enabled.
-    $tid_editable = false;
-        // True if buttons to start editing $tid_info
-	// are enabled.
-    $tid_creatable = false;
-        // True if buttons to create new team are
-	// enabled.
+    // Compute $uid_editable, $tid_editable, and
+    // $tid_creatable.
+    //
     function compute_editable()
     {
         global $state, $rw, $is_team,
@@ -513,7 +516,6 @@
 	$aid = $_SESSION['EPM_AID'];
 	require "$epm_home/include/epm_list.php";
         $users = read_accounts ( 'user' );
-	compute_tids();
 
 	$state = 'normal';
 
@@ -781,7 +783,6 @@
 	write_tids ( $items, $aid, 'manager' );
 
 	$TID_LIST = 'manager';
-	compute_tids();
 
 	$state = 'normal';
     }
@@ -804,7 +805,6 @@
 	write_tids ( $items, $mid, 'manager' );
 
 	$TID_LIST = 'all';
-	compute_tids();
 
 	$state = 'normal';
     }
@@ -980,6 +980,7 @@
     else
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
+    compute_tids();
     compute_editable();
 ?>
 
