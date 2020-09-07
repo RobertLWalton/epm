@@ -2,7 +2,7 @@
 
     // File:	epm_rw.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep  6 16:54:35 EDT 2020
+    // Date:	Mon Sep  7 02:01:02 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -17,6 +17,10 @@
     // this file.  Mode, which must be read-only,
     // will be changed to read-write and $errors will
     // be left untouched.
+    //
+    // You can set $epm_rw_request='MODE' to simulate
+    // POST with rw='MODE', in which case $_POST will
+    // be ignored.
 
     if ( ! isset ( $epm_data ) )
 	exit ( 'ACCESS ERROR: $epm_data not set' );
@@ -30,7 +34,9 @@
     // WARNING: $uid may not be EPM_UID because this is
     //		called by user.php.
 
-    if ( isset ( $_POST['rw'] ) )
+    if ( isset ( $epm_rw_request ) )
+	$new_rw = $epm_rw_request;
+    elseif ( isset ( $_POST['rw'] ) )
 	$new_rw = $_POST['rw'];
     elseif ( isset ( $_POST['force-rw'] ) )
         $new_rw = 'rw';
@@ -74,7 +80,10 @@
 	register_shutdown_function ( 'rw_unlock' );
 
 	$u = trim ( fread ( $rw_handle, 1000 ) );
-	if ( $u == '' || isset ( $_POST['force-rw'] ) )
+	if ( $u == ''
+	     || ( isset ( $_POST['force-rw'] )
+	          &&
+		  ! isset ( $epm_rw_request ) ) )
 	{
 	    rewind ( $rw_handle );
 	    ftruncate ( $rw_handle, 0 );

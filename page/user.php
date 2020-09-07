@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep  7 00:45:39 EDT 2020
+    // Date:	Mon Sep  7 02:12:39 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -94,11 +94,6 @@
     //		new-tid (ask if new team TID ok)
     //		new-manager (ask if new team manager ok)
     //		force-rw (ask if rw should be forced)
-    //
-    //	   $data FORCE-RW-ERRORS
-    //		save of $errors when $state set to
-    //		force-rw; reused if UID changed in
-    //		force-rw state
     //
     $uid_edit_states =
         [ 'uid-profile', 'emails', 'guests',
@@ -212,9 +207,12 @@
     {
         if ( count ( $errors ) > 0 )
 	    $errors[] = '';
-	    // Separate errors from FORCE-RW-ERRORS.
-	foreach ( $data['FORCE-RW-ERRORS'] as $e )
-	    $errors[] = $e;
+	    // Separate errors from rw errors.
+	$epm_rw_request = 'rw';
+	$error_count = count ( $errors );
+	require "$epm_home/include/epm_rw.php";
+	if ( $error_count == count ( $errors ) )
+	    $state = 'normal';
     }
 
     // If no selector processed, process any team
@@ -416,10 +414,7 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	require "$epm_home/include/epm_rw.php";
 	if ( count ( $errors ) > 0 )
-	{
 	    $state = 'force-rw';
-	    $data['FORCE-RW-ERRORS'] = $errors;
-	}
     }
     elseif ( isset ( $_POST['force-rw'] ) )
     {
