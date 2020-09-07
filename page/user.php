@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep  6 17:56:44 EDT 2020
+    // Date:	Mon Sep  7 00:45:39 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -30,9 +30,6 @@
     $warnings = [];
         // Lists of error and warning messages to be
 	// displayed.
-    $force_rw = false;
-        // Set by $_POST['rw'] to ask if RW should be
-	// forced.
 
     if ( ! $new_user )
     {
@@ -96,6 +93,12 @@
     //		new-uid (ask if new user UID ok)
     //		new-tid (ask if new team TID ok)
     //		new-manager (ask if new team manager ok)
+    //		force-rw (ask if rw should be forced)
+    //
+    //	   $data FORCE-RW-ERRORS
+    //		save of $errors when $state set to
+    //		force-rw; reused if UID changed in
+    //		force-rw state
     //
     $uid_edit_states =
         [ 'uid-profile', 'emails', 'guests',
@@ -118,9 +121,11 @@
         $UID = $uid;
 
     // Set up $data, processing GET and those POSTs
-    // that set $data.
+    // that set $data.  First process selectors that
+    // are OK unless what they select is being
+    // edited.
     //
-    $post_processed = true;
+    $post_processed = false;
     if ( $epm_method == 'GET' )
     {
         if ( $state != 'normal' )
@@ -155,14 +160,17 @@
         $new_uid = $_POST['user'];
 	$f = "admin/users/$new_uid/$new_uid.info";
 	if ( ! is_readable ( "$epm_data/$f" ) )
+	{
 	    $errors[] =
 	        "$new_uid is no longer a user id";
+	}	
 	else
 	{
 	    $UID = $new_uid;
 	    $data['UID-INFO'] = read_info
 	        ( 'user', $UID );
 	}
+	$post_processed = true;
     }
     elseif ( isset ( $_POST['team'] )
              &&
@@ -181,6 +189,7 @@
 	    $data['TID-INFO'] = read_info
 	        ( 'team', $TID );
 	}
+	$post_processed = true;
     }
     elseif ( isset ( $_POST['tid-list'] )
              &&
@@ -193,28 +202,32 @@
 	$TID_LIST = $new_tid_list;
 	$TID = NULL;
 	$data['TID-INFO'] = NULL;
+	$post_processed = true;
     }
-    elseif ( $state != 'normal' )
-        $post_processed = false;
-    elseif ( $new_user )
-        ERROR ( "new user and normal state" );
-	// Just checking
-    elseif ( isset ( $_POST['rw'] ) )
+
+    // If selector processed in force-rw mode, fix up
+    // error messages.
+    //
+    if ( $post_processed && $state == 'force-rw' )
     {
-	require "$epm_home/include/epm_rw.php";
-	if ( count ( $errors ) > 0 )
-	    $force_rw = true;
+        if ( count ( $errors ) > 0 )
+	    $errors[] = '';
+	    // Separate errors from FORCE-RW-ERRORS.
+	foreach ( $data['FORCE-RW-ERRORS'] as $e )
+	    $errors[] = $e;
     }
-    elseif ( isset ( $_POST['force-rw'] ) )
+
+    // If no selector processed, process any team
+    // creation.
+    //
+    if ( ! $post_processed
+         &&
+	 isset ( $_POST['create-tid'] ) )
     {
-	require "$epm_home/include/epm_rw.php";
-    }
-    elseif ( isset ( $_POST['ignore-rw'] ) )
-    {
-	/* Do Nothing */
-    }
-    elseif ( isset ( $_POST['create-tid'] ) )
-    {
+        if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        if ( $new_user || $uid != $aid )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	if ( $rw )
 	{
 	    $data['TID-INFO'] = [
@@ -227,9 +240,8 @@
 	    $TID = NULL;
 	    $state = 'tid-profile';
 	}
+	$post_processed = true;
     }
-    else
-	$post_processed = false;
 
     // The above establishes EPM_USER UID, TID,
     // TID-LIST, $TID, $UID, and $TID_LIST,  and
@@ -267,7 +279,13 @@
 	 &&
          $state != 'new-tid' )
 	ERROR ( "new team, bad \$state = $state" );
-    if ( $state != 'normal' )
+    if ( $state == 'force-rw' )
+    {
+	if ( $new_user || ! $is_team )
+	    ERROR
+	        ( "NOT team and bad \$state = $state" );
+    }
+    elseif ( $state != 'normal' )
     {
 	if ( ! $new_user && $is_team )
 	    ERROR
@@ -386,10 +404,40 @@
 	}
     }
 
-    if ( $epm_method == 'GET' || ! $rw )
+    if ( $epm_method == 'GET' )
         /* Do nothing */;
     elseif ( $post_processed )
         /* Do nothing */;
+    elseif ( isset ( $_POST['rw'] ) )
+    {
+	if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	if ( $new_user || ! $is_team )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	require "$epm_home/include/epm_rw.php";
+	if ( count ( $errors ) > 0 )
+	{
+	    $state = 'force-rw';
+	    $data['FORCE-RW-ERRORS'] = $errors;
+	}
+    }
+    elseif ( isset ( $_POST['force-rw'] ) )
+    {
+	if ( $state != 'force-rw' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	require "$epm_home/include/epm_rw.php";
+	$state = 'normal';
+    }
+    elseif ( isset ( $_POST['ignore-rw'] ) )
+    {
+	if ( $state != 'force-rw' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$state = 'normal';
+    }
+    elseif ( ! $rw )
+    {
+	/* Do Nothing */
+    }
     elseif ( isset ( $_POST['edit'] ) )
     {
 	if ( $state != 'normal' )
@@ -982,6 +1030,7 @@
 
     compute_tids();
     compute_editable();
+
 ?>
 
 <html>
@@ -1102,7 +1151,7 @@ function KEY_DOWN ( event, id )
 	echo "<br></div></div>";
     }
 
-    if ( $force_rw )
+    if ( $state == 'force-rw' )
         echo <<<EOT
 	<div class='errors'>
 	<strong>Do you want to force RW
