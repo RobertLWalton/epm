@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep  7 13:15:43 EDT 2020
+    // Date:	Mon Sep  7 14:37:15 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -22,8 +22,7 @@
     // require "$epm_home/include/debug_info.php";
 
     if ( ! isset ( $_REQUEST['problem'] ) )
-	exit ( "ACCESS: illegal $epm_method" .
-	       " to problem.php" );
+	exit ( "UNACCEPTABLE HTTP POST" );
 
     $problem = $_REQUEST['problem'];
     $probdir = "accounts/$aid/$problem";
@@ -38,7 +37,7 @@
     //					     ['ORDER']
     //	      Problem sort order: one of:
     //		extension
-    //		lexigraphical
+    //		lexical
     //		recent
     //
     //	  $work = & $_SESSION['EPM_WORK'][$problem]
@@ -91,7 +90,7 @@
     }
 
     // Return DISPLAYABLE problem file names, sorted
-    // most recent first, that are in the given
+    // according to $order, that are in the given
     // directory.  Only the last component of each
     // name is returned.  The directory is relative
     // to $epm_data.  Allow file names that are link
@@ -124,7 +123,7 @@
 
 	    switch ( $order )
 	    {
-	    case 'lexigraphic':
+	    case 'lexical':
 	        $value = $fname;
 	        break;
 	    case 'recent':
@@ -195,7 +194,7 @@
     // FILE-SHOW is true iff
     //
     //	  the file is UTF8 or PDF
-    //    the file has >= $min_display_lines
+    //    the file has >= $min_display_lines if UTF8
     //	  the file is not displayed in FILE-COMMENT
     //
     // and FILE-COMMENT is:
@@ -203,7 +202,7 @@
     //	   (Empty) iff the file is empty
     //     {FILE-CONTENTS} iff the file has 1 line
     //         that after being right trimmed has
-    //	       <= 56 characters
+    //	       <= $max_in_comment_characters
     //	   (Lines ###) iff the above do not apply and
     //         the file is UTF8 with ### lines
     //
@@ -221,10 +220,11 @@
     // Note that here FILE-CONTENTS is truncated to a
     // maximum of $epm_file_maxsize bytes.
     //
+    $max_in_comment_characters = 56;
     $max_display_lines = 40;
     $min_display_lines = 10;
     $specials = implode ( '|', $epm_specials );
-    $not_link_re = "/^($specials)\-$problem\$/";
+    $not_linkable_re = "/^($specials)\-$problem\$/";
     $link_re = "/^.+\-(($specials)-$problem)\$/";
     $txt_re = "/^($specials)-$problem\$/";
     function file_info
@@ -235,7 +235,8 @@
 	       $display_file_map, $epm_file_maxsize,
 	       $epm_filename_re, $linkable_ext,
 	       $max_display_lines, $min_display_lines,
-	       $not_link_re, $link_re, $txt_re;
+	       $max_in_comment_characters,
+	       $not_linkable_re, $link_re, $txt_re;
 
 	$fext = pathinfo ( $fname, 
 			   PATHINFO_EXTENSION );
@@ -244,7 +245,6 @@
 	$ftype = $display_file_type[$fext];
 
 	$f = "$epm_data/$dir/$fname";
-	$fsize = NULL;
 	$fsize = @filesize ( $f );
 	$fcontents = NULL;
 	$flines = NULL;
@@ -258,12 +258,12 @@
 	     &&
 	     ! is_link ( $f )
 	     &&
-	     ! preg_match ( $fbase, $not_linkable_re )
+	     ! preg_match ( $not_linkable_re, $fbase )
 	     &&
 	     $fbase != $problem )
 	{
 	    if ( preg_match
-	        ( $fbase, $link_re, $matches ) )
+	        ( $link_re, $fbase, $matches ) )
 		$factions[] = "{$matches[1]}$dotfext";
 	    else
 		$factions[] = "$problem$dotfext";
@@ -297,7 +297,7 @@
 	}
 
 	if (    $ftype == 'utf8'
-	     && isset ( $fsize ) )
+	     && $fsize !== false )
 	{
 	    $fcontents = @file_get_contents
 	        ( $f, false, NULL, 0,
@@ -310,13 +310,14 @@
 	    if ( $fexplode[$flines-1] == '' )
 	        -- $flines;
 	}
-	if ( isset ( $fsize ) && $fsize == 0 )
+	if ( $fsize !== false && $fsize == 0 )
 	    $fcomment = '(Empty)';
 	elseif ( $ftype == 'utf8' )
 	{
-	    if (    $flines <= 1
+	    if (    isset ( $flines )
+	         && $flines <= 1
 		 &&    strlen ( rtrim ( $fcontents ) )
-		    <= 56 )
+		    <= $max_in_comment_characters )
 		$fcomment = '{'
 			  . rtrim ( $fcontents )
 			  . '}';
@@ -332,7 +333,7 @@
 		if ( $flines >= $min_display_lines )
 		    $fshow = true;
 	    }
-	    elseif ( isset ( $fsize ) )
+	    elseif ( $fsize !== false )
 		$fcomment = "($fsize Bytes)";
 	    else
 		$fcomment = "(Has Undetermined Size)";
@@ -340,7 +341,7 @@
 	elseif ( isset ( $display_file_map
 			       [$ftype] ) )
 	{
-	    if ( isset ( $fsize ) )
+	    if ( $fsize !== false )
 		$fcomment = "($fsize Bytes)";
 	    else
 		$fcomment = "(Has Undetermined Size)";
@@ -402,8 +403,7 @@
         if ( $work_executing || $run_executing )
 	{
 	    if ( ! $epm_page_init )
-		exit ( "ACCESS: illegal GET to" .
-		       " problem.php" );
+		exit ( "UNACCEPTABLE HTTP POST" );
 
 	    if ( count ( $warnings ) > 0 )
 		usleep ( 3000000 ); // 3 seconds
@@ -425,14 +425,15 @@
 	    $work = [];
 	    $run = [];
 	}
-	$_SESSION['EPM_STATE'][$problem] = [];
     }
-    $state = & $_SESSION['EPM_STATE'][$problem];
 
     // Process file deletions for other posts.
     //
     if ( $rw && isset ( $_POST['delete_files'] ) )
     {
+        if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	    
 	$files = $_POST['delete_files'];
 	$files = explode ( ',', $files );
 	foreach ( $files as $fname )
@@ -440,13 +441,15 @@
 	    if ( $fname == '' ) continue;
 	    if ( ! preg_match
 	               ( $epm_filename_re, $fname ) )
-		exit ( "ACCESS: illegal POST to" .
-		       " problem.php" );
+		exit ( "UNACCEPTABLE HTTP POST" );
 	    $ext = pathinfo
 	        ( $fname, PATHINFO_EXTENSION );
 	    if ( ! isset ( $display_file_type[$ext] ) )
-		exit ( "ACCESS: illegal POST to" .
-		       " problem.php" );
+		exit ( "UNACCEPTABLE HTTP POST" );
+	}
+	foreach ( $files as $fname )
+	{
+	    if ( $fname == '' ) continue;
 	    $f = "$probdir/$fname";
 	    if ( ! file_exists ( "$epm_data/$f" )
 	         &&
@@ -507,7 +510,7 @@
     elseif ( isset ( $_POST['order'] ) )
     {
         $new_order = $_POST['order'];
-	if ( ! in_array ( $new_order, ['lexigraphic',
+	if ( ! in_array ( $new_order, ['lexical',
 	                               'recent',
 				       'extension'] ) )
 	    echo ( "ACCESS: illegal POST to" .
@@ -520,16 +523,14 @@
     {
 	$prob = $_POST['delete_problem'];
 	if ( $prob != $problem )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$delete_problem = true;
     }
     elseif ( isset ( $_POST['delete_problem_yes'] ) )
     {
 	$prob = $_POST['delete_problem_yes'];
 	if ( $prob != $problem )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$work = [];
 	$run = [];
 	exec ( "rm -rf $epm_data/$probdir" );
@@ -544,23 +545,20 @@ EOT;
     {
 	$prob = $_POST['delete_problem_no'];
 	if ( $prob != $problem )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
     }
     elseif ( isset ( $_POST['make'] ) )
     {
         $m = $_POST['make'];
 	if ( ! preg_match ( '/^([^:]+):([^:]+)$/', $m,
 	                    $matches ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$src = $matches[1];
 	$des = $matches[2];
 		 	    
 	$fnames = problem_file_names ( $probdir );
 	if ( ! in_array ( $src, $fnames, true ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	if ( preg_match ( '/\.ftest$/', $des ) )
 	    $make_ftest = $des;
 	else
@@ -582,15 +580,13 @@ EOT;
 	$base = pathinfo ( $m, PATHINFO_FILENAME );
 	$ext = pathinfo ( $m, PATHINFO_EXTENSION );
 	if ( $ext != 'ftest' )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$src = "$base.fout";
 	$des = "$base.ftest";
 		 	    
 	$fnames = problem_file_names ( $probdir );
 	if ( ! in_array ( $src, $fnames, true ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$d = "$probdir/+parent+";
 	$lock = NULL;
 	if ( is_dir ( "$epm_data/$d" ) )
@@ -628,13 +624,11 @@ EOT;
         $to = $_POST['link'];
 	$fnames = problem_file_names ( $probdir );
 	if ( ! in_array ( $to, $fnames, true ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$ext = pathinfo ( $to, PATHINFO_EXTENSION );
 	if ( ! in_array ( $ext, $linkable_ext,
 	                        true ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	$base = pathinfo ( $to, PATHINFO_FILENAME );
 	$from = "$problem";
@@ -660,13 +654,11 @@ EOT;
     {
         $f = $_POST['run'];
 	if ( ! preg_match ( '/\.run$/', $f ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 		 	    
 	$fnames = problem_file_names ( $probdir );
 	if ( ! in_array ( $f, $fnames, true ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$d = "$probdir/+parent+";
 	$lock = NULL;
 	if ( is_dir ( "$epm_data/$d" ) )
@@ -911,8 +903,9 @@ EOT;
         echo <<<EOT
 	<strong>(from project $parent)</strong>
 EOT;
+    $refresh = "problem.php?problem=$problem"
+             . "&id=$ID";
     echo <<<EOT
-
     </td><td style='text-align:right'>
     <strong>Go To</strong>
     <form method='GET'>
@@ -953,8 +946,6 @@ EOT;
 	</form>
 EOT;
 
-    $refresh = "problem.php?problem=$problem"
-             . "&id=$ID";
     $title = 'View downloadable sample solutions'
            . ' and templates';
     echo <<<EOT
@@ -968,7 +959,7 @@ EOT;
 EOT;
 
     $order_options = '';
-    foreach ( ['lexigraphic' => '(alphabetic order)',
+    foreach ( ['lexical' => '(lexical order)',
 	       'recent' => '(most recent first)',
 	       'extension' => '(extension order)']
 	      as $key => $label )
