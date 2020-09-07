@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep  7 06:39:18 EDT 2020
+    // Date:	Mon Sep  7 13:15:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -159,16 +159,34 @@
 	return $names;
     }
 
-    // Get information about a file.  Return
+    // Get information about a file FNAME with basename
+    // FBASE and extension FEXT.  Returns
     //
     // 	    list ( FILE-EXTENSION,
     //		   FILE-TYPE,
+    //		   FILE-ACTIONS,
     //		   FILE-DISPLAY,
     //		   FILE-SHOW,
     //		   FILE-COMMENT )
     //
-    // where FILE-TYPE is the $display_file_type of
-    // the FILE-EXTENSION, FILE-DISPLAY if true iff
+    // where FILE-EXTENSION if FEXT,
+    //
+    // FILE-TYPE is the $display_file_type of FEXT,
+    //
+    // FILE-ACTIONS is a list of actions that can
+    // be performed with FNAME, where the possible
+    // actions are represented by the strings:
+    //
+    //		+run+	the Run action for .run files
+    //		.DEXT   the =>.DEXT action to make
+    //			FBASE.DEXT from FNAME using a
+    //			template
+    //		OTHER   the Link action to link OTHER
+    //			to FNAME, where OTHER is any
+    //			file name (therefore does not
+    //			begin with + or .)
+    //
+    // FILE-DISPLAY is true iff
     //
     // 	  the file is UTF8
     //	  the file has <= $max_display_lines lines
@@ -179,13 +197,6 @@
     //	  the file is UTF8 or PDF
     //    the file has >= $min_display_lines
     //	  the file is not displayed in FILE-COMMENT
-    //
-    // FILE-LINKABLE is true iff
-    //
-    //	  the file has extension in $linkable_ext
-    //    the file is not a link
-    //    the file basename has the form *-PPPP
-    //		(which includes -generate-PPPP, etc.)
     //
     // and FILE-COMMENT is:
     //
@@ -212,6 +223,10 @@
     //
     $max_display_lines = 40;
     $min_display_lines = 10;
+    $specials = implode ( '|', $epm_specials );
+    $not_link_re = "/^($specials)\-$problem\$/";
+    $link_re = "/^.+\-(($specials)-$problem)\$/";
+    $txt_re = "/^($specials)-$problem\$/";
     function file_info
             ( $dir, $fname, $count, & $display_list )
     {
@@ -219,10 +234,13 @@
 	       $display_file_type,
 	       $display_file_map, $epm_file_maxsize,
 	       $epm_filename_re, $linkable_ext,
-	       $max_display_lines, $min_display_lines;
+	       $max_display_lines, $min_display_lines,
+	       $not_link_re, $link_re, $txt_re;
 
 	$fext = pathinfo ( $fname, 
 			   PATHINFO_EXTENSION );
+	$fbase = pathinfo ( $fname, 
+			    PATHINFO_FILENAME );
 	$ftype = $display_file_type[$fext];
 
 	$f = "$epm_data/$dir/$fname";
@@ -230,9 +248,54 @@
 	$fsize = @filesize ( $f );
 	$fcontents = NULL;
 	$flines = NULL;
+	$factions = [];
 	$fdisplay = false;
 	$fshow = false;
-	$flinkable = false;
+
+	$dotfext = ( $fext == '' ? '' : ".$fext" );
+
+	if ( in_array ( $fext, $linkable_ext )
+	     &&
+	     ! is_link ( $f )
+	     &&
+	     ! preg_match ( $fbase, $not_linkable_re )
+	     &&
+	     $fbase != $problem )
+	{
+	    if ( preg_match
+	        ( $fbase, $link_re, $matches ) )
+		$factions[] = "{$matches[1]}$dotfext";
+	    else
+		$factions[] = "$problem$dotfext";
+	}
+
+	switch ( $fext )
+	{
+	case "run":
+	    $factions[] = '+run+';
+	    break;
+	case "in":
+	    $factions[] = '.sin';
+	    $factions[] = '.sout';
+	    $factions[] = '.score';
+	    break;
+	case "sin":
+	    $factions[] = '.dout';
+	    break;
+	case "sout":
+	    $factions[] = '.fout';
+	    $factions[] = '.score';
+	    break;
+	case "fout":
+	    $factions[] = '.score';
+	    $factions[] = '.ftest';
+	    break;
+	case "":
+	    if ( preg_match ( $txt_re, $fname ) )
+	        $factions[] = '.txt';
+	    break;
+	}
+
 	if (    $ftype == 'utf8'
 	     && isset ( $fsize ) )
 	{
@@ -315,23 +378,9 @@
 	    else
 		$fcomment .= " (Link to default)";
 	}
-	elseif ( in_array ( $fext, $linkable_ext,
-	                           true ) )
-	{
-	    $fbase = pathinfo
-	        ( $fname, PATHINFO_FILENAME );
-	    $re = '/^(generate|filter|monitor)-'
-	        . "$problem\$/";
-	    if ( preg_match ( "/-$problem\$/",
-	                      $fbase )
-		 &&
-		 ! preg_match ( $re, $fbase ) )
-	        $flinkable = true;
-	}
 
-	return [ $fext, $ftype,
-	         $fdisplay, $fshow, $flinkable,
-		 $fcomment ];
+	return [ $fext, $ftype, $factions,
+	         $fdisplay, $fshow, $fcomment ];
     }
 
     // Data Set by GET and POST Requests:
@@ -1095,8 +1144,8 @@ EOT;
 		echo "<tr class='$class'>";
 		echo "<td" .
 		     " style='text-align:right'>";
-		list ( $fext, $ftype, $fdisplay,
-		       $fshow, $flinkable, $fcomment )
+		list ( $fext, $ftype, $factions,
+		       $fdisplay, $fshow, $fcomment )
 		    = file_info ( $workdir, $fname,
 				  $count,
 				  $display_list );
@@ -1265,9 +1314,8 @@ EOT;
 	++ $count;
 	echo "<tr class='$class'>";
 	echo "<td style='text-align:right'>";
-	list ( $fext, $ftype,
-	       $fdisplay, $fshow, $flinkable,
-	       $fcomment )
+	list ( $fext, $ftype, $factions,
+	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $fname, $count,
 			  $display_list );
 	$fbase = pathinfo ( $fname, 
@@ -1331,63 +1379,35 @@ EOT;
         echo <<<EOT
 	<td colspan='100'>
 EOT;
-	if ( ! $rw )
-	    /* Do Nothing */;
-	elseif ( $flinkable )
+	if ( $rw ) foreach ( $factions as $action )
 	{
-	    $ext = ( $fext != '' ? ".$fext" : $fext );
-	    $base = pathinfo
-	        ( $fname, PATHINFO_FILENAME );
-	    $link = "$problem$ext";
-	    $re = '/-(generate|filter|monitor)'
-	        . "-$problem\$/";
-	    if ( preg_match ( $re, $base, $matches ) )
-		$link = "{$matches[1]}-$problem$ext";
-
-	    echo "<button type='submit'" .
-		 " name='link'" .
-		 " title='Link $link to $fname'" .
-		 " value='$fname'>" .
-		 "Link</button>";
-	}
-	elseif ( $fext == 'in' )
-	{
-	    MAKE ( $fbase, 'in', 'sin' );
-	    MAKE ( $fbase, 'in', 'sout' );
-	    MAKE ( $fbase, 'in', 'score' );
-	}
-	elseif ( $fext == 'sin' )
-	    MAKE ( $fbase, 'sin', 'dout' );
-	elseif ( $fext == 'sout' )
-	{
-	    MAKE ( $fbase, 'sout', 'fout' );
-	    MAKE ( $fbase, 'sout', 'score' );
-	}
-	elseif ( $fext == 'fout' )
-	{
-	    MAKE ( $fbase, 'fout', 'score' );
-	    echo "<button type='submit'" .
-		 " style='background-color:" .
-			 "var(--hl-orange)'" .
-		 " name='make'" .
-		 " title='Make $fbase.ftest" .
-		 " from $fname'" .
-		 " value='$fname:$fbase.ftest'>" .
-		 "&rArr;.ftest</button>";
-	}
-	elseif ( $fext == 'run' )
-	{
-	    echo "<button type='submit'" .
-		 " name='run'" .
-		 " value='$fname'>" .
-		 "Run</button>";
-	}
-	elseif ( $fext == '' )
-	{
-	    $re = '/^(generate|filter|monitor)'
-	        . "-$problem\$/";
-	    if ( preg_match ( $re, $fbase ) )
-		MAKE ( $fbase, '', 'txt' );
+	    if ( $action[0] == '.' )
+	    {
+		$target = "$fbase$action";
+		$s = '';
+		if ( $action == '.ftest' )
+		    $s = "style='background-color:"
+		       . "var(--hl-orange)'";
+		echo <<<EOT
+		<button type='submit' name='make'
+		   $s
+		   title='Make $target from $fname'
+		   value='$fname:$target'>
+		   &rArr;$action</button>
+EOT;
+	    }
+	    elseif ( $action == '+run+' )
+		echo <<<EOT
+		<button type='submit' name='run'
+		   title='Run $fname on Run Page'
+		   value='$fname'>Run</button>
+EOT;
+	    else
+		echo <<<EOT
+		<button type='submit' name='link'
+		  title='Link $action to $fname'
+		  value='$fname'>Link</button>
+EOT;
 	}
 	echo "<pre>  $fcomment</pre>";
 	echo "</td></tr>";
