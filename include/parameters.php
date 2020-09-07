@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Aug 20 04:31:31 EDT 2020
+// Date:    Mon Sep  7 07:03:18 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -138,10 +138,13 @@ $epm_filename_re =
     // base name or extension.
 
 $epm_parent_re =
-    '#^\.\./\.\./\.\./(projects/[^/]+/[^/]+)$#';
-    // Regular expression to target directory of
-    // +parent+ link.  The first match is the
-    // target directory relative to $epm_data.
+    '#^\.\./\.\./\.\./(projects/(([^/]+)/([^/]+)))$#';
+    // Regular expression matching target directory of
+    // +parent+ link.  The matches are:
+    //     [1]	projects/PROJECT/PROBLEM
+    //     [2]	PROJECT/PROBLEM
+    //     [3]	PROJECT
+    //     [4]	PROBLEM
 
 $epm_project_privs =
     ['owner','push-new','pull-new','re-pull',

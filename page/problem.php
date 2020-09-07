@@ -2,15 +2,15 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep  4 04:02:38 EDT 2020
+    // Date:	Mon Sep  7 06:39:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
     // they make no warranty and accept no liability
     // for EPM.
 
-    // Selects EPM user problem.  Displays and uploads
-    // problem files.
+    // Displays and uploads the files of an EPM problem,
+    // and makes files from other files using templates.
 
     if ( $_SERVER['REQUEST_METHOD'] == 'GET'
          &&
@@ -31,6 +31,30 @@
     if ( ! is_dir ( "$epm_data/$probdir" ) )
         exit ( "problem $problem no longer exists<br>" .
 	       "please close tab" );
+
+    // Session Data:
+    //
+    //    $order = & $_SESSION['EPM_PROBLEM'][$problem]
+    //					     ['ORDER']
+    //	      Problem sort order: one of:
+    //		extension
+    //		lexigraphical
+    //		recent
+    //
+    //	  $work = & $_SESSION['EPM_WORK'][$problem]
+    //		data for recent execution; see
+    //		include/epm_make.php
+    //
+    //	  $run = & $_SESSION['EPM_RUN'][$problem]
+    //		data for recent Run Page run; see
+    //		include/epm_make.php
+    //
+    //		// set when epm_make.php loaded.
+    //		// set when epm_make.php loaded.
+    //
+    //    $state (see index.php)
+    //		normal
+    //		running
 
     if ( ! isset ( $_SESSION['EPM_PROBLEM']
                             [$problem] ) )
@@ -60,19 +84,11 @@
 	$t = @readlink ( "$epm_data/$d" );
 	if ( $t === false )
 	    ERROR ( "cannot read link $d" );
-	$re = "#^\.\./\.\./\.\./projects/"
-	    . "([^/]+)/$problem\$#";
-	if ( ! preg_match ( $re, $t, $matches ) )
+	if ( ! preg_match ( $epm_parent_re,
+	                    $t, $matches ) )
 	    ERROR ( "link $d has bad target $t" );
-	$parent = $matches[1];
+	$parent = $matches[3];
     }
-
-    // The $_SESSION state particular to this page is:
-    //
-    //	   $work = & $_SESSION['EPM_WORK'][$problem]
-    //		// set when epm_make.php loaded.
-    //	   $run = & $_SESSION['EPM_RUN'][$problem]
-    //		// set when epm_make.php loaded.
 
     // Return DISPLAYABLE problem file names, sorted
     // most recent first, that are in the given
@@ -836,7 +852,7 @@ EOT;
     <tr>
     <td>
     <strong title='Login Name'>$lname</strong>
-    </td><td>
+    </td><td style='text-align:center'>
 
     <strong>Problem:</strong>&nbsp;
     <pre class='problem'>$problem</pre></b>
@@ -847,7 +863,31 @@ EOT;
 	<strong>(from project $parent)</strong>
 EOT;
     echo <<<EOT
-    </td><td>
+
+    </td><td style='text-align:right'>
+    <strong>Go To</strong>
+    <form method='GET'>
+    <input type='hidden'
+	   name= 'problem' value='$problem'>
+    <input type='hidden' name='id' value='$ID'>
+    <button type='submit'
+	    formaction='run.php'>
+	    Run</button>
+    <button type='submit'
+	    formaction='option.php'>
+	    Option</button>
+    </form>
+    <strong>Page</strong>
+    <pre>   </pre>
+    <button type='button' id='refresh'
+            onclick='location.replace ("$refresh")'>
+	&#8635;</button>
+    <button type='button'
+            onclick='HELP("problem-page")'>
+	?</button>
+    </td>
+    </tr><tr><td>
+    </td><td style='text-align:center'>
 EOT;
 
     if ( $rw )
@@ -873,28 +913,6 @@ EOT;
 	    onclick='VIEW("downloads/index.html")'
 	    title='$title'>
 	View Downloads</button>
-
-    </td><td>
-    <strong>Go To</strong>
-    <form method='GET'>
-    <input type='hidden'
-	   name= 'problem' value='$problem'>
-    <input type='hidden' name='id' value='$ID'>
-    <button type='submit'
-	    formaction='run.php'>
-	    Run</button>
-    <button type='submit'
-	    formaction='option.php'>
-	    Option</button>
-    </form>
-    <strong>Page</strong>
-    </td><td style='text-align:right'>
-    <button type='button' id='refresh'
-            onclick='location.replace ("$refresh")'>
-	&#8635;</button>
-    <button type='button'
-            onclick='HELP("problem-page")'>
-	?</button>
     </td>
     </tr></table>
     </div>
