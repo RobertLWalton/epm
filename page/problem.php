@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep  7 22:02:27 EDT 2020
+    // Date:	Mon Sep  7 22:27:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -686,12 +686,14 @@ EOT;
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
         $f = $_POST['run'];
-	if ( ! preg_match ( '/\.run$/', $f ) )
+	list ( $fextension, $fype, $factions, $ferror,
+	       $fdisplay, $fshow, $fcomment )
+	    = file_info ( $probdir, $f, true );
+	if ( ! in_array ( '+run+', $factions ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+	if ( isset ( $ferror ) )
+	    exit ( "someone has deleted $f: $ferror" );
 		 	    
-	$fnames = problem_file_names ( $probdir );
-	if ( ! in_array ( $f, $fnames, true ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
 	$d = "$probdir/+parent+";
 	$lock = NULL;
 	if ( is_dir ( "$epm_data/$d" ) )
