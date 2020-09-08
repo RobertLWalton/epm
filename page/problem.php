@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep  8 04:26:16 EDT 2020
+    // Date:	Tue Sep  8 17:05:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -54,6 +54,8 @@
     //    $state (see index.php)
     //		normal
     //		running
+    //		delete-problem (asking if problem should
+    //				be deleted)
 
     if ( ! isset ( $_SESSION['EPM_PROBLEM']
                             [$problem] ) )
@@ -428,9 +430,6 @@
     $make_ftest = NULL;
         // Set to ask if $make_ftest .ftest file should
 	// be made from .fout file.
-    $delete_problem = false;
-        // True to ask whether current problem is to be
-	// deleted.
 
     // NOTE: GETs with running executions that are
     // not $epm_page_init are rejected here.
@@ -558,16 +557,21 @@
         /* Do Nothing */;
     elseif ( isset ( $_POST['delete_problem'] ) )
     {
+        if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$prob = $_POST['delete_problem'];
 	if ( $prob != $problem )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$delete_problem = true;
+	$state = 'delete-problem';
     }
     elseif ( isset ( $_POST['delete_problem_yes'] ) )
     {
+        if ( $state != 'delete-problem' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$prob = $_POST['delete_problem_yes'];
 	if ( $prob != $problem )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+
 	$work = [];
 	$run = [];
 	exec ( "rm -rf $epm_data/$probdir" );
@@ -580,9 +584,12 @@ EOT;
     }
     elseif ( isset ( $_POST['delete_problem_no'] ) )
     {
+        if ( $state != 'delete-problem' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$prob = $_POST['delete_problem_no'];
 	if ( $prob != $problem )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+	$state = 'normal';
     }
     elseif ( isset ( $_POST['make'] ) )
     {
@@ -893,7 +900,7 @@ EOT;
 
 <?php 
 
-    if ( $delete_problem )
+    if ( $state == 'delete-problem' )
     {
         echo <<<EOT
 	<div class='notices'>
@@ -969,6 +976,7 @@ EOT;
     <table style='width:100%'>
     <tr>
     <td>
+
     <strong title='Login Name'>$lname</strong>
     </td><td style='text-align:center'>
 
@@ -984,6 +992,11 @@ EOT;
              . "&id=$ID";
     echo <<<EOT
     </td><td style='text-align:right'>
+EOT;
+    $v = ( $state == 'normal' ? ''
+    			      : 'visibility:hidden;' );
+    echo <<<EOT
+    <div style='display:inline;$v'>
     <strong>Go To</strong>
     <form method='GET'>
     <input type='hidden'
@@ -999,17 +1012,20 @@ EOT;
     <strong>Page</strong>
     <pre>   </pre>
     <button type='button' id='refresh'
-            onclick='location.replace ("$refresh")'>
+	    onclick='location.replace ("$refresh")'>
 	&#8635;</button>
+    </div>
+
     <button type='button'
             onclick='HELP("problem-page")'>
 	?</button>
     </td>
-    </tr><tr><td>
+    </tr>
+    <tr><td>
     </td><td style='text-align:center'>
 EOT;
 
-    if ( $rw )
+    if ( $rw && $state == 'normal' )
         echo <<<EOT
 	<form action='problem.php' method='POST'>
 	<input type='hidden'
@@ -1303,7 +1319,7 @@ EOT;
     </strong>
     </td>
 EOT;
-    if ( $rw )
+    if ( $rw && $state == 'normal' )
         echo <<<EOT
 	<td>
 	<form action='problem.php' method='POST'
@@ -1425,7 +1441,7 @@ EOT;
 	else
 	    echo "<td></td>";
 
-	if ( $rw )
+	if ( $rw && $state == 'normal' )
 	    echo <<<EOT
 	    <td><button type='button'
 		 id='button$count'
@@ -1438,36 +1454,38 @@ EOT;
         echo <<<EOT
 	<td colspan='100'>
 EOT;
-	if ( $rw ) foreach ( $factions as $action )
-	{
-	    if ( $action[0] == '.' )
+	if ( $rw && $state == 'normal' )
+	    foreach ( $factions as $action )
 	    {
-		$target = "$fbase$action";
-		$s = '';
-		if ( $action == '.ftest' )
-		    $s = "style='background-color:"
-		       . "var(--hl-orange)'";
-		echo <<<EOT
-		<button type='submit' name='make'
-		   $s
-		   title='Make $target from $fname'
-		   value='$fname:$action'>
-		   &rArr;$action</button>
+		if ( $action[0] == '.' )
+		{
+		    $target = "$fbase$action";
+		    $s = '';
+		    if ( $action == '.ftest' )
+			$s = "style='background-color:"
+			   . "var(--hl-orange)'";
+		    echo <<<EOT
+		    <button type='submit' name='make'
+		       $s
+		       title='Make $target from $fname'
+		       value='$fname:$action'>
+		       &rArr;$action</button>
+EOT;
+		}
+		elseif ( $action == '+run+' )
+		    echo <<<EOT
+		    <button type='submit' name='run'
+		       title='Run $fname on Run Page'
+		       value='$fname'>Run</button>
+EOT;
+		else
+		    echo <<<EOT
+		    <button type='submit' name='link'
+		      title='Link $action to $fname'
+		      value='$fname:$action'>
+		      Link</button>
 EOT;
 	    }
-	    elseif ( $action == '+run+' )
-		echo <<<EOT
-		<button type='submit' name='run'
-		   title='Run $fname on Run Page'
-		   value='$fname'>Run</button>
-EOT;
-	    else
-		echo <<<EOT
-		<button type='submit' name='link'
-		  title='Link $action to $fname'
-		  value='$fname:$action'>Link</button>
-EOT;
-	}
 	echo "<pre>  $fcomment</pre>";
 	echo "</td></tr>";
     }
