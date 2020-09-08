@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep  7 21:12:51 EDT 2020
+    // Date:	Mon Sep  7 22:02:27 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -164,18 +164,18 @@
     // 	    list ( FILE-EXTENSION,
     //		   FILE-TYPE,
     //		   FILE-ACTIONS,
+    //		   FILE-ERROR,
     //		   FILE-DISPLAY,
     //		   FILE-SHOW,
-    //		   FILE-COMMENT,
-    //		   FILE-ERROR )
+    //		   FILE-COMMENT )
     //
     // where FILE-EXTENSION if FEXT,
     //
     // FILE-TYPE is the $display_file_type of FEXT,
     //
     // FILE-ACTIONS is a list of actions that can
-    // be performed with FNAME, where the possible
-    // actions are represented by the strings:
+    //     be performed with FNAME, where the possible
+    //     actions are represented by the strings:
     //
     //		+run+	the Run action for .run files
     //		.DEXT   the =>.DEXT action to make
@@ -185,6 +185,18 @@
     //			to FNAME, where OTHER is any
     //			file name (therefore does not
     //			begin with + or .)
+    //
+    //     These actions are computed solely from FNAME,
+    //     and are not dependent upon whether the file
+    //     exists.
+    //
+    // FILE-ERROR is:
+    //     NULL if the file exists, including the case
+    //     where the file is a link to an existing file;
+    //     or is "FNAME no longer exists" if the file
+    //     does not exist and is not a link, or is
+    //     "FNAME is a dangling link" if the file is a
+    //     dangling link.
     //
     // FILE-DISPLAY is the contents of the file iff:
     //
@@ -218,22 +230,9 @@
     //     If the target does not exist, `(DANGLING)'
     //	   is further appended.
     //
-    // FILE-ERROR is:
-    //     NULL if the file exists, including the case
-    //     where the file is a link to an existing file;
-    //     or is "FNAME no longer exists" if the file
-    //     does not exist and is not a link, or is
-    //     "FNAME is a dangling link" if the file is a
-    //     dangling link.
-    //
-    // If FILE-DISPLAY is set to true, the element
-    //
-    //	  [$count, $fname, FILE-CONTENTS]
-    //
-    // is appended to $display_list.
-    //
-    // Note that here FILE-CONTENTS is truncated to a
-    // maximum of $epm_file_maxsize bytes.
+    // If $short is true, FILE-DISPLAY, FILE-SHOW, and
+    // FILE-COMMENT are not computed and returned
+    // as  NULL, false, '' respectively.
     //
     $max_in_comment_characters = 56;
     $max_display_lines = 40;
@@ -242,7 +241,7 @@
     $not_linkable_re = "/^($specials)\-$problem\$/";
     $link_re = "/^.+\-(($specials)-$problem)\$/";
     $txt_re = "/^($specials)-$problem\$/";
-    function file_info ( $dir, $fname )
+    function file_info ( $dir, $fname, $short = false )
     {
         global $epm_data, $problem, $parent,
 	       $display_file_type,
@@ -263,9 +262,10 @@
 	$fcontents = NULL;
 	$flines = NULL;
 	$factions = [];
+	$ferror = NULL;
 	$fdisplay = NULL;
 	$fshow = false;
-	$ferror = NULL;
+	$fcomment = '';
 
 	$dotfext = ( $fext == '' ? '' : ".$fext" );
 
@@ -310,6 +310,14 @@
 	        $factions[] = '.txt';
 	    break;
 	}
+
+	if ( $fsize === false )
+	    $ferror =
+	        ( is_link ( $f ) ?
+		  "$fname is a dangling link" :
+	          "$fname does not exist" );
+
+	if ( $short ) goto FILE_INFO_DONE;
 
 	// Compute $flines if possible.
 	//
@@ -394,21 +402,16 @@
 		$fcomment .= " (Link to default)";
 
 	    if ( $fsize === false )
-	    {
 	        $fcomment .=  " (DANGLING)";
-		$ferror = "$fname is a dangling link";
-	    }
 	}
 	elseif ( $fsize === false )
-	{
 	    $fcomment = "(DOES NOT EXIST)";
 	        // Overrides previous comment.
-	    $ferror = "$fname does not exist";
-	}
 
-	return [ $fext, $ftype, $factions,
-	         $fdisplay, $fshow, $fcomment,
-		 $ferror ];
+    FILE_INFO_DONE:
+
+	return [ $fext, $ftype, $factions, $ferror,
+	         $fdisplay, $fshow, $fcomment ];
     }
 
     // Data Set by GET and POST Requests:
@@ -1165,12 +1168,10 @@ EOT;
 		echo "<tr class='$class'>";
 		echo "<td" .
 		     " style='text-align:right'>";
-		list ( $fext, $ftype, $factions,
-		       $fdisplay, $fshow, $fcomment,
-		       $ferror )
-		    = file_info ( $workdir, $fname,
-				  $count,
-				  $display_list );
+		list ( $fext, $ftype,
+		       $factions, $ferror,
+		       $fdisplay, $fshow, $fcomment )
+		    = file_info ( $workdir, $fname );
 
 		if ( $fshow )
 		{
@@ -1338,11 +1339,9 @@ EOT;
 	++ $count;
 	echo "<tr class='$class'>";
 	echo "<td style='text-align:right'>";
-	list ( $fext, $ftype, $factions,
-	       $fdisplay, $fshow, $fcomment,
-	       $ferror )
-	    = file_info ( $probdir, $fname, $count,
-			  $display_list );
+	list ( $fext, $ftype, $factions, $ferror,
+	       $fdisplay, $fshow, $fcomment )
+	    = file_info ( $probdir, $fname );
 	$fbase = pathinfo ( $fname, 
 			    PATHINFO_FILENAME );
 
