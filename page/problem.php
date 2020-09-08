@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep  7 14:37:15 EDT 2020
+    // Date:	Mon Sep  7 21:12:51 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -166,7 +166,8 @@
     //		   FILE-ACTIONS,
     //		   FILE-DISPLAY,
     //		   FILE-SHOW,
-    //		   FILE-COMMENT )
+    //		   FILE-COMMENT,
+    //		   FILE-ERROR )
     //
     // where FILE-EXTENSION if FEXT,
     //
@@ -185,19 +186,21 @@
     //			file name (therefore does not
     //			begin with + or .)
     //
-    // FILE-DISPLAY is true iff
+    // FILE-DISPLAY is the contents of the file iff:
     //
-    // 	  the file is UTF8
+    // 	  the file exists and is UTF8
     //	  the file has <= $max_display_lines lines
     //	  the file is not displayed in FILE-COMMENT
     //
+    //    Otherwise FILE-DISPLAY is NULL.
+    //
     // FILE-SHOW is true iff
     //
-    //	  the file is UTF8 or PDF
+    //	  the file exists and is UTF8 or PDF
     //    the file has >= $min_display_lines if UTF8
     //	  the file is not displayed in FILE-COMMENT
     //
-    // and FILE-COMMENT is:
+    // FILE-COMMENT is:
     //
     //	   (Empty) iff the file is empty
     //     {FILE-CONTENTS} iff the file has 1 line
@@ -205,11 +208,23 @@
     //	       <= $max_in_comment_characters
     //	   (Lines ###) iff the above do not apply and
     //         the file is UTF8 with ### lines
+    //	   (DOES NOT EXIST) if the file does not
+    //         exist and is also not a link.
     //
     //     If in addition the file is linked,
-    //     `(Link to ...)' is appended, where ...
-    //	   is a project name, local file name, or
-    //     `default'.
+    //     `(Link to ...)' is appended if the target
+    //     exists, where ...  is a project name,
+    //     local file name, or otherwise `default'.
+    //     If the target does not exist, `(DANGLING)'
+    //	   is further appended.
+    //
+    // FILE-ERROR is:
+    //     NULL if the file exists, including the case
+    //     where the file is a link to an existing file;
+    //     or is "FNAME no longer exists" if the file
+    //     does not exist and is not a link, or is
+    //     "FNAME is a dangling link" if the file is a
+    //     dangling link.
     //
     // If FILE-DISPLAY is set to true, the element
     //
@@ -227,8 +242,7 @@
     $not_linkable_re = "/^($specials)\-$problem\$/";
     $link_re = "/^.+\-(($specials)-$problem)\$/";
     $txt_re = "/^($specials)-$problem\$/";
-    function file_info
-            ( $dir, $fname, $count, & $display_list )
+    function file_info ( $dir, $fname )
     {
         global $epm_data, $problem, $parent,
 	       $display_file_type,
@@ -249,8 +263,9 @@
 	$fcontents = NULL;
 	$flines = NULL;
 	$factions = [];
-	$fdisplay = false;
+	$fdisplay = NULL;
 	$fshow = false;
+	$ferror = NULL;
 
 	$dotfext = ( $fext == '' ? '' : ".$fext" );
 
@@ -296,6 +311,8 @@
 	    break;
 	}
 
+	// Compute $flines if possible.
+	//
 	if (    $ftype == 'utf8'
 	     && $fsize !== false )
 	{
@@ -310,6 +327,7 @@
 	    if ( $fexplode[$flines-1] == '' )
 	        -- $flines;
 	}
+
 	if ( $fsize !== false && $fsize == 0 )
 	    $fcomment = '(Empty)';
 	elseif ( $ftype == 'utf8' )
@@ -325,11 +343,7 @@
 	    {
 		$fcomment = "($flines Lines)";
 		if ( $flines <= $max_display_lines )
-		{
-		    $display_list[] =
-			[$count, $fname, $fcontents];
-		    $fdisplay = true;
-		}
+		    $fdisplay = $fcontents;
 		if ( $flines >= $min_display_lines )
 		    $fshow = true;
 	    }
@@ -378,10 +392,23 @@
 		$fcomment .= " (Link to $t)";
 	    else
 		$fcomment .= " (Link to default)";
+
+	    if ( $fsize === false )
+	    {
+	        $fcomment .=  " (DANGLING)";
+		$ferror = "$fname is a dangling link";
+	    }
+	}
+	elseif ( $fsize === false )
+	{
+	    $fcomment = "(DOES NOT EXIST)";
+	        // Overrides previous comment.
+	    $ferror = "$fname does not exist";
 	}
 
 	return [ $fext, $ftype, $factions,
-	         $fdisplay, $fshow, $fcomment ];
+	         $fdisplay, $fshow, $fcomment,
+		 $ferror ];
     }
 
     // Data Set by GET and POST Requests:
@@ -652,6 +679,9 @@ EOT;
     }
     elseif ( isset ( $_POST['run'] ) )
     {
+        if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	    
         $f = $_POST['run'];
 	if ( ! preg_match ( '/\.run$/', $f ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
@@ -1136,7 +1166,8 @@ EOT;
 		echo "<td" .
 		     " style='text-align:right'>";
 		list ( $fext, $ftype, $factions,
-		       $fdisplay, $fshow, $fcomment )
+		       $fdisplay, $fshow, $fcomment,
+		       $ferror )
 		    = file_info ( $workdir, $fname,
 				  $count,
 				  $display_list );
@@ -1166,8 +1197,10 @@ EOT;
 			</td>
 EOT;
 
-		if ( $fdisplay )
+		if ( isset ( $fdisplay ) )
 		{
+		    $display_list[] =
+		        [ $count, $fname, $fdisplay ];
 		    $display_map[$fname] =
 			"file{$count}_button";
 		    echo <<<EOT
@@ -1306,7 +1339,8 @@ EOT;
 	echo "<tr class='$class'>";
 	echo "<td style='text-align:right'>";
 	list ( $fext, $ftype, $factions,
-	       $fdisplay, $fshow, $fcomment )
+	       $fdisplay, $fshow, $fcomment,
+	       $ferror )
 	    = file_info ( $probdir, $fname, $count,
 			  $display_list );
 	$fbase = pathinfo ( $fname, 
@@ -1335,8 +1369,10 @@ EOT;
 		<pre id='file$count'>$fname</pre>
 		</td>
 EOT;
-	if ( $fdisplay )
+	if ( isset ( $fdisplay ) )
 	{
+	    $display_list[] =
+		[ $count, $fname, $fdisplay ];
 	    if ( ! $is_working && $kept_count > 0 )
 		$display_map[$fname] =
 		    "file{$count}_button";
