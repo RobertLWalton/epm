@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep  7 22:27:05 EDT 2020
+    // Date:	Tue Sep  8 02:54:06 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -169,9 +169,19 @@
     //		   FILE-SHOW,
     //		   FILE-COMMENT )
     //
-    // where FILE-EXTENSION if FEXT,
+    // where
     //
-    // FILE-TYPE is the $display_file_type of FEXT,
+    // FILE-EXTENSION is FEXT
+    //
+    // FILE-TYPE is the $display_file_type of FEXT
+    //
+    // FILE-ERROR is:
+    //     NULL if the file exists, including the case
+    //     where the file is a link to an existing file;
+    //     or is "FNAME no longer exists" if the file
+    //     does not exist and is not a link, or is
+    //     "FNAME is a dangling link" if the file is a
+    //     dangling link.
     //
     // FILE-ACTIONS is a list of actions that can
     //     be performed with FNAME, where the possible
@@ -186,17 +196,7 @@
     //			file name (therefore does not
     //			begin with + or .)
     //
-    //     These actions are computed solely from FNAME,
-    //     and are not dependent upon whether the file
-    //     exists.
-    //
-    // FILE-ERROR is:
-    //     NULL if the file exists, including the case
-    //     where the file is a link to an existing file;
-    //     or is "FNAME no longer exists" if the file
-    //     does not exist and is not a link, or is
-    //     "FNAME is a dangling link" if the file is a
-    //     dangling link.
+    //     Set to [] if FILE-ERROR is set.
     //
     // FILE-DISPLAY is the contents of the file iff:
     //
@@ -214,25 +214,30 @@
     //
     // FILE-COMMENT is:
     //
+    //	   'DANGLING LINK' if the file is a dangling
+    //	       link
+    //	   'DOES NOT EXIST' if the file does not
+    //         exist and is also not a dangling link
+    //
+    //     Otherwise:
+    //
     //	   (Empty) iff the file is empty
     //     {FILE-CONTENTS} iff the file has 1 line
     //         that after being right trimmed has
     //	       <= $max_in_comment_characters
     //	   (Lines ###) iff the above do not apply and
     //         the file is UTF8 with ### lines
-    //	   (DOES NOT EXIST) if the file does not
-    //         exist and is also not a link.
     //
-    //     If in addition the file is linked,
-    //     `(Link to ...)' is appended if the target
-    //     exists, where ...  is a project name,
-    //     local file name, or otherwise `default'.
-    //     If the target does not exist, `(DANGLING)'
-    //	   is further appended.
+    //     If in addition the file is linked and not
+    //     dangling, `(Link to ...)' is appended, where
+    //     ...  is a project name, local file name, or
+    //	   otherwise `default'.
     //
     // If $short is true, FILE-DISPLAY, FILE-SHOW, and
     // FILE-COMMENT are not computed and returned
-    // as  NULL, false, '' respectively.
+    // as  NULL, false, '' respectively.  Note that
+    // FILE-ACTIONS is computed but is [] if FILE-ERROR
+    // is set.
     //
     $max_in_comment_characters = 56;
     $max_display_lines = 40;
@@ -261,11 +266,25 @@
 	$fsize = @filesize ( $f );
 	$fcontents = NULL;
 	$flines = NULL;
-	$factions = [];
 	$ferror = NULL;
+	$factions = [];
 	$fdisplay = NULL;
 	$fshow = false;
 	$fcomment = '';
+
+	if ( $fsize === false )
+	{
+	    $ferror =
+	        ( is_link ( $f ) ?
+		  "$fname is a dangling link" :
+	          "$fname does not exist" );
+	    if ( ! $short )
+		$fcomment =
+		    ( is_link ( $f ) ?
+		      "DANGLING LINK" :
+		      "DOES NOT EXIST" );
+	    goto FILE_INFO_DONE;
+	}
 
 	$dotfext = ( $fext == '' ? '' : ".$fext" );
 
@@ -310,12 +329,6 @@
 	        $factions[] = '.txt';
 	    break;
 	}
-
-	if ( $fsize === false )
-	    $ferror =
-	        ( is_link ( $f ) ?
-		  "$fname is a dangling link" :
-	          "$fname does not exist" );
 
 	if ( $short ) goto FILE_INFO_DONE;
 
@@ -400,17 +413,11 @@
 		$fcomment .= " (Link to $t)";
 	    else
 		$fcomment .= " (Link to default)";
-
-	    if ( $fsize === false )
-	        $fcomment .=  " (DANGLING)";
 	}
-	elseif ( $fsize === false )
-	    $fcomment = "(DOES NOT EXIST)";
-	        // Overrides previous comment.
 
     FILE_INFO_DONE:
 
-	return [ $fext, $ftype, $factions, $ferror,
+	return [ $fext, $ftype, $ferror, $factions,
 	         $fdisplay, $fshow, $fcomment ];
     }
 
@@ -686,13 +693,13 @@ EOT;
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
         $f = $_POST['run'];
-	list ( $fextension, $fype, $factions, $ferror,
+	list ( $fextension, $fype, $ferror, $factions,
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $f, true );
-	if ( ! in_array ( '+run+', $factions ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
 	if ( isset ( $ferror ) )
 	    exit ( "someone has deleted $f: $ferror" );
+	if ( ! in_array ( '+run+', $factions ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 		 	    
 	$d = "$probdir/+parent+";
 	$lock = NULL;
@@ -1171,7 +1178,7 @@ EOT;
 		echo "<td" .
 		     " style='text-align:right'>";
 		list ( $fext, $ftype,
-		       $factions, $ferror,
+		       $ferror, $factions,
 		       $fdisplay, $fshow, $fcomment )
 		    = file_info ( $workdir, $fname );
 
@@ -1341,7 +1348,7 @@ EOT;
 	++ $count;
 	echo "<tr class='$class'>";
 	echo "<td style='text-align:right'>";
-	list ( $fext, $ftype, $factions, $ferror,
+	list ( $fext, $ftype, $ferror, $factions,
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $fname );
 	$fbase = pathinfo ( $fname, 
