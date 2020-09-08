@@ -595,6 +595,11 @@ EOT;
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	$fname = $matches[1];
 	$action = $matches[2];
+	if ( ! preg_match
+		   ( $epm_filename_re, $fname ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	if ( $action[0] != '.' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
 	list ( $fextension, $fype, $ferror, $factions,
 	       $fdisplay, $fshow, $fcomment )
@@ -670,34 +675,50 @@ EOT;
     }
     elseif ( isset ( $_POST['link'] ) )
     {
-        $to = $_POST['link'];
-	$fnames = problem_file_names ( $probdir );
-	if ( ! in_array ( $to, $fnames, true ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
-	$ext = pathinfo ( $to, PATHINFO_EXTENSION );
-	if ( ! in_array ( $ext, $linkable_ext,
-	                        true ) )
+        if ( $state != 'normal' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
-	$base = pathinfo ( $to, PATHINFO_FILENAME );
-	$from = "$problem";
-	$re = "/-(generate|filter|monitor)-$problem\$/";
-	if ( preg_match ( $re, $base, $matches ) )
-	    $from = "{$matches[1]}-$problem";
+        $lk = $_POST['link'];
+	if ( ! preg_match ( '/^([^:]+):([^:]+)$/', $lk,
+	                    $matches ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$fname = $matches[1];
+	$from = $matches[2];
+	if ( ! preg_match
+		   ( $epm_filename_re, $fname ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	if ( ! preg_match
+		   ( $epm_filename_re, $from ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	    
+	list ( $fextension, $fype, $ferror, $factions,
+	       $fdisplay, $fshow, $fcomment )
+	    = file_info ( $probdir, $fname, true );
+	if ( isset ( $ferror ) )
+	    exit ( "someone has deleted $fname:" .
+	           " $ferror" );
+	if ( ! in_array ( $from, $factions ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 
-	if ( in_array ( $ext, $executable_ext, true ) )
+	$base = pathinfo ( $from, PATHINFO_FILENAME );
+
+	// If file being linked to has executable
+	// extension, deleted all files with the same
+	// basename as the file being linked from and
+	// any executable extension.
+	//
+	if ( in_array ( $fext, $executable_ext ) )
 	    foreach ( $executable_ext as $uext )
 	    {
 		if ( $uext != '' ) $uext = ".$uext";
 		@unlink
-		    ( "$epm_data/$probdir/$from$uext" );
+		    ( "$epm_data/$probdir/$base$uext" );
 	    }
 
-	if ( $ext != '' ) $ext = ".$ext";
 	if ( ! symbolic_link
-	           ( $to,
-		     "$epm_data/$probdir/$from$ext" ) )
-	    ERROR ( "cannot link $from$ext to $to" );
+	           ( $fname,
+		     "$epm_data/$probdir/$from" ) )
+	    ERROR ( "cannot link $from to $fname" );
     }
     elseif ( isset ( $_POST['run'] ) )
     {
@@ -705,6 +726,8 @@ EOT;
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
         $f = $_POST['run'];
+	if ( ! preg_match ( $epm_filename_re, $f ) )
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	list ( $fextension, $fype, $ferror, $factions,
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $f, true );
@@ -1442,7 +1465,7 @@ EOT;
 		echo <<<EOT
 		<button type='submit' name='link'
 		  title='Link $action to $fname'
-		  value='$fname'>Link</button>
+		  value='$fname:$action'>Link</button>
 EOT;
 	}
 	echo "<pre>  $fcomment</pre>";
