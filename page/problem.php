@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep  8 02:54:06 EDT 2020
+    // Date:	Tue Sep  8 04:26:16 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -586,17 +586,29 @@ EOT;
     }
     elseif ( isset ( $_POST['make'] ) )
     {
+        if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
         $m = $_POST['make'];
 	if ( ! preg_match ( '/^([^:]+):([^:]+)$/', $m,
 	                    $matches ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$src = $matches[1];
-	$des = $matches[2];
-		 	    
-	$fnames = problem_file_names ( $probdir );
-	if ( ! in_array ( $src, $fnames, true ) )
+	$fname = $matches[1];
+	$action = $matches[2];
+	    
+	list ( $fextension, $fype, $ferror, $factions,
+	       $fdisplay, $fshow, $fcomment )
+	    = file_info ( $probdir, $fname, true );
+	if ( isset ( $ferror ) )
+	    exit ( "someone has deleted $fname:" .
+	           " $ferror" );
+	if ( ! in_array ( $action, $factions ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	if ( preg_match ( '/\.ftest$/', $des ) )
+
+	$fbase = pathinfo ( $fname, PATHINFO_FILENAME );
+	$des = "$fbase$action";
+		 	    
+	if ( $action == '.ftest' )
 	    $make_ftest = $des;
 	else
 	{
@@ -605,7 +617,7 @@ EOT;
 	    if ( is_dir ( "$epm_data/$d" ) )
 	        $lock = LOCK ( $d, LOCK_SH );
 	    start_make_file
-		( $src, $des, NULL /* no condition */,
+		( $fname, $des, NULL /* no condition */,
 		  true, $lock, "$probdir/+work+",
 		  NULL, NULL /* no upload */,
 		  $errors );
@@ -1316,17 +1328,6 @@ EOT;
     <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='delete_files' value=''>
 EOT;
-    function MAKE ( $fbase, $sext, $dext )
-    {
-	if ( $sext != '' ) $sext = ".$sext";
-	if ( $dext != '' ) $dext = ".$dext";
-	echo "<button type='submit'" .
-	     " name='make'" .
-	     " title='Make $fbase$dext" .
-	     " from $fbase$sext'" .
-	     " value='$fbase$sext:$fbase$dext'>" .
-	     "&rArr;$dext</button>";
-    }
     echo "<table style='display:block'>";
     foreach ( problem_file_names( $probdir )
 	      as $fname )
@@ -1427,7 +1428,7 @@ EOT;
 		<button type='submit' name='make'
 		   $s
 		   title='Make $target from $fname'
-		   value='$fname:$target'>
+		   value='$fname:$action'>
 		   &rArr;$action</button>
 EOT;
 	    }
