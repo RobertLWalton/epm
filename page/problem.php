@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep  8 17:05:32 EDT 2020
+    // Date:	Tue Sep  8 21:58:57 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -56,6 +56,13 @@
     //		running
     //		delete-problem (asking if problem should
     //				be deleted)
+    //		make-ftest (asking if XXXX.ftest should
+    //			    be made from XXXX.sout )
+    //
+    //    $data['FTEST']
+    //		[$src,$des] for make of $src to $des
+    //          where the latter has extension .ftest;
+    //		only valid when $state == 'make-ftest'
 
     if ( ! isset ( $_SESSION['EPM_PROBLEM']
                             [$problem] ) )
@@ -427,9 +434,6 @@
     //
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $make_ftest = NULL;
-        // Set to ask if $make_ftest .ftest file should
-	// be made from .fout file.
 
     // NOTE: GETs with running executions that are
     // not $epm_page_init are rejected here.
@@ -621,7 +625,10 @@ EOT;
 	$des = "$fbase$action";
 		 	    
 	if ( $action == '.ftest' )
-	    $make_ftest = $des;
+	{
+	    $state = 'make-ftest';
+	    $data['FTEST'] = [ $fname, $des ];
+	}
 	else
 	{
 	    $d = "$probdir/+parent+";
@@ -637,17 +644,11 @@ EOT;
     }
     elseif ( isset ( $_POST['make_ftest_yes'] ) )
     {
-        $m = $_POST['make_ftest_yes'];
-	$base = pathinfo ( $m, PATHINFO_FILENAME );
-	$ext = pathinfo ( $m, PATHINFO_EXTENSION );
-	if ( $ext != 'ftest' )
+        if ( $state != 'make-ftest' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$src = "$base.fout";
-	$des = "$base.ftest";
-		 	    
-	$fnames = problem_file_names ( $probdir );
-	if ( ! in_array ( $src, $fnames, true ) )
-	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	list ( $src, $des ) = $data['FTEST'];
+
 	$d = "$probdir/+parent+";
 	$lock = NULL;
 	if ( is_dir ( "$epm_data/$d" ) )
@@ -657,10 +658,15 @@ EOT;
 	      true, $lock, "$probdir/+work+",
 	      NULL, NULL /* no upload */,
 	      $errors );
+
+	$state = 'normal';
     }
     elseif ( isset ( $_POST['make_ftest_no'] ) )
     {
-	// Do nothing.
+        if ( $state != 'make-ftest' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+	$state = 'normal';
     }
     elseif ( isset ( $_POST['upload'] ) )
     {
@@ -924,11 +930,9 @@ EOT;
 	</form></div>
 EOT;
     }
-    else if ( isset ( $make_ftest ) )
+    else if ( $state == 'make-ftest' )
     {
-        $fout = pathinfo ( $make_ftest,
-	                   PATHINFO_FILENAME )
-	      . ".fout";
+	list ( $src, $des ) = $data['FTEST'];
 	echo <<<EOT
 	<div class='notices'>
 	<form method='POST'
@@ -936,18 +940,16 @@ EOT;
 	<input type='hidden'
 	       name= 'problem' value='$problem'>
 	<input type='hidden' name='id' value='$ID'>
-	Do you really want to copy $fout to
-	       $make_ftest (this will force score
+	Do you really want to copy $src to
+	       $des (this will force score
 	       to be `Completely Correct')?
 	<pre>   </pre>
 	<button type='submit'
-	        name='make_ftest_yes'
-	        value='$make_ftest'>
+	        name='make_ftest_yes'>
 	     YES</button>
 	<pre>   </pre>
 	<button type='submit'
-	        name='make_ftest_no'
-	        value='$make_ftest'>
+	        name='make_ftest_no'>
 	     NO</button>
 	</form></div>
 EOT;
@@ -1057,7 +1059,8 @@ EOT;
 	       'extension' => '(extension order)']
 	      as $key => $label )
     {
-	$selected = ( $key == $order ? 'selected' : '' );
+	$selected =
+	    ( $key == $order ? 'selected' : '' );
 	$order_options .=
 	    "<option value='$key' $selected>" .
 	    "$label</option>";
