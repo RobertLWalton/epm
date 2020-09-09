@@ -49,7 +49,6 @@
     header ( 'Content-Transfer-Encoding: binary' );
     header ( 'Content-Length: ' .
              filesize ( "$epm_data/$f" ) );
-    header ( 'Accept-Ranges: bytes' );
     @readfile ( "$epm_data/$f" );
 
 ?>

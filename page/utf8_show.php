@@ -2,7 +2,7 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Sep  9 15:51:43 EDT 2020
+    // Date:	Wed Sep  9 17:10:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -14,8 +14,7 @@
     // relative to problem directory.
     //
     // Otherwise show the UTF-8 file $_GET['filename']
-    // that is in the $epm_home/pages/downloads
-    // directory.
+    // that is in the $epm_home/downloads directory.
     //
     // Check that file exists and names are properly
     // formatted.
@@ -100,7 +99,7 @@
 	    exit ( "UNACCEPTABLE HTTP POST: UTF8" );
 	$title = "$fname";
 
-	$f = "page/downloads/$filename";
+	$f = "downloads/$filename";
 	if ( ! is_readable ( "$epm_home/$f" ) )
 	    exit ( "UNACCEPTABLE HTTP POST: UTF8" );
 
