@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep  8 21:58:57 EDT 2020
+    // Date:	Wed Sep  9 01:09:24 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -53,7 +53,7 @@
     //
     //    $state (see index.php)
     //		normal
-    //		running
+    //		executing (commands)
     //		delete-problem (asking if problem should
     //				be deleted)
     //		make-ftest (asking if XXXX.ftest should
@@ -442,7 +442,7 @@
     {
         if ( $work_executing || $run_executing )
 	{
-	    if ( ! $epm_page_init )
+	    if ( ! isset ( $epm_ID_init ) )
 		exit ( "UNACCEPTABLE HTTP POST" );
 
 	    if ( count ( $warnings ) > 0 )
@@ -505,14 +505,17 @@
     //
     if ( $epm_method != 'POST' ) /* Do Nothing */;
     // xhttp posts are first and are done if ! $rw
-    elseif ( isset ( $_POST['reload'] )
-             &&
-	     isset ( $work['BASE'] ) )
+    elseif ( isset ( $_POST['reload'] ) )
     {
-	/* Do Nothing */
+        if ( $state != 'executing' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	$state = 'normal';
     }
     elseif ( isset ( $_POST['update'] ) )
     {
+        if ( $state != 'executing' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
 	$count = 0;
 	echo "ID $ID\n";
 	$r = update_work_results ( 0 );
@@ -549,6 +552,10 @@
     }
     elseif ( isset ( $_POST['order'] ) )
     {
+        if ( $state == 'executing' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	    // Note: OK if NOT executing.
+
         $new_order = $_POST['order'];
 	if ( ! in_array ( $new_order, ['lexical',
 	                               'recent',
@@ -640,6 +647,7 @@ EOT;
 		  true, $lock, "$probdir/+work+",
 		  NULL, NULL /* no upload */,
 		  $errors );
+	    $state = 'executing';
 	}
     }
     elseif ( isset ( $_POST['make_ftest_yes'] ) )
@@ -659,7 +667,7 @@ EOT;
 	      NULL, NULL /* no upload */,
 	      $errors );
 
-	$state = 'normal';
+	$state = 'executing';
     }
     elseif ( isset ( $_POST['make_ftest_no'] ) )
     {
@@ -670,6 +678,9 @@ EOT;
     }
     elseif ( isset ( $_POST['upload'] ) )
     {
+        if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
 	if ( isset ( $_FILES['uploaded_file']
 	                     ['name'] ) )
 	{
@@ -767,6 +778,10 @@ EOT;
     }
     elseif ( isset ( $_POST['delete_working'] ) )
     {
+        if ( $state == 'executing' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	    // Note: OK if NOT executing.
+
         if ( $work['DIR'] )
 	{
 	    cleanup_dir ( $work['DIR'], $warnings );
@@ -780,10 +795,13 @@ EOT;
     else
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
-    if ( isset ( $work['CONTROL'] )
+    if ( $state == 'executing'
          &&
 	 update_work_results() !== true )
+    {
         finish_make_file ( $warnings, $errors );
+	$state = 'normal';
+    }
 
 ?>
 
@@ -1092,7 +1110,7 @@ EOT;
 	     && $result == ['D',0] )
 	    $r = 'commands succeeded: ';
 	elseif ( $result === true )
-	    $r = 'commands still running';
+	    $r = 'commands still executing';
 		// Should never happen as 'update'
 		// POST exits above.
 	else
@@ -1723,16 +1741,11 @@ EOT;
 	xhttp.send ( data );
     }
     <?php
-	if ( isset ( $problem )
-	     &&
-	     isset ( $work['RESULT'] ) )
+	if ( $state == 'executing' )
 	{
-	    $r = $work['RESULT'];
-	    if ( $r === true )
-		echo "REQUEST_UPDATE();";
-	    if ( ! is_array ( $r ) || $r != ['D',0] )
-		 echo "document.getElementById" .
-		      "('commands_button').click();";
+	    echo "REQUEST_UPDATE();";
+	    echo "document.getElementById" .
+		 "('commands_button').click();";
 	}
     ?>
 
