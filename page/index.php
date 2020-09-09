@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Sep  5 01:56:30 EDT 2020
+// Date:    Wed Sep  9 10:26:14 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -453,8 +453,8 @@ function REFRESH ( event )
 //
 function AUX_WINDOW ( name, page, x, y, w, h )
 {
-    if ( x < 0 ) x += screen.width;
-    if ( y < 0 ) y += screen.height;
+    if ( x < 0 ) x += screen.availWidth;
+    if ( y < 0 ) y += screen.availHeight;
     window.open
 	( '$epm_root' + '/page/' + page, name,
 	  'height=' + h + 'px,' +
@@ -477,6 +477,17 @@ function VIEW ( page )
 {
     AUX_WINDOW ( '+view+', page,
 		 -1200, -800, 1200, 800 );
+}
+// Launches show windows in lower right corner offset by
+// increasing amounts.
+//
+var show_offset = 0;
+function SHOW ( name, page )
+{
+    show_offset += 30;
+    AUX_WINDOW ( name, page,
+		 -1200 - show_offset,
+		 -800  - show_offset, 1200, 800 );
 }
 </script>
 EOT;

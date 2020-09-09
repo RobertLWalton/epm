@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Sep  9 01:09:24 EDT 2020
+    // Date:	Wed Sep  9 10:27:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -854,12 +854,13 @@ EOT;
     var problem = '<?php echo $problem; ?>';
 
     function NEW_WINDOW ( page, filename ) {
+	var name = problem + '/' + filename;
 	var src = page
 	        + '?problem='
 	        + encodeURIComponent ( problem )
 		+ '&filename='
 		+ encodeURIComponent ( filename );
-	VIEW ( src );
+	SHOW ( name, src );
     }
 
     function TOGGLE_BODY ( name, thing )
