@@ -2,15 +2,23 @@
 
     // File:	utf8_show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug 13 02:34:28 EDT 2020
+    // Date:	Wed Sep  9 15:51:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
     // they make no warranty and accept no liability
     // for EPM.
 
-    // Show the UTF-8 file $_GET['filename'].
-    // Filename is relative to problem directory.
+    // If $_GET['problem'] is set, show the UTF-8 file
+    // $_GET['filename'], where there filename is
+    // relative to problem directory.
+    //
+    // Otherwise show the UTF-8 file $_GET['filename']
+    // that is in the $epm_home/pages/downloads
+    // directory.
+    //
+    // Check that file exists and names are properly
+    // formatted.
 
 ?>
 
@@ -42,7 +50,6 @@
 <?php
 
     $epm_page_type = '+no-post+';
-
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
@@ -50,40 +57,58 @@
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
 	       $epm_method );
-    elseif ( ! isset ( $_SESSION['EPM_AID'] ) )
-	exit ( "ACCESS: illegal GET to utf8_show.php" );
-    elseif ( ! isset ( $_GET['problem'] ) )
-	exit ( "ACCESS: illegal GET to utf8_show.php" );
     elseif ( ! isset ( $_GET['filename'] ) )
-	exit ( "ACCESS: illegal GET to utf8_show.php" );
+	exit ( "UNACCEPTABLE HTTP POST: UTF8" );
 
-    $aid = $_SESSION['EPM_AID'];
-    $problem = $_GET['problem'];
-    $probdir = "accounts/$aid/$problem";
     $filename = $_GET['filename'];
     $ext = pathinfo ( $filename, PATHINFO_EXTENSION );
+    $fname = pathinfo ( $filename, PATHINFO_BASENAME );
+    $fdir = pathinfo ( $filename, PATHINFO_DIRNAME );
+
     if ( ! isset ( $display_file_type[$ext] )
          ||
 	 $display_file_type[$ext] != 'utf8' )
-        exit ( "ACCESS: illegal GET to utf8_show.php" );
+	exit ( "UNACCEPTABLE HTTP POST: UTF8" );
+    if ( ! preg_match ( $epm_filename_re, $filename ) )
+	exit ( "UNACCEPTABLE HTTP POST: UTF8" );
 
-    $f = "$probdir/$filename";
-    if ( ! is_readable ( "$epm_data/$f" ) )
-        exit ( "ACCESS: illegal GET to utf8_show.php" );
+    if ( isset ( $_GET['problem'] ) )
+    {
+	if ( $fdir == '.' )
+	    $title = "$fname";
+	elseif ( $fdir == '+work+' )
+	    $title = "[working directory]$fname";
+	else
+	    exit ( "UNACCEPTABLE HTTP POST: UTF8" );
 
-    $fbase = pathinfo ( $filename, PATHINFO_BASENAME );
-    $fdir = pathinfo ( $filename, PATHINFO_DIRNAME );
-    if ( $fdir == '.' )
-	$title = "$fbase";
-    elseif ( $fdir == '+work+' )
-	$title = "[working directory]$fbase";
+	$problem = $_GET['problem'];
+	if ( ! preg_match ( $epm_name_re, $problem ) )
+	    exit ( "UNACCEPTABLE HTTP POST: UTF8" );
+
+	$f = "accounts/$aid/$problem/$filename";
+	if ( ! is_readable ( "$epm_data/$f" ) )
+	    exit ( "UNACCEPTABLE HTTP POST: UTF8" );
+
+	$c = @file_get_contents ( "$epm_data/$f" );
+	if ( $c === false )
+	    exit ( "SYSTEM ERROR: cannot read" .
+	           " readable $f" );
+    }
     else
-        exit ( "ACCESS: illegal GET to utf8_show.php" );
+    {
+        if ( $fdir != '.' )
+	    exit ( "UNACCEPTABLE HTTP POST: UTF8" );
+	$title = "$fname";
 
-    $c = @file_get_contents ( "$epm_data/$f" );
-    if ( $c === false )
-	exit
-	    ( "SYSTEM ERROR: cannot read readable $f" );
+	$f = "page/downloads/$filename";
+	if ( ! is_readable ( "$epm_home/$f" ) )
+	    exit ( "UNACCEPTABLE HTTP POST: UTF8" );
+
+	$c = @file_get_contents ( "$epm_home/$f" );
+	if ( $c === false )
+	    exit ( "SYSTEM ERROR: cannot read" .
+	           " readable $f" );
+    }
 
     $lines = explode ( "\n", $c );
     if ( array_slice ( $lines, -1, 1 ) == [""] )

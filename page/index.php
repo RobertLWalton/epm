@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Sep  9 10:26:14 EDT 2020
+// Date:    Wed Sep  9 15:57:28 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -485,6 +485,8 @@ var show_offset = 0;
 function SHOW ( name, page )
 {
     show_offset += 30;
+    if ( show_offset >= 5 * 30 )
+        show_offset -= 4 * 30 - 10;
     AUX_WINDOW ( name, page,
 		 -1200 - show_offset,
 		 -800  - show_offset, 1200, 800 );
