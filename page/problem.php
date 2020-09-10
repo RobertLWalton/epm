@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Sep  9 10:27:26 EDT 2020
+    // Date:	Thu Sep 10 15:44:08 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -847,16 +847,51 @@ EOT;
     tr.show {
         background-color: var(--bg-yellow);
     }
+    pre.downloadable {
+	border: 1px black solid;
+	padding: 2px 4px;
+    }
 
 </style>
 
 <script>
     var problem = '<?php echo $problem; ?>';
 
-    function NEW_WINDOW ( page, filename ) {
+    var controls_down = 0;
+	// Non-zero if some control key is down.
+
+    function KEYDOWN ( event )
+    {
+	if ( event.code == 'ControlLeft'
+	     ||
+	     event.code == 'ControlRight' )
+	    ++ controls_down;
+    }
+
+    function KEYUP ( event )
+    {
+	if ( event.code == 'ControlLeft'
+	     ||
+	     event.code == 'ControlRight' )
+	    -- controls_down;
+    }
+
+    window.addEventListener ( 'keydown', KEYDOWN );
+    window.addEventListener ( 'keyup', KEYUP );
+
+    function LOOK ( filename, showable = true ) {
+	if ( ! showable && controls_down == 0 )
+	    return;
+
 	var name = problem + '/' + filename;
+	var disposition = 'show';
+	if ( controls_down != 0 )
+	{
+	    name = '_blank';
+	    disposition = 'download';
+	}
 	var src = 'look.php'
-	        + '?disposition=show'
+	        + '?disposition=' + disposition
 	        + '&location='
 	        + encodeURIComponent ( problem )
 		+ '&filename='
@@ -1256,6 +1291,11 @@ EOT;
 		       $fdisplay, $fshow, $fcomment )
 		    = file_info ( $workdir, $fname );
 
+		$downloadable = in_array
+		    ( $ftype, ['utf8','pdf'] );
+		$title = "Show $fname at Right or"
+		       . " Download $fname";
+
 		if ( $fshow )
 		{
 		    $show_map[$fname] = "show$count";
@@ -1264,21 +1304,26 @@ EOT;
 		    echo <<<EOT
 			<button type='button'
 			   id='show$count'
-			   title=
-			     'Show $fname at Right'
-			   onclick='NEW_WINDOW
-			      ("$fpage",
-			       "+work+/$fname")'>
+			   title='$title'
+			   onclick='LOOK
+			       ("+work+/$fname")'>
 			 <pre id='file$count'
 			     >$fname</pre>
 			 </button></td>
 EOT;
 		}
+		elseif ( $downloadable )
+		    echo <<<EOT
+		     <pre class='downloadable'
+		          title='Download $fname'
+			  onclick='LOOK
+			       ("+work+/$fname",
+			        false)'>$fname</pre>
+				</td>
+EOT;
 		else
 		    echo <<<EOT
-			<pre id='file$count'
-			    >$fname</pre>
-			</td>
+		    <pre>$fname</pre></td>
 EOT;
 
 		if ( isset ( $fdisplay ) )
@@ -1417,6 +1462,11 @@ EOT;
 	$fbase = pathinfo ( $fname, 
 			    PATHINFO_FILENAME );
 
+	$downloadable = in_array
+	    ( $ftype, ['utf8','pdf'] );
+	$title = "Show $fname at Right or"
+	       . " Download $fname";
+
 	if ( $fshow )
 	{
 	    if ( ! $is_working && $kept_count > 0 )
@@ -1427,18 +1477,22 @@ EOT;
 	    echo <<<EOT
 		<button type='button'
 		   id='show$count'
-		   title='Show $fname in Window at
-			  Right'
-		   onclick='NEW_WINDOW
-		      ("$fpage","$fname")'>
+		   title='$title'
+		   onclick='LOOK ("$fname")'>
 		 <pre id='file$count'>$fname</pre>
 		 </button></td>
 EOT;
 	}
+	elseif ( $downloadable )
+	    echo <<<EOT
+	     <pre class='downloadable'
+		  title='Download $fname'
+		  onclick='LOOK ("$fname",false)'
+		  >$fname</pre></td>
+EOT;
 	else
 	    echo <<<EOT
-		<pre id='file$count'>$fname</pre>
-		</td>
+	    <pre>$fname</pre></td>
 EOT;
 	if ( isset ( $fdisplay ) )
 	{

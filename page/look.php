@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 11:42:22 EDT 2020
+    // Date:	Thu Sep 10 15:28:24 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -132,7 +132,7 @@
 	if ( $ftype == 'tgz' )
 	     exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
 
-	if ( ! in_array ( $fdir, ['.','+work'] ) )
+	if ( ! in_array ( $fdir, ['.','+work+'] ) )
 	     exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
 
 	$f .= "/$filename";
