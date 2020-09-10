@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 15:28:24 EDT 2020
+    // Date:	Thu Sep 10 16:41:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -24,7 +24,7 @@
     //				    +work+/FILENAME
     //
     //		+home+		    downloads/FILENAME
-    //				    document/FILENAME
+    //				    documents/FILENAME
     //
     //		+temp+		    FILENAME
     //
@@ -34,7 +34,7 @@
     // except that for +temp+ FILENAME may have the
     // extension .tgz.
     // 
-    // In document/FILENAME only .pdf files are allowed
+    // In documents/FILENAME only .pdf files are allowed
     // and disposition must be 'show'.
     //
     // For +temp+, the the file itself is in

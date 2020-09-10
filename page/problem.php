@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 15:44:08 EDT 2020
+    // Date:	Thu Sep 10 17:26:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1100,7 +1100,9 @@ EOT;
            . ' and templates';
     echo <<<EOT
     <button type='button'
-	    onclick='VIEW("downloads/index.html")'
+	    onclick='AUX_WINDOW("+downloads+",
+	                        "downloads.php",
+				-600, 0, 600, 400 )'
 	    title='$title'>
 	View Downloads</button>
     </td>
