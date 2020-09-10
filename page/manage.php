@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep  4 17:22:58 EDT 2020
+    // Date:	Thu Sep 10 18:03:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -463,16 +463,16 @@ EOT;
 
     if ( isset ( $download ) )
     {
-        $filename = rawurlencode ( $download );
-	$content_type = rawurlencode
-	    ( 'application/x-gzip' );
         echo <<<EOT
 	<script>
 	window.open
-	    ( '$epm_root/page/download.php' +
-	      '?filename=$filename&' +
-	      'content-type=$content_type',
-	      '+download+' );
+	    ( 'look.php' +
+	      '?disposition=download' +
+	      '&location=' +
+	      encodeURIComponent ( '+temp+' ) +
+	      '&filename=' +
+	      encodeURIComponent ( '$download' ),
+	      '_blank' );
 	</script>
 EOT;
     }
