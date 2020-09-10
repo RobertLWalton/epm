@@ -855,8 +855,9 @@ EOT;
 
     function NEW_WINDOW ( page, filename ) {
 	var name = problem + '/' + filename;
-	var src = page
-	        + '?problem='
+	var src = 'look.php'
+	        + '?disposition=show'
+	        + '&location='
 	        + encodeURIComponent ( problem )
 		+ '&filename='
 		+ encodeURIComponent ( filename );

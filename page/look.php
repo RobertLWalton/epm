@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 03:53:59 EDT 2020
+    // Date:	Thu Sep 10 11:42:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -47,11 +47,7 @@
     // The file to be displayed or downloaded must
     // be readable.
 
-?>
-
-<?php
-
-    $epm_page_type = '+no-post+';
+    $epm_page_type = '+download+';
     require __DIR__ . '/index.php';
 
     // require "$epm_home/include/debug_info.php";
@@ -63,13 +59,13 @@
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
 	       $epm_method );
     elseif ( ! isset ( $_GET['disposition'] ) )
-	exit ( "UNACCEPTABLE HTTP POST: UTF8" );
+	exit ( "UNACCEPTABLE HTTP POST" );
     elseif ( ! isset ( $_GET['location'] ) )
-	exit ( "UNACCEPTABLE HTTP POST: UTF8" );
+	exit ( "UNACCEPTABLE HTTP POST" );
     elseif ( ! isset ( $_GET['filename'] ) )
-	exit ( "UNACCEPTABLE HTTP POST: UTF8" );
+	exit ( "UNACCEPTABLE HTTP POST" );
 
-    $dispostion = $_GET['disposition'];
+    $disposition = $_GET['disposition'];
     $location   = $_GET['location'];
     $filename   = $_GET['filename'];
 
@@ -77,23 +73,25 @@
                                      'download'] ) )
 	exit ( "UNACCEPTABLE HTTP POST: DISPOSITION" );
 
-    $ext = pathinfo ( $filename, PATHINFO_EXTENSION );
+    $fext = pathinfo ( $filename, PATHINFO_EXTENSION );
     $fname = pathinfo ( $filename, PATHINFO_BASENAME );
     $fdir = pathinfo ( $filename, PATHINFO_DIRNAME );
 
     if ( ! preg_match ( $epm_filename_re, $fname ) )
 	exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
 
-    $ftype = ( isset ( $display_file_type[$fext] ) ?
-               $display_file_type[$fext] :
-	       $fext == 'tgz' ? 'tgz' : '' );
+    $ftype = '';
+    if ( isset ( $display_file_type[$fext] ) )
+       $ftype = $display_file_type[$fext];
+    elseif ( $fext == 'tgz' )
+       $ftype = 'tgz';
     if ( ! in_array ( $ftype, ['utf8','pdf','tgz'] ) )
 	exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
 
     if ( $location == '+temp+' )
     {
         if ( $disposition != 'download' )
-	    exit ( "UNACCEPTABLE HTTP POST:"
+	    exit ( "UNACCEPTABLE HTTP POST:" .
 	           " DISPOSITION" );
         if ( $fdir != '.' )
 	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
@@ -109,12 +107,14 @@
         if ( $fdir == 'documents' )
 	{
 	    if ( $ftype != 'pdf' )
-		exit ( "UNACCEPTABLE HTTP POST:"
+		exit ( "UNACCEPTABLE HTTP POST:" .
 		       " FILENAME" );
-	    if ( $dispostion != 'show' )
-		exit ( "UNACCEPTABLE HTTP POST:"
+	    if ( $disposition != 'show' )
+		exit ( "UNACCEPTABLE HTTP POST:" .
 		       " DISPLOSITION" );
 	}
+        elseif ( $fdir != 'downloads' )
+	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
 
         $d = $epm_home;
 	$f = $filename;
@@ -160,9 +160,15 @@
 	header ( "Content-Transfer-Encoding: binary" );
 	header ( "Content-Length: $fsize" );
 	$r = @readfile ( "$d/$f" );
+	if ( $r === false )
 	    ERROR ( "cannot read readable $f" );
-	$r = @unlink ( "$d/$f" );
-	    ERROR ( "cannot unlink $f" );
+
+	if ( $location == '+temp+' )
+	{
+	    $r = @unlink ( "$d/$f" );
+	    if ( $r === false )
+		ERROR ( "cannot unlink $f" );
+	}
 	exit;
     }
     elseif ( $ftype == 'pdf' )
@@ -173,6 +179,7 @@
 	header ( 'Content-Transfer-Encoding: binary' );
 	header ( "Content-Length: $fsize" );
 	$r = @readfile ( "$d/$f" );
+	if ( $r === false )
 	    ERROR ( "cannot read readable $f" );
 	exit;
     }
