@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep 11 06:21:35 EDT 2020
+    // Date:	Fri Sep 11 07:06:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -52,7 +52,7 @@
     //	    problem=PROJECT:PROBLEM
     //		Select problem in project.
     //
-    //	    submit    value=FILE   warn={,no,yes}
+    //	    update=FILE    warning={,no,yes}
     //		Replace +priv+ file for selected project
     //		or problem if privileges allow.
     //
@@ -63,7 +63,7 @@
     //		Download selected project or problem
     //		if privileges allow.
     //
-    //	    move=NEW_PROJECT   warn={,no,yes}
+    //	    move=NEW_PROJECT   warning={,no,yes}
     //		Move PROJECT PROBLEM to NEW_PROJECT
 
     $epm_page_type = '+main+';
@@ -247,85 +247,34 @@
 	         &&
 		 $_POST['warning'] == 'no' )
 	    /* do nothing */;
-        elseif ( isset ( $_POST['problem-priv'] ) )
+        elseif ( isset ( $_POST['update'] ) )
 	{
 	    if ( ! isset ( $_POST['warning'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( ! isset ( $problem ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( ! isset ( $project ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
-   	    $edited_contents = $_POST['problem-priv'];
+   	    $edited_contents = $_POST['update'];
 	    if ( trim ( $edited_contents ) == '' )
 	        $edited_contents = " \n";
    	    $warn = $_POST['warning'];
-	    check_problem_priv
-	        ( $pmap, $project, $problem,
-		  $edited_contents, $errors );
-	    if ( count ( $errors ) == 0 )
-	    {
-		$is_owner = ( isset ( $pmap['owner'] )
-		              &&
-			      $pmap['owner'] == '+' );
-		if ( $is_owner || $warn == 'yes' )
-		{
-		    $f = "/projects/$project/$problem/"
-		       . "+priv+";
-		    $r = ATOMIC_WRITE
-		        ( "$epm_data/$f",
-			  $edited_contents );
-		    if ( $r === false )
-		        ERROR ( "cannot write $f" );
-
-		    $time = @filemtime
-		        ( "$epm_data/$f" );
-		    if ( $time === false )
-			ERROR ( "cannot stat $f" );
-		    $time = strftime
-		        ( $epm_time_format, $time );
-		    $action = "$time $aid update"
-		            . " $project $problem"
-			    . " privileges"
-			    . PHP_EOL;
-
-		    $f = "projects/$project/+actions+";
-		    $r = @file_put_contents
-			( "$epm_data/$f", $action,
-			  FILE_APPEND );
-		    if ( $r === false )
-			ERROR ( "cannot write $f" );
-
-		    $f = "projects/$project/$problem/"
-		       . "+actions+";
-		    $r = @file_put_contents
-			( "$epm_data/$f", $action,
-			  FILE_APPEND );
-		    if ( $r === false )
-			ERROR ( "cannot write $f" );
-
-		    $edited_contents = NULL;
-		}
-		else
-		    $owner_warn = true;
-	    }
-	}
-        elseif ( isset ( $_POST['project-priv'] ) )
-	{
-	    if ( ! isset ( $_POST['warning'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( isset ( $problem ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( ! isset ( $project ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-
-   	    $edited_contents = $_POST['project-priv'];
-	    if ( trim ( $edited_contents ) == '' )
-	        $edited_contents = " \n";
-   	    $warn = $_POST['warning'];
-	    check_project_priv
-	        ( $pmap, $project,
-		  $edited_contents, $errors );
+	    {
+		check_problem_priv
+		    ( $pmap, $project, $problem,
+		      $edited_contents, $errors );
+		$f = "/projects/$project/$problem/"
+		   . "+priv+";
+		$n = "$project $problem";
+	    }
+	    else
+	    {
+		check_project_priv
+		    ( $pmap, $project,
+		      $edited_contents, $errors );
+		$f = "/projects/$project/+priv+";
+		$n = "$project project";
+	    }
 	    if ( count ( $errors ) == 0 )
 	    {
 		$is_owner = ( isset ( $pmap['owner'] )
@@ -333,7 +282,6 @@
 			      $pmap['owner'] == '+' );
 		if ( $is_owner || $warn == 'yes' )
 		{
-		    $f = "/projects/$project/+priv+";
 		    $r = ATOMIC_WRITE
 		        ( "$epm_data/$f",
 			  $edited_contents );
@@ -347,8 +295,7 @@
 		    $time = strftime
 		        ( $epm_time_format, $time );
 		    $action = "$time $aid update"
-		            . " $project project"
-			    . " privileges"
+			    . " $n privileges"
 			    . PHP_EOL;
 
 		    $f = "projects/$project/+actions+";
@@ -357,6 +304,17 @@
 			  FILE_APPEND );
 		    if ( $r === false )
 			ERROR ( "cannot write $f" );
+
+		    if ( isset ( $problem ) )
+		    {
+			$f = "projects/$project/"
+			   / "$problem/+actions+";
+			$r = @file_put_contents
+			    ( "$epm_data/$f", $action,
+			      FILE_APPEND );
+			if ( $r === false )
+			    ERROR ( "cannot write $f" );
+		    }
 
 		    $edited_contents = NULL;
 		}
@@ -465,11 +423,11 @@ div.priv pre {
 		Do you want to continue?</strong>
 	<pre>   </pre>
 	<button type='button'
-		onclick='COPY("$type","yes")'>
+		onclick='COPY("yes")'>
 	     YES</button>
 	<pre>   </pre>
 	<button type='button'
-		onclick='COPY("$type","no")'>
+		onclick='COPY("no")'>
 	     NO</button>
 	<br></div>
 EOT;
@@ -642,17 +600,32 @@ EOT;
     </div>
 EOT;
 
-    if ( isset ( $project ) && isset ( $problem ) )
+    if ( in_array ( $state, ['normal','edit'] )
+         &&
+         isset ( $project ) )
     {
-        $f =  "/projects/$project/$problem/+priv+";
+        if ( isset ( $problem ) )
+	{
+	    $f =  "/projects/$project/$problem/+priv+";
+	    $n = "$project $problem Problem";
+	    $c = 'problem';
+	    problem_priv_map ( $pmap, $project, $problem ); 
+	}
+	else
+	{
+	    $f =  "/projects/$project/+priv+";
+	    $n = "$project Project";
+	    $c = 'project';
+	    project_priv_map ( $pmap, $project ); 
+	}
+
         $priv_file_contents = ATOMIC_READ
 	    ( "$epm_data/$f" );
         if ( $priv_file_contents === false )
 	    $priv_file_contents = " \n";
         echo <<<EOT
-	<div class='problem'>
-	<strong>$project $problem Problem Privileges
-	        </strong>
+	<div class='$c'>
+	<strong>$n Privileges</strong>
 	<button type='button'
 	        style='visibility:hidden'>
 		Submit</button>
@@ -664,7 +637,7 @@ EOT;
 	</div>
 	</div>
 EOT;
-        problem_priv_map ( $pmap, $project, $problem ); 
+
 	if ( $rw
 	     &&
 	     isset ( $pmap['owner'] )
@@ -677,79 +650,39 @@ EOT;
 	    <div class='problem'>
 	    <form method='POST' action='manage.php'
 		  enctype='multipart/form-data'
-		  id='problem-post'>
+		  id='post'>
 	    <input type='hidden' name='id' value='$ID'>
-	    <input type='hidden' name='problem-priv'
-				 id='problem-value'>
-	    <input type='hidden' id='problem-warning'
+	    <input type='hidden' name='update'
+				 id='value'>
+	    <input type='hidden' id='warning'
 	           name='warning' value=''>
 	    <strong>Edit and</strong>
 	    <button type='button'
-		    onclick='COPY("problem","")'>
+		    onclick='COPY("")'>
 		Submit</button>
 	    <div class='priv'>
 	    <pre contenteditable='true'
-		 id='problem-contents'
+		 id='contents'
 		>$priv_file_contents</pre>
 	    </div>
 	    </form>
 	    </div>
 EOT;
 	}
-    }
-    if ( isset ( $project ) )
-    {
-        $priv_file_contents = ATOMIC_READ
-	    ( "$epm_data/projects/$project/+priv+" );
-        if ( $priv_file_contents === false )
-	    $priv_file_contents = " \n";
-        echo <<<EOT
-	<div style='clear:both'></div>
-	<div class='project'>
-	<strong>$project Project Privileges</strong>
-	<button type='button'
-	        style='visibility:hidden'>
-		Submit</button>
-		<!-- this keeps the two header
-		     heights the same, as button
-		     is higher then text -->
-	<div class='priv'>
-	<pre>$priv_file_contents</pre>
-	</div>
-	</div>
-EOT;
-        project_priv_map ( $pmap, $project ); 
 
-	if ( $rw
-	     &&
-	     isset ( $pmap['owner'] )
-	     &&
-	     $pmap['owner'] == '+'
-	     &&
-	     ! isset ( $problem ) )
+        if ( isset ( $problem ) )
 	{
-	    if ( isset ( $edited_contents ) )
-		$priv_file_contents = $edited_contents;
+	    $f =  "/projects/$project/+priv+";
+	    $priv_file_contents = ATOMIC_READ
+		( "$epm_data/$f" );
+	    if ( $priv_file_contents === false )
+		$priv_file_contents = " \n";
 	    echo <<<EOT
 	    <div class='project'>
-	    <form method='POST' action='manage.php'
-		  enctype='multipart/form-data'
-		  id='project-post'>
-	    <input type='hidden' name='id' value='$ID'>
-	    <input type='hidden' name='project-priv'
-				 id='project-value'>
-	    <input type='hidden' id='project-warning'
-	           name='warning' value=''>
-	    <strong>Edit and</strong>
-	    <button type='button'
-		    onclick='COPY("project","")'>
-		Submit</button>
+	    <strong>$project Project Privileges</strong>
 	    <div class='priv'>
-	    <pre contenteditable='true'
-		 id='project-contents'
-		>$priv_file_contents</pre>
+	    <pre>$priv_file_contents</pre>
 	    </div>
-	    </form>
 	    </div>
 EOT;
 	}
@@ -759,14 +692,12 @@ EOT;
 ?>
 
 <script>
-function COPY ( type, warn )
+function COPY ( warn )
 {
-    src = document.getElementById
-        ( type + '-contents' );
-    des = document.getElementById ( type + '-value' );
-    form = document.getElementById ( type + '-post' );
-    warning = document.getElementById
-        ( type + '-warning' );
+    src = document.getElementById ( 'contents' );
+    des = document.getElementById ( 'value' );
+    form = document.getElementById ( 'post' );
+    warning = document.getElementById ( 'warning' );
     des.value = src.innerText;
     warning.value = warn;
     form.submit();
