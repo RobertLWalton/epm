@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Sep  7 07:03:18 EDT 2020
+// Date:    Fri Sep 11 05:07:41 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -225,11 +225,8 @@ $display_file_type = [
     "score" => "utf8"
     ];
 
-$display_file_map = [
-    // See display_file_type.
-    //
-    "utf8" => "utf8_show.php",
-    "pdf"  => "pdf_show.php" ];
+$displayable_types = ['utf8','pdf'];
+    // Types displayable by look.php.
 
 $push_file_map = [
     // If file YYYY.EEE is to be pushed then

@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 18:03:11 EDT 2020
+    // Date:	Thu Sep 10 22:47:48 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -19,16 +19,54 @@
     //
     //	   EPM_MANAGE LISTNAME
     //		Current problem listname.
-
-    // POST:
-    // ----
     //
-    // Each post may selects a project, problem list, or
-    // problem.
+    //	   $problem = & $data['problem']
+    //	   $project = & $data['project']
     //
-    //	    problem=PROJECT:PROBLEM
+    //	   $state (see index.php)
+    //		normal (no problem or project selected)
+    //		problem ($problem selected; if $project
+    //		         not NULL problem is in
+    //			 $project; otherwise it is
+    //			 local)
+    //		project ($project is selected; no
+    //			 problem is selected)
+    //		owner_warn  (warn user that he will not
+    //			     longer be an owner of a
+    //			     project of problem if
+    //			     submitted +priv+ file is
+    //			     accepted)
+    //
+    // POSTs:
     //
     //	    listname=PROJECT:BASENAME
+    //		Set LISTNAME; deselect problem/project.
+    //
+    //	    project=PROJECT
+    //		Select project; set $problem to NULL.
+    //
+    //	    problem=-:PROBLEM
+    //		Select problem with NULL $project.
+    //
+    //	    problem=PROJECT:PROBLEM
+    //		Select problem in project.
+    //
+    //	    submit
+    //		Replace +priv+ file for selected project
+    //		or problem if privileges allow.
+    //
+    //	    owner_warn_yes
+    //		Like submit but do not warn.
+    //
+    //	    owner_warn_no
+    //		Abort submit be keep edited +priv+ file.
+    //
+    //	    cancel
+    //		Restore edited +priv+ file to original.
+    //		
+    //	    download
+    //		Download selected project or problem
+    //		if privileges allow.
 
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
@@ -49,10 +87,6 @@
     $listname = & $_SESSION['EPM_MANAGE']['LISTNAME'];
     $project = & $data['PROJECT'];
     $problem = & $data['PROBLEM'];
-        // If $problem is set and $project is not,
-	// it is `your' problem.  If $project is set
-	// and $problem is not, only the project is
-	// selected.
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.

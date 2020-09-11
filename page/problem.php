@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 17:26:05 EDT 2020
+    // Date:	Fri Sep 11 05:04:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -259,7 +259,7 @@
     {
         global $epm_data, $problem, $parent,
 	       $display_file_type,
-	       $display_file_map, $epm_file_maxsize,
+	       $displayable_types, $epm_file_maxsize,
 	       $epm_filename_re, $linkable_ext,
 	       $max_display_lines, $min_display_lines,
 	       $max_in_comment_characters,
@@ -382,8 +382,8 @@
 	    else
 		$fcomment = "(Has Undetermined Size)";
 	}
-	elseif ( isset ( $display_file_map
-			       [$ftype] ) )
+	elseif ( in_array
+	             ( $ftype, $displayable_types ) )
 	{
 	    if ( $fsize !== false )
 		$fcomment = "($fsize Bytes)";
@@ -1301,8 +1301,6 @@ EOT;
 		if ( $fshow )
 		{
 		    $show_map[$fname] = "show$count";
-		    $fpage =
-			$display_file_map[$ftype];
 		    echo <<<EOT
 			<button type='button'
 			   id='show$count'
@@ -1475,7 +1473,6 @@ EOT;
 		$show_map[$fname] = "show$count";
 		// Working directory overrides
 		// problem directory.
-	    $fpage = $display_file_map[$ftype];
 	    echo <<<EOT
 		<button type='button'
 		   id='show$count'
