@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 22:47:48 EDT 2020
+    // Date:	Fri Sep 11 06:21:35 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -22,20 +22,21 @@
     //
     //	   $problem = & $data['problem']
     //	   $project = & $data['project']
+    //		// $project $problem   Selected:
+    //		//   NULL     NULL     Nothing
+    //		//   PROJECT  NULL     PROJECT
+    //		//   NULL     PROBLEM  Your PROBLEM
+    //		//   PROJECT  PROBLEM  PROJECT PROBLEM
     //
     //	   $state (see index.php)
     //		normal (no problem or project selected)
-    //		problem ($problem selected; if $project
-    //		         not NULL problem is in
-    //			 $project; otherwise it is
-    //			 local)
-    //		project ($project is selected; no
-    //			 problem is selected)
     //		owner_warn  (warn user that he will not
     //			     longer be an owner of a
     //			     project of problem if
     //			     submitted +priv+ file is
     //			     accepted)
+    //		move_warn (ask the user if he really
+    //			   wants to move the problem)
     //
     // POSTs:
     //
@@ -51,15 +52,9 @@
     //	    problem=PROJECT:PROBLEM
     //		Select problem in project.
     //
-    //	    submit
+    //	    submit    value=FILE   warn={,no,yes}
     //		Replace +priv+ file for selected project
     //		or problem if privileges allow.
-    //
-    //	    owner_warn_yes
-    //		Like submit but do not warn.
-    //
-    //	    owner_warn_no
-    //		Abort submit be keep edited +priv+ file.
     //
     //	    cancel
     //		Restore edited +priv+ file to original.
@@ -67,6 +62,9 @@
     //	    download
     //		Download selected project or problem
     //		if privileges allow.
+    //
+    //	    move=NEW_PROJECT   warn={,no,yes}
+    //		Move PROJECT PROBLEM to NEW_PROJECT
 
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
