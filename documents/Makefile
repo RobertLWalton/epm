@@ -1,6 +1,19 @@
+# EPM Documentation Makefile
+#
+# File:		Makefile
+# Authors:	Bob Walton (walton@deas.harvard.edu)
+# Date:		Sat Sep 12 08:46:52 EDT 2020
+#
+# The authors have placed this program in the public
+# domain; they make no warranty and accept no liability
+# for this program.
+
+SRC = ../src
+
 all:	epm_design.pdf epm_score.pdf
 
 # For vimake
+#
 epm_design:	epm_design.pdf
 
 
@@ -8,17 +21,6 @@ epm_design.pdf:		epm_design.tex
 	pdflatex -record -interaction nonstopmode \
 	         -no-shell-escape epm_design.tex
 
-epm_score.pdf:		../bin/epm_score
-	D=`date -r ../src/epm_score.cc +'%D %T'` \
-	echo "DATE $$D"
-	../bin/epm_score -doc | \
-	    enscript \
-	        -2r \
-		-F Courier-Bold12 \
-		-f Courier10 \
-		--margins=48:48:: \
-		-b 'epm_score|$$D|$$% of $$=' \
-		-p - | \
-	    ps2pdf - epm_score.pdf
-
-
+epm_score.pdf:		${SRC}/epm_score.cc
+	make -C ${SRC} epm_score
+	epm_print epm_score
