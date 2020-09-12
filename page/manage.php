@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep 12 06:12:21 EDT 2020
+    // Date:	Sat Sep 12 06:33:23 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -689,7 +689,13 @@ EOT;
     $listname_options = list_to_options
         ( $favorites, $listname );
     $project_options =
-        values_to_options ( $priv_projects, $project );
+        values_to_options
+	    ( $priv_projects,
+	      ( isset ( $problem ) ?
+	        NULL : $project ) );
+	    // If problem is selected, it is the
+	    // problem and not the project selector
+	    // that is providing the project.
     if ( isset ( $problem ) )
     {
 	if ( isset ( $project ) )
