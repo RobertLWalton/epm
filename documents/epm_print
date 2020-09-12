@@ -1,13 +1,13 @@
 #!/bin/bash
 
 D=`date -r ../src/$1.cc +'%D %T'`
-../bin/epm_score -doc | \
+../src/$1 -doc | \
     enscript \
 	-2r \
 	-F Courier-Bold12 \
 	-f Courier10 \
 	--margins=48:48:: \
-	-b "epm_score|$D|\$% of \$=" \
+	-b "$1|$D|\$% of \$=" \
 	-p - | \
     ps2pdf - $1.pdf
 
