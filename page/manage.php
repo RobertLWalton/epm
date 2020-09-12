@@ -2,22 +2,21 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep 11 19:45:45 EDT 2020
+    // Date:	Sat Sep 12 04:23:33 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
     // they make no warranty and accept no liability
     // for EPM.
 
-    // Displays and edits privileges, deletes and
-    // renames project problems and projects.
+    // Displays and edits privileges, downloads
+    // problems and projects, moves problems between
+    // projects.
 
-    // Session Data
-    // ------- ----
-
-    // Session data is in EPM_MANAGE as follows:
+    // Session Data:
     //
-    //	   EPM_MANAGE LISTNAME
+    //	   $listname = & $_SESSION['EPM_MANAGE']
+    //			          ['LISTNAME']
     //		Current problem listname.
     //
     //	   $problem = & $data['PROBLEM']
@@ -29,23 +28,28 @@
     //		//   PROJECT  PROBLEM  PROJECT PROBLEM
     //
     //	   $state (see index.php)
-    //		normal (no problem or project selected)
-    //		owner-warn  (warn user that he will not
+    //		normal (no warning)
+    //		owner-warn  (warn user that he will no
     //			     longer be an owner of a
-    //			     project of problem if
+    //			     project or problem if
     //			     submitted +priv+ file is
     //			     accepted)
     //		move-warn (ask the user if he really
     //			   wants to move the problem)
     //
+    //	   $download_enabled = & $data['DOWNLOAD-ENABLED']
+    //		true if user was presented with a download
+    //		button by the last response
+    //
     //	   $update_enabled = & $data['UPDATE-ENABLED']
     //		true if user was presented with editable
-    //		or edited +priv+ file by last request
+    //		or edited +priv+ file by last response
+    //		(true in owner-warn state)
     //
     //	   $move_enabled = & $data['MOVE-ENABLED']
     //		true if user was presented with move to
-    //		project option or selection by last
-    //		request
+    //		project option by last response
+    //		(false in move-warn state)
     //
     // POSTs:
     //
@@ -237,9 +241,12 @@
     {
 	// These must be reset if $project or $problem
 	// is reset.  They can be reset if $rw is reset.
+	// Each may be set to true after POST
+	// processing.
 	//
-        $update_enable = false;
-	$move_enable = false;
+        $download_enabled = false;
+        $update_enabled = false;
+	$move_enabled = false;
     }
 
     $pmap = [];
@@ -256,7 +263,7 @@
 
     if ( $process_post
          &&
-	 $state = 'normal'
+	 $download_enabled
 	 &&
          isset ( $_POST['download'] ) )
     {
@@ -265,7 +272,7 @@
 	if ( ! isset ( $problem )
 	     &&
 	     ! isset ( $project ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    ERROR ( "bad \$download_enabled" );
 
 	$d = NULL;
 	if ( isset ( $project )
@@ -313,11 +320,25 @@
 	 &&
 	 $update_enabled
 	 &&
+	 $state == 'normal'
+	 &&
+         isset ( $_POST['reset'] ) )
+    {
+        $process_post = false;
+    }
+
+    if ( $process_post
+	 &&
+	 $update_enabled
+	 &&
          isset ( $_POST['update'] )
 	 &&
          isset ( $_POST['warning'] )
     {
         $process_post = false;
+
+	if ( ! isset ( $process ) )
+	    ERROR ( "bad \$update_enabled" );
 
 	$warn = $_POST['warning'];
 	if ( ! in_array ( $warn, ['','no','yes'] ) )
@@ -328,92 +349,76 @@
 	$state = 'normal';
 	    // May be changed below.
 
-	if ( ! isset ( $process ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-
-	if ( $warn != 'no' )
+	$edited_contents = $_POST['update'];
+	if ( trim ( $edited_contents ) == '' )
+	    $edited_contents = " \n";
+	if ( ! $rw )
+	    $errors[] = "you no longer have read-write"
+	              . " privilege";
+	elseif ( isset ( $problem ) )
 	{
-   	    $edited_contents = $_POST['update'];
-	    if ( trim ( $edited_contents ) == '' )
-	        $edited_contents = " \n";
-	    if ( isset ( $problem ) )
+	    check_problem_priv
+		( $update_pmap, $project, $problem,
+		  $edited_contents, $errors );
+	    $f = "/projects/$project/$problem/"
+	       . "+priv+";
+	    $n = "$project $problem";
+	}
+	else
+	{
+	    check_project_priv
+		( $update_pmap, $project,
+		  $edited_contents, $errors );
+	    $f = "/projects/$project/+priv+";
+	    $n = "$project project";
+	}
+	if ( count ( $errors ) == 0 && $warn != 'no' )
+	{
+	    $is_owner =
+	        ( isset ( $update_pmap['owner'] )
+		  &&
+		  $update_pmap['owner'] == '+' );
+	    if ( $is_owner || $warn == 'yes' )
 	    {
-		check_problem_priv
-		    ( $pmap, $project, $problem,
-		      $edited_contents, $errors );
-		$f = "/projects/$project/$problem/"
-		   . "+priv+";
-		$n = "$project $problem";
-	    }
-	    else
-	    {
-		check_project_priv
-		    ( $pmap, $project,
-		      $edited_contents, $errors );
-		$f = "/projects/$project/+priv+";
-		$n = "$project project";
-	    }
-	    if ( count ( $errors ) == 0 )
-	    {
-		$is_owner = ( isset ( $pmap['owner'] )
-		              &&
-			      $pmap['owner'] == '+' );
-		if ( $is_owner || $warn == 'yes' )
+		$r = ATOMIC_WRITE
+		    ( "$epm_data/$f",
+		      $edited_contents );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
+		$edited_contents = NULL;
+
+		$time = @filemtime
+		    ( "$epm_data/$f" );
+		if ( $time === false )
+		    ERROR ( "cannot stat $f" );
+		$time = strftime
+		    ( $epm_time_format, $time );
+		$action = "$time $aid update"
+			. " $n privileges"
+			. PHP_EOL;
+
+		$f = "projects/$project/+actions+";
+		$r = @file_put_contents
+		    ( "$epm_data/$f", $action,
+		      FILE_APPEND );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
+
+		if ( isset ( $problem ) )
 		{
-		    $r = ATOMIC_WRITE
-		        ( "$epm_data/$f",
-			  $edited_contents );
-		    if ( $r === false )
-		        ERROR ( "cannot write $f" );
-
-		    $time = @filemtime
-		        ( "$epm_data/$f" );
-		    if ( $time === false )
-			ERROR ( "cannot stat $f" );
-		    $time = strftime
-		        ( $epm_time_format, $time );
-		    $action = "$time $aid update"
-			    . " $n privileges"
-			    . PHP_EOL;
-
-		    $f = "projects/$project/+actions+";
+		    $f = "projects/$project/"
+		       / "$problem/+actions+";
 		    $r = @file_put_contents
 			( "$epm_data/$f", $action,
 			  FILE_APPEND );
 		    if ( $r === false )
 			ERROR ( "cannot write $f" );
-
-		    if ( isset ( $problem ) )
-		    {
-			$f = "projects/$project/"
-			   / "$problem/+actions+";
-			$r = @file_put_contents
-			    ( "$epm_data/$f", $action,
-			      FILE_APPEND );
-			if ( $r === false )
-			    ERROR ( "cannot write $f" );
-		    }
-
-		    $edited_contents = NULL;
 		}
-		else
-		    $state = 'owner-warn';
 	    }
+	    else
+		$state = 'owner-warn';
 	}
     }
-
-    if ( $state == 'owner-warn' )
-        $update_enabled = true;
-    elseif ( $state == 'normal'
-             &&
-	     $rw
-	     &&
-	     isset ( $project )
-	     &&
-	     isset ( $pmap['owner'] )
-	     &&
-	     $pmap['owner'] == '+' )
-        $update_enabled = true;
 
     if ( isset ( $project ) && isset ( $problem ) )
     {
@@ -432,6 +437,11 @@
     {
         $process_post = false;
 
+	if ( ! isset ( $problem )
+	     ||
+	     ! isset ( $project ) )
+	    ERROR ( "bad \$move_enabled" );
+
 	$warn = $_POST['warning'];
 	if ( ! in_array ( $warn, ['','no','yes'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
@@ -441,11 +451,6 @@
 	$state = 'normal';
 	    // May be changed below.
 
-	if ( ! isset ( $problem ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-	if ( ! isset ( $project ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-
 	$proj = $_POST['move'];
         if ( $proj != '' && $warn != 'no' )
 	{
@@ -454,6 +459,9 @@
 	    if ( ! in_array
 	               ( $proj, $move_to_projects ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+	    elseif ( ! $rw )
+		$errors[] = "you no longer have"
+		          . " read-write privilege";
 	    elseif ( $proj == $project )
 		$errors[] = "problem is aleady in $proj"
 		          . " project";
@@ -472,6 +480,24 @@
 
     if ( $state == 'normal'
          &&
+	 ( isset ( $problem ) || isset ( $project ) ) )
+        $download_enabled = true;
+
+    if ( $state == 'owner-warn' )
+        $update_enabled = true;
+    elseif ( $state == 'normal'
+             &&
+	     $rw
+	     &&
+	     isset ( $project )
+	     &&
+	     isset ( $pmap['owner'] )
+	     &&
+	     $pmap['owner'] == '+' )
+        $update_enabled = true;
+
+    if ( $state == 'normal'
+         &&
 	 $rw
 	 &&
 	 isset ( $project )
@@ -483,12 +509,7 @@
 	 $project_pmap['move-from'] == '+' )
         $move_enabled = true;
 
-    if ( $state == 'normal'
-         &&
-	 ( isset ( $problem ) || isset ( $project ) ) )
-        $download_enabled;
-
-    if ( $post_processed )
+    if ( $process_post )
 	exit ( 'UNACCEPTABLE HTTP POST' );
 ?>
 
@@ -503,7 +524,6 @@ div.select {
     padding-top: var(--pad);
 }
 div.project, div.problem {
-    background-color: var(--bg-tan);
     padding: var(--pad) 0px;
     margin: 0px;
     display: inline-block;
@@ -559,11 +579,11 @@ div.priv pre {
 		Do you want to continue?</strong>
 	<pre>   </pre>
 	<button type='button'
-		onclick='COPY("yes")'>
+		onclick='UPDATE("yes")'>
 	     YES</button>
 	<pre>   </pre>
 	<button type='button'
-		onclick='COPY("no")'>
+		onclick='UPDATE("no")'>
 	     NO</button>
 	<br></div>
 EOT;
@@ -587,7 +607,7 @@ EOT;
 	<button type='submit'
 	        name='warning' value='no'>
 	     NO</button>
-	<br></div>
+	<br></form></div>
 EOT;
     }
 
@@ -670,9 +690,7 @@ EOT;
     $listname_options = list_to_options
         ( $favorites, $listname );
     $project_options =
-        values_to_options
-	    ( $priv_projects,
-	      isset ( $project ) ? NULL : $project );
+        values_to_options ( $priv_projects, $project );
     if ( isset ( $problem ) )
     {
 	if ( isset ( $project ) )
@@ -724,8 +742,7 @@ EOT;
     if ( $move_enabled)
     {
 	$move_options =
-	    values_to_options
-		( $move_projects, $move_warn );
+	    values_to_options ( $move_to_projects );
         echo <<<EOT
 	<strong>or Move Problem to Project</strong>
 	<form method='POST' action='manage.php'
@@ -755,7 +772,7 @@ EOT;
 	<button type='submit'>$m</button>
 	</form>
 EOT;
-}
+    }
 
     echo <<<EOT
     </div>
@@ -813,13 +830,19 @@ EOT;
 		   name='warning' value=''>
 	    <strong>Edit and</strong>
 	    <button type='button'
-		    onclick='COPY("")'>
+		    onclick='UPDATE("")'>
 		Submit</button>
+	    </form>
+	    <pre>   </pre>
+	    <form method='POST' action='manage.php'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <button type='submit' name='reset'>
+	        Reset</button>
+	    </form>
 	    <div class='priv'>
 	    <pre $e id='contents'
 		>$priv_file_contents</pre>
 	    </div>
-	    </form>
 	    </div>
 EOT;
 	}
@@ -846,7 +869,7 @@ EOT;
 ?>
 
 <script>
-function COPY ( warn )
+function UPDATE ( warn )
 {
     src = document.getElementById ( 'contents' );
     des = document.getElementById ( 'value' );
