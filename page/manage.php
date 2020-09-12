@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep 12 04:23:33 EDT 2020
+    // Date:	Sat Sep 12 06:12:21 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -48,8 +48,8 @@
     //
     //	   $move_enabled = & $data['MOVE-ENABLED']
     //		true if user was presented with move to
-    //		project option by last response
-    //		(false in move-warn state)
+    //		project option or move warning by last
+    //		response (true in move-warn state)
     //
     // POSTs:
     //
@@ -244,7 +244,6 @@
 	// Each may be set to true after POST
 	// processing.
 	//
-        $download_enabled = false;
         $update_enabled = false;
 	$move_enabled = false;
     }
@@ -279,7 +278,7 @@
 	     &&
 	     ( ! isset ( $pmap['download'] )
 	       ||
-	       $pmap['download'] != '+' )
+	       $pmap['download'] != '+' ) )
 	    $errors[] = "you do not have download"
 	              . " privilege for $project"
 		      . ( isset ( $problem ) ?
@@ -333,11 +332,11 @@
 	 &&
          isset ( $_POST['update'] )
 	 &&
-         isset ( $_POST['warning'] )
+         isset ( $_POST['warning'] ) )
     {
         $process_post = false;
 
-	if ( ! isset ( $process ) )
+	if ( ! isset ( $project ) )
 	    ERROR ( "bad \$update_enabled" );
 
 	$warn = $_POST['warning'];
@@ -478,10 +477,10 @@
 	}
     }
 
-    if ( $state == 'normal'
-         &&
-	 ( isset ( $problem ) || isset ( $project ) ) )
-        $download_enabled = true;
+    $download_enabled =
+        ( $state == 'normal'
+          &&
+	  ( isset ( $problem ) || isset ( $project ) ) );
 
     if ( $state == 'owner-warn' )
         $update_enabled = true;
@@ -739,7 +738,7 @@ EOT;
     </select></form>
 EOT;
 
-    if ( $move_enabled)
+    if ( $move_enabled && $state == 'normal' )
     {
 	$move_options =
 	    values_to_options ( $move_to_projects );
