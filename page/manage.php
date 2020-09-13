@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep 12 06:33:23 EDT 2020
+    // Date:	Sun Sep 13 03:11:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -82,7 +82,7 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     require "$epm_home/include/epm_list.php";
 
@@ -629,10 +629,6 @@ EOT;
     $login_title =
         'Login Name; Click to See User Profile';
     echo <<<EOT
-    <div style='background-color:orange;
-                text-align:center'>
-    <strong>This Page is Under Construction.</strong>
-    </div>
     <div class='manage'>
     <form method='GET' action='manage.php'>
     <input type='hidden' name='id' value='$ID'>

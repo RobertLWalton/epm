@@ -2,24 +2,30 @@
 <!--
 File:	orphan.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Jun 18 03:40:30 EDT 2020
+Date:	Sun Sep 13 04:18:41 EDT 2020
 -->
+<head>
+<meta http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate" />
+</head>
 <body>
 <div style='background-color:#FFAAAA'>
 <h1>This Tab is Orphaned</h1>
 <h2>You must close this tab!</h2>
 <h3>
-A tab becomes orphaned when two tabs of the same kind
-(i.e., non-problem tabs, or a tabs for a specific
-problem) exist simultaneously in a browser.
-Then the tab create earlier becomes orphaned and can no
-longer be used.
+A tab is likely to be orphaned if you use the browser back or refresh buttons
+in the tab.  You can use control-R to refresh a page.
 <br>
 <br>
-The only way for there to be two tabs of the same
-kind is if you open a tab by giving it a URL and
-a tab of the same kind already exists.  Then that
-previously existing tab will be orphaned.
+A tab will also become orphaned if you use a copy of the URL of the
+tab to open a new tab.
+<br>
+<br>
+More specifically, a tab is orphaned if the server believes that
+two tabs of the same kind have been opened.  The older tab is then
+orphaned.  Unfortunately the browser back and refresh buttons
+usually fool the server into believing this and cannot be reprogrammed
+to do otherwise (the control-R key has been reprogrammed).
 </h3>
 
 </div>
