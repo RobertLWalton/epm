@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Sep  9 15:57:28 EDT 2020
+// Date:    Sun Sep 13 14:39:59 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -304,9 +304,8 @@ if ( $epm_page_type == '+download+' ) return;
 // which steps through pseudo-random sequence numbers.
 // A request out of sequence is rejected.
 //
-if ( in_array ( $epm_page_type,
-                ['+problem+','+main+','+view+'],
-		true ) )
+if ( ! in_array ( $epm_page_type,
+                  ['+no-post+','+download+'] ) )
 {
     if ( $epm_page_type == '+problem+' )
     {

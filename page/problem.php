@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep 12 08:14:34 EDT 2020
+    // Date:	Sun Sep 13 15:02:16 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -509,7 +509,8 @@
     {
         if ( $state != 'executing' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	$state = 'normal';
+	// State will be rest to 'normal' below
+	// when finish_make_file is called.
     }
     elseif ( isset ( $_POST['update'] ) )
     {
@@ -531,6 +532,7 @@
 	    if ( $r !== true || $count == 10 )
 	    			// 5 seconds
 	    {
+		DEBUG ( 'reply RELOAD' );
 	        echo "RELOAD\n";
 		exit;
 	    }
@@ -542,6 +544,7 @@
 	        foreach ( $r as $n )
 		{
 		    $e = $workmap[$n];
+		    DEBUG ( "reply TIME $n {$e[2]}" );
 		    echo "TIME $n {$e[2]}\n";
 		}
 		exit;
