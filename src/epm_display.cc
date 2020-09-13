@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Sep 12 17:53:22 EDT 2020
+// Date:	Sat Sep 12 21:05:05 EDT 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -179,6 +179,17 @@ const options FILL_OPTIONS = (options)
     ( FILL_SOLID + FILL_DOTTED + FILL_HORIZONTAL
                                + FILL_VERTICAL );
 
+const options DOTTED_DASHED_CONFLICT = (options)
+    ( DOTTED + DASHED );
+const options FILL_CONFLICT = (options)
+    ( FILL_SOLID + FILL_DOTTED + FILL_HORIZONTAL
+                 + FILL_VERTICAL );
+const options TOP_BOTTOM_CONFLICT = (options)
+    ( TOP + BOTTOM );
+const options LEFT_RIGHT_CONFLICT = (options)
+    ( LEFT + RIGHT );
+const options BOX_CIRCLE_CONFLICT = (options)
+    ( BOX_WHITE + CIRCLE_WHITE );
 
 // Print options for debugging:
 //
@@ -1762,6 +1773,35 @@ void check_extra ( void )
 		token.c_str() );
 }
 
+// Check if there are conflicts in options, and remove
+// all but the one with the lowest order bit.  Print
+// error messages for options removed.
+//
+void check_conflicts
+	( options & opt, options conflicts )
+{
+    int first = -1;
+    int next = -1;
+    while ( opt & conflicts )
+    {
+        ++ next;
+	options mask = (options) ( 1 << next );
+	if ( ( conflicts & mask ) == 0 )
+	    continue;
+	conflicts = (options) ( conflicts & ~ mask );
+	if ( ( opt & mask ) == 0 )
+	    continue;
+	if ( first == -1 ) first = next;
+	else
+	{
+	    error ( "option %c conflicts with %c;"
+	            " %c ignored", optchar[next],
+		    optchar[first], optchar[next] );
+	    opt = (options) ( opt & ~ mask );
+	}
+    }
+}
+
 // Attach command to end of current_list.  Returns
 // false if this cannot be dones because command is
 // continuing and has no previous start.  This
@@ -1946,6 +1986,10 @@ section read_section ( istream & in )
 	        WIDTH = ( OPT & FILL_OPTIONS ?
 		          0 : 1.0/72 );
 
+	    check_conflicts
+	        ( OPT, DOTTED_DASHED_CONFLICT );
+	    check_conflicts
+	        ( OPT, FILL_CONFLICT );
 
 	    const stroke * strk =
 	        make_stroke ( NAME, WIDTH, COLOR, OPT );
@@ -2073,6 +2117,13 @@ section read_section ( istream & in )
 	    }
 	    read_text ( "TEXT", TEXT );
 
+	    check_conflicts
+	        ( OPT, TOP_BOTTOM_CONFLICT );
+	    check_conflicts
+	        ( OPT, LEFT_RIGHT_CONFLICT );
+	    check_conflicts
+	        ( OPT, BOX_CIRCLE_CONFLICT );
+
 	    text * t = new text;
 	    attach ( t, 't' );
 	    t->f = FONT;
@@ -2116,6 +2167,11 @@ section read_section ( istream & in )
 			 + MAX_BODY_COORDINATE,
 			 false ) )
 	        continue;
+
+	    check_conflicts
+	        ( OPT, DOTTED_DASHED_CONFLICT );
+	    check_conflicts
+	        ( OPT, FILL_CONFLICT );
 
 	    start * st = new start;
 	    attach ( st, 's', true );
@@ -2265,6 +2321,11 @@ section read_section ( istream & in )
 		         false ) )
 		continue;
 
+	    check_conflicts
+	        ( OPT, DOTTED_DASHED_CONFLICT );
+	    check_conflicts
+	        ( OPT, FILL_CONFLICT );
+
 	    arc * a = new arc;
 	    attach ( a, 'a',
 	             STROKE == NULL,
@@ -2282,7 +2343,7 @@ section read_section ( istream & in )
 	{
 	    const stroke * STROKE;
 	    const color * COLOR;
-	    options OPT;
+	    options OPT = NO_OPTIONS;
 	    double XC, YC, WIDTH, HEIGHT;
 
 	    if ( ! read_stroke
@@ -2311,6 +2372,11 @@ section read_section ( istream & in )
 	               ( "HEIGHT", HEIGHT,
 			 0, + MAX_BODY_COORDINATE,
 			 false ) )
+
+	    check_conflicts
+	        ( OPT, DOTTED_DASHED_CONFLICT );
+	    check_conflicts
+	        ( OPT, FILL_CONFLICT );
 		continue;
 
 	    rectangle * r = new rectangle;
