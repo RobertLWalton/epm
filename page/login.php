@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep  5 03:46:22 EDT 2020
+    // Date:	Mon Sep 14 02:43:42 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -531,9 +531,8 @@ or User-ID:Guest-User-Email-Address'>
 </td></tr></table>
 <br>
 <strong>New Users -
-        <button type=button onclick='AUX_WINDOW
-	    ( "+help+", "guide.html",
-	      -800, 0, 800, 800 )'>
+        <button type=button onclick='HELP
+	    ( "", "guide.html" )'>
         See Guide</button>
 </div>
 

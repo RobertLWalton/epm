@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug 27 02:22:15 EDT 2020
+    // Date:	Sun Sep 13 21:35:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -356,7 +356,7 @@ EOT;
     echo <<<EOT
     <td style='width=15%''>
     <button type='button'
-            onclick='VIEW("template.php")'>
+            onclick='AUX("template.php","+template+")'>
     View Templates</button>
     </td>
     <td style='text-align:right;width=30%'>

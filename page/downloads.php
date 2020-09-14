@@ -2,7 +2,7 @@
 
     // File:	downloads.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 16:35:07 EDT 2020
+    // Date:	Mon Sep 14 03:51:59 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -48,33 +48,11 @@
 
 <script>
 
-    var controls_down = 0;
-	// Non-zero if some control key is down.
-
-    function KEYDOWN ( event )
-    {
-	if ( event.code == 'ControlLeft'
-	     ||
-	     event.code == 'ControlRight' )
-	    ++ controls_down;
-    }
-
-    function KEYUP ( event )
-    {
-	if ( event.code == 'ControlLeft'
-	     ||
-	     event.code == 'ControlRight' )
-	    -- controls_down;
-    }
-
-    window.addEventListener ( 'keydown', KEYDOWN );
-    window.addEventListener ( 'keyup', KEYUP );
-
-    function LOOK ( filename ) {
+    function LOOK (event, filename ) {
 
 	var name = 'downloads/' + filename;
 	var disposition = 'show';
-	if ( controls_down != 0 )
+	if ( event.ctrlKey )
 	{
 	    name = '_blank';
 	    disposition = 'download';
@@ -86,7 +64,10 @@
 		+ '&filename='
 		+ encodeURIComponent
 		    ( 'downloads/' + filename );
-	SHOW ( name, src );
+	if ( disposition == 'download' )
+	    window.open ( src, '_blank' );
+	else
+	    AUX ( event, src, name );
     }
 
 </script>
@@ -102,37 +83,37 @@ to download the file.
 
 <h2> Reverser Problem Solutions:</h2>
 <p>
-<button onclick='LOOK("reverser.c")'>
+<button onclick='LOOK(event,"reverser.c")'>
         reverser.c</button>
-<button onclick='LOOK("reverser.cc")'>
+<button onclick='LOOK(event,"reverser.cc")'>
         reverser.cc</button>
-<button onclick='LOOK("reverser.java")'>
+<button onclick='LOOK(event,"reverser.java")'>
         reverser.java</button>
-<button onclick='LOOK("reverser.py")'>
+<button onclick='LOOK(event,"reverser.py")'>
         reverser.py</button>
 </ul>
 
 <h2> Latex Template and Examples:</h2>
 <p>
-<button onclick='LOOK("template.tex")'>
+<button onclick='LOOK(event,"template.tex")'>
      template.tex</button>
-<button onclick='LOOK("reverser.tex")'>
+<button onclick='LOOK(event,"reverser.tex")'>
      reverser.tex</button>
 
 <h2> Generate Program Template and Examples:</h2>
 <p>
-<button onclick='LOOK("epm_generate.cc")'>
+<button onclick='LOOK(event,"epm_generate.cc")'>
      epm_generate.cc</button>
-<button onclick='LOOK("generate-annual.cc")'>
+<button onclick='LOOK(event,"generate-annual.cc")'>
      generate-annual.cc</button>
-<button onclick='LOOK("generate-valuable.cc")'>
+<button onclick='LOOK(event,"generate-valuable.cc")'>
      generate-valuable.cc</button>
 
 <h2> Filter Program Template and Examples:</h2>
 <p>
-<button onclick='LOOK("epm_filter.cc")'>
+<button onclick='LOOK(event,"epm_filter.cc")'>
      epm_filter.cc</button>
-<button onclick='LOOK("filter-valuable.cc")'>
+<button onclick='LOOK(event,"filter-valuable.cc")'>
      filter-valuable.cc</button>
 
 </body>

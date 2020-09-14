@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Sep 13 14:39:59 EDT 2020
+// Date:    Sun Sep 13 21:31:59 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -419,24 +419,29 @@ if ( isset ( $aid ) )
 echo <<<EOT
 <script>
 
-document.onkeydown = REFRESH;
+document.onkeydown = KEY_DOWN;
 
-function REFRESH ( event )
+function KEY_DOWN ( event )
 {
-    let refresh = document.getElementById ( 'refresh' );
-        // Cannot compute this globally because
-	// id='refresh' button may not be loaded till
-	// after this code.
-
     if ( event.code == 'F5'
          ||
 	 ( event.code == 'KeyR'
 	   &&
 	   event.ctrlKey ) )
     {
+	let refresh = document.getElementById
+		( 'refresh' );
+	    // Cannot compute this globally because
+	    // id='refresh' button may not be loaded
+	    // till after this code.
+
 	event.preventDefault();
 	if ( refresh == null ) return;
 	    // Must not do this before preventDefault.
+
+	// If ancestor has style.display == 'none'
+	// ignore key press.
+	//
 	var e = refresh;
 	while ( e != null )
 	{
@@ -448,7 +453,7 @@ function REFRESH ( event )
     }
 }
 
-// See HELP and VIEW below.
+// See HELP and AUX below.
 //
 function AUX_WINDOW ( name, page, x, y, w, h )
 {
@@ -464,31 +469,33 @@ function AUX_WINDOW ( name, page, x, y, w, h )
 
 // Launches 'help' window in upper right corner.
 //
-function HELP ( reference )
+function HELP ( reference, page = 'help.html' )
 {
-    AUX_WINDOW ( '+help+',
-		 'help.html#' + reference,
+    AUX_WINDOW ( '+help-window+',
+		 page + '#' + reference,
 		 -800, 0, 800, 800 );
 }
-// Launches 'view' window in lower right corner.
+// Launches auxilary window in lower right corner.
 //
-function VIEW ( page )
+var aux_offset = 0;
+function AUX ( event, page, name )
 {
-    AUX_WINDOW ( '+view+', page,
-		 -1200, -800, 1200, 800 );
-}
-// Launches show windows in lower right corner offset by
-// increasing amounts.
-//
-var show_offset = 0;
-function SHOW ( name, page )
-{
-    show_offset += 30;
-    if ( show_offset >= 5 * 30 )
-        show_offset -= 4 * 30 - 10;
+    var offset = 0;
+    if ( event != null && event.altKey )
+    {
+        aux_offset += 30;
+	if ( aux_offset >= 5 * 30 )
+	    aux_offset -= 4 * 30 - 10;
+	offset = aux_offset;
+    }
+    else
+        name = '+aux+';
+
     AUX_WINDOW ( name, page,
-		 -1200 - show_offset,
-		 -800  - show_offset, 1200, 800 );
+		 -1200 - offset,
+		 -800 - offset
+		      - ( offset > 0 ? 40 : 0 ),
+		 1200, 800 );
 }
 </script>
 EOT;

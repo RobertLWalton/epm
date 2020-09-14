@@ -2,7 +2,7 @@
 
     // File:	documents.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep 12 07:09:38 EDT 2020
+    // Date:	Sun Sep 13 21:38:45 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -52,7 +52,8 @@
 
 <script>
 
-    function LOOK ( filename, dir = 'documents' ) {
+    function LOOK
+	    ( event, filename, dir = 'documents' ) {
 
 	var name = dir + '/' + filename;
 	var src = 'look.php'
@@ -62,7 +63,7 @@
 		+ '&filename='
 		+ encodeURIComponent
 		    ( dir + '/' + filename );
-	SHOW ( name, src );
+	AUX ( event, src, name );
     }
 
 </script>
@@ -72,17 +73,18 @@
 
 <dl>
 
-<dt><button onclick='SHOW("_blank","guide.html")'>
+<dt><button onclick='AUX(event,"guide.html","+guide+")'>
     Guide</button></dt>
 <dd>Introductory Guide for Users.</dd>
 
-<dt><button onclick='SHOW("_blank","help.html")'>
+<dt><button onclick='AUX(event,"help.html","+help+")'>
     Help Page</button></dt>
 <dd>Complete User Documentation.</dd>
 
-<dt><button onclick='LOOK("epm_design.pdf")'>
+<dt><button onclick='LOOK(event,"epm_design.pdf")'>
     EPM Design Document</button></dt>
-<dd>Details of the EPM design for maintainers of EPM.</dd>
+<dd>Details of the EPM design for maintainers
+    of EPM.</dd>
 
 <dt>
 
@@ -91,6 +93,3 @@
 
 </body>
 </html>
-
-
-

@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep  4 17:25:37 EDT 2020
+    // Date:	Mon Sep 14 03:39:58 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1036,27 +1036,6 @@ if ( $rw )
     var dragsrc = null;
 	// Source (start) table of drag.  We cannot use
 	// id because `copy' duplicates ids.
-    var controls_down = 0;
-	// Non-zero if some control key is down.
-
-    function KEYDOWN ( event )
-    {
-	if ( event.code == 'ControlLeft'
-	     ||
-	     event.code == 'ControlRight' )
-	    ++ controls_down;
-    }
-
-    function KEYUP ( event )
-    {
-	if ( event.code == 'ControlLeft'
-	     ||
-	     event.code == 'ControlRight' )
-	    -- controls_down;
-    }
-
-    window.addEventListener ( 'keydown', KEYDOWN );
-    window.addEventListener ( 'keyup', KEYUP );
 
     function DRAGSTART ( event )
     {
@@ -1064,7 +1043,7 @@ if ( $rw )
 	let div = table.parentElement;
 	let writable = div.dataset.writable;
 	let effect = 'copy';
-	if ( writable == 'yes' && controls_down == 0 )
+	if ( writable == 'yes' && ! event.ctrlKey )
 	    effect = 'move';
 	event.dataTransfer.dropEffect = effect;
 	event.dataTransfer.setData ( 'effect', effect );

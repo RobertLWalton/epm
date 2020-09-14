@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep 13 15:02:16 EDT 2020
+    // Date:	Sun Sep 13 21:48:06 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -860,35 +860,13 @@ EOT;
 <script>
     var problem = '<?php echo $problem; ?>';
 
-    var controls_down = 0;
-	// Non-zero if some control key is down.
-
-    function KEYDOWN ( event )
-    {
-	if ( event.code == 'ControlLeft'
-	     ||
-	     event.code == 'ControlRight' )
-	    ++ controls_down;
-    }
-
-    function KEYUP ( event )
-    {
-	if ( event.code == 'ControlLeft'
-	     ||
-	     event.code == 'ControlRight' )
-	    -- controls_down;
-    }
-
-    window.addEventListener ( 'keydown', KEYDOWN );
-    window.addEventListener ( 'keyup', KEYUP );
-
-    function LOOK ( filename, showable = true ) {
-	if ( ! showable && controls_down == 0 )
+    function LOOK ( event, filename, showable = true ) {
+	if ( ! showable && ! event.ctrl.Key )
 	    return;
 
 	var name = problem + '/' + filename;
 	var disposition = 'show';
-	if ( controls_down != 0 )
+	if ( event.ctrlKey )
 	{
 	    name = '_blank';
 	    disposition = 'download';
@@ -899,7 +877,10 @@ EOT;
 	        + encodeURIComponent ( problem )
 		+ '&filename='
 		+ encodeURIComponent ( filename );
-	SHOW ( name, src );
+	if ( disposition == 'download' )
+	    window.open ( src, '_blank' );
+	else
+	    AUX ( event, src, name );
     }
 
     function TOGGLE_BODY ( name, thing )
@@ -1317,7 +1298,7 @@ EOT;
 			   id='show$count'
 			   title='$title'
 			   onclick='LOOK
-			       ("+work+/$fname")'>
+			     (event, "+work+/$fname")'>
 			 <pre id='file$count'
 			     >$fname</pre>
 			 </button></td>
@@ -1328,7 +1309,7 @@ EOT;
 		     <pre class='downloadable'
 		          title='Download $fname'
 			  onclick='LOOK
-			       ("+work+/$fname",
+			       (event, "+work+/$fname",
 			        false)'>$fname</pre>
 				</td>
 EOT;
@@ -1488,7 +1469,7 @@ EOT;
 		<button type='button'
 		   id='show$count'
 		   title='$title'
-		   onclick='LOOK ("$fname")'>
+		   onclick='LOOK (event, "$fname")'>
 		 <pre id='file$count'>$fname</pre>
 		 </button></td>
 EOT;
@@ -1497,7 +1478,7 @@ EOT;
 	    echo <<<EOT
 	     <pre class='downloadable'
 		  title='Download $fname'
-		  onclick='LOOK ("$fname",false)'
+		  onclick='LOOK (event,"$fname",false)'
 		  >$fname</pre></td>
 EOT;
 	else
