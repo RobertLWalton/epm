@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep 13 03:11:18 EDT 2020
+    // Date:	Mon Sep 14 10:30:37 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -856,6 +856,7 @@ EOT;
 	    if ( $priv_file_contents === false )
 		$priv_file_contents = " \n";
 	    echo <<<EOT
+	    <div style='clear:both'></div>
 	    <div class='project'>
 	    <strong>$project Project Privileges</strong>
 	    <div class='priv'>

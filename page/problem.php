@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep 13 21:48:06 EDT 2020
+    // Date:	Mon Sep 14 10:39:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -696,6 +696,8 @@ EOT;
 		( $_FILES['uploaded_file'],
 		  $lock, "$probdir/+work+",
 		  $errors );
+
+	    $state = 'executing';
 	}
 	else
 	    $errors[] = "no file selected for upload";
@@ -1479,11 +1481,12 @@ EOT;
 	     <pre class='downloadable'
 		  title='Download $fname'
 		  onclick='LOOK (event,"$fname",false)'
+		  id='file$count'
 		  >$fname</pre></td>
 EOT;
 	else
 	    echo <<<EOT
-	    <pre>$fname</pre></td>
+	    <pre id='file$count'>$fname</pre></td>
 EOT;
 	if ( isset ( $fdisplay ) )
 	{
