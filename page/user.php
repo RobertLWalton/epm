@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 12:17:56 EDT 2020
+    // Date:	Mon Sep 14 17:05:45 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -138,7 +138,69 @@
     //		with $aid as manager; not allowed unless
     //		$uid == $aid (not member or guest login)
     //		and not new user
-    //	   
+    //
+    //	   rw=MODE
+    //		change rw mode to MODE (rw or ro)
+    //
+    //     force-rw
+    //          change rw from read-only to read-write
+    //
+    //     edit={uid-profile,emails,guests,tid-profile,
+    //           members}
+    //          change $state to the given value of
+    //          $_POST['edit']
+    //
+    //     uid-update uid=UID full_name=FULL-NAME
+    //                organization=ORGANIZATION
+    //                location=LOCATION
+    //          update $uid_info with the given fields
+    //
+    //     new-uid
+    //          accept $uid_info as info for new user
+    //
+    //     NO-new-uid
+    //          reject $uid_info as info for new user and
+    //          continue editing
+    //
+    //     add-email new-email=EMAIL
+    //          add EMAIL to $uid_info
+    //
+    //     delete-email=EMAIL
+    //          delete EMAIL from $uid_info
+    //
+    //     add-guest new-guest=GUEST
+    //          add GUEST to $uid_info
+    //
+    //     delete-guest=N
+    //          delete N+1'st GUEST from $uid_info
+    //
+    //
+    //     tid-update manager=MANAGER team_name=TID
+    //                full_name=FULL-NAME
+    //                organization=ORGANIZATION
+    //                location=LOCATION
+    //          update $tid_info with the given fields
+    //
+    //     new-tid
+    //          accept $tid_info as info for new team
+    //
+    //     NO-new-tid
+    //          reject $tid_info as info for new team and
+    //          continue editing
+    //
+    //     new-manager
+    //          accept $tid_info as info with new manager
+    //		for existing team
+    //
+    //     NO-new-manager
+    //          reject $tid_info as info with new manager
+    //          and continue editing
+    //
+    //     add-member new-member=MEMBER
+    //          add MEMBER to $tid_info
+    //
+    //     delete-member=N
+    //          delete N+1'st member from $tid_info
 
     $uid_edit_states =
         [ 'uid-profile', 'emails', 'guests',
@@ -146,7 +208,7 @@
     $tid_edit_states =
         [ 'tid-profile', 'members', 'new-tid',
 	  'new-manager' ];
- 
+
     // Set up $user.
     //
     if ( ! isset ( $_SESSION['EPM_USER'] ) )
@@ -260,7 +322,7 @@
 
 	// The following has the same effect as a
 	// POST with rw='rw'.
-	// 
+	//
 	$epm_rw_request = 'rw';
 	$error_count = count ( $errors );
 	require "$epm_home/include/epm_rw.php";
@@ -347,7 +409,7 @@
 	if ( ! $new_user && $uid != $aid )
 	    ERROR
 	        ( "is guest and bad \$state = $state" );
-	if ( ! $rw ) 
+	if ( ! $rw )
 	    ERROR
 	        ( "! \$rw and bad \$state = $state" );
     }
@@ -635,7 +697,7 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	$e = trim ( $_POST['new-email'] );
-	if ( count ( $emails ) >= 
+	if ( count ( $emails ) >=
 	     $epm_max_emails )
 	    $errors[] = "you already have the maximum"
 	              . " limit of $epm_max_emails"
@@ -809,7 +871,7 @@
 	    exit ( "UNACCEPTABLE HTTP POST: TID" );
 	if ( $new_team && $new_manager != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST: MANAGER" );
-	    
+
 	if ( count ( $errors ) == 0
 	     &&
 	     $new_tid != $old_tid )
@@ -1172,7 +1234,7 @@ function KEY_DOWN ( event, id )
 </head>
 <body>
 
-<?php 
+<?php
 
     if ( $new_user || $UID == $uid ) $uname = 'Your';
     else $uname = $UID;
