@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Sep 14 05:48:23 EDT 2020
+Date:	Mon Sep 14 06:32:00 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -238,7 +238,7 @@ margin: 2em;
 
 <div id='text'>
 
-<a id="introductory-note"><h1>Introductory Note</h1></a>
+<h1 id="introductory-note">Introductory Note</h1>
 <p>
 EPM (the Educational Problem Manager) is intended to
 make it easier for one user to develop a programming problem and
@@ -339,13 +339,13 @@ context.fillText ( '.score file', 115, 430 );
 
 </script>
 
-<a id="login-page"><h1>Login Page</h1></a>
+<h1 id="login-page">Login Page</h1>
 
 <p>
 To log into an EPM account,
 you open the URL of the EPM server you wish to access
 and load its <b>Login Page</b>.  This page accepts a
-    <a id='login-name'>login name</a> of the one of the forms:
+    <b id='login-name'>login name</b> of the one of the forms:
 <br>
 <table class='login-name'>
 <tr><td>User-E-Mail-Address</td><td>User Account</td></tr>
@@ -358,8 +358,8 @@ and load its <b>Login Page</b>.  This page accepts a
 EPM has two kinds of accounts: user accounts and team accounts.
 These behave similarly in most circumstances.
 Both kinds of accounts are named by an
-<a id='account-ID'>account ID</a>, which is
-either a <a id='user-ID'>user ID</a> or a <a id='team-ID'>team ID</a>.
+<b id='account-ID'>account ID</b>, which is
+either a <b id='user-ID'>user ID</b> or a <b id='team-ID'>team ID</b>.
 E-mail addresses map to user IDs, and a single user can have several
 e-mail addresses.  Teams have members, which
 are user accounts.  A user may have guests, which are other users
@@ -367,14 +367,14 @@ who are allowed to see the user's account but not change it.
 <a href="#guests">Guests</a> and <a href='#teams'>teams</a>
 are discussed separately.
 <p>
-An account is on an <a id='EPM-server'>EPM server</a>.
+An account is on an <b id='EPM-server'>EPM server</b>.
 EPM servers are named
 by the document root URL used to access them, and EPM servers with
 different names are independent of each other (even
 if they are running on the same computer).
 <p>
 Once you have logged in, an
-EPM server <a id='session'>session</a>
+EPM server <b id='session'>session</b>
 for your login name is attached to your browser,
 and a ticket for future use with the login name is stored in your browser
 local memory.  The ticket enables you to log in again using the
@@ -383,25 +383,26 @@ number by e-mail.
 <p>
 Your session is allocated:
 <ul>
-<li> A <a id="main-tab">main tab</a> for non-problem-specific
+<li> A <b id="main-tab">main tab</b> for non-problem-specific
 actions.  This is allocated on login and after login is
 loaded with the <a href="#project-page">Project Page</a>.
 You should not close this tab while you are logged in, but if
 you do you can recover it by re-using the EPM server URL you
 originally used to open this tab.
-<li> A <a id="problem-tab">problem tab</a> for each of your
+<li> A <b id="problem-tab">problem tab</b> for each of your
 problems.
 These are created using the <a href="#project-page">Project Page</a>.
 There can be at most one problem tab for each of your problems.
-<li> <a id="aux-window">Auxilary popup windows</a> for read-only
+<li> Popup windows for read-only
 views of files and information.  By default there is only one
-such window and new views overlay old views in this window.  But
+such window, the <b id="aux-window">auxiliary window</b>,
+and new views overlay old views in this window.  But
 if you hold down an ALT key while launching an auxiliary window,
-a separate floating window will be created dedicated to the content
-of the particular view.
-<li> A <a id="help-window">help popup window</a> for this
+a separate floating window will be created instead that is
+dedicated to the content of the particular view.
+<li> A <b id="help-window">help popup window</b> for this
 Help Page and the User Guide page.
-<li> An <a id="index-window">index popup window</a> for indices of
+<li> An <b id="index-window">index popup window</b> for indices of
 documentation and downloads.
 </ul>
 <p>
@@ -432,7 +433,7 @@ problem tabs and popup windows that you have.
 Or you can simply close and reopen your browser.
 </p>
 
-<a id="login-e-mail"><h2>User E-Mail Address</h2></a>
+<h2 id="login-e-mail">User E-Mail Address</h2>
 <p>
 You can have up to 3 <b>e-mail addresses</b> that map to your
 user ID, and hence to your account on the EPM server.
@@ -446,7 +447,7 @@ to that address, you will be routed to the
 of establishing a new account.
 </p>
 
-<a id="browser-ticket"><h2>Browser Ticket</h2></a>
+<h2 id="browser-ticket">Browser Ticket</h2>
 <p>
 A browser <b>ticket</b> is stored in the browser local memory
 and enables an account to log in by giving only the login name
@@ -477,7 +478,7 @@ number.  The first auto-login period is 2 days, the second
 is 7 days, and all the rest are 30 days.
 </p>
 
-<a id="user-page"><h1>User Page</h1></a>
+<h1 id="user-page">User Page</h1>
 
 <p>
 To be an EPM user you must supply the following information which
@@ -526,7 +527,7 @@ A guest account is specified by giving the user ID of the account.
 </ul>
 </p>
 
-<a id="guests"><h2>Guests</h2></a>
+<h2 id="guests">Guests</h2>
 <p>
 If you are a guest of another user, you may log in as a guest
 using a login name of the form:
@@ -547,7 +548,7 @@ your own profile or the profile of teams of which you are
 a manager, and you cannot create new teams.
 </p>
 
-<a id="teams"><h2>Teams</h2></a>
+<h2 id="teams">Teams</h2>
 <p>
 A team account is like a user account except that:
 <ol>
@@ -601,7 +602,7 @@ into read-only mode.
 <p>
 Any user can make a team using the User Page.  A team has a profile
 like a user profile, except that a team also has a
-<a id='manager'>manager</a>, that is the user account that can
+<b id='manager'>manager</b>, that is the user account that can
 edit the profile and add or delete team members.  New team
 members can be identified by either their user ID or by one
 of their e-mail addresses.  A manager can change a team's
@@ -621,7 +622,7 @@ are in read-write mode.
 </p>
 
 
-<a id="project-page"><h1>Project Page</h1></a>
+<h1 id="project-page">Project Page</h1>
 <p>
 A project is a collection of problems which may be solved
 by EPM users.  Before solving a problem in a project, a user pulls
@@ -631,9 +632,9 @@ not belong to any project, and when done, the user
 may elect to push that problem to a project so other users can pull the
 problem from the project and try to solve it.
 <p>
-Two builtin projects are `<a id='demos'>demos</a>',
+Two builtin projects are `<b id='demos'>demos</b>',
 which contains demonstration
-problems, and `<a id='public'>public</a>',
+problems, and `<b id='public'>public</b>',
 into which anyone may push problems
 they have developed.
 <p>
@@ -684,7 +685,7 @@ for details.
 When you pull or push a problem, the problem ends up in
 both a directory private to you, as `Your' problem, and
 in a directory within a project.  The project problem
-directory is known as the <a id='parent'>parent</a>
+directory is known as the <b id='parent'>parent</b>
 of your problem directory.  Your problem directory will
 then contain symbolic links to files in its parent.
 However, solution program files are only in your problem
@@ -710,7 +711,7 @@ Projects Page.  See <a href='#manage-page'>Manage Page</a> for
 details.
 </p>
 
-<a id="project-pull"><h2>Pulling Problems From Project</h2></a>
+<h2 id="project-pull">Pulling Problems From Project</h2>
 <p>
 If you want to solve a problem that someone else has written,
 you must pull the problem from a project.  Pulling a problem
@@ -758,7 +759,7 @@ performed),
 and white if the problem was skipped over.
 </p>
 
-<a id="project-push"><h2>Pushing Problems to Project</h2></a>
+<h2 id="project-push">Pushing Problems to Project</h2>
 <p>
 If you have written your own problem, you can make it
 available for others to solve by pushing the problem
@@ -831,7 +832,7 @@ performed),
 and white if the problem was skipped over.
 </p>
 
-<a id="problem-page"><h1>Problem Page</h1></a>
+<h1 id="problem-page">Problem Page</h1>
 
 <p>
 The <a href='#project-page'>Project Page</a>,
@@ -858,16 +859,16 @@ But you can work on a
 DIFFERENT problem, which will be in a different problem tab.
 </p>
 
-<a id="problem-names"><h2>Problem Names</h2></a>
+<h2 id="problem-names">Problem Names</h2>
 <p>
-A <a id='problem-name'><b>problem name</b></a>
+A <b id='problem-name'>problem name</b>
 can contain only letters, digits, and the
 special characters dash(<pre.inline>-</pre>) and
 underline(<pre.inline>_</pre>).
 In addition, it must begin with a letter and end with a letter or digit.
 </p>
 
-<a id="problem-marks"><h2>Problem Marks</h2></a>
+<h2 id="problem-marks">Problem Marks</h2>
 <p>
 On the Problem Page:
 <table class='top-align'>
@@ -880,7 +881,7 @@ or upload or make a new file or make a new link</td></tr>
 </table>
 </p>
 
-<a id="current-problem-files"><h2>Current Problem Files</h2></a>
+<h2 id="current-problem-files">Current Problem Files</h2>
 <p>
 The <b>current problem files</b> are the files that you have uploaded
 or made for the problem, plus links to other files.
@@ -894,7 +895,7 @@ first and file basename second.  You can also have the file lines
 sorted in `<b>most recent first</b>' or `<b>alphabetic order</b>'
 (i.e., basename first, extension second).
 <p>
-Current problem <a id='file-names'><b>file names</b></a> must have particular
+Current problem <b id='file-names'>file names</b> must have particular
 <a href='#file-extensions'>extensions</a> that specify their role within
 the problem.  The rest of a file name can contain
 only letters, digits, and the special characters dash(<pre.inline>-</pre>) and
@@ -956,7 +957,7 @@ a control key down, provided the file name is in a button or
 is in a box with a black boundary line.
 </p>
 
-<a id="file-extensions"><h2>File Extensions</h2></a>
+<h2 id="file-extensions">File Extensions</h2>
 <p>
 EPM files have <b>extensions</b> that indicate their format
 and purpose.  In the following PPPP denotes the problem name
@@ -1134,7 +1135,7 @@ creates the problem).
 </div>
 </p>
 
-<a id="generate-and-filter"><h2>Generate and Filter Programs</h2></a>
+<h2 id="generate-and-filter">Generate and Filter Programs</h2>
 <p>
 The generate, filter, monitor, and scoring programs all follow
 the conventions that a line beginning `!!' is special, that
@@ -1192,7 +1193,7 @@ solution output line beginning with `!!' but NOT `!!**',
 it outputs the line but issues a warning message.
 </p>
 
-<a id="multiple-solutions"><h2>Multiple Solutions</h2></a>
+<h2 id="multiple-solutions">Multiple Solutions</h2>
 <p>
 If you are writting in the C language, so that normally you
 would provide a solution PPPP.c, you may provide multiple
@@ -1222,7 +1223,7 @@ as such files are treated not as solutions but as generate,
 filter, or monitor programs.
 </p>
 
-<a id="problem-commands"><h2>Commands Last Executed</h2></a>
+<h2 id="problem-commands">Commands Last Executed</h2>
 <p>
 This section displays the UNIX/POSIX/LINUX commands last executed
 to make a file, and if any files output by these commands are
@@ -1251,7 +1252,7 @@ deletes this section and stops any kept files from being
 highlighted or automatically shown.
 </p>
 
-<a id="problem-working"><h2>Working Files of Last Executed Commands</h2></a>
+<h2 id="problem-working">Working Files of Last Executed Commands</h2>
 <p>
 This section lists the files made by the last executed commands
 which were <u>not</u> kept.  These files can be displayed in the
@@ -1272,7 +1273,7 @@ when a .run file is run, or when the
 `<b>Delete Working Files and Command History</b>' button is clicked.
 </p>
 
-<a id="run-page"><h1>Run Page</h1></a>
+<h1 id="run-page">Run Page</h1>
 <p>
 If you click a <b>Run</b> button on the Problem Page, the associated
 .run file will be run and the page will switch to the Run Page where
@@ -1282,7 +1283,7 @@ the Problem Page, and may be `Run', and .run files that are only
 in the <a href="#parent">parent</a> of the current problem, and may
 only be `Submit'ed.
 <p>
-A <a id='.run-file'>.run file</a> is just a list of .in files
+A <b id='.run-file'>.run file</b> is just a list of .in files
 from which .score files may be computed.  A .run file can be uploaded
 on the <a href="#problem-page">Problem Page</a>,
 and pushed along with other files to a project
@@ -1343,7 +1344,7 @@ linked into your problem directory so you can debug against
 them without re-submitting.
 </p>
 
-<a id="option-page"><h1>Option Page</h1></a>
+<h1 id="option-page">Option Page</h1>
 
 <p>The <b>Option Page</b> shows the options given to
 commands that perform compilations and computations,
@@ -1382,7 +1383,7 @@ When editing you can also reset all options to their inherited
 values.
 </p>
 
-<a id="option-numbers"><h2>Number Options</h2></a>
+<h2 id="option-numbers">Number Options</h2>
 <p>
 <b>Number options</b> are numbers included in argument
 options.  For example, the STIME option value is the maximum number of
@@ -1396,7 +1397,7 @@ value.  Clicking the &#8635; symbol after the value will restore
 the value to the inherited value (and restore the color to tan).
 </p>
 
-<a id="option-arguments"><h2>Argument Options</h2></a>
+<h2 id="option-arguments">Argument Options</h2>
 <p>
 <b>Argument options</b> are the arguments that
 are inserted into <a href='#template-page'>template commands</a>.
@@ -1424,7 +1425,7 @@ the option value is inherited, even if the box is colored green
 (it is green because you are editing and have clicked on the inherited value).
 </p>
 
-<a id="template-page"><h1>Template Page</h1></a>
+<h1 id="template-page">Template Page</h1>
 <p>
 A <b>Template</b> supplies the commands used to make one
 file from another file.
@@ -1500,7 +1501,7 @@ Finally the template specifies a <b>keep</b> list of files that
 are to be kept if there are no errors in an execution.
 </p>
 
-<a id="list-page"><h1>List Page</h1></a>
+<h1 id="list-page">List Page</h1>
 <p>
 A problem list is just a list of problems that are either
 your problems or project problems.  The `Your Problems'
@@ -1570,7 +1571,7 @@ can include your list in their favorites.  An unpublished list is
 not visible.
 </p>
 
-<a id="list-descriptions"><h2>List Descriptions</h2></a>
+<h2 id="list-descriptions">List Descriptions</h2>
 <p>
 If you have a list of your own named XXXX, then when you have
 selected this list for editing, you may upload
@@ -1597,7 +1598,7 @@ one or more tabs at the very beginning of a line, but nowhere
 else.  Each tab will be replaced by 8 single space characters.
 </p>
 
-<a id="favorites-page"><h1>Favorites Page</h1></a>
+<h1 id="favorites-page">Favorites Page</h1>
 <p>
 The `Favorites' list is a list of those problem lists
 you find most interesting, in order of interest.
@@ -1634,7 +1635,7 @@ You must use one of these two buttons to get the `Go To ... Page'
 buttons to reappear.
 </p>
 
-<a id="view-page"><h1>View Page</h1></a>
+<h1 id="view-page">View Page</h1>
 <p>
 The View Page allows you to see lists of actions that involve
 a user, a project, or a project problem.
@@ -1660,7 +1661,7 @@ visible on the View Page.  Such projects are usually used
 to prepare programming contest problems.
 </p>
 
-<a id="manage-page"><h1>Manage Page</h1></a>
+<h1 id="manage-page">Manage Page</h1>
 <p>
 The Manage Page allows you to view project and project problem
 privileges, to change these if you have owner privilege for
@@ -1799,7 +1800,7 @@ intersections, unions, or
 set complements of previous groups.
 </p>
 
-<a id="conflicts"><h1>Conflicts</h1></a>
+<h1 id="conflicts">Conflicts</h1>
 <dl>
 
 <dt>Browser Back, Forward, and Refrest Buttons Must NOT Be Used</dt>
@@ -1838,7 +1839,7 @@ the Project Page selector to create a problem window.</dd>
 
 </dl>
 
-<a id="deficiencies"><h1>Deficiencies</h1></a>
+<h1 id="deficiencies">Deficiencies</h1>
 <dl>
 <dt>Moving Problems Between Projects</dt>
 <dd>To be implemented on Manage Page.  Not yet implemented.</dd>
