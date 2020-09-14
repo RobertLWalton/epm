@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  8 02:29:59 EDT 2020
+    // Date:	Mon Sep 14 04:23:28 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -276,11 +276,6 @@ function INCLUDE ( checkbox, c )
     <strong title='Login Name'>$lname</strong>
     </td>
     <td>
-    <form method='GET'>
-    <button type='submit' formaction='template.php'>
-    View Templates
-    </button>
-    </form>
     </td>
     <td>
     </td><td style='text-align:right'>

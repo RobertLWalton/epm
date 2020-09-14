@@ -2,7 +2,7 @@
 
     // File:	template.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug 27 02:00:35 EDT 2020
+    // Date:	Mon Sep 14 04:25:41 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -115,10 +115,6 @@
     <strong title='Login Name'>$lname</strong>
     </td>
     <td>
-    <form method='GET'>
-    <button type='submit' formaction='view.php'>
-    View Actions</button>
-    </form>
     </td>
     <td style='text-align:right'>
     <button type='button' id='refresh'
