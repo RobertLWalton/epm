@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep 13 21:37:17 EDT 2020
+    // Date:	Mon Sep 14 12:17:56 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -40,29 +40,34 @@
         ERROR ( "new user and ! \$rw" );
 	// Just checking on index.php.
 
-    // Data:
+    // Session Data:
     //
-    //     EPM_USER UID
-    //          Currently selected UID.
+    //     $user = & $_SESSION['EPM_USER']
+    //		// User Page Persistant Memory
     //
-    //     EPM_USER TID
+    //     $UID = & $user['UID']
+    //          Currently selected UID.  NULL only
+    //		during new user processing.  Defaults
+    //		to $uid (see index.php) if that exists.
+    //
+    //     $TID = & $user['TID']
     //          Currently selected TID.
     //		NULL if no team or new team.
     //
-    //     EPM_USER TID-LIST
+    //     $TID_LIST = & $user['TID-LIST']
     //          Currently selected TID-LIST:
-    //		  'all' => all tids
+    //		  'all'     => all tids
     //		  'manager' => tids with $UID as
     //			       a manager
-    //		  'member' => tids with $UID as a member
+    //		  'member'  => tids with $UID as
+    //			       a member
     //
-    //	   $data UID-INFO
-    //		This is the info of EPM_USER UID,
-    //		except when the latter is NULL during
-    //		new_user processing, when it is to
-    //		info of the not yet extant new user.
-    //
-    //	        .info file contents containing:
+    //	   $uid_info = & $data['UID-INFO']
+    //		This is the info of $UID, except when
+    //		the latter is NULL during new_user
+    //		processing, when it is info of the
+    //		not yet extant new user.  User .info
+    //	        file contents containing:
     //
     //		uid		string
     //		emails		list of strings
@@ -71,9 +76,16 @@
     //		location	string
     //		guests		list of strings
     //
-    //	   $data TID-INFO
-    //		NULL if no team
-    //	        .info file contents containing:
+    //     $emails = & $uid_info['emails']
+    //		Email addresses of $UID user.
+    //		If $UID = $uid or new user,
+    //		the first email address is the login
+    //		email address.
+    //
+    //	   $tid_info = & $data['TID-INFO']
+    //		NULL if no team; new team info if new
+    //		team.  Team .info file contents
+    //		containing:
     //
     //		tid		string
     //		manager		string
@@ -82,19 +94,52 @@
     //		organization	string
     //		location	string
     //
-    //	   $state
+    //	   $state (see index.php)
     //		normal
     //		emails (edit $UID == $uid emails)
     //		uid-profile (edit $UID == $uid profile;
     //                       or new user profile)
     //		guests (edit $UID == $uid guests )
     //		members (edit $TID members)
-    //		tid-profile (edit $TID profile)
+    //		tid-profile (edit $TID profile
+    //			     or new team profile)
     //		new-uid (ask if new user UID ok)
     //		new-tid (ask if new team TID ok)
     //		new-manager (ask if new team manager ok)
     //		force-rw (ask if rw should be forced)
     //
+    //
+    // POSTs:
+    //
+    //	   user=new_UID
+    //		set $UID if it is different from new_UID
+    //		and in this case set $uid_info to info
+    //		of new_UID read from .info file; allowed
+    //		in any state where $uid_info is NOT being
+    //		edited
+    //
+    //	   team=new_TID
+    //		set $TID if it is different from new_TID
+    //		and in this case set $tid_info to info
+    //		of new_TID read from .info file; allowed
+    //		in any state where $tid_info is NOT being
+    //		edited
+    //
+    //	   tid-list=new_TID_LIST
+    //		set $TID_LIST if it is different from
+    //		new_TID_LIST and in this case set $TID
+    //		and $tid_info to NULL (no team
+    //		selected); allowed in any state where
+    //		$tid_info is NOT being edited
+    //
+    //	   create-tid
+    //		create new team; set TID = NULL and
+    //		$tid_info to initial value for new team
+    //		with $aid as manager; not allowed unless
+    //		$uid == $aid (not member or guest login)
+    //		and not new user
+    //	   
+
     $uid_edit_states =
         [ 'uid-profile', 'emails', 'guests',
 	  'new-uid' ];
@@ -190,6 +235,8 @@
              &&
 	     $_POST['tid-list'] != $TID_LIST )
     {
+        if ( in_array ( $state, $tid_edit_states ) )
+	    exit ( "UNACCEPTABLE HTTP POST: TID EDIT" );
         $new_tid_list = $_POST['tid-list'];
 	if ( ! in_array ( $new_tid_list,
 	                  ['all','member','manager'] ) )
@@ -200,19 +247,27 @@
 	$post_processed = true;
     }
 
-    // If selector processed in force-rw mode, fix up
-    // error messages.
+    // We allow selectors to be processed in force-rw
+    // state, so that user can inspect user and team
+    // data in this state.  But if a selector is used,
+    // we must repeat the $_POST['rw]' == 'rw'.
     //
     if ( $post_processed && $state == 'force-rw' )
     {
         if ( count ( $errors ) > 0 )
 	    $errors[] = '';
-	    // Separate errors from rw errors.
+	    // Separate any errors from rw errors.
+
+	// The following has the same effect as a
+	// POST with rw='rw'.
+	// 
 	$epm_rw_request = 'rw';
 	$error_count = count ( $errors );
 	require "$epm_home/include/epm_rw.php";
 	if ( $error_count == count ( $errors ) )
 	    $state = 'normal';
+	    // If there were no new errors, we can
+	    // go back to normal state.
     }
 
     // If no selector processed, process any team
@@ -226,18 +281,19 @@
 	    exit ( "UNACCEPTABLE HTTP POST" );
         if ( $new_user || $uid != $aid )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	if ( $rw )
-	{
-	    $data['TID-INFO'] = [
-		'tid' => '',
-		'manager' => $aid,
-		'members' => [],
-		'team_name' => '',
-		'organization' => '',
-		'location' => ''];
-	    $TID = NULL;
-	    $state = 'tid-profile';
-	}
+        if ( ! $rw )
+	    exit ( "UNACCEPTABLE HTTP POST: RW" );
+	    // Previous check should ensure this.
+
+	$data['TID-INFO'] = [
+	    'tid' => '',
+	    'manager' => $aid,
+	    'members' => [],
+	    'team_name' => '',
+	    'organization' => '',
+	    'location' => ''];
+	$TID = NULL;
+	$state = 'tid-profile';
 	$post_processed = true;
     }
 

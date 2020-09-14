@@ -2,11 +2,12 @@
 
 // File:	abort.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Sun Aug  9 04:52:33 EDT 2020
+// Date:	Mon Sep 14 14:46:40 EDT 2020
 
 $our_time = strftime ( $epm_time_format, $our_time );
 $cur_time = strftime ( $epm_time_format, $cur_time );
 $aid = $_SESSION['EPM_AID'];
+$email = $_SESSION['EPM_EMAIL'];
 
 echo <<<EOT
     <html>
@@ -16,16 +17,17 @@ echo <<<EOT
     <h2>You should close all tabs and
         windows of this session!</h2>
     <h2>
-    This session for $aid,
+    This session for $aid:$email,
     <br>
     started about $our_time,
     <br>
-    has been aborted by a new session for $aid,
+    has been aborted by a new session for $aid:$email,
     <br>
     started about $cur_time.
     </h2>
     <h2>
-    You cannot have two simutaneous sessions for $aid.
+    You cannot have two simutaneous sessions for
+    $aid:$email.
     </h2>
     <h2>
     If you want to start a new un-aborted session,
