@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Sep 14 04:59:40 EDT 2020
+Date:	Mon Sep 14 05:48:23 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -216,7 +216,7 @@ margin: 2em;
 <div style='width:50%;float:left'>
 <ul>
 
-<li><a href="#template-page">Template Page</a> [view]
+<li><a href="#template-page">Template Page</a> [auxiliary]
 
 <li><a href="#list-page">List Page</a> [main]
 <ul>
@@ -224,7 +224,7 @@ margin: 2em;
 </ul>
 <li><a href="#favorites-page">Favorites Page</a> [main]
 
-<li><a href="#view-page">View Page</a> [view]
+<li><a href="#view-page">View Page</a> [auxiliary]
 
 <li><a href="#manage-page">Manage Page</a> [main]
 
@@ -386,15 +386,23 @@ Your session is allocated:
 <li> A <a id="main-tab">main tab</a> for non-problem-specific
 actions.  This is allocated on login and after login is
 loaded with the <a href="#project-page">Project Page</a>.
-You should NOT close this tab while you are logged in.
+You should not close this tab while you are logged in, but if
+you do you can recover it by re-using the EPM server URL you
+originally used to open this tab.
 <li> A <a id="problem-tab">problem tab</a> for each of your
 problems.
 These are created using the <a href="#project-page">Project Page</a>.
 There can be at most one problem tab for each of your problems.
-<li> A <a id="view-window">view popup window</a> for read-only
-views of files and information.
+<li> <a id="aux-window">Auxilary popup windows</a> for read-only
+views of files and information.  By default there is only one
+such window and new views overlay old views in this window.  But
+if you hold down an ALT key while launching an auxiliary window,
+a separate floating window will be created dedicated to the content
+of the particular view.
 <li> A <a id="help-window">help popup window</a> for this
 Help Page and the User Guide page.
+<li> An <a id="index-window">index popup window</a> for indices of
+documentation and downloads.
 </ul>
 <p>
 EPM consists of a set of pages, such as the Login Page and the
@@ -904,8 +912,9 @@ Usually links are treated and talked about as if they were files.
 <p>
 Clicking on a file name, if it is a button,
 will show the file with line numbers
-in a separate window.  There is an exception for PDF files,
-which will be rendered as a document in the separate window.
+in a separate <a href='#aux-window'>auxiliary window</a>.
+There is an exception for PDF files,
+which will be rendered as a document in the separate auxiliary window.
 <p>
 Clicking on &darr; will show the file below.
 <p>
@@ -1235,7 +1244,7 @@ The lines of kept files in the
 section
 are also highlighted by using a darker background color.  Some
 of these files, particularly PDF files, are automatically shown
-in a separate window.
+in a separate <a href='#aux-window'>auxiliary window</a>.
 <p>
 The `<b>Delete Working Files and Command History</b>' button
 deletes this section and stops any kept files from being
@@ -1351,7 +1360,8 @@ into arguments, and arguments are substituted into the commands
 used to make one file from another file.
 These commands are specified by templates, which  can be
 displayed by clicking the `View Templates' button to display
-the <a href='#template-page'>Template Page</a> in a separate window.
+the <a href='#template-page'>Template Page</a> in
+a separate <a href='#aux-window'>auxiliary window</a>.
 <p>
 There are two values for each option: an <b>inherited value</b>
 and a <b>local value</b>.  The inherited value is set by
@@ -1419,7 +1429,8 @@ the option value is inherited, even if the box is colored green
 A <b>Template</b> supplies the commands used to make one
 file from another file.
 Templates can be displayed in a separate
-window by clicking the `View Templates' button on
+<a href='#aux-window'>auxiliary window</a>
+by clicking the `View Templates' button on
 the <a href='#option-page'>Option Page</a>.
 <p>
 An index of all the available templates is displayed at the top

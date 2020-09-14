@@ -2,7 +2,7 @@
 
     // File:	documents.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep 13 21:38:45 EDT 2020
+    // Date:	Mon Sep 14 05:55:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -70,6 +70,12 @@
 
 </head>
 <body>
+
+<p>
+Click on a file name to display the document in the
+(one and only) auxilary
+window.  Holding down an alt key while doing this will
+create a distinct window for the document.
 
 <dl>
 

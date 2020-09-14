@@ -2,7 +2,7 @@
 
     // File:	downloads.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 03:51:59 EDT 2020
+    // Date:	Mon Sep 14 05:53:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -76,9 +76,12 @@
 <body>
 
 <p>
-Click on file name to display file contents.
+Click on a file name to display the file contents in the
+(one and only) auxilary
+window.  Holding down an alt key while doing this will
+create a distinct window for the file contents.
 <p>
-Click on file name while holding a control key down
+Click on a file name while holding a control key down
 to download the file.
 
 <h2> Reverser Problem Solutions:</h2>
