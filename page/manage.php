@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 10:30:37 EDT 2020
+    // Date:	Tue Sep 15 07:46:12 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -37,9 +37,10 @@
     //		move-warn (ask the user if he really
     //			   wants to move the problem)
     //
-    //	   $download_enabled = & $data['DOWNLOAD-ENABLED']
-    //		true if user was presented with a download
-    //		button by the last response
+    //	   $download_enabled =
+    //		    & $data['DOWNLOAD-ENABLED']
+    //		true if user was presented with a
+    //		download button by the last response
     //
     //	   $update_enabled = & $data['UPDATE-ENABLED']
     //		true if user was presented with editable
@@ -480,7 +481,9 @@
     $download_enabled =
         ( $state == 'normal'
           &&
-	  ( isset ( $problem ) || isset ( $project ) ) );
+	  ( isset ( $problem )
+	    ||
+	    isset ( $project ) ) );
 
     if ( $state == 'owner-warn' )
         $update_enabled = true;

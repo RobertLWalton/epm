@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 10 16:41:26 EDT 2020
+    // Date:	Tue Sep 15 07:44:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -102,7 +102,7 @@
     elseif ( $location == '+home+' )
     {
 	if ( $ftype == 'tgz' )
-	     exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
 
         if ( $fdir == 'documents' )
 	{
@@ -127,13 +127,13 @@
         if ( ! preg_match ( $epm_name_re, $problem ) )
 	    exit ( "UNACCEPTABLE HTTP POST: LOCATION" );
         if ( ! is_dir ( "$epm_data/$f" ) )
-	     exit ( "UNACCEPTABLE HTTP POST: LOCATION" );
+	    exit ( "UNACCEPTABLE HTTP POST: LOCATION" );
 
 	if ( $ftype == 'tgz' )
-	     exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
 
 	if ( ! in_array ( $fdir, ['.','+work+'] ) )
-	     exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
 
 	$f .= "/$filename";
 	$d = $epm_data;

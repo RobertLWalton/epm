@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep  4 16:24:15 EDT 2020
+    // Date:	Tue Sep 15 07:41:38 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1917,7 +1917,8 @@ EOT;
 	elseif ( isset ( $listname ) )
 	    echo <<<EOT
 	    <pre>    </pre>
-	    (list has NO problems you previously created or pulled)
+	    (list has NO problems you previously
+	     created or pulled)
 EOT;
 
 	if ( $rw )
