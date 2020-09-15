@@ -116,7 +116,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 5, 2020}
+\date{September 15, 2020}
  
 \maketitle
 
@@ -193,7 +193,8 @@ same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
      which:
      \begin{itemize}
      \item defines {\tt \$epm\_time\_\EOL format}
-           (defaults to {\tt "\%FT\%T\%Z"})
+           (defaults to {\tt "\%FT\%T\%Z"}, which
+	    produces times such as {\tt 2020-09-15T07:40:10EDT})
      \item sets the time zone using
            {\tt date\_default\_\EOL timezone\_\EOL set}
      \end{itemize}
@@ -237,7 +238,7 @@ same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
       window contents.
 
       \$ID values are generated and checked by {\tt /page/index.php}
-      which is required by all page files
+      which is required by all page .php files
       \sref{TABS-AND-WINDOWS}{SEQUENCE-RULE}.
 \end{enumerate}
 
@@ -245,19 +246,30 @@ same rules.  See {\tt /include/parameters.php} {\tt \$epm\_filename\_re}.
 \label{TABS-AND-WINDOWS}
 
 \begin{enumerate}
-\item There are specific tabs and windows for different kinds
-of transactions.  The \TT{main} tab is for non-problem specific
-transactions.  For each account problem there is a problem-specific
-tab for transactions on that problem.  There is a \TT{view}
-pop-up window for looking at files and information, and a
-separate \TT{help} pop-up window for the Help and Guide Pages.
+\item Transactions that make changes to the server files
+are executed in tabs.
+The \key{main tab} is for non-problem specific
+transactions.  For each account problem there is a
+\key{problem tab} for transactions on that problem.
 
-\item Pages are assigned to tabs or windows.  E.g., Login, Project,
-User, Manage, List Edit, and Favorites Edit Pages are assigned
+Popup windows are used to display information about server files,
+without making any changes.  The \key{help window} displays help and
+guide information.  The \key{documents index} and
+\key{downloads index} windows display indices of
+available documents and downloads.  The \key{auxiliary window}
+displays files and other information.  Pages that are loaded into
+the auxiliary window by default can be loaded into floating windows
+instead (just by holding down an ALT key when launching the window):
+each floating window is separarate and specific to its content.
+
+\item Pages are assigned to tabs or windows.  The Login, Logout,
+Project, User, Manage, List Edit, and Favorites Edit Pages are assigned
 to the main tab;
 Problem, Option, and Run Pages are assigned to problem tabs;
-the View and Template Pages are assigned to the view pop-up
-window; and Help and Guide Pages are assigned to the help pop-up
+the View and Template Pages are assigned to the auxiliary
+window; the Documents Page is assigned to the documents index window;
+the Downloads Page is assigned to the downloads index window;
+and Help and Guide Pages are assigned to the help pop-up
 window.
 
 \item \key{Page Rule}\label{PAGE-RULE}
