@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 17:05:45 EDT 2020
+    // Date:	Tue Sep 15 07:26:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -115,15 +115,15 @@
     //		set $UID if it is different from new_UID
     //		and in this case set $uid_info to info
     //		of new_UID read from .info file; allowed
-    //		in any state where $uid_info is NOT being
-    //		edited
+    //		in any state where $uid_info is NOT
+    //		being edited
     //
     //	   team=new_TID
     //		set $TID if it is different from new_TID
     //		and in this case set $tid_info to info
     //		of new_TID read from .info file; allowed
-    //		in any state where $tid_info is NOT being
-    //		edited
+    //		in any state where $tid_info is NOT
+    //		being edited
     //
     //	   tid-list=new_TID_LIST
     //		set $TID_LIST if it is different from
@@ -159,8 +159,8 @@
     //          accept $uid_info as info for new user
     //
     //     NO-new-uid
-    //          reject $uid_info as info for new user and
-    //          continue editing
+    //          reject $uid_info as info for new user
+    //		and continue editing
     //
     //     add-email new-email=EMAIL
     //          add EMAIL to $uid_info
@@ -185,16 +185,16 @@
     //          accept $tid_info as info for new team
     //
     //     NO-new-tid
-    //          reject $tid_info as info for new team and
-    //          continue editing
+    //          reject $tid_info as info for new team
+    //		and continue editing
     //
     //     new-manager
-    //          accept $tid_info as info with new manager
-    //		for existing team
+    //          accept $tid_info as info with new
+    //		manager for existing team
     //
     //     NO-new-manager
-    //          reject $tid_info as info with new manager
-    //          and continue editing
+    //          reject $tid_info as info with new
+    //		manager and continue editing
     //
     //     add-member new-member=MEMBER
     //          add MEMBER to $tid_info
@@ -335,7 +335,9 @@
     // If no selector processed, process any team
     // creation.
     //
-    if ( ! $post_processed
+    if ( $epm_method == 'POST'
+         &&
+	 ! $post_processed
          &&
 	 isset ( $_POST['create-tid'] ) )
     {
@@ -548,9 +550,9 @@
 	$state = 'normal';
     }
     elseif ( ! $rw )
-    {
-	/* Do Nothing */
-    }
+	exit ( "UNACCEPTABLE HTTP POST" );
+	// None of the following posts are accepted
+	// when ! $rw.
     elseif ( isset ( $_POST['edit'] ) )
     {
 	if ( $state != 'normal' )
@@ -582,7 +584,7 @@
 	    $new_uid = $uid_info['uid'];
 	    $d = "accounts/$new_uid";
 	    if ( $new_uid == '' )
-	        /* Do Nothing */;
+	        $errors[] = 'missing user ID';
 	    elseif ( ! preg_match
 	                ( $epm_name_re, $new_uid ) )
 	        $errors[] = "$new_uid is not a properly"
@@ -924,7 +926,17 @@
         if ( $state != 'new-tid' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
-	$TID = $tid_info['tid'];
+	$new_tid = $tid_info['tid'];
+	if ( is_dir ( "$epm_data/accounts/$new_tid" ) )
+	{
+	    $errors[] = "another account has just"
+	              . " started using $new_tid as an"
+		      . " Account ID";
+	    $state = 'tid-profile';
+	    goto NEW_TID_EXIT;
+	}
+
+	$TID = $new_tid;
 	$no_team = false;
 	$new_team = false;
 
@@ -946,6 +958,9 @@
 	$TID_LIST = 'manager';
 
 	$state = 'normal';
+
+	NEW_TID_EXIT:
+	    // goto here on errors
     }
     elseif ( isset ( $_POST['new-manager'] ) )
     {
