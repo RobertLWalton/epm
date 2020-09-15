@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 10:39:29 EDT 2020
+    // Date:	Tue Sep 15 08:12:45 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1082,22 +1082,19 @@ EOT;
 	</form>
 EOT;
 
-    $title = 'View downloadable sample solutions'
-           . ' and templates';
+    $title_down = 'View downloadable sample solutions'
+                . ' and templates';
+    $title_doc = 'View complete set of documents';
     echo <<<EOT
     <pre>   </pre>
     <strong>View:</strong>
     <button type='button'
-	    onclick='AUX_WINDOW("+downloads+",
-	                        "downloads.php",
-				-600, 0, 600, 400 )'
-	    title='$title'>
+	    onclick='INDEX("downloads")'
+	    title='$title_down'>
 	Downloads</button>
     <button type='button'
-	    onclick='AUX_WINDOW("+documents+",
-	                        "documents.php",
-				-600, 0, 600, 400 )'
-	    title='$title'>
+	    onclick='INDEX("documents")'
+	    title='$title_doc'>
 	Documents</button>
     </td>
     </tr></table>
