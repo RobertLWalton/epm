@@ -13,6 +13,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{makeidx}
+\usepackage{upquote}
 
 \makeindex
 
@@ -441,9 +442,9 @@ pages that do no POSTs and also .html pages.
 \begin{itemize}
 \item Compute:
 
-      \hspace*{0.2in}\begin{tabular}{l}
-		\tt \$epm\_root = ROOT \\
-		\tt \$epm\_self = SELF \\
+      \hspace*{0.2in}\begin{tabular}{ll}
+		\tt \$epm\_root = ROOT & (begins with {\tt /}) \\
+		\tt \$epm\_self = SELF & (begins with {\tt /}) \\
 		\tt \$epm\_web = W \\
 		\end{tabular}
 
@@ -451,20 +452,23 @@ pages that do no POSTs and also .html pages.
 
        \hspace*{0.2in}{\tt http://HOST/ROOT/SELF}
 
-       {\tt SELF} has the form {\tt page/...}, or if
-       not that, the form {\tt index.php}, HOST is the
+       {\tt SELF} has the form {\tt /page/...}, or if
+       not that, the form {\tt /index.php}, HOST is the
        EPM server host name, and {\tt ROOT} is whatever
        is left over.  Here W is the EPM server web directory
        (\pagref{W-DIRECTORY}) and is
 
        \hspace*{0.2in}{\tt \$\_SERVER['DOCUMENT\_ROOT'] . ROOT}
 
-\item If {\tt SELF} is either {\tt index.php} or {\tt page/index.php},
+\item If {\tt SELF} is either {\tt /index.php} or {\tt /page/index.php},
       re-routes the request to {\tt page/\EOL login.php}.  The
       request must be a 'GET' else it is not accepted.
 
 \item Loads {\tt W/parameters.php} which in turn defines H and D
       \sref{DIRECTORIES}{MAIN-DIRECTORIES}.
+
+\item Starts the session and clears the file status cache.
+Sets umask to 07 and Cache-Control header to no-store.
 
 \item Runs the following checks and aborts invalid requests:
 \begin{itemize}
@@ -489,6 +493,12 @@ same {\tt AID:UID} login name.
        true if page is read-write; false if read-only \\
        (see {\tt page/index.php} and {\tt include/epm\_rw.php} for details)
        \end{tabular}
+\$RW \_BUTTON= \begin{tabular}[t]{@{}p{4.0in}@{}}
+       a button to be included in the upper right corner of pages that
+       allow the read-write mode of a session to be changed; set to
+       \verb/''/
+       if not team member login
+       \end{tabular}
 \end{minipage}
 
 \item Defines functions and error handlers.
@@ -505,18 +515,18 @@ same {\tt AID:UID} login name.
       the tab or window orphaned.
 
 \item Except for pages of {\tt +download+} type and xhttp requests,
+      and pages run before login is complete,
       sets up shutdown function that will write statistics
       into {\tt accounts/\EOL AID/\EOL +read-write+} or
       {\tt accounts/\EOL AID/\EOL +read-only+}.
 \item Except for pages of {\tt +download+} type and xhttp requests,
-      defines functions
-      and parameters for use in creating buttons and launching
-      widows, including {\tt <script>} functions.
+      defines {\tt <script>} functions that handle the refresh keys and
+      launch popup windows.
 
 \item Note that may parameters and some functions are defined in
       {\tt W/parameters.php}.  See that file.  Also see
-      {\tt /page/index.php} for functions it defines and button
-      parameters it defines.
+      {\tt /page/index.php} for functions it defines and more details
+      on the above.
 
 
 \end{itemize}

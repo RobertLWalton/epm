@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Sep 15 08:13:00 EDT 2020
+// Date:    Wed Sep 16 04:22:27 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -71,6 +71,8 @@ require "$epm_web/parameters.php";
 session_name ( $epm_session_name );
 session_start();
 clearstatcache();
+umask ( 07 );
+header ( 'Cache-Control: no-store' );
 
 // A session cannot change its IP address if
 // $epm_check_ipaddr is true (see parameters.php).
@@ -188,9 +190,6 @@ if ( isset ( $_SESSION['EPM_ABORT'] ) )
         require "$epm_home/include/epm_abort.php";
 	// This does not return.
 }
-
-umask ( 07 );
-header ( 'Cache-Control: no-store' );
 
 // First functions that most pages need defined.
 
