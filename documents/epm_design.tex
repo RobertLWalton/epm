@@ -93,6 +93,7 @@
 
 \newcommand{\TT}[1]{{\tt \bfseries #1}}
 \newcommand{\key}[1]{{\bf \em #1}}
+\newcommand{\ttkey}[1]{{\tt \bfseries #1}}
 \newcommand{\EOL}{\penalty \exhyphenpenalty}
 \newcommand{\pagref}[1]{p\pageref{#1}}
 \newcommand{\sref}[2]{(\ref{#1}.\ref{#2})}
@@ -116,7 +117,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 15, 2020}
+\date{September 16, 2020}
  
 \maketitle
 
@@ -273,7 +274,7 @@ and Help and Guide Pages are assigned to the help pop-up
 window.
 
 \item \key{Page Rule}\label{PAGE-RULE}
-At any given time a tab or window has a current page.
+At any given time a tab or window that does POSTs has a current page.
 A GET can change the current page.  All
 transactions done with POSTs
 are checked to be sure their page is the current page for
@@ -295,24 +296,38 @@ Sequencing prevents two main
 tabs from existing at the same time, or two problem tabs
 for the same problem existing at the same time.
 
+Transactions in a window that does POSTs are also sequenced.
+
+To initialize a sequence, the
+page must set \$epm\_ID\_init before it requires index.php.
+
 Sequencing is done
 by random sequence \$IDs that are attached to each page.
 The next request must contain the current \$ID else the
 tab is orphaned.  For the main tab the Login Page initializes
 the tab's \$ID sequence.  For problem tabs the Problem Page
-initializes the sequence.  For the view window, the View Page
-initiates and uses sequencing, but other view window pages are
-no-post pages that do no sequencing.  The help window pages are
-{\tt .html} pages that do no sequencing.
+initializes the sequence.
 
-This rule is checked by {\tt index.php} which is required
+Pages that do no posts set \$epm\_page\_type to
+\ttkey{+no-post+} and do no sequencing.  Pages that do
+views or downloads set \$epm\_page\_type
+to \ttkey{+download+} and do no sequencing.
+
+Other pages
+that provide read-only views but do POSTs (e.g., the View Page)
+set \$epm\_page\_type to a value unique to the page
+(e.g., +view+) and set \$epm\_ID\_init on a GET to initiate sequencing
+for the page's POSTs.
+
+The sequence rule is checked by {\tt index.php} which is required
 at the beginning of all pages in tabs or windows that
 access the server state.
 
 \item \key{Stateless Pages}\label{STATELESS-PAGES}
-The Help Page, Guide Page, and Downloads Page are stateless.
-They access just read-only files in the Home Directory
-\sref{DIRECTORIES}{H-DIRECTORY}.
+Pages that do no POSTs are referred to a stateless pages, as
+they have no session state of their own (they do use state
+variables such as \$aid and \$uid).  These include .php
+pages that do no POSTs and also .html pages.
 \end{enumerate}
 
 \subsection{Directories}
@@ -328,19 +343,19 @@ They access just read-only files in the Home Directory
       named by the EPM server URL.  It contains a symbolic link to
       the {\tt index.php} file that is
       the first file loaded when a user initially
-      contacts the EPM server.
+      contacts the EPM server.  In also contains a symbolic link to
+      the H/page directory and edited versions of the
+      include/parameters.php and include/maintenance\_\EOL parameters.php
+      files.
 
       \key{D, Data Directory}:  This is the directory
       containing all the mutable data for the EPM server.
 
-\item The following subdirectories of H contain the
+\item The following subdirectory of H contains the
       EPM files that are directly visible to web clients:
 
       \key{H/page}:  Loadable page files.  {\tt W/page} is
       symbolically linked to this directory.
-
-      \key{H/page/downloads}:  Example files downloadable
-      by the client.
 
 \item The following subdirectories of H contain the
       EPM files that are \underline{not}
@@ -355,7 +370,11 @@ They access just read-only files in the Home Directory
       \key{H/template}:  Templates used to compute client problem
       files from other client or project files.
 
-      \key{H/doc}:  Off-line documentation files, including this file.
+      \key{H/downloads}:  Example files that can be downloaded.
+      			  Indexed by the Downloads Index Page.
+
+      \key{H/documents}:  Documentation files, including this file.
+      			  Indexed by the Documents Index Page.
 
       \key{H/secure}:  Source code for binary executables involved with
       security.
@@ -379,30 +398,31 @@ They access just read-only files in the Home Directory
       symbolic link {\tt W/page} $\longrightarrow$ {\tt H/page} \\
       symbolic link {\tt W/index.php}
           $\longrightarrow$ {\tt page/index.php} \\
-      {\tt W/parameters.php}, modified copy of {\tt H/include/parameters.php} \\
+      {\tt W/parameters.php}, edited copy of {\tt H/include/parameters.php} \\
       {\tt W/maintenance\_parameters.php}, \\
-      \hspace*{0.2in}modified copy of
+      \hspace*{0.2in}edited copy of
            {\tt H/include/maintenance\_parameters.php}, \\
       \hspace*{0.2in}(only used off-line) \\
       \end{tabular}
 
-\item When loaded, a page initializes by executing the following steps:
+\item When loaded, a .php page initializes by executing the following steps:
 \begin{itemize}
 \item Set {\tt \$epm\_page\_type} to indicate the tab or pop-up window
       or other type.  The possible values are:
       
       {\tt +main+} and {\tt +problem+} for tabs;
       
-      {\tt +view+} for a view pop-up window that POSTs;
-      
-      {\tt +no-post+} for a view pop-up window that does \underline{not}
-      POST;
+      {\tt +no-post+} for a pop-up window that does \underline{not}
+      POST or download;
       
       {\tt +download+} for pages that download files
       so that {\tt <script>}
       in {\tt /page/\EOL index.php} which implements the help button
       is surpressed (these pages do no POSTing and have
       no buttons).
+      
+      OTHER for auxiliary pages that POST.  E.g., {\tt +view+}
+      for the View Page.
 
 \item If the page is the first loaded in a tab or popup-window that POSTs,
       then it must set {\tt \$epm\_ID\_init} to initialize a new
