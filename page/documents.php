@@ -92,6 +92,21 @@ create a distinct window for the document.
 <dd>Details of the EPM design for maintainers
     of EPM.</dd>
 
+<dt><button onclick='LOOK(event,"epm_display.pdf")'>
+    EPM Display Program Document</button></dt>
+<dd>Details of the epm_display program used to create
+    graphic displays for problems.</dd>
+
+<dt><button onclick='LOOK(event,"epm_score.pdf")'>
+    EPM Scoring Program Document</button></dt>
+<dd>Details of the epm_score program used to score
+    problem submissions.</dd>
+
+<dt><button onclick='LOOK(event,"epm_sandbox.pdf")'>
+    EPM Sandbox Program Document</button></dt>
+<dd>Details of the epm_sandbox program used to sandbox
+    user submitted program binaries during execution.</dd>
+
 <dt>
 
 </dl>

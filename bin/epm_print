@@ -1,0 +1,59 @@
+#! /bin/php
+<?php
+
+// File:	epm_print
+// Author:	Robert L Walton <walton@acm.org>
+// Date:	Thu Sep 17 09:00:11 EDT 2020
+
+// The authors have placed EPM (its files and the
+// content of these files) in the public domain;
+// they make no warranty and accept no liability
+// for EPM.
+
+$document = <<<'EOT'
+    epm_print PPPP
+
+Locates the unique file F with the name:
+
+	../src/PPPP.c
+	../src/PPPP.cc
+	../secure/PPPP.c
+	../secure/PPPP.cc
+
+
+EOT;
+
+if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
+{
+    echo $document;
+    exit ( 0 );
+}
+
+$PPPP = $argv[1];
+
+foreach ( ['src','secure'] as $d )
+foreach ( ['.c','.cc'] as $e )
+{
+    if ( file_exists ( "../$d/$PPPP$e" ) )
+    {
+        $dir = $d;
+	$ext = $e;
+        break;
+    }
+}
+
+$time = filemtime ( "../$dir/$PPPP$ext" );
+$time = strftime ( "%D ^%T", $time );
+
+$command = "../$dir/$PPPP -doc |"
+         . " enscript -2r"
+	 . " -F Courier-Bold12"
+	 . " -f Courier10"
+	 . " --margins=48:48::"
+	 . " -b '$PPPP|$time|\$% of \$='"
+	 . " -p - | ps2pdf - $PPPP.pdf";
+
+passthru ( $command );
+
+
+
