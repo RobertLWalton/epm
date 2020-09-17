@@ -118,7 +118,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 16, 2020}
+\date{September 17, 2020}
  
 \maketitle
 
@@ -492,8 +492,8 @@ same {\tt AID:UID} login name.
 \$rw = \begin{tabular}[t]{@{}l@{}}
        true if page is read-write; false if read-only \\
        (see {\tt page/index.php} and {\tt include/epm\_rw.php} for details)
-       \end{tabular}
-\$RW \_BUTTON= \begin{tabular}[t]{@{}p{4.0in}@{}}
+       \end{tabular} \\
+\$RW \_BUTTON= \begin{tabular}[t]{@{}p{3.5in}@{}}
        a button to be included in the upper right corner of pages that
        allow the read-write mode of a session to be changed; set to
        \verb/''/
@@ -582,9 +582,12 @@ now obsolete \$ID number is detected (by {\tt index.php}) and
 the tab contents are replaced by the {\tt orphan.php} page which
 announces that the tab is \key{orphaned} and should be closed.
 
-A similar thing happens if two windows of `view' type exist
-with pages that execute POSTs.  `View' windows make no changes
-in the EPM file system, but do have their own session variables.
+A similar thing happens if two windows (not-tabs)
+exist whose pages execute POSTs and have the same
+\$epm\_page\_type (and consequently are the same .php page).
+Although such pages make no changes to
+the EPM file system, they do have session state that must be
+managed between their original GET and subsequent POSTs.
 
 \item \key{Tab Independence}
 The pages in each
@@ -597,7 +600,7 @@ of each other.
 
 \item \key{Administrative Locking}
 Administrative files are those in the {\tt admin} directory tree.
-Only the Login Page and User Page access most administrative files
+Only the Login Page and User Page access most administrative files.
 These pages both begin by getting an exclusive lock on the
 {\tt admin} directory using the LOCK function in {\tt parameters.php}.
 
@@ -614,11 +617,12 @@ in order to ensure the integrity of their format.
 For team member logins the {\tt admin/teams/TID/+read-write+}
 file is locked at the beginning of a request.  If it is
 determined that the account is currently read-only, this file
-is unlocked immediately, else it is unlocked at the end of the
-request.
+is unlocked immediately, else it is not unlocked until the end of the
+request (even if the request makes the session read-only).
 
 If a read-only request attempts to become read-write, the file
-is re-locked and remains locked till the end of the request.
+is re-locked and remains locked till the end of the request
+(even if the request to become read-write is not successful).
 
 This sequences requests from read-write team logins for the
 same team, even if the requests are made by different team
@@ -660,7 +664,7 @@ during the job, an error is declared for the job,
 and the job results are not saved in the problem local directory.
 
 
-Pulls to a local problem directory an be run in the `main' tab
+Pulls to a local problem directory can be run in the `main' tab
 while a background job is run in the local problem directory in
 its problem tab.  To prevent conflict, every time the problem
 directory is altered its {\tt +altered+} file is touched.
@@ -712,9 +716,12 @@ window doing the POST.  This simplifies request checking.
 
 Request checking is just about checking the request type and
 request parameters to ensure that the request is legal given the
-current state of the server.
+current state of the session, server, and page loaded by the
+last request for the tab or window.
 
 \end{itemize}
+
+\newpage
 
 \section{Data Files}
 
@@ -791,14 +798,6 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& \STACK{inactive\\.login files \pagref{ADMIN/USERS/XID/YID.INACTIVE}}
 	& user & & \\ 
 \hline
-\FSTACK{admin/}{users/UID/\\UID.info} & json
-	& user info \pagref{ADMIN/USERS/UID/UID.INFO}
-	& user & user & \STACK{user\\problem} \\ 
-\hline
-\FSTACK{admin/}{teams/TID/\\TID.info} & json
-	& team info \pagref{ADMIN/USERS/TID/TID.INFO}
-	& user & user & user \\ 
-\hline
 \end{tabular}
 \end{center}
 
@@ -808,6 +807,14 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
+\FSTACK{admin/}{users/UID/\\UID.info} & json
+	& user info \pagref{ADMIN/USERS/UID/UID.INFO}
+	& user & user & \STACK{user\\problem} \\ 
+\hline
+\FSTACK{admin/}{teams/TID/\\TID.info} & json
+	& team info \pagref{ADMIN/USERS/TID/TID.INFO}
+	& user & user & user \\ 
+\hline
 \STACK{
 \FSTACK{admin/}{users/UID/\\+actions+}\\
 \FSTACK{admin/}{teams/TID/\\+actions+}}
@@ -854,6 +861,15 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	          \pagref{ACCOUNTS/AID/READ-ONLY}}
 	& index & index & [+main+] \\ 
 \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Format & Description & Creators & Updaters & Readers \\
+\hline\hline
 \FSTACK{accou}{nts/AID/\\PROBLEM}
         & dir & \STACK{account\\problem\\directory}
 	& project & \STACK{+problem+\\project} & \STACK{+problem+\\project} \\ 
@@ -870,15 +886,6 @@ Name & Format & Description & Creators & Updaters & Readers \\
         & lines & \STACK{log of changes\\made by pulls}
 	& project & project & \\ 
 \hline
-\end{tabular}
-\end{center}
-
-\begin{center}
-\small
-\begin{tabular}{|l|l|l|l|l|l|}
-\hline
-Name & Format & Description & Creators & Updaters & Readers \\
-\hline\hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+work+}
         & dir & \STACK{working\\directory\\for jobs}
 	& \STACK{problem\\run}
@@ -911,7 +918,12 @@ setup is setup function of epm/bin/epm \\
 backup is backup function of epm/bin/epm \\
 \end{center}
 
+\newpage
+
 \section{Session Variables}
+
+Important: See Global Variables defined by index.php
+on \pagref{INDEX-DEFINED-GLOBAL-VARIABLES}.
 
 \begin{center}
 \begin{tabular}{|l|l|l|l|l|l|}
@@ -938,13 +950,17 @@ Name & Description & Creators & Updaters & Readers \\
 \TT{EPM\_TIME} & \STACK{session\\time}
                  & login & & \STACK{index\\login\\user} \\ 
 \hline
-\TT{EPM\_ID\_GEN} & \$ID generation
+\TT{EPM\_ID\_GEN[id\_type]} & \$ID generation
                  & index & index & index  \\ 
 \hline
 \TT{EPM\_ABORT} & \STACK{session\\abort info}
                  & \STACK{login\\user} & & index \\ 
 \hline
 \end{tabular}
+\\[1ex]
+id\_type is \$epm\_page\_type if this is not \\
++problem+, +no-post+, or +download+, \\
+or is PROBLEM if \$epm\_page\_type is +problem+
 \end{center}
 
 \begin{center}
@@ -952,23 +968,19 @@ Name & Description & Creators & Updaters & Readers \\
 \hline
 Name & Description & Creators & Updaters & Readers \\
 \hline\hline
-\TT{EPM\_MAIN} & \STACK{temporary\\data for\\current\\+main+\\page}
-                & \STACK{project\\user\\list\\favorites\\manage}
-		& (creators) & (creators) \\ 
-\hline
-\TT{EPM\_PROJECT} & \STACK{permanent\\data for\\project}
+\TT{EPM\_PROJECT} & \STACK{permanent\\data for\\project page}
                 & project & project & project \\
 \hline
-\TT{EPM\_USER} & \STACK{permanent\\data for\\user}
+\TT{EPM\_USER} & \STACK{permanent\\data for\\user page}
                 & user & user & user \\
 \hline
-\TT{EPM\_MANAGE} & \STACK{permanent\\data for\\manage}
+\TT{EPM\_MANAGE} & \STACK{permanent\\data for\\manage page}
                 & manage & manage & manage \\
 \hline
-\TT{EPM\_VIEW} & \STACK{permanent\\data for\\view}
+\TT{EPM\_VIEW} & \STACK{permanent\\data for\\view page}
                 & view & view & view \\
 \hline
-\TT{EPM\_PROBLEM[problem]} & \STACK{permanent\\data for\\problem}
+\TT{EPM\_PROBLEM[problem]} & \STACK{permanent\\data for\\problem page}
                 & problem & problem & problem \\
 \hline
 \TT{EPM\_WORK[problem]} & \STACK{data for\\current\\background\\task}
@@ -978,6 +990,8 @@ Name & Description & Creators & Updaters & Readers \\
                 & run & run & run \\
 \hline
 \end{tabular}
+\\[1ex]
+`problem' is the problem name of the tab
 \end{center}
 
 \newpage
@@ -987,9 +1001,9 @@ Name & Description & Creators & Updaters & Readers \\
 \subsection{Index Page}
 
 The Index Page is required by every other EPM .php page
-does initial setup for all EPM .php pages.  It also
+and does initial setup for all EPM .php pages.  It also
 functions as the initial file for accessing the EPM
-server and reroutes these accesses to the login page.
+server and reroutes these accesses to the Login Page.
 
 \begin{center}
 {\bf Index Page Requires}
@@ -1056,7 +1070,7 @@ required at the beginning of an EPM .php page, and usable
 by the remainder of that page.  For other such parameters,
 see the include/parameters.php file.
 
-\begin{center}
+\begin{center}\label{INDEX-DEFINED-GLOBAL-VARIABLES}
 \begin{tabular}{lp{4.0in}}
 \TT{\$epm\_method}	& the request method,
                           either 'GET' or 'POST' \\
@@ -1363,6 +1377,7 @@ changing its modification time.
 \end{indpar}
 
 \subsubsection{Login Page Session Variables}
+\label{LOGIN-PAGE-SESSION-VARIABLES}
 
 \begin{indpar}[0.2in]
 \begin{tabular}[t]{lp{4.5in}}
@@ -1468,7 +1483,6 @@ changing its modification time.
 \\[1ex]
 \begin{tabular}{llll}
 \TT{EPM\_USER}	& create  & update & read \\
-\TT{EPM\_DATA}	& create  & update & read \\
 \TT{EPM\_EMAIL}	& -       & -      & read \\
 \TT{EPM\_AID}	& create  & -      & read \\
 \TT{EPM\_UID}	& create  & -      & read \\
@@ -1620,6 +1634,23 @@ also written to this file.
 \end{itemlist}
 \end{indpar}
 
+\subsubsection{User Page Session Variables}
+
+\begin{indpar}[0.2in]
+\begin{tabular}[t]{lp{4.5in}}
+\TT{EPM\_USER}\label{EPM_USER}
+    & User Page Permanent State: \\
+    & ~~ \TT{'UID'} {\tt =>} currently selected user \\
+    & ~~ \TT{'TID'} {\tt =>} currently selected team \\
+    & ~~ \TT{'TID\_LIST'} {\tt =>} currently selected team list; one of: \\
+    & ~~~~~~ \TT{'all'} all teams \\
+    & ~~~~~~ \TT{'manager'} teams for which UID is the manager \\
+    & ~~~~~~ \TT{'member'} teams for which UID is a member
+\\[1ex]
+Other & see Login Page Session Variables, \pagref{LOGIN-PAGE-SESSION-VARIABLES}
+\end{tabular}
+\end{indpar}
+
 \subsubsection{User Page Transactions}
 
 \begin{enumerate}
@@ -1646,10 +1677,10 @@ also written to this file.
 \\[1ex]
 \begin{tabular}{lllll}
 \TT{accounts/AID/PROBLEM}	        & create  & update & read & delete
-\\[0.5ex]
+\\[1ex]
 \TT{accounts/AID/PROBLEM/PROBLEM.tex}	& upload  & -      & read & delete \\
 \TT{accounts/AID/PROBLEM/PROBLEM.pdf}	& create  & -      & read & delete
-\\[0.5ex]
+\\[1ex]
 \TT{accounts/AID/PROBLEM/PROBLEM.c}	& upload  & -      & read & delete \\
 \TT{accounts/AID/PROBLEM/PROBLEM.cc}	& upload  & -      & read & delete \\
 \TT{accounts/AID/PROBLEM/PROBLEM.java}	& upload  & -      & read & delete \\
@@ -1657,7 +1688,7 @@ also written to this file.
 \TT{accounts/AID/PROBLEM/PROBLEM}	& create  & -      & read & delete \\
 \TT{accounts/AID/PROBLEM/PROBLEM.jar}	& create  & -      & read & delete \\
 \TT{accounts/AID/PROBLEM/PROBLEM.pyc}	& create  & -      & read & delete
-\\[0.5ex]
+\\[1ex]
 \TT{accounts/AID/PROBLEM/YYYY-PROBLEM.c} & upload  & -     & read & delete \\
 \TT{accounts/AID/PROBLEM/YYYY-PROBLEM.cc} & upload  & -    & read & delete \\
 \TT{accounts/AID/PROBLEM/YYYY-PROBLEM.java} & upload  & -  & read & delete \\
@@ -1665,20 +1696,22 @@ also written to this file.
 \TT{accounts/AID/PROBLEM/YYYY-PROBLEM}	& create  & -      & read & delete \\
 \TT{accounts/AID/PROBLEM/YYYY-PROBLEM.jar} & create  & -   & read & delete \\
 \TT{accounts/AID/PROBLEM/YYYY-PROBLEM.pyc} & create  & -   & read & delete
-\\[0.5ex]
+\\[1ex]
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.in} & upload  & -    & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.sin} & create  & -   & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.sout} & create  & -  & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.fout} & create  & -  & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.ftest} & create  & - & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.dout} & create  & -  & read & delete \\
-\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.score} & create  & - & read & delete \\
-\\[0.5ex]
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.score} & create  & - & read & delete
+\\[1ex]
 \TT{accounts/AID/PROBLEM/ZZZZ-PROBLEM.run} 	  & -  & - & read & -
 \end{tabular}
 \\[1ex]
 Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
-\\\bigskip
+
+\newpage
+
 {\bf Problem Page Parent Files}
 \\[1ex]
 \begin{tabular}{lllll}
@@ -1698,19 +1731,52 @@ Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
 {\bf Problem Page Maintenance Files}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{accounts/AID/PROBLEM/+parent+}		& -  & - & read & delete \\
-\TT{accounts/AID/PROBLEM/PROBLEM.optn}		& -  & - & read & delete
-\\[1ex]
+\TT{accounts/AID/PROBLEM/+parent+}	& -  & - & read & - \\
+\TT{accounts/AID/PROBLEM/PROBLEM.optn}	& -  & - & read & - \\
+\TT{accounts/AID/PROBLEM/+altered+}	& create  & touch & stat & -
 \end{tabular}
 \\[3ex]
 {\bf Problem Page Session Data}
 \\[1ex]
 \begin{tabular}{lllll}
-\TT{EPM\_EMAIL}	& -       & -      & read \\
-\TT{EPM\_UID}	& -       & -      & read \\
-\TT{EPM\_PROBLEM}
+\TT{EPM\_PROBLEM[problem]}
 		& create  & update & read \\
 \end{tabular}
+\\[3ex]
+\TT{problem} is the value of the \verb|'problem'| \\
+parameter to page GETs and POSTs
 \end{center}
+
+\subsubsection{Problem Page File Formats}
+
+\begin{indpar}
+\begin{itemlist}
+\item[Visible Files:] see Help Page \\
+\item[Parent Files:] see Help Page and following \\
+\item[\TT{accounts/AID/PROBLEM/+parent+}:]~\\
+    symbolic link to {\tt projects/PROJECT/PROBLEM} \\
+\item[\TT{accounts/AID/PROBLEM/PROBLEM.optn}:] see \pagref{PROBLEM.OPTN} \\
+\item[\TT{accounts/AID/PROBLEM/+altered+}:]~
+\label{PROBLEM/ALTERED} \\
+    empty file; only modification time is used;
+    this file is touched by every transaction that
+    creates, deletes, or modifies a file in the problem directory
+\end{itemlist}
+\end{indpar}
+
+\subsubsection{Problem Page Session Variables}
+
+\begin{indpar}[0.2in]
+\begin{tabular}[t]{lp{4.0in}}
+\TT{EPM\_PROBLEM[problem]}\label{EPM_PROBLEM}
+    & Problem Page Permanent State: \\
+    & ~~ \TT{'ORDER'} {\tt =>} \\
+    & ~~~~~~ currently selected problem list order \\
+    & ~~~~~~ (see Help Page); one of: \\
+    & ~~~~~~~~ \TT{'extension'} \\
+    & ~~~~~~~~ \TT{'lexical'} \\
+    & ~~~~~~~~ \TT{'recent'} 
+\end{tabular}
+\end{indpar}
 
 \end{document}
