@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 15 08:12:45 EDT 2020
+    // Date:	Thu Sep 17 04:47:44 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -63,6 +63,51 @@
     //		[$src,$des] for make of $src to $des
     //          where the latter has extension .ftest;
     //		only valid when $state == 'make-ftest'
+    //
+    //
+    // POSTs:
+    //
+    //    delete_files=FILENAME,FILENAME,...
+    //		delete the named files in the problem
+    //		directory; this parameter may be used
+    //		in a POST by itself or attached to any
+    //		other normal state POST, in which case
+    //		the files will be deleted before the
+    //		other POST is processed
+    //
+    //    order=ORDER
+    //		set $order to ORDER; accepted in all
+    //		states except executing
+    //
+    //    delete_problem=PROBLEM
+    //		set state to delete-problem if PROBLEM
+    //		is the current problem
+    //
+    //    delete_problem_yes=PROBLEM
+    //		delete the current problem if PROBLEM is
+    //		the current problem and state is
+    //		delete-problem; close the problem tab
+    //
+    //    delete_problem_no=PROBLEM
+    //		set the state to normal if PROBLEM is
+    //		the current problem and state is
+    //		delete-problem
+    //
+    //    TBD
+    //
+    // xhttp POSTs:
+    //
+    //    These are recognized in the executing state.
+    //
+    //    reload
+    //		finish execution and reload page
+    //
+    //    update=  update=abort
+    //		read status produced by epm_sandbox
+    //		(every 0.5 seconds) and return times
+    //		for command lines whose times have
+    //		changed; if abort given, abort the
+    //		current execution first; 
 
     if ( ! isset ( $_SESSION['EPM_PROBLEM']
                             [$problem] ) )
