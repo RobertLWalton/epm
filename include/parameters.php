@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Sep 11 05:07:41 EDT 2020
+// Date:    Fri Sep 18 06:15:32 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -78,6 +78,30 @@ $epm_debug = preg_match
 
 
 // Parameters you may like to edit:
+
+// Throttle Parameters:
+//
+//	long_c = 0.9772372	long_n = 100
+//	short_c = 0.7943282	short_n = 10
+//
+//	dt = time since last request for session
+//	s = dt + c * s = dt[0] + c*dt[1]
+//             + c^2*dt[2] + ...
+//
+//	if ( (1-c) * s < DT && dt < DT ) delay DT - dt
+//
+//      c is chosen so c^n = 0.1 and 90% of s
+//      is in dt[0] + c*dt[1] + ... + c^(n-1)*dt[n-1]
+//
+//	limit = DT / (1-c) so s < limit is the same
+//	as (1-c) * s < DT
+//
+$epm_long_time_constant = 0.9772372;
+$epm_short_time_constant = 0.7943282;
+$epm_long_delay = 1.0;
+$epm_short_delay = 0.1;
+$epm_long_limit = 43.931374;
+$epm_short_limit = 0.48621157;
 
 $epm_max_members = 3;
     // Max number of members a team may have.

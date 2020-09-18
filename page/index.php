@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Sep 16 04:22:27 EDT 2020
+// Date:    Fri Sep 18 05:30:10 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -73,6 +73,34 @@ session_start();
 clearstatcache();
 umask ( 07 );
 header ( 'Cache-Control: no-store' );
+
+$epm_begin_time = microtime ( true );
+
+if ( $_SESSION['EPM_THROTTLE'] )
+{
+    // See parameters.php for documentation.
+    //
+    $d = & $_SESSION['EPM_THROTTLE'];
+    $t = & $d[0];
+    $s_long = & $d[1];
+    $s_short = & $d[2];
+    $dt = $epm_begin_time - $t;
+    $t = $epm_begin_time;
+    $s_long =
+        $dt + $epm_long_time_constant * $s_long;
+    $s_short =
+        $dt + $epm_short_time_constant * $s_short;
+
+    $delay = 0;
+    if ( $s_long < $epm_long_limit )
+        $delay = $epm_long_delay;
+    if ( $s_short < $epm_short_limit
+         &&
+	 $delay < $epm_short_delay )
+        $delay = $epm_short_delay;
+    if ( $delay > $dt )
+        usleep ( (int) ( 1000000 * ( $delay - $dt ) ) );
+}
 
 // A session cannot change its IP address if
 // $epm_check_ipaddr is true (see parameters.php).
@@ -390,7 +418,8 @@ if ( isset ( $_POST['xhttp'] ) ) return;
 //
 if ( isset ( $aid ) )
 {
-    $epm_begin_time = microtime ( true );
+    // $epm_begin_time = microtime ( true );
+    // as set above
     function shutdown_statistics()
     {
         global $epm_data, $aid, $uid, $rw, $epm_self,
