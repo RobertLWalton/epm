@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 17 04:47:44 EDT 2020
+    // Date:	Fri Sep 18 12:36:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -42,14 +42,13 @@
     //
     //	  $work = & $_SESSION['EPM_WORK'][$problem]
     //		data for recent execution; see
-    //		include/epm_make.php
+    //		include/epm_make.php; set when
+    //		include/epm_make.php loaded.
     //
     //	  $run = & $_SESSION['EPM_RUN'][$problem]
     //		data for recent Run Page run; see
-    //		include/epm_make.php
-    //
-    //		// set when epm_make.php loaded.
-    //		// set when epm_make.php loaded.
+    //		include/epm_make.php; set when
+    //		include/epm_make.php loaded.
     //
     //    $state (see index.php)
     //		normal
@@ -131,6 +130,8 @@
 	                 $run['RESULT'] === true ) );
 
     $parent = NULL;
+        // The project which is the parent of this
+	// problem, if any.
     $d = "$probdir/+parent+";
     if ( is_link ( "$epm_data/$d" ) )
     {
@@ -298,7 +299,7 @@
     $min_display_lines = 10;
     $specials = implode ( '|', $epm_specials );
     $not_linkable_re = "/^($specials)\-$problem\$/";
-    $link_re = "/^.+\-(($specials)-$problem)\$/";
+    $link_re = "/^.+\-(($specials)\-$problem)\$/";
     $txt_re = "/^($specials)-$problem\$/";
     function file_info ( $dir, $fname, $short = false )
     {
@@ -490,12 +491,6 @@
 	    if ( ! isset ( $epm_ID_init ) )
 		exit ( "UNACCEPTABLE HTTP POST" );
 
-	    if ( count ( $warnings ) > 0 )
-		usleep ( 3000000 ); // 3 seconds
-		// Let orphaned tab into schedule so it
-		// can process any request it started
-		// before this request orphaned it.
-
 	    if ( $work_executing )
 	    {
 		$m = abort_dir ( $work['DIR'] );
@@ -514,9 +509,9 @@
 
     // Process file deletions for other posts.
     //
-    if ( $rw && isset ( $_POST['delete_files'] ) )
+    if ( isset ( $_POST['delete_files'] ) )
     {
-        if ( $state != 'normal' )
+        if ( ! $rw || $state != 'normal' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
 	$files = $_POST['delete_files'];
@@ -549,17 +544,24 @@
     // Process POST requests.
     //
     if ( $epm_method != 'POST' ) /* Do Nothing */;
-    // xhttp posts are first and are done if ! $rw
+
+    elseif ( count ( $errors ) > 0 ) /* Do Nothing */;
+        // This can only happen of delete_files is
+	// given, which means that state is normal
+	// and so we can abort normal request.
+
+    // xhttp posts are first and require executing
+    // state
     elseif ( isset ( $_POST['reload'] ) )
     {
-        if ( $state != 'executing' )
+        if ( ! $rw || $state != 'executing' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	// State will be rest to 'normal' below
 	// when finish_make_file is called.
     }
     elseif ( isset ( $_POST['update'] ) )
     {
-        if ( $state != 'executing' )
+        if ( ! $rw || $state != 'executing' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
 	$count = 0;
@@ -574,13 +576,16 @@
 	}
 	while ( true )
 	{
-	    if ( $r !== true || $count == 10 )
-	    			// 5 seconds
+	    if ( $r !== true )
 	    {
 		DEBUG ( 'reply RELOAD' );
 	        echo "RELOAD\n";
 		exit;
 	    }
+
+	    if ( $count >= 10 ) // 10 seconds
+	        abort_dir ( $word['DIR'] );
+
 	    usleep ( 1000000 ); // 1.0 second
 	    $r = update_workmap();
 	    if ( count ( $r ) > 0 )
@@ -608,12 +613,18 @@
 	if ( ! in_array ( $new_order, ['lexical',
 	                               'recent',
 				       'extension'] ) )
-	    echo ( "ACCESS: illegal POST to" .
-	           " problem.php" );
+	    exit ( "UNACCEPTABLE HTTP POST" );
 	$order = $new_order;
     }
     elseif ( ! $rw )
-        /* Do Nothing */;
+    {
+        if ( $state == 'executing' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+	    // Note: OK if NOT executing.
+        $warnings[] =
+	    'you are no longer in read-write mode';
+	$state = 'normal';
+    }
     elseif ( isset ( $_POST['delete_problem'] ) )
     {
         if ( $state != 'normal' )
@@ -671,8 +682,10 @@ EOT;
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $fname, true );
 	if ( isset ( $ferror ) )
-	    exit ( "someone has deleted $fname:" .
-	           " $ferror" );
+	{
+	    $errors[] = $ferror;
+	    goto MAKE_DONE;
+	}
 	if ( ! in_array ( $action, $factions ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
@@ -695,8 +708,10 @@ EOT;
 		  true, $lock, "$probdir/+work+",
 		  NULL, NULL /* no upload */,
 		  $errors );
-	    $state = 'executing';
+	    if ( count ( $errors ) == 0 )
+		$state = 'executing';
 	}
+	MAKE_DONE:  // come here on error
     }
     elseif ( isset ( $_POST['make_ftest_yes'] ) )
     {
@@ -714,8 +729,8 @@ EOT;
 	      true, $lock, "$probdir/+work+",
 	      NULL, NULL /* no upload */,
 	      $errors );
-
-	$state = 'executing';
+	if ( count ( $errors ) == 0 )
+	    $state = 'executing';
     }
     elseif ( isset ( $_POST['make_ftest_no'] ) )
     {
@@ -741,8 +756,8 @@ EOT;
 		( $_FILES['uploaded_file'],
 		  $lock, "$probdir/+work+",
 		  $errors );
-
-	    $state = 'executing';
+	    if ( count ( $errors ) == 0 )
+		$state = 'executing';
 	}
 	else
 	    $errors[] = "no file selected for upload";
@@ -769,8 +784,10 @@ EOT;
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $fname, true );
 	if ( isset ( $ferror ) )
-	    exit ( "someone has deleted $fname:" .
-	           " $ferror" );
+	{
+	    $errors[] = $ferror;
+	    goto LINK_DONE;
+	}
 	if ( ! in_array ( $from, $factions ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 
@@ -793,6 +810,8 @@ EOT;
 	           ( $fname,
 		     "$epm_data/$probdir/$from" ) )
 	    ERROR ( "cannot link $from to $fname" );
+
+	LINK_DONE: // come here on error
     }
     elseif ( isset ( $_POST['run'] ) )
     {
