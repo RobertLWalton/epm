@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep 19 02:22:18 EDT 2020
+    // Date:	Sat Sep 19 08:12:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -713,7 +713,7 @@ EOT;
 	if ( $action[0] != '.' )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
-	list ( $fextension, $fype, $ferror, $factions,
+	list ( $fext, $fype, $ferror, $factions,
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $fname, true );
 	if ( isset ( $ferror ) )
@@ -817,7 +817,7 @@ EOT;
 		   ( $epm_filename_re, $from ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
 	    
-	list ( $fextension, $fype, $ferror, $factions,
+	list ( $fext, $fype, $ferror, $factions,
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $fname, true );
 	if ( isset ( $ferror ) )
@@ -858,7 +858,7 @@ EOT;
         $f = $_POST['run'];
 	if ( ! preg_match ( $epm_filename_re, $f ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
-	list ( $fextension, $fype, $ferror, $factions,
+	list ( $fext, $fype, $ferror, $factions,
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $f, true );
 	if ( ! in_array ( '+run+', $factions ) )

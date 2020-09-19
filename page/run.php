@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  8 02:01:37 EDT 2020
+    // Date:	Sat Sep 19 07:16:26 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -18,8 +18,7 @@
     // require "$epm_home/include/debug_info.php";
 
     if ( ! isset ( $_REQUEST['problem'] ) )
-	exit ( "ACCESS: illegal $epm_method" .
-	       " to run.php" );
+	exit ( 'UNACCEPTABLE HTTP ' . $epm_method );
 
     $problem = $_REQUEST['problem'];
     $probdir = "accounts/$aid/$problem";
@@ -28,91 +27,79 @@
         exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_make.php";
-    load_file_caches();
+
+    // Session Data:
+    //
+    //	  $run = & $_SESSION['EPM_RUN'][$problem]
+    //		data for recent Run Page run; see
+    //		include/epm_make.php; set when
+    //		include/epm_make.php loaded.
+    //
+    //    $state (see index.php)
+    //		normal
+    //		executing (run via epm_run)
+    //		    (means $run['RESULT'] is set
+    //		     and $run['FINISHED'] is not)
+    //
+    // POSTs:
+    //
+    //    execute_run=FILENAME
+    //		execute start_run; if no errors,
+    //		set state to executing
+    //
+    //    submit_run=FILENAME
+    //		execute start_run; if no errors,
+    //		set state to executing
+    //		
+    //
+    // xhttp POSTs:
+    //
+    //    These are recognized in the executing state.
+    //
+    //    reload
+    //		finish execution and reload page
+    //
+    //    update=  update=abort
+    //		read status produced by epm_run
+    //		(every 0.5 seconds) and return
+    //		contents of status file; if abort
+    //		given, abort the run first
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
     $post_processed = false;
 
-    if ( ! $rw )
-	$post_processed = true;
-    elseif ( isset ( $_POST['execute_run'] ) )
-    {
-	$f = $_POST['execute_run'];
-	if ( ! isset ( $local_file_cache[$f] )
-	     ||
-	     ! preg_match ( '/\.run$/', $f ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " run.php" );
-	$d = "$probdir/+parent+";
-	$lock = NULL;
-	if ( is_dir ( "$epm_data/$d" ) )
-	    $lock = LOCK ( $d, LOCK_SH );
-	start_run ( "$probdir/+work+", $f,
-	            $lock, "$probdir/+run+", false,
-	            $errors );
-	$post_processed = true;
-    }
-    elseif ( isset ( $_POST['submit_run'] ) )
-    {
-	$f = $_POST['submit_run'];
-	if ( ! isset ( $remote_file_cache[$f] )
-	     ||
-	     ! preg_match ( '/\.run$/', $f ) )
-	    exit ( "ACCESS: illegal POST to" .
-	           " run.php" );
-	$d = "$probdir/+parent+";
-	$lock = NULL;
-	if ( is_dir ( "$epm_data/$d" ) )
-	    $lock = LOCK ( $d, LOCK_SH );
-	start_run ( "$probdir/+work+", $f,
-	            $lock, "$probdir/+run+", true,
-	            $errors );
-	$post_processed = true;
-    }
-
-    // Do this after execute or submit but before
-    // update and reload.
-    //
-    if ( isset ( $run['RESULT'] ) )
-    {
-	if ( $run['RESULT'] === true )
-	    update_run_results();
-
-	if ( $run['RESULT'] !== true
-	     &&
-	     ! $run['FINISHED']
-	     &&
-	     ! isset ( $_POST['xhttp'] ) )
-	{
-	    finish_run ( $warnings, $errors );
-	    reload_file_caches();
-	}
-    }
-
     $runbase = NULL;
     $rundir = NULL;
-    $runsubmit = NULL;
     $runresult = NULL;
     if ( isset ( $run['BASE'] ) )
     {
         $runbase = $run['BASE'];
         $rundir = $run['DIR'];
-        $runsubmit = $run['SUBMIT'];
         $runresult = $run['RESULT'];
     }
 
-    // xhttp POSTs.
-    //
-    if ( isset ( $_POST['reload'] )
+    if ( $epm_method == 'GET'
+         &&
+	 isset ( $runresult )
 	 &&
-	 isset ( $runbase ) )
+	 ! $run['FINISHED'] )
+        $state = 'executing';
+	// Handle hand-off from problems.php
+	// which starts run.
+    //
+    // handle xhttp POSTs.
+    //
+    elseif ( ! $rw || $state != 'executing' )
+    	/* Do Nothing */;
+    else if ( isset ( $_POST['reload'] ) )
     {
-        // Do nothing here.
+        // State will be reset to normal below.
 	$post_processed = true;
     }
     elseif ( isset ( $_POST['update'] ) )
     {
+	$runresult = update_run_results();
 	if ( ! isset ( $runresult )
 	     ||
 	     $runresult !== true )
@@ -124,7 +111,8 @@
 	{
 	    abort_dir ( $run['DIR'] );
 	    usleep ( 100000 ); // 0.1 second
-	    if ( update_run_results ( 0 ) !== true )
+	    $runresult = update_run_results();
+	    if ( $runresult !== true )
 	    {
 		echo "$ID\$RELOAD";
 		exit;
@@ -142,9 +130,81 @@
 	exit;
     }
 
-    if ( $epm_method == 'POST' && ! $post_processed )
-        exit ( 'UNACCEPTABLE HTTP POST' );
+    load_file_caches();
+    if ( $epm_method != 'POST'
+         ||
+	 ! $rw
+	 ||
+	 $state != 'normal' )
+	/* Do Nothing */;
+    elseif ( isset ( $_POST['execute_run'] ) )
+    {
+	$f = $_POST['execute_run'];
+	if ( ! isset ( $local_file_cache[$f] )
+	     ||
+	     ! preg_match ( '/\.run$/', $f ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$d = "$probdir/+parent+";
+	$lock = NULL;
+	if ( is_dir ( "$epm_data/$d" ) )
+	    $lock = LOCK ( $d, LOCK_SH );
+	start_run ( "$probdir/+work+", $f,
+	            $lock, "$probdir/+run+", false,
+	            $errors );
+	if ( count ( $errors ) == 0 )
+	    $state = 'executing';
+	$post_processed = true;
+    }
+    elseif ( isset ( $_POST['submit_run'] ) )
+    {
+	if ( $state != 'normal' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$f = $_POST['submit_run'];
+	if ( ! isset ( $remote_file_cache[$f] )
+	     ||
+	     ! preg_match ( '/\.run$/', $f ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$d = "$probdir/+parent+";
+	$lock = NULL;
+	if ( is_dir ( "$epm_data/$d" ) )
+	    $lock = LOCK ( $d, LOCK_SH );
+	start_run ( "$probdir/+work+", $f,
+	            $lock, "$probdir/+run+", true,
+	            $errors );
+	if ( count ( $errors ) == 0 )
+	    $state = 'executing';
+	$post_processed = true;
+    }
 
+    if ( $epm_method == 'POST' && ! $post_processed )
+    {
+        if ( ! $rw && $state == 'normal' )
+	     $errors[] =
+	         'you are no longer in read-write mode';
+	else
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+    }
+
+    if ( $state == 'executing' )
+    {
+        $runbase = $run['BASE'];
+        $rundir = $run['DIR'];
+        $runresult = $run['RESULT'];
+
+	if ( $runresult === true )
+	    $runresult = update_run_results();
+
+	if ( $runresult !== true
+	     &&
+	     ! $run['FINISHED']
+	     &&
+	     $state == 'executing' )
+	{
+	    finish_run ( $warnings, $errors );
+	    reload_file_caches();
+	    $state = 'normal';
+	}
+    }
 
     // Compute
     //

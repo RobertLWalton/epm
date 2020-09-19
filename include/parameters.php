@@ -72,7 +72,7 @@ $epm_priv_prefix = '+ owner walton';
     // Only `owner' privilege is allowed.
 
 $epm_debug = preg_match
-    ( '/(problem|manage)/',
+    ( '/(problem|run|manage)/',
       $epm_self );
     // True to turn debugging on; false for off.
 

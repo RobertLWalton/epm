@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Sep 18 05:30:10 EDT 2020
+// Date:    Sat Sep 19 08:14:47 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -76,7 +76,7 @@ header ( 'Cache-Control: no-store' );
 
 $epm_begin_time = microtime ( true );
 
-if ( $_SESSION['EPM_THROTTLE'] )
+if ( isset ( $_SESSION['EPM_THROTTLE'] ) )
 {
     // See parameters.php for documentation.
     //
