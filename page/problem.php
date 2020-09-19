@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep 18 21:03:00 EDT 2020
+    // Date:	Sat Sep 19 02:22:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -75,8 +75,8 @@
     //		other POST is processed
     //
     //    order=ORDER
-    //		set $order to ORDER; accepted in all
-    //		states except executing
+    //		set $order to ORDER; valid in all states
+    //		except executing (does not change state)
     //
     //    delete_problem=PROBLEM
     //		set state to delete-problem if PROBLEM
@@ -102,7 +102,7 @@
     //		instead
     //		
     //    make_ftest_yes=
-    //		make DES from SRC using template, wher
+    //		make DES from SRC using template, where
     //		$data['FTEST'] = [SRC,DES], set state
     //		to executing if no errors, and normal
     //		otherwise
@@ -121,12 +121,12 @@
     //		
     //    run=FILENAME
     //		execute start_run; if no errors,
-    //		reroute request to run.php
+    //		re-route request to run.php
     //		
     //    delete-working=
-    //		delete +work+ and set $work = []
-    //		do NOT change state; valid in any
-    //		state but executing
+    //		delete +work+ and set $work = [];
+    //		valid in all states but executing
+    //		(does not change state)
     //
     //
     // xhttp POSTs:
@@ -939,6 +939,10 @@ EOT;
         background-color: inherit;
 	border: 1px black solid;
     }
+    /* The time and error-message classes are used by
+       the get_commands_display function in
+       epm_make.php.
+     */
     td.time {
 	color: var(--hl-purple);
 	text-align: right;
