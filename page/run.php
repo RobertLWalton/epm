@@ -69,67 +69,17 @@
     $warnings = [];  // Warning messages to be shown.
     $post_processed = false;
 
-    $runbase = NULL;
-    $rundir = NULL;
-    $runresult = NULL;
-    if ( isset ( $run['BASE'] ) )
-    {
-        $runbase = $run['BASE'];
-        $rundir = $run['DIR'];
-        $runresult = $run['RESULT'];
-    }
-
     if ( $epm_method == 'GET'
          &&
-	 isset ( $runresult )
+	 isset ( $run['RESULT'] )
 	 &&
 	 ! $run['FINISHED'] )
         $state = 'executing';
 	// Handle hand-off from problems.php
 	// which starts run.
-    //
-    // handle xhttp POSTs.
-    //
-    elseif ( ! $rw || $state != 'executing' )
-    	/* Do Nothing */;
-    else if ( isset ( $_POST['reload'] ) )
-    {
-        // State will be reset to normal below.
-	$post_processed = true;
-    }
-    elseif ( isset ( $_POST['update'] ) )
-    {
-	$runresult = update_run_results();
-	if ( ! isset ( $runresult )
-	     ||
-	     $runresult !== true )
-	{
-	    echo "$ID\$RELOAD";
-	    exit;
-	}
-	elseif ( $_POST['update'] == 'abort' )
-	{
-	    abort_dir ( $run['DIR'] );
-	    usleep ( 100000 ); // 0.1 second
-	    $runresult = update_run_results();
-	    if ( $runresult !== true )
-	    {
-		echo "$ID\$RELOAD";
-		exit;
-	    }
-	}
 
-	usleep ( 2000000 ); // 2.0 second
-	$f = "$rundir/$runbase.stat";
-	$contents = @file_get_contents
-	    ( "$epm_data/$f" );
-	if ( $contents !== false )
-	    echo "$ID\$$contents";
-	else
-	    echo "$ID\$(no status available)";
-	exit;
-    }
-
+    // Handle requests to start a run.
+    //
     load_file_caches();
     if ( $epm_method != 'POST'
          ||
@@ -176,6 +126,57 @@
 	$post_processed = true;
     }
 
+
+    $runbase = NULL;
+    $rundir = NULL;
+    $runresult = NULL;
+    if ( isset ( $run['BASE'] ) )
+    {
+        $runbase = $run['BASE'];
+        $rundir = $run['DIR'];
+        $runresult = $run['RESULT'];
+    }
+
+    // handle xhttp POSTs.
+    //
+    if ( $epm_method != 'POST'
+         ||
+	 $post_processed
+         ||
+	 ! $rw
+	 ||
+	 $state != 'executing' )
+    	/* Do Nothing */;
+    else if ( isset ( $_POST['reload'] ) )
+    {
+        // State will be reset to normal below.
+	$post_processed = true;
+    }
+    elseif ( isset ( $_POST['update'] ) )
+    {
+	if ( $_POST['update'] == 'abort' )
+	    abort_dir ( $run['DIR'] );
+
+	usleep ( 2000000 ); // 2.0 second
+	$runresult = update_run_results();
+	if ( ! isset ( $runresult )
+	     ||
+	     $runresult !== true )
+	{
+	    echo "$ID\$RELOAD";
+	    exit;
+	}
+
+	$f = "$rundir/$runbase.stat";
+	$contents = @file_get_contents
+	    ( "$epm_data/$f" );
+	if ( $contents !== false )
+	    echo "$ID\$$contents";
+	else
+	    echo "$ID\$(no status available)";
+	exit;
+    }
+
     if ( $epm_method == 'POST' && ! $post_processed )
     {
         if ( ! $rw && $state == 'normal' )
@@ -187,18 +188,12 @@
 
     if ( $state == 'executing' )
     {
-        $runbase = $run['BASE'];
-        $rundir = $run['DIR'];
-        $runresult = $run['RESULT'];
-
 	if ( $runresult === true )
 	    $runresult = update_run_results();
 
 	if ( $runresult !== true
 	     &&
-	     ! $run['FINISHED']
-	     &&
-	     $state == 'executing' )
+	     ! $run['FINISHED'] )
 	{
 	    finish_run ( $warnings, $errors );
 	    reload_file_caches();
