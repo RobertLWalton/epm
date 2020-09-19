@@ -118,7 +118,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 17, 2020}
+\date{September 19, 2020}
  
 \maketitle
 
@@ -1778,5 +1778,27 @@ parameter to page GETs and POSTs
     & ~~~~~~~~ \TT{'recent'} 
 \end{tabular}
 \end{indpar}
+
+\subsubsection{Problem Page Transactions}
+
+\begin{enumerate}
+\item Display visible problem files.
+\item Display visible +work+ directory files.
+\item Display commands last executed.
+\item Update command list with execution times and
+      error messages.
+\item Change order of visible files in listings (lexical,
+      by-extension, or most-recent-first)
+\item Make XXXX.FFF from XXXX.EEE using template.
+\item Upload file XXXX.EEE and make XXXX.FFF from it using template
+      (FFF is a function of EEE).
+\item Link XXXX.EEE to YYYY-XXXX.EEE.
+\item Start run of XXXX.run file (run finished by Run Page)
+\item Delete selected visible files.
+\item Delete problem.
+\item Delete +work+ directory.
+\end{enumerate}
+
+
 
 \end{document}
