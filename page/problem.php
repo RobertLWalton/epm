@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep 18 12:36:22 EDT 2020
+    // Date:	Fri Sep 18 21:03:00 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -92,7 +92,42 @@
     //		the current problem and state is
     //		delete-problem
     //
-    //    TBD
+    //    make=BASENAME.EXT1:EXT2
+    //		make BASENAME.EXT2 from BASENAME.EXT1
+    //		using a template; more specifically,
+    //		call start_make_file and set state to
+    //		executing if there are no errors, unless
+    //		EXT2 is ftest, in which case set state
+    //		to make-ftest and set $data['FTEST']
+    //		instead
+    //		
+    //    make_ftest_yes=
+    //		make DES from SRC using template, wher
+    //		$data['FTEST'] = [SRC,DES], set state
+    //		to executing if no errors, and normal
+    //		otherwise
+    //		
+    //    make_ftest_no=
+    //		set state to normal
+    //		
+    //    upload=
+    //		call process_upload to process
+    //		$_FILES['uploaded_file'], and if no
+    //		errors set state to executing
+    //		
+    //    link=FILENAME:FROM
+    //		link FROM --> FILENAME if no errors;
+    //		also unlink all executables first
+    //		
+    //    run=FILENAME
+    //		execute start_run; if no errors,
+    //		reroute request to run.php
+    //		
+    //    delete-working=
+    //		delete +work+ and set $work = []
+    //		do NOT change state; valid in any
+    //		state but executing
+    //
     //
     // xhttp POSTs:
     //
@@ -731,6 +766,8 @@ EOT;
 	      $errors );
 	if ( count ( $errors ) == 0 )
 	    $state = 'executing';
+	else
+	    $state = 'normal';
     }
     elseif ( isset ( $_POST['make_ftest_no'] ) )
     {
@@ -824,10 +861,13 @@ EOT;
 	list ( $fextension, $fype, $ferror, $factions,
 	       $fdisplay, $fshow, $fcomment )
 	    = file_info ( $probdir, $f, true );
-	if ( isset ( $ferror ) )
-	    exit ( "someone has deleted $f: $ferror" );
 	if ( ! in_array ( '+run+', $factions ) )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+	if ( isset ( $ferror ) )
+	{
+	    $errors[] = $ferror;
+	    goto RUN_DONE;
+	}
 		 	    
 	$d = "$probdir/+parent+";
 	$lock = NULL;
@@ -844,6 +884,7 @@ EOT;
 	          "id=$ID&problem=$problem" );
 	    exit;
 	}
+	RUN_DONE:
     }
     elseif ( isset ( $_POST['delete_working'] ) )
     {
