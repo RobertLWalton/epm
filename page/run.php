@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep 20 10:14:56 EDT 2020
+    // Date:	Sun Sep 20 14:27:24 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -33,7 +33,8 @@
     //	  $run = & $_SESSION['EPM_RUN'][$problem]
     //		data for recent Run Page run; see
     //		include/epm_make.php; set when
-    //		include/epm_make.php loaded.
+    //		include/epm_make.php loaded.  May
+    //		be set to [] if no data exist.
     //
     //    $state (see index.php)
     //		normal
@@ -90,9 +91,11 @@
     elseif ( isset ( $_POST['execute_run'] ) )
     {
 	$f = $_POST['execute_run'];
-	if ( ! isset ( $local_file_cache[$f] )
+	if ( ! preg_match ( $epm_filename_re, $f )
 	     ||
-	     ! preg_match ( '/\.run$/', $f ) )
+	     ! isset ( $local_file_cache[$f] )
+	     ||
+	     substr ( $f, -4 ) != '.run' )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$d = "$probdir/+parent+";
 	$lock = NULL;
@@ -107,12 +110,12 @@
     }
     elseif ( isset ( $_POST['submit_run'] ) )
     {
-	if ( $state != 'normal' )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$f = $_POST['submit_run'];
-	if ( ! isset ( $remote_file_cache[$f] )
+	if ( ! preg_match ( $epm_filename_re, $f )
 	     ||
-	     ! preg_match ( '/\.run$/', $f ) )
+	     ! isset ( $remote_file_cache[$f] )
+	     ||
+	     substr ( $f, -4 ) != '.run' )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$d = "$probdir/+parent+";
 	$lock = NULL;
@@ -137,13 +140,17 @@
         $runresult = $run['RESULT'];
     }
 
-    // State check.
+    // State checks.
     //
     if ( ( isset ( $run['RESULT'] )
 	   &&
 	   ! $run['FINISHED'] )
 	 != ( $state == 'executing' ) )
         ERROR ( "executing state error" );
+    if ( isset ( $runresult ) != isset ( $rundir )
+         ||
+	 isset ( $runresult ) != isset ( $runbase ) )
+        ERROR ( "\$run{result,dir,base} error" );
 
     // handle xhttp POSTs.
     //
@@ -464,7 +471,7 @@
 EOT;
     }
 
-    if ( isset ( $runbase ) )
+    if ( isset ( $runresult ) )
     {
 	if ( $runresult === true )
 	    $h = 'Currently Executing Run';
@@ -514,6 +521,7 @@ EOT;
     if ( $state == 'normal' )
     {
 	compute_run_map ( $local_map, $rundir );
+	    // $rundir may be NULL if it does not exist
 
 	$n = 0;
 	$display_list = [];
@@ -624,7 +632,9 @@ EOT;
 EOT;
 	    }
 	}
-	if ( isset ( $runbase ) && $runresult !== true )
+	if ( isset ( $runresult )
+	     &&
+	     $runresult !== true )
 	    foreach ( $initially_display as $rxxxN )
 		echo "<script>" .
 		     "TOGGLE('s_$rxxxN','$rxxxN')" .
