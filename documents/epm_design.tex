@@ -1812,17 +1812,19 @@ Template commands redirect their standard error so it does not appear here.
 
 \subsubsection{Problem Page Session Variables}
 
-\begin{indpar}[0.2in]
-\begin{tabular}[t]{lp{4.0in}}
-\TT{EPM\_PROBLEM[problem]}\label{EPM_PROBLEM}
-    & Problem Page Permanent State: \\
-    & ~~ \TT{'ORDER'} {\tt =>} \\
-    & ~~~~~~ currently selected problem list order \\
-    & ~~~~~~ (see Help Page); one of: \\
-    & ~~~~~~~~ \TT{'extension'} \\
-    & ~~~~~~~~ \TT{'lexical'} \\
-    & ~~~~~~~~ \TT{'recent'} 
-\end{tabular}
+\begin{indpar}
+\begin{itemlist}
+\item[\TT{EPM\_PROBLEM[problem]}:] ~
+\label{EPM_PROBLEM} \\
+    Problem Page Permanent State
+\item[\TT{EPM\_PROBLEM[problem]['ORDER']}:]
+    currently selected problem list order (see Help Page); one of:
+    \begin{tabular}[t]{l}
+    \TT{'extension'} \\
+    \TT{'lexical'} \\
+    \TT{'recent'} 
+    \end{tabular}
+\end{itemlist}
 \end{indpar}
 
 \subsubsection{Problem Page Transactions}
