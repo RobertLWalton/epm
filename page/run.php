@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep 19 07:16:26 EDT 2020
+    // Date:	Sun Sep 20 10:14:56 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -39,7 +39,7 @@
     //		normal
     //		executing (run via epm_run)
     //		    (means $run['RESULT'] is set
-    //		     and $run['FINISHED'] is not)
+    //		     and $run['FINISHED'] is set false)
     //
     // POSTs:
     //
@@ -130,12 +130,20 @@
     $runbase = NULL;
     $rundir = NULL;
     $runresult = NULL;
-    if ( isset ( $run['BASE'] ) )
+    if ( isset ( $run['RESULT'] ) )
     {
         $runbase = $run['BASE'];
         $rundir = $run['DIR'];
         $runresult = $run['RESULT'];
     }
+
+    // State check.
+    //
+    if ( ( isset ( $run['RESULT'] )
+	   &&
+	   ! $run['FINISHED'] )
+	 != ( $state == 'executing' ) )
+        ERROR ( "executing state error" );
 
     // handle xhttp POSTs.
     //
@@ -412,46 +420,49 @@
 	echo "<br></div></div>" . PHP_EOL;
     }
 
-    $refresh = "run.php?problem=$problem"
-             . "&id=$ID";
-    echo <<<EOT
-    <div class='manage' id='manage'>
-    <table style='width:100%'>
-    <tr>
-    <td>
-    <strong title='Login Name'>$lname</strong>
-    </td>
-    <td style='padding-left:50px'>
-    <strong>Go To</strong>
-    <form method='GET'>
-    <input type='hidden'
-           name='problem' value='$problem'>
-    <input type='hidden' name='id' value='$ID'>
-    <button type='submit'
-            formaction='problem.php'>Problem
-    </button>
-    <button type='submit'
-            formaction='option.php'>Option
-    </button>
-    </form>
-    <strong>Page</strong>
-    </td>
-    <td style='padding-left:50px'>
-    <strong>Current Problem:</strong>&nbsp;
-    <pre class='problem'>$problem</pre></b>
-    </td>
-    <td style='text-align:right'>
-    <button type='button' id='refresh'
-            onclick='location.replace ("$refresh")'>
-	&#8635;</button>
-    <button type='button'
-            onclick='HELP("run-page")'>
-	?</button>
-    </td>
-    </tr>
-    </table>
-    </div>
+    if ( $state == 'normal' )
+    {
+	$refresh = "run.php?problem=$problem"
+		 . "&id=$ID";
+	echo <<<EOT
+	<div class='manage'>
+	<table style='width:100%'>
+	<tr>
+	<td>
+	<strong title='Login Name'>$lname</strong>
+	</td>
+	<td style='padding-left:50px'>
+	<strong>Go To</strong>
+	<form method='GET'>
+	<input type='hidden'
+	       name='problem' value='$problem'>
+	<input type='hidden' name='id' value='$ID'>
+	<button type='submit'
+		formaction='problem.php'>Problem
+	</button>
+	<button type='submit'
+		formaction='option.php'>Option
+	</button>
+	</form>
+	<strong>Page</strong>
+	</td>
+	<td style='padding-left:50px'>
+	<strong>Current Problem:</strong>&nbsp;
+	<pre class='problem'>$problem</pre></b>
+	</td>
+	<td style='text-align:right'>
+	<button type='button' id='refresh'
+		onclick='location.replace ("$refresh")'>
+	    &#8635;</button>
+	<button type='button'
+		onclick='HELP("run-page")'>
+	    ?</button>
+	</td>
+	</tr>
+	</table>
+	</div>
 EOT;
+    }
 
     if ( isset ( $runbase ) )
     {
@@ -500,113 +511,126 @@ EOT;
 	echo "</div>" . PHP_EOL;
     }
 
-    compute_run_map ( $local_map, $rundir );
-
-    $n = 0;
-    $display_list = [];
-    $initially_display = [];
-    if ( $local_map != [] )
+    if ( $state == 'normal' )
     {
-    	echo <<<EOT
-	<div class='run_list' id='run-list'>
-    	<form action='run.php' method='POST'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type='hidden'
-	       name='problem' value='$problem'>
-	<table>
-EOT;
-	$td = [ 'run' => "<td>",
-	        'rout' =>
-		    "<td style='padding-left:40px'>",
-	        'rerr' =>
-		    "<td style='padding-left:40px'>" ];
-	foreach ( $local_map as $base => $entry )
+	compute_run_map ( $local_map, $rundir );
+
+	$n = 0;
+	$display_list = [];
+	$initially_display = [];
+	if ( $local_map != [] )
 	{
-	    ++ $n;
-
-	    echo "<tr>";
-	    foreach ( ['run','rout','rerr'] as $rxxx )
-	    {
-	        if ( $entry[$rxxx] === false ) continue;
-		if (    $entry[$rxxx] == ''
-		     && $rxxx != 'run' )
-		    continue;
-
-		$fname = "$base.$rxxx";
-		echo $td[$rxxx];
-		$display_list[] =
-		    ["$rxxx$n",
-		     "$base.$rxxx", $entry[$rxxx]];
-		echo <<<EOT
-		     <button type='button'
-		             id='s_$rxxx$n'
-		             onclick='TOGGLE
-			       ("s_$rxxx$n","$rxxx$n")'
-			>&darr;</button>
-		     <pre>$fname</pre>
-EOT;
-		if ( $rxxx != 'run' )
-		{
-		    if ( $n == 1 )
-		        $initially_display[] =
-			    "$rxxx$n";
-		    continue;
-		}
-
-		if ( $rw && $entry['loc'] == 'local' )
-		     echo <<<EOT
-		     <button type='submit'
-			     name='execute_run'
-			     value='$fname'
-			 >Run</button>
-EOT;
-		elseif ( $rw )
-		     echo <<<EOT
-		     <button type='submit'
-			     name='submit_run'
-			     value='$fname'
-			 >Submit</button>
-EOT;
-		echo "</td>";
-	    }
-	    echo "</tr>";
-	}
-
-        echo "</table></form></div>";
-    }
-
-    if ( count ( $display_list ) > 0 )
-    {
-	foreach ( $display_list as $e )
-	{
-	    list ( $id, $fname, $fcontents ) = $e;
-	    $fcontents = htmlspecialchars
-		( $fcontents );
-	    if ( preg_match ( '/\.rout$/', $fname ) )
-		$fcontents =
-		    preg_replace
-		      ( '/(?m)^(Score|' .
-			'First-Failed-Test-Case|' .
-			'Number-of-Warning-Messages):' .
-			'.*$/',
-			'</pre><pre class="red">$0' .
-			"\n</pre><pre>",
-			$fcontents );
 	    echo <<<EOT
-	    <div style='display:none' id='$id'
-	         class='file-name'>
-	    <strong>$fname:</strong><br>
-	    <div class='file-contents'>
-	    <pre>$fcontents</pre>
-	    </div></div>
+	    <div class='run_list'>
+	    <form action='run.php' method='POST'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type='hidden'
+		   name='problem' value='$problem'>
+	    <table>
 EOT;
+	    $td = [ 'run' => "<td>",
+		    'rout' =>
+		      "<td style='padding-left:40px'>",
+		    'rerr' =>
+		      "<td style='padding-left:40px'>"
+		  ];
+	    foreach ( $local_map as $base => $entry )
+	    {
+		++ $n;
+
+		echo "<tr>";
+		foreach ( ['run','rout','rerr']
+		          as $rxxx )
+		{
+		    if ( $entry[$rxxx] === false )
+		        continue;
+		    if (    $entry[$rxxx] == ''
+			 && $rxxx != 'run' )
+			continue;
+
+		    $fname = "$base.$rxxx";
+		    echo $td[$rxxx];
+		    $display_list[] =
+			["$rxxx$n",
+			 "$base.$rxxx", $entry[$rxxx]];
+		    echo <<<EOT
+			 <button type='button'
+				 id='s_$rxxx$n'
+				 onclick='TOGGLE
+				   ("s_$rxxx$n",
+				    "$rxxx$n")'
+			    >&darr;</button>
+			 <pre>$fname</pre>
+EOT;
+		    if ( $rxxx != 'run' )
+		    {
+			if ( $n == 1 )
+			    $initially_display[] =
+				"$rxxx$n";
+			continue;
+		    }
+
+		    if ( $rw
+		         &&
+			 $entry['loc'] == 'local' )
+			 echo <<<EOT
+			 <button type='submit'
+				 name='execute_run'
+				 value='$fname'
+			     >Run</button>
+EOT;
+		    elseif ( $rw )
+			 echo <<<EOT
+			 <button type='submit'
+				 name='submit_run'
+				 value='$fname'
+			     >Submit</button>
+EOT;
+		    echo "</td>";
+		}
+		echo "</tr>";
+	    }
+
+	    echo "</table></form></div>";
 	}
+
+	if ( count ( $display_list ) > 0 )
+	{
+	    foreach ( $display_list as $e )
+	    {
+		list ( $id, $fname, $fcontents ) = $e;
+		$fcontents = htmlspecialchars
+		    ( $fcontents );
+		if ( preg_match ( '/\.rout$/',
+		                  $fname ) )
+		    $fcontents =
+			preg_replace
+			  ( '/(?m)^(Score|' .
+			    'First-Failed-Test-Case|' .
+			    'Number-of-Warning' .
+			             '-Messages):' .
+			    '.*$/',
+			    '</pre>' .
+			    '<pre class="red">$0' .
+			    "\n</pre><pre>",
+			    $fcontents );
+		echo <<<EOT
+		<div style='display:none' id='$id'
+		     class='file-name'>
+		<strong>$fname:</strong><br>
+		<div class='file-contents'>
+		<pre>$fcontents</pre>
+		</div></div>
+EOT;
+	    }
+	}
+	if ( isset ( $runbase ) && $runresult !== true )
+	    foreach ( $initially_display as $rxxxN )
+		echo "<script>" .
+		     "TOGGLE('s_$rxxxN','$rxxxN')" .
+		     "</script>";
+
     }
-    if ( isset ( $runbase ) && $runresult !== true )
-        foreach ( $initially_display as $rxxxN )
-	    echo "<script>" .
-		 "TOGGLE('s_$rxxxN','$rxxxN')" .
-		 "</script>";
 
     echo <<<EOT
     <form action='run.php' method='POST' id='reload'>
@@ -642,8 +666,6 @@ EOT;
 	    ( function () { alert ( message ); } );
     }
 
-    let manage = document.getElementById("manage");
-    let run_list = document.getElementById("run-list");
     let reload = document.getElementById("reload");
     let reload_id =
         document.getElementById("reload-id");
@@ -728,11 +750,6 @@ EOT;
 	    ( "Content-Type",
 	      "application/x-www-form-urlencoded" );
 	REQUEST_IN_PROGRESS = true;
-	manage.style.display = 'none';
-	run_list.style.display = 'none';
-	    // These keep buttons from being clicked
-	    // while waiting for xhttp response and
-	    // its updated ID.
 	abort_switch.style.visibility = 'visible';
 	    // This permits abort.
 
@@ -747,7 +764,7 @@ EOT;
 	xhttp.send ( data );
     }
     <?php
-	if ( $runresult === true )
+	if ( $state == 'executing' )
 	    echo "REQUEST_UPDATE();" . PHP_EOL;
     ?>
 
