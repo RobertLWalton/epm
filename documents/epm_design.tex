@@ -118,7 +118,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 19, 2020}
+\date{September 20, 2020}
  
 \maketitle
 
@@ -725,6 +725,7 @@ last request for the tab or window.
 
 \section{Data Files}
 
+for template files see \pagref{TEMPLATES} and \pagref{TEMPLATE.OPTN} \\{}
 [xxx] means file modification time is read by xxx
 
 \begin{center}
@@ -887,7 +888,8 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& project & project & \\ 
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+work+}
-        & dir & \STACK{working\\directory\\for jobs}
+        & dir & \STACK{working\\directory\\for jobs
+	               \pagref{PROBLEM/WORK}}
 	& \STACK{problem\\run}
 	& \STACK{problem\\run}
 	& \STACK{problem\\run} \\ 
@@ -1735,6 +1737,19 @@ Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
 \TT{accounts/AID/PROBLEM/PROBLEM.optn}	& -  & - & read & - \\
 \TT{accounts/AID/PROBLEM/+altered+}	& create  & touch & stat & -
 \end{tabular}
+\\\bigskip
+{\bf Problem Page Work Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.sh}     & create  & - & - & - \\
+\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.shout}  & create  & - & read & - \\
+\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.sherr}  & create  & - & - & - \\
+\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.*stat}  & create  & - & read & - \\
+\end{tabular}
+\\[2ex]
+Other files are linked into the {\tt +work+} directory
+as per templates \\
+or are created by template commands
 \\[3ex]
 {\bf Problem Page Session Data}
 \\[1ex]
@@ -1761,6 +1776,37 @@ parameter to page GETs and POSTs
     empty file; only modification time is used;
     this file is touched by every transaction that
     creates, deletes, or modifies a file in the problem directory
+\item[\TT{accounts/AID/PROBLEM/+work+}:]~
+\label{PROBLEM/WORK} \\
+    directory created when commands from a template are to be
+    executed; the commands run with this directory as the current
+    directory
+\item[\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.sh}:]~ \\
+This is the bash script that is executed to run the template
+determined job.  Before each bash command {\tt n} is set to
+specifiy the command.  The commands in order are:
+\begin{center}
+\begin{tabular}{lp{4.5in}}
+n=B & bash initialization commands setting traps for signals
+      and command errors \\
+n=\# & template command beginning on template command line \# \\
+n=D  & `{\tt exit 0}' command after template commands \\
+\end{tabular}
+\end{center}
+On termination the script writes to the .shout file the line:
+\begin{center}
+{\tt ::}$n$ $e$ {\tt DONE}
+\end{center}
+where $n$ is the value of {\tt n} at the beginning of the
+last bash command executed, and $e$ is the exit code.
+See include/epm\_make.php for more details.
+
+\item[\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.shout}:]~ \\
+This is the standard output of the bash shell script.
+Template commands redirect their standard output so it does not appear here.
+\item[\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.sherr}:]~ \\
+This is the standard error of the bash shell script.
+Template commands redirect their standard error so it does not appear here.
 \end{itemlist}
 \end{indpar}
 
