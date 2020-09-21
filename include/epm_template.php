@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 10:38:41 EDT 2020
+// Date:    Sun Sep 20 20:50:04 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -407,6 +407,12 @@ function check_optmap
 
     foreach ( $optmap as $opt => $value )
     {
+        if ( ! isset ( $template_optn[$opt] ) )
+	    ERROR ( "$opt is not a legal option" );
+	    // This should never happen as only
+	    // template options are accepted in
+	    // POSTs.
+
 	$d = & $template_optn[$opt];
 	$set_to_default = false;
 	$reset_value = NULL;

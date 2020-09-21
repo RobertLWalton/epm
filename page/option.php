@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 04:20:27 EDT 2020
+    // Date:	Mon Sep 21 01:01:57 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -27,6 +27,32 @@
         exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_template.php";
+
+    // Session Data:
+    //
+    //    $state (see index.php)
+    //		normal
+    //		edit
+    //
+    // POSTs:
+    //
+    //	  edit
+    //		set state to 'edit'
+    //
+    //    update  OPT=VALUE ...
+    //		update current options; for each OPT
+    //		already in current options, if OPT=VALUE
+    //		is in POST, replace OPT value in current
+    //		options by VALUE; check for errors after
+    //		all values replaced; if no errors, reset
+    //		state to normal
+    //
+    //	  cancel
+    //		reset state to normal
+    //
+    //	  reset-all
+    //		delete PROBLEM.optn and reset state to
+    //		normal
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -61,7 +87,8 @@
     //
     // Lastly, check format of option templates and
     // report errors by appending to $errors.  Template
-    // errors will result in a call to ERROR below.
+    // errors will result in a call to ERROR via
+    // a call to check_errors below.
 
     get_template_optn();
     check_template_optn ( $errors );
@@ -102,10 +129,10 @@
     load_optmap
         ( $optmap, [$probdir], $problem, $errors );
     check_optmap ( $optmap, 'local', $errors );
+        // Errors here do not prevent editing
+	// as that is needed to remove errors.
 
     $defaults = $optmap;
-    $edit = false;
-        // False to display options, true to edit them.
     
     // If editing, $optmap is updated and errors are
     // checked.  If there are no errors, elements of
@@ -114,15 +141,25 @@
     // $problem.optn.  If there are errors $optmap, is
     // reset to $defaults and editing begins anew.
 
-    if ( ! $rw )
+    if ( $epm_method == 'GET' )
         /* Do Nothing */;
+    elseif ( ! $rw )
+    {
+        $errors[] = "you no longer have read-write"
+	          . " privilege";
+	$state = 'normal';
+    }
     elseif ( isset ( $_POST['edit'] ) )
-        $edit = true;
+    {
+        if ( $state != 'normal' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+        $state = 'edit';
+    }
     elseif ( isset ( $_POST['update'] ) )
     {
-	// Errors are appended to $errors even if they
-	// indicate the POST is UNACCEPTABLE.
-	//
+        if ( $state != 'edit' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
 	foreach ( $optmap as $opt => $value )
 	{
 	    if ( isset ( $_POST[$opt] ) )
@@ -130,13 +167,13 @@
 	}
 	$errors = [];
 	    // Clear previous $optmap errors.
+	    // We cannot allow previous $optmap errors
+	    // to prevent an update, as then it would
+	    // not be possible for the user to clear
+	    // an error.  We recompute errors for
+	    // updated $optmap here.
 	check_optmap ( $optmap, 'update', $errors );
-	if ( count ( $errors ) > 0 )
-	{
-	    $optmap = $defaults;
-	    $errors[] = "update is cancelled";
-	}
-	else
+	if ( count ( $errors ) == 0 )
 	{
 	    $new_opts = [];
 	    foreach ( $optmap as $opt => $value )
@@ -157,17 +194,30 @@
 		    ERROR ( "cannot write $f" );
 	    }
 	    touch ( "$epm_data/$probdir/+altered+" );
+	    $state = 'normal';
 	}
     }
     elseif ( isset ( $_POST['cancel'] ) )
-        /* Do Nothing */;
+    {
+        if ( $state != 'edit' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
+        $state = 'normal';
+    }
     elseif ( isset ( $_POST['reset-all'] ) )
     {
+        if ( $state != 'edit' )
+	    exit ( "UNACCEPTABLE HTTP POST" );
+
 	$f = "$probdir/$problem.optn";
 	@unlink ( "$epm_data/$f" );
 	touch ( "$epm_data/$probdir/+altered+" );
 	$optmap = $inherited;
+
+        $state = 'normal';
     }
+    else
+	exit ( "UNACCEPTABLE HTTP POST" );
 ?>
 
 <html>
@@ -237,16 +287,6 @@
         background-color: #99FF99;
 	border-style: solid;
 	border-width: 1px;
-    }
-    div.errors {
-	background-color: #F5F81A;
-    }
-    div.warnings {
-	background-color: #FFC0FF;
-    }
-    div.manage {
-	background-color: #96F9F3;
-	padding-bottom: 5px;
     }
     div.values {
 	background-color: #FFE6F0;
@@ -330,7 +370,7 @@
     <strong title='Login Name'>$lname</strong>
     </td>
 EOT;
-    if ( $edit )
+    if ( $state == 'edit' )
         echo <<<EOT
 	<td style='width:25%'>
 	</td>
@@ -365,7 +405,7 @@ EOT;
     <pre class='problem'>$problem</pre>
     <pre>   </pre>
 EOT;
-    if ( ! $edit )
+    if ( $state == 'normal' )
     {
 	$refresh = "option.php?problem=$problem"
 		 . "&id=$ID";
@@ -399,7 +439,7 @@ EOT;
 	       name='problem' value='$problem'>
 	<input type='hidden' name='id' value='$ID'>
 EOT;
-	if ( $edit )
+	if ( $state == 'edit' )
 	    echo <<<EOT
 	    <div class='center manage'>
 	    <button type='submit'
@@ -470,7 +510,7 @@ EOT;
 	echo <<<EOT
 	<tr><td>$valname</td><td>
 EOT;
-	if ( $edit )
+	if ( $state == 'edit' )
 	{
 	    echo "<input name='$opt' value='$v'" .
 	         " type='text' size='10'" .
@@ -549,14 +589,14 @@ EOT;
 			$c = 'inherited';
 		    elseif ( $v == $vv )
 		    {
-		        if ( $edit )
+		        if ( $state == 'edit' )
 			    $chk = 'checked';
 			else
 			    $c = 'local';
 		    }
 		    if ( $v == '' )
 			$v = '     ';
-		    if ( $edit )
+		    if ( $state == 'edit' )
 			echo "<label>" .
 			     "<input class='argument'" .
 			     " name='$opt'" .
@@ -576,7 +616,7 @@ EOT;
 		    $c = 'inherited';
 		if ( $vv == '' )
 		    $vv = '     ';
-		if ( $edit )
+		if ( $state == 'edit' )
 		    echo "<input class='$c'" .
 		         " name='$opt'" .
 			 " value='$vv'" .
