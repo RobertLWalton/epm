@@ -727,7 +727,7 @@ last request for the tab or window.
 
 \section{Data Files}
 
-for template files see \pagref{TEMPLATES} and \pagref{TEMPLATE.OPTN} \\{}
+for template files see \pagref{JOB-TEMPLATES} and \pagref{TEMPLATE.OPTN} \\{}
 [xxx] means file modification time is read by xxx
 
 \begin{center}
@@ -897,11 +897,13 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& \STACK{problem\\run} \\ 
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+run+}
-        & dir & \STACK{working\\directory\\for runs}
+        & dir & \STACK{working\\directory\\for runs
+	               \pagref{PROBLEM/RUN}}
 	& run & run & run \\
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\\ldots}
-        & various & \STACK{files visible\\to users}
+        & various & \STACK{files visible\\to users
+                           \pagref{PROBLEM-VISIBLE-FILES}}
 	& +problem+ & +problem+ & +problem+ \\
 \hline
 \TT{projects} & dir & \pagref{PROJECTS} & login & maint & \\ 
@@ -997,6 +999,79 @@ Name & Description & Creators & Updaters & Readers \\
 \\[1ex]
 `problem' is the problem name of the tab
 \end{center}
+
+\newpage
+
+\section{Job Templates}
+\label{JOB-TEMPLATES}
+
+Job templates are used to make a file XXXX.dext from a file XXXX.sext.
+A job template is a {\tt .tmpl} file in the {\tt H/template} directory
+that encodes a PHP array in JSON.
+
+A {\tt .tmpl} file is used to make a source file from a destination
+file and has a name of the form:
+\begin{center}
+\tt BBBBBBBB.SSS:BBBBBBBB.DDD:QQQQQQQQ.tmpl
+\end{center}
+
+where \begin{tabular}[t]{lp{4in}}
+      \tt BBBBBBBB & is the basename of the source and destination file \\
+      \tt .SSS     & is the extension of the source file \\
+      \tt .DDD     & is the extension of the destination file and
+                     may be empty \\
+      \tt QQQQQQQQ & is a qualifier, and may be any text, such as
+      		     `{\tt JAVA}', `{\tt JAVA-UPLOAD}',
+		     `{\tt SUBMIT}', etc. \\
+      \end{tabular}
+
+Some examples are:
+\begin{indpar}
+\begin{itemlist}
+\item[\tt PPPP.cc:PPPP:.tmpl] ~ \\
+make PPPP binary from PPPP.cc C++ source
+\item[\tt XXXX-PPPP.in:XXXX-PPPP.score:.tmpl] ~ \\
+make .score file from .in file using PPPP binary
+\item[\tt XXXX-PPPP.in:XXXX-PPPP.score:JAVA.tmpl] ~ \\
+make .score file from .in file using PPPP.jar binary
+\end{itemlist}
+\end{indpar}
+
+Sequences of 4 identical capital letters in a row in the basename
+are replaced by text from the source file name when a template
+file is used.  {\tt PPPP} is always replaced by the problem name.
+For example, if given the source file {\tt 01-000-reverser.in},
+the destination file {\tt 01-000-reverser.score} may be made
+by either of the last two template file named above.
+Which if the two template files is used is determined by the
+contents of the files and the problem directory, as described
+below.
+
+A {\tt .tmpl} file JSON encodes a PHP array with the following
+components:
+\begin{indpar}[0.2in]
+\begin{itemlist}
+\item[\tt 'COMMANDS' => ['line',...]] ~ \\
+A list of command lines that is parsed into a sequence of commands.
+A command consists of a consecutive sequence of lines all but the
+last of which end in \BSL.
+
+In JSON each line is enclosed in double quotes \verb|"| and \BSL
+is represented by \BSL\BSL.
+
+\item[\tt 'LOCAL-REQUIRES' => ['filename',...]] ~ \\
+Locally required files.
+A list of files in the accounts/AID/PROBLEM directory that must
+exist, and which are linked into the working directory in which
+the commands are executed.
+
+For example, {\tt XXXX-PPPP.in:XXXX-PPPP.score:.tmpl} \\
+lists {\tt PPPP} as locally required, whereas \\
+{\tt XXXX-PPPP.in:XXXX-PPPP.score:JAVA.tmpl} \\
+lists {\tt PPPP.jar} as locally required.
+
+
+
 
 \newpage
 
@@ -1678,6 +1753,7 @@ Other & see Login Page Session Variables, \pagref{LOGIN-PAGE-SESSION-VARIABLES}
 
 \begin{center}
 {\bf Problem Page Visible Files}
+\label{PROBLEM-VISIBLE-FILES}
 \\[1ex]
 \begin{tabular}{lllll}
 \TT{accounts/AID/PROBLEM}	        & create  & update & read & delete
