@@ -3,7 +3,7 @@
 
 // File:	epm_print
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Sep 17 09:00:11 EDT 2020
+// Date:	Mon Sep 21 03:52:06 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -11,15 +11,20 @@
 // for EPM.
 
 $document = <<<'EOT'
-    epm_print PPPP
+epm_print PPPP
 
-Locates the unique file F with the name:
+Searches for a file F with the name:
 
 	../src/PPPP.c
 	../src/PPPP.cc
 	../secure/PPPP.c
 	../secure/PPPP.cc
+	../bin/PPPP
 
+using the given search order, and produces the file
+PPPP.pdf from F.  If F needs to be compiled, it must be
+compiled first (e.g., if ../src/PPPP.c is found,
+../src/PPPP must exist and be up to date).
 
 EOT;
 
@@ -31,6 +36,7 @@ if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
 
 $PPPP = $argv[1];
 
+$dir = NULL;
 foreach ( ['src','secure'] as $d )
 foreach ( ['.c','.cc'] as $e )
 {
@@ -41,6 +47,16 @@ foreach ( ['.c','.cc'] as $e )
         break;
     }
 }
+if ( ! isset ( $dir )
+     &&
+     file_exists ( "../bin/$PPPP" ) )
+{
+    $dir = 'bin';
+    $ext = '';
+}
+
+if ( ! isset ( $dir ) )
+    exit ( "cannot find $PPPP" );
 
 $time = filemtime ( "../$dir/$PPPP$ext" );
 $time = strftime ( "%D ^%T", $time );
@@ -54,6 +70,3 @@ $command = "../$dir/$PPPP -doc |"
 	 . " -p - | ps2pdf - $PPPP.pdf";
 
 passthru ( $command );
-
-
-

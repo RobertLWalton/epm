@@ -111,6 +111,8 @@
 \newcommand{\PLUS}[1][]{{$^{+#1}$}}
 \newcommand{\QMARK}{{$^{\,\mbox{\footnotesize ?}}$}}
 
+\newcommand{\BSL}{\textbackslash}
+
 \begin{document}
         
 \title{Educational Problem Manager\\
@@ -118,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 20, 2020}
+\date{September 21, 2020}
  
 \maketitle
 
@@ -1703,11 +1705,12 @@ Other & see Login Page Session Variables, \pagref{LOGIN-PAGE-SESSION-VARIABLES}
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.sin} & create  & -   & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.sout} & create  & -  & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.fout} & create  & -  & read & delete \\
-\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.ftest} & create  & - & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.dout} & create  & -  & read & delete \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.ftest} & create  & - & read & delete \\
 \TT{accounts/AID/PROBLEM/XXXX-PROBLEM.score} & create  & - & read & delete
 \\[1ex]
-\TT{accounts/AID/PROBLEM/ZZZZ-PROBLEM.run} 	  & -  & - & read & -
+\TT{accounts/AID/PROBLEM/ZZZZ-PROBLEM.run}  & upload  & - & read & delete \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.rout} & -  & -  & read & delete \\
 \end{tabular}
 \\[1ex]
 Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
@@ -1742,9 +1745,12 @@ Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
 \\[1ex]
 \begin{tabular}{lllll}
 \TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.sh}     & create  & - & - & - \\
-\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.shout}  & create  & - & read & - \\
-\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.sherr}  & create  & - & - & - \\
-\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.*stat}  & create  & - & read & - \\
+\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.shout}  & create  & append & read
+                                                                        & - \\
+\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.sherr}  & create  & append & -
+                                                                        & - \\
+\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.*stat}  & create  & update & read
+                                                                        & - \\
 \end{tabular}
 \\[2ex]
 Other files are linked into the {\tt +work+} directory
@@ -1845,6 +1851,83 @@ Template commands redirect their standard error so it does not appear here.
 \item Delete selected visible files.
 \item Delete problem.
 \item Delete +work+ directory.
+\end{enumerate}
+
+\newpage
+
+\subsection{Run Page}
+
+\begin{center}
+{\bf Run Page Visible Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{accounts/AID/PROBLEM/ZZZZ-PROBLEM.run}  & -  & - & read & - \\
+\TT{accounts/AID/PROBLEM/XXXX-PROBLEM.rout} & create  & append  & read & - \\
+\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.rerr}
+					    & create  & append  & read & - \\
+\end{tabular}
+\\\bigskip
+{\bf Run Page Run Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.sh}     & create  & - & - & - \\
+\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.shout}  & create  & append & read
+                                                                       & - \\
+\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.sherr}  & create  & append & -
+                                                                       & - \\
+\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.stat}   & create  & append & read
+                                                                       & - \\
+\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.run}    & link    & - & read & - \\
+\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.rout}   & create  & append & read
+                                                                       & - \\
+\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.rerr}   & create  & append & read
+                                                                       & - \\
+\end{tabular}
+\end{center}
+
+\subsubsection{Run Page File Formats}
+
+\begin{indpar}
+\begin{itemlist}
+\item[\TT{accounts/AID/PROBLEM/+run+}:]~
+\label{PROBLEM/RUN} \\
+    directory created when a run is to be executed;
+    the run executes with this directory as the current
+    directory
+\item[\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.sh}:]
+\item[\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.shout}:]\vspace*{-1ex}
+\item[\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.sherr}:]\vspace*{-1ex} ~ \\
+These have the same format and purpose as the similar {\tt +work+}
+files (\pagref{PROBLEM/WORK}).  Also see Run Page Transactions Below.
+
+\item[\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.run}:]
+\item[\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.rout}:]\vspace*{-1ex}
+\item[\TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.rerr}:]\vspace*{-1ex} ~ \\
+See Run Page Transactions Below.
+
+\end{itemlist}
+\end{indpar}
+
+\subsubsection{Run Page Transactions}
+
+\begin{enumerate}
+\item Display visible run files.
+\item Execute runs.  A run is executed in a {\tt +run+}
+      directory using a template consisting of the single
+      command:
+      \begin{center}
+      \begin{tabular}{l}
+      \tt \$BIN/epm\_run $s$ XXXX-PROBLEM.run \BSL \\
+      \tt ~~~~ accounts/AID/PROBLEM/+work+ XXXX-PROBLEM.stat \BSL \\
+      \tt ~~~~ > XXXX-PROBLEM.rout 2> XXXX-PROBLEM.rerr
+      \end{tabular}
+      \end{center}
+      The resulting .sh, .shout, .sherr, .rout, and .rerr
+      files are as they would be for commands executed from
+      a template in the {\tt +work} directory.
+      \\[1ex]
+      See epm\_run document for more details.
+
 \end{enumerate}
 
 

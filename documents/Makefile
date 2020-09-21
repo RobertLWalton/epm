@@ -2,7 +2,7 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Thu Sep 17 08:40:04 EDT 2020
+# Date:		Mon Sep 21 03:58:38 EDT 2020
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
@@ -10,10 +10,11 @@
 
 SRC = ../src
 SECURE = ../secure
+BIN = ../bin
 PRINT = ../bin/epm_print
 
 all:	epm_design.pdf epm_display.pdf epm_score.pdf \
-        epm_sandbox.pdf
+        epm_sandbox.pdf epm_run.pdf epm.pdf
 
 # For vimake
 #
@@ -34,6 +35,12 @@ epm_score.pdf:		${SRC}/epm_score.cc
 epm_sandbox.pdf:		${SECURE}/epm_sandbox.c
 	make -C ${SECURE} epm_sandbox
 	${PRINT} epm_sandbox
+
+epm_run.pdf:		${BIN}/epm_run
+	${PRINT} epm_run
+
+epm.pdf:		${BIN}/epm
+	${PRINT} epm
 
 clean:
 	rm -f *.pdf
