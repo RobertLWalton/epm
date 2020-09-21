@@ -2,7 +2,7 @@
 
 // File:    epm_template.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Sep 20 20:50:04 EDT 2020
+// Date:    Mon Sep 21 02:00:34 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -408,10 +408,21 @@ function check_optmap
     foreach ( $optmap as $opt => $value )
     {
         if ( ! isset ( $template_optn[$opt] ) )
-	    ERROR ( "$opt is not a legal option" );
+	{
+	    WARN ( "$opt is not a legal option;" .
+	           " deleted" );
 	    // This should never happen as only
 	    // template options are accepted in
-	    // POSTs.
+	    // POSTs.  However, it might happen
+	    // if a .optn file contained a
+	    // deprecated option, so we will try
+	    // to fix it.
+
+	    unset ( $optmap[$opt] );
+	        // Note: unset inside a foreach
+		// has been tested and works.
+	    continue;
+	}
 
 	$d = & $template_optn[$opt];
 	$set_to_default = false;
