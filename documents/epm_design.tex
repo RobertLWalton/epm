@@ -1061,8 +1061,9 @@ is represented by \BSL\BSL.
 
 \item[\tt 'LOCAL-REQUIRES' => ['filename',...]] ~ \\
 Locally required files.
-A list of files in the accounts/AID/PROBLEM directory that must
-exist, and which are linked into the working directory in which
+A list of files in the `local' {\tt accounts/AID/PROBLEM} directory that must
+exist if the template is to be used.  These files
+are linked into the working directory in which
 the commands are executed.
 
 For example, {\tt XXXX-PPPP.in:XXXX-PPPP.score:.tmpl} \\
@@ -1071,6 +1072,25 @@ lists {\tt PPPP} as locally required, whereas \\
 lists {\tt PPPP.jar} as locally required.
 
 
+\item[\tt 'REMOTE-REQUIRES' => ['filename',...]] ~ \\
+Remote required files.  Like locally required files but the
+files must be in the `remote'
+{\tt accounts/AID/PROBLEM/+parent+} directory.
+
+\item[\tt 'REQUIRES' => ['filename',...]] ~ \\
+Required files.  Like above but files can be in either the local
+or remote directories; the local directory version is perferred if
+both exist.
+
+\item[\tt 'CREATABLE' => ['filename',...]] ~ \\
+Creatable files.  If file does not otherwise exist and is
+listed in REQUIRES or LOCAL-REQUIRES, the file will be automatically
+created in the local directory.  Note that a REQUIRES file which
+exists in the remote directory will be used from that directory
+and not created.
+
+\end{itemlist}
+\end{indpar}
 
 
 \newpage
@@ -1868,19 +1888,27 @@ This is the bash script that is executed to run the template
 determined job.  Before each bash command {\tt n} is set to
 specifiy the command.  The commands in order are:
 \begin{center}
-\begin{tabular}{lp{4.5in}}
+\begin{tabular}{lp{4.0in}}
 n=B & bash initialization commands setting traps for signals
-      and command errors \\
-n=\# & template command beginning on template command line \# \\
+      and command errors and writing PID in first output line \\
+n=\# & template command beginning on template command line number \# \\
 n=D  & `{\tt exit 0}' command after template commands \\
 \end{tabular}
 \end{center}
+Upon starting, the script writes to the .shout file the line:
+\begin{center}
+$pid$ {\tt PID}
+\end{center}
+where $pid$ is the ID of the process running the script (which
+can be used to send the script a stop signal).
+
 On termination the script writes to the .shout file the line:
 \begin{center}
 {\tt ::}$n$ $e$ {\tt DONE}
 \end{center}
 where $n$ is the value of {\tt n} at the beginning of the
 last bash command executed, and $e$ is the exit code.
+
 See include/epm\_make.php for more details.
 
 \item[\TT{accounts/AID/PROBLEM/+work+/XXXX-PROBLEM.shout}:]~ \\
