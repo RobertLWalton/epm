@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 15 07:46:12 EDT 2020
+    // Date:	Tue Sep 22 15:09:55 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -407,7 +407,7 @@
 		if ( isset ( $problem ) )
 		{
 		    $f = "projects/$project/"
-		       / "$problem/+actions+";
+		       . "$problem/+actions+";
 		    $r = @file_put_contents
 			( "$epm_data/$f", $action,
 			  FILE_APPEND );

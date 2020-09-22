@@ -212,8 +212,37 @@
 	{
 	    finish_run ( $warnings, $errors );
 	    if ( isset ( $run['FIRST-FAILED'] ) )
-	        link_test_case
-		    ( $run['FIRST-FAILED'], $warnings );
+	    {
+	        // Can only happen on submit, so
+		// parent must exist.
+		$d = "$probdir/+parent+";
+		if ( ! is_link ( "$epm_data/$d" ) )
+		    ERROR ( "$d is not link" );
+		$t = @readlink ( "$epm_data/$d" );
+		if ( $t === false )
+		    ERROR ( "cannot read link $d" );
+		if ( ! preg_match ( $epm_parent_re,
+				    $t, $matches ) )
+		    ERROR ( "link $d has bad target" .
+		            " $t" );
+		$project = $matches[3];
+		require
+		    "$epm_home/include/epm_list.php";
+		problem_priv_map
+		    ( $pmap, $project, $problem,
+		             $errors );
+
+		$ff = $run['FIRST-FAILED'];
+		if ( count ( $errors ) == 0
+		     &&
+		     isset ( $pmap['first-failed'] )
+		     &&
+		     $pmap['first-failed'] == '+' )
+		    link_test_case ( $ff, $warnings );
+
+		// Its not an error to not have
+		// first-failed privileges.
+	    }
 	    reload_file_caches();
 	    $state = 'normal';
 	}
