@@ -3,7 +3,7 @@
 
 // File:	epm_run
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Jul 30 16:18:00 EDT 2020
+// Date:	Tue Sep 22 01:08:41 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -44,23 +44,32 @@ is relative to the current working directory of this
 program.
 
 A summary of the results is written to the standard
-output.  Without the -d option, this includes the line:
+output.  Without the -d option, if there are no
+errors this includes the line:
 
-	Run Score: XXXX
+	Score: XXXX
 
 where XXXX is `Completely Correct' or something else.
-If the Run Score is not `Completely Correct', the
-output also includes the line:
+If the Score is not `Completely Correct' or there
+are errors, the following line is included:
 
-	First Failed Test Case: YYYY
+	First-Failed-Test-Case: YYYY
 
-where YYYY is the basename for the test case.  The
-test case files YYYY.in and YYYY.ftest may then be
+where YYYY is the basename for the test case.
+
+If there is a `Score' other than `Completely Correct',
+the test case files YYYY.in and YYYY.ftest may be
 symbolically linked to the local directory, if they
 are not already there, but this program does not do
 this.
 
-But the individual .in file tests are done in the
+The last line output has the form:
+
+	Run-Real-Time: XXXXs
+
+If this does not exist, the run was aborted.
+
+The individual .in file tests are done in the
 work-dir directory, which is treated the same as it is
 when tests are run directly from the problems.php page
 (but it may or may not be the same directory).
@@ -290,7 +299,6 @@ foreach ( $runin as $infile )
     if ( count ( $errors ) > 0 )
     {
 	$first_failed = $base;
-	$score = 'EPM System Error';
 	break;
     }
     $map = & $work['MAP'];
@@ -334,7 +342,6 @@ foreach ( $runin as $infile )
 	    $errors[] = "parent of $aid $problem was"
 	              . " pushed during run";
 	    $first_failed = $base;
-	    $score = 'EPM Push Conflict Error';
 	    break;
 	}
     }
@@ -348,7 +355,6 @@ foreach ( $runin as $infile )
 		  . " another one of your tabs"
 		  . " during run execution";
 	$first_failed = $base;
-	$score = 'EPM Tab Conflict Error';
 	break;
     }
 
@@ -366,14 +372,12 @@ foreach ( $runin as $infile )
     {
         $errors[] = "$base died";
 	$first_failed = $base;
-	$score = 'Program Crashed';
 	break;
     }
     elseif ( is_array ( $r ) && $r[0] == 'B' )
     {
         $errors[] = "$base.sh died during startup";
 	$first_failed = $base;
-	$score = 'EPM System Error';
 	break;
     }
     elseif (    is_array ( $r )
@@ -382,28 +386,27 @@ foreach ( $runin as $infile )
 	     // We assume that if $r[0] != 'D' then
 	     // we will have $r[1] != 0.
     {
-        $score = get_exit_message ( $r[1] );
+        $m = get_exit_message ( $r[1] );
         $errors[] = "$base failed with exit code"
 	          . " {$r[1]}:" . PHP_EOL
-	          . "      $score";
+	          . "      $m";
 	$first_failed = $base;
 	break;
     }
 
     $f = "$workdir/$base.score";
-    $score = @file_get_contents ( "$epm_data/$f" );
-    if ( $score === false )
+    $c = @file_get_contents ( "$epm_data/$f" );
+    if ( $c === false )
     {
         $errors[] = "cannot read $f";
 	$first_failed = $base;
-	$score = 'EPM System Error';
 	break;
     }
-    if ( trim ( $score ) != 'Completely Correct' )
+    $c = explode ( "\n", $c );
+    $c = trim ( $c[0] );
+    if ( $c != "Completely Correct" )
     {
-        $score = explode ( "\n", $score );
-	$score = trim ( $score[0] );
-        $errors[] = "$base: $score";
+	$score = $c;
 	$first_failed = $base;
 	break;
     }
@@ -417,6 +420,11 @@ if ( count ( $errors ) > 0 )
          PHP_EOL;
     foreach ( $errors as $e )
         echo "    $e" . PHP_EOL;
+    echo "First-Failed-Test-Case: $first_failed" .
+         PHP_EOL;
+}
+elseif ( isset ( $first_failed ) )
+{
     echo "First-Failed-Test-Case: $first_failed" .
          PHP_EOL;
     echo "Score: $score" . PHP_EOL;

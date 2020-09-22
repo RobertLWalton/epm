@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep 20 14:27:24 EDT 2020
+    // Date:	Tue Sep 22 01:39:43 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -613,10 +613,8 @@ EOT;
 		                  $fname ) )
 		    $fcontents =
 			preg_replace
-			  ( '/(?m)^(Score|' .
-			    'First-Failed-Test-Case|' .
-			    'Number-of-Warning' .
-			             '-Messages):' .
+			  ( '/(?m)^(Errors |Score:|' .
+			    'First-Failed-Test-Case:)' .
 			    '.*$/',
 			    '</pre>' .
 			    '<pre class="red">$0' .

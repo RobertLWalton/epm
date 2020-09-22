@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Aug 19 16:02:47 EDT 2020
+// Date:    Tue Sep 22 01:36:51 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -2148,6 +2148,16 @@ function finish_run ( & $warnings, & $errors )
 	$errors[] = "file $rout is not readable";
 	return;
     }
+    $contents = @file_get_contents
+	( "$epm_data/$rout" );
+    if ( $contents === false )
+	ERROR ( "cannot read $rout" );
+    if ( preg_match ( '/(?m)^Score:(.*)$/',
+		       $contents, $matches ) )
+	$score = trim ( $matches[1] );
+    else
+	return;
+	// If no score, do not save.
 
     $f = "$probdir/$runbase.rout";
     if ( ! $submit )
@@ -2167,10 +2177,6 @@ function finish_run ( & $warnings, & $errors )
 
     // From here on $submit == true.
     //
-    $contents = @file_get_contents
-	( "$epm_data/$rout" );
-    if ( $contents === false )
-	ERROR ( "cannot read $rout" );
     $r = @file_put_contents
 	( "$epm_data/$f", $contents );
     if ( $r === false )
@@ -2198,12 +2204,6 @@ function finish_run ( & $warnings, & $errors )
     if ( $time === false )
 	ERROR ( "cannot stat $rout" );
     $time = strftime ( $epm_time_format, $time );
-
-    if ( preg_match ( '/(?m)^Score:(.*)$/',
-		       $contents, $matches ) )
-	$score = trim ( $matches[1] );
-    else
-	$score = 'Undefined Score';
 
     if ( preg_match
              ( '/(?m)^Maximum-Solution-Time:(.*)$/',
