@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Sep 22 01:36:51 EDT 2020
+// Date:    Tue Sep 22 14:08:33 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -2033,17 +2033,21 @@ function start_run
 // true;
 //
 // Checks for errors, including non-empty .rerr file.
-// Then if there are no errors, moves the .rout file
-// into $probdir is $submit is false.
+// Then if there are no errors and a Score has been
+// produced, moves the .rout file into $probdir if
+// $submit is false.
 //
-// If $submit is true and there are no errors, copies
-// (not moves) .rout file to $probdir and appends an
-// action line to each of
+// If $submit is true, there are no errors, and a Score
+// was produced, copies (not moves) .rout file to
+// $probdir and appends an action line to each of
 //
 //	projects/$project/+actions+
 //	projects/$project/$problem/+actions+
 //	accounts/$aid/+actions+
 //	accounts/$aid/$problem/+actions+
+//
+// If in addition `First-Failed-Test-Case' was produced,
+// sets $run['FIRST-FAILED'] to its value.
 //
 // Then locks project/$project/$problem/+submits+ for
 // writing and moves .rout file to
@@ -2175,7 +2179,7 @@ function finish_run ( & $warnings, & $errors )
 	return;
     }
 
-    // From here on $submit == true.
+    // From here on $submit == true and $score is set.
     //
     $r = @file_put_contents
 	( "$epm_data/$f", $contents );
@@ -2215,9 +2219,7 @@ function finish_run ( & $warnings, & $errors )
     if ( preg_match
              ( '/(?m)^First-Failed-Test-Case:(.*)$/',
 	       $contents, $matches ) )
-	$failed_case = trim ( $matches[1] );
-    else
-	$failed_case = NULL;
+	$run['FIRST-FAILED'] = trim ( $matches[1] );
 
     $action = "$time $aid submit $project $problem"
             . " $runbase $stime $score" . PHP_EOL;
@@ -2243,22 +2245,6 @@ function finish_run ( & $warnings, & $errors )
     if ( $r === false )
 	ERROR ( "cannot write $f" );
 
-    if ( isset ( $failed_case ) )
-    {
-        foreach ( ['in','ftest'] as $ext )
-	{
-	    $f = "$failed_case.$ext";
-	    $g = "$probdir/$f";
-	    if ( file_exists ( "$epm_data/$g" ) )
-	        continue;
-	    if ( ! symbolic_link ( "+parent+/$f",
-	                           "$epm_data/$g" ) )
-		$errors[] = "cannot link $f to parent";
-	    else
-		$warnings[] = "linked $f to parent";
-	}
-    }
-
     $d = "$d/+submits+";
     $cf = "$d/+count+";
     @mkdir ( "$epm_data/$d", 02770 );
@@ -2283,6 +2269,28 @@ function finish_run ( & $warnings, & $errors )
 	$e = "could not rename $rout to $f";
 	WARN ( $e );
 	$errors[] = "EPM SYSTEM ERROR: $e";
+    }
+}
+
+// Link (e.g., failed) test case from local directory to
+// parent.  Announce each link made in a warning
+// message.
+//
+function link_test_case ( $test_case, & $warnings )
+{
+    global $epm_data, $probdir;
+
+    foreach ( ['in','ftest'] as $ext )
+    {
+	$f = "$test_case.$ext";
+	$g = "$probdir/$f";
+	if ( file_exists ( "$epm_data/$g" ) )
+	    continue;
+	if ( ! symbolic_link ( "+parent+/$f",
+			       "$epm_data/$g" ) )
+	    $errors[] = "cannot link $f to parent";
+	else
+	    $warnings[] = "linked $f to parent";
     }
 }
 

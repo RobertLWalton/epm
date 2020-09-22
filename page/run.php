@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 22 01:39:43 EDT 2020
+    // Date:	Tue Sep 22 14:13:30 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -211,6 +211,9 @@
 	     ! $run['FINISHED'] )
 	{
 	    finish_run ( $warnings, $errors );
+	    if ( isset ( $run['FIRST-FAILED'] ) )
+	        link_test_case
+		    ( $run['FIRST-FAILED'], $warnings );
 	    reload_file_caches();
 	    $state = 'normal';
 	}
