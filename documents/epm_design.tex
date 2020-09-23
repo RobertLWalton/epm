@@ -1171,7 +1171,8 @@ A {\tt .tmpl} file JSON-encodes a PHP array with the following
 components:
 \begin{indpar}[0.2in]
 \begin{itemlist}
-\item[\tt 'COMMANDS' => ['line',...]] ~ \\
+\item[\tt 'COMMANDS' => ['line',...]] ~
+\label{TEMPLATE-COMMANDS} \\
 A list of command lines that is parsed into a sequence of commands.
 A command consists of a consecutive sequence of lines all but the
 last of which end in \BSL.
@@ -2192,6 +2193,91 @@ See Run Page Transactions Below.
       See epm\_run document for more details.
 
 \end{enumerate}
+
+\newpage
+
+\subsection{Option Page}
+
+\begin{center}
+{\bf Option Page Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{accounts/AID/PROBLEM/PROBLEM.optn}  & create  & update & read & - \\
+\TT{projects/PROJECT/PROBLEM/PROBLEM.optn} & -  & -  & read & - \\
+\TT{templates/template.optn} & -  & -  & read & - \\
+\end{tabular}
+\end{center}
+
+\subsubsection{Option Page File Formats}
+
+\begin{indpar}
+\begin{itemlist}
+\item[\TT{accounts/AID/PROBLEM/PROBLEM.optn}:]
+\item[\TT{projects/PROJECT/PROBLEM/PROBLEM.optn}:]\vspace*{-1ex}
+\item[\TT{templates/template.optn}:]\vspace*{-1ex} ~
+\label{PROBLEM.OPTN} \\
+    JSON-encoding of PHP array defining options.
+    The template.optn file has a different array layout
+    from the other .optn file.
+\end{itemlist}
+\end{indpar}
+
+{\bf PROBLEM.optn File Arrays:}
+
+\begin{indpar}
+\begin{itemlist}
+\item[\tt 'option-name' => 'option-value'] ~ \\
+Specifies that the named option has the given value.
+\end{itemlist}
+\end{indpar}
+
+{\bf template.optn File Array:}
+
+\begin{indpar}
+There are several types of array entries:
+\begin{itemlist}
+
+\item[\tt 'argument-name' => ['description' => 'text']] ~ \\
+Specifies that `argument-name' names an argument with the
+given text as a strictly-human readable description.
+An argument-name, preceded by \$, may appear in a template
+command (see COMMANDS, \pagref{TEMPLATE-COMMANDS}) and will be replaced
+by a space separated sequence of all the argument-options assigned to
+argument-name (see following).
+
+\medskip
+
+\newsavebox{\argoptbox}
+\begin{lrbox}{\argoptbox}
+\tt
+[\begin{tabular}[t]{l}
+'argname' => 'argument-name', \\
+'values' => ['value',\ldots], \\
+'default' => 'default-value', \\
+'description' => 'text'] \\
+\end{tabular}
+\end{lrbox}
+\item[\tt 'option-name' => \usebox{\argoptbox}] ~ \\
+Describes an argument option.
+
+\medskip
+
+\newsavebox{\valoptbox}
+\begin{lrbox}{\valoptbox}
+\tt
+[\begin{tabular}[t]{l}
+'valname' => 'value-name', \\
+'type' => 'value-type', \\
+'range' => ['min-value','max-value'], \\
+'default' => 'default-value', \\
+'description' => 'text'] \\
+\end{tabular}
+\end{lrbox}
+\item[\tt 'option-name' => \usebox{\valoptbox}] ~ \\
+Describes a value option.
+
+\end{itemlist}
+\end{indpar}
 
 
 
