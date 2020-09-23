@@ -876,7 +876,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
 \FSTACK{accou}{nts/AID/\\PROBLEM}
         & dir & \STACK{account\\problem\\directory}
-	& project & \STACK{+problem+\\project} & \STACK{+problem+\\project} \\ 
+	& project & \STACK{problem\\project} & \STACK{problem\\project} \\ 
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+actions+}
         & lines & \STACK{log of\\problem\\related\\actions
@@ -906,7 +906,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\\ldots}
         & various & \STACK{files visible\\to users
                            \pagref{PROBLEM-VISIBLE-FILES}}
-	& +problem+ & +problem+ & +problem+ \\
+	& problem & problem & problem \\
 \hline
 \TT{projects} & dir & \STACK{holds project\\subdirectories}
 	      & setup & (super)
@@ -916,7 +916,59 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	      & \STACK{setup\\(super)} & \STACK{project\\manage}
 	      & \STACK{project\\problem\\run\\option\\manage} \\ 
 \hline
-\FSTACK{projects}{/PROJECT/\\PROBLEM} & dir & \\
+\FSTACK{projects}{/PROJECT/\\PROBLEM} & dir
+	   & \STACK{problem\\directory\\in project}
+	   & project & project & \STACK{project\\problem\\run\\manage} \\
+\hline
+\FSTACK{projects}{/PROJECT/\\+actions+} & lines
+	   & \STACK{log of\\project\\related\\actions
+		    \pagref{ACCOUNT-ACTIONS}}
+	   & (updaters) & project & view \\
+\hline
+\FSTACK{projects}{/PROJECT/\\+priv+} & lines
+	   & \STACK{project\\privileges \pagref{MANAGE}}
+	   & manage & manage & \STACK{project\\problem\\run\\manage} \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Format & Description & Creators & Updaters & Readers \\
+\hline\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM/\\+actions+} & lines
+	   & \STACK{log of\\problem\\related\\actions
+		    \pagref{ACCOUNT-ACTIONS}}
+	   & (updaters) & \STACK{project\\run\\manage} & view \\
+\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM/\\+changes+} & lines
+	   & \STACK{log of\\problem\\push\\changes
+		    \pagref{PROJECT-PUSH}}
+	   & project & project & - \\
+\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM/\\+lock+} & lock
+	   & \STACK{project\\problem\\lock
+		    \pagref{PROBLEM/LOCK}}
+	   & (updaters) & \STACK{project\\problem\\run} & (updaters) \\
+\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM/\\+priv+} & lines
+	   & \STACK{problem\\privileges \pagref{MANAGE}}
+	   & manage & manage & \STACK{project\\problem\\run\\manage} \\
+\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM/\\+sources+} & dir
+	   & \STACK{problem\\sources \pagref{PROBLEM/+SOURCES+}}
+	   & project & project & - \\
+\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM/\\+submits+} & dir
+	   & \STACK{problem\\submits \pagref{PROBLEM/+SUBMITS+}}
+	   & run & run & - \\
+\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM/\\\ldots}
+        & various & \STACK{files visible\\to users
+                           \pagref{PROJECT-PROBLEM-VISIBLE-FILES}}
+	& project & project & \STACK{problem\\run} \\
 \hline
 \TT{lists} & dir & \STACK{links to\\published\\lists} & list & list
            & \STACK{favorites\\list\\project\\view\\manage} \\ 
@@ -1020,16 +1072,19 @@ describes actions affecting {\tt accounts}
 directory contents.  For actions affecting the {\tt admin}
 directory contents, see \pagref{ADMIN/ACTIONS}.
 
-An account {\tt +actions+} file consists of lines of format: \\
+An account {\tt +actions+} file consists of lines of format:
 \begin{indpar}
-TIME AID TYPE PROJECT NAME DATA... \\
+TIME~~AID~~TYPE~~PROJECT~~NAME~~DATA...
+\end{indpar}
+where
+\begin{indpar}
 \begin{tabular}[t]{@{\hspace{0.2in}}lp{4.5in}}
 TIME & Session time for login (EPM\_TIME) \\
-AID & AID of account performing action (may be team ID or user ID) \\
+AID & AID of account performing action (EPM\_AID) \\
 TYPE & see below \\
 PROJECT & project involved in action, or {\tt -} if none \\
-NAME & problem involved in action,
-       or name of list involved in action \\
+NAME & PROBLEM involved in action,
+       or LIST involved in action \\
 DATA & TYPE-specific data, or empty \\
 \end{tabular}
 \end{indpar}
@@ -1037,7 +1092,7 @@ DATA & TYPE-specific data, or empty \\
 The possible TYPEs and their corresponding DATA... fields are:
 \begin{indpar}
 \begin{tabular}[t]{lll}
-submit & BASENAME SOLUTION-TIME SCORE... \\
+submit & BASENAME~~SOLUTION-TIME~~SCORE... \\
 push \\
 pull \\
 create-problem \\
@@ -1048,8 +1103,9 @@ update-priv \\
 \end{tabular}
 \end{indpar}
 
-For a `submit' action, the .run file is BASENAME.run and the run output
-file is BASENAME.rout, the SOLUTION-TIME is the maximum number of CPU seconds
+For a `submit' action, BASENAME.run is the the .run file, BASENAME.rout
+is the .rout run output file,
+the SOLUTION-TIME is the maximum number of CPU seconds
 taken by the solution for any one test case .in file, and the SCORE... is
 the submission score (`Completely Correct' or otherwise).
 
@@ -1058,10 +1114,13 @@ All account actions are appended to the {\tt accounts/AID/+actions+} file.
 If a PROJECT is involved in an action, the action is also appended to
 the {\tt project/\EOL PROJECT/\EOL +actions+} file.
 
-If a PROJECT and PROBLEM are involved in an action,
+If a LIST is involved in an action, the action is also appended to
+the {\tt accounts/\EOL AID/\EOL +lists+/\EOL +actions+} file.
+
+If both a PROJECT and a PROBLEM are involved in an action,
 the action is also appended to both
 the {\tt project/PROJECT/PROBLEM/+actions+} file
-and the {\tt accounts/AID/PROBLEM/+actions+} file.
+and the {\tt accounts/\EOL AID/\EOL PROBLEM/\EOL +actions+} file.
 
 \section{Job Templates}
 \label{JOB-TEMPLATES}
