@@ -851,7 +851,8 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& list & \STACK{list\\favorites} & \STACK{+main+\\view} \\ 
 \hline
 \FSTACK{accoun}{ts/AID/\\+actions+}
-        & lines & \STACK{log of account\\problem\\related\\actions}
+        & lines & \STACK{log of account\\problem\\related\\actions
+	                 \pagref{ACCOUNT-ACTIONS}}
 	& (updaters) & \STACK{project\\run} & view \\ 
 \hline
 \FSTACK{accoun}{ts/AID/\\+read-write+}
@@ -878,7 +879,8 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& project & \STACK{+problem+\\project} & \STACK{+problem+\\project} \\ 
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+actions+}
-        & lines & \STACK{log of\\problem\\related\\actions}
+        & lines & \STACK{log of\\problem\\related\\actions
+	                 \pagref{ACCOUNT-ACTIONS}}
 	& (updaters) & \STACK{project\\run} & view \\ 
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+altered+}
@@ -1001,6 +1003,57 @@ Name & Description & Creators & Updaters & Readers \\
 \end{center}
 
 \newpage
+
+\section{Account Actions}
+\label{ACCOUNT-ACTIONS}
+
+Actions are recorded in {\tt +actions+} files.  The following
+describes actions affecting {\tt accounts}
+directory contents.  For actions affecting the {\tt admin}
+directory contents, see \pagref{ADMIN/ACTIONS}.
+
+An account {\tt +actions+} file consists of lines of format: \\
+\begin{indpar}
+TIME AID TYPE PROJECT NAME DATA... \\
+\begin{tabular}[t]{@{\hspace{0.2in}}lp{4.5in}}
+TIME & Session time for login (EPM\_TIME) \\
+AID & AID of account performing action (may be team ID or user ID) \\
+TYPE & see below \\
+PROJECT & project involved in action, or {\tt -} if none \\
+NAME & problem involved in action,
+       or name of list involved in action \\
+DATA & TYPE-specific data, or empty \\
+\end{tabular}
+\end{indpar}
+
+The possible TYPEs and their corresponding DATA... fields are:
+\begin{indpar}
+\begin{tabular}[t]{lll}
+submit & BASENAME SOLUTION-TIME SCORE... \\
+push \\
+pull \\
+create-problem \\
+creat-list \\
+publish-list \\
+unpublish-list \\
+update-priv \\
+\end{tabular}
+\end{indpar}
+
+For a `submit' action, the .run file is BASENAME.run and the run output
+file is BASENAME.rout, the SOLUTION-TIME is the maximum number of CPU seconds
+taken by the solution for any one test case .in file, and the SCORE... is
+the submission score (`Completely Correct' or otherwise).
+
+All account actions are appended to the {\tt accounts/AID/+actions+} file.
+
+If a PROJECT is involved in an action, the action is also appended to
+the {\tt project/\EOL PROJECT/\EOL +actions+} file.
+
+If a PROJECT and PROBLEM are involved in an action,
+the action is also appended to both
+the {\tt project/PROJECT/PROBLEM/+actions+} file
+and the {\tt accounts/AID/PROBLEM/+actions+} file.
 
 \section{Job Templates}
 \label{JOB-TEMPLATES}
