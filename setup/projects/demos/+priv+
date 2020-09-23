@@ -1,3 +1,4 @@
 + pull-new .*
 + re-pull .*
 + view .*
++ first-failed .*

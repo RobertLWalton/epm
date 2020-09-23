@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Sep 15 21:17:05 EDT 2020
+Date:	Tue Sep 22 21:31:03 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1323,10 +1323,11 @@ the associated run output, or .rout file is given.
 If there is also a non-empty run error, or .rerr
 file, it is also listed.  These files can be displayed with the &darr; button.
 <p>
-A run's .rout output file gives the `Score' for the run, and if not
-`Completely Correct', gives the name of the first failed test case.
-Also given are the maximum CPU execution times over all .in files
-of the generate, solution, and filter programs.
+The objective of run is to produce a `Score' for the total run
+that is listed in the run's
+output .rout file.   Sometimes no score can be produced, and none is
+listed.  The most frequent cause of this is failure to upload a problem
+solution on the Problem Page before attempting the run.
 <p>
 The differences between a `Run' of a
 a .run file in your directory and a `Submit' of a .run file
@@ -1334,18 +1335,20 @@ in the parent of your directory are as follows.  During a
 submit, all files used are in the parent, and not your local
 directory, except for your solution executable.  During a run,
 files in your local directory override those in the parent.
-After a submit, the .rout file is recorded as a submit
+After a submit that produces a `Score', the .rout file is recorded as a submit
 result in the parent (project) problem directory, where every user
 can view it (using the <a href='#view-page'>View Page</a>).
-After a run, the .rout file
+The .rout file is also recorded in your problem directory
+for a submit that produces a `Score'.
+After a non-submit run that produces a `Score', the .rout file
 is only recorded in your problem directory where only you can
-view it.  The .rout file is also recorded in your problem directory
-for a submit.
+view it.
 <p>
-Lastly, after a submit that is not completely correct, the
-.in and .ftest files of the first failed test case will be
-linked into your problem directory so you can debug against
-them without re-submitting.
+Lastly, after a submit that produces a `Score' that is not
+`Completely Correct', .in and .ftest files of the first failed
+test case will be linked into your problem directory so you
+can debug against them without re-submitting, provided that
+you have `first-failed' privilege for the project problem.
 </p>
 
 <h1 id="option-page">Option Page</h1>
@@ -1723,7 +1726,11 @@ The following are the possible project privileges:
                               from other projects
 		      </td></tr>
 <tr><td>download</td><td>allows a .tgz tar file to be made containing
-                     the project directory contents
+                     the contents of the project directory
+		     </td></tr>
+<tr><td>first&#8209;failed</td><td>allows the input and output of the
+                     first failed test case of a project problem submission
+		     to be linked into the submitter's problem directory
 		     </td></tr>
 </table>
 </p>
@@ -1737,7 +1744,12 @@ The following are the possible project problem privileges:
 			      parent
                               </td></tr>
 <tr><td>download</td><td>allows a .tgz tar file to be made containing
-                     the project directory contents for the project problem
+                     the contents of the problem subdirectory of the project
+		     directory
+		     </td></tr>
+<tr><td>first&#8209;failed</td><td>allows the input and output of the
+                     first failed test case of a submission of the problem
+		     to be linked into the submitter's problem directory
 		     </td></tr>
 </table>
 <p>
