@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 21, 2020}
+\date{September 23, 2020}
  
 \maketitle
 
@@ -1047,7 +1047,7 @@ Which if the two template files is used is determined by the
 contents of the files and the problem directory, as described
 below.
 
-A {\tt .tmpl} file JSON encodes a PHP array with the following
+A {\tt .tmpl} file JSON-encodes a PHP array with the following
 components:
 \begin{indpar}[0.2in]
 \begin{itemlist}
@@ -1088,6 +1088,45 @@ listed in REQUIRES or LOCAL-REQUIRES, the file will be automatically
 created in the local directory.  Note that a REQUIRES file which
 exists in the remote directory will be used from that directory
 and not created.
+
+\item[\tt 'KEEP' => ['filename',...]] ~ \\
+Files that are to be `kept', that is, moved to the local problem
+directory at the end of the job, if there are no errors or failed
+checks (see CHECKS).
+
+\item[\tt 'CHECKS' => ['check',...]] ~ \\
+Checks to be run upon job completion before keeping any files.
+A check has the form ['filename',...].   For all but the last
+check, this means that the first named file should be non-existant
+or empty, else the check fails, and if the check fails,
+the files listed in the check should be shown to the user as
+proof that the check failed.
+
+An example check is \verb|["PPPP.cerr","PPPP.cc"]| which checks
+that the compiler .cerr error output file is empty and if not
+shows it and the .cc source code file.
+
+The last check is the list of files
+that should be shown to the user if the job has no error, none
+of the previous checks fail, and the KEEP files are moved to the
+local problem directory.  The last check is typically empty, that is [],
+but the previous checks cannot be empty.
+
+A check can also be just 'filename',
+which is equivalent to ['filename'].
+
+\item[\tt 'CONDITIION' => 'condition'] ~ \\
+A condition to be satisfied if the template is to be used.
+Most templates have no CONDITION.  The possible conditions are:
+\begin{indpar}
+\begin{itemlist}
+\item['UPLOAD filename'] ~ \\
+The job is being run to verify the named file which has
+just been uploaded using the Problem Page.
+\item['SUBMIT'] ~ \\
+The job is being run as part of a Run Page submission.
+\end{itemlist}
+\end{indpar}
 
 \end{itemlist}
 \end{indpar}
