@@ -908,7 +908,15 @@ Name & Format & Description & Creators & Updaters & Readers \\
                            \pagref{PROBLEM-VISIBLE-FILES}}
 	& +problem+ & +problem+ & +problem+ \\
 \hline
-\TT{projects} & dir & \pagref{PROJECTS} & login & maint & \\ 
+\TT{projects} & dir & \STACK{holds project\\subdirectories}
+	      & setup & (super)
+	      & all \\
+\hline
+\TT{projects/PROJECT} & dir & \STACK{project\\directory}
+	      & \STACK{setup\\(super)} & \STACK{project\\manage}
+	      & \STACK{project\\problem\\run\\option\\manage} \\ 
+\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM} & dir & \\
 \hline
 \TT{lists} & dir & \STACK{links to\\published\\lists} & list & list
            & \STACK{favorites\\list\\project\\view\\manage} \\ 
