@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 15 07:41:38 EDT 2020
+    // Date:	Thu Sep 24 11:16:05 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -17,19 +17,6 @@
     // Directories and Files
     // ----------- --- -----
 
-    // Each project has a directory:
-    //
-    //		projects/PROJECT
-    //
-    // and a privilege file:
-    //
-    //		projects/PROJECT/+priv+
-    //
-    // Each projects/PROJECT/PROBLEM directory also con-
-    // tains a +priv+ file.
-    //
-    // See manage.php for detail on privileges.
-    //
     // In the following all TIMEs are in the $epm_time_
     // format, and all descriptions consist of para-
     // graphs at the end of a file, each paragraph
@@ -121,116 +108,7 @@
     // favorites.  However you may read a list's
     // desciption before adding it, in order to decide
     // if the list is worth adding.
-    //
-    // The directory:
-    //
-    //	    projects/PROJECT/PROBLEM/+review+
-    //
-    // holds files named AID.review which are reviews of
-    // the problem by the AID user.  There can be at
-    // most one review for each PROJECT, PROBLEM, AID
-    // triple.  A review file is just a sequence of
-    // description paragraphs separated by blank lines.
-    //
-    // A review file may be created by its AID user
-    // after the user has solved the PROBLEM, if the
-    // user is the owner of the PROBLEM, or if the user
-    // has `review' privilege for the problem.  The
-    // creator of a review file may delete or replace
-    // it.
-    //
-    // A problem may be pulled by any user with `pull'
-    // privilege for the problem.  A problem may be
-    // created in a project by pushing it into the
-    // project by any user with `push' privilege for
-    // the project.  When a problem is created, the
-    // projects/PROJECT/PROBLEM/+perm+ file is set to
-    // make the pushing user the owner of the problem
-    // in the project.  Only an owner of a problem may
-    // make subsequent pushes to the problem after the
-    // problem has been created.
-    //
-    // A PROBLEM in a PROJECT has two directories
-    // containing its files:
-    //
-    //	     projects/PROJECT/PROBLEM
-    // and
-    //	     projects/PROJECT/PROBLEM/+sources+
-    //
-    // The former directory contains the publicly
-    // useable PROBLEM files, and the latter directory
-    // contains source code.  These are kept in separate
-    // directories so that they may be backed up
-    // separately.
-    //
-    // When a problem is pushed, only uploaded files
-    // and a few made files, such as .ftest and .pdf
-    // files, are copied to the problem's project
-    // subdirectories.
-    //
-    // When a problem is submitted, the resulting run
-    // output (.rout) file is placed in the file
-    //
-    //	     projects/PROJECT/PROBLEM/+submits+/
-    //		      CCCCCC-AID-RUN-PROBLEM.rout
-    //
-    // file, where CCCCCC is a counter that goes 000000,
-    // 000001, 000002, ... as submissions occur, AID
-    // is the user who submitted, and RUN-PROBLEM.run
-    // is the corresponding run (.run) file.
-    //	    
-    // The following are log files:
-    //
-    //	    accounts/AID/+actions+
-    //	    accounts/AID/PROBLEM/+actions+
-    //	    accounts/AID/PROBLEM/+changes+
-    //	    accounts/AID/+lists+/+actions+
-    //	    projects/PROJECT/+actions+
-    //	    projects/PROJECT/PROBLEM/+actions+
-    //	    projects/PROJECT/PROBLEM/+changes+
-    //	    lists/+actions+
-    //
-    // The +changes+ files describe change to the files
-    // within the directory containing the +changes+
-    // file.  There is no fixed format for these
-    // descriptions.
-    //
-    // The +actions+ files contains lines each describ-
-    // ing an action.  When an action occurs, its
-    // action description line is written into the
-    // +actions+ files of every directory involved in
-    // the action.  This means that 4 +actions+ files
-    // are written for push and pull operations and 2
-    // +actions+ files are written for list operations.
-    //
-    // The following are the possible action description
-    // lines:
-    //
-    //	 TIME AID pull PROJECT PROBLEM
-    //	 TIME AID push PROJECT PROBLEM
-    //	 TIME AID submit PROJECT PROBLEM STIME SCORE...
-    //   TIME AID publish OWNER LISTNAME
-    //   TIME AID unpublish OWNER LISTNAME
-    //   TIME AID add OWNER LISTNAME
-    //   TIME AID sub OWNER LISTNAME
-    //
-    // Here TIME is the time of the action, AID is the
-    // account performing the action, PROJECT may be '-'
-    // to indicate that the PROBLEM is private to the
-    // AID account, STIME is the max solution time in a
-    // submit run, SCORE... is the submit run score and
-    // may contain single spaces, OWNER is the owner of
-    // the list named LISTNAME, add means that account
-    // AID has added the list to their favorites, and
-    // sub means account AID has removed the list from
-    // their favorites.
-    //
-    // +actions+ logs are NOT protected by locking and
-    // it is possible for the writing of two lines to
-    // collide and produce a garbled line.
 
-    // Session Data
-    // ------- ----
 
     // Session data is as follows:
     //
@@ -238,11 +116,11 @@
     //		Name of selected problem list.
     //		Preserved accross GETs of this page.
     //
-    //     $data OP
+    //     $state
     //		One of:
-    //		    NULL
-    //		    'push'
-    //		    'pull'
+    //		    normal
+    //		    push
+    //		    pull
     //
     // During a push or pull operation:
     //
@@ -384,7 +262,6 @@
 
     if ( $epm_method == 'GET' )
     {
-        $data['OP'] = NULL;
 	if ( ! isset ( $_SESSION['EPM_PROJECT'] ) )
 	    $_SESSION['EPM_PROJECT'] =
 	        [ 'LISTNAME' => NULL ];
@@ -639,6 +516,42 @@ EOT;
 	return $action;
     }
 
+    // Check if files are equal.  File names are
+    // relative to $epm_data.  True if both files
+    // fail to exist and false if only one file
+    // fails to exist.
+    //
+    function files_equal ( $fname1, $fname2 )
+    {
+        global $epm_data;
+
+	$fsize1 = @filesize ( "$epm_data/$fname1" );
+	$fsize2 = @filesize ( "$epm_data/$fname2" );
+	if ( $fsize1 != $fsize2 ) return false;
+	if ( $fsize1 === false ) return true;
+
+	$fd1 = @fopen ( "$epm_data/$fname1", 'r' );
+	if ( $fd1 === false )
+	    ERROR ( "cannot read stat'able $fname1" );
+	$fd2 = @fopen ( "$epm_data/$fname2", 'r' );
+	if ( $fd2 === false )
+	    ERROR ( "cannot read stat'able $fname2" );
+
+	$r = true;
+	while ( $r )
+	{
+	    if ( feof ( $fd1 ) ) break;
+	    if ( fread ( $fd1, 4096 )
+	         !=
+		 fread ( $fd2, 4096 ) )
+	        $r = false;
+	}
+	fclose ( $fd1 );
+	fclose ( $fd2 );
+	return $r;
+    }
+
+
     // Compute $data CHANGES, COMMANDS, PROJECT,
     // and PROBLEM to be used to push $problem to
     // $project.  If $problem has a parent, it is an
@@ -790,6 +703,12 @@ EOT;
 	    {
 		$t = "+sources+/$fname";
 		$s = " sources";
+		if ( files_equal ( "$srcdir/$fname",
+				   "$desdir/$t" ) )
+		{
+		    unset ( $desmap[$fname] );
+		    continue;
+		}
 	    }
 	    else
 	    {
@@ -1277,7 +1196,6 @@ EOT;
 	    ERROR ( "cannot write $g" );
     }
 
-    $op = & $data['OP'];
     $listname = & $_SESSION['EPM_PROJECT']['LISTNAME'];
 
     $errors = [];    // Error messages to be shown.
@@ -1286,7 +1204,7 @@ EOT;
     		     // problem whose tab should be
 		     // created (or gone to).
 
-    if ( ! isset ( $op ) )
+    if ( $state == 'normal' )
     {
         $favorites = read_favorites_list ( $warnings );
 	if ( ! isset ( $listname ) )
@@ -1302,11 +1220,11 @@ EOT;
 	if ( isset ( $_POST['rw'] ) )
 	{
 	    require "$epm_home/include/epm_rw.php";
-	    $op = NULL;
+	    $state = 'normal';
 	}
         elseif ( isset ( $_POST['listname'] ) )
 	{
-	    if ( isset ( $op ) )
+	    if ( $state != 'normal' )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $new_listname = $_POST['listname'];
 	    if ( in_list ( $new_listname, $favorites )
@@ -1316,7 +1234,7 @@ EOT;
 	}
         elseif ( isset ( $_POST['goto'] ) )
 	{
-	    if ( isset ( $op ) )
+	    if ( $state != 'normal' )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( ! isset ( $listname ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -1335,26 +1253,25 @@ EOT;
 	    }
 	}
 	elseif ( ! $rw )
-	    $op = NULL;
+	    $state = 'normal';
 	// From here on we are processing posts
 	// that can only occur if $rw is true.
         elseif ( isset ( $_POST['op'] ) )
 	{
-	    $new_op = $_POST['op'];
+	    $new_state = $_POST['op'];
 	    if ( ! in_array
-	               ( $new_op, ['push','pull'],
-		                  true ) )
+	               ( $new_state, ['push','pull'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( ! isset ( $listname ) )
 	        $errors[] = "you must select problem"
 		          . " list BEFORE you push or"
 			  . " pull";
 	    else
-		$op = $new_op;
+		$state = $new_state;
 	}
         elseif ( isset ( $_POST['create'] ) )
 	{
-	    if ( isset ( $op ) )
+	    if ( $state != 'normal' )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $problem = trim ( $_POST['create'] );
 	    $d = "accounts/$aid/$problem";
@@ -1416,7 +1333,7 @@ EOT;
 		umask ( $m );
 	    }
 	}
-	elseif ( ! isset ( $op ) )
+	elseif ( $state == 'normal' )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	// From here on we are processing POSTs
 	// occuring during push/pull ops.
@@ -1438,7 +1355,7 @@ EOT;
 	    $d = "projects/$project/$problem";
 	    if ( is_dir ( "$epm_data/$d" ) )
 	    {
-		$lock_type = ( $op == 'push' ?
+		$lock_type = ( $state == 'push' ?
 		               LOCK_EX : LOCK_SH );
 		$lock = LOCK ( $d, $lock_type );
 		if ( ! isset ( $data['LOCK'] )
@@ -1447,9 +1364,9 @@ EOT;
 		    $errors[] =
 		        "problem $project $problem" .
 			" was changed by a push" .
-			" during this $op" .
+			" during this $state" .
 			PHP_EOL .
-			"  so this $op has been" .
+			"  so this $state has been" .
 			" cancelled; try again";
 	    }
 	    $f = "accounts/$aid/$problem/+altered+";
@@ -1458,12 +1375,12 @@ EOT;
 	    if ( $altered > $data['ALTERED'] )
 		$errors[] = "$aid $problem was altered"
 			  . " by another one of your"
-			  . " tabs during this $op";
+			  . " tabs during this $state";
 
 	    if ( count ( $errors ) == 0 )
 	    {
 		execute_commands ( $errors );
-		if ( $op == 'pull' )
+		if ( $state == 'pull' )
 		    touch ( "$epm_data/$f" );
 	    }
 	    if ( count ( $errors ) > 0 )
@@ -1473,14 +1390,14 @@ EOT;
 		    echo "$e\n";
 		exit;
 	    }
-	    if ( $op == 'push' )
+	    if ( $state == 'push' )
 	        record_push_execution();
 	    else
 	        record_pull_execution();
 	    echo "DONE $ID\n";
 	    exit;
 	}
-        elseif ( $op == 'push' || $op == 'pull' )
+        elseif ( $state == 'push' || $state == 'pull' )
 	{
 	    $just_compile = isset ( $_POST['compile'] );
 	    if ( $just_compile )
@@ -1489,7 +1406,7 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    else
 	        $oper = $_POST['finish'];
-	    if ( $oper != $op )
+	    if ( $oper != $state )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    elseif ( ! isset ( $_POST['problem'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
@@ -1511,7 +1428,7 @@ EOT;
 	    $d = "projects/$project/$problem";
 	    if ( is_dir ( "$epm_data/$d" ) )
 	    {
-		$lock_type = ( $op == 'push' ?
+		$lock_type = ( $state == 'push' ?
 		               LOCK_EX : LOCK_SH );
 		$data['LOCK'] = LOCK ( $d, $lock_type );
 	    }
@@ -1520,7 +1437,7 @@ EOT;
 	    if ( $altered === false ) $altered = 0;
 	    $data['ALTERED'] = $altered;
 
-	    if ( $op == 'push' )
+	    if ( $state == 'push' )
 		compile_push_problem
 		    ( $project, $problem,
 		      $warnings, $errors );
@@ -1557,7 +1474,7 @@ EOT;
 		    echo "$e\n";
 		exit;
 	    }
-	    if ( $op == 'push' )
+	    if ( $state == 'push' )
 	        record_push_execution();
 	    else
 	        record_pull_execution();
@@ -1659,17 +1576,17 @@ function FAIL ( message )
 
     // Must execute these before $warnings is used.
     //
-    if ( $op == 'pull' )
+    if ( $state == 'pull' )
 	$pull_rows = list_to_pull_rows
 	    ( read_problem_list
 	          ( $listname, $warnings ),
 	      $warnings );
-    elseif ( $op == 'push' )
+    elseif ( $state == 'push' )
 	$push_rows = list_to_push_rows
 	    ( read_problem_list
 	          ( $listname, $warnings ),
 	      $warnings );
-    elseif ( $op == NULL && isset ( $listname ) )
+    elseif ( $state == 'normal' && isset ( $listname ) )
 	$problem_options = listname_to_problem_options
 	    ( $listname, $warnings );
 
@@ -1692,9 +1609,9 @@ function FAIL ( message )
 	echo "<br></div></div>";
     }
 
-    if ( isset ( $op ) )
+    if ( $state != 'normal' )
     {
-	$cancel = ( $op == 'push' ?
+	$cancel = ( $state == 'push' ?
 		    'Cancel All Pushing' :
 		    'Cancel All Pulling' );
 	echo <<<EOT
@@ -1774,7 +1691,7 @@ function FAIL ( message )
 EOT;
     }
 
-    $display = ( isset ( $op ) ? 'none' : 'table-row' );
+    $display = ( $state != 'normal' ? 'none' : 'table-row' );
     $login_title =
         'Login Name; Click to See User Profile';
     echo <<<EOT
@@ -1824,7 +1741,7 @@ EOT;
     </tr>
 EOT;
 
-    if ( isset ( $op ) )
+    if ( $state != 'normal' )
     	echo <<<EOT
 	<tr id='check-row'>
 	<td>
@@ -1848,7 +1765,7 @@ EOT;
     </table>
     </form>
 EOT;
-    if ( $op == NULL )
+    if ( $state == 'normal' )
     {
 	$listname_options = list_to_options
 	    ( $favorites, $listname );
@@ -1939,7 +1856,7 @@ EOT;
     echo <<<EOT
     </div>
 EOT;
-    if ( $op == 'push' )
+    if ( $state == 'push' )
     {
 	$project_options = values_to_options
 	    ( read_projects ( ['push-new'] ) );
@@ -2143,7 +2060,7 @@ EOT;
 EOT;
     }
 
-    if ( $op == 'pull' )
+    if ( $state == 'pull' )
     {
 	echo <<<EOT
 	<div class='push-pull-list'>
@@ -2289,7 +2206,7 @@ EOT;
 EOT;
     }
 
-    if ( ! isset ( $op ) )
+    if ( $state == 'normal' )
         echo <<<EOT
 	<script>
 	function KEYDOWN ( form_id )
@@ -2317,10 +2234,10 @@ EOT;
 	GOTO_PROBLEM ( '$goto' );
 	</script>
 EOT;
-    if ( isset ( $op ) )
+    if ( $state != 'normal' )
     {
         $check_proposed =
-	    ( $op == 'push' ? 'on' : 'off' );
+	    ( $state == 'push' ? 'on' : 'off' );
         echo <<<EOT
 	<script>
 
