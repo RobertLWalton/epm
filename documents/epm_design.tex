@@ -141,6 +141,18 @@ no liability for EPM.
 
 \tableofcontents 
 
+\begin{center}
+{\bf Symbol Index}
+\\[1ex]
+\begin{minipage}{2in}
+{\tt H} \dotfill \pagref{H-DIRECTORY} \\
+{\tt W} \dotfill \pagref{W-DIRECTORY} \\
+{\tt D} \dotfill \pagref{D-DIRECTORY} \\
+{\tt ID} \dotfill \pagref{AIDS}
+\end{minipage}
+\end{center}
+
+
 \newpage
 
 \section{Introduction}
@@ -351,7 +363,7 @@ pages that do no POSTs and also .html pages.
       include/parameters.php and include/maintenance\_\EOL parameters.php
       files.
 
-      \key{D, Data Directory}:  This is the directory
+      \key{D, Data Directory}\label{D-DIRECTORY}:  This is the directory
       containing all the mutable data for the EPM server.
 
 \item The following subdirectory of H contains the
@@ -2309,6 +2321,25 @@ be replaced by the number option value (there is NO \$ in this case).
 
 \end{itemlist}
 \end{indpar}
+
+\subsubsection{Option Page Transactions}
+
+\begin{enumerate}
+\item Display current problem options.  This is a composite
+of {\tt H/template/template.optn}, with default values
+overridden by {\tt +parent+/PROBLEM.optn}
+if {\tt +parent+} exists, and with values then
+overridden by {\tt PROBLEM.optn} in the local
+problem directory if that exists.
+\item Delete {\tt PROBLEM.optn} resetting the options
+to the `inherited' options.
+\item Edit {\tt PROBLEM.optn}.
+\end{enumerate}
+
+Note: The Project Page, when it pushes PROBLEM, merges
+{\tt PROBLEM.optn} into {\tt +parent+/\EOL PROBLEM.optn} and
+deletes {\tt PROBLEM.optn}.
+
 
 
 
