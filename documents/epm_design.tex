@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 23, 2020}
+\date{September 24, 2020}
  
 \maketitle
 
@@ -727,7 +727,8 @@ last request for the tab or window.
 
 \section{Data Files}
 
-for template files see \pagref{JOB-TEMPLATES} and \pagref{TEMPLATE.OPTN} \\{}
+for template files see \pagref{JOB-TEMPLATES} and \pagref{TEMPLATE.OPTN}
+\\{}
 [xxx] means file modification time is read by xxx
 
 \begin{center}
@@ -2204,7 +2205,7 @@ See Run Page Transactions Below.
 \begin{tabular}{lllll}
 \TT{accounts/AID/PROBLEM/PROBLEM.optn}  & create  & update & read & - \\
 \TT{projects/PROJECT/PROBLEM/PROBLEM.optn} & -  & -  & read & - \\
-\TT{templates/template.optn} & -  & -  & read & - \\
+\TT{H/template/template.optn} & -  & -  & read & - \\
 \end{tabular}
 \end{center}
 
@@ -2214,7 +2215,7 @@ See Run Page Transactions Below.
 \begin{itemlist}
 \item[\TT{accounts/AID/PROBLEM/PROBLEM.optn}:]
 \item[\TT{projects/PROJECT/PROBLEM/PROBLEM.optn}:]\vspace*{-1ex}
-\item[\TT{templates/template.optn}:]\vspace*{-1ex} ~
+\item[\TT{H/template/template.optn}:]\vspace*{-1ex} ~
 \label{PROBLEM.OPTN} \\
     JSON-encoding of PHP array defining options.
     The template.optn file has a different array layout
@@ -2232,8 +2233,12 @@ Specifies that the named option has the given value.
 \end{indpar}
 
 {\bf template.optn File Array:}
+\label{TEMPLATE.OPTN}
 
 \begin{indpar}
+See the {\tt H/template/template.optn} file for examples.
+This is the only file in EPM that has this format.
+
 There are several types of array entries:
 \begin{itemlist}
 
@@ -2241,14 +2246,15 @@ There are several types of array entries:
 Specifies that `argument-name' names an argument with the
 given text as a strictly-human readable description.
 An argument-name, preceded by \$, may appear in a template
-command (see COMMANDS, \pagref{TEMPLATE-COMMANDS}) and will be replaced
-by a space separated sequence of all the argument-options assigned to
+command (see COMMANDS, \pagref{TEMPLATE-COMMANDS}) and this
+will be replaced by a space separated sequence of all the
+argument-options assigned to
 argument-name (see following).
 
 \medskip
 
-\newsavebox{\argoptbox}
-\begin{lrbox}{\argoptbox}
+\newsavebox{\valoptbox}
+\begin{lrbox}{\valoptbox}
 \tt
 [\begin{tabular}[t]{l}
 'argname' => 'argument-name', \\
@@ -2257,13 +2263,33 @@ argument-name (see following).
 'description' => 'text'] \\
 \end{tabular}
 \end{lrbox}
-\item[\tt 'option-name' => \usebox{\argoptbox}] ~ \\
-Describes an argument option.
+\item[\tt 'option-name' => \usebox{\valoptbox}] ~ \\
+Describes an argument option that takes one of a fixed
+set of values.  The option is included in the argument
+named.
 
 \medskip
 
-\newsavebox{\valoptbox}
-\begin{lrbox}{\valoptbox}
+\newsavebox{\argoptbox}
+\begin{lrbox}{\argoptbox}
+\tt
+[\begin{tabular}[t]{l}
+'argname' => 'argument-name', \\
+'default' => 'default-value', \\
+'description' => 'text'] \\
+\end{tabular}
+\end{lrbox}
+\item[\tt 'option-name' => \usebox{\argoptbox}] ~ \\
+Describes an argument option that takes a
+string as a value.  The string may be any string
+that has only letters,
+digits, and the characters {\tt - + \_ @ : . , = /}.
+The option is included in the argument named.
+
+\medskip
+
+\newsavebox{\numoptbox}
+\begin{lrbox}{\numoptbox}
 \tt
 [\begin{tabular}[t]{l}
 'valname' => 'value-name', \\
@@ -2273,8 +2299,13 @@ Describes an argument option.
 'description' => 'text'] \\
 \end{tabular}
 \end{lrbox}
-\item[\tt 'option-name' => \usebox{\valoptbox}] ~ \\
-Describes a value option.
+\item[\tt 'option-name' => \usebox{\numoptbox}] ~ \\
+Describes a number option that has a type and is in a
+range.  The type can be `{\tt natural}', `{\tt integer}',
+or `{\tt float}'.  Only decimal numbers are allowed.
+The option may be included in any argument option by including
+the value-name in the argument option; the value-name will
+be replaced by the number option value (there is NO \$ in this case).
 
 \end{itemlist}
 \end{indpar}
