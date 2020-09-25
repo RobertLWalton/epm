@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 24, 2020}
+\date{September 25, 2020}
  
 \maketitle
 
@@ -2007,7 +2007,9 @@ Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
 \begin{tabular}{lllll}
 \TT{accounts/AID/PROBLEM/+parent+}	& -  & - & read & - \\
 \TT{accounts/AID/PROBLEM/PROBLEM.optn}	& -  & - & read & - \\
-\TT{accounts/AID/PROBLEM/+altered+}	& create  & touch & stat & -
+\TT{accounts/AID/PROBLEM/+altered+}	& create  & touch & stat & - \\
+\TT{accounts/AID/PROBLEM/+changes+}	& create  & append & - & - \\
+\TT{accounts/AID/PROBLEM/+actions+}	& create  & append & - & - \\
 \end{tabular}
 \\\bigskip
 {\bf Problem Page Work Files}
@@ -2041,16 +2043,20 @@ parameter to page GETs and POSTs
 
 \begin{indpar}
 \begin{itemlist}
-\item[Visible Files:] see Help Page \\
-\item[Parent Files:] see Help Page and following \\
+\item[Visible Files:] see Help Page
+\item[Parent Files:] see Help Page and following
 \item[\TT{accounts/AID/PROBLEM/+parent+}:]~\\
-    symbolic link to {\tt projects/PROJECT/PROBLEM} \\
-\item[\TT{accounts/AID/PROBLEM/PROBLEM.optn}:] see \pagref{PROBLEM.OPTN} \\
+    symbolic link to {\tt projects/PROJECT/PROBLEM}
+\item[\TT{accounts/AID/PROBLEM/PROBLEM.optn}:] see \pagref{PROBLEM.OPTN}
 \item[\TT{accounts/AID/PROBLEM/+altered+}:]~
 \label{PROBLEM/ALTERED} \\
     empty file; only modification time is used;
     this file is touched by every transaction that
     creates, deletes, or modifies a file in the problem directory
+\item[\TT{accounts/AID/PROBLEM/+changes+}:]~ \\
+    Log of changes to \TT{accounts/AID/PROBLEM} made by pulling problem.
+\item[\TT{accounts/AID/PROBLEM/+actions+}:]~
+    see \pagref{ACCOUNT-ACTIONS}
 \item[\TT{accounts/AID/PROBLEM/+work+}:]~
 \label{PROBLEM/WORK} \\
     directory created when commands from a template are to be
@@ -2339,6 +2345,113 @@ to the `inherited' options.
 Note: The Project Page, when it pushes PROBLEM, merges
 {\tt PROBLEM.optn} into {\tt +parent+/\EOL PROBLEM.optn} and
 deletes {\tt PROBLEM.optn}.
+
+\newpage
+
+\subsection{Project Page}
+
+\begin{center}
+
+{\bf Project Page Visible Files}
+\\[1ex]
+These are made visible by links to the local problem directory.
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{projects/PROJECT/PROBLEM/PROBLEM.pdf}    	& create  & replace & - & - \\
+\TT{projects/PROJECT/PROBLEM/generate-PROBLEM} 	& create  & replace & - & - \\
+\TT{projects/PROJECT/PROBLEM/filter-PROBLEM} 	& create  & replace & - & - \\
+\TT{projects/PROJECT/PROBLEM/display-PROBLEM} 	& create  & replace & - & - \\
+\TT{projects/PROJECT/PROBLEM/monitor-PROBLEM} 	& create  & replace & - & - \\
+\TT{projects/PROJECT/PROBLEM/XXXX-PROBLEM.in}	& create  & replace & - & - \\
+\TT{projects/PROJECT/PROBLEM/XXXX-PROBLEM.ftest} & create  & replace & - & - \\
+\TT{projects/PROJECT/PROBLEM/ZZZZ-PROBLEM.run} & create  & replace & - & -
+\\[1ex]
+\end{tabular}
+\\\bigskip
+{\bf Project Page Maintenance Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{projects/PROJECT/PROBLEM}	        & create  & update & read & - \\
+\TT{projects/PROJECT/PROBLEM/PROBLEM.optn} & create  & update & read & delete \\
+\TT{projects/PROJECT/PROBLEM/+actions+} & create  & append & - & - \\
+\TT{projects/PROJECT/PROBLEM/+changes+} & create  & append & - & - \\
+\TT{projects/PROJECT/PROBLEM/+lock+} & create  & update & read & - \\
+\TT{projects/PROJECT/PROBLEM/+priv+} & -  & - & read & - \\
+\TT{projects/PROJECT/+actions+} & create  & append & - & - \\
+\TT{projects/PROJECT/+priv+} & -  & - & read & - \\
+\TT{accounts/AID/+actions+} & create  & append & - & - \\
+\end{tabular}
+
+\newpage
+
+{\bf Project Page Source Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/PROBLEM.tex}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/PROBLEM.pdf}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/PROBLEM.c}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/PROBLEM.cc}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/PROBLEM.java}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/PROBLEM.py}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/YYYY-PROBLEM.c}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/YYYY-PROBLEM.cc}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/YYYY-PROBLEM.java}
+				& create & - & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+sources+/YYYY-PROBLEM.py}
+				& create & - & read & - \\
+\end{tabular}
+\\\bigskip
+{\bf Project Page Submit Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+submits+/XXXX-PROBLEM.rout}
+				    & create  & -  & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+submits+/+count+}
+				    & create  & update  & read & - \\
+\FSTACK{projects}{/PROJECT/PROBLEM/\\+submits+/+lock+}
+				    & create  & update  & read & - \\
+\end{tabular}
+\\[2ex]
+{\bf Project Page Session Data}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{EPM\_PROJECT} & create  & update & read \\
+\end{tabular}
+\end{center}
+
+\subsubsection{Project Page File Formats}
+
+\begin{indpar}
+\begin{itemlist}
+\item[Visible Files:] see Help Page
+\item[\TT{projects/PROJECT/PROBLEM/PROBLEM.optn}:] see \pagref{PROBLEM.OPTN}
+\item[\TT{projects/PROJECT/PROBLEM/+actions+}:]
+\item[\TT{projects/PROJECT/+actions+}:]\vspace*{-1ex} ~
+    see \pagref{ACCOUNT-ACTIONS}
+\item[\TT{projects/PROJECT/PROBLEM/+changes+}:]~ \\
+    Log of changes to \TT{projects/PROJECT/PROBLEM} made by pushing problem.
+\item[\TT{projects/PROJECT/PROBLEM/+priv+}:]
+\item[\TT{projects/PROJECT/+priv+}:]\vspace*{-1ex} ~
+    see \pagref{MANAGE}
+\item[\TT{projects/PROJECT/PROBLEM/+lock+}:]~
+\label{PROJECT/PROBLEM/LOCK} \\
+Push an pull transactions involving the project problem
+begin by calling the {\tt parameters.php} {\tt LOCK}
+function to lock the {\tt projects/PROJECT/ PROBLEM} directory.
+This function locks the
+directory by creating if necessary and locking this {\tt +lock+} file
+for the course of the transaction.  Note there are \underline{no}
+EPM transactions longer than a single http request.
+\end{itemlist}
+\end{indpar}
 
 
 
