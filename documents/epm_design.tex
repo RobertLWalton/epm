@@ -804,7 +804,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \FSTACK{admin/}{users/UID/\\UID.login}\\
 \FSTACK{admin/}{teams/TID/\\UID.login}}
         & lines
-        & \STACK{log of logins\\\pagref{ADMIN/USERS/XID/YID.LOGIN}}
+        & \STACK{log of\\logins \pagref{ADMIN/USERS/XID/YID.LOGIN}}
 	& (updaters) & \STACK{login\\user} & [index]  \\ 
 \hline
 \STACK{
@@ -854,19 +854,15 @@ Name & Format & Description & Creators & Updaters & Readers \\
     & +main+ & +main+ & \STACK{+main+\\index} \\ 
 \hline
 \TT{accounts} & dir & \STACK{holds account\\subdirectories}
-              & user & user & all \\ 
+              & user & user & (all) \\ 
 \hline
 \TT{accounts/AID} & dir & \STACK{account\\subdirectory}
-	& user & \STACK{problem\\project} & all \\ 
-\hline
-\FSTACK{accoun}{ts/AID/\\+lists+}
-        & dir & \STACK{holds account\\problem lists}
-	& list & \STACK{list\\favorites} & \STACK{+main+\\view} \\ 
+	& user & \STACK{problem\\project} & (all) \\ 
 \hline
 \FSTACK{accoun}{ts/AID/\\+actions+}
         & lines & \STACK{log of account\\problem\\related\\actions
 	                 \pagref{ACCOUNT-ACTIONS}}
-	& (updaters) & \STACK{project\\run} & view \\ 
+	& (updaters) & \STACK{project\\run\\list\\manage} & view \\ 
 \hline
 \FSTACK{accoun}{ts/AID/\\+read-write+}
         & lines & \STACK{log of account\\read-write mode\\requests
@@ -887,12 +883,32 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
+\FSTACK{accoun}{ts/AID/\\+lists+}
+        & dir & \STACK{holds account\\problem lists\\and favorites list}
+	& \STACK{favorites\\list\\project\\manage\\view}
+	& \STACK{list\\favorites} & (creators) \\ 
+\hline
+\FSTACK{accoun}{ts/AID/\\+lists+/\\+favorites+}
+        & lines & \STACK{list of problem\\lists
+	                 \pagref{FAVORITES}}
+	& \STACK{favorites\\list\\project\\manage\\view}
+	& favorites & (creators) \\
+\hline
+\FSTACK{accoun}{ts/AID/\\+lists+/\\+actions+}
+        & lines & \STACK{log of list related\\actions
+	                 \pagref{ACCOUNT-ACTIONS}}
+	& (updaters) & list & view \\ 
+\hline
+\FSTACK{accoun}{ts/AID/\\+lists+/\\NAME.list}
+        & lines & problem list \pagref{LIST/NAME.LIST}
+	& list & list & \STACK{list\\project\\manage\\view} \\
+\hline
 \FSTACK{accou}{nts/AID/\\PROBLEM}
-        & dir & \STACK{account\\problem\\directory}
+        & dir & \STACK{account problem\\directory}
 	& project & \STACK{problem\\project} & \STACK{problem\\project} \\ 
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+actions+}
-        & lines & \STACK{log of\\problem\\related\\actions
+        & lines & \STACK{log of problem\\related\\actions
 	                 \pagref{ACCOUNT-ACTIONS}}
 	& (updaters) & \STACK{project\\run} & view \\ 
 \hline
@@ -922,27 +938,6 @@ Name & Format & Description & Creators & Updaters & Readers \\
                            \pagref{PROBLEM-VISIBLE-FILES}}
 	& problem & problem & problem \\
 \hline
-\TT{projects} & dir & \STACK{holds project\\subdirectories}
-	      & setup & (super)
-	      & all \\
-\hline
-\TT{projects/PROJECT} & dir & \STACK{project\\directory}
-	      & \STACK{setup\\(super)} & \STACK{project\\manage}
-	      & \STACK{project\\problem\\run\\option\\manage} \\ 
-\hline
-\FSTACK{projects}{/PROJECT/\\PROBLEM} & dir
-	   & \STACK{problem\\directory\\in project}
-	   & project & project & \STACK{project\\problem\\run\\manage} \\
-\hline
-\FSTACK{projects}{/PROJECT/\\+actions+} & lines
-	   & \STACK{log of\\project\\related\\actions
-		    \pagref{ACCOUNT-ACTIONS}}
-	   & (updaters) & project & view \\
-\hline
-\FSTACK{projects}{/PROJECT/\\+priv+} & lines
-	   & \STACK{project\\privileges \pagref{MANAGE}}
-	   & manage & manage & \STACK{project\\problem\\run\\manage} \\
-\hline
 \end{tabular}
 \end{center}
 
@@ -952,6 +947,27 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
+\TT{projects} & dir & \STACK{holds project\\subdirectories}
+	      & setup & (super)
+	      & (all) \\
+\hline
+\TT{projects/PROJECT} & dir & \STACK{project\\directory}
+	      & \STACK{setup\\(super)} & \STACK{project\\manage}
+	      & \STACK{project\\problem\\run\\option\\manage} \\ 
+\hline
+\FSTACK{projects}{/PROJECT/\\+actions+} & lines
+	   & \STACK{log of\\project\\related\\actions
+		    \pagref{ACCOUNT-ACTIONS}}
+	   & (updaters) & \STACK{project\\run\\manage} & view \\
+\hline
+\FSTACK{projects}{/PROJECT/\\+priv+} & lines
+	   & \STACK{project\\privileges \pagref{MANAGE}}
+	   & manage & manage & \STACK{project\\problem\\run\\manage} \\
+\hline
+\FSTACK{projects}{/PROJECT/\\PROBLEM} & dir
+	   & \STACK{problem\\directory\\in project}
+	   & project & project & \STACK{project\\problem\\run\\manage} \\
+\hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM/\\+actions+} & lines
 	   & \STACK{log of\\problem\\related\\actions
 		    \pagref{ACCOUNT-ACTIONS}}
@@ -984,8 +1000,21 @@ Name & Format & Description & Creators & Updaters & Readers \\
                            \pagref{PROJECT-VISIBLE-FILES}}
 	& project & project & \STACK{problem\\run} \\
 \hline
-\TT{lists} & dir & \STACK{links to\\published\\lists} & list & list
-           & \STACK{favorites\\list\\project\\view\\manage} \\ 
+\end{tabular}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Format & Description & Creators & Updaters & Readers \\
+\hline\hline
+\TT{lists} & dir & links to published lists & list & list
+           & (all) \\
+\hline
+\TT{lists/AID:NAME.list}
+           & link & \STACK{link to accounts/\\AID/+lists+/\\NAME.list}
+	   & list & list & (all) \\
 \hline
 \TT{default} & dir & \STACK{default\\program\\binaries} & setup &  & \\ 
 \hline
@@ -1013,9 +1042,9 @@ on \pagref{INDEX-DEFINED-GLOBAL-VARIABLES}.
 Name & Description & Creators & Updaters & Readers \\
 \hline\hline
 \TT{EPM\_EMAIL} & \STACK{login email}
-                & login & & all pages \\ 
+                & login & & (all) \\ 
 \hline
-\TT{EPM\_AID} & account ID & \STACK{login\\user} & & all pages \\ 
+\TT{EPM\_AID} & account ID & \STACK{login\\user} & & (all) \\ 
 \hline
 \TT{EPM\_UID} & user ID
               & \STACK{login\\user} & & \STACK{login\\user\\manage} \\ 
@@ -2497,5 +2526,82 @@ EPM transactions longer than a single http request.
 
 
 \end{center}
+
+\subsubsection{List Page File Formats}
+\label{LIST-PAGE-FILE-FORMATS}
+
+\begin{indpar}
+\begin{itemlist}
+\item[\TT{accounts/AID/+lists+/+favorites+}:] ~
+\label{FAVORITES} \\
+\begin{tabular}{@{}r@{~~~~~}l}
+Lines of the form: & TIME~~USER~~NAME \\
+or                 & TIME~~PROJECT~~- \\
+\end{tabular}
+\\[1ex]
+For the first form of line, USER is `-' if the list is in
+{\tt accounts/ AID/+lists+/NAME.list} and an account ID
+if the list is linked to by
+{\tt lists/USER:NAME.list}.
+
+For the second form of line, PROJECT is `-' if the list
+is the list of all the current account's problems
+in {\tt accounts/AID}, and otherwise the list is the list
+of all PROJECT problems in {\tt projects/PROJECT}.
+
+The first page to read the {\tt +favorites} file creates it
+if it does not exist.  When so created it contains the
+`{\tt TIME - -}' list of the user's own problems (there might
+be none) and the `{\tt TIME PROJECT -}' lists for all PROJECTs
+for which the user has at least one privilege.
+
+\item[\TT{accounts/AID/+lists+/NAME.list}:] ~
+\label{LIST/NAME.LIST} \\
+Lines of the form:\hspace{0.5in}TIME~~PROJECT~~PROBLEM
+\\[1ex]
+PROJECT is `-' if the PROBLEM is local in {\tt accounts/AID/PROBLEM}
+and is otherwise the project containing the PROBLEM
+in {\tt projects/ PROJECT/PROBLEM}.
+
+\item[\TT{lists/AID:NAME.list}:] ~ \\
+This is a symbolic link to {\tt accounts/AID/+lists+/NAME.list}.
+
+\end{itemlist}
+\end{indpar}
+
+\subsubsection{List Page Transactions}
+
+\begin{enumerate}
+\item TBD
+\end{enumerate}
+
+\newpage
+
+\subsection{Favorites Page}
+
+\begin{center}
+
+{\bf Favorites Page Files}
+
+\begin{tabular}{lllll}
+\TT{accounts/AID/+lists+}    	& -  & - & read & - \\
+\TT{accounts/AID/+lists+/+favorites}    	& -  & update & read & - \\
+\TT{accounts/AID/+lists+/NAME.list}    	& -  & - & read & - \\
+\TT{lists/AID:NAME} 	& -  & - & read & - \\
+\end{tabular}
+
+
+\end{center}
+
+\subsubsection{Favorites Page File Formats}
+
+\begin{indpar}
+See List Page File Formats \pagref{LIST-PAGE-FILE-FORMATS}.
+
+\subsubsection{Favorites Page Transactions}
+
+\begin{enumerate}
+\item TBD
+\end{enumerate}
 
 \end{document}
