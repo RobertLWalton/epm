@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Sep 19 08:14:47 EDT 2020
+// Date:    Sun Sep 27 16:15:43 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -82,8 +82,8 @@ if ( isset ( $_SESSION['EPM_THROTTLE'] ) )
     //
     $d = & $_SESSION['EPM_THROTTLE'];
     $t = & $d[0];
-    $s_long = & $d[1];
-    $s_short = & $d[2];
+    $s_short = & $d[1];
+    $s_long = & $d[2];
     $dt = $epm_begin_time - $t;
     $t = $epm_begin_time;
     $s_long =
@@ -100,6 +100,14 @@ if ( isset ( $_SESSION['EPM_THROTTLE'] ) )
         $delay = $epm_short_delay;
     if ( $delay > $dt )
         usleep ( (int) ( 1000000 * ( $delay - $dt ) ) );
+
+    // These need to be cleared least they be set by
+    // pages.
+    //
+    unset ( $d );
+    unset ( $t );
+    unset ( $s_long );
+    unset ( $s_short );
 }
 
 // A session cannot change its IP address if

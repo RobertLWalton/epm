@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 02:43:42 EDT 2020
+    // Date:	Sun Sep 27 16:15:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -97,6 +97,10 @@
 	               $_SERVER['REQUEST_TIME'] );
 	$_SESSION['EPM_IPADDR'] =
 	    $_SERVER['REMOTE_ADDR'];
+	$_SESSION['EPM_THROTTLE'] =
+	     [microtime ( true ),
+	      2 * $epm_short_limit,
+	      2 * $epm_long_limit];
     }
     else
     {
@@ -122,9 +126,6 @@
         global $ID;
 	echo ( "$ID $reply" );
 	DEBUG ( "REPLY $ID $reply" );
-	usleep ( 300000 ); // 0.3 second
-	    // All xhttp's must be individually
-	    // throttled.
 	exit;
     }
 
