@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Sep 24 11:16:05 EDT 2020
+    // Date:	Sun Sep 27 03:55:33 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -135,10 +135,18 @@
     //     $data COMMANDS
     //		List of commands to be executed by
     //		execute_commands to accomplish the
-    //		current push/pull operation.  Commands
-    //		are to be executed with $epm_data being
-    //		the current directory and 06 the current
+    //		current push/pull operation on PROBLEM
+    //		and PROJECT.  Commands are to be
+    //		executed with $epm_data being the
+    //		current directory and 06 the current
     //		mask.
+    //
+    //		If the commands are not executable, this
+    //		variable is unset.  Thus if it is set,
+    //		the allowed POSTs are those that execute
+    //		the commands, send the changes to the
+    //		browser, or abort (delete) the commands
+    //		(a GET will also delete these commands).
     //
     //     $data CHANGES
     //		String to be appended to +changes+ file
@@ -159,33 +167,17 @@
     // Non-XHTTP POSTs:
     // --------- -----
     //
-    // Non-XHTTP POSTs include id=value-of-ID derived
-    // from including in each form:
-    //
-    //	    <input type='hidden'
-    //		   name='id' value='ID-value'>
-    //
-    // Initially there is a project page used to select
-    // a problem LISTNAME and then either select an
-    // operation to be performed, push or pull, or
-    // create/reload a tab for a problem that either
-    // exists or is being created.
-    //
-    // Project Page POST:
-    // ------- ---- ----
-    //
     //      listname=LISTNAME
     //		Set EPM_PROJECT LISTNAME.  LISTNAME has
     //		the format PROJECT:BASENAME.
     //
     //	    op=OPERATION 
     //		where OPERATION is 'push' or 'pull'.
-    //	        Response is one of 2 page layouts
-    //		according to the operation.
+    //	        Set $state to OPERATION.
     //
     //	    goto=PROBLEM
     //		Create a tab for the problem named
-    //		having the tab (window) name '<PROBLEM>'
+    //		having the tab (window) name 'PROBLEM'
     //		and src problem.php?problem=PROBLEM.
     //		Shift visibility to that tab.
     //		
@@ -195,8 +187,6 @@
 
     // XHTTP POSTS
     // ----- -------
-    //
-    // XHTTP POSTs include id=value-of-ID
     //
     // XHTTP POSTs are used for push and pull.
 
@@ -226,11 +216,11 @@
     //     compile=pull problem=PROBLEM project=PROJECT
     //	       Compile pull of PROBLEM from PROJECT.
     //
-    //     send-changes=yes
+    //     send-changes
     //	       Send changes from previous compile (this
     //         can happen after WARN response).
     //
-    //     execute=yes
+    //     execute
     //	       Execute compiled push or pull.
     //
     //	    Responses:
@@ -1219,8 +1209,9 @@ EOT;
     {
 	if ( isset ( $_POST['rw'] ) )
 	{
+	    if ( $state != 'normal' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    require "$epm_home/include/epm_rw.php";
-	    $state = 'normal';
 	}
         elseif ( isset ( $_POST['listname'] ) )
 	{
@@ -1244,6 +1235,9 @@ EOT;
 		if ( ! preg_match
 			   ( $epm_name_re, $problem ) )
 		    exit ( 'UNACCEPTABLE HTTP POST' );
+		// We skip check that $problem is in
+		// $list but do check that problem
+		// is in account.
 		$d = "accounts/$aid/$problem";
 		if ( ! is_dir ( "$epm_data/$d" ) )
 		    $errors[] = "your $problem problem"
@@ -1253,11 +1247,17 @@ EOT;
 	    }
 	}
 	elseif ( ! $rw )
+	{
+	    $errors[] = 'you are no longer in'
+	              . ' read-write mode';
 	    $state = 'normal';
+	}
 	// From here on we are processing posts
 	// that can only occur if $rw is true.
         elseif ( isset ( $_POST['op'] ) )
 	{
+	    if ( $state != 'normal' )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $new_state = $_POST['op'];
 	    if ( ! in_array
 	               ( $new_state, ['push','pull'] ) )
@@ -1285,7 +1285,8 @@ EOT;
 		$errors[] =
 		    "problem name `$problem' contains" .
 		    " an illegal character or does" .
-		    " not begin and end with a letter";
+		    " not begin with a letter and end" .
+		    " with a letter or digit";
 	    elseif ( is_dir ( "$epm_data/$d" ) )
 		$errors[] =
 		    "trying to create problem" .
@@ -1310,8 +1311,9 @@ EOT;
 		        ERROR ( "cannot stat $d" );
 		    $time = strftime
 		        ( $epm_time_format, $time );
-		    $action = "$time $aid create"
-		            . " $problem"
+		    $action = "$time $aid"
+		            . " create-problem"
+		            . " - $problem"
 			    . PHP_EOL;
 
 		    umask ( $m );
@@ -1335,19 +1337,20 @@ EOT;
 	}
 	elseif ( $state == 'normal' )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	// From here on we are processing POSTs
+
+	// From here on we are processing XHTTP POSTs
 	// occuring during push/pull ops.
         elseif ( isset ( $_POST['send-changes'] ) )
 	{
+	    if ( ! isset ( $data['COMMANDS'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
 	    echo "COMPILED $ID\n";
 	    echo $data['CHANGES'];
 	    exit;
 	}
         elseif ( isset ( $_POST['execute'] ) )
 	{
-	    if ( ! isset ( $data['PROBLEM'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    elseif ( ! isset ( $data['PROJECT'] ) )
+	    if ( ! isset ( $data['COMMANDS'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $problem = $data['PROBLEM'];
 	    $project = $data['PROJECT'];
@@ -1359,6 +1362,8 @@ EOT;
 		               LOCK_EX : LOCK_SH );
 		$lock = LOCK ( $d, $lock_type );
 		if ( ! isset ( $data['LOCK'] )
+			// $d did not exist at
+			// compile time
 		     ||
 		     $lock > $data['LOCK'] )
 		    $errors[] =
@@ -1380,6 +1385,7 @@ EOT;
 	    if ( count ( $errors ) == 0 )
 	    {
 		execute_commands ( $errors );
+		unset ( $data['COMMANDS'] );
 		if ( $state == 'pull' )
 		    touch ( "$epm_data/$f" );
 	    }
@@ -1397,8 +1403,10 @@ EOT;
 	    echo "DONE $ID\n";
 	    exit;
 	}
-        elseif ( $state == 'push' || $state == 'pull' )
+        else
 	{
+	    // Must be compile or finish POST.
+	    //
 	    $just_compile = isset ( $_POST['compile'] );
 	    if ( $just_compile )
 	        $oper = $_POST['compile'];
@@ -1467,6 +1475,7 @@ EOT;
 		exit;
 	    }
 	    execute_commands ( $errors );
+	    unset ( $data['COMMANDS'] );
 	    if ( count ( $errors ) > 0 )
 	    {
 		echo "ERROR $ID\n";
@@ -1481,8 +1490,6 @@ EOT;
 	    echo "DONE $ID\n";
 	    exit;
 	}
-	else
-	    exit ( 'UNACCEPTABLE HTTP POST' );
     }
 
     unset ( $problem );
