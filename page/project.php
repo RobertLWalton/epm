@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Sep 27 03:55:33 EDT 2020
+    // Date:	Sun Sep 27 03:58:19 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1203,293 +1203,292 @@ EOT;
 	        $favorites[0];
 	    $listname = "$proj:$base";
 	}
+	// $listname should always be set after this,
+	// as first GET will set it.
     }
 
-    if ( $epm_method == 'POST' )
+    if ( $epm_method != 'POST' )
+        /* Do Nothing */;
+    elseif ( isset ( $_POST['rw'] ) )
     {
-	if ( isset ( $_POST['rw'] ) )
+	if ( $state != 'normal' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	require "$epm_home/include/epm_rw.php";
+    }
+    elseif ( isset ( $_POST['listname'] ) )
+    {
+	if ( $state != 'normal' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$new_listname = $_POST['listname'];
+	if ( in_list ( $new_listname, $favorites )
+	     === NULL )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$listname = $new_listname;
+    }
+    elseif ( isset ( $_POST['goto'] ) )
+    {
+	if ( $state != 'normal' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	if ( ! isset ( $listname ) )
+	    ERROR ( 'LISTNAME not set' );
+	$problem = $_POST['goto'];
+	if ( $problem != '' )
 	{
-	    if ( $state != 'normal' )
+	    if ( ! preg_match
+		       ( $epm_name_re, $problem ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
-	    require "$epm_home/include/epm_rw.php";
-	}
-        elseif ( isset ( $_POST['listname'] ) )
-	{
-	    if ( $state != 'normal' )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $new_listname = $_POST['listname'];
-	    if ( in_list ( $new_listname, $favorites )
-	         === NULL )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $listname = $new_listname;
-	}
-        elseif ( isset ( $_POST['goto'] ) )
-	{
-	    if ( $state != 'normal' )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( ! isset ( $listname ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $problem = $_POST['goto'];
-	    if ( $problem != '' )
-	    {
-		if ( ! preg_match
-			   ( $epm_name_re, $problem ) )
-		    exit ( 'UNACCEPTABLE HTTP POST' );
-		// We skip check that $problem is in
-		// $list but do check that problem
-		// is in account.
-		$d = "accounts/$aid/$problem";
-		if ( ! is_dir ( "$epm_data/$d" ) )
-		    $errors[] = "your $problem problem"
-			      . " no longer exists";
-		else
-		    $goto = $problem;
-	    }
-	}
-	elseif ( ! $rw )
-	{
-	    $errors[] = 'you are no longer in'
-	              . ' read-write mode';
-	    $state = 'normal';
-	}
-	// From here on we are processing posts
-	// that can only occur if $rw is true.
-        elseif ( isset ( $_POST['op'] ) )
-	{
-	    if ( $state != 'normal' )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $new_state = $_POST['op'];
-	    if ( ! in_array
-	               ( $new_state, ['push','pull'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( ! isset ( $listname ) )
-	        $errors[] = "you must select problem"
-		          . " list BEFORE you push or"
-			  . " pull";
-	    else
-		$state = $new_state;
-	}
-        elseif ( isset ( $_POST['create'] ) )
-	{
-	    if ( $state != 'normal' )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $problem = trim ( $_POST['create'] );
+	    // We skip check that $problem is in
+	    // $list but do check that problem
+	    // is in account.
 	    $d = "accounts/$aid/$problem";
-	    if ( $problem == '' )
+	    if ( ! is_dir ( "$epm_data/$d" ) )
+		$errors[] = "your $problem problem"
+			  . " no longer exists";
+	    else
+		$goto = $problem;
+	}
+    }
+    elseif ( ! $rw )
+    {
+	$errors[] = 'you are no longer in'
+		  . ' read-write mode';
+	$state = 'normal';
+    }
+    // From here on we are processing posts
+    // that can only occur if $rw is true.
+    elseif ( isset ( $_POST['op'] ) )
+    {
+	if ( $state != 'normal' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$new_state = $_POST['op'];
+	if ( ! in_array
+		   ( $new_state, ['push','pull'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	if ( ! isset ( $listname ) )
+	    ERROR ( 'LISTNAME not set' );
+	else
+	    $state = $new_state;
+    }
+    elseif ( isset ( $_POST['create'] ) )
+    {
+	if ( $state != 'normal' )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$problem = trim ( $_POST['create'] );
+	$d = "accounts/$aid/$problem";
+	if ( $problem == '' )
+	{
+	    // User hit carriage return on empty
+	    // field.  Do nothing.
+	}
+	elseif ( ! preg_match ( $epm_name_re,
+				$problem ) )
+	    $errors[] =
+		"problem name `$problem' contains" .
+		" an illegal character or does" .
+		" not begin with a letter and end" .
+		" with a letter or digit";
+	elseif ( is_dir ( "$epm_data/$d" ) )
+	    $errors[] =
+		"trying to create problem" .
+		" `$problem' which already exists";
+	else
+	{
+	    $m = umask ( 06 );
+	    if ( ! @mkdir ( "$epm_data/$d",
+			    02771, true ) )
 	    {
-		// User hit carriage return on empty
-		// field.  Do nothing.
-	    }
-	    elseif ( ! preg_match ( $epm_name_re,
-				    $problem ) )
-		$errors[] =
-		    "problem name `$problem' contains" .
-		    " an illegal character or does" .
-		    " not begin with a letter and end" .
-		    " with a letter or digit";
-	    elseif ( is_dir ( "$epm_data/$d" ) )
 		$errors[] =
 		    "trying to create problem" .
-		    " `$problem' which already exists";
+		    " `$problem' which already" .
+		    " exists";
+	    }
 	    else
 	    {
-		$m = umask ( 06 );
-		if ( ! @mkdir ( "$epm_data/$d",
-		                02771, true ) )
-		{
-		    $errors[] =
-			"trying to create problem" .
-			" `$problem' which already" .
-			" exists";
-		}
-		else
-		{
-		    $goto = $problem;
-		    $time = @filemtime
-		        ( "$epm_data/$d" );
-		    if ( $time === false )
-		        ERROR ( "cannot stat $d" );
-		    $time = strftime
-		        ( $epm_time_format, $time );
-		    $action = "$time $aid"
-		            . " create-problem"
-		            . " - $problem"
-			    . PHP_EOL;
+		$goto = $problem;
+		$time = @filemtime
+		    ( "$epm_data/$d" );
+		if ( $time === false )
+		    ERROR ( "cannot stat $d" );
+		$time = strftime
+		    ( $epm_time_format, $time );
+		$action = "$time $aid"
+			. " create-problem"
+			. " - $problem"
+			. PHP_EOL;
 
-		    umask ( $m );
-
-		    $f = "accounts/$aid/+actions+";
-		    $r = @file_put_contents
-			( "$epm_data/$f", $action,
-			  FILE_APPEND );
-		    if ( $r === false )
-			ERROR ( "cannot write $f" );
-
-		    $f = "$d/+actions+";
-		    $r = @file_put_contents
-			( "$epm_data/$f", $action,
-			  FILE_APPEND );
-		    if ( $r === false )
-			ERROR ( "cannot write $f" );
-		}
 		umask ( $m );
+
+		$f = "accounts/$aid/+actions+";
+		$r = @file_put_contents
+		    ( "$epm_data/$f", $action,
+		      FILE_APPEND );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
+
+		$f = "$d/+actions+";
+		$r = @file_put_contents
+		    ( "$epm_data/$f", $action,
+		      FILE_APPEND );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
 	    }
+	    umask ( $m );
 	}
-	elseif ( $state == 'normal' )
+    }
+    elseif ( $state == 'normal' )
+	exit ( 'UNACCEPTABLE HTTP POST' );
+
+    // From here on we are processing XHTTP POSTs
+    // occuring during push/pull ops.
+    elseif ( isset ( $_POST['send-changes'] ) )
+    {
+	if ( ! isset ( $data['COMMANDS'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	echo "COMPILED $ID\n";
+	echo $data['CHANGES'];
+	exit;
+    }
+    elseif ( isset ( $_POST['execute'] ) )
+    {
+	if ( ! isset ( $data['COMMANDS'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$problem = $data['PROBLEM'];
+	$project = $data['PROJECT'];
+
+	$d = "projects/$project/$problem";
+	if ( is_dir ( "$epm_data/$d" ) )
+	{
+	    $lock_type = ( $state == 'push' ?
+			   LOCK_EX : LOCK_SH );
+	    $lock = LOCK ( $d, $lock_type );
+	    if ( ! isset ( $data['LOCK'] )
+		    // $d did not exist at
+		    // compile time
+		 ||
+		 $lock > $data['LOCK'] )
+		$errors[] =
+		    "problem $project $problem" .
+		    " was changed by a push" .
+		    " during this $state" .
+		    PHP_EOL .
+		    "  so this $state has been" .
+		    " cancelled; try again";
+	}
+	$f = "accounts/$aid/$problem/+altered+";
+	$altered = @filemtime ( "$epm_data/$f" );
+	if ( $altered === false ) $altered = 0;
+	if ( $altered > $data['ALTERED'] )
+	    $errors[] = "$aid $problem was altered"
+		      . " by another one of your"
+		      . " tabs during this $state";
+
+	if ( count ( $errors ) == 0 )
+	{
+	    execute_commands ( $errors );
+	    unset ( $data['COMMANDS'] );
+	    if ( $state == 'pull' )
+		touch ( "$epm_data/$f" );
+	}
+	if ( count ( $errors ) > 0 )
+	{
+	    echo "ERROR $ID\n";
+	    foreach ( $errors as $e )
+		echo "$e\n";
+	    exit;
+	}
+	if ( $state == 'push' )
+	    record_push_execution();
+	else
+	    record_pull_execution();
+	echo "DONE $ID\n";
+	exit;
+    }
+    else
+    {
+	// Must be compile or finish POST.
+	//
+	$just_compile = isset ( $_POST['compile'] );
+	if ( $just_compile )
+	    $oper = $_POST['compile'];
+	elseif ( ! isset ( $_POST['finish'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	else
+	    $oper = $_POST['finish'];
+	if ( $oper != $state )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	elseif ( ! isset ( $_POST['problem'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	elseif ( ! isset ( $_POST['project'] ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$problem = $_POST['problem'];
+	$project = $_POST['project'];
+	if ( $project == '-' )
+	    ERROR ( "compile or finish project" .
+		    " is `-'" );
+
+	if ( ! preg_match
+		   ( $epm_name_re, $problem ) )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	if ( ! preg_match
+		   ( $epm_name_re, $project ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
-	// From here on we are processing XHTTP POSTs
-	// occuring during push/pull ops.
-        elseif ( isset ( $_POST['send-changes'] ) )
+	$d = "projects/$project/$problem";
+	if ( is_dir ( "$epm_data/$d" ) )
 	{
-	    if ( ! isset ( $data['COMMANDS'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+	    $lock_type = ( $state == 'push' ?
+			   LOCK_EX : LOCK_SH );
+	    $data['LOCK'] = LOCK ( $d, $lock_type );
+	}
+	$f = "accounts/$aid/$problem/+altered+";
+	$altered = @filemtime ( "$epm_data/$f" );
+	if ( $altered === false ) $altered = 0;
+	$data['ALTERED'] = $altered;
+
+	if ( $state == 'push' )
+	    compile_push_problem
+		( $project, $problem,
+		  $warnings, $errors );
+	else
+	    compile_pull_problem
+		( $project, $problem,
+		  $warnings, $errors );
+
+	if ( count ( $errors ) > 0 )
+	{
+	    echo "ERROR $ID\n";
+	    foreach ( $errors as $e )
+		echo "$e\n";
+	    exit;
+	}
+	if ( count ( $warnings ) > 0 )
+	{
+	    echo "WARN $ID\n";
+	    foreach ( $warnings as $e )
+		echo "$e\n";
+	    exit;
+	}
+	if ( $just_compile )
+	{
 	    echo "COMPILED $ID\n";
 	    echo $data['CHANGES'];
 	    exit;
 	}
-        elseif ( isset ( $_POST['execute'] ) )
+	execute_commands ( $errors );
+	unset ( $data['COMMANDS'] );
+	if ( count ( $errors ) > 0 )
 	{
-	    if ( ! isset ( $data['COMMANDS'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $problem = $data['PROBLEM'];
-	    $project = $data['PROJECT'];
-
-	    $d = "projects/$project/$problem";
-	    if ( is_dir ( "$epm_data/$d" ) )
-	    {
-		$lock_type = ( $state == 'push' ?
-		               LOCK_EX : LOCK_SH );
-		$lock = LOCK ( $d, $lock_type );
-		if ( ! isset ( $data['LOCK'] )
-			// $d did not exist at
-			// compile time
-		     ||
-		     $lock > $data['LOCK'] )
-		    $errors[] =
-		        "problem $project $problem" .
-			" was changed by a push" .
-			" during this $state" .
-			PHP_EOL .
-			"  so this $state has been" .
-			" cancelled; try again";
-	    }
-	    $f = "accounts/$aid/$problem/+altered+";
-	    $altered = @filemtime ( "$epm_data/$f" );
-	    if ( $altered === false ) $altered = 0;
-	    if ( $altered > $data['ALTERED'] )
-		$errors[] = "$aid $problem was altered"
-			  . " by another one of your"
-			  . " tabs during this $state";
-
-	    if ( count ( $errors ) == 0 )
-	    {
-		execute_commands ( $errors );
-		unset ( $data['COMMANDS'] );
-		if ( $state == 'pull' )
-		    touch ( "$epm_data/$f" );
-	    }
-	    if ( count ( $errors ) > 0 )
-	    {
-		echo "ERROR $ID\n";
-		foreach ( $errors as $e )
-		    echo "$e\n";
-		exit;
-	    }
-	    if ( $state == 'push' )
-	        record_push_execution();
-	    else
-	        record_pull_execution();
-	    echo "DONE $ID\n";
+	    echo "ERROR $ID\n";
+	    foreach ( $errors as $e )
+		echo "$e\n";
 	    exit;
 	}
-        else
-	{
-	    // Must be compile or finish POST.
-	    //
-	    $just_compile = isset ( $_POST['compile'] );
-	    if ( $just_compile )
-	        $oper = $_POST['compile'];
-	    elseif ( ! isset ( $_POST['finish'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    else
-	        $oper = $_POST['finish'];
-	    if ( $oper != $state )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    elseif ( ! isset ( $_POST['problem'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    elseif ( ! isset ( $_POST['project'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    $problem = $_POST['problem'];
-	    $project = $_POST['project'];
-	    if ( $project == '-' )
-	        ERROR ( "compile or finish project" .
-		        " is `-'" );
-
-	    if ( ! preg_match
-	               ( $epm_name_re, $problem ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( ! preg_match
-	               ( $epm_name_re, $project ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-
-	    $d = "projects/$project/$problem";
-	    if ( is_dir ( "$epm_data/$d" ) )
-	    {
-		$lock_type = ( $state == 'push' ?
-		               LOCK_EX : LOCK_SH );
-		$data['LOCK'] = LOCK ( $d, $lock_type );
-	    }
-	    $f = "accounts/$aid/$problem/+altered+";
-	    $altered = @filemtime ( "$epm_data/$f" );
-	    if ( $altered === false ) $altered = 0;
-	    $data['ALTERED'] = $altered;
-
-	    if ( $state == 'push' )
-		compile_push_problem
-		    ( $project, $problem,
-		      $warnings, $errors );
-	    else
-		compile_pull_problem
-		    ( $project, $problem,
-		      $warnings, $errors );
-
-	    if ( count ( $errors ) > 0 )
-	    {
-		echo "ERROR $ID\n";
-		foreach ( $errors as $e )
-		    echo "$e\n";
-		exit;
-	    }
-	    if ( count ( $warnings ) > 0 )
-	    {
-		echo "WARN $ID\n";
-		foreach ( $warnings as $e )
-		    echo "$e\n";
-		exit;
-	    }
-	    if ( $just_compile )
-	    {
-		echo "COMPILED $ID\n";
-		echo $data['CHANGES'];
-		exit;
-	    }
-	    execute_commands ( $errors );
-	    unset ( $data['COMMANDS'] );
-	    if ( count ( $errors ) > 0 )
-	    {
-		echo "ERROR $ID\n";
-		foreach ( $errors as $e )
-		    echo "$e\n";
-		exit;
-	    }
-	    if ( $state == 'push' )
-	        record_push_execution();
-	    else
-	        record_pull_execution();
-	    echo "DONE $ID\n";
-	    exit;
-	}
+	if ( $state == 'push' )
+	    record_push_execution();
+	else
+	    record_pull_execution();
+	echo "DONE $ID\n";
+	exit;
     }
 
     unset ( $problem );
@@ -1593,7 +1592,7 @@ function FAIL ( message )
 	    ( read_problem_list
 	          ( $listname, $warnings ),
 	      $warnings );
-    elseif ( $state == 'normal' && isset ( $listname ) )
+    elseif ( $state == 'normal' )
 	$problem_options = listname_to_problem_options
 	    ( $listname, $warnings );
 
@@ -1810,9 +1809,7 @@ EOT;
 	    </button>
 	    </form>
 EOT;
-	if ( isset ( $listname )
-	     &&
-	     $problem_options != '' )
+	if ( $problem_options != '' )
 	{
 	    if ( $rw )
 		echo <<<EOT
@@ -1838,7 +1835,7 @@ EOT;
 	    </select></form>
 EOT;
         }
-	elseif ( isset ( $listname ) )
+	else
 	    echo <<<EOT
 	    <pre>    </pre>
 	    (list has NO problems you previously
