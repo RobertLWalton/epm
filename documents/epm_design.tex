@@ -961,7 +961,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	   & (updaters) & \STACK{project\\run\\manage} & view \\
 \hline
 \FSTACK{projects}{/PROJECT/\\+priv+} & lines
-	   & \STACK{project\\privileges \pagref{MANAGE}}
+	   & \STACK{project\\privileges \pagref{PRIV}}
 	   & manage & manage & \STACK{project\\problem\\run\\manage} \\
 \hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM} & dir
@@ -984,7 +984,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	   & (updaters) & \STACK{project\\problem\\run} & (updaters) \\
 \hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM/\\+priv+} & lines
-	   & \STACK{problem\\privileges \pagref{MANAGE}}
+	   & \STACK{problem\\privileges \pagref{PRIV}}
 	   & manage & manage & \STACK{project\\problem\\run\\manage} \\
 \hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM/\\+sources+} & dir
@@ -1111,7 +1111,7 @@ Name & Description & Creators & Updaters & Readers \\
 \label{ACCOUNT-ACTIONS}
 
 Actions are recorded in {\tt +actions+} files.  The following
-describes actions affecting {\tt accounts}
+describes actions affecting {\tt accounts} or {\tt projects}
 directory contents.  For actions affecting the {\tt admin}
 directory contents, see \pagref{ADMIN/ACTIONS}.
 
@@ -2479,7 +2479,7 @@ These are made visible by links to the local problem directory.
     This is a descriptive file with no fixed format.
 \item[\TT{projects/PROJECT/PROBLEM/+priv+}:]
 \item[\TT{projects/PROJECT/+priv+}:]\vspace*{-1ex} ~
-    see \pagref{MANAGE}
+    see \pagref{PRIV}
 \item[\TT{projects/PROJECT/PROBLEM/+lock+}:]~
 \label{PROJECT/PROBLEM/LOCK} \\
 Push an pull transactions involving the project problem
@@ -2576,7 +2576,7 @@ This is a symbolic link to {\tt accounts/AID/+lists+/NAME.list}.
 
 \item[\TT{accounts/AID/+lists+/+actions+}:]
 \item[\TT{accounts/AID/+actions+}:]\vspace*{-1ex} ~ \\
-    see \pagref{ACCOUNT-ACTIONS}
+    See \pagref{ACCOUNT-ACTIONS}.
 
 \end{itemlist}
 \end{indpar}
@@ -2646,7 +2646,8 @@ See List Page File Formats \pagref{LIST-PAGE-FILE-FORMATS}.
 \begin{indpar}
 \begin{itemlist}
 \item[\TT{projects/PROJECT/+priv+}:]
-\item[\TT{projects/PROJECT/PROBLEM/+priv+}:]\vspace*{-1ex}~ \\
+\item[\TT{projects/PROJECT/PROBLEM/+priv+}:]\vspace*{-1ex}~
+\label{PRIV} \\
 See Help Page.
 \item[\TT{accounts/AID/+lists+}:]
 \item[\TT{accounts/AID/+lists+/+favorites+}:]\vspace*{-1ex}~ \\
@@ -2664,6 +2665,68 @@ See \pagref{ACCOUNT-ACTIONS}.
 \end{indpar}
 
 \subsubsection{Manage Page Transactions}
+
+\begin{enumerate}
+\item TBD
+\end{enumerate}
+
+\newpage
+
+\subsection{View Page}
+
+\begin{center}
+
+{\bf View Page Files}
+
+\begin{tabular}{lllll}
+\TT{admin/+actions+}    		& -       & -      & read & - \\
+\TT{admin/users/UID/+actions+} 		& -       & -      & read & - \\
+\TT{admin/teams/TID/+actions+} 		& -       & -      & read & - \\
+\TT{accounts/AID/+actions+}    		& -       & -      & read & - \\
+\TT{accounts/AID/PROBLEM/+actions+}	& -       & -      & read & - \\
+\TT{accounts/AID/+lists+/+actions+}	& -       & -      & read & - \\
+\TT{projects/PROJECT/+actions+}    	& -       & -      & read & - \\
+\TT{projects/PROJECT/PROBLEM/+actions+} & -       & -      & read & - \\
+\end{tabular}
+
+
+\end{center}
+
+\subsubsection{View Page File Formats}
+
+\begin{indpar}
+See Account Actions, \pagref{ACCOUNT-ACTIONS}, and
+administrative action files, \pagref{ADMIN/XXXX/XID/ACTIONS}.
+\end{indpar}
+
+\subsubsection{View Page Transactions}
+
+\begin{enumerate}
+\item TBD
+\end{enumerate}
+
+\newpage
+
+\subsection{Template Page}
+
+\begin{center}
+
+{\bf Template Page Files}
+
+\begin{tabular}{l@{\hspace{0.5in}}llll}
+\TT{template/\ldots.tmpl}    		& -       & -      & read & - \\
+\end{tabular}
+
+
+\end{center}
+
+\subsubsection{Template Page File Formats}
+
+\begin{indpar}
+See Job Templates \pagref{JOB-TEMPLATES}.
+\end{indpar}
+
+\subsubsection{Template Page Transactions}
 
 \begin{enumerate}
 \item TBD
