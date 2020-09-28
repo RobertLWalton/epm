@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 28 14:51:42 EDT 2020
+    // Date:	Mon Sep 28 15:51:01 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -660,7 +660,7 @@
                              ||
 			        trim ( $fline )
 			     != $lines[$i] )
-			$mismatch_found = true;
+			    $mismatch_found = true;
 			++ $i;
 		        continue;
 		    }
@@ -673,6 +673,9 @@
 		    $lines[] = $fline;
 		}
 	    }
+	    if ( $i < $limit ) $mismatch_found = true;
+	        // $i == number list items in existing
+		// file
 	}
 
 	if ( ! $mismatch_found ) return;
