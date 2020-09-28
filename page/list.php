@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 03:39:58 EDT 2020
+    // Date:	Mon Sep 28 12:51:48 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -22,6 +22,14 @@
     //		[name1,name2] where nameJ is in the
     //		format PROJECT:BASENAME or is ''
     //		for no-list.
+    //
+    //	   $data WRITABLE
+    //		[writable1,writable2] where writableJ
+    //		is true iff nameJ was writable when
+    //		presented to user.  This means that
+    //		nameJ had the form -:NAME and that $rw
+    //		was true on the last transaction of this
+    //		page.
     //
     //     $data ELEMENTS
     //		A list of the elements of the form
@@ -102,10 +110,12 @@
     if ( $epm_method == 'GET' )
     {
 	$data['NAMES'] = ['',''];
+	$data['WRITABLE'] = [false,false];
 	$data['ELEMENTS'] = [];
     }
 
     $names = & $data['NAMES'];
+    $writable = & $data['WRITABLE'];
     $elements = & $data['ELEMENTS'];
 
     $errors = [];    // Error messages to be shown.
@@ -464,12 +474,18 @@ EOT;
     $writable_count = 0;
     foreach ( [0,1] as $J )
     {
+	$writable[$J] = false;
 	if ( $names[$J] != '' )
 	{
 	    list ( $project, $basename ) =
 	        explode ( ':', $names[$J] );
-	    if ( $project == '-' && $basename != '-' )
+	    if (    $project == '-'
+	         && $basename != '-'
+		 && $rw )
+	    {
+		$writable[$J] = true;
 	        ++ $writable_count;
+	    }
 	}
 
         if ( isset ( $lists[$J] ) ) continue;
