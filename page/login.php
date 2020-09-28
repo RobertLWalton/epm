@@ -378,18 +378,19 @@
 		     ( "$epm_data/$tdir/$uid.login" ) )
 		    reply ( 'USER_NOT_MEMBER' );
 		$is_team = true;
+		$dir = $tdir;
 	    }
 	    elseif ( is_dir ( "$epm_data/$udir" ) )
 	    {
 		if ( ! is_readable
 		     ( "$epm_data/$udir/$uid.login" ) )
 		    reply ( 'USER_NOT_GUEST' );
+		$dir = $udir;
 	    }
 	    else
 	        reply ( 'NO_ACCOUNT' );
 
 	    $_SESSION['EPM_AID'] = $aid;
-	    $dir = "admin/teams/$aid/";
 	}
 	elseif ( ! isset ( $uid ) )
 	{
