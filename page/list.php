@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 28 12:51:48 EDT 2020
+    // Date:	Mon Sep 28 13:36:50 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -496,6 +496,7 @@ EOT;
 	    $lists[$J] = read_problem_list
 	        ( $names[$J], $warnings );
 	$lengths[$J] = count ( $lists[$J] );
+
     }
 
 ?>
@@ -620,62 +621,67 @@ EOT;
 	echo "<br></div></div>";
     }
 
-    $login_title =
-        'Login Name; Click to See User Profile';
     echo <<<EOT
     <div class='manage'>
     <form method='GET' action='list.php'>
     <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
+    <tr style='width:100%'>
+EOT;
 
-    <tr id='not-edited' style='width:100%'>
-    <td>
-    <button type='submit'
-    	    formaction='user.php'
-	    title='$login_title'>
-	    $lname</button>
-    </td>
-    <td>
-    <strong>Go To</strong>
-    <button type='submit' formaction='project.php'>
-    Project
-    </button>
-    <button type='submit' formaction='favorites.php'>
-    Edit Favorites
-    </button>
-    <strong>Page</strong>
-    </td>
-    <td>
-    </td><td style='text-align:right'>
-    $RW_BUTTON
-    <button type='button' id='refresh'
-            onclick='location.replace
-	        ("list.php?id=$ID")'>
-	&#8635;</button>
-    <button type='button'
-            onclick='HELP("list-page")'>
-	?</button>
-    </td>
+    if ( $writable_count == 0 )
+    {
+	$login_title =
+	    'Login Name; Click to See User Profile';
+	echo <<<EOT
+	<td style='text-align:left'>
+	<button type='submit'
+		formaction='user.php'
+		title='$login_title'>
+		$lname</button>
+	</td>
+	<td>
+	<strong>Go To</strong>
+	<button type='submit' formaction='project.php'>
+	Project
+	</button>
+	<button type='submit' formaction='favorites.php'>
+	Edit Favorites
+	</button>
+	<strong>Page</strong>
+	</td>
+	<td style='text-align:right'>
+	$RW_BUTTON
+	<button type='button' id='refresh'
+		onclick='location.replace
+		    ("list.php?id=$ID")'>
+	    &#8635;</button>
+	<button type='button'
+		onclick='HELP("list-page")'>
+	    ?</button>
+	</td>
+EOT;
+    }
+    else
+    {
+        echo <<<EOT
+	<td style='text-align:left'>
+	<strong title='Login Name'>$lname</strong>
+	</td>
+	<td style='text-align:right'>
+	<button type='button'
+		onclick='HELP("list-page")'>
+	    ?</button>
+	</td>
+EOT;
+    }
+    echo <<<EOT
     </tr>
-
-    <tr id='edited' style='width:100%;display:none'>
-    <td>
-    <strong title='Login Name'>$lname</strong>
-    </td>
-    <td>
-    </td>
-    <td>
-    </td><td style='text-align:right'>
-    <button type='button'
-            onclick='HELP("list-page")'>
-	?</button>
-    </td>
-    </tr>
-
     </table>
     </form>
     </div>
 EOT;
+
     $elements = [];
     $upload_file_title = 'Selected List Description'
 		       . ' (.dsc) File to be Uploaded';
@@ -686,7 +692,6 @@ EOT;
 	$sname = ( $name != '' ? $name : NULL );
 	$options = list_to_options
 	    ( $favorites, $sname, [$names[$K]] );
-	$writable = 'no';
 	$published = NULL;
 	$pname = 'No List Selected';
 	$description = '';
@@ -699,16 +704,10 @@ EOT;
 	    list ( $project, $basename ) =
 	        explode ( ':', $name );
 	    if ( $project == '-' )
-	    {
 	        $project = '<i>Your</i>';
-		$writable = 'yes';
-	    }
 	    if ( $basename == '-' )
-	    {
 	        $basename = '<i>Problems</i>';
-		$writable = 'no';
-	    }
-	    elseif ( $writable == 'yes' )
+	    elseif ( $writable[$J] )
 	    {
 	        $f = "accounts/$aid/+lists+/"
 		   . "$basename.list";
@@ -733,13 +732,13 @@ EOT;
 
 	    <strong>Select List to Edit:</strong>
 	    <select title='New Problem List to Edit'
-		   onchange='SELECT_LIST("$J")'>
+		   onchange='SELECT_LIST(event,"$J")'>
 	    <option value=''>No List Selected</option>
 	    $options
 	    </select>
 	    </div>
 EOT;
-	elseif ( $writable == 'no' )
+	elseif ( ! $writable[$J] )
 	    echo <<<EOT
 	    <div class='read-only-header list-header'>
 
@@ -754,13 +753,13 @@ EOT;
 
 	    <strong>Select List to Edit:</strong>
 	    <select title='New Problem List to Edit'
-		   onchange='SELECT_LIST("$J")'>
+		   onchange='SELECT_LIST(event,"$J")'>
 	    <option value=''>No List Selected</option>
 	    $options
 	    </select>
 	    </div>
 EOT;
-	elseif ( $writable == 'yes' )
+	elseif ( $writable[$J] )
 	{
 	    echo <<<EOT
 	    <div id='write-header-$J'
@@ -833,8 +832,9 @@ EOT;
 	    </div>
 EOT;
 	}
+	$w = ( $writable[$J] ? 'yes' : 'no' );
 	echo <<<EOT
-	<div id='list$J' data-writable='$writable'>
+	<div id='list$J' data-writable='$w'>
 	<div class='list-name'
 	     ondrop='DROP(event)'
 	     ondragover='ALLOWDROP(event)'>
@@ -887,9 +887,6 @@ EOT;
 	delete_header.style.display = 'none';
     }
 
-    let edited = document.getElementById ( 'edited' );
-    let not_edited = document.getElementById
-	( 'not-edited' );
     let submit_form = document.getElementById
 	( 'submit-form' );
     let op_in = document.getElementById ( 'op' );
@@ -987,7 +984,7 @@ EOT;
 	}
     }
 
-    function SELECT_LIST ( J )
+    function SELECT_LIST ( event, J )
     {
 	let select = event.currentTarget;
 	SUBMIT ( 'select', J, select.value );
@@ -1045,8 +1042,6 @@ if ( $rw )
 		div.insertBefore ( table, next );
 	    }
 	}
-	edited.style.display = 'table-row';
-	not_edited.style.display = 'none';
     }
 
     var dragsrc = null;
@@ -1099,9 +1094,6 @@ if ( $rw )
 		    BOX(target).style.backgroundColor
 		 != on )
 		BOX(src).style.backgroundColor = off;
-
-	    edited.style.display = 'table-row';
-	    not_edited.style.display = 'none';
 	}
 	else
 	{
@@ -1114,9 +1106,6 @@ if ( $rw )
 			            .backgroundColor
 		      != on )
 		BOX(src).style.backgroundColor = off;
-
-	    edited.style.display = 'table-row';
-	    not_edited.style.display = 'none';
 	}
     }
 
