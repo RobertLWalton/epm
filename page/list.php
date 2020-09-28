@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 28 13:36:50 EDT 2020
+    // Date:	Mon Sep 28 14:25:32 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -334,7 +334,11 @@ EOT;
     if ( $epm_method != 'POST' )
         /* Do Nothing */;
     elseif ( isset ( $_POST['rw'] ) )
+    {
+        if ( $writable[0] || $writable[1] )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
 	require "$epm_home/include/epm_rw.php";
+    }
     elseif ( ! isset ( $_POST['op'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST' );
     elseif ( ! isset ( $_POST['indices'] ) )
@@ -343,7 +347,12 @@ EOT;
 	exit ( 'UNACCEPTABLE HTTP POST' );
     elseif ( ! isset ( $_POST['list'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST' );
-    elseif ( $rw || $_POST['op'] == 'select' )
+    elseif ( ! $rw && $_POST['op'] != 'select' )
+    {
+        $errors[] = 'you are no longer in'
+	          . ' read-write mode';
+    }
+    else
     {
 	$op = $_POST['op'];
 	if ( ! in_array ( $op, ['save','finish','reset',
@@ -366,65 +375,11 @@ EOT;
 	if ( $lengths[$K] > count ( $lists[$K] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
-	if ( $op == 'save' || $op == 'finish' )
+	if ( $op == 'new' )
 	{
-	    $lists[$J] = index_to_list ( $indices[$J] );
-	    if ( ! preg_match
-	               ( '/^\d+$/', $lengths[$J] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-	    if ( $lengths[$J] > count ( $lists[$J] ) )
+	    if ( $writable[$J] )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
-	    // Be sure all UNACCEPTABLE HTTP POST checks
-	    // are done before we write the file.
-	    //
-	    write_file_list
-		( listname_to_filename ( $names[$J] ),
-		  array_slice
-		      ( $lists[$J], 0, $lengths[$J] ) );
-	    if ( $op == 'finish' )
-	    {
-	        $lists[$J] = NULL;
-		$names[$J] = '';
-	    }
-	}
-	elseif ( $op == 'reset' )
-	    /* Do Nothing */;
-	elseif ( $op == 'cancel' )
-	    $names[$J] = '';
-	elseif ( $op == 'delete'
-	         ||
-		 $op == 'publish'
-		 ||
-		 $op == 'unpublish' )
-	{
-	    list ( $account, $name ) =
-	        explode ( ':', $names[$J] );
-	    if ( $account != '-' )
-		exit ( 'UNACCEPTABLE HTTP POST' );
-
-	    if ( $op == 'delete' )
-	    {
-		delete_list ( $name, $errors, true );
-		if ( count ( $errors ) == 0 )
-		{
-		    $names[$J] = '';
-		    $favorites = read_favorites_list
-			( $warnings );
-		}
-	    }
-	    elseif ( $op == 'publish' )
-		publish_list ( $name, $errors );
-	    elseif ( $op == 'unpublish' )
-		unpublish_list ( $name, $errors );
-	}
-	elseif ( $op == 'dsc' )
-	{
-	    upload_list_description
-		( $names[$J], $warnings, $errors );
-	}
-	elseif ( $op == 'new' )
-	{
 	    if ( ! isset ( $_POST['name'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $name = $_POST['name'];
@@ -437,14 +392,14 @@ EOT;
 	}
 	elseif ( $op == 'select' )
 	{
+	    if ( $writable[$J] )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
 	    if ( ! isset ( $_POST['name'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    $name = $_POST['name'];
 	    if ( $name == '' )
-	    {
 	    	$names[$J] = '';
-		$lists[$J] = NULL;
-	    }
 	    elseif ( ! isset ( $fmap[$name] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    elseif ( $name == $names[$K] )
@@ -453,6 +408,59 @@ EOT;
 			  . " the same";
 	    else
 	    	$names[$J] = $name;
+	}
+	elseif ( ! $writable[$J] )
+	    exit ( 'UNACCEPTABLE HTTP POST' );
+	elseif ( in_array ( $op, ['save','finish','dsc',
+	                          'publish',
+				  'unpublish'] ) )
+	{
+	    $lists[$J] = index_to_list ( $indices[$J] );
+	    if ( ! preg_match
+	               ( '/^\d+$/', $lengths[$J] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	    if ( $lengths[$J] > count ( $lists[$J] ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+
+	    $name = substr ( $names[$J], 2 );
+	    if ( $op == 'publish' )
+		publish_list ( $name, $errors );
+	    elseif ( $op == 'unpublish' )
+		unpublish_list ( $name, $errors );
+	    elseif ( $op == 'dsc' )
+		upload_list_description
+		    ( $names[$J], $warnings, $errors );
+
+	    if ( count ( $errors ) == 0 )
+	    {
+		write_file_list
+		    ( listname_to_filename
+		          ( $names[$J] ),
+		      array_slice
+			  ( $lists[$J], 0,
+			    $lengths[$J] ) );
+
+		if ( $op == 'finish' )
+		{
+		    $lists[$J] = NULL;
+		    $names[$J] = '';
+		}
+	    }
+	}
+	elseif ( $op == 'reset' )
+	    /* Do Nothing */;
+	elseif ( $op == 'cancel' )
+	    $names[$J] = '';
+	elseif ( $op == 'delete' )
+	{
+	    $name = substr ( $names[$J], 2 );
+	    delete_list ( $name, $errors, true );
+	    if ( count ( $errors ) == 0 )
+	    {
+		$names[$J] = '';
+		$favorites = read_favorites_list
+		    ( $warnings );
+	    }
 	}
 
 	// If there were errors, restore $list[$J].
@@ -645,7 +653,8 @@ EOT;
 	<button type='submit' formaction='project.php'>
 	Project
 	</button>
-	<button type='submit' formaction='favorites.php'>
+	<button type='submit'
+	        formaction='favorites.php'>
 	Edit Favorites
 	</button>
 	<strong>Page</strong>
