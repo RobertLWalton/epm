@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 28 14:25:32 EDT 2020
+    // Date:	Tue Sep 29 01:42:49 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -120,6 +120,9 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $action = NULL;  // Action to be recorded.
+    $pubaction = false;
+        // True if action involves published list.
 
     $lists = [NULL,NULL];
     $lengths = [0,0];
@@ -424,26 +427,71 @@ EOT;
 
 	    $name = substr ( $names[$J], 2 );
 	    if ( $op == 'publish' )
+	    {
 		publish_list ( $name, $errors );
+		$action = 'publish';
+		$pubaction = true;
+	    }
 	    elseif ( $op == 'unpublish' )
+	    {
 		unpublish_list ( $name, $errors );
+		$action = 'unpublish';
+		$pubaction = true;
+	    }
 	    elseif ( $op == 'dsc' )
+	    {
 		upload_list_description
 		    ( $names[$J], $warnings, $errors );
+		$action = 'update';
+	    }
 
 	    if ( count ( $errors ) == 0 )
 	    {
-		write_file_list
+		$r = write_file_list
 		    ( listname_to_filename
 		          ( $names[$J] ),
 		      array_slice
 			  ( $lists[$J], 0,
 			    $lengths[$J] ) );
 
+		if ( $r )
+		{
+		    if ( in_array
+		             ( $op, ['dsc','publish',
+				     'unpublish'] ) )
+			$warnings[] =
+			    "updated list $name has" .
+			    " been saved";
+		    $action = 'update';
+		}
 		if ( $op == 'finish' )
 		{
 		    $lists[$J] = NULL;
 		    $names[$J] = '';
+		}
+		if ( isset ( $action ) )
+		{
+		    if ( $action == 'update' )
+		    {
+			$d = "accounts/$aid/+lists+";
+			$f = "$d/$name.list";
+			$g = "lists/$aid:$name.list";
+			$pubaction = is_link
+			    ( "$epm_data/$g" );
+		    }
+		    else
+		        $f = 'lists';
+
+		    $time = @filemtime
+			( "$epm_data/$f" );
+		    if ( $time === false )
+			ERROR ( "cannot stat $f" );
+		    $time = strftime
+			( $epm_time_format, $time );
+		    $action = "$time $aid"
+			    . " $action"
+			    . " - $name"
+			    . PHP_EOL;
 		}
 	    }
 	}
@@ -457,6 +505,21 @@ EOT;
 	    delete_list ( $name, $errors, true );
 	    if ( count ( $errors ) == 0 )
 	    {
+		$time = strftime ( $epm_time_format );
+		$action = "$time $aid"
+			. " delete-list"
+			. " - $name"
+			. PHP_EOL;
+
+		$g = "lists/$aid:$name.list";
+		$pubaction = is_link ( "$epm_data/$g" );
+		if ( $pubaction )
+		{
+		    @unlink ( "$epm_data/$g" );
+		    $warnings[] =
+		        "$name has been unpublished";
+		}
+
 		$names[$J] = '';
 		$favorites = read_favorites_list
 		    ( $warnings );

@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 28 15:51:01 EDT 2020
+    // Date:	Tue Sep 29 01:08:38 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -596,7 +596,8 @@
     // of the associated TIMEs.
     //
     // If writing the file would not change its
-    // contents, the file write is surpressed.
+    // contents, the file write is surpressed and false
+    // is returned.  Otherwise true is returned.
     //
     function write_file_list ( $filename, $list )
     {
@@ -678,7 +679,7 @@
 		// file
 	}
 
-	if ( ! $mismatch_found ) return;
+	if ( ! $mismatch_found ) return false;
 
 	$c = '';
 	foreach ( $lines as $line )
@@ -686,6 +687,7 @@
 	$r = ATOMIC_WRITE ( "$epm_data/$filename", $c );
 	if ( $r === false )
 	    ERROR ( "cannot write $filename" );
+	return true;
     }
 
     // Delete all lines `TIME $root $leaf' from
