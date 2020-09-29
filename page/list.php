@@ -388,10 +388,23 @@ EOT;
 	    $name = $_POST['name'];
 	    make_new_list ( $name, $errors );
 	    if ( count ( $errors ) == 0 )
+	    {
+		$f = "accounts/$aid/+lists+/$name.list";
+		$time = @filemtime ( "$epm_data/$f" );
+		if ( $time === false )
+		    ERROR ( "cannot stat $f" );
+		$time = strftime
+		    ( $epm_time_format, $time );
+		$action = "$time $aid"
+			. " create-list"
+			. " - $name"
+			. PHP_EOL;
+
 	    	$names[$J] = "-:$name";
 		// No need to update $favorites as
 		// new list is excluded from
 		// selectors.
+	    }
 	}
 	elseif ( $op == 'select' )
 	{
@@ -502,23 +515,21 @@ EOT;
 	elseif ( $op == 'delete' )
 	{
 	    $name = substr ( $names[$J], 2 );
+	    $g = "lists/$aid:$name.list";
+	    $pubaction = is_link ( "$epm_data/$g" );
+	        // Do this before calling delete_list.
 	    delete_list ( $name, $errors, true );
 	    if ( count ( $errors ) == 0 )
 	    {
+		if ( $pubaction )
+		    $warnings[] =
+		        "$name has been unpublished";
+
 		$time = strftime ( $epm_time_format );
 		$action = "$time $aid"
 			. " delete-list"
 			. " - $name"
 			. PHP_EOL;
-
-		$g = "lists/$aid:$name.list";
-		$pubaction = is_link ( "$epm_data/$g" );
-		if ( $pubaction )
-		{
-		    @unlink ( "$epm_data/$g" );
-		    $warnings[] =
-		        "$name has been unpublished";
-		}
 
 		$names[$J] = '';
 		$favorites = read_favorites_list
@@ -539,6 +550,32 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    if ( $lengths[$J] > count ( $lists[$J] ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
+	}
+	elseif ( isset ( $action ) )
+	{
+	    // Else if no errors but an action.
+	    //
+	    $f = "accounts/$aid/+lists+/+actions+";
+	    $r = @file_put_contents
+		( "$epm_data/$f", $action,
+		  FILE_APPEND );
+	    if ( $r === false )
+		ERROR ( "cannot write $f" );
+	    $f = "accounts/$aid/+actions+";
+	    $r = @file_put_contents
+		( "$epm_data/$f", $action,
+		  FILE_APPEND );
+	    if ( $r === false )
+		ERROR ( "cannot write $f" );
+	    if ( $pubaction )
+	    {
+		$f = "lists/+actions+";
+		$r = @file_put_contents
+		    ( "$epm_data/$f", $action,
+		      FILE_APPEND );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
+	    }
 	}
     }
 
