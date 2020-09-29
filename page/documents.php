@@ -2,7 +2,7 @@
 
     // File:	documents.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 21 04:02:39 EDT 2020
+    // Date:	Tue Sep 29 05:48:51 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -105,18 +105,24 @@ create a distinct window for the document.
 <dt><button onclick='LOOK(event,"epm_sandbox.pdf")'>
     EPM Sandbox Program Document</button></dt>
 <dd>Details of the epm_sandbox program used to sandbox
-    user submitted program binaries during execution.</dd>
+    user submitted program binaries during
+    execution.</dd>
 
 <dt><button onclick='LOOK(event,"epm_run.pdf")'>
     EPM Run Program Document</button></dt>
 <dd>Details of the epm_run program used by the Run Page
     to execute EPM runs.</dd>
 
+<dt><button onclick='LOOK(event,"epm_latex.pdf")'>
+    EPM Latex Program Document</button></dt>
+<dd>Run pdflatex with appropriate options and scan
+    errors recorded in the .log file into the .terr
+    file.</dd>
+
 <dt><button onclick='LOOK(event,"epm.pdf")'>
     EPM Installation Program Document</button></dt>
 <dd>Details of the epm program used to install and
     update EPM.</dd>
-<dt>
 
 </dl>
 

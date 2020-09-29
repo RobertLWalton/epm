@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 29 02:39:43 EDT 2020
+    // Date:	Tue Sep 29 05:48:01 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1697,7 +1697,8 @@ function FAIL ( message )
 EOT;
     }
 
-    $display = ( $state != 'normal' ? 'none' : 'table-row' );
+    $display =
+        ( $state != 'normal' ? 'none' : 'table-row' );
     $login_title =
         'Login Name; Click to See User Profile';
     echo <<<EOT

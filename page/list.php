@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 29 01:42:49 EDT 2020
+    // Date:	Tue Sep 29 05:47:19 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -698,6 +698,8 @@ var LOG = function(message) {};
 
 <?php 
 
+    // Form for submits other than upload of .dsc:
+    //
     echo <<<EOT
     <form method='POST' action='list.php'
 	  id='submit-form'>
