@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 29, 2020}
+\date{September 30, 2020}
  
 \maketitle
 
@@ -758,7 +758,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \TT{admin} & dir & \STACK{administrative\\files}
 	& login & \STACK{login\\user} & \STACK{index\\login\\user} \\ 
 \hline
-\TT{admin/+blocking+} & dir
+\TT{admin/+blocking+} & lines
         & \STACK{email blocking\\control file \pagref{ADMIN/BLOCKING}}
 	& (editor) & (editor ) & login \\ 
 \hline
@@ -778,14 +778,14 @@ Name & Format & Description & Creators & Updaters & Readers \\
         \STACK{log of\\administrative\\actions \pagref{ADMIN/XXXX/XID/ACTIONS}}
 	& (updaters) & user & view \\ 
 \hline
-\TT{admin/browser} & dir & \STACK{browser\\tickets}
+\TT{admin/browser} & dir & \STACK{hold browser\\tickets}
 	& login & login & login \\ 
 \hline
 \TT{admin/browser/TICKET} & 1-line
         & ticket info \pagref{ADMIN/TICKET/TICKET}
 	& login & & login \\ 
 \hline
-\TT{admin/email} & dir & email files
+\TT{admin/email} & dir & holds email files
 	& user & user & \STACK{login\\user} \\ 
 \hline
 \TT{admin/email/EMAIL} & 1-line
@@ -793,11 +793,11 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& user & \STACK{login\\user} & \STACK{login\\user} \\ 
 \hline
 \TT{\STACK{admin/users\\admin/teams}}
-        & dir & \STACK{administrative\\user/team\\directories}
+        & dir & \STACK{holds administrative\\user/team\\directories}
 	& user & user & \STACK{user\\login} \\ 
 \hline
 \TT{\STACK{admin/users/UID\\admin/teams/TID}}
-        & dir & \STACK{administrative\\account files}
+        & dir & \STACK{holds administrative\\account files}
 	& user & user & \STACK{user\\login} \\ 
 \hline
 \STACK{
@@ -856,7 +856,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \TT{accounts} & dir & \STACK{holds account\\subdirectories}
               & user & user & (all) \\ 
 \hline
-\TT{accounts/AID} & dir & \STACK{account\\subdirectory}
+\TT{accounts/AID} & dir & \STACK{holds account\\subdirectories\\and files}
 	& user & \STACK{problem\\project} & (all) \\ 
 \hline
 \FSTACK{accoun}{ts/AID/\\+actions+}
@@ -904,7 +904,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	& list & list & \STACK{list\\project\\manage\\view} \\
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM}
-        & dir & \STACK{account problem\\directory}
+        & dir & \STACK{holds account\\problem files}
 	& project & \STACK{problem\\project} & \STACK{problem\\project} \\ 
 \hline
 \FSTACK{accou}{nts/AID/\\PROBLEM/\\+actions+}
@@ -1016,7 +1016,7 @@ Name & Format & Description & Creators & Updaters & Readers \\
            & link & \STACK{link to accounts/\\AID/+lists+/\\NAME.list}
 	   & list & list & (all) \\
 \hline
-\TT{default} & dir & \STACK{default\\program\\binaries} & setup &  & \\ 
+\TT{default} & dir & \STACK{holds default\\program\\binaries} & setup &  & \\ 
 \hline
 \TT{+web-save+} & dir & backup of W & backup & backup & backup \\ 
 \hline
@@ -2621,7 +2621,8 @@ See List Page File Formats \pagref{LIST-PAGE-FILE-FORMATS}.
 \subsubsection{Favorites Page Transactions}
 
 \begin{enumerate}
-\item TBD
+\item Display favorites list and problem lists that might be added to it.
+\item Edit favorites list.
 \end{enumerate}
 
 \newpage
@@ -2674,7 +2675,10 @@ See \pagref{ACCOUNT-ACTIONS}.
 \subsubsection{Manage Page Transactions}
 
 \begin{enumerate}
-\item TBD
+\item Display project and project problem privileges ({\tt +priv+} files).
+\item Edit project and project problem privileges ({\tt +priv+} files).
+\item Download {\tt .tgz} files containing problem or project directories.
+\item Move problems between projects.
 \end{enumerate}
 
 \newpage
@@ -2709,7 +2713,7 @@ administrative action files, \pagref{ADMIN/XXXX/XID/ACTIONS}.
 \subsubsection{View Page Transactions}
 
 \begin{enumerate}
-\item TBD
+\item Display action lists ({\tt +actions+} files).
 \end{enumerate}
 
 \newpage
@@ -2736,7 +2740,7 @@ See Job Templates \pagref{JOB-TEMPLATES}.
 \subsubsection{Template Page Transactions}
 
 \begin{enumerate}
-\item TBD
+\item Display job template files.
 \end{enumerate}
 
 \end{document}
