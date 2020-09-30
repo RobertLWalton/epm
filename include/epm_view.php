@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jul 14 14:53:09 EDT 2020
+// Date:	Wed Sep 30 04:56:23 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -55,13 +55,17 @@ function view_priv ( $project )
 //	[TIME, UID, 'info', KEY, OP, VALUE]
 //	[TIME, UID, 'push', PROJECT, PROBLEM]
 //	[TIME, UID, 'pull', PROJECT, PROBLEM]
-//	[TIME, UID, 'create', UID, PROBLEM]
 //	[TIME, UID, 'submit', PROJECT, PROBLEM, RUNBASE,
 //			      STIME, SCORE...]
-//	[TIME, UID, 'update', PROJECT, PROBLEM,
-//				       THING...]
-//	[TIME, UID, 'update', PROJECT, 'project',
-//				       THING...]
+//	[TIME, UID, 'create-problem', '-', PROBLEM]
+//	[TIME, UID, 'delete-problem', '-', PROBLEM]
+//	[TIME, UID, 'update-priv', PROJECT, '-']
+//	[TIME, UID, 'update-priv', PROJECT, PROBLEM]
+//	[TIME, UID, 'create-list', '-', NAME]
+//	[TIME, UID, 'update-list', '-', NAME]
+//	[TIME, UID, 'publish-list', '-', NAME]
+//	[TIME, UID, 'unpublish-list', '-', NAME]
+//	[TIME, UID, 'delete-list', '-', NAME]
 //
 // For 'info':
 //
@@ -94,8 +98,10 @@ function actions_to_rows ( $actions, $types )
         $time = $items[0];
         $user = $items[1];
         $type = $items[2];
+	$type = explode ( '-', $type );
+	$type[] = '';
 	$a = NULL;
-	if ( $type == 'info' )
+	if ( $type[0] == 'info' )
 	{
 	    $key = $items[3];
 	    $op = $items[4];
@@ -116,6 +122,10 @@ function actions_to_rows ( $actions, $types )
 	    else
 		$a = "unknown operation $op";
 	}
+	elseif ( $type[1] == 'problem' )
+	    $a = "{$type[0]} problem {$items[4]}";
+	elseif ( $type[1] == 'list' )
+	    $a = "{$type[0]} list {$items[4]}";
 	else
 	{
 	    $project = $items[3];
@@ -128,20 +138,17 @@ function actions_to_rows ( $actions, $types )
 
 	if ( isset ( $a ) )
 	    /* Do Nothing */;
-	else if ( $type == 'pull' )
-	    $a = "pull {$items[4]} from {$items[3]}";
-	else if ( $type == 'push' )
-	    $a = "push {$items[4]} to {$items[3]}";
-	else if ( $type == 'create' )
-	    $a = "created her/his own problem"
-	       . " {$items[3]}";
-	else if ( $type == 'update' )
+	else if ( $type[1] == 'priv' )
 	{
-	    $updated = implode
-	        ( ' ', array_slice ( $items, 4 ) );
-	    $a = "update {$items[3]} $updated";
+	    $n = $items[4];
+	    if ( $n == '' ) $n = 'project';
+	    $a = "update {$items[3]} $n privileges";
 	}
-	else if ( $type == 'submit' )
+	else if ( $type[0] == 'pull' )
+	    $a = "pull {$items[4]} from {$items[3]}";
+	else if ( $type[0] == 'push' )
+	    $a = "push {$items[4]} to {$items[3]}";
+	else if ( $type[0] == 'submit' )
 	{
 	    $project = $items[3];
 	    $problem = $items[4];
@@ -153,10 +160,10 @@ function actions_to_rows ( $actions, $types )
 	       . "  $cpu_time $score";
 	}
 	else
-	    $a = "unknown action type $type";
+	    $a = "unknown action type {$items[2]}";
 
-	if ( in_array ( $type, $types, true ) )
-	    $class = $type;
+	if ( in_array ( $items[2], $types ) )
+	    $class = $items[2];
 	else
 	    $class = 'other';
 

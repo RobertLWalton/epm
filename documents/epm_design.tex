@@ -1139,9 +1139,11 @@ submit & BASENAME~~SOLUTION-TIME~~SCORE... \\
 push \\
 pull \\
 create-problem \\
-creat-list \\
+create-list \\
+update-list \\
 publish-list \\
 unpublish-list \\
+delete-list \\
 update-priv \\
 \end{tabular}
 \end{indpar}
@@ -1159,6 +1161,8 @@ the {\tt project/\EOL PROJECT/\EOL +actions+} file.
 
 If a LIST is involved in an action, the action is also appended to
 the {\tt accounts/\EOL AID/\EOL +lists+/\EOL +actions+} file.
+If a published list is involved, the action is also appended to
+the {\tt lists/\EOL +actions+} file.
 
 If both a PROJECT and a PROBLEM are involved in an action,
 the action is also appended to both

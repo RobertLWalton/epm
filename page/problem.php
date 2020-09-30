@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Sep 19 08:12:11 EDT 2020
+    // Date:	Wed Sep 30 05:03:52 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -680,6 +680,16 @@
 	$work = [];
 	$run = [];
 	exec ( "rm -rf $epm_data/$probdir" );
+
+	$time = strftime ( $epm_time_format );
+	$action = "$time $aid delete-problem - $problem"
+		. PHP_EOL;
+	$f = "accounts/$aid/+actions+";
+	$r = @file_put_contents
+	    ( "$epm_data/$f", $action, FILE_APPEND );
+	if ( $r === false )
+	    ERROR ( "cannot write $f" );
+
 	echo <<<EOT
 	<html><body><script>
 	window.close();

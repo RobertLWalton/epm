@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 22 15:09:55 EDT 2020
+    // Date:	Wed Sep 30 04:46:36 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -370,7 +370,7 @@
 		( $update_pmap, $project,
 		  $edited_contents, $errors );
 	    $f = "/projects/$project/+priv+";
-	    $n = "$project project";
+	    $n = "$project -";
 	}
 	if ( count ( $errors ) == 0 && $warn != 'no' )
 	{
@@ -393,9 +393,15 @@
 		    ERROR ( "cannot stat $f" );
 		$time = strftime
 		    ( $epm_time_format, $time );
-		$action = "$time $aid update"
-			. " $n privileges"
+		$action = "$time $aid update-priv $n"
 			. PHP_EOL;
+
+		$f = "accounts/$aid/+actions+";
+		$r = @file_put_contents
+		    ( "$epm_data/$f", $action,
+		      FILE_APPEND );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
 
 		$f = "projects/$project/+actions+";
 		$r = @file_put_contents

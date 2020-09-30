@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 29 05:47:19 EDT 2020
+    // Date:	Wed Sep 30 04:42:48 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -442,20 +442,20 @@ EOT;
 	    if ( $op == 'publish' )
 	    {
 		publish_list ( $name, $errors );
-		$action = 'publish';
+		$action = 'publish-list';
 		$pubaction = true;
 	    }
 	    elseif ( $op == 'unpublish' )
 	    {
 		unpublish_list ( $name, $errors );
-		$action = 'unpublish';
+		$action = 'unpublish-list';
 		$pubaction = true;
 	    }
 	    elseif ( $op == 'dsc' )
 	    {
 		upload_list_description
 		    ( $names[$J], $warnings, $errors );
-		$action = 'update';
+		$action = 'update-list';
 	    }
 
 	    if ( count ( $errors ) == 0 )
@@ -475,7 +475,7 @@ EOT;
 			$warnings[] =
 			    "updated list $name has" .
 			    " been saved";
-		    $action = 'update';
+		    $action = 'update-list';
 		}
 		if ( $op == 'finish' )
 		{
@@ -484,7 +484,7 @@ EOT;
 		}
 		if ( isset ( $action ) )
 		{
-		    if ( $action == 'update' )
+		    if ( $action == 'update-list' )
 		    {
 			$d = "accounts/$aid/+lists+";
 			$f = "$d/$name.list";
