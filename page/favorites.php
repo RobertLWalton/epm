@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Sep  4 17:31:05 EDT 2020
+    // Date:	Tue Sep 29 22:53:18 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -72,11 +72,13 @@
 	exit ( 'UNACCEPTABLE HTTP POST' );
     elseif ( !isset ( $_POST['indices'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST' );
-    elseif ( $rw )
+    elseif ( ! $rw )
+        $errors[] = 'you are no longer in read-write'
+	          . ' mode';
+    else
     {
 	$op = $_POST['op'];
-	if ( ! in_array ( $op, ['save','reset'],
-			       true ) )
+	if ( ! in_array ( $op, ['save','reset'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 
 	if ( $op == 'save' )
