@@ -272,7 +272,8 @@ function LOGEXP_EXECUTE ( )
     for ( var j = 0; j < logexp[i].length; ++ j )
 	keymap.set ( logexp[i][j], true );
 
-    var rows = document.getElementsByClassName ( 'row' );
+    var rows =
+        document.getElementsByClassName ( 'row' );
     for ( var i = 0; i < rows.length; ++ i )
     {
 	if ( logexp === null
