@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Oct  1 02:37:34 EDT 2020
+// Date:	Thu Oct  1 15:34:01 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -96,31 +96,38 @@ function actions_to_rows ( $actions, $types )
     foreach ( $actions as $items )
     {
         $time = $items[0];
-        $user = $items[1];
+        $account = $items[1];
         $type = $items[2];
 	$type = explode ( '-', $type );
 	$type[] = '';
 	$a = NULL;
+	$k = [$account];
 	if ( $type[0] == 'info' )
 	{
 	    $key = $items[3];
 	    $op = $items[4];
 	    $value = implode
 	        ( ' ', array_slice ( $items, 5 ) );
-	    $k = [$key];
 	    if ( $key == 'email' )
 		$value = preg_replace
 		    ( '/^[^@]+@/', '...@', $value );
+
 	    if ( $key == 'email' )
 	    {
 	        $key = 'emails';
-		$k = ['email','emails'];
+	        array_push ( $k, 'email', 'emails' );
 	    }
 	    elseif ( $key == 'full_name' )
 	    {
 	        $key = 'full name';
-		$k = ['full','name'];
+	        array_push ( $k, 'full', 'name' );
 	    }
+	    elseif ( $key == 'members' )
+	        array_push ( $k, 'member', 'members' );
+	    elseif ( $key == 'guests' )
+	        array_push ( $k, 'guest', 'guests' );
+	    else
+	        $k[] = $key;
 
 	    if ( $op == '=' )
 		$a = "set $key to $value";
@@ -135,12 +142,14 @@ function actions_to_rows ( $actions, $types )
 	elseif ( $type[1] == 'problem' )
 	{
 	    $a = "{$type[0]} problem {$items[4]}";
-	    $k = [$type[0],$items[4],'problem'];
+	    array_push
+	        ( $k, $type[0], $items[4], 'problem' );
 	}
 	elseif ( $type[1] == 'list' )
 	{
 	    $a = "{$type[0]} list {$items[4]}";
-	    $k = [$type[0],$items[4],'list'];
+	    array_push
+	        ( $k, $type[0], $items[4], 'list' );
 	}
 	else
 	{
@@ -156,7 +165,9 @@ function actions_to_rows ( $actions, $types )
 	    /* Do Nothing */;
 	else if ( $type[1] == 'priv' )
 	{
-	    $k = [$type[0],$items[3],'privileges'];
+	    array_push
+	        ( $k, $type[0], $items[3],
+		  'privileges' );
 	    $n = $items[4];
 	    if ( $n == '' ) $n = 'project';
 	    else $k[] = $items[4];
@@ -165,12 +176,14 @@ function actions_to_rows ( $actions, $types )
 	else if ( $type[0] == 'pull' )
 	{
 	    $a = "pull {$items[4]} from {$items[3]}";
-	    $k = ['pull',$items[3],$items[4]];
+	    array_push
+	        ( $k, 'pull', $items[3], $items[4] );
 	}
 	else if ( $type[0] == 'push' )
 	{
 	    $a = "push {$items[4]} to {$items[3]}";
-	    $k = ['push',$items[3],$items[4]];
+	    array_push
+	        ( $k, 'push', $items[3], $items[4] );
 	}
 	else if ( $type[0] == 'submit' )
 	{
@@ -182,19 +195,25 @@ function actions_to_rows ( $actions, $types )
 	        ( ' ', array_slice ( $items, 7 ) );
 	    $a = "submit $runbase.run in $project"
 	       . "  $cpu_time $score";
-	    $k = ['submit',$items[3],$items[4]];
+	    array_push
+	        ( $k, 'submit', $items[3], $items[4],
+		  $runbase );
+	    $k = array_merge
+	        ( $k, array_slice ( $items, 7 ) );
 	}
 	else
 	{
 	    $a = "unknown action type {$items[2]}";
-	    $k = ['unknown',$items[2]];
+	    array_push
+	        ( $k, 'unknown', $items[2] );
+	    $k = array_merge ( $k, $type );
 	}
 
 	$k = implode ( ':', $k );
 
 	$r .= "<tr class='row' data-keys='$k'>"
 	    . "<td>$time</td>"
-	    . "<td>$user</td>"
+	    . "<td>$account</td>"
 	    . "<td>$a</td></tr>";
     }
     return $r;
