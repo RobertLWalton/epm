@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Oct  1 02:31:57 EDT 2020
+    // Date:	Thu Oct  1 07:17:53 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -228,7 +228,6 @@ function KEYMAP_STRINGIFY ( )
 
 function LOGEXP_COMPILE ( logexp_src )
 {
-    keymap.clear();
     logexp_src = logexp_src.trim();
     if ( logexp_src == '' )
     {
@@ -250,14 +249,15 @@ function LOGEXP_APPLY ( keys )
 {
     if ( logexp === null ) return true;
     keys = keys.split ( ':' );
+    for ( var i = 0; i < keys.length; ++ i )
+        keymap.delete ( keys[i] );
+
     or_loop: for ( var i = 0; i < logexp.length; ++ i )
     {
         for ( var j = 0; j < logexp[i].length; ++ j )
 	{
 	    if ( ! keys.includes ( logexp[i][j] ) )
 	        continue or_loop;
-	    else
-	        keymap.delete ( logexp[i][j] );
 	}
 	return true;
     }
@@ -266,6 +266,12 @@ function LOGEXP_APPLY ( keys )
 
 function LOGEXP_EXECUTE ( )
 {
+    keymap.clear();
+    if ( logexp !== null )
+    for ( var i = 0; i < logexp.length; ++ i )
+    for ( var j = 0; j < logexp[i].length; ++ j )
+	keymap.set ( logexp[i][j], true );
+
     var rows = document.getElementsByClassName ( 'row' );
     for ( var i = 0; i < rows.length; ++ i )
     {
@@ -275,6 +281,18 @@ function LOGEXP_EXECUTE ( )
 	    rows[i].style.display = 'table-row';
 	else
 	    rows[i].style.display = 'none';
+    }
+
+    var r = KEYMAP_STRINGIFY();
+    if ( r == '' )
+	document.getElementById ( 'logexp-unused' )
+	        .style.display = 'none'
+    else
+    {
+	document.getElementById ( 'logexp-unused' )
+	        .style.display = 'block'
+	document.getElementById ( 'unused-keywords' )
+	        .innerText = r;
     }
 }
 
@@ -293,6 +311,8 @@ function LOGEXP_CLEAR ( event )
 {
     event.preventDefault();
     logexp = null;
+    document.getElementById ( 'logexp' )
+            .value = '';
     LOGEXP_EXECUTE();
 }
 
@@ -426,7 +446,12 @@ EOT;
     <button type='button' onclick='LOGEXP_CLEAR(event)'
             title='$clear_title'>
     Clear</button>
+    </div>
 
+    <div class='errors' id='logexp-unused'
+         style='display:none;clear:both'>
+    <strong>Unused Keywords:</strong>
+    <pre id='unused-keywords'></pre>
     </div>
 EOT;
 
