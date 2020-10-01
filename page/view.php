@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Oct  1 02:05:15 EDT 2020
+    // Date:	Thu Oct  1 02:31:57 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -215,6 +215,17 @@ function TOGGLE_BODY ( name, thing )
 var logexp = null;
 var keymap = new Map();
 
+function KEYMAP_STRINGIFY ( )
+{
+    var r = ''
+    keymap.forEach ( function ( value, key, map )
+                     {
+		         r += ' ' + key;
+		     }
+		   );
+    return r.substring ( 1 );
+}
+
 function LOGEXP_COMPILE ( logexp_src )
 {
     keymap.clear();
@@ -241,9 +252,9 @@ function LOGEXP_APPLY ( keys )
     keys = keys.split ( ':' );
     or_loop: for ( var i = 0; i < logexp.length; ++ i )
     {
-        for ( var j = 0; j < logexp[i].length, ++ j )
+        for ( var j = 0; j < logexp[i].length; ++ j )
 	{
-	    if ( ! keys.includes ( logexp[i][j] )
+	    if ( ! keys.includes ( logexp[i][j] ) )
 	        continue or_loop;
 	    else
 	        keymap.delete ( logexp[i][j] );
@@ -265,6 +276,24 @@ function LOGEXP_EXECUTE ( )
 	else
 	    rows[i].style.display = 'none';
     }
+}
+
+function LOGEXP_KEYDOWN ( event )
+{
+    if ( event.code === 'Enter' )
+    {
+	event.preventDefault();
+	let logexp_src =
+	    document.getElementById ( 'logexp' );
+	LOGEXP_COMPILE ( logexp_src.value );
+	LOGEXP_EXECUTE();
+    }
+}
+function LOGEXP_CLEAR ( event )
+{
+    event.preventDefault();
+    logexp = null;
+    LOGEXP_EXECUTE();
 }
 
 </script>
@@ -394,7 +423,7 @@ EOT;
 	   onkeydown='LOGEXP_KEYDOWN(event)'
            value=''>
     <pre> </pre>
-    <button type='button' onclick='LOGEXP_CLEAR()'
+    <button type='button' onclick='LOGEXP_CLEAR(event)'
             title='$clear_title'>
     Clear</button>
 

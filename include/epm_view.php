@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Wed Sep 30 16:24:17 EDT 2020
+// Date:	Thu Oct  1 02:37:34 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -192,7 +192,7 @@ function actions_to_rows ( $actions, $types )
 
 	$k = implode ( ':', $k );
 
-	$r .= "<tr data-keys='$k'>"
+	$r .= "<tr class='row' data-keys='$k'>"
 	    . "<td>$time</td>"
 	    . "<td>$user</td>"
 	    . "<td>$a</td></tr>";
