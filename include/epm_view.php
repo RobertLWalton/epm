@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Wed Sep 30 04:56:23 EDT 2020
+// Date:	Wed Sep 30 16:24:17 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -107,12 +107,21 @@ function actions_to_rows ( $actions, $types )
 	    $op = $items[4];
 	    $value = implode
 	        ( ' ', array_slice ( $items, 5 ) );
+	    $k = [$key];
 	    if ( $key == 'email' )
 		$value = preg_replace
 		    ( '/^[^@]+@/', '...@', $value );
-	    if ( $key == 'email' ) $key = 'emails';
+	    if ( $key == 'email' )
+	    {
+	        $key = 'emails';
+		$k = ['email','emails'];
+	    }
 	    elseif ( $key == 'full_name' )
+	    {
 	        $key = 'full name';
+		$k = ['full','name'];
+	    }
+
 	    if ( $op == '=' )
 		$a = "set $key to $value";
 	    elseif ( $op == '+' )
@@ -121,11 +130,18 @@ function actions_to_rows ( $actions, $types )
 		$a = "remove $value from $key";
 	    else
 		$a = "unknown operation $op";
+	    $k[] = 'info';
 	}
 	elseif ( $type[1] == 'problem' )
+	{
 	    $a = "{$type[0]} problem {$items[4]}";
+	    $k = [$type[0],$items[4],'problem'];
+	}
 	elseif ( $type[1] == 'list' )
+	{
 	    $a = "{$type[0]} list {$items[4]}";
+	    $k = [$type[0],$items[4],'list'];
+	}
 	else
 	{
 	    $project = $items[3];
@@ -140,14 +156,22 @@ function actions_to_rows ( $actions, $types )
 	    /* Do Nothing */;
 	else if ( $type[1] == 'priv' )
 	{
+	    $k = [$type[0],$items[3],'privileges'];
 	    $n = $items[4];
 	    if ( $n == '' ) $n = 'project';
-	    $a = "update {$items[3]} $n privileges";
+	    else $k[] = $items[4];
+	    $a = "{$type[0]} {$items[3]} $n privileges";
 	}
 	else if ( $type[0] == 'pull' )
+	{
 	    $a = "pull {$items[4]} from {$items[3]}";
+	    $k = ['pull',$items[3],$items[4]];
+	}
 	else if ( $type[0] == 'push' )
+	{
 	    $a = "push {$items[4]} to {$items[3]}";
+	    $k = ['push',$items[3],$items[4]];
+	}
 	else if ( $type[0] == 'submit' )
 	{
 	    $project = $items[3];
@@ -158,16 +182,17 @@ function actions_to_rows ( $actions, $types )
 	        ( ' ', array_slice ( $items, 7 ) );
 	    $a = "submit $runbase.run in $project"
 	       . "  $cpu_time $score";
+	    $k = ['submit',$items[3],$items[4]];
 	}
 	else
+	{
 	    $a = "unknown action type {$items[2]}";
+	    $k = ['unknown',$items[2]];
+	}
 
-	if ( in_array ( $items[2], $types ) )
-	    $class = $items[2];
-	else
-	    $class = 'other';
+	$k = implode ( ':', $k );
 
-	$r .= "<tr class='$class'>"
+	$r .= "<tr data-keys='$k'>"
 	    . "<td>$time</td>"
 	    . "<td>$user</td>"
 	    . "<td>$a</td></tr>";

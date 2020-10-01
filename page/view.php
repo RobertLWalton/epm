@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 14 04:23:28 EDT 2020
+    // Date:	Thu Oct  1 02:05:15 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -212,26 +212,59 @@ function TOGGLE_BODY ( name, thing )
     }
 }
 
-let on = 'black';
-let off = 'white';
-function INCLUDE ( checkbox, c )
+var logexp = null;
+var keymap = new Map();
+
+function LOGEXP_COMPILE ( logexp_src )
 {
-    var onoff = checkbox.style.backgroundColor;
-    var display;
-    if ( onoff == on )
+    keymap.clear();
+    logexp_src = logexp_src.trim();
+    if ( logexp_src == '' )
     {
-        onoff = off;
-	display = 'none';
+        logexp = null;
+	return;
     }
-    else
+    logexp = [];
+    logexp_src = logexp_src.split ( /\s+/ );
+    for ( var i = 0; i < logexp_src.length; ++ i )
     {
-        onoff = on;
-	display = 'table-row';
+        let term = logexp_src[i].split ( '&' );
+	logexp.push ( term );
+	for ( var j = 0; j < term.length; ++ j )
+	    keymap.set ( term[j], true );
     }
-    checkbox.style.backgroundColor = onoff;
-    var rows = document.getElementsByClassName ( c );
+}
+
+function LOGEXP_APPLY ( keys )
+{
+    if ( logexp === null ) return true;
+    keys = keys.split ( ':' );
+    or_loop: for ( var i = 0; i < logexp.length; ++ i )
+    {
+        for ( var j = 0; j < logexp[i].length, ++ j )
+	{
+	    if ( ! keys.includes ( logexp[i][j] )
+	        continue or_loop;
+	    else
+	        keymap.delete ( logexp[i][j] );
+	}
+	return true;
+    }
+    return false;
+}
+
+function LOGEXP_EXECUTE ( )
+{
+    var rows = document.getElementsByClassName ( 'row' );
     for ( var i = 0; i < rows.length; ++ i )
-        rows[i].style.display = display;
+    {
+	if ( logexp === null
+	     ||
+	     LOGEXP_APPLY ( rows[i].dataset.keys ) )
+	    rows[i].style.display = 'table-row';
+	else
+	    rows[i].style.display = 'none';
+    }
 }
 
 </script>
@@ -314,26 +347,6 @@ function INCLUDE ( checkbox, c )
     <option value=''>No Project Selected</option>
     $project_options
     </select></form>
-    <pre>     </pre>
-    <strong>Include:</strong>
-    <pre> </pre>
-    <div class='checkbox'
-         style='background-color:black'
-	 onclick='INCLUDE(this,"submit")'></div>
-    <strong>submit</strong>
-    <div class='checkbox'
-         style='background-color:black'
-	 onclick='INCLUDE(this,"push")'></div>
-    <strong>push</strong>
-    <div class='checkbox'
-         style='background-color:black'
-	 onclick='INCLUDE(this,"pull")'></div>
-    <strong>pull</strong>
-    <div class='checkbox'
-         style='background-color:black'
-	 onclick='INCLUDE(this,"other")'></div>
-    <strong>other</strong>
-
 
     <br>
 EOT;
@@ -343,6 +356,12 @@ EOT;
 	$key = NULL;
     $problem_options = list_to_options
 	( $list, $key );
+    $include_placeholder =
+	'logical expression' .
+	' (clear to include all actions)';
+    $clear_title =
+	'clearing logical expression includes' .
+	' all actions';
     echo <<<EOT
 
     <strong>or Problem:</strong>
@@ -364,6 +383,21 @@ EOT;
 	                ("listname-form").submit()'>
     $listname_options
     </select></form>
+
+    <br>
+    <strong>Include Actions:</strong>
+    <pre> </pre>
+    <input type='text' id='logexp' size='60'
+	   placeholder='$include_placeholder'
+	   title=
+	     'type logical expression and then enter'
+	   onkeydown='LOGEXP_KEYDOWN(event)'
+           value=''>
+    <pre> </pre>
+    <button type='button' onclick='LOGEXP_CLEAR()'
+            title='$clear_title'>
+    Clear</button>
+
     </div>
 EOT;
 
