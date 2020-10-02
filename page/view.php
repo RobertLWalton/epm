@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Oct  1 07:17:53 EDT 2020
+    // Date:	Fri Oct  2 01:19:29 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -256,7 +256,14 @@ function LOGEXP_APPLY ( keys )
     {
         for ( var j = 0; j < logexp[i].length; ++ j )
 	{
-	    if ( ! keys.includes ( logexp[i][j] ) )
+	    let keyword = logexp[i][j];
+	    if ( keyword[0] == '-' )
+	    {
+	        if ( keys.includes
+		         ( keyword.substring(1) ) )
+		    continue or_loop;
+	    }
+	    else if ( ! keys.includes ( keyword ) )
 	        continue or_loop;
 	}
 	return true;

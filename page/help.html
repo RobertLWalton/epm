@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Sep 28 15:29:21 EDT 2020
+Date:	Fri Oct  2 01:25:15 EDT 2020
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1658,13 +1658,25 @@ To view actions involving a project problem, first select a problem
 list, and then select a project problem from that list.
 <p>
 The actions are displayed as action lists.
-You can exclude actions of particular types from these lists
-by clicking the `Include' ovals to turn
-white any action types you want to exclude.
-<p>
 The actions are generally self explanatory.  For the submit
 actions, the 3 decimal digit number followed immediately
 by `s' is the maximum solution execution time in seconds.
+<p>
+You can filter the actions displayed by entering a logical
+expression which must be satisfied by each action displayed.
+This logical expression uses keywords in the action, which
+are pretty much any significant word in the action.
+The logical expression syntax is:
+<table style='margin-left:5em'>
+<tr><td>logical expression ::= term { whitespace term }*</td></tr>
+<tr><td>term ::= factor { '&amp;' factor }*</td></tr>
+<tr><td>factor ::= keyword | '-' keyword</td></tr>
+</table>
+A keyword factor is true iff the keyword is in the action.
+A `-keyword' factor is true iff the keyword is NOT in the action.
+&amp; denotes logical AND, and whitespace denotes logical OR.
+There are NO parentheses.  Note that terms cannot contain
+whitespace.
 <p>
 Projects for which you do not have view privilege will NOT be
 visible on the View Page.  Such projects are usually used
