@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Oct  2 07:44:37 EDT 2020
+// Date:	Fri Oct  2 09:05:25 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -112,6 +112,9 @@ function actions_to_rows ( $actions )
 	    if ( $key == 'email' )
 		$value = preg_replace
 		    ( '/^[^@]+@/', '...@', $value );
+	    $k = array_merge
+	        ( $k, preg_split ( '/[^A-Za-z0-9]+/',
+		                   $value ) );
 
 	    if ( $key == 'email' )
 	    {
