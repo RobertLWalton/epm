@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Oct  2 06:40:32 EDT 2020
+// Date:	Fri Oct  2 07:44:37 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -131,14 +131,26 @@ function actions_to_rows ( $actions )
 	        $k[] = $key;
 
 	    if ( $op == '=' )
+	    {
 		$a = "set $key to $value";
+		$k[] = 'set';
+	    }
 	    elseif ( $op == '+' )
+	    {
 		$a = "add $value to $key";
+		$k[] = 'add';
+	    }
 	    elseif ( $op == '-' )
+	    {
 		$a = "remove $value from $key";
+		$k[] = 'remove';
+	    }
 	    else
+	    {
 		$a = "unknown operation $op";
-	    $k[] = 'info';
+		$k[] = 'unknown';
+		$k[] = 'operation';
+	    }
 	}
 	elseif ( $type[1] == 'problem' )
 	{

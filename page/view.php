@@ -2,14 +2,15 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Oct  2 06:50:11 EDT 2020
+    // Date:	Fri Oct  2 07:25:10 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
     // they make no warranty and accept no liability
     // for EPM.
 
-    // Allows user and problem information to be viewed.
+    // Allows account, project, problem, and published
+    // list actions to be viewed.
 
     // Session Data
     // ------- ----
@@ -22,10 +23,10 @@
     // POST:
     // ----
     //
-    // Each post may selects a user, project, problem,
-    // problem list, or published-lists.
+    // Each post may select an account, project,
+    // problem, problem list, or published-lists.
     //
-    //	    user=AID
+    //	    account=AID
     //
     //	    project=PROJECT
     //
@@ -51,7 +52,7 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $user = NULL;    // AID for 'user' POST.
+    $account = NULL; // AID for 'account' POST.
     $project = NULL; // Project for 'project' or
     		     // 'problem' POST.
     $problem = NULL; // Problem for 'problem' POST.
@@ -67,6 +68,8 @@
     $list = read_problem_list ( $listname, $warnings );
     $projects = read_projects ( ['view'] );
     $users = read_accounts ( 'user' );
+    $teams = read_accounts ( 'team' );
+    $accounts = array_merge ( $users, $teams );
 
     if ( $epm_method == 'POST' )
     {
@@ -93,13 +96,13 @@
 	    $list = read_problem_list
 	        ( $listname, $warnings );
 	}
-        elseif ( isset ( $_POST['user'] ) )
+        elseif ( isset ( $_POST['account'] ) )
 	{
-	    $user = $_POST['user'];
-	    if ( $user == '' )
-	        $user = NULL;
-	    elseif ( ! in_array ( $user, $users,
-	                          true ) )
+	    $account = $_POST['account'];
+	    if ( $account == '' )
+	        $account = NULL;
+	    elseif ( ! in_array
+	                   ( $account, $accounts ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	}
         elseif ( isset ( $_POST['project'] ) )
@@ -172,7 +175,7 @@ div.select {
     background-color: var(--bg-green);
     padding-top: var(--pad);
 }
-div.user {
+div.account {
     background-color: var(--bg-tan);
     padding-top: var(--pad);
 }
@@ -360,8 +363,8 @@ function LOGEXP_CLEAR ( event )
 	echo "<br></div></div>";
     }
 
-    $user_options =
-        values_to_options ( $users, $user );
+    $account_options =
+        values_to_options ( $accounts, $account );
     $project_options =
         values_to_options
 	    ( $projects,
@@ -393,15 +396,15 @@ function LOGEXP_CLEAR ( event )
 
     <div class='select'>
 
-    <strong>Select User:</strong>
+    <strong>Select Account:</strong>
     <form method='POST' action='view.php'
-          id='user-form'>
+          id='account-form'>
     <input type='hidden' name='id' value='$ID'>
-    <select name='user'
+    <select name='account'
             onchange='document.getElementById
-	                ("user-form").submit()'>
-    <option value=''>No User Selected</option>
-    $user_options
+	                ("account-form").submit()'>
+    <option value=''>No Account Selected</option>
+    $account_options
     </select></form>
 
     <strong>or Project:</strong>
@@ -480,34 +483,38 @@ EOT;
     </div>
 EOT;
 
-    if ( isset ( $user ) )
+    if ( isset ( $account ) )
     {
-	$f = "admin/users/$user/+actions+";
+	if ( in_array ( $account, $users ) )
+	    $f = "admin/users/$account/+actions+";
+	else
+	    $f = "admin/teams/$account/+actions+";
 	$change_rows = actions_to_rows
 	    ( read_actions ( "$f" ) );
-	$g = "accounts/$user/+actions+";
+	$g = "accounts/$account/+actions+";
 	$action_rows = actions_to_rows
 	    ( read_actions ( "$g" ) );
         echo <<<EOT
-	<div class='user'>
+	<div class='account'>
 
 	<div class='changes'>
 	<table style='width:100%'><tr>
 	<td>
 	<button type='button'
-	    id='user_info_button'
+	    id='account_info_button'
 	    onclick='TOGGLE_BODY
-		 ("user_info",
-		  "Changes to User Information")'
-	    title='Show Changes to User Information'>
-	    <pre id='user_info_mark'>&darr;</pre>
+		 ("account_info",
+		  "Changes to Account Profile")'
+	    title='Show Changes to Account Profile'>
+	    <pre id='account_info_mark'>&darr;</pre>
 	    </button>
-	<strong>Actions Changing $user
-	        Profile and Emails
+	<strong>Actions Changing $account
+	        Profile
 	        (most recent first):</strong>
 	</td>
 	</tr></table>
-	<div id='user_info_body' style='display:none'>
+	<div id='account_info_body'
+	     style='display:none'>
 	<table>
 	$change_rows
 	</table>
@@ -518,18 +525,18 @@ EOT;
 	<table style='width:100%'><tr>
 	<td>
 	<button type='button'
-	    id='user_actions_button'
+	    id='account_actions_button'
 	    onclick='TOGGLE_BODY
-		 ("user_actions",
-		  "User Actions")'
-	    title='Show User Actions'>
-	    <pre id='user_actions_mark'>&uarr;</pre>
+		 ("account_actions",
+		  "Account Actions")'
+	    title='Show Account Actions'>
+	    <pre id='account_actions_mark'>&uarr;</pre>
 	    </button>
-	<strong>Other Actions of $user
+	<strong>Other Actions of $account
 	        (most recent first):</strong>
 	</td>
 	</tr></table>
-	<div id='user_actions_body'>
+	<div id='account_actions_body'>
 	<table>
 	$action_rows
 	</table>
