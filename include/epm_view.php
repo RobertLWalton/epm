@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Oct  1 15:34:01 EDT 2020
+// Date:	Fri Oct  2 06:40:32 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -86,12 +86,13 @@ function view_priv ( $project )
 //              elements that should be separated by
 //              single spaces
 //
-// Give each row class='TYPE' if TYPE is in $types
-// list, or class='other' if TYPE is not in $types.
+// Each row has class 'row' and data-keys equal to
+// the list of ':' separated keys of the row (see
+// Help Page for documentation of keys).
 //
-function actions_to_rows ( $actions, $types )
+function actions_to_rows ( $actions )
 {
-    global $view_cache;
+    global $view_cache, $epm_data;
     $r = '';
     foreach ( $actions as $items )
     {
@@ -154,11 +155,15 @@ function actions_to_rows ( $actions, $types )
 	else
 	{
 	    $project = $items[3];
-	    if ( isset ( $view_cache[$project] ) )
-	        $v = $view_cache[$project];
-	    else
-	        $v = view_priv ( $project );
-	    if ( $v != '+' ) continue;
+	    $d = "$epm_data/projects/$project";
+	    if ( is_dir ( $d ) )
+	    {
+		if ( isset ( $view_cache[$project] ) )
+		    $v = $view_cache[$project];
+		else
+		    $v = view_priv ( $project );
+		if ( $v != '+' ) continue;
+	    }
 	}
 
 	if ( isset ( $a ) )

@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Oct  2 01:19:29 EDT 2020
+    // Date:	Fri Oct  2 06:50:11 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -22,8 +22,8 @@
     // POST:
     // ----
     //
-    // Each post may selects a user, project, problem
-    // list, or problem.
+    // Each post may selects a user, project, problem,
+    // problem list, or published-lists.
     //
     //	    user=AID
     //
@@ -32,6 +32,8 @@
     //	    problem=PROJECT:PROBLEM
     //
     //	    listname=PROJECT:BASENAME
+    //
+    //	    published-lists
 
     $epm_page_type = '+view+';
     $epm_ID_init = true;
@@ -53,9 +55,8 @@
     $project = NULL; // Project for 'project' or
     		     // 'problem' POST.
     $problem = NULL; // Problem for 'problem' POST.
-
-    $non_others = ['submit','push','pull'];
-        // List for actions_to_rows.
+    $published_lists = false;
+    		     // True for 'published-lists' POST.
 
     $favorites = read_favorites_list ( $warnings );
     if ( ! isset ( $listname ) )
@@ -136,6 +137,10 @@
 		    exit ( 'UNACCEPTABLE HTTP POST' );
 	    }
 	}
+        elseif ( isset ( $_POST['published-lists'] ) )
+	    $published_lists = true;
+	else
+	    exit ( 'UNACCEPTABLE HTTP POST' );
     }
 
 ?>
@@ -277,7 +282,12 @@ function LOGEXP_EXECUTE ( )
     if ( logexp !== null )
     for ( var i = 0; i < logexp.length; ++ i )
     for ( var j = 0; j < logexp[i].length; ++ j )
-	keymap.set ( logexp[i][j], true );
+    {
+	var keyword = logexp[i][j];
+	if ( keyword[0] == '-' )
+	    keyword = keyword.substring ( 1 );
+	keymap.set ( keyword, true );
+    }
 
     var rows =
         document.getElementsByClassName ( 'row' );
@@ -405,6 +415,13 @@ function LOGEXP_CLEAR ( event )
     $project_options
     </select></form>
 
+    <strong>or</strong>
+    <form method='POST' action='view.php'>
+    <input type='hidden' name='id' value='$ID'>
+    <button type='submit' name='published-lists'>
+    Published Lists</button>
+    </form>
+
     <br>
 EOT;
     if ( isset ( $problem ) )
@@ -467,10 +484,10 @@ EOT;
     {
 	$f = "admin/users/$user/+actions+";
 	$change_rows = actions_to_rows
-	    ( read_actions ( "$f" ), $non_others );
+	    ( read_actions ( "$f" ) );
 	$g = "accounts/$user/+actions+";
 	$action_rows = actions_to_rows
-	    ( read_actions ( "$g" ), $non_others );
+	    ( read_actions ( "$g" ) );
         echo <<<EOT
 	<div class='user'>
 
@@ -525,7 +542,7 @@ EOT;
     {
 	$g = "projects/$project/+actions+";
 	$action_rows = actions_to_rows
-	    ( read_actions ( "$g" ), $non_others );
+	    ( read_actions ( "$g" ) );
         echo <<<EOT
 	<div class='actions'>
 	<table style='width:100%'><tr>
@@ -548,7 +565,7 @@ EOT;
 	else
 	    $f = "projects/$project/$problem/+actions+";
 	$action_rows = actions_to_rows
-	    ( read_actions ( "$f" ), $non_others );
+	    ( read_actions ( "$f" ) );
 	if ( $project == '-' ) $project = '<i>Your</i>';
         echo <<<EOT
 	<div class='actions'>
@@ -565,8 +582,27 @@ EOT;
 EOT;
     }
 
+    if ( $published_lists )
+    {
+	$g = "lists/+actions+";
+	$action_rows = actions_to_rows
+	    ( read_actions ( "$g" ) );
+        echo <<<EOT
+	<div class='actions'>
+	<table style='width:100%'><tr>
+	<td>
+	<strong>Actions on Published Lists
+	        (most recent first):</strong>
+	</td>
+	</tr></table>
+	<table>
+	$action_rows
+	</table>
+	</div>
+EOT;
+    }
+
 ?>
 
 </body>
 </html>
-
