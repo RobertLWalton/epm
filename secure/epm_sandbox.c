@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Fri May 29 18:00:00 EDT 2020
+ * Date:	Wed Oct  7 13:21:31 EDT 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -1182,6 +1182,25 @@ int main ( int argc, char ** argv )
 	    errno_exit
 	        ( "setrlimit RLIMIT_NPROC" );
 #	endif
+    }
+
+    /* For some reason the kernel claims that SIGXFSZ
+     * is set to default action but it behaves instead
+     * like ignore action unless we explicitly set it
+     * to default.
+     */
+    {
+        sigset_t empty;
+	if ( sigemptyset ( & empty ) < 0 )
+	    errno_exit ( "sigemptyset" );
+	struct sigaction new;
+	new.sa_handler = SIG_DFL;
+	new.sa_sigaction = NULL;
+	new.sa_mask = empty;
+	new.sa_flags = 0;
+	new.sa_restorer = NULL;
+	if ( sigaction ( SIGXFSZ, & new, NULL ) < 0 )
+	    errno_exit ( "sigaction SIGXFSZ ..." );
     }
 
     /* Execute program with arguments and optional
