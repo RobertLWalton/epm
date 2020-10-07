@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Wed Oct  7 13:21:31 EDT 2020
+ * Date:	Wed Oct  7 13:51:19 EDT 2020
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -13,10 +13,6 @@
  */
 
 #define _GNU_SOURCE
-    /* Without this strsignal breaks with segmentation
-     * fault.
-     */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -33,6 +29,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <pwd.h>
+#include <grp.h>
 
 char documentation [] =
 "epm_sandbox [options] program argument ...\n"
