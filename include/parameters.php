@@ -119,7 +119,7 @@ $epm_expiration_times =
     // [2, 7, 30] days; ticket expiration times
     // for 1st, 2nd, and >= 3rd tickets.
 
-$epm_file_maxsize = 16*1024*1024;  // 16 megabytes.
+$epm_file_maxsize = 32*1024*1024;  // 32 megabytes.
     // Maximum size any file.
 
 $epm_upload_maxsize = 256*1024;  // 256 kilobytes.

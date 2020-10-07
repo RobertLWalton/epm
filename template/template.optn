@@ -2,7 +2,7 @@
 //
 // File:    template.optn.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Aug 12 09:47:12 EDT 2020
+// Date:    Wed Oct  7 14:07:05 EDT 2020
 
 {
     "GXXOPT": { "description":
@@ -66,7 +66,7 @@
 		   "argname": "GSARGS" },
 
     "gfsize": { "type": "natural",
-                "range": ["1", "2048"],
+                "range": ["1", "32768"],
 		"default": "128",
 		"description":
 		    "generate output files size"
@@ -100,7 +100,7 @@
     "SSARGS": { "description":
                     "solution sandbox arguments" },
     "sfsize": { "type": "natural",
-                "range": ["1", "2048"],
+                "range": ["1", "32768"],
 		"default": "128",
 		"description":
 		    "solution output files size limit"
@@ -231,7 +231,7 @@
 		       " (required)",
 		   "argname": "FSARGS" },
     "ffsize": { "type": "natural",
-                "range": ["1", "2048"],
+                "range": ["1", "32768"],
 		"default": "128",
 		"description":
 		    "filter output files size limit in"
