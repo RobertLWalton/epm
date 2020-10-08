@@ -11,6 +11,9 @@
 \newcommand{\problem}[1]{\underline{\Large \bf #1}}
 \renewcommand{\section}[1]{\bigskip\underline{\bf #1}\\}
 \newcommand{\header}[1]{\underline{\bf #1}}
+\newcommand{\file}[1]{{\bf #1}}
+\newcommand{\blankpage}{\newpage\vspace*{3.5in}%
+    \centerline{\Large This Page is Intentionally Left Blank}}
 \setlength{\parindent}{0.0in}
 \setlength{\parskip}{1ex}
 
@@ -23,23 +26,35 @@
 \section{Output}
 
 
-\begin{center}
-\begin{tabular}{l|l}
-\begin{minipage}{2.5in}
+\newpage  % you may need to move this
+
+\begin{tabular}{ll}
+\begin{minipage}[t]{2.5in}
 \header{Sample Input}
+\\[1ex]
+\file{00-000-PPPP.sin:}
 \begin{verbatim}
-*Sample Input Goes Here*
+  .......................
 \end{verbatim}
-\end{minipage}\hspace*{0.2in}
-&
-\hspace*{0.2in}\begin{minipage}{2.5in}
-\header{Sample Output}
+\file{00-001-PPPP.sin:}
 \begin{verbatim}
-*Sample Output Goes Here*
+ .......................
+\end{verbatim}
+\end{minipage}
+&
+\begin{minipage}[t]{2.5in}
+\header{Sample Output}
+\\[1ex]
+\file{00-000-PPPP.sout:}
+\begin{verbatim}
+.......................
+\end{verbatim}
+\file{00-001-PPPP.sout:}
+\begin{verbatim}
+.......................
 \end{verbatim}
 \end{minipage}
 \end{tabular}
-\end{center}
 
 \bigskip
 
