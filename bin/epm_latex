@@ -3,7 +3,7 @@
 
 // File:	epm_latex
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Aug 10 10:40:33 EDT 2020
+// Date:	Mon Oct 12 01:26:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -27,6 +27,7 @@ the following:
   (2) a line that has `at lines DD--DD' at its end,
       where DD denotes any sequence of digits
   (3) a line that contains `while \\output is active'
+  (4) a line that begins with `l.<digit>+<whitespace>'
       
 An error ends with a blank line.
 
@@ -100,6 +101,15 @@ foreach ( explode ( "\n", $c ) as $line )
 	     preg_match
 	         ( '/while \\\\output is active/',
 		   $line ) )
+    {
+	$in_error = true;
+	$out .= $line . PHP_EOL;
+	++ $errors;
+    }
+    elseif ( ! $in_error
+             &&
+	     preg_match
+	         ( '/^l\.\d+\s/', $line ) )
     {
 	$in_error = true;
 	$out .= $line . PHP_EOL;
