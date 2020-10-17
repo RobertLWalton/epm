@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 15 07:44:05 EDT 2020
+    // Date:	Sat Oct 17 12:12:22 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -46,6 +46,11 @@
     //		
     // The file to be displayed or downloaded must
     // be readable.
+    //
+    // If a non-PDF file to be displayed has more than
+    // $epm_max_display_lines, lines in the middle will
+    // be omitted, so only $epm_max_display_lines are
+    // displayed.
 
     $epm_page_type = '+download+';
     require __DIR__ . '/index.php';
@@ -232,7 +237,6 @@
 
 <?php
 
-    $count = 0;
     echo <<<EOT
     <title>$title</title>
     </head>
@@ -245,9 +249,33 @@
     <div class='filecontents'>
     <table class='filecontents'>
 EOT;
+
+    $count = 0;
+    $last = count ( $lines );
+        // Last of beginning group of printed lines.
+    $first = $last + 1;
+        // First of ending group of lines.
+    if ( $last > $epm_max_display_lines )
+    {
+        $last = intdiv ( $epm_max_display_lines, 2 );
+	$first = $first
+	       - ( $epm_max_display_lines - $last );
+    }
     foreach ( $lines as $line )
     {
 	++ $count;
+	if ( $count == $last + 1 )
+	{
+	    $omitted = $first - $last - 1;
+	    echo "<tr><td class='linenumber'></td>" .
+	         "<td style='color:red'><strong>" .
+		 "..... $omitted lines omitted ....." .
+		 "</strong></td></tr>" . PHP_EOL;
+	    continue;
+	}
+	elseif ( $count > $last && $count < $first )
+	    continue;
+
 	$hline = htmlspecialchars ( $line );
 	echo "<tr><td class='linenumber'>" . PHP_EOL .
 	     "<pre>$count:</pre></td>" .

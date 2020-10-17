@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Sep 22 14:44:18 EDT 2020
+// Date:    Sat Oct 17 12:20:52 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -138,6 +138,10 @@ $epm_shell_timeout = 3;
     // Number of seconds to wait for the shell to
     // startup and execute initialization commands
     // for a .sh script.
+
+$epm_max_display_lines = 2000;
+    // Maximum number of lines displayed when a text
+    // file is being displayed.   See look.php.
 
 $epm_time_format = "%FT%T%Z";
     // Format for times, as per strftime.
