@@ -3,7 +3,7 @@
 
 // File:	epm_latex
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Oct 12 01:26:52 EDT 2020
+// Date:	Tue Oct 20 02:24:42 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -20,25 +20,32 @@ Executes
 	     >PPPP.tout 2>PPPP.terr
 
 and scans PPPP.log file for errors, appending any found
-to PPPP.terr.  An error in PPPP.log begins with one of
-the following:
+to PPPP.terr.
+
+If PPPP.log contains a line matching `Warning:.*Rerun',
+the above command is re-run up to 3 times.
+
+An error in PPPP.log begins with one of the following:
 
   (1) a line that has `!' as its first character
   (2) a line that has `at lines DD--DD' at its end,
       where DD denotes any sequence of digits
   (3) a line that contains `while \\output is active'
   (4) a line that begins with `l.<digit>+<whitespace>'
+  (5) a line containing `Warning: Reference'
       
 An error ends with a blank line.
 
-If there are errors, this program also outputs page
-number lines that have the format `[NN]', where NN is
-the page number.  Errors generally occur in a page
-whose `[NN]' line either is the first preceding or the
-first following the error message.
+If there are errors, this program also outputs lines
+that contain `[DD' followed by a non-digit or line
+end, where DD is a sequence of digits and is normally
+a page number.  Errors generally occur in a page whose
+`[DD' line is either the first preceding or the first
+following the error message.
 
 This program returns the exit code of pdflatex as its
-exit code.
+exit code and outputs an error message if this code
+is non-zero and there are no errors in PPPP.log.
 
 EOT;
 
@@ -49,22 +56,31 @@ if ( $argc < 2 || preg_match ( '/^-doc/', $argv[1] ) )
 }
 
 $PPPP = $argv[1];
+$LOG = "$PPPP.log";
+$ERR = "$PPPP.terr";
 
 $command = "pdflatex -record -no-shell-escape"
          . " -interaction nonstopmode"
 	 . " -halt-on-error $PPPP.tex"
 	 . " >$PPPP.tout 2>$PPPP.terr";
 
-exec ( $command, $discard, $code );
+$runs = 0;
 
-$LOG = "$PPPP.log";
-$ERR = "$PPPP.terr";
-$c = @file_get_contents ( $LOG  );
-if ( $c === false )
+while ( $runs < 3 )
 {
-    file_put_contents
-        ( $ERR, "cannot read $LOG", FILE_APPEND );
-    exit ( $code );
+    ++ $runs;
+    exec ( $command, $discard, $code );
+
+    $c = @file_get_contents ( $LOG  );
+    if ( $c === false )
+    {
+	file_put_contents
+	    ( $ERR, "cannot read $LOG", FILE_APPEND );
+	exit ( $code );
+    }
+
+    if ( ! preg_match ( '/Warning:.*Rerun/', $c ) )
+        break;
 }
 
 $in_error = false;
@@ -110,6 +126,15 @@ foreach ( explode ( "\n", $c ) as $line )
              &&
 	     preg_match
 	         ( '/^l\.\d+\s/', $line ) )
+    {
+	$in_error = true;
+	$out .= $line . PHP_EOL;
+	++ $errors;
+    }
+    elseif ( ! $in_error
+             &&
+	     preg_match
+	         ( '/Warning: Reference/', $line ) )
     {
 	$in_error = true;
 	$out .= $line . PHP_EOL;
