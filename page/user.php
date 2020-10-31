@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 15 07:26:22 EDT 2020
+    // Date:	Sat Oct 31 05:13:38 EDT 2020
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -677,6 +677,12 @@
 
 	$new_user = false;
 	$aid = $_SESSION['EPM_AID'];
+	$lname = $email;
+
+	// At this point $aid, $uid, $lname, $rw,
+	// $is_team should be set as they would
+	// be set by index.php for an existing user.
+
 	require "$epm_home/include/epm_list.php";
         $users = read_accounts ( 'user' );
 
