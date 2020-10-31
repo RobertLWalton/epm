@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Oct 17 12:20:52 EDT 2020
+// Date:    Sat Oct 31 04:34:41 EDT 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -204,7 +204,8 @@ $upload_target_ext = [
     "py" => "pyc",
     "tex" => "pdf",
     "in" => "sout",
-    "run" => "run" ];
+    "run" => "run",
+    "txt" => "txt" ];
 
 $display_file_type = [
     // To be listed as a problem file, and thence be
@@ -228,6 +229,7 @@ $display_file_type = [
     "jar" => "Compiled JAVA Executable",
     "pyc" => "Compiled PYTHON Executable",
     "run" => "utf8",
+    "txt" => "utf8",
     "pdf" => "pdf",
     "in" => "utf8",
     "sin" => "utf8",
@@ -285,6 +287,7 @@ $push_file_map = [
     "ftest" => ["00-\\d+-PPPP" => "L",
                 "\\d+-\\d+-PPPP" => "R"],
     "run" => ["sample-PPPP" => "L", ".*-PPPP" =>"R"],
+    "txt" => "L",
     "pdf" => [ "PPPP" => "L" ],
     "" => [ "generate-PPPP" => "L",
             "filter-PPPP" => "L",
