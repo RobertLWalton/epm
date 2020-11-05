@@ -3,7 +3,7 @@
 
 // File:	epm_latex
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Oct 20 02:24:42 EDT 2020
+// Date:	Thu Nov  5 06:25:21 EST 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -32,7 +32,8 @@ An error in PPPP.log begins with one of the following:
       where DD denotes any sequence of digits
   (3) a line that contains `while \\output is active'
   (4) a line that begins with `l.<digit>+<whitespace>'
-  (5) a line containing `Warning: Reference'
+  (5) a line containing `Warning: Reference', but only
+      if re-runs were done
       
 An error ends with a blank line.
 
@@ -134,7 +135,9 @@ foreach ( explode ( "\n", $c ) as $line )
     elseif ( ! $in_error
              &&
 	     preg_match
-	         ( '/Warning: Reference/', $line ) )
+	         ( '/Warning: Reference/', $line )
+	    &&
+	    $runs > 1 )
     {
 	$in_error = true;
 	$out .= $line . PHP_EOL;
