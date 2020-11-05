@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jul 21 11:33:20 EDT 2020
+// Date:    Thu Nov  5 06:42:41 EST 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -853,6 +853,13 @@ function setup ( $dryrun )
     echo ( "making epm/secure/epm_sandbox" . PHP_EOL );
     $command =
         "cd $epm_home/secure; make $n epm_sandbox";
+    passthru ( $command, $r );
+    if ( $r != 0 )
+        ERROR ( "make returned exit code $r" );
+
+    echo ( "making epm/documents/*" . PHP_EOL );
+    $command =
+        "cd $epm_home/documents; make $n";
     passthru ( $command, $r );
     if ( $r != 0 )
         ERROR ( "make returned exit code $r" );

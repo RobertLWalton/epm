@@ -2,7 +2,7 @@
 #
 # File:		Makefile
 # Authors:	Bob Walton (walton@deas.harvard.edu)
-# Date:		Tue Sep 29 05:52:13 EDT 2020
+# Date:		Thu Nov  5 06:30:53 EST 2020
 #
 # The authors have placed this program in the public
 # domain; they make no warranty and accept no liability
@@ -22,6 +22,10 @@ all:	epm_design.pdf epm_display.pdf epm_score.pdf \
 epm_design:	epm_design.pdf
 
 epm_design.pdf:		epm_design.tex
+	pdflatex -record -interaction nonstopmode \
+	         -no-shell-escape epm_design.tex
+	pdflatex -record -interaction nonstopmode \
+	         -no-shell-escape epm_design.tex
 	pdflatex -record -interaction nonstopmode \
 	         -no-shell-escape epm_design.tex
 
