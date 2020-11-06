@@ -3,7 +3,7 @@
 
 // File:	epm_latex
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Thu Nov  5 06:25:21 EST 2020
+// Date:	Thu Nov  5 19:17:09 EST 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -43,6 +43,8 @@ end, where DD is a sequence of digits and is normally
 a page number.  Errors generally occur in a page whose
 `[DD' line is either the first preceding or the first
 following the error message.
+
+Lines containing nothing but `[]' are suppressed.
 
 This program returns the exit code of pdflatex as its
 exit code and outputs an error message if this code
@@ -90,7 +92,9 @@ $errors = 0;
 foreach ( explode ( "\n", $c ) as $line )
 {
     $line = rtrim ( $line );
-    if ( $line == '' )
+    if ( ltrim ( $line ) == '[]' )
+        continue;
+    elseif ( $line == '' )
     {
         if ( $in_error )
 	{
@@ -146,8 +150,8 @@ foreach ( explode ( "\n", $c ) as $line )
     elseif ( $in_error )
 	$out .= $line . PHP_EOL;
     elseif ( preg_match ( '/\[(\d+)($|\D)/',
-                          $line, $matches ) )
-	$out .= "[{$matches[1]}]" . PHP_EOL;
+                          $line) )
+	$out .= trim ( $line ) . PHP_EOL;
 }
 
 if ( $errors == 0 && $code != 0 )
