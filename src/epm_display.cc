@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Sep 12 21:05:05 EDT 2020
+// Date:	Sun Dec 20 00:01:15 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -340,7 +340,7 @@ ostream & operator << ( ostream & s, const bounds & b )
 // Documentation
 // -------------
 
-const char * const documentation[2] = { "\n"
+const char * const documentation[] = { "\n"
 "epm_display [-debug] [file]\n"
 "\n"
 "    This program displays line drawings defined\n"
@@ -555,15 +555,20 @@ const char * const documentation[2] = { "\n"
 "      command.\n"
 "\n"
 "        head\n"
-"          Start or continue the head list.\n"
+"          Start or continue the head list.  If the\n"
+"          previous list is a level list, push it\n"
+"          into the level stack.\n"
 "\n"
 "        foot\n"
-"          Start or continue the foot list.\n"
+"          Start or continue the foot list.  If the\n"
+"          previous list is a level list, push it\n"
+"          into the level stack.\n"
 "\n"
 "        level N\n"
-"          Start or continue list n, where\n"
-"          1 <= n <= 100.  Push previous level onto\n"
-"          the level stack.\n"
+"          Start or continue list n, where"
+                                " 1 <= n <= 100.\n"
+"          If the previous list is level list, push\n"
+"          it into the level stack.\n"
 "\n"
 "        level\n"
 "          Start or continue list m, where m is at\n"
@@ -696,7 +701,8 @@ const char * const documentation[2] = { "\n"
 "        to 0, and G2 defaults to 360.\n"
 "\n"
 "        All numbers are either in body coordinates\n"
-"        or are angles in degrees.\n"
+"        or are angles in degrees, except that R may\n"
+"        have units (e.g., pt).\n"
 "\n"
 "        A fill or close option in STROKE draws a\n"
 "        straight line from G1 to G2 (of possibly\n"
@@ -710,7 +716,8 @@ const char * const documentation[2] = { "\n"
 "        ted by G2.  The arc is drawn as for the\n"
 "        previous arc command.\n"
 "\n"
-"      rectangle STROKE XC YC WIDTH HEIGHT\n"
+"      rectangle STROKE [COLOR] [OPT] XC YC"
+				    " WIDTH HEIGHT\n"
 "        Draw a rectangle of given STROKE type.\n"
 "        COLOR and OPT, if given, override the COLOR\n"
 "        and OPTions of STROKE.  The rectangle has\n"
@@ -1438,6 +1445,43 @@ bool read_double ( const char * name, double & var,
     return true;
 }
 
+// Process units for double read with get_double.
+// Return true on success and false if error message.
+// If missing_allowed, units == "" is allowed.
+//
+bool process_units ( const char * name, double & var,
+                     double low, double high,
+		     bool missing_allowed = true )
+{
+    if ( units == "" )
+    {
+	if ( ! missing_allowed )
+	{
+	    error ( "%s should have units %s",
+		    name, units.c_str() );
+	    return false;
+	}
+	else
+	    return true;
+    }
+    else if ( units == "pt" )
+        token_double /= 72;
+    else if ( units != "in" )
+    {
+	error ( "%s should have pt or in units",
+	        name );
+	return false;
+    }
+    if ( token_double < low || token_double > high )
+    {
+        error ( "%s out of range [%gin,%gin]",
+	        name, low, high );
+	return false;
+    }
+    var = token_double;
+    return true;
+}
+
 // Read double length with units.
 //
 // Similar to read_long but for double and requires
@@ -1454,22 +1498,7 @@ bool read_length ( const char * name, double & var,
 	    error ( "%s missing", name );
 	return false;
     }
-    if ( units == "pt" )
-        token_double /= 72;
-    else if ( units != "in" )
-    {
-	error ( "%s should have pt or in units",
-	        name );
-	return false;
-    }
-    if ( token_double < low || token_double > high )
-    {
-        error ( "%s out of range [%gin,%gin]",
-	        name, low, high );
-	return false;
-    }
-    var = token_double;
-    return true;
+    return process_units ( name, var, low, high );
 }
 
 // Read double with em units.
@@ -2054,12 +2083,18 @@ section read_section ( istream & in )
 	}
 	else if ( op == "head" && s == PAGE )
 	{
+	    if ( ! in_head_or_foot )
+		level_stack.push_back
+		    ( current_list - level );
 	    current_list = & head;
 	    in_head_or_foot = true;
 	    in_body = false;
 	}
 	else if ( op == "foot" && s == PAGE )
 	{
+	    if ( ! in_head_or_foot )
+		level_stack.push_back
+		    ( current_list - level );
 	    current_list = & foot;
 	    in_head_or_foot = true;
 	    in_body = false;
@@ -2080,8 +2115,9 @@ section read_section ( istream & in )
 	    }
 	    else
 	    {
-	        level_stack.push_back
-		    ( current_list - level );
+		if ( ! in_head_or_foot )
+		    level_stack.push_back
+			( current_list - level );
 		current_list = & level[N];
 	    }
 	    in_head_or_foot = false;
