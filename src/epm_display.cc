@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 20 00:01:15 EST 2020
+// Date:	Sun Dec 20 01:09:23 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -1053,6 +1053,10 @@ struct arc : public command // == 'a'
     options o;
     point c;
 
+    // Data if R has units ( ! isnan ( R ) )
+    //
+    double R;   // In inches.
+
     // Data if continuing or not continuing.
     //
     vector r;
@@ -1447,23 +1451,14 @@ bool read_double ( const char * name, double & var,
 
 // Process units for double read with get_double.
 // Return true on success and false if error message.
-// If missing_allowed, units == "" is allowed.
+// Units of "" do not change value, but low and high
+// are checked.
 //
 bool process_units ( const char * name, double & var,
-                     double low, double high,
-		     bool missing_allowed = true )
+                     double low, double high )
 {
     if ( units == "" )
-    {
-	if ( ! missing_allowed )
-	{
-	    error ( "%s should have units %s",
-		    name, units.c_str() );
-	    return false;
-	}
-	else
-	    return true;
-    }
+        /* do nothing */;
     else if ( units == "pt" )
         token_double /= 72;
     else if ( units != "in" )
@@ -1496,6 +1491,11 @@ bool read_length ( const char * name, double & var,
     {
         if ( ! missing_allowed )
 	    error ( "%s missing", name );
+	return false;
+    }
+    if ( units == "" )
+    {
+        error ( "%s should have units", name );
 	return false;
     }
     return process_units ( name, var, low, high );
@@ -2285,7 +2285,7 @@ section read_section ( istream & in )
 	    const stroke * STROKE = NULL;
 	    const color * COLOR = NULL;
 	    options OPT = NO_OPTIONS;
-	    double XC = 0, YC = 0, RX, RY,
+	    double XC = 0, YC = 0, RX, RY, R = NAN,
 	           A = 0, G1 = 0, G2 = 360;
 
 	    if ( read_stroke ( "STROKE", STROKE ) )
@@ -2305,30 +2305,44 @@ section read_section ( istream & in )
 			     + MAX_BODY_COORDINATE,
 			     false ) )
 		    continue;
-		if ( ! read_double
-			   ( "R", RX,
-			     0, + MAX_BODY_COORDINATE,
-			     false ) )
+		if ( ! get_double() )
+		{
+		    error ( "R or RX is missing" );
 		    continue;
-		if ( ! read_double
-			   ( "RY", RY,
-			     0,
-			     + MAX_BODY_COORDINATE ) )
-		    RY = RX;
+		}
+		if ( units != "" )
+		{
+		    if ( ! process_units
+		               ( "R", R, 0, 1 ) )
+			continue;
+		}
 		else
-		if ( read_double
-			 ( "A", A,
-			   - 1000 * 360, + 1000 * 360 )
-		     &&
-		     read_double
-			 ( "G1", G1,
-			   - 1000 * 360, + 1000 * 360 )
-		     &&
-		     ! read_double
-			 ( "G2", G2,
-			   - 1000 * 360, + 1000 * 360,
-			   false ) )
-		    continue;
+		{
+		    if ( ! process_units
+		        ( "R/RX", RX,
+			   0, + MAX_BODY_COORDINATE ) )
+			continue;
+		    if ( ! read_double
+			       ( "RY", RY,
+				 0,
+				 + MAX_BODY_COORDINATE )
+		       )
+			RY = RX;
+		    else
+		    if ( read_double
+			     ( "A", A,
+			       - 1000 * 360, + 1000 * 360 )
+			 &&
+			 read_double
+			     ( "G1", G1,
+			       - 1000 * 360, + 1000 * 360 )
+			 &&
+			 ! read_double
+			     ( "G2", G2,
+			       - 1000 * 360, + 1000 * 360,
+			       false ) )
+			continue;
+		}
 	    }
 	    else // No STROKE
 	    if ( ! read_double
