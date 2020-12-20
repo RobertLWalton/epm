@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 20 01:09:23 EST 2020
+// Date:	Sun Dec 20 03:53:50 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -1055,7 +1055,7 @@ struct arc : public command // == 'a'
 
     // Data if R has units ( ! isnan ( R ) )
     //
-    double R;   // In inches.
+    double R;   // In pt.
 
     // Data if continuing or not continuing.
     //
@@ -1169,12 +1169,16 @@ void print_commands ( command * list )
 		    cout << " " << a->col->name;
 		if ( a->o != NO_OPTIONS )
 		    cout << " " << a->o;
-		cout << " " << a->c
-		     << " " << a->r
-		     << " " << a->a
-		     << " " << a->g1
-		     << " " << a->g2
-		     << endl;
+		cout << " " << a->c;
+		if ( ! isnan ( a->R ) )
+		    cout << " " << a->R << "pt"
+		         << endl;
+		else
+		    cout << " " << a->r
+		         << " " << a->a
+		         << " " << a->g1
+		         << " " << a->g2
+		         << endl;
 	    }
 	    break;
 	}
@@ -2384,6 +2388,7 @@ section read_section ( istream & in )
 	    a->col = COLOR;
 	    a->o = OPT;
 	    a->c = { XC, YC };
+	    a->R = ( isnan ( R ) ? NAN : 72 * R );
 	    a->r = { RX, RY };
 	    a->a = A;
 	    a->g1 = G1;
@@ -2622,7 +2627,13 @@ int compute_bounding_box ( void )
 		arc * a = (arc *) current;
 		point c;
 		if ( a->s != NULL )
+		{
 		    c = a->c;
+		    if ( ! isnan ( a->R ) )
+			a->r.x = a->r.y = 0;
+			// Include center in bounds
+			// but treat radius as 0.
+		}
 		else
 		{
 		    point ux = { 1, 0 };
@@ -3347,10 +3358,17 @@ void draw_level ( int i )
 	    }
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
-	    cairo_scale ( context, xscale, - yscale );
-	    cairo_rotate
-	        ( context, M_PI * a->a / 180 );
-	    cairo_scale ( context, a->r.x, a->r.y );
+	    if ( isnan ( a->R ) )
+	    {
+		cairo_scale
+		    ( context, xscale, - yscale );
+		cairo_rotate
+		    ( context, M_PI * a->a / 180 );
+		cairo_scale ( context, a->r.x, a->r.y );
+	    }
+	    else
+		cairo_scale
+		    ( context, a->R, a->R );
 
 	    // (x,y) in the arc plane means (x,-y) in
 	    // our plane, and angle A in the arc plane
