@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 20 03:53:50 EST 2020
+// Date:	Mon Dec 21 01:28:12 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -616,8 +616,8 @@ const char * const documentation[] = { "\n"
 "        FONT is font name.\n"
 "        COLOR, if given, overrides COLOR of FONT.\n"
 "        OPT are some of:\n"
-"          t  display about 0.5em below Y\n"
-"          b  display about 0.5em above Y\n"
+"          t  display about 0.5em above Y\n"
+"          b  display about 0.5em below Y\n"
 "             If neither option, vertically\n"
 "             center on Y.\n"
 "                (t b conflict)\n"
@@ -3175,9 +3175,9 @@ void draw_level ( int i )
 
 	    double m = ( t->o & BOX_WHITE ? 2 : 1 );
 	        // Allow for extra size of rectangle.
-	    if ( t->o & TOP )
+	    if ( t->o & BOTTOM )
 	        box_ul.y = p.y + m * delta - 0.3 * h;
-	    else if ( t->o & BOTTOM )
+	    else if ( t->o & TOP )
 	        box_ul.y = p.y - n * h - m * delta;
 	    else
 	        box_ul.y = p.y - n * h / 2 - 0.2 * h;
