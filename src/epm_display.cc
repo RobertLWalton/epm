@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Dec 22 07:23:03 EST 2020
+// Date:	Tue Dec 22 11:32:22 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -775,6 +775,14 @@ int R, C;
 double L_height, L_width;
 margins L_margins;
 
+// Title Parameters.
+//
+struct command;	    // Defined in Page Section Data
+void delete_commands ( command * & list );  // Ditto
+double compute_height ( command * list );   // Ditto
+command * title = NULL;
+double title_height;
+
 // Default page parameters from layout section.
 //
 double D_scale;
@@ -939,6 +947,7 @@ void init_layout ( int R, int C )
 
     font_dict.clear();
     stroke_dict.clear();
+    delete_commands ( title );
 
     const color * black = find_color ( "black" );
     assert ( black != NULL );
@@ -1858,7 +1867,7 @@ void check_conflicts
 }
 
 // Attach command to end of current_list.  Returns
-// false if this cannot be dones because command is
+// false if this cannot be done because command is
 // continuing and has no previous start.  This
 // cannot happen if continuing is false.
 //
@@ -1969,6 +1978,7 @@ section read_section ( istream & in )
 	    dout << endl << "Layout:" << endl;
 
 	    s = LAYOUT;
+	    current_list = & title;
 
 	    long R, C;
 	    double  WIDTH, HEIGHT; 
@@ -2149,7 +2159,7 @@ section read_section ( istream & in )
 	    in_head_or_foot = false;
 	    in_body = true;
 	}
-	else if ( op == "text" && s == PAGE )
+	else if ( op == "text" )
 	{
 	    const font * FONT;
 	    const color * COLOR = NULL;
@@ -2194,7 +2204,7 @@ section read_section ( istream & in )
 	    t->p = { X, Y };
 	    t->t = TEXT;
 	}
-	else if ( op == "space" && in_head_or_foot )
+	else if ( op == "space" && ! in_body )
 	{
 	    double SPACE;
 	    if ( ! read_length ( "SPACE", SPACE,
@@ -2357,15 +2367,18 @@ section read_section ( istream & in )
 		    else
 		    if ( read_double
 			     ( "A", A,
-			       - 1000 * 360, + 1000 * 360 )
+			       - 1000 * 360,
+			       + 1000 * 360 )
 			 &&
 			 read_double
 			     ( "G1", G1,
-			       - 1000 * 360, + 1000 * 360 )
+			       - 1000 * 360,
+			       + 1000 * 360 )
 			 &&
 			 ! read_double
 			     ( "G2", G2,
-			       - 1000 * 360, + 1000 * 360,
+			       - 1000 * 360,
+			       + 1000 * 360,
 			       false ) )
 			continue;
 		}
@@ -2474,7 +2487,10 @@ section read_section ( istream & in )
 		error ( "missing `end' inserted" );
 		end * e = new end;
 		attach ( e, 'e', false, true );
-	     }
+	    }
+	    else if ( s == LAYOUT )
+	        title_height = compute_height ( title );
+
 	    break;
 	}
 	else
