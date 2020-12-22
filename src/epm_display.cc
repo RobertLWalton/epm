@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Dec 22 11:32:22 EST 2020
+// Date:	Tue Dec 22 17:42:03 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -1287,7 +1287,8 @@ void init_page ( void )
     P_bounds = D_bounds;
 
     P_height = L_height - L_margins.top
-                        - L_margins.bottom;
+                        - L_margins.bottom
+			- title_height;
     P_height /= R;
     P_width = L_width - L_margins.left
                       - L_margins.right;
@@ -3699,20 +3700,18 @@ int main ( int argc, char ** argv )
 		 == CAIRO_STATUS_SUCCESS );
 
 	double left = L_margins.left;
-	double top = L_margins.top;
-	double width = ( L_width - L_margins.left
-	                         - L_margins.right )
-		     / C;
-	double height = ( L_height - L_margins.top
-	                           - L_margins.bottom )
-		      / R;
+	double top = L_margins.top - title_height;
 	int curR = 0, curC = 0;
 	while ( true )
 	{
 	    s = read_section ( * in );
 	    if ( s != PAGE ) break;
-	    draw_page ( left + curC * width,
-	                top + curR * height );
+	    if ( curR == 0 && curC == 0 )
+	        draw_head_or_foot
+		    ( title, "Title",
+		      left, L_margins.top, L_width );
+	    draw_page ( left + curC * P_width,
+	                top + curR * P_height );
 	    if ( ++ curC >= C )
 	    {
 		curC = 0;
