@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Dec 22 17:42:03 EST 2020
+// Date:	Tue Dec 22 19:16:32 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -435,7 +435,7 @@ const char * const documentation[] = { "\n"
 "    beginning of each list.\n"
 "\n"
 "    The -debug option can be used to output the data\n"
-"    used to draw, rather than the drawing itself.\n"
+"    used to draw to the standard error.\n"
 "\n"
 "    The commands are described below.  Upper case\n"
 "    identifiers in a command designate parameters.\n"
@@ -900,7 +900,7 @@ const stroke * make_stroke ( string name,
 //
 void print_font ( const font * f )
 {
-    cout << "    font " << f->name
+    cerr << "    font " << f->name
 	 << " " << 72 * f->size << "pt"
 	 << " " << f->c->name
 	 << " " << f->o
@@ -913,7 +913,7 @@ void print_font ( const font * f )
 //
 void print_stroke ( const stroke * s )
 {
-    cout << "    stroke " << s->name
+    cerr << "    stroke " << s->name
 	 << " " << 72 * s->width << "pt"
 	 << " " << s->c->name
 	 << " " << s->o
@@ -1135,12 +1135,12 @@ void print_commands ( command * list )
 	case 't':
 	{
 	    text * t = (text *) current;
-	    cout << "    text " << t->f->name;
+	    cerr << "    text " << t->f->name;
 	    if ( t->c != NULL )
-	        cout << " " << t->c->name;
+	        cerr << " " << t->c->name;
 	    if ( t->o != NO_OPTIONS )
-	        cout << " " << t->o;
-	    cout << " " << t->p
+	        cerr << " " << t->o;
+	    cerr << " " << t->p
 		 << " " << t->t
 		 << endl;
 	    break;
@@ -1148,46 +1148,46 @@ void print_commands ( command * list )
 	case 'S':
 	{
 	    space * s = (space *) current;
-	    cout << "    space " << s->s << "in"
+	    cerr << "    space " << s->s << "in"
 		 << endl;
 	    break;
 	}
 	case 's':
 	{
 	    start * s = (start *) current;
-	    cout << "    start " << s->s->name;
+	    cerr << "    start " << s->s->name;
 	    if ( s->c != NULL )
-	        cout << " " << s->c->name;
+	        cerr << " " << s->c->name;
 	    if ( s->o != NO_OPTIONS )
-	        cout << " " << s->o;
-	    cout << " " << s->p
+	        cerr << " " << s->o;
+	    cerr << " " << s->p
 		 << endl;
 	    break;
 	}
 	case 'l':
 	{
 	    line * l = (line *) current;
-	    cout << "    line " << l->p
+	    cerr << "    line " << l->p
 		 << endl;
 	    break;
 	}
 	case 'c':
 	{
 	    curve * c = (curve *) current;
-	    cout << "    curve " << c->p[0]
+	    cerr << "    curve " << c->p[0]
 	         << " " << c->p[1]
 	         << " " << c->p[2]
 		 << endl;
 	    break;
 	}
 	case 'e':
-	    cout << "    end" << endl;
+	    cerr << "    end" << endl;
 	    break;
 	case 'a':
 	{
 	    arc * a = (arc *) current;
 	    if ( a->s == NULL )
-		cout << "    arc"
+		cerr << "    arc"
 		     << " " << a->r
 		     << " " << a->a
 		     << " " << a->g1
@@ -1195,17 +1195,17 @@ void print_commands ( command * list )
 		     << endl;
 	    else
 	    {
-		cout << "    arc " << a->s->name;
+		cerr << "    arc " << a->s->name;
 		if ( a->col != NULL )
-		    cout << " " << a->col->name;
+		    cerr << " " << a->col->name;
 		if ( a->o != NO_OPTIONS )
-		    cout << " " << a->o;
-		cout << " " << a->c;
+		    cerr << " " << a->o;
+		cerr << " " << a->c;
 		if ( ! isnan ( a->R ) )
-		    cout << " " << a->R << "pt"
+		    cerr << " " << a->R << "pt"
 		         << endl;
 		else
-		    cout << " " << a->r
+		    cerr << " " << a->r
 		         << " " << a->a
 		         << " " << a->g1
 		         << " " << a->g2
@@ -1216,19 +1216,19 @@ void print_commands ( command * list )
 	case 'r':
 	{
 	    rectangle * r = (rectangle *) current;
-	    cout << "    rectangle " << r->s->name;
+	    cerr << "    rectangle " << r->s->name;
 	    if ( r->col != NULL )
-		cout << " " << r->col->name;
+		cerr << " " << r->col->name;
 	    if ( r->o != NO_OPTIONS )
-		cout << " " << r->o;
-	    cout << " " << r->c
+		cerr << " " << r->o;
+	    cerr << " " << r->c
 	         << " " << r->width
 	         << " " << r->height
 		 << endl;
 	    break;
 	}
 	default:
-	    cout << "    bad command " << current->c
+	    cerr << "    bad command " << current->c
 	         << endl;
 	}
 
@@ -2510,7 +2510,7 @@ section read_section ( istream & in )
     }
 
     if ( debug && s == LAYOUT )
-	cout << "    R = " << R <<
+	cerr << "    R = " << R <<
 		   " C = " << C << endl
 	     << "    Physical Page:" << endl
 	     << "        width "
@@ -2745,13 +2745,13 @@ void print_matrix ( cairo_t * context,
     cairo_matrix_t matrix;
 
     if ( name != NULL )
-        cout << endl << name << ":" << endl;
+        cerr << endl << name << ":" << endl;
 
     cairo_get_matrix ( context, & matrix );
     vector x = { matrix.xx, matrix.yx };
     vector y = { matrix.xy, matrix.yy };
     vector t = { matrix.x0, matrix.y0 };
-    cout << x << "*x + " << y << "*y + " << t << endl;
+    cerr << x << "*x + " << y << "*y + " << t << endl;
 }
 
 // Print current path for debugging.
@@ -2763,7 +2763,7 @@ void print_path ( cairo_t * context,
     cairo_path_data_t * data;
 
     if ( name != NULL )
-        cout << endl << name << ":" << endl;
+        cerr << endl << name << ":" << endl;
 
     path = cairo_copy_path ( context );
     for ( int i = 0; i < path->num_data; )
@@ -2776,14 +2776,14 @@ void print_path ( cairo_t * context,
 	{
 	    point p = { data[1].point.x,
 	                data[1].point.y };
-	    cout << "move to " << p << endl;
+	    cerr << "move to " << p << endl;
 	    break;
 	}
 	case CAIRO_PATH_LINE_TO:
 	{
 	    point p = { data[1].point.x,
 	                data[1].point.y };
-	    cout << "line to " << p << endl;
+	    cerr << "line to " << p << endl;
 	    break;
 	}
 	case CAIRO_PATH_CURVE_TO:
@@ -2792,7 +2792,7 @@ void print_path ( cairo_t * context,
 	        { data[1].point.x, data[1].point.y },
 	        { data[2].point.x, data[2].point.y },
 	        { data[3].point.x, data[3].point.y } };
-	    cout << "curve to"
+	    cerr << "curve to"
 	         << " " << p[0]
 	         << " " << p[1]
 	         << " " << p[2]
@@ -2801,16 +2801,16 @@ void print_path ( cairo_t * context,
 	}
 	case CAIRO_PATH_CLOSE_PATH:
 	{
-	    cout << "close" << endl;
+	    cerr << "close" << endl;
 	    break;
 	}
 	default:
-	    cout << "unknown path element type "
+	    cerr << "unknown path element type "
 	         << data->header.type << endl;
         }
     }
     cairo_path_destroy ( path );
-    cout << "Matrix: ";
+    cerr << "Matrix: ";
     print_matrix ( context );
 }
 
@@ -2828,7 +2828,7 @@ void draw_head_or_foot
 
     if ( debug && list != NULL )
     {
-        cout << endl << name << ":" << endl;
+        cerr << endl << name << ":" << endl;
 	print_commands ( list );
     }
 
@@ -3140,7 +3140,7 @@ void draw_level ( int i )
 {
     if ( debug && level[i] != NULL )
     {
-        cout << endl
+        cerr << endl
 	     << "Level " << i << ":"
 	     << endl;
 	print_commands ( level[i] );
@@ -3554,12 +3554,12 @@ void draw_page ( double P_left, double P_top )
 	point cll = { CONVERT ( P_bounds.ll ) };
 	point cur = { CONVERT ( P_bounds.ur ) };
 
-	// cout << "PHYSICAL " << ll << " - " << ur
+	// cerr << "PHYSICAL " << ll << " - " << ur
 	//      << endl;
-	// cout << "CONVERTED " << cll << " - " << cur
+	// cerr << "CONVERTED " << cll << " - " << cur
 	//      << endl;
 
-	cout << endl << "Logical Page:" << endl
+	cerr << endl << "Logical Page:" << endl
 	     << "    width " << P_width << "in"
 	     << " height " << P_height << "in"
 	     << endl
@@ -3602,12 +3602,9 @@ cairo_status_t write_to_cout
       const unsigned char * data, unsigned int length )
 {
     bytes += length;
-    if ( ! debug )
-    {
-	cout.write ( (const char *) data, length );
-	if ( ! cout )
-	    return CAIRO_STATUS_WRITE_ERROR;
-    }
+    cout.write ( (const char *) data, length );
+    if ( ! cout )
+	return CAIRO_STATUS_WRITE_ERROR;
     return CAIRO_STATUS_SUCCESS;
 }
 
@@ -3637,7 +3634,7 @@ int main ( int argc, char ** argv )
 	}
 	else
 	{
-	    cout << "Cannot understand -" << name
+	    cerr << "Cannot understand -" << name
 	         << endl << endl;
 	    exit (1);
 	}
@@ -3650,7 +3647,7 @@ int main ( int argc, char ** argv )
 
     if ( argc > 2 )
     {
-	cout << "Wrong number of arguments."
+	cerr << "Wrong number of arguments."
 	     << endl;
 	exit (1);
     }
@@ -3666,7 +3663,7 @@ int main ( int argc, char ** argv )
 	fin.open ( file );
 	if ( ! fin )
 	{
-	    cout << "Cannot open " << file << endl;
+	    cerr << "Cannot open " << file << endl;
 	    exit ( 1 );
 	}
 	in = & fin;
@@ -3675,12 +3672,12 @@ int main ( int argc, char ** argv )
     init_layout ( 1, 1 );
     if ( debug )
     {
-	cout << endl << "Default Fonts:" << endl;
+	cerr << endl << "Default Fonts:" << endl;
 	for ( font_it it = font_dict.begin();
 	      it != font_dict.end(); ++ it )
 	    print_font ( it->second );
 
-	cout << endl << "Default Strokes:" << endl;
+	cerr << endl << "Default Strokes:" << endl;
 	for ( stroke_it it = stroke_dict.begin();
 	      it != stroke_dict.end(); ++ it )
 	    print_stroke ( it->second );
@@ -3700,16 +3697,18 @@ int main ( int argc, char ** argv )
 		 == CAIRO_STATUS_SUCCESS );
 
 	double left = L_margins.left;
-	double top = L_margins.top - title_height;
+	double top = L_margins.top + title_height;
 	int curR = 0, curC = 0;
 	while ( true )
 	{
 	    s = read_section ( * in );
 	    if ( s != PAGE ) break;
 	    if ( curR == 0 && curC == 0 )
+	    {
 	        draw_head_or_foot
 		    ( title, "Title",
 		      left, L_margins.top, L_width );
+	    }
 	    draw_page ( left + curC * P_width,
 	                top + curR * P_height );
 	    if ( ++ curC >= C )
