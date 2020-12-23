@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Tue Dec 22 19:16:32 EST 2020
+// Date:	Tue Dec 22 19:24:03 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -63,6 +63,7 @@ using std::map;
 using std::min;
 using std::max;
 using std::string;
+using std::to_string;
 // std::vector is not here as vector is used for
 // another purpose.
 
@@ -2823,7 +2824,8 @@ double head_left, head_top, head_height, head_width,
 
 void draw_head_or_foot
     ( command * list, const char * name,
-      double left, double top, double width )
+      double left, double top, double width,
+      int page = 0 )
 {
 
     if ( debug && list != NULL )
@@ -2854,17 +2856,32 @@ void draw_head_or_foot
 	    const color * c = t->c;
 	    if ( c == NULL ) c = f->c;
 
+	    string s = t->t;
+
+	    if ( page > 0 )
+	    {
+	        string ps = to_string ( page );
+		while ( true )
+		{
+		    size_t pos = s.find ( "###" );
+		    if ( pos == string::npos )
+		        break;
+		    s.replace ( pos, 3, ps );
+		}
+	    }
+
+
 	    string tx[3];
-	    size_t pos1 = t->t.find_first_of ( '\\' );
-	    size_t pos2 = t->t.find_last_of ( '\\' );
+	    size_t pos1 = s.find_first_of ( '\\' );
+	    size_t pos2 = s.find_last_of ( '\\' );
 	    if ( pos1 == string::npos )
-	        tx[1] = t->t;
+	        tx[1] = s;
 	    else
 	    {
-	        tx[0] = t->t.substr ( 0, pos1 );
-		tx[2] = t->t.substr ( pos2 + 1 );
+	        tx[0] = s.substr ( 0, pos1 );
+		tx[2] = s.substr ( pos2 + 1 );
 		if ( pos1 != pos2 )
-		    tx[1] = t->t.substr
+		    tx[1] = s.substr
 		        ( pos1 + 1, pos2 - pos1 - 1 );
 	    }
 
@@ -3689,6 +3706,7 @@ int main ( int argc, char ** argv )
     context = cairo_create ( page );
 
     section s = LAYOUT;
+    int page_number = 0;
     while ( s == LAYOUT )
     {
 	cairo_pdf_surface_set_size
@@ -3707,7 +3725,10 @@ int main ( int argc, char ** argv )
 	    {
 	        draw_head_or_foot
 		    ( title, "Title",
-		      left, L_margins.top, L_width );
+		      left, L_margins.top,
+                      L_width - L_margins.left
+                              - L_margins.right,
+		      ++ page_number );
 	    }
 	    draw_page ( left + curC * P_width,
 	                top + curR * P_height );
