@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Aug 10 13:35:13 EDT 2020
+// Date:	Fri Dec 25 00:47:05 EST 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -99,6 +99,12 @@ function ERROR ( $message )
     fprintf ( STDERR, '%s',
               "ERROR: epm: $message" . PHP_EOL );
     exit ( 1 );
+}
+
+function WARN ( $message )
+{
+    fprintf ( STDERR, '%s',
+              "WARNING: epm: $message" . PHP_EOL );
 }
 
 $dryrun = false;

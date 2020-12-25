@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Nov  5 06:42:41 EST 2020
+// Date:    Fri Dec 25 00:49:10 EST 2020
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -255,7 +255,7 @@ function set_perms
 	if ( ! $dryrun
 	     &&
 	     ! @chmod ( $f, $new_perms ) )
-	    ERROR ( "could not change $action" );
+	    WARN ( "could not change $action" );
     }
 }
 
