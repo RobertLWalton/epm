@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Jun 11 15:15:36 EDT 2020
+// Date:	Thu Dec 24 23:01:28 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -30,6 +30,7 @@ using std::string;
 using std::vector;
 using std::ifstream;
 using std::max;
+using std::isnan;
 
 unsigned const LIMIT = 5;
 char const ILLEGAL = '?';
@@ -168,12 +169,12 @@ char documentation [] =
 "        both converted to IEEE floating point and\n"
 "        tested for equality.\n"
 "\n"
-"        If the absolute difference is larger than\n"
-"        A, or the relative difference is larger\n"
-"        than R, the two tokens are unequal.  See\n"
-"        below for definition of relative difference.\n"
-"        If either A or R is `-', the A or R test is\n"
-"        disabled.\n"
+"        If the absolute difference is less than or\n"
+"        equal to A OR the relative difference is\n"
+"        less than or equal to R, the two tokens are\n"
+"        equal.  See below for definition of relative\n"
+"        difference. If either A or R is `-', the A\n"
+"        or R test is disabled (both cannot be).\n"
 "\n"
 "        If this option is not given, it defaults to\n"
 "        `-float 0 -'.\n"
@@ -846,8 +847,6 @@ bool integers_are_equal ( void )
 // Compute statistics on results.
 //
 long long float_comparisons = 0;
-long long A_violations = 0;
-long long R_violations = 0;
 double max_A = -1;
 double max_R = -1;
 //
@@ -857,55 +856,66 @@ void compare_numbers ( void )
     double n2 = number ( test );
 
     ++ float_comparisons;
+    bool A_violation = false;
+    bool R_violation = false;
+    double A = 0, R = 0;
 
-    double A = 0;
-    if ( n1 != n2 ) A = fabs ( n1 - n2 );
-	// If n1 and n2 are both infinities of the
-	// same sign, they compare equal.
+    // If n1 and n2 are both infinities of the
+    // same sign, they compare equal and there
+    // are no violations.
 
-    if ( ! isnan ( number_A ) )
+    if ( ! isnan ( number_A ) && n1 != n2 )
     {
-	if ( max_A < A ) max_A = A;
-	if ( A > number_A )
-	{
-	    ++ A_violations;
-	    error ( unequal_numbers,
-		    "output token %s and test token"
-		    " %s\n    are unequal numbers,"
-		    " their absolute difference"
-		    " %g\n    is > the allowed"
-		    " difference %g",
-		    token ( output ),
-		    token ( test ),
-		    A, number_A );
-	}
+	A = fabs ( n1 - n2 );
+	A_violation = ( A > number_A );
     }
-
-    double R = 0;
-    if ( n1 != n2 )
+    if ( ! isnan ( number_R ) && n1 != n2 )
     {
 	double divisor =
 	    max ( fabs ( n1 ), fabs ( n2 ) );
-	R = fabs ( n1 - n2 )
-		 / divisor;
-    }
-    if ( ! isnan ( number_R ) )
-    {
-	if ( max_R < R ) max_R = R;
+	R = fabs ( n1 - n2 ) / divisor;
 
-	if ( R > number_R )
-	{
-	    ++ R_violations;
-	    error ( unequal_numbers,
-		    "output token %s and test token"
-		    " %s\n    are unequal numbers,"
-		    " their relative difference"
-		    " %g\n    is > the allowed"
-		    " difference %g",
-		    token ( output ),
-		    token ( test ),
-		    R, number_R );
-	}
+	R_violation = ( R > number_R );
+    }
+    if ( A_violation && R_violation )
+    {
+	error ( unequal_numbers,
+		"output token %s and test token"
+		" %s\n    are unequal numbers,"
+		"\n    their absolute difference"
+		" %g is > %g,"
+		"\n    their relative difference"
+		" %g is > %g",
+		token ( output ),
+		token ( test ),
+		A, number_A,
+		R, number_R );
+	if ( max_A < A ) max_A = A;
+	if ( max_R < R ) max_R = R;
+    }
+    else if ( A_violation && isnan ( number_R ) )
+    {
+	error ( unequal_numbers,
+		"output token %s and test token"
+		" %s\n    are unequal numbers,"
+		"\n    their absolute difference"
+		" %g is > %g",
+		token ( output ),
+		token ( test ),
+		A, number_A );
+	if ( max_A < A ) max_A = A;
+    }
+    else if ( R_violation && isnan ( number_A ) )
+    {
+	error ( unequal_numbers,
+		"output token %s and test token"
+		" %s\n    are unequal numbers,"
+		"\n    their relative difference"
+		" %g is > %g",
+		token ( output ),
+		token ( test ),
+		R, number_R );
+	if ( max_R < R ) max_R = R;
     }
 
     if ( output.places != test.places
@@ -1006,6 +1016,13 @@ int main ( int argc, char ** argv )
 			 << argv[1] << endl;
 		    exit ( 1 );
 		}
+	    }
+	    if (    isnan ( number_R )
+	         && isnan ( number_A ) )
+	    {
+		cerr << "BOTH A and R cannot be `-'"
+			" for -float" << endl;
+		exit ( 1 );
 	    }
 	}
 	else
@@ -1341,28 +1358,22 @@ int main ( int argc, char ** argv )
 	     << " Float Number Comparisons:"
 	     << endl;
 	if ( ! isnan ( number_A ) )
-	    cout << "  " << A_violations
-	         << " violated the A constraint"
-		 << endl
-		 << "    with maximum A = "
-		 << max_A
-		 << ( max_A < number_A ? " < " :
-		      max_A > number_A ? " > " :
-		                        " == " )
-		 << number_A
-		 << " = allowed A" << endl;
+	{
+	    cout << "  Maximum A = " << max_A
+	         << " > " << number_A;
+	    if ( ! isnan ( number_R ) )
+	        cout << " when R violated";
+	    cout << endl;
+	}
 	if ( ! isnan ( number_R ) )
-	    cout << "  " << R_violations
-	         << " violated the R constraint"
-		 << endl
-		 << "    with maximum R = "
-		 << max_R
-		 << ( max_R < number_R ? " < " :
-		      max_R > number_R ? " > " :
-		                        " == " )
-		 << number_R
-		 << " = allowed R" << endl;
-	 cout << "-----" << endl;
+	{
+	    cout << "  Maximum R = " << max_R
+	         << " > " << number_R;
+	    if ( ! isnan ( number_A ) )
+	        cout << " when A violated";
+	    cout << endl;
+	}
+	cout << "-----" << endl;
     }
 
     for ( int i = 0; i < error_type_count; ++ i )
