@@ -3572,11 +3572,104 @@ void draw_level ( int i )
 	{
 	    infline * il = (infline *) current;
 	    cairo_new_path ( context );
-	    point p1, p2;
-	    cairo_move_to ( context, CONVERT ( p1 ) );
-	    cairo_line_to ( context, CONVERT ( p2 ) );
-	    apply_stroke ( il->s, il->col, il->o );
-	    // TBD arrows
+	    point p = il->p;
+	    vector v = { cos ( il->A ), sin ( il->A ) };
+	    // Line is p + t*v for real t
+	    double tenter = - INFINITY;
+	    double texit = + INFINITY;
+	    if ( v.x == 0 )
+	    {
+	        if ( p.x < P_bounds.ll.x
+		     ||
+		     p.x > P_bounds.ur.x )
+		    tenter = + INFINITY,
+		    texit = -INFINITY;
+	    }
+	    else if ( v.x > 0 )
+	    {
+	        // p.x + t * v.x = bound x
+	        double t =
+		    ( P_bounds.ll.x - p.x ) / v.x;
+		if ( tenter < t ) tenter = t;
+	        t = ( P_bounds.ur.x - p.x ) / v.x;
+		if ( texit > t ) texit = t;
+	    }
+	    else // if ( v.x < 0 )
+	    {
+	        // p.x + t * v.x = bound x
+	        double t =
+		    ( P_bounds.ur.x - p.x ) / v.x;
+		if ( tenter < t ) tenter = t;
+	        t = ( P_bounds.ll.x - p.x ) / v.x;
+		if ( texit > t ) texit = t;
+	    }
+	    if ( v.y == 0 )
+	    {
+	        if ( p.y < P_bounds.ll.y
+		     ||
+		     p.y > P_bounds.ur.y )
+		    tenter = + INFINITY,
+		    texit = -INFINITY;
+	    }
+	    else if ( v.y > 0 )
+	    {
+	        // p.y + t * v.y = bound y
+	        double t =
+		    ( P_bounds.ll.y - p.y ) / v.y;
+		if ( tenter < t ) tenter = t;
+	        t = ( P_bounds.ur.y - p.y ) / v.y;
+		if ( texit > t ) texit = t;
+	    }
+	    else // if ( v.y < 0 )
+	    {
+	        // p.y + t * v.y = bound y
+	        double t =
+		    ( P_bounds.ur.y - p.y ) / v.y;
+		if ( tenter < t ) tenter = t;
+	        t = ( P_bounds.ll.y - p.y ) / v.y;
+		if ( texit > t ) texit = t;
+	    }
+	    if ( il->o & EXTEND_FOREWARD )
+	    {
+	        if ( tenter < 0 ) tenter = 0;
+	    }
+	    if ( il->o & EXTEND_BACKWARD )
+	    {
+	        if ( texit > 0 ) texit = 0;
+	    }
+	    if ( tenter <= texit )
+	    {
+	        point penter = p + tenter * v;
+	        point pexit = p + texit * v;
+		cairo_new_path ( context );
+		cairo_move_to
+		    ( context, CONVERT ( penter ) );
+		cairo_line_to
+		    ( context, CONVERT ( pexit ) );
+		apply_stroke ( il->s, il->col, il->o );
+		if ( il->o & ARROW_OPTIONS )
+		{
+		    cairo_new_path ( context );
+		    point pmiddle =
+		        0.5 * ( penter + pexit );
+		    if ( il->o & MIDDLE_ARROW )
+			draw_arrow ( pmiddle, v );
+		    if ( il->o & END_ARROW )
+			draw_arrow ( pexit, v );
+
+		    // This cannot be done by apply
+		    // stoke as that may contain
+		    // dashes or dots.
+		    //
+		    cairo_set_source_rgb
+			( context, il->col->red,
+			  il->col->green,
+			  il->col->blue );
+		    cairo_set_line_width
+		        ( context, 72 * il->s->width );
+		    cairo_stroke ( context );
+		}
+	    }
 	    break;
 	}
 	default:
