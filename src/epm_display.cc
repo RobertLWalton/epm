@@ -1292,7 +1292,7 @@ void delete_commands ( command * & list )
     {
         command * next = current->next;
 
-	switch ( list->c )
+	switch ( current->c )
 	{
 	case 't':
 	    delete (text *) current;
@@ -1324,6 +1324,7 @@ void delete_commands ( command * & list )
 	default:
 	    assert ( ! "deleting bad command" );
 	}
+	current = next;
 
     } while ( current != list );
 
@@ -2525,12 +2526,12 @@ section read_section ( istream & in )
 	               ( "HEIGHT", HEIGHT,
 			 0, + MAX_BODY_COORDINATE,
 			 false ) )
+		continue;
 
 	    check_conflicts
 	        ( OPT, DOTTED_DASHED_CONFLICT );
 	    check_conflicts
 	        ( OPT, FILL_CONFLICT );
-		continue;
 
 	    rectangle * r = new rectangle;
 	    attach ( r, 'r' );
@@ -2577,7 +2578,6 @@ section read_section ( istream & in )
 	        ( OPT, DOTTED_DASHED_CONFLICT );
 	    check_conflicts
 	        ( OPT, EXTEND_CONFLICT );
-		continue;
 
 	    infline * il = new infline;
 	    attach ( il, 'i' );
@@ -3580,7 +3580,8 @@ void draw_level ( int i )
 	    infline * il = (infline *) current;
 	    cairo_new_path ( context );
 	    point p = il->p;
-	    vector v = { cos ( il->A ), sin ( il->A ) };
+	    double A = ( M_PI / 180 ) * il->A;
+	    vector v = { cos ( A ), sin ( A ) };
 	    // Line is p + t*v for real t
 	    // Compute values of t for which line enters
 	    // and leaves bounding box.

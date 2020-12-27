@@ -404,14 +404,16 @@ level
 line  1 0
 line  1 1
 end
-# level 51
-# arc solid-red 0.5 0.5 0.2
+level 51
+arc solid-blue 0.5 0.5 0.2
 bounds 0 0 2 2
 *
-# arc solid-blue 0 1 0.5 0.25 0 0 90
 start solid-red 0 0
 line  1 0
 line  1 1
-bounds 0 0 2 2
 end
+rectangle normal 0 0 1 1
+infline normal 0 0 0
+infline normal 0 0 90
+bounds -2 -2 2 2
 *
