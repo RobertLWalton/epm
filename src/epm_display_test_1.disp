@@ -1,3 +1,13 @@
+# Test data for epm_display
+#
+# File: 	epm_display_test_1.disp
+# Authors:	Bob Walton (walton@deas.harvard.edu)
+# Date: 	Sun Dec 27 11:15:46 EST 2020
+#
+# The authors have placed this data in the public
+# domain; they make no warranty and accept no liability
+# for this data.
+#
 layout 3 2
 stroke red 2pt red
 stroke blue 4pt blue c
@@ -389,7 +399,7 @@ text large-bold co 2 4 XXX\YYYYYY\XXX
 *
 layout 2 1
 stroke solid-blue blue s
-stroke solid-red red s
+stroke solid-red 2pt red s
 margins 0.1in 0in
 scale 1
 *
@@ -408,12 +418,16 @@ level 51
 arc solid-blue 0.5 0.5 0.2
 bounds 0 0 2 2
 *
-start solid-red 0 0
+start solid-red mos 0 0
 line  1 0
 line  1 1
 end
 rectangle normal 0 0 1 1
 infline normal 0 0 0
 infline normal 0 0 90
+infline normal blue ef -0.5 0.5 135
+infline normal blue eb 0.5 -0.5 135
+infline normal red mf 0.5 1.5 0
+infline normal brown -mef 0.5 1.75 0
 bounds -2 -2 2 2
 *
