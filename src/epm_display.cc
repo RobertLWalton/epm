@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Dec 26 17:23:12 EST 2020
+// Date:	Sat Dec 26 19:20:47 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -159,32 +159,38 @@ enum options {
     FILL_DOTTED		= 1 << 8,
     FILL_HORIZONTAL	= 1 << 9,
     FILL_VERTICAL	= 1 << 10,
+    EXTEND_FOREWARD     = 1 << 11,
+    EXTEND_BACKWARD     = 1 << 12,
 
     // Text Options:
     //
-    TOP 		= 1 << 11,
-    BOTTOM		= 1 << 12,
-    LEFT		= 1 << 13,
-    RIGHT		= 1 << 14,
-    BOX_WHITE		= 1 << 15,
-    CIRCLE_WHITE	= 1 << 16,
+    TOP 		= 1 << 13,
+    BOTTOM		= 1 << 14,
+    LEFT		= 1 << 15,
+    RIGHT		= 1 << 16,
+    BOX_WHITE		= 1 << 17,
+    CIRCLE_WHITE	= 1 << 18,
 
     // Text and Stroke Options
     //
-    OUTLINE		= 1 << 17
+    OUTLINE		= 1 << 19
 };
-const char * optchar = "bi" ".-cmesdhv" "tblrxco";
+const char * optchar = "bi" ".-cmesdhvfb" "tblrxco";
 const options ARROW_OPTIONS = (options)
     ( MIDDLE_ARROW + END_ARROW );
 const options FILL_OPTIONS = (options)
     ( FILL_SOLID + FILL_DOTTED + FILL_HORIZONTAL
                                + FILL_VERTICAL );
+const options EXTEND_OPTIONS = (options)
+    ( EXTEND_FOREWARD + EXTEND_BACKWARD );
 
 const options DOTTED_DASHED_CONFLICT = (options)
     ( DOTTED + DASHED );
 const options FILL_CONFLICT = (options)
     ( FILL_SOLID + FILL_DOTTED + FILL_HORIZONTAL
                  + FILL_VERTICAL );
+const options EXTEND_CONFLICT = (options)
+    ( EXTEND_FOREWARD + EXTEND_BACKWARD );
 const options TOP_BOTTOM_CONFLICT = (options)
     ( TOP + BOTTOM );
 const options LEFT_RIGHT_CONFLICT = (options)
@@ -765,7 +771,7 @@ const char * const documentation[] = { "\n"
 "        With the f option the first line endpoint\n"
 "        is (X,Y) and the second is on the boundary\n"
 "        in direction A.  With the b option the\n"
-"        first endpoint is on the bounardy in direc-\n"
+"        first endpoint is on the boundary in direc-\n"
 "        tion -A and the second endpoint is (X,Y).\n"
 "        with neither option, the first endpoint is\n"
 "        on the boundary in direction -A and the\n"
@@ -834,7 +840,8 @@ struct font
 options stroke_options = (options)
     ( DOTTED + DASHED + CLOSED +
       ARROW_OPTIONS +
-      FILL_OPTIONS + OUTLINE );
+      FILL_OPTIONS +
+      EXTEND_OPTIONS + OUTLINE );
 struct stroke
 {
     string name;
@@ -1128,6 +1135,14 @@ struct rectangle : public command // == 'r'
     point c;
     double width, height;
 };
+struct infline : public command // == 'i'
+{
+    const stroke * s;
+    const color * col;
+    options o;
+    point p;
+    double A;
+};
 
 // Page Parameters.
 //
@@ -1253,6 +1268,19 @@ void print_commands ( command * list )
 		 << endl;
 	    break;
 	}
+	case 'i':
+	{
+	    infline * il = (infline *) current;
+	    cerr << "    infline " << il->s->name;
+	    if ( il->col != NULL )
+		cerr << " " << il->col->name;
+	    if ( il->o != NO_OPTIONS )
+		cerr << " " << il->o;
+	    cerr << " " << il->p
+	         << " " << il->A
+		 << endl;
+	    break;
+	}
 	default:
 	    cerr << "    bad command " << current->c
 	         << endl;
@@ -1295,6 +1323,9 @@ void delete_commands ( command * & list )
 	    break;
 	case 'r':
 	    delete (rectangle *) current;
+	    break;
+	case 'i':
+	    delete (infline *) current;
 	    break;
 	default:
 	    assert ( ! "deleting bad command" );
@@ -2505,6 +2536,50 @@ section read_section ( istream & in )
 	    r->width = WIDTH;
 	    r->height = HEIGHT;
 	}
+	else if ( op == "infline" && in_body )
+	{
+	    const stroke * STROKE;
+	    const color * COLOR;
+	    options OPT = NO_OPTIONS;
+	    double X, Y, A;
+
+	    if ( ! read_stroke
+	               ( "STROKE", STROKE, false ) )
+		continue;
+	    read_color ( "COLOR", COLOR );
+	    read_options ( "OPT", OPT, stroke_options );
+	    if ( ! read_double
+	               ( "X", X,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "Y", Y,
+			 - MAX_BODY_COORDINATE,
+			 + MAX_BODY_COORDINATE,
+			 false ) )
+		continue;
+	    if ( ! read_double
+	               ( "A", A,
+		         - 1000 * 360, + 1000 * 360,
+			 false ) )
+		continue;
+
+	    check_conflicts
+	        ( OPT, DOTTED_DASHED_CONFLICT );
+	    check_conflicts
+	        ( OPT, EXTEND_CONFLICT );
+		continue;
+
+	    infline * il = new infline;
+	    attach ( il, 'i' );
+	    il->s = STROKE;
+	    il->col = COLOR;
+	    il->o = OPT;
+	    il->p = { X, Y };
+	    il->A = A;
+	}
 	else if ( op == "*" )
 	{
 	    if (    s == PAGE
@@ -2747,6 +2822,11 @@ int compute_bounding_box ( void )
 		    BOUND ( r->c + d[j] );
 		}
 		break;
+	    }
+	    case 'i':
+	    {
+		infline * il = (infline *) current;
+		BOUND ( il->p );
 	    }
 	    default:
 		assert ( ! "bounding bad command" );
@@ -3488,6 +3568,17 @@ void draw_level ( int i )
 	    apply_stroke ( r->s, r->col, r->o );
 	    break;
 	}
+	case 'i':
+	{
+	    infline * il = (infline *) current;
+	    cairo_new_path ( context );
+	    point p1, p2;
+	    cairo_move_to ( context, CONVERT ( p1 ) );
+	    cairo_line_to ( context, CONVERT ( p2 ) );
+	    apply_stroke ( il->s, il->col, il->o );
+	    // TBD arrows
+	    break;
+	}
 	default:
 	    assert ( ! "bad draw level command" );
 	}
@@ -3533,10 +3624,10 @@ void draw_page ( double P_left, double P_top )
     if ( isnan ( P_bounds.ll.x ) )
     {
         int count = compute_bounding_box();
-	if ( count < 4 )
-	    fatal ( "only %d points available to"
+	if ( count == 0 )
+	    fatal ( "zero points available to"
 	            " automatically compute bounding"
-		    " box (need >= 4)", count );
+		    " box", count );
     }
 
     double dx = P_bounds.ur.x - P_bounds.ll.x;
