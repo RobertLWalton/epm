@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 27 04:28:11 EST 2020
+// Date:	Sun Dec 27 05:43:29 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -3065,12 +3065,14 @@ double xscale, yscale, left, bottom;
 # define SCALE(v) \
     (v).x * xscale, - (v).y * yscale
 
-inline void apply_stroke
-	( const stroke * s, const color * col,
-	                    options opt )
+void apply_stroke ( const command * c )
 {
+    const stroke * str = c->str;
+    const color * col = c->col;
+    options opt = c->opt;
+
     cairo_set_line_width
-	( context, 72 * s->width );
+	( context, 72 * str->width );
     if ( opt & ( FILL_DOTTED |
 	         FILL_HORIZONTAL |
 	         FILL_VERTICAL ) )
@@ -3477,7 +3479,7 @@ void draw_level ( int i )
 	}
 	case 'e':
 	{
-	    apply_stroke ( s->str, s->col, s->opt );
+	    apply_stroke ( s );
 	    draw_arrows ( s );
 	    break;
 	}
@@ -3556,7 +3558,7 @@ void draw_level ( int i )
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
 	    if ( a->str != NULL )
-	        apply_stroke ( a->str, a->col, a->opt );
+	        apply_stroke ( a );
 	    break;
 	}
 	case 'r':
@@ -3570,7 +3572,7 @@ void draw_level ( int i )
 	        ( context, c.x + d.x, c.y + d.y,
 		           fabs ( xscale) * r->width,
 		           fabs ( yscale) * r->height );
-	    apply_stroke ( r->str, r->col, r->opt );
+	    apply_stroke ( r );
 	    break;
 	}
 	case 'i':
@@ -3580,8 +3582,11 @@ void draw_level ( int i )
 	    point p = il->p;
 	    vector v = { cos ( il->A ), sin ( il->A ) };
 	    // Line is p + t*v for real t
+	    // Compute values of t for which line enters
+	    // and leaves bounding box.
 	    double tenter = - INFINITY;
 	    double texit = + INFINITY;
+
 	    if ( v.x == 0 )
 	    {
 	        if ( p.x < P_bounds.ll.x
@@ -3589,6 +3594,7 @@ void draw_level ( int i )
 		     p.x > P_bounds.ur.x )
 		    tenter = + INFINITY,
 		    texit = -INFINITY;
+		    // Line misses bounding box.
 	    }
 	    else if ( v.x > 0 )
 	    {
@@ -3608,6 +3614,7 @@ void draw_level ( int i )
 	        t = ( P_bounds.ll.x - p.x ) / v.x;
 		if ( texit > t ) texit = t;
 	    }
+
 	    if ( v.y == 0 )
 	    {
 	        if ( p.y < P_bounds.ll.y
@@ -3615,6 +3622,7 @@ void draw_level ( int i )
 		     p.y > P_bounds.ur.y )
 		    tenter = + INFINITY,
 		    texit = -INFINITY;
+		    // Line misses bounding box.
 	    }
 	    else if ( v.y > 0 )
 	    {
@@ -3651,8 +3659,7 @@ void draw_level ( int i )
 		    ( context, CONVERT ( penter ) );
 		cairo_line_to
 		    ( context, CONVERT ( pexit ) );
-		apply_stroke
-		    ( il->str, il->col, il->opt );
+		apply_stroke ( il );
 		if ( il->opt & ARROW_OPTIONS )
 		{
 		    cairo_new_path ( context );
