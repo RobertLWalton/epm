@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 27 05:43:29 EST 2020
+// Date:	Sun Dec 27 11:15:46 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -768,17 +768,17 @@ const char * const documentation[] = { "\n"
 "        nates and A is in degrees.  Close and\n"
 "        fill options are ignored.\n"
 "\n"
-"        With the f option the first line endpoint\n"
-"        is (X,Y) and the second is on the boundary\n"
-"        in direction A.  With the b option the\n"
-"        first endpoint is on the boundary in direc-\n"
-"        tion -A and the second endpoint is (X,Y).\n"
-"        with neither option, the first endpoint is\n"
-"        on the boundary in direction -A and the\n"
-"        second endpoint is on the bounary in direc-\n"
-"        tion +A.   Arrows are drawn in the direc-\n"
-"        tion A in the midpoint or at end of the\n"
-"        drawn line.\n"
+"        With the f option the infinite line extends\n"
+"        from (X,Y) in the +A direction.  With the b\n"
+"        option the infinite line extends from (X,Y)\n"
+"        in the -A direction.  With neither option\n"
+"        the infinite line extends in both"
+				" directions.\n"
+"        In all cases the line is truncated so as to\n"
+"        not go outside the boundary.  Any arrows are\n"
+"        place at the end or midpoint of the"
+                                " truncated\n"
+"        line.\n"
 } ;
 
 void print_documentation ( int exit_code )
