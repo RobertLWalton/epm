@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Dec 26 19:20:47 EST 2020
+// Date:	Sun Dec 27 04:28:11 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -827,8 +827,8 @@ struct font
 {
     string name;
     double size;
-    const color * c;
-    options o;
+    const color * col;
+    options opt;
     const char * family;
     double space;
 
@@ -845,8 +845,8 @@ options stroke_options = (options)
 struct stroke
 {
     string name;
-    const color * c;
-    options o;
+    const color * col;
+    options opt;
     double width;
 };
 
@@ -863,12 +863,12 @@ typedef stroke_dt::iterator stroke_it;
 //
 const font * make_font ( string name,
 		         double size,
-                         const color * c,
-			 options o,
+                         const color * col,
+			 options opt,
                          const char * family,
 	                 double space )
 {
-    assert ( c != NULL );
+    assert ( col != NULL );
 
     font_it it = font_dict.find ( name );
     if ( it != font_dict.end() )
@@ -878,8 +878,8 @@ const font * make_font ( string name,
     }
     font * f = new font;
     f->name = name;
-    f->c = c;
-    f->o = o;
+    f->col = col;
+    f->opt = opt;
     f->family = family;
     // Putting cairo: in front of these does not
     // work, so cairo_family == family.
@@ -890,11 +890,11 @@ const font * make_font ( string name,
     f->space = space;
 
     f->cairo_slant =
-        ( o & ITALIC ? CAIRO_FONT_SLANT_ITALIC :
-                       CAIRO_FONT_SLANT_NORMAL );
+        ( opt & ITALIC ? CAIRO_FONT_SLANT_ITALIC :
+                         CAIRO_FONT_SLANT_NORMAL );
     f->cairo_weight =
-        ( o & BOLD ? CAIRO_FONT_WEIGHT_BOLD :
-                     CAIRO_FONT_WEIGHT_NORMAL );
+        ( opt & BOLD ? CAIRO_FONT_WEIGHT_BOLD :
+                       CAIRO_FONT_WEIGHT_NORMAL );
 
     font_dict[f->name] = f;
 
@@ -907,10 +907,10 @@ const font * make_font ( string name,
 //
 const stroke * make_stroke ( string name,
                              double width,
-		             const color * c,
-			     options o )
+		             const color * col,
+			     options opt )
 {
-    assert ( c != NULL );
+    assert ( col != NULL );
 
     stroke_it it = stroke_dict.find ( name );
     if ( it != stroke_dict.end() )
@@ -920,8 +920,8 @@ const stroke * make_stroke ( string name,
     }
     stroke * s = new stroke;
     s->name = name;
-    s->c = c;
-    s->o = o;
+    s->col = col;
+    s->opt = opt;
     s->width = width;
 
     stroke_dict[s->name] = s;
@@ -935,8 +935,8 @@ void print_font ( const font * f )
 {
     cerr << "    font " << f->name
 	 << " " << 72 * f->size << "pt"
-	 << " " << f->c->name
-	 << " " << f->o
+	 << " " << f->col->name
+	 << " " << f->opt
 	 << " " << f->family
 	 << " " << f->space << "em"
 	 << endl;
@@ -948,8 +948,8 @@ void print_stroke ( const stroke * s )
 {
     cerr << "    stroke " << s->name
 	 << " " << 72 * s->width << "pt"
-	 << " " << s->c->name
-	 << " " << s->o
+	 << " " << s->col->name
+	 << " " << s->opt
 	 << endl;
 }
 
@@ -1073,6 +1073,15 @@ struct command
         // Start, line, etc command that is continued
 	// until the next `end' command.
     command * next;
+
+    // The following are only used by some commands.
+    //
+    const font * fnt;
+    const stroke * str;
+    const color * col;
+    options opt;
+        // When fnt or str is set, col and opt default
+	// to those of fnt or str.
 };
 
 options text_options = (options)
@@ -1080,9 +1089,6 @@ options text_options = (options)
       BOX_WHITE + CIRCLE_WHITE + OUTLINE );
 struct text : public command // == 't'
 {
-    const font * f;
-    const color * c;
-    options o;
     point p;
     string t;
 };
@@ -1092,9 +1098,6 @@ struct space : public command // == 'S'
 };
 struct start : public command // == 's'
 {
-    const stroke * s;
-    const color * c;
-    options o;
     point p;
 };
 struct line : public command // == 'l'
@@ -1112,9 +1115,6 @@ struct arc : public command // == 'a'
 {
     // Data if not continuing ( s != NULL )
     //
-    const stroke * s;
-    const color * col;
-    options o;
     point c;
 
     // Data if R has units ( ! isnan ( R ) )
@@ -1129,17 +1129,11 @@ struct arc : public command // == 'a'
 };
 struct rectangle : public command // == 'r'
 {
-    const stroke * s;
-    const color * col;
-    options o;
     point c;
     double width, height;
 };
 struct infline : public command // == 'i'
 {
-    const stroke * s;
-    const color * col;
-    options o;
     point p;
     double A;
 };
@@ -1176,11 +1170,11 @@ void print_commands ( command * list )
 	case 't':
 	{
 	    text * t = (text *) current;
-	    cerr << "    text " << t->f->name;
-	    if ( t->c != NULL )
-	        cerr << " " << t->c->name;
-	    if ( t->o != NO_OPTIONS )
-	        cerr << " " << t->o;
+	    cerr << "    text " << t->fnt->name;
+	    if ( t->col != NULL )
+	        cerr << " " << t->col->name;
+	    if ( t->opt != NO_OPTIONS )
+	        cerr << " " << t->opt;
 	    cerr << " " << t->p
 		 << " " << t->t
 		 << endl;
@@ -1196,11 +1190,11 @@ void print_commands ( command * list )
 	case 's':
 	{
 	    start * s = (start *) current;
-	    cerr << "    start " << s->s->name;
-	    if ( s->c != NULL )
-	        cerr << " " << s->c->name;
-	    if ( s->o != NO_OPTIONS )
-	        cerr << " " << s->o;
+	    cerr << "    start " << s->str->name;
+	    if ( s->col != NULL )
+	        cerr << " " << s->col->name;
+	    if ( s->opt != NO_OPTIONS )
+	        cerr << " " << s->opt;
 	    cerr << " " << s->p
 		 << endl;
 	    break;
@@ -1227,7 +1221,7 @@ void print_commands ( command * list )
 	case 'a':
 	{
 	    arc * a = (arc *) current;
-	    if ( a->s == NULL )
+	    if ( a->str == NULL )
 		cerr << "    arc"
 		     << " " << a->r
 		     << " " << a->a
@@ -1236,11 +1230,11 @@ void print_commands ( command * list )
 		     << endl;
 	    else
 	    {
-		cerr << "    arc " << a->s->name;
+		cerr << "    arc " << a->str->name;
 		if ( a->col != NULL )
 		    cerr << " " << a->col->name;
-		if ( a->o != NO_OPTIONS )
-		    cerr << " " << a->o;
+		if ( a->opt != NO_OPTIONS )
+		    cerr << " " << a->opt;
 		cerr << " " << a->c;
 		if ( ! isnan ( a->R ) )
 		    cerr << " " << a->R << "pt"
@@ -1257,11 +1251,11 @@ void print_commands ( command * list )
 	case 'r':
 	{
 	    rectangle * r = (rectangle *) current;
-	    cerr << "    rectangle " << r->s->name;
+	    cerr << "    rectangle " << r->str->name;
 	    if ( r->col != NULL )
 		cerr << " " << r->col->name;
-	    if ( r->o != NO_OPTIONS )
-		cerr << " " << r->o;
+	    if ( r->opt != NO_OPTIONS )
+		cerr << " " << r->opt;
 	    cerr << " " << r->c
 	         << " " << r->width
 	         << " " << r->height
@@ -1271,11 +1265,11 @@ void print_commands ( command * list )
 	case 'i':
 	{
 	    infline * il = (infline *) current;
-	    cerr << "    infline " << il->s->name;
+	    cerr << "    infline " << il->str->name;
 	    if ( il->col != NULL )
 		cerr << " " << il->col->name;
-	    if ( il->o != NO_OPTIONS )
-		cerr << " " << il->o;
+	    if ( il->opt != NO_OPTIONS )
+		cerr << " " << il->opt;
 	    cerr << " " << il->p
 	         << " " << il->A
 		 << endl;
@@ -2220,18 +2214,23 @@ section read_section ( istream & in )
 	else if ( op == "text" )
 	{
 	    const font * FONT;
-	    const color * COLOR = NULL;
+	    const color * COLOR;
 	    options OPT = NO_OPTIONS;
 	    double X = 0, Y = 0;
 	    string TEXT;
 
 	    if ( ! read_font ( "FONT", FONT, false ) )
 	        continue;
+	    COLOR = FONT->col;
+	    // Unlike non-text drawing commands,
+	    // options are logical OR of font and
+	    // optional options.
 	    if ( in_body )
 	    {
 		read_color ( "COLOR", COLOR );
 	        read_options
 		    ( "OPT", OPT, text_options );
+		OPT != FONT->opt;
 		if ( ! read_double
 		           ( "X", X,
 			     - MAX_BODY_COORDINATE,
@@ -2256,9 +2255,9 @@ section read_section ( istream & in )
 
 	    text * t = new text;
 	    attach ( t, 't' );
-	    t->f = FONT;
-	    t->c = COLOR;
-	    t->o = OPT;
+	    t->fnt = FONT;
+	    t->col = COLOR;
+	    t->opt = OPT;
 	    t->p = { X, Y };
 	    t->t = TEXT;
 	}
@@ -2276,12 +2275,14 @@ section read_section ( istream & in )
 	else if ( op == "start" && in_body )
 	{
 	    const stroke * STROKE;
-	    const color * COLOR = NULL;
-	    options OPT = NO_OPTIONS;
+	    const color * COLOR;
+	    options OPT;
 	    double X, Y;
 	    if ( ! read_stroke
 	               ( "STROKE", STROKE, false ) )
 	        continue;
+	    COLOR = STROKE->col;
+	    OPT = STROKE->opt;
 	    read_color ( "COLOR", COLOR );
 	    read_options
 	        ( "OPT", OPT, stroke_options ); 
@@ -2305,9 +2306,9 @@ section read_section ( istream & in )
 
 	    start * st = new start;
 	    attach ( st, 's', true );
-	    st->s = STROKE;
-	    st->c = COLOR;
-	    st->o = OPT;
+	    st->str = STROKE;
+	    st->col = COLOR;
+	    st->opt = OPT;
 	    st->p = { X, Y };
 	}
 	else if ( op == "line" && in_body )
@@ -2384,6 +2385,8 @@ section read_section ( istream & in )
 
 	    if ( read_stroke ( "STROKE", STROKE ) )
 	    {
+		COLOR = STROKE->col;
+		OPT = STROKE->opt;
 		read_color ( "COLOR", COLOR );
 		read_options
 		    ( "OPT", OPT, stroke_options );
@@ -2477,9 +2480,9 @@ section read_section ( istream & in )
 	    attach ( a, 'a',
 	             STROKE == NULL,
 		     STROKE == NULL );
-	    a->s = STROKE;
+	    a->str = STROKE;
 	    a->col = COLOR;
-	    a->o = OPT;
+	    a->opt = OPT;
 	    a->c = { XC, YC };
 	    a->R = ( isnan ( R ) ? NAN : 72 * R );
 	    a->r = { RX, RY };
@@ -2491,12 +2494,14 @@ section read_section ( istream & in )
 	{
 	    const stroke * STROKE;
 	    const color * COLOR;
-	    options OPT = NO_OPTIONS;
+	    options OPT;
 	    double XC, YC, WIDTH, HEIGHT;
 
 	    if ( ! read_stroke
 	               ( "STROKE", STROKE, false ) )
 		continue;
+	    COLOR = STROKE->col;
+	    OPT = STROKE->opt;
 	    read_color ( "COLOR", COLOR );
 	    read_options ( "OPT", OPT, stroke_options );
 	    if ( ! read_double
@@ -2529,9 +2534,9 @@ section read_section ( istream & in )
 
 	    rectangle * r = new rectangle;
 	    attach ( r, 'r' );
-	    r->s = STROKE;
+	    r->str = STROKE;
 	    r->col = COLOR;
-	    r->o = OPT;
+	    r->opt = OPT;
 	    r->c = { XC, YC };
 	    r->width = WIDTH;
 	    r->height = HEIGHT;
@@ -2540,12 +2545,14 @@ section read_section ( istream & in )
 	{
 	    const stroke * STROKE;
 	    const color * COLOR;
-	    options OPT = NO_OPTIONS;
+	    options OPT;
 	    double X, Y, A;
 
 	    if ( ! read_stroke
 	               ( "STROKE", STROKE, false ) )
 		continue;
+	    COLOR = STROKE->col;
+	    OPT = STROKE->opt;
 	    read_color ( "COLOR", COLOR );
 	    read_options ( "OPT", OPT, stroke_options );
 	    if ( ! read_double
@@ -2574,9 +2581,9 @@ section read_section ( istream & in )
 
 	    infline * il = new infline;
 	    attach ( il, 'i' );
-	    il->s = STROKE;
+	    il->str = STROKE;
 	    il->col = COLOR;
-	    il->o = OPT;
+	    il->opt = OPT;
 	    il->p = { X, Y };
 	    il->A = A;
 	}
@@ -2662,7 +2669,7 @@ double compute_height ( command * list )
 	if ( current->c == 't' )
 	{
 	    text * t = (text *) current;
-	    h += t->f->size * t->f->space;
+	    h += t->fnt->size * t->fnt->space;
 	}
 	else if ( current->c == 'S' )
 	{
@@ -2766,7 +2773,7 @@ int compute_bounding_box ( void )
 	    {
 		arc * a = (arc *) current;
 		point c;
-		if ( a->s != NULL )
+		if ( a->str != NULL )
 		{
 		    c = a->c;
 		    if ( ! isnan ( a->R ) )
@@ -2956,10 +2963,9 @@ void draw_head_or_foot
 	case 't':
 	{
 	    text * t = (text *) current;
-	    const font * f = t->f;
+	    const font * f = t->fnt;
 	    top += f->size * f->space; 
-	    const color * c = t->c;
-	    if ( c == NULL ) c = f->c;
+	    const color * col = t->col;
 
 	    string s = t->t;
 
@@ -2991,7 +2997,8 @@ void draw_head_or_foot
 	    }
 
 	    cairo_set_source_rgb
-	        ( context, c->red, c->green, c->blue );
+	        ( context,
+		  col->red, col->green, col->blue );
 		           
 	    cairo_select_font_face
 	        ( context, f->cairo_family,
@@ -3059,49 +3066,48 @@ double xscale, yscale, left, bottom;
     (v).x * xscale, - (v).y * yscale
 
 inline void apply_stroke
-	( const stroke * s, const color * c = NULL,
-	                    options o = NO_OPTIONS )
+	( const stroke * s, const color * col,
+	                    options opt )
 {
-    if ( o == NO_OPTIONS ) o = s->o;
-    if ( c == NULL ) c = s->c;
     cairo_set_line_width
 	( context, 72 * s->width );
-    if ( o & ( FILL_DOTTED |
-	       FILL_HORIZONTAL |
-	       FILL_VERTICAL ) )
-	set_fill ( context, c, o );
+    if ( opt & ( FILL_DOTTED |
+	         FILL_HORIZONTAL |
+	         FILL_VERTICAL ) )
+	set_fill ( context, col, opt );
     else
 	cairo_set_source_rgb
-	    ( context, c->red, c->green, c->blue );
-    if ( o & CLOSED )
+	    ( context,
+	      col->red, col->green, col->blue );
+    if ( opt & CLOSED )
 	cairo_close_path ( context );
-    if ( o & FILL_OPTIONS )
+    if ( opt & FILL_OPTIONS )
     {
-	if ( o & OUTLINE )
+	if ( opt & OUTLINE )
 	{
 	    cairo_fill_preserve ( context );
-	    if ( ( o & CLOSED ) == 0 )
+	    if ( ( opt & CLOSED ) == 0 )
 		cairo_close_path ( context );
-	    if ( o & FILL_SOLID )
+	    if ( opt & FILL_SOLID )
 		cairo_set_source_rgb
 		    ( context, 0, 0, 0 );
 	    else
 		cairo_set_source_rgb
-		    ( context,
-		      c->red, c->green, c->blue ); 
+		    ( context, col->red,
+		      col->green, col->blue ); 
 	    cairo_stroke ( context );
 	}
 	else
 	    cairo_fill ( context );
     }
-    else if ( o & DASHED )
+    else if ( opt & DASHED )
     {
 	double dashes[2] = { 4, 2 };
 	cairo_set_dash ( context, dashes, 2, 0 );
 	cairo_stroke ( context );
 	cairo_set_dash ( context, NULL, 0, 0 );
     }
-    else if ( o & DOTTED )
+    else if ( opt & DOTTED )
     {
 	double dashes[2] = { 0, 3 };
 	    // dot separation is 2pt
@@ -3137,12 +3143,10 @@ void draw_arrow ( point p, vector dv )
 //
 void draw_arrows ( const start * s )
 {
-    options o = s->o;
-    if ( o == NO_OPTIONS ) o = s->s->o;
-    if ( ( o & ARROW_OPTIONS ) == 0 )
+    options opt = s->opt;
+    if ( ( opt & ARROW_OPTIONS ) == 0 )
         return;
-    const color * c = s->c;
-    if ( c == NULL ) c = s->s->c;
+    const color * col = s->col;
 
     cairo_new_path ( context );
     point p = s->p;
@@ -3156,23 +3160,23 @@ void draw_arrows ( const start * s )
 	{
 	    done = true;
 
-	    if (    ( o & ( FILL_OPTIONS | CLOSED ) )
+	    if (    ( opt & ( FILL_OPTIONS | CLOSED ) )
 	         == 0 )
 	        break;
-	    if ( o & MIDDLE_ARROW )
+	    if ( opt & MIDDLE_ARROW )
 	        draw_arrow ( 0.5 * ( p + s->p ),
 		             s->p - p );
-	    if ( o & END_ARROW )
+	    if ( opt & END_ARROW )
 	        draw_arrow ( s->p, s->p - p );
 	    break;
 	}
 	case 'l':
 	{
 	    const line * l = (const line *) current;
-	    if ( o & MIDDLE_ARROW )
+	    if ( opt & MIDDLE_ARROW )
 	        draw_arrow ( 0.5 * ( p + l->p ),
 		             l->p - p );
-	    if ( o & END_ARROW )
+	    if ( opt & END_ARROW )
 	        draw_arrow ( l->p, l->p - p );
 	    p = l->p;
 	    break;
@@ -3180,7 +3184,7 @@ void draw_arrows ( const start * s )
 	case 'c':
 	{
 	    const curve * c = (const curve *) current;
-	    if ( o & MIDDLE_ARROW )
+	    if ( opt & MIDDLE_ARROW )
 	    {
 	        vector dv;
 		point pmid = midpoint
@@ -3188,7 +3192,7 @@ void draw_arrows ( const start * s )
 		      p, c->p[0], c->p[1], c->p[2] );
 	        draw_arrow ( pmid, dv );
 	    }
-	    if ( o & END_ARROW )
+	    if ( opt & END_ARROW )
 	        draw_arrow ( c->p[2],
 		             c->p[2] - c->p[1] );
 	    p = c->p[2];
@@ -3208,7 +3212,7 @@ void draw_arrows ( const start * s )
 	    //
 	    point c = p - v1;  // Center
 
-	    if ( o & MIDDLE_ARROW )
+	    if ( opt & MIDDLE_ARROW )
 	    {
 		double gmid = ( a->g1 + a->g2 ) / 2;
 		vector v = ux ^ gmid;
@@ -3228,7 +3232,7 @@ void draw_arrows ( const start * s )
 	    v = { a->r.x * v.x, a->r.y * v.y };
 	    v = v ^ a->a;
 
-	    if ( o & END_ARROW )
+	    if ( opt & END_ARROW )
 	    {
 		vector dv;
 		if ( a->g1 > a->g2 )
@@ -3247,14 +3251,16 @@ void draw_arrows ( const start * s )
 
 	current = current->next;
     }
-    if ( ( o & FILL_SOLID )
+    if ( ( opt & FILL_SOLID )
          &&
-	 ( o & OUTLINE ) )
+	 ( opt & OUTLINE ) )
 	cairo_set_source_rgb ( context, 0, 0, 0 );
     else
 	cairo_set_source_rgb
-	    ( context, c->red, c->green, c->blue );
-    cairo_set_line_width ( context, 72 * s->s->width );
+	    ( context,
+	      col->red, col->green, col->blue );
+    cairo_set_line_width
+        ( context, 72 * s->str->width );
     cairo_stroke ( context );
 }
 
@@ -3278,9 +3284,8 @@ void draw_level ( int i )
 	case 't':
 	{
 	    text * t = (text *) current;
-	    const font * f = t->f;
-	    const color * c = t->c;
-	    if ( c == NULL ) c = f->c;
+	    const font * f = t->fnt;
+	    const color * c = t->col;
 	    point p = { CONVERT ( t->p ) };
 	    double h = 72 * f->size * f->space;
 	    double delta = 72 * 0.5 * f->size;
@@ -3334,20 +3339,20 @@ void draw_level ( int i )
 	    point box_ul = { 0, 0 };
 	    options align = NO_OPTIONS;
 
-	    double m = ( t->o & BOX_WHITE ? 2 : 1 );
+	    double m = ( t->opt & BOX_WHITE ? 2 : 1 );
 	        // Allow for extra size of rectangle.
-	    if ( t->o & BOTTOM )
+	    if ( t->opt & BOTTOM )
 	        box_ul.y = p.y + m * delta - 0.3 * h;
-	    else if ( t->o & TOP )
+	    else if ( t->opt & TOP )
 	        box_ul.y = p.y - n * h - m * delta;
 	    else
 	        box_ul.y = p.y - n * h / 2 - 0.2 * h;
-	    if ( t->o & LEFT )
+	    if ( t->opt & LEFT )
 	    {
 	        box_ul.x = p.x - box_width - m * delta;
 		align = RIGHT;
 	    }
-	    else if ( t->o & RIGHT )
+	    else if ( t->opt & RIGHT )
 	    {
 	        box_ul.x = p.x + m * delta;
 		align = LEFT;
@@ -3355,7 +3360,7 @@ void draw_level ( int i )
 	    else
 	        box_ul.x = p.x - box_width / 2;
 
-	    if ( t->o & CIRCLE_WHITE )
+	    if ( t->opt & CIRCLE_WHITE )
 	    {
 	        align = NO_OPTIONS;
 		double RADIUS = 0;
@@ -3377,7 +3382,7 @@ void draw_level ( int i )
 			    box_ul.y + box_height / 2
 			             + 0.2 * h,
 			    RADIUS, 0, 2 * M_PI );
-		if ( t->o & OUTLINE )
+		if ( t->opt & OUTLINE )
 		{
 		    cairo_fill_preserve ( context );
 		    cairo_set_source_rgb
@@ -3390,7 +3395,7 @@ void draw_level ( int i )
 		    ( context, 1, 1, 1 );
 		cairo_fill ( context );
 	    }
-	    else if ( t->o & BOX_WHITE )
+	    else if ( t->opt & BOX_WHITE )
 	    {
 		align = NO_OPTIONS;
 		cairo_new_path ( context );
@@ -3400,7 +3405,7 @@ void draw_level ( int i )
 		      box_ul.y,
 		      box_width + 2 * delta,
 		      box_height + delta );
-		if ( t->o & OUTLINE )
+		if ( t->opt & OUTLINE )
 		{
 		    cairo_set_source_rgb
 			( context, 0, 0, 0 );
@@ -3416,7 +3421,8 @@ void draw_level ( int i )
 		     == CAIRO_STATUS_SUCCESS );
 
 	    cairo_set_source_rgb
-	        ( context, c->red, c->green, c->blue );
+	        ( context, t->col->red,
+		  t->col->green, t->col->blue );
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
 
@@ -3447,11 +3453,10 @@ void draw_level ( int i )
 	}
 	case 's':
 	{
-	    start * st = (start *) current;
-	    s = st;
+	    s = (start *) current;
 	    cairo_new_path ( context );
 	    cairo_move_to
-	        ( context, CONVERT ( st->p ) );
+	        ( context, CONVERT ( s->p ) );
 	    break;
 	}
 	case 'l':
@@ -3472,7 +3477,7 @@ void draw_level ( int i )
 	}
 	case 'e':
 	{
-	    apply_stroke ( s->s, s->c, s->o );
+	    apply_stroke ( s->str, s->col, s->opt );
 	    draw_arrows ( s );
 	    break;
 	}
@@ -3486,7 +3491,7 @@ void draw_level ( int i )
 	    cairo_matrix_t matrix;
 	    cairo_get_matrix ( context, & matrix );
 
-	    if ( a->s == NULL )
+	    if ( a->str == NULL )
 	    {
 	        point p1;
 		cairo_get_current_point
@@ -3550,8 +3555,8 @@ void draw_level ( int i )
 	    cairo_set_matrix ( context, & matrix );
 	    assert (    cairo_status ( context )
 		     == CAIRO_STATUS_SUCCESS );
-	    if ( a->s != NULL )
-	        apply_stroke ( a->s, a->col, a->o );
+	    if ( a->str != NULL )
+	        apply_stroke ( a->str, a->col, a->opt );
 	    break;
 	}
 	case 'r':
@@ -3565,7 +3570,7 @@ void draw_level ( int i )
 	        ( context, c.x + d.x, c.y + d.y,
 		           fabs ( xscale) * r->width,
 		           fabs ( yscale) * r->height );
-	    apply_stroke ( r->s, r->col, r->o );
+	    apply_stroke ( r->str, r->col, r->opt );
 	    break;
 	}
 	case 'i':
@@ -3629,11 +3634,11 @@ void draw_level ( int i )
 	        t = ( P_bounds.ll.y - p.y ) / v.y;
 		if ( texit > t ) texit = t;
 	    }
-	    if ( il->o & EXTEND_FOREWARD )
+	    if ( il->opt & EXTEND_FOREWARD )
 	    {
 	        if ( tenter < 0 ) tenter = 0;
 	    }
-	    if ( il->o & EXTEND_BACKWARD )
+	    if ( il->opt & EXTEND_BACKWARD )
 	    {
 	        if ( texit > 0 ) texit = 0;
 	    }
@@ -3646,15 +3651,16 @@ void draw_level ( int i )
 		    ( context, CONVERT ( penter ) );
 		cairo_line_to
 		    ( context, CONVERT ( pexit ) );
-		apply_stroke ( il->s, il->col, il->o );
-		if ( il->o & ARROW_OPTIONS )
+		apply_stroke
+		    ( il->str, il->col, il->opt );
+		if ( il->opt & ARROW_OPTIONS )
 		{
 		    cairo_new_path ( context );
 		    point pmiddle =
 		        0.5 * ( penter + pexit );
-		    if ( il->o & MIDDLE_ARROW )
+		    if ( il->opt & MIDDLE_ARROW )
 			draw_arrow ( pmiddle, v );
-		    if ( il->o & END_ARROW )
+		    if ( il->opt & END_ARROW )
 			draw_arrow ( pexit, v );
 
 		    // This cannot be done by apply
@@ -3666,7 +3672,8 @@ void draw_level ( int i )
 			  il->col->green,
 			  il->col->blue );
 		    cairo_set_line_width
-		        ( context, 72 * il->s->width );
+		        ( context,
+			  72 * il->str->width );
 		    cairo_stroke ( context );
 		}
 	    }
