@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Dec 27 11:15:46 EST 2020
+// Date:	Mon Dec 28 04:26:11 EST 2020
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2834,6 +2834,7 @@ int compute_bounding_box ( void )
 	    {
 		infline * il = (infline *) current;
 		BOUND ( il->p );
+		break;
 	    }
 	    default:
 		assert ( ! "bounding bad command" );
