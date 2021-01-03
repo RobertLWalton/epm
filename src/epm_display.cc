@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Mon Dec 28 04:26:11 EST 2020
+// Date:	Sun Jan  3 03:06:39 EST 2021
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -517,7 +517,8 @@ const char * const documentation[] = { "\n"
 "        OPT is some of:\n"
 "            .   dotted line\n"
 "            -   dashed line\n"
-"                 (. - conflict)\n"
+"                 (. - conflict; if neither line\n"
+"                  is solid)\n"
 "            c   close path\n"
 "                 (implied by s d h v)\n"
 "            m   arrow head in middle of segment\n"
@@ -529,7 +530,8 @@ const char * const documentation[] = { "\n"
 "                 (s d h v conflict)\n"
 "            f   extend infinite line forward\n"
 "            b   extend infinite line backward\n"
-"                 (f b conflict)\n"
+"                 (f b conflict; if neither line\n"
+"                  extends in both directions)\n"
 "\n"
 "      background COLOR\n"
 "        Sets the default background color for each\n"
