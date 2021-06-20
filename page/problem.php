@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Oct  8 07:59:41 EDT 2020
+    // Date:	Sun Jun 20 14:52:15 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -30,6 +30,9 @@
     if ( ! is_dir ( "$epm_data/$probdir" ) )
         exit ( "problem $problem no longer exists<br>" .
 	       "please close tab" );
+
+    $has_display = is_executable
+        ( "$epm_data/$probdir/display-$problem" );
 
     // Session Data:
     //
@@ -344,7 +347,8 @@
 	       $epm_filename_re, $linkable_ext,
 	       $max_display_lines, $min_display_lines,
 	       $max_in_comment_characters,
-	       $not_linkable_re, $link_re, $txt_re;
+	       $not_linkable_re, $link_re, $txt_re,
+	       $has_display;
 
 	$fext = pathinfo ( $fname, 
 			   PATHINFO_EXTENSION );
@@ -402,6 +406,8 @@
 	    $factions[] = '.sin';
 	    $factions[] = '.sout';
 	    $factions[] = '.score';
+	    if ( $has_display )
+		$factions[] = '.pdf';
 	    break;
 	case "sin":
 	    $factions[] = '.dout';
