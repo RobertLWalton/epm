@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Oct 31 04:56:11 EDT 2020
+Date:	Mon Jun 21 14:59:45 EDT 2021
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -196,10 +196,12 @@ margin: 2em;
 <li><a href="#problem-marks">Problem Marks</a>
 <li><a href="#current-problem-files">Current Problem Files</a>
 <li><a href="#file-extensions">File Extensions</a>
-<li><a href="#problem-commands">Commands Last Executed</a>
-<li><a href="#problem-working">Working Files of Last Executed Commands</a>
+<li><a href="#problem-solution-files">Problem Solution Files</a>
+<li><a href="#problem-creation-files">Problem Creation Files</a>
 <li><a href="#generate-and-filter">Generate and Filter Programs</a>
 <li><a href="#multiple-solutions">Multiple Solutions</a>
+<li><a href="#problem-commands">Commands Last Executed</a>
+<li><a href="#problem-working">Working Files of Last Executed Commands</a>
 </ul>
 
 <li><a href="#run-page">Run Page</a> [problem]
@@ -1003,6 +1005,174 @@ as they may be uploaded.  The solution program is of course
 provided by the problem solver, but the generate and filter
 programs are provided by the problem setter (the person who
 creates the problem).
+</p>
+
+<h2 id="problem-solution-files">Problem Solution Files</h2>
+
+<p>
+The following files are relevant to solving the problem named
+PPPP.  Some files are supplied by the parent from which
+the problem was pulled.
+
+<p>
+<!-- &#8209; is no-breaking hyphen -->
+<div class='indented'>
+<strong>Files That Document The Problem:</strong><br>
+<table class='extension'>
+<tr><td>PPPP.pdf</td><td>Problem Description; supplied by parent</td></tr>
+<tr><td>XXXX&#8209;PPPP.txt</td><td>Supplementary data/documentation
+                    text file; supplied by parent</td></tr>
+<tr><td>generate&#8209;PPPP.txt</td><td>Documentation of generate-PPPP
+                    program; made from generate-PPPP</td></tr>
+<tr><td>filter&#8209;PPPP.txt</td><td>Documentation of filter-PPPP
+                    program; made from filter-PPPP</td></tr>
+<tr><td>display&#8209;PPPP.txt</td><td>Documentation of display-PPPP
+                    program; made from display-PPPP if that exists</td></tr>
+</table>
+<br>
+<strong>Files That Are Uploaded:</strong><br>
+<table class='extension'>
+<tr><td>PPPP.c</td><td>C Program Source File</td></tr>
+<tr><td>PPPP.cc</td><td>C++ Program Source File</td></tr>
+<tr><td>PPPP.py</td><td>PYTHON Program Source File</td></tr>
+<tr><td>PPPP.java</td><td>JAVA Program Source File</td></tr>
+<tr><td>PPPP.tex</td><td>LATEX Document Source File</td></tr>
+<tr><td>XXXX&#8209;PPPP.txt</td><td>Supplementary data/documentation
+                    text file;
+                    may be supplied by parent</td></tr>
+<tr><td>XXXX&#8209;PPPP.in</td><td>Test Case Input File;
+                    may be supplied by parent</td></tr>
+<tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files;
+                    may be supplied by parent</td></tr>
+</table>
+<br>
+<strong>Files Made During Upload:</strong><br>
+<table class='extension'>
+<tr><td>PPPP</td><td>C/C++ Program Binary File,
+                     made from PPPP.c or PPPP.cc file</td></tr>
+<tr><td>PPPP.pyc</td><td>PYTHON Program Binary File,
+                     made from PPPP.py file</td></tr>
+<tr><td>PPPP.jar</td><td>JAVA Program Binary File,
+                     made from PPPP.java file</td></tr>
+<tr><td>PPPP.pdf</td><td>Document PDF File,
+                     made from PPPP.tex file;
+                     may be supplied by parent</td></tr>
+<tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
+                     made from XXXX&#8209;PPPP.in file
+		     by generate program and compiled solution
+		     </td></tr>
+</table>
+<br>
+<strong>Files Created When Making Other Files:</strong><br>
+<table class='extension'>
+<tr><td>generate&#8209;PPPP<pre>  </pre></td><td>
+                     <a href="#generate-and-filter">
+		     Generate Program</a> executable;
+		     may be supplied by parent or
+		     created automatically by linking to
+		     epm_default_generator</td></tr>
+<tr><td>filter&#8209;PPPP</td><td>
+                     <a href="#generate-and-filter">
+                     Filter Program</a> executable;
+                     may be supplied by parent or
+		     created automatically by linking to
+		     epm_default_filter</td></tr>
+</table>
+<br>
+<strong>Files Made From Other Files (Not During Upload):</strong><br>
+<table class='extension'>
+<tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
+                     made from XXXX&#8209;PPPP.in test case input file
+		     by generate program</td></tr>
+<tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
+                     made from XXXX&#8209;PPPP.sin file
+		     by compiled solution
+		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.dout</td><td>Debugging Output File,
+                     made from XXXX&#8209;PPPP.sin file
+		     by the compiled solution and for C/C++
+		     the solution source code; designed to
+		     identify the line number of the statement where
+		     a CPU time limit signal or program fault
+		     occurred
+		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.fout</td><td>Filtered Solution Output File,
+                     made from XXXX&#8209;PPPP.sout file
+                     and XXXX&#8209;PPPP.sin file
+		     by filter program
+		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
+                     made by simply copying
+		     the XXXX&#8209;PPPP.fout file
+		     (WARNING: affects scoring; made by problem
+		     setter; NOT made by problem solver);
+		     may be supplied by parent
+		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.score</td><td>Scoring Output File,
+                     made from XXXX&#8209;PPPP.fout
+                     and XXXX&#8209;PPPP.ftest files
+		     by scoring program
+		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.rout</td><td>Run output file,
+                     made from XXXX&#8209;PPPP.run
+		     and other files by the scoring and other
+		     programs;
+		     summarizes .score files made from
+		     .in files listed in the .run file
+		     </td></tr>
+<tr><td>XXXX&#8209;PPPP.txt </td><td>Documentation of the
+                     XXXX&#8209;PPPP program (for XXXX equal
+		     `generate', `filter', or `monitor') made by
+		     executing `XXXX&#8209;PPPP&nbsp;&nbsp;-doc'
+		     </td></tr>
+</table>
+<br>
+<strong>Working Files That Should Be Empty:</strong><br>
+<table class='extension'>
+<tr><td>PPPP.cout</td>
+    <td>Compiler Output File, made during upload or
+        debug compilation</td></tr>
+<tr><td>PPPP.cerr</td>
+                 <td>Error Output from compilation
+		     during upload or debug compilation</td></tr>
+<tr><td>PPPP.terr</td><td>Error Output from LATEX
+		     during upload</td></tr>
+<tr><td>XXXX&#8209;PPPP.gYerr</td><td>Error Output from
+		     generate program (if generate program
+		     is run twice Y is 1 or 2, else Y is
+		     missing)</td></tr>
+<tr><td>XXXX&#8209;PPPP.ferr</td><td>Error Output from
+		     filter program</td></tr>
+<tr><td>XXXX&#8209;PPPP.serr</td><td>Error Output from
+		     solution program</td></tr>
+<tr><td>XXXX&#8209;PPPP.scerr</td><td>Error Output from
+		     epm_score scoring program</td></tr>
+<tr><td>XXXX&#8209;PPPP.rerr</td><td>Error Output from
+		     a run</td></tr>
+</table>
+<br>
+<strong>Working Files That Are Not Empty:</strong><br>
+<table class='extension'>
+<tr><td>PPPP.tout</td><td>LATEX output file
+                     made from PPPP.tex file</td></tr>
+<tr><td>PPPP.log</td><td>Log file of a LATEX compilation,
+                         made from PPPP.tex file; like .tout
+			 file but with extra information</td></tr>
+<tr><td>PPPP.fls</td><td>File List that lists all input and
+                         output files in a LATEX compilation,
+                         made from PPPP.tex file</td></tr>
+</table>
+
+</div>
+</p>
+
+<h2 id="problem-creation-files">Problem Creation Files</h2>
+
+<p>
+The following files are relevant to creating the problem named
+PPPP.  These are in addition to the files listed above in
+<a href="#problem-solution-files">Problem Solution Files</a>.
+
 <p>
 <!-- &#8209; is no-breaking hyphen -->
 <div class='indented'>

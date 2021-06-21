@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun 20 16:18:29 EDT 2021
+// Date:    Mon Jun 21 14:52:01 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -210,11 +210,11 @@ $upload_target_ext = [
 $display_file_type = [
     // To be listed as a problem file, and thence be
     // `displayable', a file must have extension EEE
-    // such that $display_file_type['EEE'] == TTT
-    // exists.  If display_file_map[TTT] = GGGG then the
-    // web page /page/GGGG may be used to display the
-    // file.  Otherwise TTT is the file type and only
-    // that is displayed.
+    // such that $display_file_type['EEE'] == 'TTT'
+    // exists.  If TTT is in $displayable_types, the
+    // web page /page/look.php may be used to display
+    // the file.  Otherwise TTT describes the file
+    // type and only TTT is displayed.
     //
     // WARNING: the UNIX file(1) command CANNOT be
     //          reliably used to determine whether
