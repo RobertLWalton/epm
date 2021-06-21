@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Jun 21 16:26:44 EDT 2021
+Date:	Mon Jun 21 18:02:16 EDT 2021
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1011,8 +1011,13 @@ creates the problem).
 
 <p>
 The following files are relevant to solving the problem named
-PPPP.  Some files are supplied by the parent from which
+PPPP.  Some files are supplied by the <a href="#parent">parent</a> from which
 the problem was pulled.
+<p>
+When a file is uploaded, another file is made,
+but if this second file cannot be made successfully, the file to be
+uploaded is not uploaded.  In this case information concerning the
+error will be available in the Working Files.
 
 <p>
 <!-- &#8209; is no-breaking hyphen -->
@@ -1021,7 +1026,8 @@ the problem was pulled.
 <table class='extension'>
 <tr><td>PPPP.pdf</td><td>Problem Description; supplied by parent</td></tr>
 <tr><td>XXXX&#8209;PPPP.txt</td><td>Supplementary data/documentation
-                    text file; supplied by parent</td></tr>
+                    text file; supplied by parent; see PPPP.pdf file
+		    for more information</td></tr>
 </table>
 <br>
 <strong>Supporting Programs</strong><br>
@@ -1053,7 +1059,7 @@ the problem was pulled.
                     program; made from display-PPPP if that exists</td></tr>
 </table>
 <br>
-<strong>Solution Files That Are Uploaded:</strong><br>
+<strong>Solution Files One of Which You Upload:</strong><br>
 <table class='extension'>
 <tr><td>PPPP.c</td><td>C Program Source File</td></tr>
 <tr><td>PPPP.cc</td><td>C++ Program Source File</td></tr>
@@ -1061,7 +1067,7 @@ the problem was pulled.
 <tr><td>PPPP.java</td><td>JAVA Program Source File</td></tr>
 </table>
 <br>
-<strong>Solution Files Made During Upload:</strong><br>
+<strong>Binary Files Made When Solution Uploaded:</strong><br>
 <table class='extension'>
 <tr><td>PPPP</td><td>C/C++ Program Binary File,
                      made from PPPP.c or PPPP.cc file</td></tr>
@@ -1071,18 +1077,39 @@ the problem was pulled.
                      made from PPPP.java file</td></tr>
 </table>
 <br>
+<strong>Test Files Supplied by Parent </strong><br>
+<table class='extension'>
+<tr><td>XXXX&#8209;PPPP.in</td><td>Test Case Input File supplied by parent;
+				   for sample tests, XXXX begins with `00-'
+                    </td></tr>
+<tr><td>XXXX&#8209;PPPP.ftest</td><td>Test Case Output File supplied by parent;
+                                   used to make XXXX-PPPP.score
+                    </td></tr>
+<tr><td>sample&#8209;PPPP.run</td><td>List of 00-XXXX-PPPP.in Files
+				      supplied by parent
+                    </td></tr>
+<tr><td>submit&#8209;PPPP.run</td><td>List of XXXX-PPPP.in Files
+				      supplied by parent; only appears
+				      on <a href="#run-page">Run Page</a>;
+				      used to submit problem for judging;
+				      non-sample XXXX-PPPP.in files are
+				      not on Problem Page unless they
+				      had an error during submit
+                    </td></tr>
+</table>
+<br>
 <strong>Files Made From Other Files (Not During Upload):</strong><br>
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
                      made from XXXX&#8209;PPPP.in test case input file
-		     by generate program</td></tr>
+		     by generate-PPPP</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.sin file
 		     by compiled solution
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.dout</td><td>Debugging Output File,
                      made from XXXX&#8209;PPPP.sin file
-		     by the compiled solution and for C/C++
+		     by the compiled solution and, for C/C++,
 		     the solution source code; designed to
 		     identify the line number of the statement where
 		     a CPU time limit signal or program fault
@@ -1091,14 +1118,13 @@ the problem was pulled.
 <tr><td>XXXX&#8209;PPPP.fout</td><td>Filtered Solution Output File,
                      made from XXXX&#8209;PPPP.sout file
                      and XXXX&#8209;PPPP.sin file
-		     by filter program
+		     by filter-PPPP
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
                      made by simply copying
 		     the XXXX&#8209;PPPP.fout file
-		     (WARNING: affects scoring; made by problem
-		     setter; NOT made by problem solver);
-		     may be supplied by parent
+		     (WARNING: affects scoring; forces `Completely Correct'
+		     score);
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.score</td><td>Scoring Output File,
                      made from XXXX&#8209;PPPP.fout
@@ -1154,12 +1180,13 @@ the problem was pulled.
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.disp</td><td>Output from
                      display-PPPP; made by display-PPPP
-		     if XXXX-PPPP.pdf is made</td></tr>
+		     if and when XXXX-PPPP.pdf is made</td></tr>
 </table>
 <br>
 <strong>Test Files You May Uploaded:</strong><br>
 <table class='extension'>
-<tr><td>XXXX&#8209;PPPP.in</td><td>Extra Test Case Input File
+<tr><td>XXXX&#8209;PPPP.in</td><td>Extra Test Case Input File;
+                    XXXX-PPPP.sout file is made by upload
                     </td></tr>
 <tr><td>XXXX&#8209;PPPP.run</td><td>Extra List of .in Files
                     </td></tr>
@@ -1169,7 +1196,7 @@ the problem was pulled.
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.in file
-		     by generate program and compiled solution
+		     by generate-PPPP and compiled solution
 		     </td></tr>
 </table>
 <br>
@@ -1216,7 +1243,7 @@ PPPP.  These are in addition to the files listed above in
                      may be supplied by parent</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.in file
-		     by generate program and compiled solution
+		     by generate-PPPP and compiled solution
 		     </td></tr>
 </table>
 <br>
@@ -1240,7 +1267,7 @@ PPPP.  These are in addition to the files listed above in
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
                      made from XXXX&#8209;PPPP.in test case input file
-		     by generate program</td></tr>
+		     by generate-PPPP</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.sin file
 		     by compiled solution
@@ -1256,7 +1283,7 @@ PPPP.  These are in addition to the files listed above in
 <tr><td>XXXX&#8209;PPPP.fout</td><td>Filtered Solution Output File,
                      made from XXXX&#8209;PPPP.sout file
                      and XXXX&#8209;PPPP.sin file
-		     by filter program
+		     by filter-PPPP
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
                      made by simply copying
@@ -1295,11 +1322,11 @@ PPPP.  These are in addition to the files listed above in
 <tr><td>PPPP.terr</td><td>Error Output from LATEX
 		     during upload</td></tr>
 <tr><td>XXXX&#8209;PPPP.gYerr</td><td>Error Output from
-		     generate program (if generate program
+		     generate-PPPP (if generate-PPPP
 		     is run twice Y is 1 or 2, else Y is
 		     missing)</td></tr>
 <tr><td>XXXX&#8209;PPPP.ferr</td><td>Error Output from
-		     filter program</td></tr>
+		     filter-PPPP</td></tr>
 <tr><td>XXXX&#8209;PPPP.serr</td><td>Error Output from
 		     solution program</td></tr>
 <tr><td>XXXX&#8209;PPPP.scerr</td><td>Error Output from
