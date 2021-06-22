@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun 22 13:33:19 EDT 2021
+Date:	Tue Jun 22 14:09:18 EDT 2021
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -469,7 +469,7 @@ to the server, which logs the browser in.
 <p>
 Every time the browser sends a ticket to the server, if
 the server accepts the ticket and logs the browser in,
-then the server sends the broswer a replacement ticket.  A
+then the server sends the browser a replacement ticket.  A
 ticket can be used only once.  Should the server reject a ticket,
 it will give you another confirmation number.
 <p>
@@ -479,7 +479,7 @@ During this period the server accepts tickets associated
 with the e-mail address from browsers that have them.
 At the end of this period the server e-mails you a confirmation
 number when you next log in using the e-mail address, and
-starts a new auto-login period when it recieves the confirmation
+starts a new auto-login period when it receives the confirmation
 number.  The first auto-login period is 2 days, the second
 is 7 days, and all the rest are 30 days.
 </p>
@@ -662,7 +662,7 @@ and click
 the <b>Submit</b> button.  Details are at
 <a href="#project-pull">Pulling Problems From Project</a>.
 <p>
-To creat a tab for one of your own problems, first
+To create a tab for one of your own problems, first
 select a problem list that contains the desired problem,
 such as the `Your Problems' list that contains all your
 problems.  Then select the problem from the
@@ -796,7 +796,7 @@ If you delete a file link in your local problem directory
 whose target is a file the parent directory, executions are likely to still
 work as in most cases a file will be taken from either the
 local directory or the parent, with the local directory
-peferred for non-submissions, and the parent version required
+preferred for non-submissions, and the parent version required
 for non-solution-executables for submissions.
 If you delete a local problem directory link of a .run file,
 you will find that you can now submit the file.  If you
@@ -1341,7 +1341,7 @@ files with generate programs that understand how to interpret them.
 <p>
 The default generate program simply copies its input to its output
 removing lines beginning `!!##', which are considered comment lines.
-If you are writting your own problem, you may write a generate
+If you are writing your own problem, you may write a generate
 program (e.g., generate-PPPP.cc) that treats lines beginning with
 `!!<some-leter>' as instructions to generate a sequence of
 input lines, typically using a pseudo-random number generated
@@ -1350,7 +1350,7 @@ standard libraries are updated)
 and seeded by a number in the input instruction line.
 <p>
 For example, `!!L seed m n' could generate a line containing
-m numbers randomly choosen in the range [1,n] with seed being
+m numbers randomly chosen in the range [1,n] with seed being
 the pseudo-random number generator seed.  Here `L' is the literal
 letter L, and seed, m, and n are natural number parameters.
 See the Downloads Page (accessible from any Problem Page)
@@ -1359,7 +1359,7 @@ for source code of an example generate program.
 The default filter program simply copies solution output
 (which it gets from file descriptor 3) to its standard output.
 The solution output can contain comments beginning `!!**'.
-If you are writting your own problem, you may write a filter
+If you are writing your own problem, you may write a filter
 program (e.g., filter-PPPP.cc) that computes data from the
 solution input (output of the generate program) and the
 solution output and replaces part of the solution output
@@ -1386,7 +1386,7 @@ it outputs the line but issues a warning message.
 
 <h2 id="multiple-solutions">Multiple Solutions</h2>
 <p>
-If you are writting in the C language, so that normally you
+If you are writing in the C language, so that normally you
 would provide a solution PPPP.c, you may provide multiple
 solutions named YYYY-PPPP.c, for various YYYY.  Then
 after upload you will have files YYYY-PPPP and YYYY-PPPP.c
@@ -1635,7 +1635,7 @@ displays or hides the relevant contents of the template.
 The commands displayed for a template are executed when the
 template is used.  These contain argument names substituted 
 from the <a href='#option-arguments'>argument options</a>.
-Each substitutable argument name is preceeded in its command by a dollar
+Each substitutable argument name is preceded in its command by a dollar
 sign ($).
 In addition to argument option substitutions, the problem
 name is substituted for PPPP, and the remainder of the source file name
@@ -1645,7 +1645,7 @@ letters, such as XXXX or YYYY.
 The template selected for a particular
 task is controlled by the extensions of the input and output
 files, but also by what other files are available.  For example,
-several tempates are available to make a .score file with
+several templates are available to make a .score file with
 a score from an .in file with solution input.  One of these
 is selected if there is a binary file with no extension
 (for C or C++);
@@ -1752,7 +1752,7 @@ the list, it will be copied and not moved; that is, the problem
 will be left in the source list while being added to the destination
 list.
 <p>
-After editing a list of your own, you must `SAVE' it.  `FINSH'
+After editing a list of your own, you must `SAVE' it.  `FINISH'
 will also save the list and in addition will de-select the list so you
 can select another list.  `CANCEL' will de-select the list without
 saving it.  `RESET' will reset the list to its state before
@@ -2021,7 +2021,7 @@ set complements of previous groups.
 <h1 id="conflicts">Conflicts</h1>
 <dl>
 
-<dt>Browser Back, Forward, and Refrest Buttons Must NOT Be Used</dt>
+<dt>Browser Back, Forward, and Refresh Buttons Must NOT Be Used</dt>
 <dd>You must not use the browser back, forward, and refresh buttons.  You can
 refresh using control-R or the refresh button
 provided ON THE PAGE, in the upper right corner.
@@ -2068,12 +2068,12 @@ the Project Page selector to create a problem window.</dd>
 
 <dt>Score Board</dt>
 <dd>There is not yet any scoreboard.  Submissions shown
-    on the View Page provide data sufficent to construct
+    on the View Page provide data sufficient to construct
     a scoreboard.</dd>
 
 <dt>No Automatic Contest Start</dt>
 <dd>There is not yet a system for automatically starting
-    a contest by reseting its project's privileges at a
+    a contest by resetting its project's privileges at a
     specified time.</dd>
 
 <dt>Times Not Explained</dt>
