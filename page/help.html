@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Jun 22 10:05:50 EDT 2021
+Date:	Tue Jun 22 13:33:19 EDT 2021
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1193,7 +1193,7 @@ error will be available in the Working Files.
                     </td></tr>
 </table>
 <br>
-<strong>Test Files Made During Upload:</strong><br>
+<strong>Test Files Made During Optional Uploads:</strong><br>
 <table class='extension'>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
                      made from XXXX&#8209;PPPP.in file
@@ -1220,17 +1220,34 @@ PPPP.  These are in addition to the files listed above in
 <tr><td colspan="2">One <a href="#solution-source-files">
                     Solution Source File</a></td></tr>
 <tr><td>PPPP.tex</td><td>LATEX Document Source File</td></tr>
-<tr><td>XXXX&#8209;PPPP.in</td><td>Test Case Input File</td></tr>
-<tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files</td></tr>
+<tr><td>XXXX&#8209;PPPP.in</td><td>Test Case Input File; one of many;
+                                   if XXXX begins with `00-' this is
+				   a sample input file; otherwise
+				   it is a submit (judge's) input file;
+				   the solution source and optional
+				   generate-PPPP.cc must be uploaded
+				   before .in files are uploaded</td></tr>
+<tr><td>sample&#8209;PPPP.run</td><td>List of sample .in Files;
+                                      the optional generate-PPPP.cc,
+				      the .in files listed, and the optional
+				      filter-PPPP.cc must be uploaded,
+				      and the .ftest files associated with
+				      the listed .in file must be made,
+				      before a .run file is uploaded
+				      </td></tr>
+<tr><td>submit&#8209;PPPP.run</td><td>List of submit .in Files</td></tr>
 </table>
 <br>
 <strong>Files That <u>May</u> Be Uploaded:</strong><br>
 <table class='extension'>
-<tr><td>generate-PPPP.cc</td><td>C++ generate-PPP Program Source File
+<tr><td>generate&#8209;PPPP.cc</td><td>C++ generate-PPPP Program Source File;
+                                 upload <u>before</u> any .in files
                         </td></tr>
-<tr><td>filter-PPPP.cc</td><td>C++ filter-PPP Program Source File
+<tr><td>filter&#8209;PPPP.cc</td><td>C++ filter-PPPP Program Source File;
+                        upload <u>before</u> making .ftest files, hence
+			before uploading .run files
                         </td></tr>
-<tr><td>display-PPPP.cc</td><td>C++ display-PPP Program Source File
+<tr><td>display&#8209;PPPP.cc</td><td>C++ display-PPPP Program Source File
                         </td></tr>
 <tr><td>XXXX&#8209;PPPP.txt</td><td>Supplementary Data/Documentation
                     Text File</td></tr>
@@ -1238,23 +1255,23 @@ PPPP.  These are in addition to the files listed above in
 <br>
 <strong>Files Made During Upload:</strong><br>
 <table class='extension'>
-<tr><td colspan="2"><a href="#solution-source-files">
-                    Solution Binary File</a></td></tr>
-<tr><td>generate-PPPP</td><td>C/C++ Program Binary File;
-                     made from generate-PPPP.c or generate-PPPP.cc
-		     file</td></tr>
-<tr><td>filter-PPPP</td><td>C/C++ Program Binary File;
-                     made from filter-PPPP.c or filter-PPPP.cc
-		     file</td></tr>
-<tr><td>display-PPPP</td><td>C/C++ Program Binary File;
-                     made from display-PPPP.c or display-PPPP.cc
-		     file</td></tr>
 <tr><td>PPPP.pdf</td><td>Document PDF File,
                      made from PPPP.tex file</td></tr>
+<tr><td colspan="2">One <a href="#solution-source-files">
+                    Solution Binary File</a></td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File;
                      made from XXXX&#8209;PPPP.in file
 		     by generate-PPPP and compiled solution
 		     </td></tr>
+<tr><td>generate&#8209;PPPP</td><td>C/C++ Program Binary File;
+                     made from generate-PPPP.c or generate-PPPP.cc
+		     file</td></tr>
+<tr><td>filter&#8209;PPPP</td><td>C/C++ Program Binary File;
+                     made from filter-PPPP.c or filter-PPPP.cc
+		     file</td></tr>
+<tr><td>display&#8209;PPPP</td><td>C/C++ Program Binary File;
+                     made from display-PPPP.c or display-PPPP.cc
+		     file</td></tr>
 </table>
 <br>
 <strong>Files Created When Making Other Files:</strong><br>
@@ -1263,14 +1280,14 @@ PPPP.  These are in addition to the files listed above in
                      <a href="#generate-and-filter">
 		     Generate Program</a> executable;
 		     created automatically by linking to
-		     epm_default_generator if not made from
-		     generate-PPPP.cc</td></tr>
+		     epm_default_generator if no
+		     generate-PPPP.cc uploaded</td></tr>
 <tr><td>filter&#8209;PPPP</td><td>
                      <a href="#generate-and-filter">
                      Filter Program</a> executable;
 		     created automatically by linking to
-		     epm_default_filter if not made from
-		     filter-PPPP.cc</td></tr>
+		     epm_default_filter if no
+		     filter-PPPP.cc uploaded</td></tr>
 </table>
 <br>
 <strong>Files Made From Other Files (Not During Upload):</strong><br>
@@ -1283,9 +1300,7 @@ PPPP.  These are in addition to the files listed above in
 <tr><td>XXXX&#8209;PPPP.ftest</td><td>Filtered Solution Test File,
                      made by simply copying
 		     the XXXX&#8209;PPPP.fout file
-		     (WARNING: affects scoring; made by problem
-		     setter; NOT made by problem solver);
-		     may be supplied by parent
+		     (WARNING: affects scoring)
 		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.rout</td><td>Run output file,
                      made from XXXX&#8209;PPPP.run
