@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Jun 21 23:24:28 EDT 2021
+Date:	Tue Jun 22 10:05:50 EDT 2021
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1226,11 +1226,11 @@ PPPP.  These are in addition to the files listed above in
 <br>
 <strong>Files That <u>May</u> Be Uploaded:</strong><br>
 <table class='extension'>
-<tr><td>generate-PPPP.cc</td><td>C/C++ generate-PPP Program Source File
+<tr><td>generate-PPPP.cc</td><td>C++ generate-PPP Program Source File
                         </td></tr>
-<tr><td>filter-PPPP.cc</td><td>C/C++ filter-PPP Program Source File
+<tr><td>filter-PPPP.cc</td><td>C++ filter-PPP Program Source File
                         </td></tr>
-<tr><td>display-PPPP.cc</td><td>C/C++ display-PPP Program Source File
+<tr><td>display-PPPP.cc</td><td>C++ display-PPP Program Source File
                         </td></tr>
 <tr><td>XXXX&#8209;PPPP.txt</td><td>Supplementary Data/Documentation
                     Text File</td></tr>
@@ -1238,12 +1238,17 @@ PPPP.  These are in addition to the files listed above in
 <br>
 <strong>Files Made During Upload:</strong><br>
 <table class='extension'>
-<tr><td>PPPP</td><td>C/C++ Program Binary File;
-                     made from PPPP.c or PPPP.cc file</td></tr>
-<tr><td>PPPP.pyc</td><td>PYTHON Program Binary File;
-                     made from PPPP.py file</td></tr>
-<tr><td>PPPP.jar</td><td>JAVA Program Binary File;
-                     made from PPPP.java file</td></tr>
+<tr><td colspan="2"><a href="#solution-source-files">
+                    Solution Binary File</a></td></tr>
+<tr><td>generate-PPPP</td><td>C/C++ Program Binary File;
+                     made from generate-PPPP.c or generate-PPPP.cc
+		     file</td></tr>
+<tr><td>filter-PPPP</td><td>C/C++ Program Binary File;
+                     made from filter-PPPP.c or filter-PPPP.cc
+		     file</td></tr>
+<tr><td>display-PPPP</td><td>C/C++ Program Binary File;
+                     made from display-PPPP.c or display-PPPP.cc
+		     file</td></tr>
 <tr><td>PPPP.pdf</td><td>Document PDF File,
                      made from PPPP.tex file</td></tr>
 <tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File;
@@ -1257,34 +1262,19 @@ PPPP.  These are in addition to the files listed above in
 <tr><td>generate&#8209;PPPP<pre>  </pre></td><td>
                      <a href="#generate-and-filter">
 		     Generate Program</a> executable;
-		     may be supplied by parent or
 		     created automatically by linking to
-		     epm_default_generator</td></tr>
+		     epm_default_generator if not made from
+		     generate-PPPP.cc</td></tr>
 <tr><td>filter&#8209;PPPP</td><td>
                      <a href="#generate-and-filter">
                      Filter Program</a> executable;
-                     may be supplied by parent or
 		     created automatically by linking to
-		     epm_default_filter</td></tr>
+		     epm_default_filter if not made from
+		     filter-PPPP.cc</td></tr>
 </table>
 <br>
 <strong>Files Made From Other Files (Not During Upload):</strong><br>
 <table class='extension'>
-<tr><td>XXXX&#8209;PPPP.sin</td><td>Solution Input File,
-                     made from XXXX&#8209;PPPP.in test case input file
-		     by generate-PPPP</td></tr>
-<tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
-                     made from XXXX&#8209;PPPP.sin file
-		     by compiled solution
-		     </td></tr>
-<tr><td>XXXX&#8209;PPPP.dout</td><td>Debugging Output File,
-                     made from XXXX&#8209;PPPP.sin file
-		     by the compiled solution and for C/C++
-		     the solution source code; designed to
-		     identify the line number of the statement where
-		     a CPU time limit signal or program fault
-		     occurred
-		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.fout</td><td>Filtered Solution Output File,
                      made from XXXX&#8209;PPPP.sout file
                      and XXXX&#8209;PPPP.sin file
@@ -1297,11 +1287,6 @@ PPPP.  These are in addition to the files listed above in
 		     setter; NOT made by problem solver);
 		     may be supplied by parent
 		     </td></tr>
-<tr><td>XXXX&#8209;PPPP.score</td><td>Scoring Output File,
-                     made from XXXX&#8209;PPPP.fout
-                     and XXXX&#8209;PPPP.ftest files
-		     by scoring program
-		     </td></tr>
 <tr><td>XXXX&#8209;PPPP.rout</td><td>Run output file,
                      made from XXXX&#8209;PPPP.run
 		     and other files by the scoring and other
@@ -1309,35 +1294,6 @@ PPPP.  These are in addition to the files listed above in
 		     summarizes .score files made from
 		     .in files listed in the .run file
 		     </td></tr>
-<tr><td>XXXX&#8209;PPPP.txt </td><td>Documentation of the
-                     XXXX&#8209;PPPP program (for XXXX equal
-		     `generate', `filter', or `monitor') made by
-		     executing `XXXX&#8209;PPPP&nbsp;&nbsp;-doc'
-		     </td></tr>
-</table>
-<br>
-<strong>Working Files That Should Be Empty:</strong><br>
-<table class='extension'>
-<tr><td>PPPP.cout</td>
-    <td>Compiler Output File, made during upload or
-        debug compilation</td></tr>
-<tr><td>PPPP.cerr</td>
-                 <td>Error Output from compilation
-		     during upload or debug compilation</td></tr>
-<tr><td>PPPP.terr</td><td>Error Output from LATEX
-		     during upload</td></tr>
-<tr><td>XXXX&#8209;PPPP.gYerr</td><td>Error Output from
-		     generate-PPPP (if generate-PPPP
-		     is run twice Y is 1 or 2, else Y is
-		     missing)</td></tr>
-<tr><td>XXXX&#8209;PPPP.ferr</td><td>Error Output from
-		     filter-PPPP</td></tr>
-<tr><td>XXXX&#8209;PPPP.serr</td><td>Error Output from
-		     solution program</td></tr>
-<tr><td>XXXX&#8209;PPPP.scerr</td><td>Error Output from
-		     epm_score scoring program</td></tr>
-<tr><td>XXXX&#8209;PPPP.rerr</td><td>Error Output from
-		     a run</td></tr>
 </table>
 <br>
 <strong>Working Files That Are Not Empty:</strong><br>
