@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Jun 21 18:02:16 EDT 2021
+Date:	Mon Jun 21 23:24:28 EDT 2021
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1059,7 +1059,8 @@ error will be available in the Working Files.
                     program; made from display-PPPP if that exists</td></tr>
 </table>
 <br>
-<strong>Solution Files One of Which You Upload:</strong><br>
+<strong id="solution-source-files">
+        Solution Source Files One of Which You Upload:</strong><br>
 <table class='extension'>
 <tr><td>PPPP.c</td><td>C Program Source File</td></tr>
 <tr><td>PPPP.cc</td><td>C++ Program Source File</td></tr>
@@ -1067,13 +1068,13 @@ error will be available in the Working Files.
 <tr><td>PPPP.java</td><td>JAVA Program Source File</td></tr>
 </table>
 <br>
-<strong>Binary Files Made When Solution Uploaded:</strong><br>
+<strong>Solution Binary Files Made When Solution Uploaded:</strong><br>
 <table class='extension'>
-<tr><td>PPPP</td><td>C/C++ Program Binary File,
+<tr><td>PPPP</td><td>C/C++ Program Binary File;
                      made from PPPP.c or PPPP.cc file</td></tr>
-<tr><td>PPPP.pyc</td><td>PYTHON Program Binary File,
+<tr><td>PPPP.pyc</td><td>PYTHON Program Binary File;
                      made from PPPP.py file</td></tr>
-<tr><td>PPPP.jar</td><td>JAVA Program Binary File,
+<tr><td>PPPP.jar</td><td>JAVA Program Binary File;
                      made from PPPP.java file</td></tr>
 </table>
 <br>
@@ -1214,34 +1215,38 @@ PPPP.  These are in addition to the files listed above in
 <p>
 <!-- &#8209; is no-breaking hyphen -->
 <div class='indented'>
-<strong>Files That Are Uploaded:</strong><br>
+<strong>Files That Must Be Uploaded:</strong><br>
 <table class='extension'>
-<tr><td>PPPP.c</td><td>C Program Source File</td></tr>
-<tr><td>PPPP.cc</td><td>C++ Program Source File</td></tr>
-<tr><td>PPPP.py</td><td>PYTHON Program Source File</td></tr>
-<tr><td>PPPP.java</td><td>JAVA Program Source File</td></tr>
+<tr><td colspan="2">One <a href="#solution-source-files">
+                    Solution Source File</a></td></tr>
 <tr><td>PPPP.tex</td><td>LATEX Document Source File</td></tr>
-<tr><td>XXXX&#8209;PPPP.txt</td><td>Supplementary data/documentation
-                    text file;
-                    may be supplied by parent</td></tr>
-<tr><td>XXXX&#8209;PPPP.in</td><td>Test Case Input File;
-                    may be supplied by parent</td></tr>
-<tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files;
-                    may be supplied by parent</td></tr>
+<tr><td>XXXX&#8209;PPPP.in</td><td>Test Case Input File</td></tr>
+<tr><td>XXXX&#8209;PPPP.run</td><td>List of .in Files</td></tr>
+</table>
+<br>
+<strong>Files That <u>May</u> Be Uploaded:</strong><br>
+<table class='extension'>
+<tr><td>generate-PPPP.cc</td><td>C/C++ generate-PPP Program Source File
+                        </td></tr>
+<tr><td>filter-PPPP.cc</td><td>C/C++ filter-PPP Program Source File
+                        </td></tr>
+<tr><td>display-PPPP.cc</td><td>C/C++ display-PPP Program Source File
+                        </td></tr>
+<tr><td>XXXX&#8209;PPPP.txt</td><td>Supplementary Data/Documentation
+                    Text File</td></tr>
 </table>
 <br>
 <strong>Files Made During Upload:</strong><br>
 <table class='extension'>
-<tr><td>PPPP</td><td>C/C++ Program Binary File,
+<tr><td>PPPP</td><td>C/C++ Program Binary File;
                      made from PPPP.c or PPPP.cc file</td></tr>
-<tr><td>PPPP.pyc</td><td>PYTHON Program Binary File,
+<tr><td>PPPP.pyc</td><td>PYTHON Program Binary File;
                      made from PPPP.py file</td></tr>
-<tr><td>PPPP.jar</td><td>JAVA Program Binary File,
+<tr><td>PPPP.jar</td><td>JAVA Program Binary File;
                      made from PPPP.java file</td></tr>
 <tr><td>PPPP.pdf</td><td>Document PDF File,
-                     made from PPPP.tex file;
-                     may be supplied by parent</td></tr>
-<tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File,
+                     made from PPPP.tex file</td></tr>
+<tr><td>XXXX&#8209;PPPP.sout</td><td>Solution Output File;
                      made from XXXX&#8209;PPPP.in file
 		     by generate-PPPP and compiled solution
 		     </td></tr>
