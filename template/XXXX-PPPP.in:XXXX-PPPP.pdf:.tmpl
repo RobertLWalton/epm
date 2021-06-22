@@ -6,10 +6,14 @@
 	      "  $BIN/epm_sandbox $SSARGS $SSTIME $SSPACE \\",
 	      "    -score XXXX-PPPP.score \\",
 	      "    -status XXXX-PPPP.sstat PPPP $DARGS \\",
-	      "     2> XXXX-PPPP.serr | \\",
+	      "    > XXXX-PPPP.sout 2> XXXX-PPPP.serr",
+              "$BIN/epm_sandbox $GSARGS $GSPACE \\",
+              "    -status XXXX-PPPP.g2stat generate-PPPP \\",
+              "    < XXXX-PPPP.in 2> XXXX-PPPP.g2err | \\",
 	      "  $BIN/epm_sandbox $FSARGS $FSPACE \\",
-              "    -status XXXX-PPPP.dstat display-PPPP \\",
-	      "    2> XXXX-PPPP.d1err > XXXX-PPPP.disp",
+              "    -status XXXX-PPPP.fstat display-PPPP \\",
+	      "    3< XXXX-PPPP.sout > XXXX-PPPP.disp \\",
+	      "    2> XXXX-PPPP.d1err",
 	      "$BIN/epm_display < XXXX-PPPP.disp \\",
 	      "    2> XXXX-PPPP.d2err > XXXX-PPPP.pdf" ],
 
@@ -17,7 +21,8 @@
 "REQUIRES":["generate-PPPP", "display-PPPP"],
 "CREATABLE":["generate-PPPP"],
 "KEEP":    ["XXXX-PPPP.pdf"],
-"CHECKS":    ["XXXX-PPPP.gerr","XXXX-PPPP.serr",
+"CHECKS":    ["XXXX-PPPP.serr",
+              "XXXX-PPPP.g1err", "XXXX-PPPP.g2err",
               "XXXX-PPPP.d1err", "XXXX-PPPP.d2err",
 	      "XXXX-PPPP.pdf"]
 
