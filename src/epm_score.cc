@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Thu Dec 24 23:01:28 EST 2020
+// Date:	Sat Jun 26 18:43:32 EDT 2021
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -99,12 +99,16 @@ char documentation [] =
 "    letter, non-digit ASCII characters that is not\n"
 "    part of a number.\n"
 "\n"
-"    Non-ASCII characters and ASCII control charac-\n"
-"    ters other than space, horizontal tab, newline,\n"
-"    and carriage return are illegal characters.\n"
-"    These are replaced by ? and then treated as\n"
-"    separator characters.  The presence of illegal\n"
-"    characters is considered to be a `Format Error'.\n"
+"    ASCII control characters other than space,\n"
+"    horizontal tab, newline, and carriage return\n"
+"    are illegal characters.  These are replaced by\n"
+"    ? and then treated as separator characters.\n"
+"    The presence of illegal characters is consider-\n"
+"    ed to be a `Format Error'.\n"
+"\n"
+"    Bytes whose high order bit is set are treated\n"
+"    as word characters; they are part of UTF-8\n"
+"    encodings of non-ASCII characters.\n"
 "\n"
 "    Tokens are scanned left to right with longer\n"
 "    tokens being preferred at each point.  When com-\n"
@@ -413,7 +417,8 @@ void get_line ( file & f )
 	while ( ! has_illegal && * p )
 	{
 	    char c = * p ++;
-	    switch ( c )
+	    if ( c & 0200 ) f.is_blank = false;
+	    else switch ( c )
 	    {
 	        case ' ':
 		case '\t':
@@ -433,6 +438,7 @@ void get_line ( file & f )
 	    for ( size_t i = 0; i < s; ++ i )
 	    {
 		char & c = f.line[i];
+		if ( c & 0200 ) continue;
 		switch ( c )
 		{
 		    case ' ':
