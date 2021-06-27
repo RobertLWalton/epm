@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Jun 27 11:27:47 EDT 2021
+// Date:	Sun Jun 27 15:14:26 EDT 2021
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -39,11 +39,12 @@ char const ILLEGAL = '?';
 char documentation [] =
 "epm_score [options] output_file test_file\n"
 "\n"
-"    The output_file is the problem monitor output\n"
-"    and the test_file is the judge's monitor output.\n"
-"    These files may contain comment lines that begin\n"
-"    with `!!' and are skipped and thus ignored by\n"
-"    epm_score.\n"
+"    The output_file is the submitted solution's\n"
+"    output and the test_file is the judge's\n"
+"    solution's output.  Both outputs may be\n"
+"    filtered.  These files may contain comment\n"
+"    lines that begin with `!!' and are skipped and\n"
+"    thus ignored by epm_score.\n"
 "\n"
 "    This program outputs a summary score line, fol-\n"
 "    lowed by descriptions of any errors found in the\n"
@@ -64,8 +65,8 @@ char documentation [] =
 "        No Output\n"
 "\n"
 "    To find errors, file lines are parsed into\n"
-"    tokens, and sucessive tokens of pairs of non-\n"
-"    blank lines are matched.  Lines begining with\n"
+"    tokens, and successive tokens of pairs of non-\n"
+"    blank lines are matched.  Lines beginning with\n"
 "    `!!' are treated as comments which are skipped\n"
 "    and thus ignored.\n"
 "\n"
@@ -107,12 +108,12 @@ char documentation [] =
 "    The presence of illegal characters is consider-\n"
 "    ed to be a `Format Error'.\n"
 "\n"
-"    Bytes whose high order bit is set are treated\n"
-"    as word characters; they are part of UTF-8\n"
-"    encodings of non-ASCII characters.  As a\n"
-"    consequence, non-ASCII space characters and\n"
+"    The input is UTF-8, but ALL non-ASCII Unicode\n"
+"    characters are treated as letters.  As a\n"
+"    consequence, non-ASCII control characters and\n"
 "    operator characters are treated as if they were\n"
-"    letters.\n"
+"    letters.  All non-ASCII Unicode characters are\n"
+"    treated as occupying a single column.\n"
 "\f\n"
 "    Tokens are scanned left to right with longer\n"
 "    tokens being preferred at each point.  When com-\n"
@@ -121,9 +122,12 @@ char documentation [] =
 "\n"
 "    The types of errors detected are:\n"
 "\n"
-"        Incorrect Output Errors:\n"
+"        Incomplete Output Errors:\n"
 "\n"
 "            Output Ends Too Soon\n"
+"\n"
+"        Incorrect Output Errors:\n"
+"\n"
 "            Superfluous Lines at End of Output\n"
 "            Tokens Missing from End of Line\n"
 "            Extra Tokens at End of Line\n"
@@ -136,10 +140,10 @@ char documentation [] =
 "            Unequal Separators\n"
 "            Unequal Numbers\n"
 "            Unequal Integers\n"
+"\f\n"
+"        Format Errors:\n"
 "\n"
 "            Number is Not an Integer*\n"
-"\n"
-"        Format Errors:\n"
 "\n"
 "            Integer has High Order Zeros*\n"
 "            Integer has Sign*\n"
@@ -149,10 +153,10 @@ char documentation [] =
 "            Word Letter Cases do Not Match*\n"
 "            Token End Columns are Not Equal*\n"
 "\n"
-"            Superflous Blank Line*\n"
+"            Superfluous Blank Line*\n"
 "            Missing Blank Line*\n"
-"\f\n"
-"    The error types marked with * are ignored by\n"
+"\n"
+"    Error types marked with * are ignored by\n"
 "    default, while all other error types are not\n"
 "    ignorable.\n"
 "\n"
@@ -168,7 +172,7 @@ char documentation [] =
 "        Reset the error type limit to L.\n"
 "\n"
 "    -blank\n"
-"        Do NOT ignore `Superflous Blank Line' and\n"
+"        Do NOT ignore `Superfluous Blank Line' and\n"
 "        `Missing Blank Line' errors.\n"
 "\n"
 "    -float A R\n"
@@ -176,7 +180,7 @@ char documentation [] =
 "        and both are numbers, the two numbers are\n"
 "        both converted to IEEE floating point and\n"
 "        tested for equality.\n"
-"\n"
+"\f\n"
 "        If the absolute difference is less than or\n"
 "        equal to A OR the relative difference is\n"
 "        less than or equal to R, the two tokens are\n"
@@ -187,10 +191,15 @@ char documentation [] =
 "        If this option is not given, it defaults to\n"
 "        `-float 0 -'.\n"
 "\n"
+"        When a non-default -float option is given,\n"
+"        care should be taken that all test number\n"
+"        tokens to be compared with the -float option\n"
+"        have a decimal point or exponent.\n"
+"\n"
 "        The -integer option below separately requi-\n"
 "        es the output token to be an integer when\n"
 "        the test token is an integer.\n"
-"\f\n"
+"\n"
 "    -places\n"
 "        Do NOT ignore `Number has Wrong Number of\n"
 "        Decimal Places' errors.  The number of\n"
@@ -204,18 +213,13 @@ char documentation [] =
 "        is an integer, the output token must be an\n"
 "        integer.\n"
 "\n"
-"        When both `-integer' and `-float A R' are\n"
-"        given, care must be taken that all test\n"
-"        number tokens that are to be compared using\n"
-"        -float contain a decimal point.\n"
-"\n"
 "    -zeros\n"
 "        Do NOT ignore `Integer has High Order\n"
 "        Zeros' errors.  The output integer token\n"
 "        will not be allowed to have a high order\n"
 "        zero unless the test integer token has a\n"
 "        high order zero.\n"
-"\n"
+"\f\n"
 "    -sign\n"
 "        Do NOT ignore `Integer has Sign' errors.\n"
 "        The output integer token will not be\n"
@@ -225,20 +229,27 @@ char documentation [] =
 "    -case\n"
 "        Do NOT ignore `Word Letter Cases do Not\n"
 "        Match' errors.\n"
-"\f\n"
+"\n"
 "    -column\n"
 "        Do NOT ignore `Token End Columns are Not\n"
 "        Equal' errors.  When computing the column\n"
 "        of a character, tabs are set every 8 col-\n"
 "        umns.\n"
 "\n"
-"    To compare two integers, any high order zeros\n"
-"    and initial + sign are ignored, and -0 is\n"
-"    treated as 0.  Integers may be arbitrarily long.\n"
+"    If two number tokens have identical character\n"
+"    strings except for differences in letter case,\n"
+"    then the tokens are considered to be equal.\n"
 "\n"
-"    To compare numbers otherwise, they are convert-\n"
-"    ed to IEEE 64 bit numbers.  It is possible that\n"
-"    a converted number will be an infinity.\n"
+"    Otherwise if both tokens are integers, high\n"
+"    order zeros and any initial + sign are ignored,\n"
+"    and -0 is treated as 0.  The integers may be\n"
+"    arbitrarily long.\n"
+"\n"
+"    Otherwise if one token is floating point, the\n"
+"    tokens are converted to IEEE 64 bit numbers.\n"
+"    It is possible that a converted number will be\n"
+"    an infinity.  Two infinities with the same sign\n"
+"    compare as equal.\n"
 "\n"
 "    The relative difference between two numbers x\n"
 "    and y is:\n"
@@ -246,7 +257,7 @@ char documentation [] =
 "                        | x - y |\n"
 "                     ----------------\n"
 "                     max ( |x|, |y| )\n"
-"\n"
+"\f\n"
 "    and is never larger than 2 (unless x or y is an\n"
 "    infinity).  If x == y == 0 this relative differ-\n"
 "    ence is taken to be zero.\n"
@@ -593,7 +604,7 @@ error_type integer_has_high_order_zeros
 
 error_type number_is_not_an_integer
     ( "Number is Not an Integer",
-      INCORRECT_OUTPUT, "integer" );
+      FORMAT_ERROR, "integer" );
 
 error_type unequal_integers
     ( "Unequal Integers", INCORRECT_OUTPUT );
@@ -924,6 +935,11 @@ void compare_numbers ( void )
 	double divisor =
 	    max ( fabs ( n1 ), fabs ( n2 ) );
 	R = fabs ( n1 - n2 ) / divisor;
+
+	// If n1 and n2 are infinities of opposite
+	// sign, R will be a NaN.
+	//
+	if ( isnan ( R ) ) R = INFINITY;
 
 	R_violation = ( R > number_R );
     }
