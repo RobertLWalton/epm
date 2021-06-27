@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Jun 27 03:47:46 EDT 2021
+// Date:	Sun Jun 27 04:42:08 EDT 2021
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -113,12 +113,12 @@ char documentation [] =
 "    consequence, non-ASCII space characters and\n"
 "    operator characters are treated as if they were\n"
 "    letters.\n"
-"\n"
+"\f\n"
 "    Tokens are scanned left to right with longer\n"
 "    tokens being preferred at each point.  When com-\n"
 "    paring tokens, the type of the test token\n"
 "    determines the type of output token expected.\n"
-"\f\n"
+"\n"
 "    The types of errors detected are:\n"
 "\n"
 "        Incorrect Output Errors:\n"
@@ -151,11 +151,11 @@ char documentation [] =
 "\n"
 "            Superflous Blank Line*\n"
 "            Missing Blank Line*\n"
-"\n"
+"\f\n"
 "    The error types marked with * are ignored by\n"
 "    default, while all other error types are not\n"
 "    ignorable.\n"
-"\f\n"
+"\n"
 "    Information about the first L error types\n"
 "    discovered, in order of discovery, is printed.\n"
 "    This includes details of the first instance of\n"
