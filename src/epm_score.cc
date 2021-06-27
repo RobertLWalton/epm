@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Jun 26 18:43:32 EDT 2021
+// Date:	Sun Jun 27 03:47:46 EDT 2021
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -75,7 +75,8 @@ char documentation [] =
 "    be used to require the output_file to have the\n"
 "    same spacing as the test_file.\n"
 "\f\n"
-"    A word is just a string of ASCII letters.  A\n"
+"    A word is just a string of ASCII letters and\n"
+"    non-ASCII UTF-8 encoded UNICODE characters.  A\n"
 "    number is a string with the syntax:\n"
 "\n"
 "        number ::= integer | float\n"
@@ -108,7 +109,10 @@ char documentation [] =
 "\n"
 "    Bytes whose high order bit is set are treated\n"
 "    as word characters; they are part of UTF-8\n"
-"    encodings of non-ASCII characters.\n"
+"    encodings of non-ASCII characters.  As a\n"
+"    consequence, non-ASCII space characters and\n"
+"    operator characters are treated as if they were\n"
+"    letters.\n"
 "\n"
 "    Tokens are scanned left to right with longer\n"
 "    tokens being preferred at each point.  When com-\n"
@@ -498,11 +502,31 @@ const char * token ( file & f, int width = 20 )
     }
     else
     {
+        // Copy s + f.start ... to f.token
+	// omitting all but at most 2*w bytes
+	// and inserting `...' at point of
+	// omission.  Take care not to break
+	// UTF-8 non-ASCII encodings.
+	//
         w = ( width - 3 ) / 2;
-	strncpy ( f.token, s + f.start, w );
-	strcpy ( f.token + w, "..." );
-	strncpy ( f.token + w + 3, s + f.end - w, w );
-	f.token[2*w+3] = 0;
+	char * p = f.token;
+	const char * q = s + f.start;
+	strncpy ( p, q, w );
+	p += w;
+	q += w;
+	if ( ( * q & 0300 ) == 0200 )
+	    while ( p > f.token && * q & 0200 )
+	        -- q, -- p;
+
+	strcpy ( p, "..." );
+	p += 3;
+
+	q = s + f.end - w;
+	while ( ( * q & 0300 ) == 0200 ) ++ q;
+	w = s + f.end - q;
+	strncpy ( p, q, w );
+	p += w;
+	* p = 0;
     }
     return f.token;
 }
@@ -632,9 +656,16 @@ char * print_file_lines ( char * p )
 	        p += sprintf ( p, "%s\n", s );
 	    else
 	    {
-	        strncpy ( p, s, 37 );
-		strcpy ( p + 37, "...\n" );
-		p += 41;
+	        // Be careful not to truncate line in
+		// the middle of UTF-8 encoding of a
+		// non-ASCII character.
+		//
+		int w = 37;
+		if ( ( s[w] & 0300 ) == 0200 )
+		    while ( w > 0 && s[w] & 0200 ) -- w;
+	        strncpy ( p, s, w );
+		strcpy ( p + w, "...\n" );
+		p += w + 4;
 	    }
 	}
     }
@@ -685,7 +716,7 @@ void get_token ( file & f )
 
     const char * lp = f.line.c_str();
     const char * p = lp + f.end;
-    const char * q;    // Ditto.
+    const char * q;
     while ( * p && isspace ( * p ) )
     {
         if ( * p == ' ' ) ++ f.column;
@@ -695,23 +726,35 @@ void get_token ( file & f )
     }
 
     f.start = p - lp;
+    unsigned continuation_characters = 0;
 
     if ( * p == 0 )
     {
         f.type = EOL;
 	goto TOKEN_DONE;
     }
-    if ( isalpha ( * p ) )
+    if ( isalpha ( * p ) || ( * p & 0200 ) )
     {
 	++ p;
-	while ( isalpha ( * p ) ) ++ p;
+	while ( true )
+	{
+	    if ( isalpha ( * p ) ) ++ p;
+	    else if ( ( * p & 0200 ) == 0 ) break;
+	    else
+	    {
+	        if ( ( * p & 0300 ) == 0200 )
+		    ++ continuation_characters;
+		++ p;
+	    }
+	}
 	f.type = WORD;
 	goto TOKEN_DONE;
     }
     q = p;
     while ( * p && ! isdigit ( * p )
 		&& ! isalpha ( * p )
-		&& ! isspace ( * p ) )
+		&& ! isspace ( * p )
+		&& ( * p & 0200 ) == 0 )
 	 ++ p;
     if ( isdigit ( * p ) )
     {
@@ -781,7 +824,8 @@ void get_token ( file & f )
 TOKEN_DONE:
 
     f.end = p - lp;
-    f.column += f.end - f.start;
+    f.column += f.end - f.start
+              - continuation_characters;
 
 
     if ( debug )
