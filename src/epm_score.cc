@@ -2,7 +2,7 @@
 //
 // File:	epm_score.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Jun 27 04:42:08 EDT 2021
+// Date:	Sun Jun 27 11:27:47 EDT 2021
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -1239,6 +1239,58 @@ int main ( int argc, char ** argv )
 			token ( output ),
 			token ( test ) );
 
+	    // If tokens are equal as character strings,
+	    // continue.  Ditto if tokens are equal as
+	    // character strings but for letter case,
+	    // and either test.type != WORD or
+	    // ignore_case is true.  Otherwise compute:
+	    //
+	    bool equal_but_for_case = false;
+	        // Tokens are equal as character strings
+		// except for differences of ASCII letter
+		// case.
+
+	    int output_len = output.end - output.start;
+	    int test_len = test.end - test.start;
+	    if ( test_len == output_len
+	         &&
+		 output.type == test.type )
+	    {
+		const char * p1 = output.line.c_str()
+				+ output.start;
+		const char * p2 = test.line.c_str()
+				+ test.start;
+
+		// We do NOT trust strncasecmp to
+		// handle non-ASCII UTF-8 encodings
+		// (it might try to treat them
+		// as latin1 encodings).
+		//
+		const char * end2 = p2 + test_len;
+		bool equal = equal_but_for_case = true;
+		while (    equal_but_for_case
+		        && p2 < end2 )
+		{
+		    char c1 = * p1 ++;
+		    char c2 = * p2 ++;
+		    if ( c1 == c2 ) continue;
+		    equal = false;
+		    if ( 'A' <= c1 && c1 <= 'Z' )
+			c1 += 'a' - 'A';
+		    if ( 'A' <= c2 && c2 <= 'Z' )
+			c2 += 'a' - 'A';
+		    equal_but_for_case = ( c1 == c2 );
+		}
+		if ( equal )
+		    continue;
+		else if ( equal_but_for_case
+		          &&
+			  ( ignore_case
+			    ||
+			    test.type != WORD ) )
+		    continue;
+	    }
+
 	    if ( test.type == INTEGER )
 	    {
 		if ( output.type == FLOAT )
@@ -1328,44 +1380,26 @@ int main ( int argc, char ** argv )
 			    token ( output ),
 			    token ( test ) );
 	    }
-	    else
-	    {
-		int output_len =
-		    output.end - output.start;
-		int test_len =
-		    test.end - test.start;
-		const char * p1 = output.line.c_str()
-				+ output.start;
-		const char * p2 = test.line.c_str()
-				+ test.start;
-		if ( test_len != output_len
-		     ||
-		        strncasecmp ( p1, p2, test_len )
-		     != 0 )
-		    error ( test.type == WORD ?
-		                unequal_words :
-		                unequal_separators,
-		            "output token `%s' and"
-			    " test token `%s'\n"
-			    "    are unequal %ss",
-			    token ( output ),
-			    token ( test ),
-			    token_type_name
-			        [test.type] );
-		else
-		if ( ! ignore_case
-		     &&
-		     test.type == WORD
-		     &&
-		     strncmp ( p1, p2, test_len ) != 0 )
-		    error
-		      ( word_letter_cases_do_not_match,
-		        "output token `%s' and test"
-			" token `%s'\n     do not have"
-			" matching letter cases",
+	    else if ( ! equal_but_for_case )
+		error ( test.type == WORD ?
+			    unequal_words :
+			    unequal_separators,
+			"output token `%s' and"
+			" test token `%s'\n"
+			"    are unequal %ss",
 			token ( output ),
-			token ( test ) );
-	    }
+			token ( test ),
+			token_type_name
+			    [test.type] );
+	    else
+	    if ( ! ignore_case )
+		error
+		  ( word_letter_cases_do_not_match,
+		    "output token `%s' and test"
+		    " token `%s'\n     do not have"
+		    " matching letter cases",
+		    token ( output ),
+		    token ( test ) );
 	}
     }
 
