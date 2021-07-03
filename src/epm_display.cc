@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sun Jan  3 03:06:39 EST 2021
+// Date:	Sat Jul  3 15:31:20 EDT 2021
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -2716,7 +2716,7 @@ int compute_bounding_box ( void )
     double & xmax = P_bounds.ur.x;
     double & ymax = P_bounds.ur.y;
     xmin = ymin = DBL_MAX;
-    xmax = ymax = DBL_MIN;
+    xmax = ymax = - DBL_MAX;
     int count = 0;
 
 #   define BOUND(v) \
