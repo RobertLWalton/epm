@@ -2,7 +2,7 @@
 //
 // File:	epm_display.cc
 // Authors:	Bob Walton (walton@deas.harvard.edu)
-// Date:	Sat Jul  3 15:31:20 EDT 2021
+// Date:	Wed Jul  7 17:39:55 EDT 2021
 //
 // The authors have placed this program in the public
 // domain; they make no warranty and accept no liability
@@ -3743,6 +3743,8 @@ void draw_page ( double P_left, double P_top )
 
     double dx = P_bounds.ur.x - P_bounds.ll.x;
     double dy = P_bounds.ur.y - P_bounds.ll.y;
+    if ( dx == 0 ) dx = dy;
+    if ( dy == 0 ) dy = dx;
     if ( dx == 0 ) dx = 1;
     if ( dy == 0 ) dy = 1;
     xscale = body_width / dx;
