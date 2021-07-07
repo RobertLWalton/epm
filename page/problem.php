@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun 20 14:52:15 EDT 2021
+    // Date:	Wed Jul  7 17:44:31 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -149,7 +149,7 @@
     if ( ! isset ( $_SESSION['EPM_PROBLEM']
                             [$problem] ) )
         $_SESSION['EPM_PROBLEM'][$problem] =
-	    ['ORDER' => 'extension'];
+	    ['ORDER' => 'recent'];
     $order = & $_SESSION['EPM_PROBLEM'][$problem]
     				       ['ORDER'];
 
