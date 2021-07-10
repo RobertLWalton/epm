@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Jun 21 14:52:01 EDT 2021
+// Date:    Sat Jul 10 09:59:49 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -285,11 +285,11 @@ $push_file_map = [
     "java" => "S",
     "py" => "S",
     "tex" => "S",
-    "in" => ["00-\\d+-PPPP" => "L",
-             "\\d+-\\d+-PPPP" => "R"],
-    "ftest" => ["00-\\d+-PPPP" => "L",
-                "\\d+-\\d+-PPPP" => "R"],
-    "run" => ["sample-PPPP" => "L", ".*-PPPP" =>"R"],
+    "in" => ["00-.+-PPPP" => "L",
+             ".+-PPPP" => "R"],
+    "ftest" => ["00-.+-PPPP" => "L",
+                ".+-PPPP" => "R"],
+    "run" => ["sample-PPPP" => "L", ".+-PPPP" =>"R"],
     "txt" => "L",
     "pdf" => [ "PPPP" => "L" ],
     "" => [ "generate-PPPP" => "L",
