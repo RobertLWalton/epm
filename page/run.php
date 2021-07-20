@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 22 14:13:30 EDT 2020
+    // Date:	Tue Jul 20 15:34:58 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -188,7 +188,7 @@
 	if ( $contents !== false )
 	    echo "$ID\$$contents";
 	else
-	    echo "$ID\$(no status available)";
+	    echo "$ID\$(no status available yet)";
 	exit;
     }
 
@@ -505,14 +505,18 @@ EOT;
 
     if ( isset ( $runresult ) )
     {
+	$y = "";
 	if ( $runresult === true )
+	{
 	    $h = 'Currently Executing Run';
+	    $y = " yet";
+	}
 	else
 	    $h = 'Last Completed Run';
 	$c = @file_get_contents
 	    ( "$epm_data/$rundir/$runbase.stat" );
 	if ( $c === false )
-	    $c = '(no status available)';
+	    $c = "(no status available$y)";
 	echo <<<EOT
 	<div class='run'>
 	<strong>$h&nbsp;-&nbsp;$runbase.run:</strong>
