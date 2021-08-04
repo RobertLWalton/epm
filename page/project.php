@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Sep 29 05:48:01 EDT 2020
+    // Date:	Wed Aug  4 14:37:04 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1235,7 +1235,8 @@ EOT;
 	if ( $problem != '' )
 	{
 	    if ( ! preg_match
-		       ( $epm_name_re, $problem ) )
+		       ( $epm_problem_name_re,
+		         $problem ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    // We skip check that $problem is in
 	    // $list but do check that problem
@@ -1280,7 +1281,7 @@ EOT;
 	    // User hit carriage return on empty
 	    // field.  Do nothing.
 	}
-	elseif ( ! preg_match ( $epm_name_re,
+	elseif ( ! preg_match ( $epm_problem_name_re,
 				$problem ) )
 	    $errors[] =
 		"problem name `$problem' contains" .
@@ -1427,7 +1428,7 @@ EOT;
 		    " is `-'" );
 
 	if ( ! preg_match
-		   ( $epm_name_re, $problem ) )
+		   ( $epm_problem_name_re, $problem ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	if ( ! preg_match
 		   ( $epm_name_re, $project ) )

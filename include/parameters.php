@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jul 10 09:59:49 EDT 2021
+// Date:    Wed Aug  4 14:31:07 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -152,6 +152,13 @@ $epm_name_re =
     // names, which have only letters, digits,
     // underline(_), and dash(-), begin with a letter,
     // and end with a letter or digit.
+
+$epm_problem_name_re =
+    '/^[A-Za-z][_A-Za-z0-9]*[A-Za-z0-9]$/';
+    // Regular expression matching only legal EPM
+    // problem names.  Same as $epm_name_re but does
+    // not allow characters that cannot be in a JAVA
+    // class name (e.g., `-').
 
 $epm_filename_re =
     '/^[A-Za-z0-9](|[-_A-Za-z0-9]*[A-Za-z0-9])' .
