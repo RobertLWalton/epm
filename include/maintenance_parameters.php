@@ -2,7 +2,7 @@
 
 // File:    maintenance_parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Jul 11 12:16:41 EDT 2020
+// Date:    Thu Aug  5 10:40:37 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -139,8 +139,10 @@ function epm_library ( $project )
     global $epm_home;
     if ( $project == 'obsolete' ) return NULL;
     if ( $project == 'public' ) return NULL;
-    return "$epm_home/../epm_$project/" .
-           "projects/$project";
+    $found = glob ( "$epm_home/../epm_*/" .
+                    "projects/$project" );
+    if ( count ( $found ) != 1 ) return NULL;
+    else return $found[0];
 }
 
 ?>
