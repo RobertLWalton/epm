@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Aug  4 14:31:07 EDT 2021
+// Date:    Thu Aug  5 17:39:28 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -72,9 +72,13 @@ $epm_priv_prefix = '+ owner walton';
     // Only `owner' privilege is allowed.
 
 $epm_debug = preg_match
-    ( '/(problem|run|manage)/',
+    ( '/(XXX|YYY|ZZZ)/',
       $epm_self );
     // True to turn debugging on; false for off.
+
+$epm_initial_favorites = [ "educational" ];
+    // Public lists included at the beginning of
+    // an initial favorites list, if they exist.
 
 
 // Parameters you may like to edit:

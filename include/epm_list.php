@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug  5 17:01:24 EDT 2021
+    // Date:	Thu Aug  5 18:12:23 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -988,11 +988,14 @@
     // and problems of all projects for which user
     // has a privilege listed in $privs, or of all
     // projects for which user has any privilege
-    // if $privs = NULL.
+    // if $privs = NULL.  But put the lists named
+    // in $epm_initial_favorites at the beginning
+    // if they exist.
     //
     function read_favorites_list ( & $warnings )
     {
-	global $epm_data, $aid, $epm_time_format;
+	global $epm_data, $aid, $epm_time_format,
+	       $epm_initial_favorites;
 
 	$f = "accounts/$aid/+lists+/+favorites+";
 	$old_list = read_file_list ( $f );
@@ -1057,6 +1060,22 @@
 	    ERROR ( "cannot stat $g" );
 	$time = strftime ( $epm_time_format, $time );
 	$new_list[] = [$time, '-', '-'];
+	$re = "|^$epm_data/lists/(.+):(.+)\\.list$|";
+	foreach ( $epm_initial_favorites as $name )
+	{
+	    $g = glob
+	        ( "$epm_data/lists/*:$name.list" );
+	    foreach ( $g as $fname )
+	    {
+		$time = @filemtime ( $fname );
+		if ( $time === false ) continue;
+		$time = strftime
+		    ( $epm_time_format, $time );
+	        preg_match  ( $re, $fname, $matches );
+		$new_list[] =
+		    [$time, $matches[1], $matches[2]];
+	    }
+	}
 	foreach ( read_projects() as $project )
 	{
 	    $g = "projects/$project";
