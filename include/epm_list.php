@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Oct  7 04:22:32 EDT 2020
+    // Date:	Thu Aug  5 17:01:24 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1036,10 +1036,9 @@
 	    return $new_list;
 	}
 
-	if ( ! $first )
-	    $warnings[] = "no lists are left in Your"
-	                . " Favorites; reinitializing"
-			. " Your Favorites";
+	$warnings[] = "no lists are left in Your"
+		    . " Favorites; reinitializing"
+		    . " Your Favorites";
 
 	if ( ! is_dir
 	         ( "$epm_data/accounts/$aid/+lists+" ) )
