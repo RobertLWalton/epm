@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Aug  4 14:42:14 EDT 2021
+Date:	Fri Aug  6 17:04:02 EDT 2021
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -927,8 +927,6 @@ in a separate <a href='#aux-window'>auxiliary window</a>.
 There is an exception for PDF files,
 which will be rendered as a document in the separate auxiliary window.
 <p>
-Clicking on &darr; will show the file below.
-<p>
 Files that are a single short line cannot be shown but their contents
 are displayed in <pre.inline>{ }</pre> brackets at the end of the
 file's line.
@@ -937,28 +935,20 @@ Empty files and binary files cannot be shown but their nature is
 displayed at the end of the file's line.
 <p>
 Displayable files must be encoded in UTF-8 or PDF.
-PDF files can only be displayed by clicking on the file name.
 A UTF-8 file that is displayable has its number of lines indicated
 at the end of the file's line.
-Only if this number of lines is small enough does the file have
-a &darr; that permits the file to be displayed below.
 <p>
 If a file has been pushed to or pulled from a
 <a href='#project-page'>project</a>, the
 file itself is not in your problem directory, but is
 in the project's problem directory and is linked to your problem
-directory.  These are marked by `(Linked to PROJECT)' at
+directory.  These are marked by `(Link to PROJECT-NAME project)' at
 the end of the file's line.
-<p>
-Executable files and source files for executables
-may be links in your problem directory.
-If they are links to a project <a href="#parent">parent</a>
-directory file they are marked `Link to PROJECT-NAME project'.
-If they are links to default EPM system files
+Files that are links to default EPM system files
 (such as epm_default_generate)
-they are marked as `Link to default'.  If they are links to
-other files in your problem directory, they are marked as
-`Link to FILE-NAME'.  This last only happens when you provide
+are marked as `(Link to default)'.  Files that are links to
+other files in your problem directory are marked as
+`(Link to FILE-NAME)'.  This last only happens when you provide
 multiple solutions to a problem: see <a href="#multiple-solutions">
 Multiple Solutions</a> for details.
 <p>
