@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jul  7 17:44:31 EDT 2021
+    // Date:	Fri Aug  6 16:33:39 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -293,6 +293,7 @@
     //
     // FILE-DISPLAY is the contents of the file iff:
     //
+    //    the file is not empty
     // 	  the file exists and is UTF8
     //	  the file has <= $max_display_lines lines
     //	  the file is not displayed in FILE-COMMENT
@@ -326,15 +327,21 @@
     //     ...  is a project name, local file name, or
     //	   otherwise `default'.
     //
+    // In counting file lines, a non-empty last line
+    // that does NOT end with a line feed is treated
+    // as a line (as if it ended with a line feed).
+    //
     // If $short is true, FILE-DISPLAY, FILE-SHOW, and
     // FILE-COMMENT are not computed and returned
     // as  NULL, false, '' respectively.  Note that
     // FILE-ACTIONS is computed but is [] if FILE-ERROR
     // is set.
     //
+    $max_display_lines = 0;    // 40
+    $min_display_lines = 0;    // 10
+        // In the current version, we disable
+	// FILE_DISPLAY by setting these to 0.
     $max_in_comment_characters = 56;
-    $max_display_lines = 40;
-    $min_display_lines = 10;
     $specials = implode ( '|', $epm_specials );
     $not_linkable_re = "/^($specials)\-$problem\$/";
     $link_re = "/^.+\-(($specials)\-$problem)\$/";
