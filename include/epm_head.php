@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu Aug  5 17:05:21 EDT 2021
+// Date:    Fri Aug  6 16:21:43 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -61,7 +61,6 @@ echo "<title>$title</title>";
 	--bg-violet: #FFCCFF;
 	--bg-yellow: #F5F81A;
 	--bg-orange: #FFCC00;
-	--bg-tan: #FFB0B0;
 	/* Highlight Colors
 	 */
 	--hl-orange: #FF6347;
@@ -137,7 +136,7 @@ echo "<title>$title</title>";
     .terms {
 	font-size: var(--large-font-size);
 	width: calc(100%-var(--pad));
-	background-color: var(--bg-tan);
+	background-color: var(--bg-orange);
 	border: var(--pad) solid red;
 	padding-top: calc(0.5*var(--pad));
 	padding-left: var(--pad);

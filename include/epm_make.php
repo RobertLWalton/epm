@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Sep 22 14:08:33 EDT 2020
+// Date:    Fri Aug  6 16:15:36 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -1867,7 +1867,7 @@ function finish_make_file ( & $warnings, & $errors )
 	    if ( count ( $found ) == 0 )
 	    {
 	        $t = $work['TEMPLATE'];
-	        ERROR ( "$t SHOW has [] before end" );
+	        ERROR ( "$t CHECKS has [] before end" );
 	    }
 	    $fname = $found[0];
 	    $errors[] = "$fname is not empty";
