@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug  5 18:12:23 EDT 2021
+    // Date:	Fri Aug  6 05:52:44 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -984,13 +984,16 @@
     // favorites list.
     //
     // If the resulting list is empty, construct a
-    // new favorites list consisting of your problems
-    // and problems of all projects for which user
-    // has a privilege listed in $privs, or of all
-    // projects for which user has any privilege
-    // if $privs = NULL.  But put the lists named
-    // in $epm_initial_favorites at the beginning
-    // if they exist.
+    // new favorites list consisting of `Your Problems'
+    // and problems of all projects for which $aid
+    // has any privilege.  But put any published lists
+    // named in $epm_initial_favorites at the beginning
+    // just after `Your Problems'.
+    //
+    // A published list with basename N of the current
+    // user U can be known under either of two names:
+    // U:N or -:N.  In the favorites list -:N must be
+    // used.
     //
     function read_favorites_list ( & $warnings )
     {
@@ -1072,8 +1075,10 @@
 		$time = strftime
 		    ( $epm_time_format, $time );
 	        preg_match  ( $re, $fname, $matches );
+		$user = $matches[1];
+		if ( $user == $aid ) $user = "-";
 		$new_list[] =
-		    [$time, $matches[1], $matches[2]];
+		    [$time, $user, $matches[2]];
 	    }
 	}
 	foreach ( read_projects() as $project )
