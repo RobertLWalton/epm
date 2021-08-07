@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Aug  7 15:55:14 EDT 2021
+// Date:    Sat Aug  7 16:16:15 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -495,17 +495,19 @@ function AUX_WINDOW ( name, page, x, y, w, h )
 {
     if ( x < 0 ) x += screen.availWidth;
     if ( y < 0 ) y += screen.availHeight;
-    let oldwin = window.open ( "", name );
+    let features =
+	  'height=' + h + 'px,' +
+	  'width=' + w + 'px,' +
+	  'screenX=' + x + 'px,' +
+	  'screenY=' + y + 'px';
+    let oldwin = window.open ( "", name, features );
     oldwin.close();
         // Closing old window allows focus to
 	// work (at least in Chrome) when
 	// old window exists.
     let win = window.open
 	( '$epm_root' + '/page/' + page, name,
-	  'height=' + h + 'px,' +
-	  'width=' + w + 'px,' +
-	  'screenX=' + x + 'px,' +
-	  'screenY=' + y + 'px' );
+	   features );
     win.focus();
         // Focus needed for FireFox but not Chrome.
 }

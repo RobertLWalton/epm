@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Oct 17 12:12:22 EDT 2020
+    // Date:	Sat Aug  7 16:56:00 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -27,6 +27,12 @@
     //				    documents/FILENAME
     //
     //		+temp+		    FILENAME
+    //
+    //     $_GET['highlight']
+    //
+    //          If present, a regular expression such
+    //          that matching lines are highlighted
+    //          in red.  E.g., '/^Score:/'.
     //
     // where PROBLEM names a problem in accounts/$aid
     // and FILENAME satisfies $epm_filename_re and its
@@ -73,6 +79,7 @@
     $disposition = $_GET['disposition'];
     $location   = $_GET['location'];
     $filename   = $_GET['filename'];
+    $highlight   = $_GET['highlight'];
 
     if ( ! in_array ( $disposition, ['show',
                                      'download'] ) )
@@ -278,8 +285,14 @@ EOT;
 
 	$hline = htmlspecialchars ( $line );
 	echo "<tr><td class='linenumber'>" . PHP_EOL .
-	     "<pre>$count:</pre></td>" .
-	     "<td><pre>  $hline</pre></td></tr>" .
+	     "<pre>$count:</pre></td>";
+	if ( isset ( $highlight )
+	     &&
+	     preg_match ( $highlight, $line ) )
+	    echo "<td style='color:red'>";
+	else
+	    echo "<td>";
+	echo "<pre>  $hline</pre></td></tr>" .
 	     PHP_EOL;
     }
 

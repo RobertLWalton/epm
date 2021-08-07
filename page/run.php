@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jul 20 15:34:58 EDT 2021
+    // Date:	Sat Aug  7 17:03:23 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -418,20 +418,37 @@
 
 <script>
 
+    var problem = '<?php echo $problem; ?>';
+    var highlight = '/^(Errors |Score:|'
+		  + 'First-Failed-Test-Case:)/';
+
+    function LOOK ( event, filename ) {
+
+	var name = problem + '/' + filename;
+	var disposition = 'show';
+	if ( event.ctrlKey )
+	{
+	    name = '_blank';
+	    disposition = 'download';
+	}
+	var src = 'look.php'
+	        + '?disposition=' + disposition
+	        + '&location='
+	        + encodeURIComponent ( problem )
+		+ '&filename='
+		+ encodeURIComponent ( filename )
+		+ '&highlight='
+		+ encodeURIComponent ( highlight );
+	if ( disposition == 'download' )
+	    window.open ( src, '_blank' );
+	else
+	    AUX ( event, src, name );
+    }
+
     function TOGGLE ( s, c )
     {
 	var SWITCH = document.getElementById ( s );
-	var CONTENTS = document.getElementById ( c );
-	if ( CONTENTS.style.display == 'none' )
-	{
-	    SWITCH.innerHTML = "&uarr;";
-	    CONTENTS.style.display = 'block';
-	}
-	else
-	{
-	    SWITCH.innerHTML = "&darr;";
-	    CONTENTS.style.display = 'none';
-	}
+	SWITCH.click();
     }
 </script>
 
@@ -600,18 +617,15 @@ EOT;
 		    echo <<<EOT
 			 <button type='button'
 				 id='s_$rxxx$n'
-				 onclick='TOGGLE
-				   ("s_$rxxx$n",
-				    "$rxxx$n")'
-			    >&darr;</button>
-			 <pre>$fname</pre>
+				 onclick='LOOK
+				   (event,"$fname")'
+			    >$fname</button>
 EOT;
 		    if ( $rxxx != 'run' )
 		    {
 			if ( $n == 1 )
 			    $initially_display[] =
 				"$rxxx$n";
-			continue;
 		    }
 
 		    if ( $rw
@@ -713,7 +727,8 @@ EOT;
     let reload = document.getElementById("reload");
     let reload_id =
         document.getElementById("reload-id");
-    let problem = '<?php echo $problem; ?>';
+    // let problem = '<?php echo $problem; ?>';
+    // Declared above.
     let abort_switch =
         document.getElementById("abort-switch");
     let abort_checkbox =

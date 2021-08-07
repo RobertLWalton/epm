@@ -2,12 +2,15 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Aug  6 16:33:39 EDT 2021
+    // Date:	Sat Aug  7 16:17:49 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
     // they make no warranty and accept no liability
     // for EPM.
+
+    // NOTICE: FILE_DISPLAY feature has been disabled
+    // and should be removed from code.
 
     // Displays and uploads the files of an EPM problem,
     // and makes files from other files using templates.
