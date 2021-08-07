@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  7 17:21:56 EDT 2021
+    // Date:	Sat Aug  7 17:36:40 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -653,7 +653,9 @@ EOT;
 	     $runresult !== true
 	     &&
 	     isset ( $initially_display ) )
-	    echo "<script>CLICK('s_$rxxxN');</script>";
+	    echo "<script>" .
+	         "CLICK('s_$initially_display');" .
+		 "</script>";
 
     }
 
