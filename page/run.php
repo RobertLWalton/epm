@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  7 17:03:23 EDT 2021
+    // Date:	Sat Aug  7 17:21:56 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -445,7 +445,7 @@
 	    AUX ( event, src, name );
     }
 
-    function TOGGLE ( s, c )
+    function CLICK ( s )
     {
 	var SWITCH = document.getElementById ( s );
 	SWITCH.click();
@@ -577,8 +577,7 @@ EOT;
 	    // $rundir may be NULL if it does not exist
 
 	$n = 0;
-	$display_list = [];
-	$initially_display = [];
+	$initially_display = NULL;
 	if ( $local_map != [] )
 	{
 	    echo <<<EOT
@@ -611,9 +610,6 @@ EOT;
 
 		    $fname = "$base.$rxxx";
 		    echo $td[$rxxx];
-		    $display_list[] =
-			["$rxxx$n",
-			 "$base.$rxxx", $entry[$rxxx]];
 		    echo <<<EOT
 			 <button type='button'
 				 id='s_$rxxx$n'
@@ -623,14 +619,14 @@ EOT;
 EOT;
 		    if ( $rxxx != 'run' )
 		    {
-			if ( $n == 1 )
-			    $initially_display[] =
-				"$rxxx$n";
+		        if ( $n == 1 )
+			    $initially_display =
+			        "$rxxx$n";
 		    }
 
-		    if ( $rw
-		         &&
-			 $entry['loc'] == 'local' )
+		    elseif ( $rw
+		             &&
+			     $entry['loc'] == 'local' )
 			 echo <<<EOT
 			 <button type='submit'
 				 name='execute_run'
@@ -652,41 +648,12 @@ EOT;
 	    echo "</table></form></div>";
 	}
 
-	if ( count ( $display_list ) > 0 )
-	{
-	    foreach ( $display_list as $e )
-	    {
-		list ( $id, $fname, $fcontents ) = $e;
-		$fcontents = htmlspecialchars
-		    ( $fcontents );
-		if ( preg_match ( '/\.rout$/',
-		                  $fname ) )
-		    $fcontents =
-			preg_replace
-			  ( '/(?m)^(Errors |Score:|' .
-			    'First-Failed-Test-Case:)' .
-			    '.*$/',
-			    '</pre>' .
-			    '<pre class="red">$0' .
-			    "\n</pre><pre>",
-			    $fcontents );
-		echo <<<EOT
-		<div style='display:none' id='$id'
-		     class='file-name'>
-		<strong>$fname:</strong><br>
-		<div class='file-contents'>
-		<pre>$fcontents</pre>
-		</div></div>
-EOT;
-	    }
-	}
 	if ( isset ( $runresult )
 	     &&
-	     $runresult !== true )
-	    foreach ( $initially_display as $rxxxN )
-		echo "<script>" .
-		     "TOGGLE('s_$rxxxN','$rxxxN')" .
-		     "</script>";
+	     $runresult !== true
+	     &&
+	     isset ( $initially_display ) )
+	    echo "<script>CLICK('s_$rxxxN');</script>";
 
     }
 
