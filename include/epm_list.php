@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  8 04:00:08 EDT 2021
+    // Date:	Sun Aug  8 11:17:04 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -769,7 +769,7 @@
 	$r = '';
 	$in_description = false;
 	$after_blank = true;
-	$paragraph = '';
+	$eop = '';   // End of paragraph
 	foreach ( $c as $line )
 	{
 	    $line = rtrim ( $line );
@@ -782,10 +782,10 @@
 		}
 		if ( $after_blank ) continue;
 
-		if ( $paragraph != '' )
+		if ( $eop != '' )
 		{
-		    $r .= "</$paragraph>" . PHP_EOL;
-		    $paragraph = '';
+		    $r .= $eop . PHP_EOL;
+		    $eop = '';
 		}
 		$after_blank = true;
 		continue;
@@ -795,28 +795,34 @@
 
 	    $line = str_replace
 	        ( "\t", "        ", $line );
-	    $desired =
-		 ( $line[0] == ' ' ? 'pre' : 'p' );
-
-	    if ( $after_blank )
+	    if ( ! $after_blank ) 
 	    {
-	        $paragraph = $desired;
-		$r .= "<$paragraph>" . PHP_EOL;
-		$after_blank = false;
+		// Do nothing special
 	    }
-	    elseif ( $paragraph != $desired )
+	    elseif ( $line[0] == ' ' )
 	    {
-		// Switch paragraph type.
-		//
-		$r .= "</$paragraph>" . PHP_EOL;
-		$paragraph = $desired;
-		$r .= "<$paragraph>" . PHP_EOL;
+		$r .= "<pre>" . PHP_EOL;
+		$eop = "</pre>";
+	    }
+	    elseif ( $line[0] == '*' )
+	    {
+		$r .= "<p style='margin-left:1em;"
+		    . "text-indent:-1em'>" . PHP_EOL;
+		$line = trim ( substr ( $line, 1 ) );
+		$line = "<b>$line</b>";
+		$eop = "</p>";
+	    }
+	    else
+	    {
+		$r .= "<p>" . PHP_EOL;
+		$eop = "</p>";
 	    }
 	    $r .= $line . PHP_EOL;
+	    $after_blank = false;
 	}
 
-	if ( $paragraph != '' )
-	    $r .= "</$paragraph>" . PHP_EOL;
+	if ( $eop != '' )
+	    $r .= $eop . PHP_EOL;
 	return $r;
     }
 
