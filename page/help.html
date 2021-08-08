@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Aug  7 17:39:55 EDT 2021
+Date:	Sun Aug  8 14:20:31 EDT 2021
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1736,9 +1736,12 @@ you are interested in.  The favorites list can be edited via
 the <a href=#favorites-page>Favorites Page</a>.  When you
 are asked to select a problem list, the list of problem lists
 presented for selection is always the favorites list.
+<p>
 The favorites list is initialized to include `Your Problems'
-plus the automatically created problem lists of all projects
-for which you have any privileges.
+plus all <a href='#published'>published</a> problem lists.
+When a problem list is published (by anyone), it will be automatically
+added to your favorites list; but you can remove it from your favorites
+list after it has been automatically added, even if it remains published.
 <p>
 The List Page allows you to view and edit two problem lists
 (colored tan and blue).  Two lists are allowed so you can
@@ -1780,12 +1783,17 @@ saving it.  `RESET' will reset the list to its state before
 you changed it, and `DELETE' will delete the list completely.
 <p>
 You can also `PUBLISH' an unpublished list and `UNPUBLISH' a published
-list.  A published list is visible to other users on their
+list.  A <b id='published'>published</b>
+list is visible to other users on their
 <a href='#favorites-page'>Favorites Page</a>, so these other users
 can include your list in their favorites.  An unpublished list is
 not visible.  When you publish or unpublish a list, the list is saved
 as by `SAVE', unless the list has
 not been changed since it was last saved.
+<p>
+When you publish a list, it is automatically added to the favorites
+list of all users, but they can remove it from their favorites list
+after it has been automatically added.
 </p>
 
 <h2 id="list-descriptions">List Descriptions</h2>
@@ -1801,12 +1809,15 @@ When you upload a description, the list is saved as by `SAVE'.
 You can delete a list description by uploading an empty .dsc file.
 <p>
 Description files contain paragraphs separated by blank lines.
-There are two kinds of paragraphs: non-indented and indented.
-A non-indented paragraph becomes a &lt;p&gt; HTML paragraph, and
-is set with variable width font and automatic line breaks.
-An indented paragraph becomes a &lt;pre&gt; HTML paragraph, and is
-set with fixed width font and line breaks just where they
-are in the .dsc file.
+There are three kinds of paragraphs: headed, indented, and ordinary.
+A headed paragraph begins with a `*'; its first input line
+with the `*' removed is made boldface; and then the paragraph is
+output as an HTML &lt;p&gt; paragraph with all output lines but the first
+slightly indented.   An indented paragraph begins
+with a single space or tab and is output in monospace font
+as an HTML &lt;pre&gt; paragraph with spaces and line breaks preserved.
+An ordinary paragraph does not begin with a `*', space, or tab, and
+is output as a plain HTML &lt;p&gt; paragraph.
 <p>
 A list description file may NOT contain the characters
 &lt; or &gt;, but may contain &amp;...;' representations

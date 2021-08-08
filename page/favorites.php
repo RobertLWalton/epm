@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Aug  5 17:13:05 EDT 2021
+    // Date:	Sun Aug  8 14:09:39 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -245,7 +245,7 @@
     }
     div.list-description p, div.list-description pre {
         margin: 0px;
-        padding: var(--pad);
+        padding: 0.25ex var(--pad);
     }
 
 </style>
