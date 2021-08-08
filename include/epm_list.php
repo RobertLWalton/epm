@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  8 02:36:06 EDT 2021
+    // Date:	Sun Aug  8 04:00:08 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -991,8 +991,8 @@
     // Otherwise add `Your Problems' to the end of the
     // list if it is not already in the list, and then
     // add at the end of the list any published list
-    // that is both not in the list and is newer than
-    // the last time the list was updated.
+    // that is both not in the list and was published
+    // after the last time the list was updated.
     //
     // A published list with basename N of the current
     // user U can be known under either of two names:
@@ -1090,8 +1090,7 @@
 			      ["$root:$name"] ) )
 		continue;
 
-	    $time = @filemtime ( $fname );
-	    if ( $time === false )
+	    if ( file_exists ( $fname ) === false )
 	    {
 		if ( $root == "-"
 		     &&
@@ -1101,7 +1100,11 @@
 			" published list";
 		continue;
 	    }
-	    if ( $time > $old_time ) continue;
+	    // Time is time published, not time
+	    // list was last modified.
+	    $lstat = @lstat ( $fname );
+	    $time = $lstat['mtime'];
+	    if ( $time < $old_time ) continue;
 	    $time = strftime
 		( $epm_time_format, $time );
 
