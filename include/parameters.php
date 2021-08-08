@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Aug  6 05:59:04 EDT 2021
+// Date:    Sun Aug  8 16:06:56 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -75,11 +75,6 @@ $epm_debug = preg_match
     ( '/(XXX|YYY|ZZZ)/',
       $epm_self );
     // True to turn debugging on; false for off.
-
-$epm_initial_favorites = [ "educational" ];
-    // Published lists included at the beginning of
-    // an initial favorites list, if they exist.
-
 
 // Parameters you may like to edit:
 
@@ -300,7 +295,9 @@ $push_file_map = [
              ".+-PPPP" => "R"],
     "ftest" => ["00-.+-PPPP" => "L",
                 ".+-PPPP" => "R"],
-    "run" => ["sample-PPPP" => "L", ".+-PPPP" =>"R"],
+    "run" => ["sample-PPPP" => "L",
+              "sample-.+-PPPP" =>"L",
+              ".+-PPPP" =>"R"],
     "txt" => "L",
     "pdf" => [ "PPPP" => "L" ],
     "" => [ "generate-PPPP" => "L",
