@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Aug  6 05:52:44 EDT 2021
+    // Date:	Sun Aug  8 02:36:06 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -546,7 +546,8 @@
     // Reading stops with the first blank line.  If the
     // file does not exist, [] is returned.  Line
     // formatting errors are fatal.  Lines with
-    // duplicate ROOT:LEAF are fatal.
+    // duplicate ROOT:LEAF are fatal.  A non-existant
+    // file just returns [].
     //
     function read_file_list ( $filename )
     {
@@ -985,10 +986,13 @@
     //
     // If the resulting list is empty, construct a
     // new favorites list consisting of `Your Problems'
-    // and problems of all projects for which $aid
-    // has any privilege.  But put any published lists
-    // named in $epm_initial_favorites at the beginning
-    // just after `Your Problems'.
+    // and problems of all published lists.
+    //
+    // Otherwise add `Your Problems' to the end of the
+    // list if it is not already in the list, and then
+    // add at the end of the list any published list
+    // that is both not in the list and is newer than
+    // the last time the list was updated.
     //
     // A published list with basename N of the current
     // user U can be known under either of two names:
@@ -997,14 +1001,17 @@
     //
     function read_favorites_list ( & $warnings )
     {
-	global $epm_data, $aid, $epm_time_format,
-	       $epm_initial_favorites;
+	global $epm_data, $aid, $epm_time_format;
 
 	$f = "accounts/$aid/+lists+/+favorites+";
 	$old_list = read_file_list ( $f );
+	$old_time = @filemtime ( "$epm_data/$f" );
+	if ( $old_time === false )
+	    $old_time = 0;
 
 	$new_list = [];
-	$first = true;
+	$new_list_keys = [];
+	$modified = false;
 	foreach ( $old_list as $e )
 	{
 	    list ( $time, $root, $name ) = $e;
@@ -1019,12 +1026,13 @@
 	    if ( file_exists ( "$epm_data/$g" ) )
 	    {
 	        $new_list[] = $e;
+		$new_list_keys["$root:$name"] = $time;
 		continue;
 	    }
 
-	    if ( $first )
+	    if ( ! $modified )
 	    {
-	        $first = false;
+	        $modified = true;
 	        $warnings[] = "The following lists"
 		            . " no longer exist";
 		$warnings[] = "and have been deleted"
@@ -1035,63 +1043,80 @@
 	    $warnings[] = "    $root $name";
 	}
 
-	if ( count ( $new_list ) > 0 )
+        $reinitializing = false;
+	if ( count ( $new_list ) == 0 )
 	{
-	    if ( ! $first )
-	        write_file_list ( $f, $new_list );
-	    return $new_list;
-	}
+	    $reinitializing = true;
+	    $warnings[] = "no lists are left in Your"
+			. " Favorites; reinitializing"
+			. " Your Favorites";
 
-	$warnings[] = "no lists are left in Your"
-		    . " Favorites; reinitializing"
-		    . " Your Favorites";
-
-	if ( ! is_dir
-	         ( "$epm_data/accounts/$aid/+lists+" ) )
-	{
-	    $m = umask ( 06 );
-	    @mkdir ( "$epm_data/accounts", 02771 );
-	    @mkdir ( "$epm_data/accounts/$aid", 02771 );
-	    @mkdir ( "$epm_data/accounts/$aid/+lists+",
-		     02770 );
-	    umask ( $m );
-	}
-
-	$g = "accounts/$aid";
-	$time = @filemtime ( "$epm_data/$g" );
-	if ( $time === false )
-	    ERROR ( "cannot stat $g" );
-	$time = strftime ( $epm_time_format, $time );
-	$new_list[] = [$time, '-', '-'];
-	$re = "|^$epm_data/lists/(.+):(.+)\\.list$|";
-	foreach ( $epm_initial_favorites as $name )
-	{
-	    $g = glob
-	        ( "$epm_data/lists/*:$name.list" );
-	    foreach ( $g as $fname )
+	    $d = "$epm_data/accounts";
+	    if ( ! is_dir ( "$d/$aid/+lists+" ) )
 	    {
-		$time = @filemtime ( $fname );
-		if ( $time === false ) continue;
-		$time = strftime
-		    ( $epm_time_format, $time );
-	        preg_match  ( $re, $fname, $matches );
-		$user = $matches[1];
-		if ( $user == $aid ) $user = "-";
-		$new_list[] =
-		    [$time, $user, $matches[2]];
+		$m = umask ( 06 );
+		@mkdir ( $d, 02771 );
+		@mkdir ( "$d/$aid", 02771 );
+		@mkdir ( "$d/$aid/+lists+", 02770 );
+		umask ( $m );
 	    }
+
+	    $new_list_time = 0;
 	}
-	foreach ( read_projects() as $project )
+
+	if ( ! isset ( $new_list_keys["-:-"] ) )
 	{
-	    $g = "projects/$project";
+	    $g = "accounts/$aid";
 	    $time = @filemtime ( "$epm_data/$g" );
 	    if ( $time === false )
-	        ERROR ( "cannot stat $g" );
+		ERROR ( "cannot stat $g" );
 	    $time = strftime
 	        ( $epm_time_format, $time );
-	    $new_list[] = [$time, $project, '-'];
+	    $new_list[] = [$time, '-', '-'];
+	    $modified = true;
+	    if ( ! $reinitializing )
+		$warnings[] = "added Your Problems to"
+			    . " Your Favorites";
 	}
-	write_file_list ( $f, $new_list );
+	$re = "|^$epm_data/lists/(.+):(.+)\\.list$|";
+	$g = glob ( "$epm_data/lists/*:*.list" );
+	foreach ( $g as $fname )
+	{
+	    preg_match  ( $re, $fname, $matches );
+	    $root = $matches[1];
+	    if ( $root == $aid ) $root = "-";
+	    $name = $matches[2];
+	    if ( isset ( $new_list_keys
+			      ["$root:$name"] ) )
+		continue;
+
+	    $time = @filemtime ( $fname );
+	    if ( $time === false )
+	    {
+		if ( $root == "-"
+		     &&
+		     ! $reinitializing )
+		    $warnings[] =
+			"Your $name is dangling" .
+			" published list";
+		continue;
+	    }
+	    if ( $time > $old_time ) continue;
+	    $time = strftime
+		( $epm_time_format, $time );
+
+	    $new_list[] = [$time, $root, $name];
+	    if ( ! $reinitializing )
+	    {
+		if ( $root == "-" ) $root = "Your";
+		$warnings[] = "added $root $name to"
+			    . " Your Favorites";
+	    }
+	    $modified = true;
+	}
+
+	if ( $modified )
+	    write_file_list ( $f, $new_list );
 	return $new_list;
     }
 
