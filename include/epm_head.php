@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Aug  6 16:21:43 EDT 2021
+// Date:    Wed Aug 18 10:33:18 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -132,6 +132,15 @@ echo "<title>$title</title>";
 	border-radius: var(--radius);
 	background-color: white;
 	cursor: crosshair;
+    }
+    div.list-description {
+	background-color: var(--bg-green);
+	margin-left: var(--indent);
+        font-size: var(--font-size);
+    }
+    div.list-description p, div.list-description pre {
+        margin: 0px;
+        padding: 0.25ex var(--pad);
     }
     .terms {
 	font-size: var(--large-font-size);

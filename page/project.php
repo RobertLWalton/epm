@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug  4 14:37:04 EDT 2021
+    // Date:	Wed Aug 18 10:16:34 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1516,6 +1516,9 @@ EOT;
     div.push-pull-list, div.edit-list {
 	background-color: #F2D9D9;
     }
+    div.description {
+	background-color: var(--bg-dark-green);
+    }
     span.selected-project {
 	color: red;
 	display:inline-block;
@@ -2461,6 +2464,26 @@ EOT;
 
 	</script>
 EOT;
+    }
+    $fname = listname_to_filename ( $listname );
+    if ( isset ( $fname ) )
+    {
+        $description = read_list_description ( $fname );
+	if ( $description != '' )
+	{
+	    list ( $project, $name ) =
+	        explode ( ':', $listname );
+	    if ( $project == '-' ) $project = 'Your';
+	    echo <<<EOT
+	    <div class='description'>
+	    <b>Description of: $project $name</b>:
+	    <br>
+	    <div class='list-description'>
+	    $description
+	    </div>
+	    </div>
+EOT;
+	}
     }
 
 ?>
