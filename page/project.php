@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Aug 18 10:16:34 EDT 2021
+    // Date:	Sun Aug 22 04:52:59 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -257,22 +257,22 @@
 	        [ 'LISTNAME' => NULL ];
     }
 
-    // Given a listname, return your problems that
-    // are in the list as an HTML <option> list.
+    // Given a problem list (as read by read_problem_
+    // list), return your problems that are in the list
+    // as an HTML <option> list.
+    //
     // A problem is returned if its $problem directory
     // exists and either its list entry project is
     // '-' or it is the current parent of the $problem
     // directory.
     //
-    function listname_to_problem_options
-	    ( $listname, & $warnings )
+    function problem_list_to_problem_options
+	    ( $problem_list )
     {
 	$map = read_problem_map();
 
 	$r = '';
-	foreach ( read_problem_list
-		      ( $listname, $warnings )
-		  as $item )
+	foreach ( $problem_list as $item )
 	{
 	    list ( $time, $project, $problem ) =
 		$item;
@@ -1586,19 +1586,18 @@ function FAIL ( message )
 
     // Must execute these before $warnings is used.
     //
+    $problem_list =
+        read_problem_list ( $listname, $warnings );
     if ( $state == 'pull' )
 	$pull_rows = list_to_pull_rows
-	    ( read_problem_list
-	          ( $listname, $warnings ),
-	      $warnings );
+	    ( $problem_list, $warnings );
     elseif ( $state == 'push' )
 	$push_rows = list_to_push_rows
-	    ( read_problem_list
-	          ( $listname, $warnings ),
-	      $warnings );
+	    ( $problem_list, $warnings );
     elseif ( $state == 'normal' )
-	$problem_options = listname_to_problem_options
-	    ( $listname, $warnings );
+	$problem_options =
+	    problem_list_to_problem_options
+	        ( $problem_list );
 
     if ( count ( $errors ) > 0 )
     {
