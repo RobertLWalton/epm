@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  8 11:17:04 EDT 2021
+    // Date:	Mon Aug 23 03:45:40 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1205,6 +1205,44 @@
 	    $r .= "<option value='$key' $selected>"
 	        . "$root $leaf $time"
 		. "</option>";
+	}
+	return $r;
+    }
+
+    // Given a list of elements of the form
+    //
+    //		[TIME ROOT LEAF]
+    //
+    // return a string whose segments have the form
+    //
+    //	    <button type='button'
+    //		    onclick='SHOW(event,"ROOT","LEAF")'
+    //              title='show/download NAME LEAF'>
+    //      <pre>NAME LEAF</pre>
+    //      </button>
+    //
+    // where NAME = 'Your' if ROOT == '-' and NAME =
+    // ROOT otherwise.
+    //
+    function list_to_show ( $list )
+    {
+        $r = '';
+	foreach ( $list as $e )
+	{
+	    list ( $time, $root, $leaf ) = $e;
+
+	    if ( $root == '-' )
+	        $name = 'Your';
+	    else
+	        $name = $root;
+	    $r .= <<<EOT
+	    <button
+	        type = 'button'
+		onclick='SHOW(event,"$root","$leaf")'
+		title='show/download $name $leaf'>
+	    <pre>$name $leaf</pre>
+	    </button>
+EOT;
 	}
 	return $r;
     }

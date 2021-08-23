@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  7 16:56:00 EDT 2021
+    // Date:	Mon Aug 23 03:44:44 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -79,7 +79,10 @@
     $disposition = $_GET['disposition'];
     $location   = $_GET['location'];
     $filename   = $_GET['filename'];
-    $highlight   = $_GET['highlight'];
+    if ( isset ( $_GET['highlight'] ) )
+	$highlight = $_GET['highlight'];
+    else
+	$highlight = NULL;
 
     if ( ! in_array ( $disposition, ['show',
                                      'download'] ) )

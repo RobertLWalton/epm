@@ -41,8 +41,7 @@
 
     // require "$epm_home/include/debug_info.php";
     // exit;
-    // Must exit after require except when showing
-    // UTF8 files.
+    // Must exit after require.
             
     if ( $epm_method != 'GET' )
         exit ( 'UNACCEPTABLE HTTP METHOD ' .
@@ -58,34 +57,59 @@
     $project     = $_GET['project'];
     $problem     = $_GET['problem'];
 
+    $errors = [];
+
     if ( ! in_array ( $disposition, ['show',
                                      'download'] ) )
 	exit ( "UNACCEPTABLE HTTP POST: DISPOSITION" );
 
-    if ( ! preg_match ( $problem_name_re, $problem ) )
+    if ( ! preg_match
+               ( $epm_problem_name_re, $problem ) )
 	exit ( "UNACCEPTABLE HTTP POST: PROBLEM" );
 
     if ( $project == '-' )
         $fname = "accounts/$aid/$problem/$problem.pdf";
     else
     {
-	if ( ! preg_match ( $name_re, $project ) )
+	if ( ! preg_match ( $epm_name_re, $project ) )
 	    exit ( "UNACCEPTABLE HTTP POST: PROJECT" );
+	require "$epm_home/include/epm_list.php";
 	problem_priv_map
-	    ( $pmap, $project, $problem );
+	    ( $pmap, $project, $problem, $errors );
 
 	if ( ! isset ( $pmap['show'] )
 	     ||
 	     $pmap['show'] == '-' )
-	    exit ( "YOU DO NOT HAVE `show' PRIVILEGE" .
-	           " FOR PROJECT $project" .
-		   " PROBLEM $problem" );
+	    $errors[] =
+	        "YOU DO NOT HAVE `show' PRIVILEGE" .
+	        " FOR PROJECT $project" .
+		" PROBLEM $problem";
         $fname =
 	    "projects/$project/$problem/$problem.pdf";
     }
 
-    if ( ! is_readable ( "$epm_data/$fname" ) )
-        exit ( "$fname IS NOT READABLE" );
+    if ( count ( $errors ) == 0
+         &&
+	 ! is_readable ( "$epm_data/$fname" ) )
+        $errors[] = "$fname IS NOT READABLE";
+
+    if ( count ( $errors ) > 0 )
+    {
+	echo "<html>";
+	echo "<head>";
+	require "$epm_home/include/epm_head.php";
+	echo "</head>";
+	echo "<div class='errors'>";
+	echo "<strong>Errors:</strong>";
+	echo "<div class='indented'>";
+	foreach ( $errors as $e )
+	    echo "<pre>$e</pre><br>";
+	echo "<br></div></div>";
+	echo "</html>";
+	exit;
+    }
+
+
     $fsize = @filesize ( "$epm_data/$fname" );
     if ( $fsize === false )
         ERROR ( "cannot stat readable $fname" );
