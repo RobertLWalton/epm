@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug 23 03:45:40 EDT 2021
+    // Date:	Mon Aug 23 05:15:47 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1235,11 +1235,13 @@
 	        $name = 'Your';
 	    else
 	        $name = $root;
+	    $title = "display/download $name $leaf"
+	           . " description";
 	    $r .= <<<EOT
 	    <button
 	        type = 'button'
 		onclick='SHOW(event,"$root","$leaf")'
-		title='show/download $name $leaf'>
+		title='$title'>
 	    <pre>$name $leaf</pre>
 	    </button>
 EOT;

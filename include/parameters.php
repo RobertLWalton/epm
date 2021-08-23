@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Aug  8 16:06:56 EDT 2021
+// Date:    Mon Aug 23 04:55:29 EDT 2021
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -182,7 +182,7 @@ $epm_parent_re =
 
 $epm_project_privs =
     ['owner','push-new','pull-new','re-pull',
-     'view','move-to','move-from','download',
+     'view','show','move-to','move-from','download',
      'first-failed'];
 $epm_problem_privs = ['owner','re-push','download',
                       'first-failed'];
