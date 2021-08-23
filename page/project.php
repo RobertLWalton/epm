@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug 22 04:52:59 EDT 2021
+    // Date:	Sun Aug 22 22:23:58 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1576,6 +1576,23 @@ function FAIL ( message )
 {
     alert ( message );
     location.assign ( 'login.php' );
+}
+
+
+function SHOW ( event, project, problem ) {
+    var disposition = 'show';
+    if ( event.ctrlKey )
+	disposition = 'download';
+    var src = 'show.php'
+	    + '?disposition=' + disposition
+	    + '&project='
+	    + encodeURIComponent ( project )
+	    + '&problem='
+	    + encodeURIComponent ( problem );
+    if ( disposition == 'download' )
+	window.open ( src, '_blank' );
+    else
+	AUX ( event, src, project + ':' + problem );
 }
 
 </script>

@@ -2,7 +2,7 @@
 
     // File:	show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug 22 16:24:45 EDT 2021
+    // Date:	Sun Aug 22 21:48:29 EDT 2021
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -25,7 +25,7 @@
     //		-		    PROBLEM
     //
     // where if PROJECT is not '-', PROBLEM names a
-    // problem in projects/PROJECT that must have 'show''
+    // problem in projects/PROJECT that must have 'show'
     // privilege for $aid, and if PROJECT is '-',
     // PROBLEM names a problem in accounts/$aid.
     // 
@@ -62,10 +62,6 @@
                                      'download'] ) )
 	exit ( "UNACCEPTABLE HTTP POST: DISPOSITION" );
 
-    $fext = pathinfo ( $filename, PATHINFO_EXTENSION );
-    $fname = pathinfo ( $filename, PATHINFO_BASENAME );
-    $fdir = pathinfo ( $filename, PATHINFO_DIRNAME );
-
     if ( ! preg_match ( $problem_name_re, $problem ) )
 	exit ( "UNACCEPTABLE HTTP POST: PROBLEM" );
 
@@ -82,7 +78,8 @@
 	     ||
 	     $pmap['show'] == '-' )
 	    exit ( "YOU DO NOT HAVE `show' PRIVILEGE" .
-	           " FOR PROJECT $project" );
+	           " FOR PROJECT $project" .
+		   " PROBLEM $problem" );
         $fname =
 	    "projects/$project/$problem/$problem.pdf";
     }
@@ -99,7 +96,7 @@
         $d = 'inline';
     header ( 'Content-type: application/pdf' );
     header ( "Content-Disposition: $d;" .
-	     ' filename=' . $problem.pdf );
+	     " filename=$problem.pdf" );
     header ( 'Content-Transfer-Encoding: binary' );
     header ( "Content-Length: $fsize" );
     $r = @readfile ( "$epm_data/$fname" );
