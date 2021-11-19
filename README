@@ -1,0 +1,10 @@
+EPM (the Educational Problem Manager) is intended to
+make it easier for one user to develop a programming
+problem and then make it available for other users to
+solve.  Problem development is mostly a matter of
+creating test case input and output in a form suitable
+for automatic scoring, and then debugging the problem
+solution and specification against the test cases.
+
+For an introductory guide and full user documentation
+see the `intro' subdirectory.
