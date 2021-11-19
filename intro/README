@@ -1,0 +1,21 @@
+This directory contains PDF files that are NOT part
+of an EPM installation, because they are printouts
+of HTML files that are part of the installation and
+can be printed from the installation.
+
+This directory is provided for online reference when
+an EPM installation is not available.
+
+The PDF files in this directory may be a bit out of
+date, as they are not automatically maintained.
+Nevertheless, they should allow the reader to get
+a good sense of EPM.  Up-to-date printouts can
+be obtained by printing the Guide and/or Help
+pages of an EPM installation.
+
+EPM User Guide.pdf
+    Introduction to using EPM.
+
+EPM Help Page.pdf
+    Complete user manual for EPM.
+
