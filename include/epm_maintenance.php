@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jan 18 06:41:08 EST 2022
+// Date:    Tue Jan 18 08:43:35 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -410,21 +410,30 @@ function init_problem
 	$f = "$d3/$spec-$problem";
 	if ( is_link ( "$epm_data/$f" ) )
 	    continue;
-	if ( file_exists ( "$epm_data/$f" ) )
-	    continue;
+	$m = @filemtime ( "$epm_data/$f" );
 	$gc = "$d4/$spec-$problem.c";
 	$gcc = "$d4/$spec-$problem.cc";
-	if ( file_exists ( "$epm_data/$gcc" ) )
+	$mc = @filemtime ( "$epm_data/$gc" );
+	$mcc = @filemtime ( "$epm_data/$gcc" );
+	if ( $mcc !== false )
 	{
-	    $action = "compile $f from C++";
-	    $command = "g++ -o $epm_data/$f " .
-		              "$epm_data/$gcc";
+	    if ( $m === false || $m < $mcc )
+	    {
+		$action = "compile $f from C++";
+		$command = "g++ -o $epm_data/$f " .
+				  "$epm_data/$gcc";
+	    }
+	    else continue;
 	}
-	elseif ( file_exists ( "$epm_data/$gc" ) )
+	elseif ( $mc !== false )
 	{
-	    $action = "compile $f from C";
-	    $command = "gcc -o $epm_data/$f " .
-		              "$epm_data/$gcc";
+	    if ( $m === false || $m < $mc )
+	    {
+		$action = "compile $f from C";
+		$command = "gcc -o $epm_data/$f " .
+				  "$epm_data/$gcc";
+	    }
+	    else continue;
 	}
 	else
 	    continue;
