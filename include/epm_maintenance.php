@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Dec 25 00:49:10 EST 2020
+// Date:    Tue Jan 18 06:41:08 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -542,7 +542,6 @@ function export_problem ( $project, $problem, $dryrun )
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
     done();
-         PHP_EOL . PHP_EOL;
 }
 
 // Function to sync epm_library to $epm_data project.
@@ -641,7 +640,6 @@ function import_problem ( $project, $problem, $dryrun )
     if ( $r != 0 )
         ERROR ( "rsync returned exit code $r" );
     done();
-         PHP_EOL . PHP_EOL;
 }
 
 // Function to sync $epm_data to epm_library($project).
@@ -673,6 +671,28 @@ function import_project ( $project, $dryrun )
         if ( ! preg_match ( $epm_name_re, $problem ) )
 	    continue;
 	import_problem ( $project, $problem, $dryrun );
+    }
+
+    $srcdir = "$lib/+lists+";
+    if ( is_dir ( "$srcdir" ) )
+    {
+	title ( "importing $project +lists+" );
+
+	$desdir = "$d/+lists+";
+	if ( ! is_dir ( "$epm_data/$d" )
+	     &&
+	     ! @mkdir ( "$epm_data/$d", 02770, true ) )
+	    ERROR ( "cannot make $d in \$epm_data" );
+
+	$opt = ( $dryrun ? '-n' : '' );
+	$command = "rsync $opt -avc --delete"
+		 . " --info=STATS0,FLIST0"
+		 . " $srcdir/ $epm_data/$desdir/";
+
+	passthru ( $command, $r );
+	if ( $r != 0 )
+	    ERROR ( "rsync returned exit code $r" );
+	done();
     }
 }
 
