@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jan 19 02:24:58 EST 2022
+// Date:    Wed Jan 19 04:24:02 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -393,7 +393,8 @@ function set_perms_accounts ( $dryrun )
 function init_problem
     ( $project, $problem, $dryrun )
 {
-    global $epm_data, $epm_specials;
+    global $epm_data, $epm_specials, $epm_cc_options,
+           $epm_c_options;
     title ( "initing $project $problem" );
 
     $d1 = "projects";
@@ -420,7 +421,8 @@ function init_problem
 	    if ( $m === false || $m < $mcc )
 	    {
 		$action = "compile $f from C++";
-		$command = "g++ -o $epm_data/$f " .
+		$command = "g++ $epm_c_options " .
+		                  "-o $epm_data/$f " .
 				  "$epm_data/$gcc";
 	    }
 	    else continue;
@@ -430,7 +432,8 @@ function init_problem
 	    if ( $m === false || $m < $mc )
 	    {
 		$action = "compile $f from C";
-		$command = "gcc -o $epm_data/$f " .
+		$command = "gcc $epm_cc_options " .
+		                  "-o $epm_data/$f " .
 				  "$epm_data/$gcc";
 	    }
 	    else continue;

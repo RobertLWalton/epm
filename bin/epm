@@ -3,7 +3,7 @@
 
 // File:	epm
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Dec 25 00:47:05 EST 2020
+// Date:	Wed Jan 19 04:22:21 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -67,7 +67,7 @@ missing parts and incorrect permissions.
 See include/maintenance_parameters.php for how to use
 backup.
 
-The import and export functions employ rsync to copy
+The import and export functions employ rsync -rc to copy
 from/to epm_library ( $project ) (the epm_library
 function is defined in W/maintenance_parameters.php).
 Import also does init and perms for the target
@@ -81,7 +81,9 @@ The rest of the commands should not be needed, but
 are available for cleaning up system problems.
 
 The init command creates links or executables for the
-$epm_specials files.
+$epm_specials files.  When it compiles executables,
+it uses gcc or g++ options from maintenance_
+parameters.php.
 
 The perms commands set permissions and sets the group
 of files and directories to $epm_web_group.  These
