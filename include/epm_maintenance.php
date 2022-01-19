@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Jan 18 08:43:35 EST 2022
+// Date:    Wed Jan 19 02:24:58 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -513,7 +513,8 @@ function init_projects ( $dryrun )
     }
 }
 
-// Function to sync epm_library to $epm_data problem.
+// Function to rsync -rc epm_library to $epm_data
+// problem.
 //
 function export_problem ( $project, $problem, $dryrun )
 {
@@ -544,18 +545,18 @@ function export_problem ( $project, $problem, $dryrun )
               . " --exclude $spec-$problem";
     $opt .= " --include +sources+"
           . " --exclude '+*+'";
-    $command = "rsync $opt -avc --delete"
+    $command = "rsync $opt -rvc --delete"
              . " --info=STATS0,FLIST0"
              . " $epm_data/$srcdir/ $desdir/";
     passthru ( $command, $r );
     if ( $r != 0 )
-        ERROR ( "rsync returned exit code $r" );
+        ERROR ( "rsync -rc returned exit code $r" );
     done();
 }
 
-// Function to sync epm_library to $epm_data project.
-// If epm_library ( $project ) not defined, does
-// nothing.
+// Function to rsync -rc epm_library to $epm_data
+// project.  If epm_library ( $project ) not defined,
+// does nothing.
 //
 function export_project ( $project, $dryrun )
 {
@@ -582,10 +583,28 @@ function export_project ( $project, $dryrun )
 	    continue;
 	export_problem ( $project, $problem, $dryrun );
     }
+
+    $srcdir = "$epm_data/$d/+lists+";
+    if ( is_dir ( "$srcdir" ) )
+    {
+	title ( "exporting $project +lists+" );
+
+	$desdir = "$lib/+lists+";
+
+	$opt = ( $dryrun ? '-n' : '' );
+	$command = "rsync $opt -rvc --delete"
+		 . " --info=STATS0,FLIST0"
+		 . " $srcdir/ $desdir/";
+
+	passthru ( $command, $r );
+	if ( $r != 0 )
+	    ERROR ( "rsync -rc returned exit code $r" );
+	done();
+    }
 }
 
-// Function to sync $epm_library to $epm_data projects.
-// Only projects in $epm_data are for which
+// Function to rsync -rc $epm_library to $epm_data
+// projects.  Only projects in $epm_data are for which
 // epm_library ( $project ) exists are sync'ed.
 //
 function export_projects ( $dryrun )
@@ -610,7 +629,8 @@ function export_projects ( $dryrun )
     }
 }
 
-// Function to sync $epm_data to epm_library problem.
+// Function to rsync -rc $epm_data to epm_library
+// problem.
 //
 function import_problem ( $project, $problem, $dryrun )
 {
@@ -637,7 +657,7 @@ function import_problem ( $project, $problem, $dryrun )
               . " --exclude $spec-$problem";
     $opt .= " --include +sources+"
           . " --exclude '+*+'";
-    $command = "rsync $opt -avc --delete"
+    $command = "rsync $opt -rvc --delete"
              . " --info=STATS0,FLIST0"
              . " $srcdir/ $epm_data/$desdir/";
 	// It is necessary to have the excludes
@@ -647,13 +667,13 @@ function import_problem ( $project, $problem, $dryrun )
 
     passthru ( $command, $r );
     if ( $r != 0 )
-        ERROR ( "rsync returned exit code $r" );
+        ERROR ( "rsync -rc returned exit code $r" );
     done();
 }
 
-// Function to sync $epm_data to epm_library($project).
-// If epm_library ( $project ) not defined, does
-// nothing.
+// Function to rsync -rc $epm_data $project to
+// epm_library.  If epm_library($project) not defined,
+// does nothing.
 //
 function import_project ( $project, $dryrun )
 {
@@ -687,27 +707,27 @@ function import_project ( $project, $dryrun )
     {
 	title ( "importing $project +lists+" );
 
-	$desdir = "$d/+lists+";
+	$d = "$d/+lists+";
 	if ( ! is_dir ( "$epm_data/$d" )
 	     &&
 	     ! @mkdir ( "$epm_data/$d", 02770, true ) )
 	    ERROR ( "cannot make $d in \$epm_data" );
 
 	$opt = ( $dryrun ? '-n' : '' );
-	$command = "rsync $opt -avc --delete"
+	$command = "rsync $opt -rvc --delete"
 		 . " --info=STATS0,FLIST0"
-		 . " $srcdir/ $epm_data/$desdir/";
+		 . " $srcdir/ $epm_data/$d/";
 
 	passthru ( $command, $r );
 	if ( $r != 0 )
-	    ERROR ( "rsync returned exit code $r" );
+	    ERROR ( "rsync -rc returned exit code $r" );
 	done();
     }
 }
 
-// Function to sync $epm_data to epm_library projects.
-// Only projects already in $epm_data are for which
-// epm_library ( $project ) exists are sync'ed.
+// Function to rsync -rc $epm_data to epm_library
+// projects.  Only projects already in $epm_data are for
+// which epm_library ( $project ) exists are sync'ed.
 //
 function import_projects ( $dryrun )
 {
