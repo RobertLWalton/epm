@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug 23 04:51:40 EDT 2021
+    // Date:	Fri Jan 21 05:13:49 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -109,7 +109,8 @@
     //		-:- => TIME,
     //		PROJECT:- => TIME,
     //		-:BASENAME => TIME,
-    //		ACCOUNT:BASENAME => TIME,
+    //		PROJECT:BASENAME => TIME,
+    //		    (for projects with `show' priv)
     //
     // in the order indicated.  TIME is the mtime
     // of the accounts's +actions+ file for -:-, the
@@ -149,28 +150,19 @@
 	    $inmap["-:$basename"] =
 	        strftime ( $epm_time_format, $time );
 	}
-    $d = "lists";
-    $fnames = @scandir ( "$epm_data/$d" );
-    if ( $fnames !== false )
-        foreach ( $fnames as $fname )
+
+    foreach ( $projects as $project )
+    {
+	$g = glob ( "$epm_data/projects/$project/" .
+		    "+lists+/" . "*.list" );
+	foreach ( $g as $fname )
 	{
-	    $re = '/^([^:\.]+):([^:\.]+)\.list$/';
-	    if ( ! preg_match ( $re, $fname,
-	                         $matches ) )
-	        continue;
-	    $account = $matches[1];
-	    if ( $account == $aid ) continue;
-	    $basename = $matches[2];
-	    $time = @filemtime
-	        ( "$epm_data/$d/$fname" );
-	    if ( $time === false )
-	    {
-		WARN ( "dangling link $d/$fname" );
-		continue;
-	    }
-	    $inmap["$account:$basename"] =
+	    $basename = basename ( $fname, ".list" );
+	    $time = filemtime ( $fname );
+	    $inmap["$project:$basename"] =
 	        strftime ( $epm_time_format, $time );
 	}
+    }
 
     $favorites = read_favorites_list ( $warnings );
 

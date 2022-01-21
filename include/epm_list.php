@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug 23 05:15:47 EDT 2021
+    // Date:	Fri Jan 21 04:32:03 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -16,7 +16,7 @@
     //	-:-		List of Your Problems
     //  -:NAME  	Your NAME list
     //  PROJECT:-	List of PROJECT Problems
-    //  ACCOUNT:NAME	Published NAME list of ACCOUNT
+    //  PROJECT:NAME	Published NAME list of PROJECT
     //  +favorites+	Your favorites list.
     //
     // Problem names have the form:
@@ -383,6 +383,8 @@
     // Given a list name return the file name of the
     // list relative to $epm_data, or return NULL if
     // the name is of the form -:- or PROJECT:-.
+    // Accepts `+favorites+' as a list name and returns
+    // its file name.
     //
     function listname_to_filename ( $listname )
     {
@@ -391,14 +393,15 @@
 	if ( $listname[0] == '+' )
 	    return "accounts/$aid/+lists+/$listname";
 
-        list ( $account, $name ) =
+        list ( $project, $name ) =
 	    explode ( ':', $listname );
 	if ( $name == '-' )
 	    return NULL;
-	elseif ( $account == '-' )
+	elseif ( $project == '-' )
 	    return "accounts/$aid/+lists+/$name.list";
 	else
-	    return "lists/$account:$name.list";
+	    return "projects/$project/+lists+/" .
+	           "$name.list";
     }
 
     // Given a name make a new empty file for the
@@ -455,9 +458,9 @@
 	    // and then re-created.
     }
 
-    // Delete the named list, or append to $errors.
-    // However if $execute is false, just check for
-    // errors and return.
+    // Delete the named local list, or append to
+    // $errors.  However if $execute is false, just
+    // check for errors and return.
     //
     function delete_list
             ( $name, & $errors, $execute )
@@ -492,6 +495,8 @@
     {
         global $epm_data, $aid;
 
+	ERROR ( "publish is being re-implemented" );
+
 	$f = "accounts/$aid/+lists+/$name.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
@@ -518,6 +523,8 @@
     function unpublish_list ( $name, & $errors )
     {
         global $epm_data, $aid;
+
+	ERROR ( "unpublish is being re-implemented" );
 
 	$f = "accounts/$aid/+lists+/$name.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
@@ -1000,11 +1007,6 @@
     // that is both not in the list and was published
     // after the last time the list was updated.
     //
-    // A published list with basename N of the current
-    // user U can be known under either of two names:
-    // U:N or -:N.  In the favorites list -:N must be
-    // used.
-    //
     function read_favorites_list ( & $warnings )
     {
 	global $epm_data, $aid, $epm_time_format;
@@ -1028,7 +1030,8 @@
 	    elseif ( $root == '-' )
 		$g = "accounts/$aid/+lists+/$name.list";
 	    else
-		$g = "lists/$root:$name.list";
+		$g = "projects/$root/+lists+/" .
+		     "$name.list";
 	    if ( file_exists ( "$epm_data/$g" ) )
 	    {
 	        $new_list[] = $e;
@@ -1084,44 +1087,27 @@
 		$warnings[] = "added Your Problems to"
 			    . " Your Favorites";
 	}
-	$re = "|^$epm_data/lists/(.+):(.+)\\.list$|";
-	$g = glob ( "$epm_data/lists/*:*.list" );
-	foreach ( $g as $fname )
+
+	$projects = read_projects ( ['show'] );
+	foreach ( $projects as $project )
 	{
-	    preg_match  ( $re, $fname, $matches );
-	    $root = $matches[1];
-	    if ( $root == $aid ) $root = "-";
-	    $name = $matches[2];
-	    if ( isset ( $new_list_keys
-			      ["$root:$name"] ) )
-		continue;
-
-	    if ( file_exists ( $fname ) === false )
+	    $g = glob ( "$epm_data/projects/$project/" .
+	                "+lists+/" . "*.list" );
+	    foreach ( $g as $fname )
 	    {
-		if ( $root == "-"
-		     &&
-		     ! $reinitializing )
-		    $warnings[] =
-			"Your $name is dangling" .
-			" published list";
-		continue;
-	    }
-	    // Time is time published, not time
-	    // list was last modified.
-	    $lstat = @lstat ( $fname );
-	    $time = $lstat['mtime'];
-	    if ( $time < $old_time ) continue;
-	    $time = strftime
-		( $epm_time_format, $time );
+	        $name = basename ( $fname, ".list" );
+		if ( isset ( $new_list_keys
+				  ["$project:$name"] ) )
+		    continue;
 
-	    $new_list[] = [$time, $root, $name];
-	    if ( ! $reinitializing )
-	    {
-		if ( $root == "-" ) $root = "Your";
-		$warnings[] = "added $root $name to"
-			    . " Your Favorites";
+		$time = filemtime ( $fname );
+		if ( $time < $old_time ) continue;
+		$time = strftime
+		    ( $epm_time_format, $time );
+
+		$new_list[] = [$time, $root, $name];
+		$modified = true;
 	    }
-	    $modified = true;
 	}
 
 	if ( $modified )
