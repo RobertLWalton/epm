@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug  8 11:46:11 EDT 2021
+    // Date:	Fri Jan 21 19:22:15 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -41,7 +41,19 @@
     //		elements for the edited versions of each
     //		list.  The elements for both lists are
     //		included here in arbitrary order.
-
+    //
+    //	   $data PUB_J
+    //		If set, the list number (0 or 1) of the
+    //		list for which the publishing or un-
+    //		publishing question is being asked.  If
+    //		NOT set, these questions are not being
+    //		asked.
+    //
+    //	   $data PUB_PROJECT
+    //		If PUB_J is set and this is set, this is
+    //		the project begin published to.  If PUB_J
+    //		is set and this is NOT set, list J is
+    //		being unpublished.
 
     // POST:
     // ----
@@ -112,17 +124,22 @@
 	$data['NAMES'] = ['',''];
 	$data['WRITABLE'] = [false,false];
 	$data['ELEMENTS'] = [];
+	$data['PUB_J'] = NULL;
+	$data['PUB_PROJECT'] = NULL;
     }
 
     $names = & $data['NAMES'];
     $writable = & $data['WRITABLE'];
     $elements = & $data['ELEMENTS'];
+    $pub_j = & $data['PUB_J'];
+    $pub_project = & $data['PUB_PROJECT'];
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
-    $action = NULL;  // Action to be recorded.
-    $pubaction = false;
-        // True if action involves published list.
+    $action = NULL;  // Action to be recorded, if any.
+    $action_project = NULL;
+        // If set, project whose +actions+ are to be
+	// updated by $action.
 
     $lists = [NULL,NULL];
     $lengths = [0,0];
@@ -427,9 +444,7 @@ EOT;
 	}
 	elseif ( ! $writable[$J] )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	elseif ( in_array ( $op, ['save','finish','dsc',
-	                          'publish',
-				  'unpublish'] ) )
+	elseif ( in_array ( $op, ['save','finish','dsc'] ) )
 	{
 	    $lists[$J] = index_to_list ( $indices[$J] );
 	    if ( ! preg_match
@@ -439,23 +454,12 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST' );
 
 	    $name = substr ( $names[$J], 2 );
-	    if ( $op == 'publish' )
+	    if ( $op == 'dsc' )
 	    {
-		publish_list ( $name, $errors );
-		$action = 'publish-list';
-		$pubaction = true;
-	    }
-	    elseif ( $op == 'unpublish' )
-	    {
-		unpublish_list ( $name, $errors );
-		$action = 'unpublish-list';
-		$pubaction = true;
-	    }
-	    elseif ( $op == 'dsc' )
-	    {
-		upload_list_description
-		    ( $names[$J], $warnings, $errors );
-		$action = 'update-list';
+		if ( upload_list_description
+		         ( $names[$J],
+			   $warnings, $errors ) )
+		    $action = 'update-list';
 	    }
 
 	    if ( count ( $errors ) == 0 )
@@ -469,9 +473,7 @@ EOT;
 
 		if ( $r )
 		{
-		    if ( in_array
-		             ( $op, ['dsc','publish',
-				     'unpublish'] ) )
+		    if ( $op == 'dsc' )
 			$warnings[] =
 			    "updated list $name has" .
 			    " been saved";
@@ -484,16 +486,10 @@ EOT;
 		}
 		if ( isset ( $action ) )
 		{
-		    if ( $action == 'update-list' )
-		    {
-			$d = "accounts/$aid/+lists+";
-			$f = "$d/$name.list";
-			$g = "lists/$aid:$name.list";
-			$pubaction = is_link
-			    ( "$epm_data/$g" );
-		    }
-		    else
-		        $f = 'lists';
+		    // $action == 'update-list'
+		    //
+		    $d = "accounts/$aid/+lists+";
+		    $f = "$d/$name.list";
 
 		    $time = @filemtime
 			( "$epm_data/$f" );
@@ -515,16 +511,9 @@ EOT;
 	elseif ( $op == 'delete' )
 	{
 	    $name = substr ( $names[$J], 2 );
-	    $g = "lists/$aid:$name.list";
-	    $pubaction = is_link ( "$epm_data/$g" );
-	        // Do this before calling delete_list.
 	    delete_list ( $name, $errors, true );
 	    if ( count ( $errors ) == 0 )
 	    {
-		if ( $pubaction )
-		    $warnings[] =
-		        "$name has been unpublished";
-
 		$time = strftime ( $epm_time_format );
 		$action = "$time $aid"
 			. " delete-list"
@@ -555,21 +544,13 @@ EOT;
 	{
 	    // Else if no errors but an action.
 	    //
-	    $f = "accounts/$aid/+lists+/+actions+";
-	    $r = @file_put_contents
-		( "$epm_data/$f", $action,
-		  FILE_APPEND );
-	    if ( $r === false )
-		ERROR ( "cannot write $f" );
-	    $f = "accounts/$aid/+actions+";
-	    $r = @file_put_contents
-		( "$epm_data/$f", $action,
-		  FILE_APPEND );
-	    if ( $r === false )
-		ERROR ( "cannot write $f" );
-	    if ( $pubaction )
+	    $places = [ "accounts/$aid" ];
+	    if ( isset ( $action_project ) )
+		$places[] = "projects/$action_project";
+	    foreach ( $places as $place )
+	    foreach ( [$place, "$place/+lists+"] as $d )
 	    {
-		$f = "lists/+actions+";
+		$f = "$d/+actions+";
 		$r = @file_put_contents
 		    ( "$epm_data/$f", $action,
 		      FILE_APPEND );

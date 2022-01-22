@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan 21 04:32:03 EST 2022
+    // Date:	Sat Jan 22 00:35:48 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -479,69 +479,9 @@
 
 	unlink ( "$epm_data/$f" );
 
-	$g = "lists/$aid:$name.list";
-	if ( is_link ( "$epm_data/$g" ) )
-	    unlink ( "$epm_data/$g" );
-
 	$f = "accounts/$aid/+lists+/+favorites+";
 	delete_from_file_list
 	    ( $f, '-', $name );
-    }
-
-    // Publish the named list, or append to $errors
-    // if its already published.
-    //
-    function publish_list ( $name, & $errors )
-    {
-        global $epm_data, $aid;
-
-	ERROR ( "publish is being re-implemented" );
-
-	$f = "accounts/$aid/+lists+/$name.list";
-	if ( ! file_exists ( "$epm_data/$f" ) )
-	{
-	    $errors[] = "you have no list named"
-		      . " $name";
-	    return;
-	}
-	$g = "lists/$aid:$name.list";
-	if ( is_link ( "$epm_data/$g" ) )
-	{
-	    $errors[] = "Your $name is already"
-	              . " published";
-	    return;
-	}
-	@mkdir ( "$epm_data/lists", 02770 );
-	if ( ! symbolic_link ( "../$f",
-	                       "$epm_data/$g" ) )
-	    ERROR ( "cannot make link $g" );
-    }
-
-    // Unpublish the named list, or append to $errors
-    // if its already unpublished.
-    //
-    function unpublish_list ( $name, & $errors )
-    {
-        global $epm_data, $aid;
-
-	ERROR ( "unpublish is being re-implemented" );
-
-	$f = "accounts/$aid/+lists+/$name.list";
-	if ( ! file_exists ( "$epm_data/$f" ) )
-	{
-	    $errors[] = "you have no list named"
-		      . " $name";
-	    return;
-	}
-	$g = "lists/$aid:$name.list";
-	if ( ! is_link ( "$epm_data/$g" ) )
-	{
-	    $errors[] = "Your $name is already"
-	              . " unpublished";
-	    return;
-	}
-	if ( ! unlink ( "$epm_data/$g" ) )
-	    ERROR ( "cannot unlink $g" );
     }
 
     // Return the lines from the list with the given
