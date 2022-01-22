@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan 21 19:22:15 EST 2022
+    // Date:	Sat Jan 22 05:48:31 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -784,7 +784,8 @@ EOT;
 	$sname = ( $name != '' ? $name : NULL );
 	$options = list_to_options
 	    ( $favorites, $sname, [$names[$K]] );
-	$published = NULL;
+	$publishable = false;
+	$unpublishable = false;
 	$pname = 'No List Selected';
 	$description = '';
 	$lines = '';
@@ -795,8 +796,7 @@ EOT;
 
 	    list ( $project, $basename ) =
 	        explode ( ':', $name );
-	    if ( $project == '-' )
-	        $project = '<i>Your</i>';
+
 	    if ( $basename == '-' )
 	        $basename = '<i>Problems</i>';
 	    elseif ( $writable[$J] )
@@ -805,12 +805,13 @@ EOT;
 		   . "$basename.list";
 		$description = read_list_description
 		    ( $f );
-		$g = "lists/$aid:$basename.list";
-		if ( file_exists ( "$epm_data/$g" ) )
-		    $published = 'yes';
-		else
-		    $published = 'no';
+		$publishable = true;
 	    }
+	    else
+	        $unpublishable = true;
+
+	    if ( $project == '-' )
+	        $project = '<i>Your</i>';
 	    $pname = "$project $basename";
 	}
 
@@ -831,6 +832,7 @@ EOT;
 	    </div>
 EOT;
 	elseif ( ! $writable[$J] )
+	{
 	    echo <<<EOT
 	    <div class='read-only-header list-header'>
 
@@ -849,8 +851,19 @@ EOT;
 	    <option value=''>No List Selected</option>
 	    $options
 	    </select>
+EOT;
+	    if ( $unpublishable )
+	        echo <<<EOT
+		<br>
+		<button type='button'
+			onclick=
+			  'SUBMIT("unpublish","$J")'>
+		UNPUBLISH</button>
+EOT;
+	    echo <<<EOT
 	    </div>
 EOT;
+	}
 	elseif ( $writable[$J] )
 	{
 	    echo <<<EOT
@@ -872,20 +885,34 @@ EOT;
 	            onclick='DELETE("$J")'>
 	    DELETE</button>
 EOT;
-	    if ( $published == 'no' )
-	        echo <<<EOT
-		<button type='button'
-			onclick=
-			  'SUBMIT("publish","$J")'>
-		PUBLISH</button>
+	    if ( $publishable )
+	    {
+		$title = 'Select Project to Publish To';
+		$projects = read_projects ( ['show'] );
+		$project_options = '';
+		foreach ( $projects as $proj )
+		    $project_options .=
+		        "<option value='$proj'>" .
+			"$proj</option>";
+		echo <<<EOT
+		<form method='POST' action='list.php'
+		      id='publish-form'>
+		<input type='hidden'
+		       name='id' value='$ID'>
+		<input type='hidden'
+		       name='op' value='publish'>
+		<input type='hidden'
+		       name='J' value='$J'>
+		<select
+		     name='project'
+		     onchange='document.getElementById
+			    ("publish-form").submit()'
+		     title='$title'>
+		<option value=''>PUBLISH TO</option>
+		$project_options
+		</select></form>
 EOT;
-	    elseif ( $published == 'yes' )
-	        echo <<<EOT
-		<button type='button'
-			onclick=
-			  'SUBMIT("unpublish","$J")'>
-		UNPUBLISH</button>
-EOT;
+	    }
 	    echo <<<EOT
 	    <br>
 
