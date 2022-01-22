@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan 22 05:48:31 EST 2022
+    // Date:	Sat Jan 22 13:32:46 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -51,9 +51,9 @@
     //
     //	   $data PUB_PROJECT
     //		If PUB_J is set and this is set, this is
-    //		the project begin published to.  If PUB_J
-    //		is set and this is NOT set, list J is
-    //		being unpublished.
+    //		the project begin published to.
+    //		If PUB_J is set and this is NOT set,
+    //		list J is being unpublished.
 
     // POST:
     // ----
@@ -140,6 +140,9 @@
     $action_project = NULL;
         // If set, project whose +actions+ are to be
 	// updated by $action.
+    $own_re = "/^.*--$aid\$/";
+        // Matches list name iff that can be published
+	// as an `own' list.
 
     $lists = [NULL,NULL];
     $lengths = [0,0];
@@ -380,7 +383,7 @@ EOT;
 				'select','new',
 				'dsc', 'publish',
 				'unpublish'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    exit ( "UNACCEPTABLE HTTP POST: $op" );
 	$J = $_POST['list'];
 	if ( ! in_array ( $J, [0,1] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
@@ -444,7 +447,8 @@ EOT;
 	}
 	elseif ( ! $writable[$J] )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
-	elseif ( in_array ( $op, ['save','finish','dsc'] ) )
+	elseif ( in_array ( $op,
+	                    ['save','finish','dsc'] ) )
 	{
 	    $lists[$J] = index_to_list ( $indices[$J] );
 	    if ( ! preg_match
@@ -784,7 +788,10 @@ EOT;
 	$sname = ( $name != '' ? $name : NULL );
 	$options = list_to_options
 	    ( $favorites, $sname, [$names[$K]] );
-	$publishable = false;
+	$publishable = [];
+	    // List of projects to which list can be
+	    // published (if its not modified).  Empty
+	    // for unpublishable lists.
 	$unpublishable = false;
 	$pname = 'No List Selected';
 	$description = '';
@@ -805,10 +812,25 @@ EOT;
 		   . "$basename.list";
 		$description = read_list_description
 		    ( $f );
-		$publishable = true;
+		$privs = ['publish-all'];
+		if ( preg_match ( $own_re, $basename ) )
+		    $privs[] = 'publish-own';
+		$publishable = read_projects ( $privs );
 	    }
 	    else
-	        $unpublishable = true;
+	    {
+	        project_priv_map ( $map, $project );
+		$privs = ['unpublish-all'];
+		if ( preg_match ( $own_re, $basename ) )
+		    $privs[] = 'unpublish-own';
+		foreach ( $privs as $priv )
+		{
+		    if ( isset ( $map[$priv] )
+		         &&
+			 $map[$priv] == '+' )
+			$unpublishable = true;
+		}
+	    }
 
 	    if ( $project == '-' )
 	        $project = '<i>Your</i>';
@@ -885,12 +907,11 @@ EOT;
 	            onclick='DELETE("$J")'>
 	    DELETE</button>
 EOT;
-	    if ( $publishable )
+	    if ( count ( $publishable ) > 0 )
 	    {
 		$title = 'Select Project to Publish To';
-		$projects = read_projects ( ['show'] );
 		$project_options = '';
-		foreach ( $projects as $proj )
+		foreach ( $publishable as $proj )
 		    $project_options .=
 		        "<option value='$proj'>" .
 			"$proj</option>";
