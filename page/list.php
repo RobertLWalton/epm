@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan 23 04:30:47 EST 2022
+    // Date:	Sun Jan 23 07:39:01 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -911,20 +911,23 @@ EOT;
 	    echo <<<EOT
 	    <div id='write-header-$J'
 	         class='writable-header list-header'>
-	    <button type='button'
+	    <button type='button' id='save-button-$J'
+	    	    style='display:none'
 	            onclick='SUBMIT("save","$J")'>
 	    SAVE</button>
-	    <button type='button'
+	    <button type='button' id='reset-button-$J'
+	    	    style='display:none'
 	            onclick='SUBMIT("reset","$J")'>
 	    RESET</button>
-	    <button type='button'
+	    <button type='button' id='finish-button-$J'
+	    	    style='display:none'
 	            onclick='SUBMIT("finish","$J")'>
 	    FINISH</button>
-	    <button type='button'
+	    <button type='button' id='cancel-button-$J'
 	            onclick='SUBMIT("cancel","$J")'>
 	    CANCEL</button>
 	    <button type='button'
-	            onclick='DELETE("$J")'>
+	            onclick='DELETE_YES("$J")'>
 	    DELETE</button>
 EOT;
 	    if ( count ( $publishable ) > 0 )
@@ -937,6 +940,7 @@ EOT;
 			"$proj</option>";
 		echo <<<EOT
 		<select
+		     id='publish-button-$J'
 		     name='project'
 		     onchange='SUBMIT("publish","$J",
 		                       event
@@ -953,14 +957,14 @@ EOT;
 
 	    <form method='POST' action='list.php'
 		  enctype='multipart/form-data'
-		  id='upload-form$J'>
+		  id='upload-form-$J'>
 	    <input type='hidden' name='id' value='$ID'>
 	    <input type='hidden' name='op' value='dsc'>
 	    <input type='hidden' name='list' value='$J'>
 	    <input type='hidden' name='indices'
-		   id='upload-indices$J'>
+		   id='upload-indices-$J'>
 	    <input type='hidden' name='lengths'
-		   id='upload-lengths$J'>
+		   id='upload-lengths-$J'>
 	    <input type="hidden" name="MAX_FILE_SIZE"
 		   value="$epm_upload_maxsize">
 	    <label>
@@ -988,7 +992,8 @@ EOT;
 	}
 	$w = ( $writable[$J] ? 'yes' : 'no' );
 	echo <<<EOT
-	<div id='list$J' data-writable='$w'>
+	<div id='list$J'
+	     data-writable='$w' data-list='$J'>
 	<div class='list-name'
 	     ondrop='DROP(event)'
 	     ondragover='ALLOWDROP(event)'>
@@ -1022,7 +1027,7 @@ EOT;
 
     echo <<<EOT
     <script>
-    function DELETE ( J )
+    function DELETE_YES ( J )
     {
 	let write_header = document.getElementById
 	    ( "write-header-" + J );
@@ -1039,6 +1044,24 @@ EOT;
 	    ( "delete-header-" + J );
 	write_header.style.display = 'block';
 	delete_header.style.display = 'none';
+    }
+    function EDITING ( J )
+    {
+	let save_button = document.getElementById
+	    ( "save-button-" + J );
+	save_button.style.display = 'inline';
+	let reset_button = document.getElementById
+	    ( "reset-button-" + J );
+	reset_button.style.display = 'inline';
+	let finish_button = document.getElementById
+	    ( "finish-button-" + J );
+	finish_button.style.display = 'inline';
+	let publish_button = document.getElementById
+	    ( "publish-button-" + J );
+	publish_button.style.display = 'none';
+	let upload_form = document.getElementById
+	    ( "upload-form-" + J );
+	upload_form.style.display = 'none';
     }
 
     let submit_form = document.getElementById
@@ -1117,11 +1140,11 @@ EOT;
     {
 	event.preventDefault();
 	let submit_form = document.getElementById
-		( 'upload-form' + J );
+		( 'upload-form-' + J );
 	let indices_in = document.getElementById
-		( 'upload-indices' + J );
+		( 'upload-indices-' + J );
 	let lengths_in = document.getElementById
-		( 'upload-lengths' + J );
+		( 'upload-lengths-' + J );
 	COMPUTE_INDICES();
 	indices_in.value = indices.join(';');
 	lengths_in.value = lengths.join(';');
@@ -1155,6 +1178,8 @@ if ( $rw )
 	let div = table.parentElement;
 	let writable = div.dataset.writable;
 	if ( writable == 'no' ) return;
+
+	EDITING ( div.dataset.list );
 
 	if ( checkbox.style.backgroundColor == on )
 	{
@@ -1229,6 +1254,8 @@ if ( $rw )
 	    event.preventDefault();
 	    return;
 	}
+
+	EDITING ( div.dataset.list );
 	let effect = event.dataTransfer.getData
 	    ( 'effect' );
 	let src = dragsrc;
