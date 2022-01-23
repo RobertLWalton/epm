@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan 22 13:32:46 EST 2022
+    // Date:	Sun Jan 23 04:30:47 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -178,9 +178,11 @@
 	foreach ( $indices as $I )
 	{
 	    if ( ! preg_match ( '/^\d+$/', $I ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " index $I" );
 	    if ( $I >= $limit )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " index $I >= $limit" );
 	    $list[] = $elements[$I];
 	}
 	return $list;
@@ -359,17 +361,17 @@ EOT;
     elseif ( isset ( $_POST['rw'] ) )
     {
         if ( $writable[0] || $writable[1] )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    exit ( 'UNACCEPTABLE HTTP POST: rw' );
 	require "$epm_home/include/epm_rw.php";
     }
     elseif ( ! isset ( $_POST['op'] ) )
-	exit ( 'UNACCEPTABLE HTTP POST' );
+	exit ( 'UNACCEPTABLE HTTP POST: no op' );
     elseif ( ! isset ( $_POST['indices'] ) )
-	exit ( 'UNACCEPTABLE HTTP POST' );
+	exit ( 'UNACCEPTABLE HTTP POST: no indices' );
     elseif ( ! isset ( $_POST['lengths'] ) )
-	exit ( 'UNACCEPTABLE HTTP POST' );
+	exit ( 'UNACCEPTABLE HTTP POST: no lengths' );
     elseif ( ! isset ( $_POST['list'] ) )
-	exit ( 'UNACCEPTABLE HTTP POST' );
+	exit ( 'UNACCEPTABLE HTTP POST: no list' );
     elseif ( ! $rw && $_POST['op'] != 'select' )
     {
         $errors[] = 'you are no longer in'
@@ -386,7 +388,7 @@ EOT;
 	    exit ( "UNACCEPTABLE HTTP POST: $op" );
 	$J = $_POST['list'];
 	if ( ! in_array ( $J, [0,1] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    exit ( "UNACCEPTABLE HTTP POST: J $J" );
 	$K = 1 - $J;
 
 	$indices = explode ( ';', $_POST['indices'] );
@@ -394,17 +396,21 @@ EOT;
 
 	$lists[$K] = index_to_list ( $indices[$K] );
 	if ( ! preg_match ( '/^\d+$/', $lengths[$K] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " lengths[$K] = $lengths[$K]" );
 	if ( $lengths[$K] > count ( $lists[$K] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " lengths[$K] > count" );
 
 	if ( $op == 'new' )
 	{
 	    if ( $writable[$J] )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' new writable' );
 
 	    if ( ! isset ( $_POST['name'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' new no name' );
 	    $name = $_POST['name'];
 	    make_new_list ( $name, $errors );
 	    if ( count ( $errors ) == 0 )
@@ -429,15 +435,18 @@ EOT;
 	elseif ( $op == 'select' )
 	{
 	    if ( $writable[$J] )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' select writable' );
 
 	    if ( ! isset ( $_POST['name'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' select no name' );
 	    $name = $_POST['name'];
 	    if ( $name == '' )
 	    	$names[$J] = '';
 	    elseif ( ! isset ( $fmap[$name] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " select no fmap[$name]" );
 	    elseif ( $name == $names[$K] )
 	        $errors[] = "cannot select list because"
 		          . " then both lists would be"
@@ -446,16 +455,19 @@ EOT;
 	    	$names[$J] = $name;
 	}
 	elseif ( ! $writable[$J] )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    exit ( 'UNACCEPTABLE HTTP POST:' .
+	           ' not writable' );
 	elseif ( in_array ( $op,
 	                    ['save','finish','dsc'] ) )
 	{
 	    $lists[$J] = index_to_list ( $indices[$J] );
 	    if ( ! preg_match
 	               ( '/^\d+$/', $lengths[$J] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " lengths[$J] = $lengths[$J]" );
 	    if ( $lengths[$J] > count ( $lists[$J] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " lengths[$J] > count" );
 
 	    $name = substr ( $names[$J], 2 );
 	    if ( $op == 'dsc' )
@@ -540,9 +552,11 @@ EOT;
 	    $lists[$J] = index_to_list ( $indices[$J] );
 	    if ( ! preg_match
 	               ( '/^\d+$/', $lengths[$J] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " lengths[$J] = $lengths[$J]" );
 	    if ( $lengths[$J] > count ( $lists[$J] ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " lengths[$J] > count" );
 	}
 	elseif ( isset ( $action ) )
 	{
@@ -847,7 +861,10 @@ EOT;
 
 	    <strong>Select List to Edit:</strong>
 	    <select title='New Problem List to Edit'
-		   onchange='SELECT_LIST(event,"$J")'>
+		   onchange='SUBMIT("select","$J",
+		                     event
+				     .currentTarget
+				     .value)'>
 	    <option value=''>No List Selected</option>
 	    $options
 	    </select>
@@ -869,7 +886,10 @@ EOT;
 
 	    <strong>Select List to Edit:</strong>
 	    <select title='New Problem List to Edit'
-		   onchange='SELECT_LIST(event,"$J")'>
+		   onchange='SUBMIT("select","$J",
+		                     event
+				     .currentTarget
+				     .value)'>
 	    <option value=''>No List Selected</option>
 	    $options
 	    </select>
@@ -916,22 +936,16 @@ EOT;
 		        "<option value='$proj'>" .
 			"$proj</option>";
 		echo <<<EOT
-		<form method='POST' action='list.php'
-		      id='publish-form'>
-		<input type='hidden'
-		       name='id' value='$ID'>
-		<input type='hidden'
-		       name='op' value='publish'>
-		<input type='hidden'
-		       name='J' value='$J'>
 		<select
 		     name='project'
-		     onchange='document.getElementById
-			    ("publish-form").submit()'
+		     onchange='SUBMIT("publish","$J",
+		                       event
+				       .currentTarget
+				       .value)'>
 		     title='$title'>
 		<option value=''>PUBLISH TO</option>
 		$project_options
-		</select></form>
+		</select>
 EOT;
 	    }
 	    echo <<<EOT
@@ -1124,11 +1138,6 @@ EOT;
 	}
     }
 
-    function SELECT_LIST ( event, J )
-    {
-	let select = event.currentTarget;
-	SUBMIT ( 'select', J, select.value );
-    }
     </script>
 EOT;
 
