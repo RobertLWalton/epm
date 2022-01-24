@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan 23 23:49:59 EST 2022
+    // Date:	Mon Jan 24 01:41:39 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -366,12 +366,6 @@ EOT;
     }
     elseif ( ! isset ( $_POST['op'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST: no op' );
-    elseif ( ! isset ( $_POST['indices'] ) )
-	exit ( 'UNACCEPTABLE HTTP POST: no indices' );
-    elseif ( ! isset ( $_POST['lengths'] ) )
-	exit ( 'UNACCEPTABLE HTTP POST: no lengths' );
-    elseif ( ! isset ( $_POST['list'] ) )
-	exit ( 'UNACCEPTABLE HTTP POST: no list' );
     elseif ( ! $rw && $_POST['op'] != 'select' )
     {
         $errors[] = 'you are no longer in'
@@ -382,6 +376,7 @@ EOT;
 	$op = $_POST['op'];
 	if ( $op == 'execute_publish' )
 	{
+	    $pub_J = NULL;
 	}
 	elseif ( $op == 'execute_unpublish' )
 	{
@@ -390,6 +385,12 @@ EOT;
 	    exit ( "UNACCEPTABLE HTTP POST:" .
 	           " pub_J op $op" );
     }
+    elseif ( ! isset ( $_POST['indices'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST: no indices' );
+    elseif ( ! isset ( $_POST['lengths'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST: no lengths' );
+    elseif ( ! isset ( $_POST['list'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST: no list' );
     else
     {
 	$op = $_POST['op'];
@@ -766,8 +767,41 @@ EOT;
     {
         if ( isset ( $pub_project ) )
 	{
+	    $name = substr ( $names[$pub_J], 2 );
+		// Here $pub_J == $J and list $J is
+		// writable.
+	    $f = "projects/$pub_project/+lists+/" .
+	         "$name.list";
+	    if ( file_exists ( "$epm_data/$f" ) )
+		$msg = "overwrite $pub_project $name" .
+		       " with <i>Your</i> $name";
+	    else
+		$msg = "make a new $pub_project $name" .
+		       "list that is a copy of" .
+		       "<i>Your</i> $name";
 	    echo <<<EOT
-	    Publish Question<br>
+	    <div class='errors'><strong>
+	    Do you want to $msg
+	    <br>
+	    <button type='button'
+		    onclick=
+		    'SUBMIT("execute_publish","$pub_J",
+		            "delete")'>
+		and then delete
+		<i>Your</i> $name?</button>
+	    <button type='button'
+		    onclick=
+		    'SUBMIT("execute_publish","$pub_J",
+		            "keep")'>
+		or keep <i>Your</i> $name
+		instead?</button>
+	    <button type='button'
+		    onclick=
+		    'SUBMIT("execute_publish","$pub_J",
+		            "cancel")'>
+		or cancel this operation completely?
+		</button>
+	    </strong></div>
 EOT;
 	}
 	else
