@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jan 23 07:39:01 EST 2022
+    // Date:	Sun Jan 23 23:49:59 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -131,7 +131,7 @@
     $names = & $data['NAMES'];
     $writable = & $data['WRITABLE'];
     $elements = & $data['ELEMENTS'];
-    $pub_j = & $data['PUB_J'];
+    $pub_J = & $data['PUB_J'];
     $pub_project = & $data['PUB_PROJECT'];
 
     $errors = [];    // Error messages to be shown.
@@ -377,6 +377,19 @@ EOT;
         $errors[] = 'you are no longer in'
 	          . ' read-write mode';
     }
+    elseif ( isset ( $pub_J ) )
+    {
+	$op = $_POST['op'];
+	if ( $op == 'execute_publish' )
+	{
+	}
+	elseif ( $op == 'execute_unpublish' )
+	{
+	}
+	else
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " pub_J op $op" );
+    }
     else
     {
 	$op = $_POST['op'];
@@ -541,6 +554,17 @@ EOT;
 		    ( $warnings );
 	    }
 	}
+	elseif ( $op == 'publish' )
+	{
+	    if ( ! isset ( $_POST['name'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' publish no project name' );
+	    $pub_project = $_POST['name'];
+	    $pub_J = $J;
+	}
+	else
+	    exit ( 'UNACCEPTABLE HTTP POST:' .
+	           " writable op $op" );
 
 	// If there were errors, restore $list[$J].
 	//
@@ -738,7 +762,19 @@ EOT;
     <tr style='width:100%'>
 EOT;
 
-    if ( $writable_count == 0 )
+    if ( isset ( $pub_J ) )
+    {
+        if ( isset ( $pub_project ) )
+	{
+	    echo <<<EOT
+	    Publish Question<br>
+EOT;
+	}
+	else
+	{
+	}
+    }
+    elseif ( $writable_count == 0 )
     {
 	$login_title =
 	    'Login Name; Click to See User Profile';
@@ -855,7 +891,11 @@ EOT;
 	<div class='list$J'>
 EOT;
 
-	if ( ! $rw )
+	if ( isset ( $pub_J ) )
+	{
+	    // No header
+	}
+	elseif ( ! $rw )
 	    echo <<<EOT
 	    <div class='read-only-header list-header'>
 
@@ -991,6 +1031,7 @@ EOT;
 EOT;
 	}
 	$w = ( $writable[$J] ? 'yes' : 'no' );
+	if ( isset ( $pub_J ) ) $w = 'no';
 	echo <<<EOT
 	<div id='list$J'
 	     data-writable='$w' data-list='$J'>
