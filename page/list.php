@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jan 25 02:53:02 EST 2022
+    // Date:	Tue Jan 25 05:10:29 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -70,6 +70,11 @@
     //	    lengths='length0;length1'
     //		The first lengthJ elements of list J are
     //		marked, and the rest are NOT marked.
+    //
+    //	    edited='edited0;edited1'
+    //		Where editedJ is 'yes' if the list has
+    //		been altered since it was last loaded
+    //		from a file, and 'no' otherwise.
     //
     //	    list=J
     //		List number (J = 0 or 1) affected by
@@ -144,6 +149,9 @@
         // Matches list name iff that can be published
 	// as an `own' list.
 
+    // None of the following are meaningful if $names[J]
+    // is ''.
+    //
     $lists = [NULL,NULL];
     $lengths = [0,0];
         // Lists to be given to list_to_edit_rows.
@@ -153,6 +161,9 @@
 	// If $lists[J] set to NULL by POST, it and
 	// $lengths[J] will be set according to the
 	// file named by $names[J] if that is not ''.
+    $edited = ['no','no'];
+        // Set to 'yes' when list is altered (edited)
+	// and 'no' when list loaded from file.
 
     $favorites = read_favorites_list ( $warnings );
     // Build $fmap so that $fmap["PROJECT:BASENAME"]
@@ -377,6 +388,8 @@ EOT;
 	exit ( 'UNACCEPTABLE HTTP POST: no indices' );
     elseif ( ! isset ( $_POST['lengths'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST: no lengths' );
+    elseif ( ! isset ( $_POST['edited'] ) )
+	exit ( 'UNACCEPTABLE HTTP POST: no edited' );
     elseif ( ! isset ( $_POST['list'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST: no list' );
     else
@@ -396,6 +409,7 @@ EOT;
 
 	$indices = explode ( ';', $_POST['indices'] );
 	$lengths = explode ( ';', $_POST['lengths'] );
+	$edited = explode ( ';', $_POST['edited'] );
 
 	foreach ( [0,1] as $K )
 	{
@@ -407,6 +421,10 @@ EOT;
 	    if ( $lengths[$K] > count ( $lists[$K] ) )
 		exit ( "UNACCEPTABLE HTTP POST:" .
 		       " lengths[$K] > count" );
+	    if ( ! in_array ( $edited[$K],
+	                      ['yes','no'] ) )
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " edited[$K] = $edited[$K]" );
 	}
 
 	if ( $op == 'new' )
@@ -505,12 +523,11 @@ EOT;
 			    "updated list $name has" .
 			    " been saved";
 		    $action = 'update-list';
+		    $lists[$J] = NULL;
 		}
 		if ( $op == 'finish' )
-		{
-		    $lists[$J] = NULL;
 		    $names[$J] = '';
-		}
+		$edited[$J] = 'no';
 		if ( isset ( $action ) )
 		{
 		    // $action == 'update-list'
@@ -619,6 +636,7 @@ EOT;
 	    $lists[$J] = read_problem_list
 	        ( $names[$J], $warnings );
 	$lengths[$J] = count ( $lists[$J] );
+	$edited[$J] = 'no';
 
     }
 
@@ -723,6 +741,7 @@ var LOG = function(message) {};
     <input type='hidden' name='list' id='list'>
     <input type='hidden' name='lengths' id='lengths'>
     <input type='hidden' name='indices' id='indices'>
+    <input type='hidden' name='edited' id='edited'>
     <input type='hidden' name='name' id='name'>
     </form>
 EOT;
@@ -972,19 +991,23 @@ EOT;
 	}
 	elseif ( $writable[$J] )
 	{
+	    $yes = ( $edited[$J] == 'yes' ?
+	             'inline' : 'none' );
+	    $no  = ( $edited[$J] == 'no' ?
+	             'inline' : 'none' );
 	    echo <<<EOT
 	    <div id='write-header-$J'
 	         class='writable-header list-header'>
 	    <button type='button' id='save-button-$J'
-	    	    style='display:none'
+	    	    style='display:$yes'
 	            onclick='SUBMIT("save","$J")'>
 	    SAVE</button>
 	    <button type='button' id='reset-button-$J'
-	    	    style='display:none'
+	    	    style='display:$yes'
 	            onclick='SUBMIT("reset","$J")'>
 	    RESET</button>
 	    <button type='button' id='finish-button-$J'
-	    	    style='display:none'
+	    	    style='display:$yes'
 	            onclick='SUBMIT("finish","$J")'>
 	    FINISH</button>
 	    <button type='button' id='cancel-button-$J'
@@ -1006,6 +1029,7 @@ EOT;
 		<select
 		     id='publish-button-$J'
 		     name='project'
+	    	     style='display:$no'
 		     onchange='SUBMIT("publish","$J",
 		                       event
 				       .currentTarget
@@ -1021,6 +1045,7 @@ EOT;
 
 	    <form method='POST' action='list.php'
 		  enctype='multipart/form-data'
+		  style='display:$no'
 		  id='upload-form-$J'>
 	    <input type='hidden' name='id' value='$ID'>
 	    <input type='hidden' name='op' value='dsc'>
@@ -1029,6 +1054,8 @@ EOT;
 		   id='upload-indices-$J'>
 	    <input type='hidden' name='lengths'
 		   id='upload-lengths-$J'>
+	    <input type='hidden' name='edited'
+		   id='upload-edited-$J'>
 	    <input type="hidden" name="MAX_FILE_SIZE"
 		   value="$epm_upload_maxsize">
 	    <label>
@@ -1087,6 +1114,7 @@ EOT;
     var names = ['{$names[0]}','{$names[1]}'];
     var lengths = ['{$lengths[0]}','{$lengths[1]}'];
     var indices = ['',''];
+    var edited = ['{$edited[0]}','{$edited[1]}'];
     </script>
 EOT;
 
@@ -1112,6 +1140,7 @@ EOT;
     }
     function EDITING ( J )
     {
+        edited[J] = 'yes';
 	let save_button = document.getElementById
 	    ( "save-button-" + J );
 	save_button.style.display = 'inline';
@@ -1138,6 +1167,8 @@ EOT;
         ( 'lengths' );
     let indices_in = document.getElementById
         ( 'indices' );
+    let edited_in = document.getElementById
+        ( 'edited' );
     let name_in = document.getElementById ( 'name' );
 
     let on = 'black';
@@ -1198,6 +1229,7 @@ EOT;
 	list_in.value = list;
 	indices_in.value = indices.join(';');
 	lengths_in.value = lengths.join(';');
+	edited_in.value = edited.join(';');
 	name_in.value = name;
 	submit_form.submit();
     }
@@ -1211,9 +1243,12 @@ EOT;
 		( 'upload-indices-' + J );
 	let lengths_in = document.getElementById
 		( 'upload-lengths-' + J );
+	let edited_in = document.getElementById
+		( 'upload-edited-' + J );
 	COMPUTE_INDICES();
 	indices_in.value = indices.join(';');
 	lengths_in.value = lengths.join(';');
+	edited_in.value = edited.join(';');
 	submit_form.submit();
     }
 
