@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jan 25 05:10:29 EST 2022
+    // Date:	Tue Jan 25 06:41:02 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -82,7 +82,10 @@
     //
     //	    name=NAME
     //		List name for `select' operation below,
-    //		or basename for `new' operation below.
+    //		or basename for `new' operation
+    //		or project name for `publish' operation
+    //		or question answer for execute-publish
+    //		or execute-unpublish operations.
     //
     //	    op=OPERATION
     //		OPERATION is one of:
@@ -107,12 +110,26 @@
     //		        J.  Basename of file must match
     //			basename of nameJ.
     //
+    //	     *	publish	Copy or move list TO project.
+    //
+    //	     *	execute-publish	Execution part of
+    //				publish.
+    //
     //	    **	select	Set nameJ = NAME and load list J
     //			from file designated by NAME.
     //
     //	    **	new	Create a new list J with given
-    //			NAME and load list J from the
+    //			-:NAME and load list J from the
     //			empty new list.
+    //
+    //	    **	copy	Create a new list J with given
+    //			-:NAME and load list J with a
+    //			copy of list 1-J.
+    //
+    //	   ** unpublish	Copy or move list FROM project.
+    //
+    //	   ** execute-publish	Execution part of
+    //				unpublish.
     //
     //  * Should be sent ONLY if list J is writable.
     // ** Should be sent ONLY if list J is read-only.
@@ -270,10 +287,10 @@ EOT;
     // Write uploaded description.  Takes global $_FILES
     // value as input, extracts description, and writes
     // into list file.  Errors append to $errors and
-    // suppress write.  If list does not exist, a
-    // warning message is added to $warnings.  It is an
-    // error if the file last name component is not
-    // BASENAME.dsc, where $name is -:BASENAME.
+    // suppress write.  If list does not exist, make a
+    // new list and add a warning message to $warnings.
+    // It is an error if the file last name component
+    // is not BASENAME.dsc, where $name is -:BASENAME.
     //
     // If successful, this function returns the listname
     // of the list given the description, in the form
@@ -328,7 +345,7 @@ EOT;
 	{
 	    $errors[] = "$fbase.$fext is not"
 		      . " $basename.dsc";
-	    return;
+	    return false;
 	}
 
 	$fsize = $upload['size'];
