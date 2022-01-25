@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jan 24 01:41:39 EST 2022
+    // Date:	Mon Jan 24 06:11:29 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -374,16 +374,33 @@ EOT;
     elseif ( isset ( $pub_J ) )
     {
 	$op = $_POST['op'];
-	if ( $op == 'execute_publish' )
+	if ( $op == 'execute-publish' )
 	{
 	    $pub_J = NULL;
+	    $project = $pub_project;
 	}
-	elseif ( $op == 'execute_unpublish' )
+	elseif ( $op == 'execute-unpublish' )
 	{
 	}
 	else
 	    exit ( "UNACCEPTABLE HTTP POST:" .
 	           " pub_J op $op" );
+
+	if ( isset ( $action ) )
+	{
+	    $places = [ "accounts/$aid",
+	                "projects/$project" ];
+	    foreach ( $places as $place )
+	    foreach ( [$place, "$place/+lists+"] as $d )
+	    {
+		$f = "$d/+actions+";
+		$r = @file_put_contents
+		    ( "$epm_data/$f", $action,
+		      FILE_APPEND );
+		if ( $r === false )
+		    ERROR ( "cannot write $f" );
+	    }
+	}
     }
     elseif ( ! isset ( $_POST['indices'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST: no indices' );
@@ -785,19 +802,19 @@ EOT;
 	    <br>
 	    <button type='button'
 		    onclick=
-		    'SUBMIT("execute_publish","$pub_J",
+		    'SUBMIT("execute-publish","$pub_J",
 		            "delete")'>
 		and then delete
 		<i>Your</i> $name?</button>
 	    <button type='button'
 		    onclick=
-		    'SUBMIT("execute_publish","$pub_J",
+		    'SUBMIT("execute-publish","$pub_J",
 		            "keep")'>
 		or keep <i>Your</i> $name
 		instead?</button>
 	    <button type='button'
 		    onclick=
-		    'SUBMIT("execute_publish","$pub_J",
+		    'SUBMIT("execute-publish","$pub_J",
 		            "cancel")'>
 		or cancel this operation completely?
 		</button>
