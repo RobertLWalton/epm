@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jan 24 06:11:29 EST 2022
+    // Date:	Tue Jan 25 02:53:02 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -147,10 +147,12 @@
     $lists = [NULL,NULL];
     $lengths = [0,0];
         // Lists to be given to list_to_edit_rows.
-	// If $lists[J] not set by POST, it will be set
-	// according to files named by $names[J].
 	// $lengths[J] is the number of marked
 	// elements of $list[J].
+	//
+	// If $lists[J] set to NULL by POST, it and
+	// $lengths[J] will be set according to the
+	// file named by $names[J] if that is not ''.
 
     $favorites = read_favorites_list ( $warnings );
     // Build $fmap so that $fmap["PROJECT:BASENAME"]
@@ -371,37 +373,6 @@ EOT;
         $errors[] = 'you are no longer in'
 	          . ' read-write mode';
     }
-    elseif ( isset ( $pub_J ) )
-    {
-	$op = $_POST['op'];
-	if ( $op == 'execute-publish' )
-	{
-	    $pub_J = NULL;
-	    $project = $pub_project;
-	}
-	elseif ( $op == 'execute-unpublish' )
-	{
-	}
-	else
-	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " pub_J op $op" );
-
-	if ( isset ( $action ) )
-	{
-	    $places = [ "accounts/$aid",
-	                "projects/$project" ];
-	    foreach ( $places as $place )
-	    foreach ( [$place, "$place/+lists+"] as $d )
-	    {
-		$f = "$d/+actions+";
-		$r = @file_put_contents
-		    ( "$epm_data/$f", $action,
-		      FILE_APPEND );
-		if ( $r === false )
-		    ERROR ( "cannot write $f" );
-	    }
-	}
-    }
     elseif ( ! isset ( $_POST['indices'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST: no indices' );
     elseif ( ! isset ( $_POST['lengths'] ) )
@@ -415,23 +386,28 @@ EOT;
 	                        'cancel','delete',
 				'select','new',
 				'dsc', 'publish',
-				'unpublish'] ) )
+				'unpublish',
+				'execute-publish',
+				'execute-unpublish'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST: $op" );
 	$J = $_POST['list'];
 	if ( ! in_array ( $J, [0,1] ) )
 	    exit ( "UNACCEPTABLE HTTP POST: J $J" );
-	$K = 1 - $J;
 
 	$indices = explode ( ';', $_POST['indices'] );
 	$lengths = explode ( ';', $_POST['lengths'] );
 
-	$lists[$K] = index_to_list ( $indices[$K] );
-	if ( ! preg_match ( '/^\d+$/', $lengths[$K] ) )
-	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " lengths[$K] = $lengths[$K]" );
-	if ( $lengths[$K] > count ( $lists[$K] ) )
-	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " lengths[$K] > count" );
+	foreach ( [0,1] as $K )
+	{
+	    $lists[$K] = index_to_list ( $indices[$K] );
+	    if ( ! preg_match ( '/^\d+$/',
+	                        $lengths[$K] ) )
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " lengths[$K] = $lengths[$K]" );
+	    if ( $lengths[$K] > count ( $lists[$K] ) )
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " lengths[$K] > count" );
+	}
 
 	if ( $op == 'new' )
 	{
@@ -458,6 +434,7 @@ EOT;
 			. PHP_EOL;
 
 	    	$names[$J] = "-:$name";
+		$lists[$J] = NULL;
 		// No need to update $favorites as
 		// new list is excluded from
 		// selectors.
@@ -478,12 +455,24 @@ EOT;
 	    elseif ( ! isset ( $fmap[$name] ) )
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       " select no fmap[$name]" );
-	    elseif ( $name == $names[$K] )
+	    elseif ( $name == $names[1 - $J] )
 	        $errors[] = "cannot select list because"
 		          . " then both lists would be"
 			  . " the same";
 	    else
+	    {
 	    	$names[$J] = $name;
+		$lists[$J] = NULL;
+	    }
+	}
+	elseif ( $op == 'execute-unpublish' )
+	{
+	    if ( ! isset ( $pub_J ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " execute-unpublish no pub_J" );
+	    if ( $writable[$J] )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' select writable' );
 	}
 	elseif ( ! $writable[$J] )
 	    exit ( 'UNACCEPTABLE HTTP POST:' .
@@ -491,15 +480,6 @@ EOT;
 	elseif ( in_array ( $op,
 	                    ['save','finish','dsc'] ) )
 	{
-	    $lists[$J] = index_to_list ( $indices[$J] );
-	    if ( ! preg_match
-	               ( '/^\d+$/', $lengths[$J] ) )
-		exit ( "UNACCEPTABLE HTTP POST:" .
-		       " lengths[$J] = $lengths[$J]" );
-	    if ( $lengths[$J] > count ( $lists[$J] ) )
-		exit ( "UNACCEPTABLE HTTP POST:" .
-		       " lengths[$J] > count" );
-
 	    $name = substr ( $names[$J], 2 );
 	    if ( $op == 'dsc' )
 	    {
@@ -552,7 +532,7 @@ EOT;
 	    }
 	}
 	elseif ( $op == 'reset' )
-	    /* Do Nothing */;
+	    $lists[$J] = NULL;
 	elseif ( $op == 'cancel' )
 	    $names[$J] = '';
 	elseif ( $op == 'delete' )
@@ -580,27 +560,21 @@ EOT;
 	    $pub_project = $_POST['name'];
 	    $pub_J = $J;
 	}
+	elseif ( $op == 'execute-publish' )
+	{
+	    if ( ! isset ( $pub_J ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " execute-publish no pub_J" );
+	    $pub_J = NULL;
+	    $project = $pub_project;
+	}
 	else
 	    exit ( 'UNACCEPTABLE HTTP POST:' .
 	           " writable op $op" );
 
-	// If there were errors, restore $list[$J].
-	//
-	// Importantly, if there were errors no files
-	// have been changed.
-	//
-	if ( count ( $errors ) > 0 )
-	{
-	    $lists[$J] = index_to_list ( $indices[$J] );
-	    if ( ! preg_match
-	               ( '/^\d+$/', $lengths[$J] ) )
-		exit ( "UNACCEPTABLE HTTP POST:" .
-		       " lengths[$J] = $lengths[$J]" );
-	    if ( $lengths[$J] > count ( $lists[$J] ) )
-		exit ( "UNACCEPTABLE HTTP POST:" .
-		       " lengths[$J] > count" );
-	}
-	elseif ( isset ( $action ) )
+	if ( count ( $errors ) == 0
+	     &&
+	     isset ( $action ) )
 	{
 	    // Else if no errors but an action.
 	    //
@@ -884,11 +858,10 @@ EOT;
 		       . ' (.dsc) File to be Uploaded';
     foreach ( [0,1] as $J )
     {
-	$K = 1 - $J;
         $name = $names[$J];
 	$sname = ( $name != '' ? $name : NULL );
 	$options = list_to_options
-	    ( $favorites, $sname, [$names[$K]] );
+	    ( $favorites, $sname, [$names[1 - $J]] );
 	$publishable = [];
 	    // List of projects to which list can be
 	    // published (if its not modified).  Empty
@@ -1150,7 +1123,8 @@ EOT;
 	finish_button.style.display = 'inline';
 	let publish_button = document.getElementById
 	    ( "publish-button-" + J );
-	publish_button.style.display = 'none';
+	if ( publish_button !== null )
+	    publish_button.style.display = 'none';
 	let upload_form = document.getElementById
 	    ( "upload-form-" + J );
 	upload_form.style.display = 'none';
@@ -1353,6 +1327,8 @@ if ( $rw )
 	let src = dragsrc;
 	if ( effect == 'copy' )
 	    src = src.cloneNode ( true );
+	else
+	    EDITING ( 1 - div.dataset.list );
 	let next = target.nextElementSibling;
 	if ( next == null )
 	{
