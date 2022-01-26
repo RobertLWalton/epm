@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jan 25 06:41:02 EST 2022
+    // Date:	Wed Jan 26 05:53:50 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -386,6 +386,59 @@ EOT;
 	    return ( "-:$fbase" );
     }
 
+    function execute_publish
+	    ( $J, $project, $subop,
+	      & $warnings, & $errors )
+    {
+        global $epm_data, $aid, $names, $own_re;
+
+	if ( $subop == 'cancel' ) return false;
+
+	// TBD: locking?
+
+	$p = "projects/$project";
+	if ( ! is_dir ( "$epm_data/$p" ) )
+	{
+	    $errors[] = "project $project" .
+			" no longer exists";
+	    return false;
+	}
+	$basename = substr ( $names[$J], 2 );
+	$privs = ['publish-all'];
+	if ( preg_match ( $own_re, $basename ) )
+	    $privs[] = 'publish-own';
+	$projects = read_projects ( $privs );
+	if ( ! in_array ( $project, $projects ) )
+	{
+	    $errors[] =
+		"You no longer have" .
+		" publication privileges" .
+		" for project $project";
+	    return false;
+	}
+	$f = "accounts/$aid/+lists+/$basename.list";
+	if ( ! file_exists ( "$epm_data/$f" ) )
+	{
+	    $errors[] = "your $basename list file" .
+			" no longer exists";
+	    return false;
+	}
+
+	if ( ! is_dir ( "$epm_data/$p/+lists+" ) )
+	    @mkdir ( "$epm_data/$p/+lists+", 02770 );
+
+	$g = "$p/+lists+/$basename.list";
+	$command = ( $subop == 'keep' ?
+	             "cp -pf" : "mv -f" );
+	exec ( "$command $epm_data/$f $epm_data/$g",
+	       $output, $status );
+	if ( $status != 0 )
+	    ERROR ( "$command .../$f .../$g" .
+	            " returned status $status" );
+
+	return true;
+    }
+
     if ( $epm_method != 'POST' )
         /* Do Nothing */;
     elseif ( isset ( $_POST['rw'] ) )
@@ -396,11 +449,6 @@ EOT;
     }
     elseif ( ! isset ( $_POST['op'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST: no op' );
-    elseif ( ! $rw && $_POST['op'] != 'select' )
-    {
-        $errors[] = 'you are no longer in'
-	          . ' read-write mode';
-    }
     elseif ( ! isset ( $_POST['indices'] ) )
 	exit ( 'UNACCEPTABLE HTTP POST: no indices' );
     elseif ( ! isset ( $_POST['lengths'] ) )
@@ -444,7 +492,37 @@ EOT;
 		       " edited[$K] = $edited[$K]" );
 	}
 
-	if ( $op == 'new' )
+	if ( $op == 'select' )
+	{
+	    if ( $writable[$J] )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' select writable' );
+
+	    if ( ! isset ( $_POST['name'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' select no name' );
+	    $name = $_POST['name'];
+	    if ( $name == '' )
+	    	$names[$J] = '';
+	    elseif ( ! isset ( $fmap[$name] ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " select no fmap[$name]" );
+	    elseif ( $name == $names[1 - $J] )
+	        $errors[] = "cannot select list because"
+		          . " then both lists would be"
+			  . " the same";
+	    else
+	    {
+	    	$names[$J] = $name;
+		$lists[$J] = NULL;
+	    }
+	}
+	elseif ( ! $rw && $_POST['op'] != 'select' )
+	{
+	    $errors[] = 'you are no longer in'
+		      . ' read-write mode';
+	}
+	elseif ( $op == 'new' )
 	{
 	    if ( $writable[$J] )
 		exit ( 'UNACCEPTABLE HTTP POST:' .
@@ -473,31 +551,6 @@ EOT;
 		// No need to update $favorites as
 		// new list is excluded from
 		// selectors.
-	    }
-	}
-	elseif ( $op == 'select' )
-	{
-	    if ( $writable[$J] )
-		exit ( 'UNACCEPTABLE HTTP POST:' .
-		       ' select writable' );
-
-	    if ( ! isset ( $_POST['name'] ) )
-		exit ( 'UNACCEPTABLE HTTP POST:' .
-		       ' select no name' );
-	    $name = $_POST['name'];
-	    if ( $name == '' )
-	    	$names[$J] = '';
-	    elseif ( ! isset ( $fmap[$name] ) )
-		exit ( 'UNACCEPTABLE HTTP POST:' .
-		       " select no fmap[$name]" );
-	    elseif ( $name == $names[1 - $J] )
-	        $errors[] = "cannot select list because"
-		          . " then both lists would be"
-			  . " the same";
-	    else
-	    {
-	    	$names[$J] = $name;
-		$lists[$J] = NULL;
 	    }
 	}
 	elseif ( $op == 'execute-unpublish' )
@@ -599,8 +652,28 @@ EOT;
 	    if ( ! isset ( $pub_J ) )
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       " execute-publish no pub_J" );
+	    if ( $J != $pub_J )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " execute-publish J != pub_J" );
+	    if ( ! isset ( $pub_project ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " execute-publish" .
+		       " no pub_project" );
+	    if ( ! isset ( $_POST['name'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' execute-publish no' .
+		       ' subop (name)' );
+	    $subop = $_POST['name'];
+	    if ( ! in_array ( $subop, ['keep', 'delete',
+	                               'cancel'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " execute-publish" .
+		       " subop $subop" );
+	    execute_publish
+	        ( $pub_J, $pub_project, $subop,
+		  $warnings, $errors );
+
 	    $pub_J = NULL;
-	    $project = $pub_project;
 	}
 	else
 	    exit ( 'UNACCEPTABLE HTTP POST:' .
