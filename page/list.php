@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jan 27 01:40:07 EST 2022
+    // Date:	Thu Jan 27 06:05:42 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -463,6 +463,85 @@ EOT;
 	return true;
     }
 
+    // Execute $subop (keep, delete, cancel) for
+    // the execute-unpublish POST.
+    //
+    // Returns true if list written to local $basename,
+    // and false if not because of errors or if subop is
+    // cancel.
+    //
+    // If no errors, copies project:basename list file
+    // to -:$basename list file, reading project list
+    // file atomically, and then if $subop is delete,
+    // deletes the project list file using unlink.
+    //
+    function execute_unpublish
+	    ( $basename, $project, $subop,
+	      & $warnings, & $errors )
+    {
+        global $epm_data, $aid, $own_re;
+
+	if ( $subop == 'cancel' ) return false;
+
+	echo "EXECUTE UNPUBLISH $basename $project $subop";
+	return false;
+
+	$p = "projects/$project";
+	if ( ! is_dir ( "$epm_data/$p" ) )
+	{
+	    $errors[] = "project $project" .
+			" no longer exists";
+	    return false;
+	}
+	$privs = ['publish-all'];
+	if ( preg_match ( $own_re, $basename ) )
+	    $privs[] = 'publish-own';
+	$projects = read_projects ( $privs );
+	if ( ! in_array ( $project, $projects ) )
+	{
+	    $errors[] =
+		"You no longer have" .
+		" publication privileges" .
+		" for project $project";
+	    return false;
+	}
+	$f = "accounts/$aid/+lists+/$basename.list";
+	if ( ! file_exists ( "$epm_data/$f" ) )
+	{
+	    $errors[] = "your $basename list file" .
+			" no longer exists";
+	    return false;
+	}
+
+	if ( ! is_dir ( "$epm_data/$p/+lists+" ) )
+	    @mkdir ( "$epm_data/$p/+lists+", 02770 );
+
+	$contents =
+	    @file_get_contents ( "$epm_data/$f" );
+	if ( $contents === false )
+	{
+	    $errors[] = "cannot read $f";
+	    return false;
+	}
+
+	$g = "$p/+lists+/$basename.list";
+	$r = ATOMIC_WRITE ( "$epm_data/$g", $contents );
+	if ( $r === false )
+	{
+	    $errors[] = "cannot write $g";
+	    return false;
+	}
+	if ( $subop == 'delete' )
+	{
+	    $r = delete_list
+	             ( $basename, $errors, true );
+	    if ( $r === false )
+		return false;
+	}
+
+	return true;
+    }
+
     if ( $epm_method != 'POST' )
         /* Do Nothing */;
     elseif ( isset ( $_POST['rw'] ) )
@@ -577,14 +656,47 @@ EOT;
 		// selectors.
 	    }
 	}
+	elseif ( $op == 'unpublish' )
+	{
+	    if ( $writable[$J] )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' unpublish writable' );
+	    $pub_J = $J;
+	    $pub_project = NULL;
+	}
 	elseif ( $op == 'execute-unpublish' )
 	{
 	    if ( ! isset ( $pub_J ) )
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       " execute-unpublish no pub_J" );
-	    if ( $writable[$J] )
+	    if ( $J != $pub_J )
 		exit ( 'UNACCEPTABLE HTTP POST:' .
-		       ' select writable' );
+		       " execute-unpublish J !=" .
+		       " pub_J" );
+	    elseif ( $writable[$pub_J] )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' publish writable' );
+	    if ( isset ( $pub_project ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " execute-unpublish" .
+		       " set pub_project" );
+	    if ( ! isset ( $_POST['name'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       ' execute-unpublish no' .
+		       ' subop (name)' );
+	    $subop = $_POST['name'];
+	    if ( ! in_array ( $subop, ['keep', 'delete',
+	                               'cancel'] ) )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " execute-unpublish" .
+		       " subop $subop" );
+	    list ( $project, $basename ) =
+	        explode ( ':', $names[$pub_J] );
+	    execute_unpublish
+	        ( $basename, $project, $subop,
+		  $warnings, $errors );
+
+	    $pub_J = NULL;
 	}
 	elseif ( ! $writable[$J] )
 	    exit ( 'UNACCEPTABLE HTTP POST:' .
@@ -694,9 +806,19 @@ EOT;
 		       " execute-publish" .
 		       " subop $subop" );
 	    $basename = substr ( $names[$pub_J], 2 );
-	    execute_publish
+	    $r = execute_publish
 	        ( $basename, $pub_project, $subop,
 		  $warnings, $errors );
+	    if ( $r )
+	    {
+		if ( $subop == 'delete' )
+		{
+		    $names[$pub_J] = '';
+		    $favorites = read_favorites_list
+			( $warnings );
+		}
+	        $lists[$pub_J] = NULL;
+	    }
 
 	    $pub_J = NULL;
 	}
@@ -898,12 +1020,13 @@ EOT;
 	    $f = "projects/$pub_project/+lists+/" .
 	         "$name.list";
 	    if ( file_exists ( "$epm_data/$f" ) )
-		$msg = "overwrite $pub_project $name" .
-		       " with <i>Your</i> $name";
+		$msg = "overwrite the $pub_project" .
+		       " $name list with <i>Your</i>" .
+		       " $name list";
 	    else
 		$msg = "make a new $pub_project $name" .
 		       "list that is a copy of" .
-		       "<i>Your</i> $name";
+		       "<i>Your</i> $name list";
 	    echo <<<EOT
 	    <div class='errors'><strong>
 	    Do you want to $msg
@@ -913,12 +1036,12 @@ EOT;
 		    'SUBMIT("execute-publish","$pub_J",
 		            "delete")'>
 		and then delete
-		<i>Your</i> $name?</button>
+		<i>Your</i> $name list?</button>
 	    <button type='button'
 		    onclick=
 		    'SUBMIT("execute-publish","$pub_J",
 		            "keep")'>
-		or keep <i>Your</i> $name
+		or keep <i>Your</i> $name list
 		instead?</button>
 	    <button type='button'
 		    onclick=
@@ -931,6 +1054,44 @@ EOT;
 	}
 	else
 	{
+	    list ( $project, $name ) =
+	        explode ( ':', $names[$pub_J] );
+		// Here $pub_J == $J and list $J is
+		// NOT writable.
+	    $f = "accounts/$aid/+lists+/" .
+	         "$name.list";
+	    if ( file_exists ( "$epm_data/$f" ) )
+		$msg = "overwrite <i>Your</i> $name" .
+		       " list with the $project $name" .
+		       " list";
+	    else
+		$msg = "make a new <i>Your</i> $name" .
+		       "list that is a copy of" .
+		       "the $project $name list";
+	    echo <<<EOT
+	    <div class='errors'><strong>
+	    Do you want to $msg
+	    <br>
+	    <button type='button'
+		    onclick=
+		    'SUBMIT("execute-unpublish",
+		            "$pub_J","delete")'>
+		and then delete the
+		$project $name list?</button>
+	    <button type='button'
+		    onclick=
+		    'SUBMIT("execute-unpublish",
+		            "$pub_J","keep")'>
+		or keep the $project $name list
+		instead?</button>
+	    <button type='button'
+		    onclick=
+		    'SUBMIT("execute-unpublish",
+		            "$pub_J","cancel")'>
+		or cancel this operation completely?
+		</button>
+	    </strong></div>
+EOT;
 	}
     }
     elseif ( $writable_count == 0 )
