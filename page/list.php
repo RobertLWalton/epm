@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jan 26 05:53:50 EST 2022
+    // Date:	Thu Jan 27 01:40:07 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -386,15 +386,26 @@ EOT;
 	    return ( "-:$fbase" );
     }
 
+    // Execute $subop (keep, delete, cancel) for
+    // the execute-publish POST.
+    //
+    // Returns true if list written to $project, and
+    // false if not because of errors or if subop is
+    // cancel.
+    //
+    // If no errors, copies -:basename list file to
+    // $project:$basename list file, writing project
+    // list file atomically, and then if $subop is
+    // delete, deletes the list $names[$J] by calling
+    // delete_list.
+    //
     function execute_publish
-	    ( $J, $project, $subop,
+	    ( $basename, $project, $subop,
 	      & $warnings, & $errors )
     {
-        global $epm_data, $aid, $names, $own_re;
+        global $epm_data, $aid, $own_re;
 
 	if ( $subop == 'cancel' ) return false;
-
-	// TBD: locking?
 
 	$p = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$p" ) )
@@ -403,7 +414,6 @@ EOT;
 			" no longer exists";
 	    return false;
 	}
-	$basename = substr ( $names[$J], 2 );
 	$privs = ['publish-all'];
 	if ( preg_match ( $own_re, $basename ) )
 	    $privs[] = 'publish-own';
@@ -427,14 +437,28 @@ EOT;
 	if ( ! is_dir ( "$epm_data/$p/+lists+" ) )
 	    @mkdir ( "$epm_data/$p/+lists+", 02770 );
 
+	$contents =
+	    @file_get_contents ( "$epm_data/$f" );
+	if ( $contents === false )
+	{
+	    $errors[] = "cannot read $f";
+	    return false;
+	}
+
 	$g = "$p/+lists+/$basename.list";
-	$command = ( $subop == 'keep' ?
-	             "cp -pf" : "mv -f" );
-	exec ( "$command $epm_data/$f $epm_data/$g",
-	       $output, $status );
-	if ( $status != 0 )
-	    ERROR ( "$command .../$f .../$g" .
-	            " returned status $status" );
+	$r = ATOMIC_WRITE ( "$epm_data/$g", $contents );
+	if ( $r === false )
+	{
+	    $errors[] = "cannot write $g";
+	    return false;
+	}
+	if ( $subop == 'delete' )
+	{
+	    $r = delete_list
+	             ( $basename, $errors, true );
+	    if ( $r === false )
+		return false;
+	}
 
 	return true;
     }
@@ -669,8 +693,9 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       " execute-publish" .
 		       " subop $subop" );
+	    $basename = substr ( $names[$pub_J], 2 );
 	    execute_publish
-	        ( $pub_J, $pub_project, $subop,
+	        ( $basename, $pub_project, $subop,
 		  $warnings, $errors );
 
 	    $pub_J = NULL;

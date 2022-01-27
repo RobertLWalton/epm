@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan 22 00:35:48 EST 2022
+    // Date:	Thu Jan 27 02:20:56 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1024,8 +1024,9 @@
 	    $new_list[] = [$time, '-', '-'];
 	    $modified = true;
 	    if ( ! $reinitializing )
-		$warnings[] = "added Your Problems to"
-			    . " Your Favorites";
+		$warnings[] =
+		    "added Your Problems list to" .
+		    " Your Favorites";
 	}
 
 	$projects = read_projects ( ['show'] );
@@ -1045,8 +1046,12 @@
 		$time = strftime
 		    ( $epm_time_format, $time );
 
-		$new_list[] = [$time, $root, $name];
+		$new_list[] = [$time, $project, $name];
 		$modified = true;
+		if ( ! $reinitializing )
+		    $warnings[] =
+		        "added $project $name list to" .
+			" Your Favorites";
 	    }
 	}
 
