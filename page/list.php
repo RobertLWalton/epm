@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jan 27 06:05:42 EST 2022
+    // Date:	Thu Jan 27 08:02:00 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -399,8 +399,11 @@ EOT;
     // delete, deletes the list $names[$J] by calling
     // delete_list.
     //
+    // But if the only error was failure to delete local
+    // list, change $subop to keep and return true.
+    //
     function execute_publish
-	    ( $basename, $project, $subop,
+	    ( $basename, $project, & $subop,
 	      & $warnings, & $errors )
     {
         global $epm_data, $aid, $own_re;
@@ -457,7 +460,7 @@ EOT;
 	    $r = delete_list
 	             ( $basename, $errors, true );
 	    if ( $r === false )
-		return false;
+		$subop = 'keep';
 	}
 
 	return true;
@@ -475,16 +478,17 @@ EOT;
     // file atomically, and then if $subop is delete,
     // deletes the project list file using unlink.
     //
+    // But if the only error was failure to unlink
+    // project list, change $subop to keep and return
+    // true.
+    //
     function execute_unpublish
-	    ( $basename, $project, $subop,
+	    ( $basename, $project, & $subop,
 	      & $warnings, & $errors )
     {
         global $epm_data, $aid, $own_re;
 
 	if ( $subop == 'cancel' ) return false;
-
-	echo "EXECUTE UNPUBLISH $basename $project $subop";
-	return false;
 
 	$p = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$p" ) )
@@ -493,39 +497,43 @@ EOT;
 			" no longer exists";
 	    return false;
 	}
-	$privs = ['publish-all'];
+	$privs = ['unpublish-all'];
 	if ( preg_match ( $own_re, $basename ) )
-	    $privs[] = 'publish-own';
+	    $privs[] = 'unpublish-own';
 	$projects = read_projects ( $privs );
 	if ( ! in_array ( $project, $projects ) )
 	{
 	    $errors[] =
 		"You no longer have" .
-		" publication privileges" .
+		" unpublication privileges" .
 		" for project $project";
 	    return false;
 	}
-	$f = "accounts/$aid/+lists+/$basename.list";
+	$f = "$p/+lists+/$basename.list";
 	if ( ! file_exists ( "$epm_data/$f" ) )
 	{
-	    $errors[] = "your $basename list file" .
+	    $errors[] = "$project $basename list file" .
 			" no longer exists";
 	    return false;
 	}
 
-	if ( ! is_dir ( "$epm_data/$p/+lists+" ) )
-	    @mkdir ( "$epm_data/$p/+lists+", 02770 );
-
-	$contents =
-	    @file_get_contents ( "$epm_data/$f" );
+	$contents = ATOMIC_READ ( "$epm_data/$f" );
 	if ( $contents === false )
 	{
 	    $errors[] = "cannot read $f";
 	    return false;
 	}
 
-	$g = "$p/+lists+/$basename.list";
-	$r = ATOMIC_WRITE ( "$epm_data/$g", $contents );
+	$g = "accounts/$aid/+lists+/$basename.list";
+	if ( ! file_exists ( "$epm_data/$g" ) )
+	{
+	    make_new_list ( $basename, $errors );
+	    if ( count ( $errors ) > 0 )
+	        return false;
+	}
+	$r = @file_put_contents
+		( "$epm_data/$g", $contents );
+
 	if ( $r === false )
 	{
 	    $errors[] = "cannot write $g";
@@ -533,10 +541,13 @@ EOT;
 	}
 	if ( $subop == 'delete' )
 	{
-	    $r = delete_list
-	             ( $basename, $errors, true );
+	    $r = unlink ( "$epm_data/$f" );
 	    if ( $r === false )
-		return false;
+	    {
+		$subop = 'keep';
+		$errors[] = "failed to delete" .
+		            " $project $basename list";
+	    }
 	}
 
 	return true;
@@ -692,9 +703,18 @@ EOT;
 		       " subop $subop" );
 	    list ( $project, $basename ) =
 	        explode ( ':', $names[$pub_J] );
-	    execute_unpublish
+	    $r = execute_unpublish
 	        ( $basename, $project, $subop,
 		  $warnings, $errors );
+	    if ( $r )
+	    {
+		if ( $subop == 'delete' )
+		{
+		    $names[$pub_J] = '';
+		    $favorites = read_favorites_list
+			( $warnings );
+		}
+	    }
 
 	    $pub_J = NULL;
 	}
@@ -817,7 +837,6 @@ EOT;
 		    $favorites = read_favorites_list
 			( $warnings );
 		}
-	        $lists[$pub_J] = NULL;
 	    }
 
 	    $pub_J = NULL;
@@ -1025,8 +1044,8 @@ EOT;
 		       " $name list";
 	    else
 		$msg = "make a new $pub_project $name" .
-		       "list that is a copy of" .
-		       "<i>Your</i> $name list";
+		       " list that is a copy of" .
+		       " <i>Your</i> $name list";
 	    echo <<<EOT
 	    <div class='errors'><strong>
 	    Do you want to $msg
@@ -1066,8 +1085,8 @@ EOT;
 		       " list";
 	    else
 		$msg = "make a new <i>Your</i> $name" .
-		       "list that is a copy of" .
-		       "the $project $name list";
+		       " list that is a copy of" .
+		       " the $project $name list";
 	    echo <<<EOT
 	    <div class='errors'><strong>
 	    Do you want to $msg
