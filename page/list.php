@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jan 27 08:02:00 EST 2022
+    // Date:	Fri Jan 28 03:06:53 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -118,13 +118,10 @@
     //	    **	select	Set nameJ = NAME and load list J
     //			from file designated by NAME.
     //
-    //	    **	new	Create a new list J with given
-    //			-:NAME and load list J from the
-    //			empty new list.
-    //
     //	    **	copy	Create a new list J with given
     //			-:NAME and load list J with a
-    //			copy of list 1-J.
+    //			copy of list 1-J or empty list
+    //			if list 1-J does not exist.
     //
     //	   ** unpublish	Copy or move list FROM project.
     //
@@ -384,6 +381,33 @@ EOT;
 	    return false;
 	else
 	    return ( "-:$fbase" );
+    }
+
+    // Copy $list into a new list with the given
+    // $basename.  If $list is NULL, make a new empty
+    // list.
+    //
+    // Returns true if no errors and false otherwise.
+    //
+    function copy_list
+	    ( $list, $basename, & $warnings, & $errors )
+    {
+        global $epm_data, $aid;
+
+	$f = "accounts/$aid/+lists+/$basename.list";
+	if ( file_exists ( "$epm_data/$f" ) )
+	{
+	    $errors[] = "Your $basename list file" .
+			" already exists";
+	    return false;
+	}
+	make_new_list ( $basename, $errors );
+	if ( count ( $errors ) > 0 )
+	    return false;
+
+	if ( $list != NULL )
+	    write_file_list ( $f, $list );
+	return true;
     }
 
     // Execute $subop (keep, delete, cancel) for
@@ -646,7 +670,8 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       ' new no name' );
 	    $name = $_POST['name'];
-	    make_new_list ( $name, $errors );
+	    copy_list
+	        ( NULL, $name, $warnings, $errors );
 	    if ( count ( $errors ) == 0 )
 	    {
 		$f = "accounts/$aid/+lists+/$name.list";
