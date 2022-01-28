@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan 28 03:06:53 EST 2022
+    // Date:	Fri Jan 28 06:24:54 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -387,12 +387,13 @@ EOT;
     // $basename.  If $list is NULL, make a new empty
     // list.
     //
-    // Returns true if no errors and false otherwise.
+    // Returns mtime of new list if no errors and false
+    // otherwise.
     //
     function copy_list
 	    ( $list, $basename, & $warnings, & $errors )
     {
-        global $epm_data, $aid;
+        global $epm_data, $aid, $epm_time_format;
 
 	$f = "accounts/$aid/+lists+/$basename.list";
 	if ( file_exists ( "$epm_data/$f" ) )
@@ -407,15 +408,15 @@ EOT;
 
 	if ( $list != NULL )
 	    write_file_list ( $f, $list );
-	return true;
+
+	$time = @filemtime ( "$epm_data/$f" );
+	if ( $time === false )
+	    ERROR ( "cannot stat $f" );
+	return strftime ( $epm_time_format, $time );
     }
 
     // Execute $subop (keep, delete, cancel) for
     // the execute-publish POST.
-    //
-    // Returns true if list written to $project, and
-    // false if not because of errors or if subop is
-    // cancel.
     //
     // If no errors, copies -:basename list file to
     // $project:$basename list file, writing project
@@ -424,13 +425,19 @@ EOT;
     // delete_list.
     //
     // But if the only error was failure to delete local
-    // list, change $subop to keep and return true.
+    // list, change $subop to keep.
+    //
+    // Returns mtime of list written to $project, or
+    // false if there no list was written (including
+    // the cases of subop equal to `cancel' and the
+    // only error being in delete).
     //
     function execute_publish
 	    ( $basename, $project, & $subop,
 	      & $warnings, & $errors )
     {
-        global $epm_data, $aid, $own_re;
+        global $epm_data, $aid, $own_re,
+	       $epm_time_format;
 
 	if ( $subop == 'cancel' ) return false;
 
@@ -487,15 +494,14 @@ EOT;
 		$subop = 'keep';
 	}
 
-	return true;
+	$time = @filemtime ( "$epm_data/$g" );
+	if ( $time === false )
+	    ERROR ( "cannot stat $g" );
+	return strftime ( $epm_time_format, $time );
     }
 
     // Execute $subop (keep, delete, cancel) for
     // the execute-unpublish POST.
-    //
-    // Returns true if list written to local $basename,
-    // and false if not because of errors or if subop is
-    // cancel.
     //
     // If no errors, copies project:basename list file
     // to -:$basename list file, reading project list
@@ -503,14 +509,19 @@ EOT;
     // deletes the project list file using unlink.
     //
     // But if the only error was failure to unlink
-    // project list, change $subop to keep and return
-    // true.
+    // project list, change $subop to keep.
+    //
+    // Returns mtime of written local list, or false
+    // if there no list was written (including the
+    // cases of subop equal to `cancel' and the only
+    // error being in unlink).
     //
     function execute_unpublish
 	    ( $basename, $project, & $subop,
 	      & $warnings, & $errors )
     {
-        global $epm_data, $aid, $own_re;
+        global $epm_data, $aid, $own_re,
+	       $epm_time_format;
 
 	if ( $subop == 'cancel' ) return false;
 
@@ -574,7 +585,10 @@ EOT;
 	    }
 	}
 
-	return true;
+	$time = @filemtime ( "$epm_data/$g" );
+	if ( $time === false )
+	    ERROR ( "cannot stat $g" );
+	return strftime ( $epm_time_format, $time );
     }
 
     if ( $epm_method != 'POST' )
@@ -670,8 +684,12 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       ' new no name' );
 	    $name = $_POST['name'];
+	    if ( $names[1-$J] == '' )
+	        $lists[1-$J] = NULL;
+	    $list = array_slice
+		( $lists[1-$J], 0, $lengths[1-$J] );
 	    copy_list
-	        ( NULL, $name, $warnings, $errors );
+	        ( $list, $name, $warnings, $errors );
 	    if ( count ( $errors ) == 0 )
 	    {
 		$f = "accounts/$aid/+lists+/$name.list";
@@ -731,7 +749,7 @@ EOT;
 	    $r = execute_unpublish
 	        ( $basename, $project, $subop,
 		  $warnings, $errors );
-	    if ( $r )
+	    if ( $r !== false )
 	    {
 		if ( $subop == 'delete' )
 		{
@@ -854,7 +872,7 @@ EOT;
 	    $r = execute_publish
 	        ( $basename, $pub_project, $subop,
 		  $warnings, $errors );
-	    if ( $r )
+	    if ( $r !== false )
 	    {
 		if ( $subop == 'delete' )
 		{
