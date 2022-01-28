@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon Aug 23 05:03:34 EDT 2021
+Date:	Fri Jan 28 01:38:15 EST 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1737,7 +1737,8 @@ It is an example of a project problem list.
 <p>
 The automatically created lists can get too long to be useful,
 so you can create shorter lists of your own, and publish them
-so others can use them.
+so others can use them.  Each published list is associated with
+a project.
 <p>
 The list of problem lists can also become too long, so
 you have a `favorites list' that is a list of the problem lists
@@ -1791,18 +1792,30 @@ can select another list.  `CANCEL' will de-select the list without
 saving it.  `RESET' will reset the list to its state before
 you changed it, and `DELETE' will delete the list completely.
 <p>
-You can also `PUBLISH' an unpublished list and `UNPUBLISH' a published
-list.  A <b id='published'>published</b>
+You can publish one of your lists to a project using the
+`PUBLISH' button.  This moves or copies your list to the project.
+You can unpublished a project list using the `UNPUBLISH' button.
+This moves or copies a project list to one of your lists.
+<p>
+A <b id='published'>published</b>
 list is visible to other users on their
 <a href='#favorites-page'>Favorites Page</a>, so these other users
 can include your list in their favorites.  An unpublished list is
-not visible.  When you publish or unpublish a list, the list is saved
-as by `SAVE', unless the list has
-not been changed since it was last saved.
+not visible to other users.
 <p>
 When you publish a list, it is automatically added to the favorites
 list of all users, but they can remove it from their favorites list
 after it has been automatically added.
+<p>
+You must have the `show' privilege for a project in order for you to be
+able to see its problem list and any of its published lists.
+To publish to a project, you must have either `publish-all' privilege,
+or you must have the `publish-own' privilege AND the list name
+must end with `&#8209;&#8209;AAAA' where AAAA is your account name (note there
+are TWO `-'s).  Similarly to unpublish a project list, you must
+have either `unpublish-all' privilege,
+or you must have the `unpublish-own' privilege AND the list name
+must end with `&#8209;&#8209;AAAA'.
 </p>
 
 <h2 id="list-descriptions">List Descriptions</h2>
@@ -1960,11 +1973,11 @@ The following are the possible project privileges:
 			 </td></tr>
 <tr><td>view</td><td>allows project actions to be viewed in the View Page
 		     </td></tr>
-<tr><td>show</td><td>makes the project problems visible; e.g., allows
-		     the project problems list to be included in
-		     the user's Favorites and if this is done,
-		     allows project problem descriptions
-		     to be displayed via the Projects Page</td></tr>
+<tr><td>show</td><td>makes the project visible; i.e., allows the
+		     the project problems list and published lists
+		     associated with the project to be included in
+		     the user's Favorites
+		     </td></tr>
 <tr><td>move&#8209;from</td><td>allows problems to be moved from the project
 				to other projects
 		     </td></tr>
@@ -1977,6 +1990,21 @@ The following are the possible project privileges:
 <tr><td>first&#8209;failed</td><td>allows the input and output of the
                      first failed test case of a project problem submission
 		     to be linked into the submitter's problem directory
+		     </td></tr>
+<tr><td>publish&#8209;all</td><td>allows any of your lists to be published to
+		     the project (i.e., copied to the project)
+		     </td></tr>
+<tr><td>publish&#8209;own</td><td>allows one of your lists to be published to
+		     the project (i.e., copied to the project) provided the
+		     list name ends in `&#8209;&#8209;AAAA',
+		     where AAAA is your account name
+		     </td></tr>
+<tr><td>unpublish&#8209;all</td><td>allows any list of the project to
+		     be unpublished (i.e., deleted)
+		     </td></tr>
+<tr><td>unpublish&#8209;own</td><td>allows a project list to be unpublished
+		     (i.e., deleted) provided the list name ends in
+		     `&#8209;&#8209;AAAA', where AAAA is your account name
 		     </td></tr>
 </table>
 </p>
