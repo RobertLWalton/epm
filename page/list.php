@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan 28 06:24:54 EST 2022
+    // Date:	Sat Jan 29 00:58:03 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -421,8 +421,7 @@ EOT;
     // If no errors, copies -:basename list file to
     // $project:$basename list file, writing project
     // list file atomically, and then if $subop is
-    // delete, deletes the list $names[$J] by calling
-    // delete_list.
+    // delete, unlinks the -:basename list file.
     //
     // But if the only error was failure to delete local
     // list, change $subop to keep.
@@ -488,10 +487,17 @@ EOT;
 	}
 	if ( $subop == 'delete' )
 	{
-	    $r = delete_list
-	             ( $basename, $errors, true );
+	    $r = unlink ( "$epm_data/$f" );
 	    if ( $r === false )
+	    {
 		$subop = 'keep';
+		$errors[] = "failed to delete" .
+		            " <i>Your</i> $basename" .
+			    " list";
+		$errors[] = "copy to $project" .
+		            " $basename list" .
+			    " successful";
+	    }
 	}
 
 	$time = @filemtime ( "$epm_data/$g" );
@@ -506,7 +512,7 @@ EOT;
     // If no errors, copies project:basename list file
     // to -:$basename list file, reading project list
     // file atomically, and then if $subop is delete,
-    // deletes the project list file using unlink.
+    // unlinks the project list file.
     //
     // But if the only error was failure to unlink
     // project list, change $subop to keep.
@@ -582,6 +588,9 @@ EOT;
 		$subop = 'keep';
 		$errors[] = "failed to delete" .
 		            " $project $basename list";
+		$errors[] = "copy to <i>Your</i>" .
+		            " $basename list" .
+			    " successful";
 	    }
 	}
 
