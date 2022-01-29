@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan 29 04:59:21 EST 2022
+    // Date:	Sat Jan 29 08:35:17 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1363,10 +1363,22 @@ EOT;
 EOT;
 	elseif ( ! $writable[$J] )
 	{
+	    if ( $names[1-$J] != '' )
+	    {
+	        list ( $p, $b ) =
+		    explode ( ':', $names[1-$J] );
+		if ( $p == '-' )
+		    $p = "<i>Your</i>";
+		if ( $b == '-' )
+		    $b = "<i>Problems</i>";
+		$m = "Copy $p $b To";
+	    }
+	    else
+	        $m = 'Create';
 	    echo <<<EOT
 	    <div class='read-only-header list-header'>
 
-	    <strong>Change To New List:</strong>
+	    <strong>$m New List:</strong>
 	    <input type="text"
 		   size="24"
 		   placeholder="New Problem List Name"
