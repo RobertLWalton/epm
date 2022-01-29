@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan 29 00:58:03 EST 2022
+    // Date:	Sat Jan 29 01:30:20 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -694,23 +694,29 @@ EOT;
 		       ' new no name' );
 	    $name = $_POST['name'];
 	    if ( $names[1-$J] == '' )
-	        $lists[1-$J] = NULL;
-	    $list = array_slice
-		( $lists[1-$J], 0, $lengths[1-$J] );
-	    copy_list
+	        $list = NULL;
+	    else
+		$list = array_slice
+		    ( $lists[1-$J], 0, $lengths[1-$J] );
+	    $time = copy_list
 	        ( $list, $name, $warnings, $errors );
-	    if ( count ( $errors ) == 0 )
+	    if ( $time !== false )
 	    {
-		$f = "accounts/$aid/+lists+/$name.list";
-		$time = @filemtime ( "$epm_data/$f" );
-		if ( $time === false )
-		    ERROR ( "cannot stat $f" );
-		$time = strftime
-		    ( $epm_time_format, $time );
-		$action = "$time $aid"
-			. " create-list"
-			. " - $name"
-			. PHP_EOL;
+	        if ( $list == NULL )
+		    $action = "$time $aid"
+			    . " create-list"
+			    . " - $name"
+			    . PHP_EOL;
+		else
+		{
+		    list ( $project, $basename ) =
+		        explode ( ':', $names[1-$J] );
+		    $action = "$time $aid"
+			    . " copy-list"
+			    . " $project $basename"
+			    . " - $name"
+			    . PHP_EOL;
+		}
 
 	    	$names[$J] = "-:$name";
 		$lists[$J] = NULL;
@@ -755,17 +761,32 @@ EOT;
 		       " subop $subop" );
 	    list ( $project, $basename ) =
 	        explode ( ':', $names[$pub_J] );
-	    $r = execute_unpublish
+	    $time = execute_unpublish
 	        ( $basename, $project, $subop,
 		  $warnings, $errors );
-	    if ( $r !== false )
+	    if ( $time !== false )
 	    {
 		if ( $subop == 'delete' )
 		{
 		    $names[$pub_J] = '';
 		    $favorites = read_favorites_list
 			( $warnings );
+		    $action = "move";
 		}
+		else
+		    $action = "copy";
+
+		$action = "$time $aid"
+			. " unpublish-$action"
+			. " $project $basename"
+			. PHP_EOL;
+		$action_project = $project;
+
+	    	$names[$J] = "-:$basename";
+		$lists[$J] = NULL;
+		// No need to update $favorites as
+		// new list is excluded from
+		// selectors.
 	    }
 
 	    $pub_J = NULL;
@@ -878,17 +899,26 @@ EOT;
 		       " execute-publish" .
 		       " subop $subop" );
 	    $basename = substr ( $names[$pub_J], 2 );
-	    $r = execute_publish
+	    $time = execute_publish
 	        ( $basename, $pub_project, $subop,
 		  $warnings, $errors );
-	    if ( $r !== false )
+	    if ( $time !== false )
 	    {
 		if ( $subop == 'delete' )
 		{
 		    $names[$pub_J] = '';
 		    $favorites = read_favorites_list
 			( $warnings );
+		    $action = "move";
 		}
+		else
+		    $action = "copy";
+
+		$action = "$time $aid"
+			. " publish-$action"
+			. " $pub_project $basename"
+			. PHP_EOL;
+		$action_project = $pub_project;
 	    }
 
 	    $pub_J = NULL;
