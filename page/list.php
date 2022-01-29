@@ -412,6 +412,9 @@ EOT;
 	$time = @filemtime ( "$epm_data/$f" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
+
+	$warnings[] = "<i>Your</i> $basename" .
+	              " list has been created";
 	return strftime ( $epm_time_format, $time );
     }
 
@@ -710,19 +713,15 @@ EOT;
 	}
 	elseif ( $op == 'new' )
 	{
-	    if ( $writable[$J] )
-		exit ( 'UNACCEPTABLE HTTP POST:' .
-		       ' new writable' );
-
 	    if ( ! isset ( $_POST['name'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       ' new no name' );
 	    $name = $_POST['name'];
-	    if ( $names[1-$J] == '' )
+	    if ( $names[$J] == '' )
 	        $list = NULL;
 	    else
 		$list = array_slice
-		    ( $lists[1-$J], 0, $lengths[1-$J] );
+		    ( $lists[$J], 0, $lengths[$J] );
 	    $time = copy_list
 	        ( $list, $name, $warnings, $errors );
 	    if ( $time !== false )
@@ -734,20 +733,15 @@ EOT;
 			    . PHP_EOL;
 		else
 		{
-		    list ( $project, $basename ) =
-		        explode ( ':', $names[1-$J] );
+		    list ( $p, $b ) =
+		        explode ( ':', $names[$J] );
 		    $action = "$time $aid"
 			    . " copy-list"
-			    . " $project $basename"
-			    . " - $name"
+			    . " $p $b - $name"
 			    . PHP_EOL;
 		}
-
-	    	$names[$J] = "-:$name";
-		$lists[$J] = NULL;
-		// No need to update $favorites as
-		// new list is excluded from
-		// selectors.
+		$favorites = read_favorites_list
+		    ( $warnings );
 	    }
 	}
 	elseif ( $op == 'unpublish' )
@@ -1336,7 +1330,11 @@ EOT;
 	    if ( $project == '-' )
 	        $project = '<i>Your</i>';
 	    $pname = "$project $basename";
+
+	    $copy_message = 'Copy To';
 	}
+	else
+	    $copy_message = 'Create Empty';
 
 	echo <<<EOT
 	<div class='list$J'>
@@ -1363,29 +1361,8 @@ EOT;
 EOT;
 	elseif ( ! $writable[$J] )
 	{
-	    if ( $names[1-$J] != '' )
-	    {
-	        list ( $p, $b ) =
-		    explode ( ':', $names[1-$J] );
-		if ( $p == '-' )
-		    $p = "<i>Your</i>";
-		if ( $b == '-' )
-		    $b = "<i>Problems</i>";
-		$m = "Copy $p $b To";
-	    }
-	    else
-	        $m = 'Create';
 	    echo <<<EOT
 	    <div class='read-only-header list-header'>
-
-	    <strong>$m New List:</strong>
-	    <input type="text"
-		   size="24"
-		   placeholder="New Problem List Name"
-		   title="New Problem List Name"
-		   onkeydown='NEW(event,"$J")'>
-
-	    <br>
 
 	    <strong>Select List to Edit:</strong>
 	    <select title='New Problem List to Edit'
@@ -1406,6 +1383,15 @@ EOT;
 		UNPUBLISH</button>
 EOT;
 	    echo <<<EOT
+
+	    <br>
+	    <strong>$copy_message New List:</strong>
+	    <input type="text"
+		   size="24"
+		   placeholder="New Problem List Name"
+		   title="New Problem List Name"
+		   onkeydown='NEW(event,"$J")'>
+
 	    </div>
 EOT;
 	}
@@ -1486,7 +1472,15 @@ EOT;
 		   title="$upload_file_title">
 	    </label>
 	    </form>
+	    <br>
+	    <strong>$copy_message New List:</strong>
+	    <input type="text"
+		   size="24"
+		   placeholder="New Problem List Name"
+		   title="New Problem List Name"
+		   onkeydown='NEW(event,"$J")'>
 	    </div>
+
 	    <div id='delete-header-$J'
 		 class='delete-header'
 		 style='display:none'>
@@ -1498,7 +1492,9 @@ EOT;
 	    <button type='button'
 	            onclick='DELETE_NO("$J")'>
 		NO</button>
+
 	    </div>
+
 EOT;
 	}
 	$w = ( $writable[$J] ? 'yes' : 'no' );
