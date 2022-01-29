@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan 29 01:30:20 EST 2022
+    // Date:	Sat Jan 29 04:59:21 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -418,27 +418,52 @@ EOT;
     // Execute $subop (keep, delete, cancel) for
     // the execute-publish POST.
     //
+    // $list is the list of -:basename entries.  This
+    // is checked for local lists and an error is
+    // announced for each that is found.
+    //
     // If no errors, copies -:basename list file to
     // $project:$basename list file, writing project
     // list file atomically, and then if $subop is
     // delete, unlinks the -:basename list file.
     //
-    // But if the only error was failure to delete local
-    // list, change $subop to keep.
+    // But if the only error was failure to unlink the
+    // local list, change $subop to keep.
     //
     // Returns mtime of list written to $project, or
-    // false if there no list was written (including
-    // the cases of subop equal to `cancel' and the
-    // only error being in delete).
+    // false if no list was written (including the cases
+    // of subop equal to `cancel' and there being errors
+    // other than in unlink).
     //
     function execute_publish
-	    ( $basename, $project, & $subop,
+	    ( $list, $basename, $project, & $subop,
 	      & $warnings, & $errors )
     {
         global $epm_data, $aid, $own_re,
 	       $epm_time_format;
 
 	if ( $subop == 'cancel' ) return false;
+
+	foreach ( $list as $e )
+	{
+	    list ( $time, $proj, $name )
+		= $e;
+	    if ( $proj == '-' )
+	    {
+		if ( count ( $errors ) == 0 )
+		{
+		    $errors[] =
+			"A published list cannot" .
+			" have local list entries.";
+		    $errors[] =
+			"The following entries" .
+			" are local lists:";
+		}
+		$errors[] =
+		    "    <i>Your</i> $name";
+	    }
+	}
+	if ( count ( $errors ) > 0 ) return false;
 
 	$p = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$p" ) )
@@ -519,8 +544,8 @@ EOT;
     //
     // Returns mtime of written local list, or false
     // if there no list was written (including the
-    // cases of subop equal to `cancel' and the only
-    // error being in unlink).
+    // cases of subop equal to `cancel' and there being
+    // an error other than unlink).
     //
     function execute_unpublish
 	    ( $basename, $project, & $subop,
@@ -892,15 +917,21 @@ EOT;
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       ' execute-publish no' .
 		       ' subop (name)' );
+	    if ( $edited[$pub_J] == 'yes' )
+		exit ( 'UNACCEPTABLE HTTP POST:' .
+		       " execute-publish" .
+		       " edited" );
 	    $subop = $_POST['name'];
 	    if ( ! in_array ( $subop, ['keep', 'delete',
 	                               'cancel'] ) )
 		exit ( 'UNACCEPTABLE HTTP POST:' .
 		       " execute-publish" .
 		       " subop $subop" );
+
 	    $basename = substr ( $names[$pub_J], 2 );
 	    $time = execute_publish
-	        ( $basename, $pub_project, $subop,
+	        ( $lists[$pub_J], $basename,
+		  $pub_project, $subop,
 		  $warnings, $errors );
 	    if ( $time !== false )
 	    {
