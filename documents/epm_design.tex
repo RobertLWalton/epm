@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{September 30, 2020}
+\date{February 4, 2022}
  
 \maketitle
 
@@ -1009,12 +1009,18 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 Name & Format & Description & Creators & Updaters & Readers \\
 \hline\hline
-\TT{lists} & dir & links to published lists & list & list
-           & (all) \\
+\FSTACK{projects}{/PROJECT/\\+lists+} & dir
+	   & \STACK{project\\published lists}
+	   & list & list & \STACK{list\\favorites\\project} \\
 \hline
-\TT{lists/AID:NAME.list}
-           & link & \STACK{link to accounts/\\AID/+lists+/\\NAME.list}
-	   & list & list & (all) \\
+\FSTACK{projects}{/PROJECT/\\+lists+/\\NAME.list} & lines
+	   & \STACK{list published\\to project \pagref{LIST/PUBLISHED}}
+	   & list & list & \STACK{list\\favorites\\project} \\
+\hline
+\FSTACK{projects}{/PROJECT/\\+lists+/\\+actions+} & lines
+	   & \STACK{log of project\\list publishing\\actions
+		    \pagref{ACCOUNT-ACTIONS}}
+	   & (updaters) & list & view \\
 \hline
 \TT{default} & dir & \STACK{holds default\\program\\binaries} & setup &  & \\ 
 \hline
@@ -2529,10 +2535,13 @@ See \pagref{FAVORITES}.
 \begin{tabular}{lllll}
 \TT{accounts/AID/+lists+}    		& create  & update  & read & - \\
 \TT{accounts/AID/+lists+/+favorites}   	& create  & -       & read & - \\
-\TT{accounts/AID/+lists+/NAME.list}    	& create  & replace & read & delete \\
-\TT{lists/AID:NAME.list}		& create  & -       & -    & delete \\
-\TT{accounts/AID/+lists+/+actions+}    	& -       & append  & -    & - \\
+\TT{accounts/AID/+lists+/NAME.list}    	& create  & update  & read & delete \\
+\TT{accounts/AID/+lists+/+actions+}    	& create  & append  & -    & - \\
 \TT{accounts/AID/+actions+}    		& -       & append  & -    & - \\
+\TT{projects/PROJECT/+lists+}		& create  & update  & read & - \\
+\TT{projects/PROJECT/+lists+/NAME.list}	& create  & replace & read & delete \\
+\TT{projects/PROJECT/+lists+/+actions+}	& create  & append  & -    & - \\
+\TT{projects/PROJECT/+actions+}		& -       & append  & -    & - \\
 \end{tabular}
 
 
@@ -2575,11 +2584,14 @@ PROJECT is `-' if the PROBLEM is local in {\tt accounts/AID/PROBLEM}
 and is otherwise the project containing the PROBLEM
 in {\tt projects/ PROJECT/PROBLEM}.
 
-\item[\TT{lists/AID:NAME.list}:] ~ \\
-This is a symbolic link to {\tt accounts/AID/+lists+/NAME.list}.
+\item[\TT{projects/PROJECT/+lists+/NAME.list}:] ~
+    \label{LIST/PUBLISHED}\\
+Copy made of some {\tt accounts/AID/+lists+/NAME.list} for some AID.
 
 \item[\TT{accounts/AID/+lists+/+actions+}:]
 \item[\TT{accounts/AID/+actions+}:]\vspace*{-1ex} ~ \\
+\item[\TT{projects/PROJECT/+lists+/+actions+}:]\vspace*{-1ex} ~ \\
+\item[\TT{projects/PROJECT/+actions+}:]\vspace*{-1ex} ~ \\
     See \pagref{ACCOUNT-ACTIONS}.
 
 \end{itemlist}
@@ -2589,13 +2601,16 @@ This is a symbolic link to {\tt accounts/AID/+lists+/NAME.list}.
 
 \begin{enumerate}
 \item Select list (one of two).
-\item Create new list.
+\item Cancel (unselect) list (one of two).
 \item Edit list by copying elements from another list, deleting elements,
-      or reordering elements.
+      or reordering elements.  This is done by JAVASCRIPT in the browser.
 \item Save edited list.
 \item Reset edited list to un-edited value.
-\item Publish list (create link to it in {\tt D/lists} directory).
-\item Unpublish list.  (remove link to it from {\tt D/lists} directory).
+\item Create new list by copying existing list, or create empty list
+      if current list unselected.
+\item Delete list.
+\item Publish list (move or copy to project list).
+\item Unpublish list (move or copy from project list).
 \end{enumerate}
 
 \newpage
