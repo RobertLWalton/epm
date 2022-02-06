@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jan 27 02:20:56 EST 2022
+    // Date:	Sun Feb  6 01:31:37 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -46,6 +46,29 @@
 	exit ( 'ACCESS ERROR: $epm_data not set' );
     if ( ! isset ( $aid ) )
 	exit ( 'ACCESS ERROR: $aid not set' );
+
+    // If projects/PROJECT/PROBLEM/+blocked+ exists,
+    // write problem blocked error messages and
+    // return true.  Otherwise return false.
+    //
+    // It is an ERROR if +blocked+ file contains
+    // < or >.
+    //
+    function blocked ( $project, $problem, & $errors )
+    {
+        global $epm_data, $epm_time_format;
+
+	$b = "projects/$project/$problem/+blocked+";
+	$btime = @filemtime ( "$epm_data/$b" );
+	if ( $btime === false ) return false;
+
+	$btime = strftime ( $epm_time_format, $btime );
+	$errors[] = "problem $problem in project" .
+		    " $project blocked as of $btime";
+	$c = file_get_contents ( "$epm_data/$b" );
+	$errors[] = $c;
+	return true;
+    }
 
     // See page/manage.php for the format of +priv+
     // files.
@@ -675,6 +698,7 @@
 	    if ( preg_match ( '/(<|>)/', $line ) )
 	    {
 		$line = trim ( $line );
+		$line = htmlspecialchars ( $line );
 	        $errors[] =
 		    "< or > is in description line:" .
 		    PHP_EOL . "    $line";
