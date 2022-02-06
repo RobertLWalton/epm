@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb  6 08:10:42 EST 2022
+    // Date:	Sun Feb  6 08:50:35 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -595,6 +595,9 @@ EOT;
 	}
 	if ( is_dir ( "$epm_data/$desdir" ) )
 	{
+	    if ( blocked ( $project, $problem,
+	                   $errors ) )
+	        return;
 	    problem_priv_map
 	        ( $pmap, $project, $problem );
 
