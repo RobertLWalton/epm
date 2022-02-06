@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb  6 01:31:37 EST 2022
+    // Date:	Sun Feb  6 08:07:49 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -51,9 +51,6 @@
     // write problem blocked error messages and
     // return true.  Otherwise return false.
     //
-    // It is an ERROR if +blocked+ file contains
-    // < or >.
-    //
     function blocked ( $project, $problem, & $errors )
     {
         global $epm_data, $epm_time_format;
@@ -66,6 +63,9 @@
 	$errors[] = "problem $problem in project" .
 		    " $project blocked as of $btime";
 	$c = file_get_contents ( "$epm_data/$b" );
+	if ( $c === false )
+	    ERROR ( "can stat but not read $b" );
+	$c = htmlspecialchars ( $c );
 	$errors[] = $c;
 	return true;
     }
@@ -700,8 +700,9 @@
 		$line = trim ( $line );
 		$line = htmlspecialchars ( $line );
 	        $errors[] =
-		    "< or > is in description line:" .
-		    PHP_EOL . "    $line";
+		    "&lt; or &gt; is in description" .
+		    " line:";
+	        $errors[] = "    $line";
 		return;
 	    }
 	}

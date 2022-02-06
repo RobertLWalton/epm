@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb  6 02:07:00 EST 2022
+    // Date:	Sun Feb  6 08:10:42 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -2389,13 +2389,13 @@ EOT;
 	    let checkbox = td.children[0];
 	    checkbox.style.backgroundColor = failed;
 
-	    error_messages.textContent = text;
+	    error_messages.innerHTML = text;
 	    error_response.style.display = 'block';
 	}
 
 	function WARN_RESPONSE ( text )
 	{
-	    warn_messages.textContent = text;
+	    warn_messages.innerHTML = text;
 	    warn_response.style.display = 'block';
 	}
 
