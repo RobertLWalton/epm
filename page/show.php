@@ -2,7 +2,7 @@
 
     // File:	show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Aug 22 21:48:29 EDT 2021
+    // Date:	Sun Feb  6 08:47:15 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -74,18 +74,21 @@
 	if ( ! preg_match ( $epm_name_re, $project ) )
 	    exit ( "UNACCEPTABLE HTTP POST: PROJECT" );
 	require "$epm_home/include/epm_list.php";
-	problem_priv_map
-	    ( $pmap, $project, $problem, $errors );
+	if ( ! blocked ( $project, $problem, $errors ) )
+	{
+	    problem_priv_map
+		( $pmap, $project, $problem, $errors );
 
-	if ( ! isset ( $pmap['show'] )
-	     ||
-	     $pmap['show'] == '-' )
-	    $errors[] =
-	        "YOU DO NOT HAVE `show' PRIVILEGE" .
-	        " FOR PROJECT $project" .
-		" PROBLEM $problem";
-        $fname =
-	    "projects/$project/$problem/$problem.pdf";
+	    if ( ! isset ( $pmap['show'] )
+		 ||
+		 $pmap['show'] == '-' )
+		$errors[] =
+		    "YOU DO NOT HAVE `show' PRIVILEGE" .
+		    " FOR PROJECT $project" .
+		    " PROBLEM $problem";
+	    $fname = "projects/$project/$problem/" .
+	             "$problem.pdf";
+	}
     }
 
     if ( count ( $errors ) == 0
