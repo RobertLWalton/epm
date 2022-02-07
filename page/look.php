@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Aug 23 03:44:44 EDT 2021
+    // Date:	Mon Feb  7 03:11:26 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -22,6 +22,8 @@
     //
     //		PROBLEM		    FILENAME
     //				    +work+/FILENAME
+    //				    +run+/FILENAME
+    //				    +parent+/FILENAME
     //
     //		+home+		    downloads/FILENAME
     //				    documents/FILENAME
@@ -93,7 +95,8 @@
     $fdir = pathinfo ( $filename, PATHINFO_DIRNAME );
 
     if ( ! preg_match ( $epm_filename_re, $fname ) )
-	exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	exit ( "UNACCEPTABLE HTTP POST:" .
+	       " FILENAME $fname" );
 
     $ftype = '';
     if ( isset ( $display_file_type[$fext] ) )
@@ -101,15 +104,16 @@
     elseif ( $fext == 'tgz' )
        $ftype = 'tgz';
     if ( ! in_array ( $ftype, ['utf8','pdf','tgz'] ) )
-	exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	exit ( "UNACCEPTABLE HTTP POST: FTYPE $ftype" );
 
     if ( $location == '+temp+' )
     {
         if ( $disposition != 'download' )
 	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " DISPOSITION" );
+	           " DISPOSITION != download" );
         if ( $fdir != '.' )
-	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " FDIR != ." );
 	    
         $d = $epm_data;
 	$f = "accounts/$aid/+download-$uid+";
@@ -117,19 +121,21 @@
     elseif ( $location == '+home+' )
     {
 	if ( $ftype == 'tgz' )
-	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " FTYPE == tgz" );
 
         if ( $fdir == 'documents' )
 	{
 	    if ( $ftype != 'pdf' )
 		exit ( "UNACCEPTABLE HTTP POST:" .
-		       " FILENAME" );
+		       " FTYPE != pdf" );
 	    if ( $disposition != 'show' )
 		exit ( "UNACCEPTABLE HTTP POST:" .
-		       " DISPLOSITION" );
+		       " DISPLOSITION != show" );
 	}
         elseif ( $fdir != 'downloads' )
-	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " FDIR != downloads" );
 
         $d = $epm_home;
 	$f = $filename;
@@ -140,22 +146,30 @@
         $f = "accounts/$aid/$problem";
 
         if ( ! preg_match ( $epm_name_re, $problem ) )
-	    exit ( "UNACCEPTABLE HTTP POST: LOCATION" );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " PROBLEM $problem" );
         if ( ! is_dir ( "$epm_data/$f" ) )
-	    exit ( "UNACCEPTABLE HTTP POST: LOCATION" );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " $f NOT DIR" );
 
 	if ( $ftype == 'tgz' )
-	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " FTYPE == tgz" );
 
-	if ( ! in_array ( $fdir, ['.','+work+'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	if ( ! in_array
+	           ( $fdir, ['.','+work+','+run+',
+		             '+parent+'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " FDIR NOT ., +work+, +run+," .
+		   " or +parent+" );
 
 	$f .= "/$filename";
 	$d = $epm_data;
     }
 
     if ( ! is_readable ( "$d/$f" ) )
-	 exit ( "UNACCEPTABLE HTTP POST: FILENAME" );
+	 exit ( "UNACCEPTABLE HTTP POST:" .
+	        " UNREADABLE $f" );
     $fsize = @filesize ( "$d/$f" );
     if ( $fsize === false )
         ERROR ( "cannot stat readable $f" );
@@ -203,6 +217,10 @@
 
     if ( $fdir == '+work+' )
 	$title = "[working directory]$fname";
+    elseif ( $fdir == '+run+' )
+	$title = "[running directory]$fname";
+    elseif ( $fdir == '+parent+' )
+	$title = "[parent directory]$fname";
     else
 	$title = "$fname";
 

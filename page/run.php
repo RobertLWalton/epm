@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  7 17:36:40 EDT 2021
+    // Date:	Mon Feb  7 03:11:46 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -609,12 +609,40 @@ EOT;
 			continue;
 
 		    $fname = "$base.$rxxx";
+		    $d = "$epm_data/$probdir";
+		    if ( $rxxx == 'run' )
+		    {
+			// Local version takes
+			// precedence over remote
+			// version.
+			//
+		        if ( is_readable
+			       ( "$d/$fname" ) )
+			    $f = $fname;
+		        elseif ( is_readable
+			           ( "$d/+parent+/" .
+				     "$fname" ) )
+			    $f = "+parent+/$fname";
+			else
+			    continue;
+		    }
+		    else
+		    {
+		        if ( is_readable
+			       ( "$d/+run+/$fname" ) )
+			    $f = "+run+/$fname";
+		        elseif ( is_readable
+			           ( "$d/$fname" ) )
+			    $f = $fname;
+			else
+			    continue;
+		    }
 		    echo $td[$rxxx];
 		    echo <<<EOT
 			 <button type='button'
 				 id='s_$rxxx$n'
 				 onclick='LOOK
-				   (event,"$fname")'
+				   (event,"$f")'
 			    >$fname</button>
 EOT;
 		    if ( $rxxx != 'run' )
