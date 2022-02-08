@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb  7 03:11:46 EST 2022
+    // Date:	Mon Feb  7 14:14:53 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -27,6 +27,7 @@
         exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_make.php";
+    require "$epm_home/include/epm_list.php";
 
     // Session Data:
     //
@@ -96,7 +97,8 @@
 	     ! isset ( $local_file_cache[$f] )
 	     ||
 	     substr ( $f, -4 ) != '.run' )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    exit ( 'UNACCEPTABLE HTTP POST:' .
+	           ' execute_run' );
 	$d = "$probdir/+parent+";
 	$lock = NULL;
 	if ( is_dir ( "$epm_data/$d" ) )
@@ -116,7 +118,8 @@
 	     ! isset ( $remote_file_cache[$f] )
 	     ||
 	     substr ( $f, -4 ) != '.run' )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	    exit ( 'UNACCEPTABLE HTTP POST' .
+	           ' submit_run' );
 	$d = "$probdir/+parent+";
 	$lock = NULL;
 	if ( is_dir ( "$epm_data/$d" ) )
@@ -226,8 +229,6 @@
 		    ERROR ( "link $d has bad target" .
 		            " $t" );
 		$project = $matches[3];
-		require
-		    "$epm_home/include/epm_list.php";
 		problem_priv_map
 		    ( $pmap, $project, $problem,
 		             $errors );

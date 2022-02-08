@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb  6 08:07:49 EST 2022
+    // Date:	Tue Feb  8 05:07:24 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -62,6 +62,41 @@
 	$btime = strftime ( $epm_time_format, $btime );
 	$errors[] = "problem $problem in project" .
 		    " $project blocked as of $btime";
+	$c = file_get_contents ( "$epm_data/$b" );
+	if ( $c === false )
+	    ERROR ( "can stat but not read $b" );
+	$c = htmlspecialchars ( $c );
+	$errors[] = $c;
+	return true;
+    }
+
+    // If accounts/AID/PROBLEM/+parent+/+blocked+
+    // exists, write problem blocked error messages and
+    // return true.  Otherwise return false.
+    //
+    function blocked_parent ( $problem, & $errors )
+    {
+        global $epm_data, $epm_time_format, $aid,
+	       $epm_parent_re;
+
+	$p = "accounts/$aid/$problem/+parent+";
+	$b = "$p/+blocked+";
+	$btime = @filemtime ( "$epm_data/$b" );
+	if ( $btime === false ) return false;
+
+	$r = @readlink ( "$epm_data/$p" );
+	if ( $r === false )
+	    ERROR ( "cannot read link $p" );
+	if ( ! preg_match ( $epm_parent_re, $r,
+	                    $matches ) )
+	    ERROR ( "link $p has bad value $r" );
+	$project = $matches[3];
+	
+	$btime = strftime ( $epm_time_format, $btime );
+	$errors[] =
+	    "parent of <i>Your</i> $problem problem" .
+	    " in project $project is blocked as of" .
+	    " $btime";
 	$c = file_get_contents ( "$epm_data/$b" );
 	if ( $c === false )
 	    ERROR ( "can stat but not read $b" );

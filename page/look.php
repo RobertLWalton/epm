@@ -2,7 +2,7 @@
 
     // File:	look.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb  7 03:11:26 EST 2022
+    // Date:	Mon Feb  7 14:10:51 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -18,17 +18,17 @@
     //		show		Display the file.
     //		download	Download the file.
     //
-    //	   $_GET['location']	    $_GET['filename']
+    //	   $_GET['location']	$_GET['filename']
     //
-    //		PROBLEM		    FILENAME
-    //				    +work+/FILENAME
-    //				    +run+/FILENAME
-    //				    +parent+/FILENAME
+    //		PROBLEM		FILENAME
+    //				+work+/FILENAME
+    //				+run+/FILENAME
+    //				+parent+/BASENAME.run
     //
-    //		+home+		    downloads/FILENAME
-    //				    documents/FILENAME
+    //		+home+		downloads/FILENAME
+    //				documents/FILENAME
     //
-    //		+temp+		    FILENAME
+    //		+temp+		FILENAME
     //
     //     $_GET['highlight']
     //
@@ -97,7 +97,6 @@
     if ( ! preg_match ( $epm_filename_re, $fname ) )
 	exit ( "UNACCEPTABLE HTTP POST:" .
 	       " FILENAME $fname" );
-
     $ftype = '';
     if ( isset ( $display_file_type[$fext] ) )
        $ftype = $display_file_type[$fext];
@@ -162,6 +161,13 @@
 	    exit ( "UNACCEPTABLE HTTP POST:" .
 	           " FDIR NOT ., +work+, +run+," .
 		   " or +parent+" );
+
+	if ( $fdir == '+parent+'
+	     &&
+	     $fext != 'run' )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " FDIR == +parent+ and" .
+		   " FEXT != run" );
 
 	$f .= "/$filename";
 	$d = $epm_data;
