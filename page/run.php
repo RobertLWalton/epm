@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb  7 14:14:53 EST 2022
+    // Date:	Tue Feb  8 06:20:19 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -70,24 +70,42 @@
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
     $post_processed = false;
+    $blocked = blocked_parent ( $problem, $errors );
 
     if ( $epm_method == 'GET'
          &&
 	 isset ( $run['RESULT'] )
 	 &&
 	 ! $run['FINISHED'] )
-        $state = 'executing';
+    {
 	// Handle hand-off from problems.php
 	// which starts run.
+	//
+	$state = 'executing';
+    }
+
+    if ( $blocked )
+    {
+	if ( isset ( $run['DIR'] ) )
+	{
+	    abort_dir ( $run['DIR'] );
+	    usleep ( 2000000 ); // 2.0 second
+	}
+	$run['RESULT'] = NULL;
+	$state = 'normal';
+    }
+    else
+	load_file_caches();
 
     // Handle requests to start a run.
     //
-    load_file_caches();
     if ( $epm_method != 'POST'
          ||
 	 ! $rw
 	 ||
-	 $state != 'normal' )
+	 $state != 'normal'
+	 ||
+	 $blocked )
 	/* Do Nothing */;
     elseif ( isset ( $_POST['execute_run'] ) )
     {
@@ -163,7 +181,9 @@
          ||
 	 ! $rw
 	 ||
-	 $state != 'executing' )
+	 $state != 'executing'
+	 ||
+	 $blocked )
     	/* Do Nothing */;
     else if ( isset ( $_POST['reload'] ) )
     {
@@ -195,7 +215,8 @@
 	exit;
     }
 
-    if ( $epm_method == 'POST' && ! $post_processed )
+    if ( $epm_method == 'POST' && ! $post_processed
+                               && ! $blocked )
     {
         if ( ! $rw && $state == 'normal' )
 	     $errors[] =
@@ -520,6 +541,9 @@
 	</div>
 EOT;
     }
+
+    if ( $blocked ) exit;
+        // Page has nothing but top line if blocked.
 
     if ( isset ( $runresult ) )
     {
