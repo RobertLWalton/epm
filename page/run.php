@@ -2,7 +2,7 @@
 
     // File:	run.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb  8 06:20:19 EST 2022
+    // Date:	Wed Feb  9 07:02:46 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -70,7 +70,10 @@
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
     $post_processed = false;
-    $blocked = blocked_parent ( $problem, $errors );
+    if ( $state == 'normal' )
+	$blocked = blocked_parent ( $problem, $errors );
+    else
+	$blocked = false;
 
     if ( $epm_method == 'GET'
          &&
@@ -92,7 +95,6 @@
 	    usleep ( 2000000 ); // 2.0 second
 	}
 	$run['RESULT'] = NULL;
-	$state = 'normal';
     }
     else
 	load_file_caches();

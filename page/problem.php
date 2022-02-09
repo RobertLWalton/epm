@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Aug  7 16:17:49 EDT 2021
+    // Date:	Wed Feb  9 06:26:31 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -158,6 +158,7 @@
 
     require "$epm_home/include/epm_make.php";
         // This sets $work and $run
+    require "$epm_home/include/epm_list.php";
 
     $work_executing = ( isset ( $work['DIR'] )
 	                &&
@@ -531,6 +532,8 @@
     //
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $blocked = NULL; // Set to blocked_parent (...)
+    		     // later.
 
     // NOTE: GETs with running executions that are
     // not $epm_page_init are rejected here.
@@ -720,6 +723,11 @@ EOT;
 	$prob = $_POST['delete_problem_no'];
 	if ( $prob != $problem )
 	    exit ( "UNACCEPTABLE HTTP POST" );
+	$state = 'normal';
+    }
+    elseif ( $blocked = blocked_parent
+                          ( $problem, $errors ) )
+    {
 	$state = 'normal';
     }
     elseif ( isset ( $_POST['make'] ) )
@@ -937,6 +945,17 @@ EOT;
     {
         finish_make_file ( $warnings, $errors );
 	$state = 'normal';
+    }
+
+    if ( ! isset ( $blocked ) )
+    {
+        if ( $state == 'normal'
+	     ||
+	     $state == 'delete-problem' )
+	    $blocked =
+	        blocked_parent ( $problem, $errors );
+	else
+	    $blocked = false;
     }
 
 ?>
@@ -1235,6 +1254,8 @@ EOT;
     </tr></table>
     </div>
 EOT;
+
+    if ( $blocked ) exit;
 
     $order_options = '';
     foreach ( ['lexical' => '(lexical order)',
