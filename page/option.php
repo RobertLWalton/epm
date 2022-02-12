@@ -2,7 +2,7 @@
 
     // File:	option.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 21 01:01:57 EDT 2020
+    // Date:	Sat Feb 12 02:29:17 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -27,6 +27,7 @@
         exit ( "problem $problem no longer exists" );
 
     require "$epm_home/include/epm_template.php";
+    require "$epm_home/include/epm_list.php";
 
     // Session Data:
     //
@@ -56,6 +57,7 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $blocked = blocked_parent ( $problem, $errors );
 
     // If $errors is not empty, call ERROR with $errors
     // in error message.
@@ -71,68 +73,75 @@
 	ERROR ( $m );
     }
 
-    // Set options to the json of $epm_home/template/
-    // template.optn with overrides (as a 2D matrix)
-    // from $epm_data/template/template.optn and
-    // $epm_data/admin/accounts/$aid/template.optn.
-    //
-    // Also set the following:
-    //
-    //    $valnames maps VALNAME => OPT-LIST
-    //    $argnames maps ARGNAME => OPT-LIST
-    //
-    // where the OPT in OPT-LIST have the given
-    // 'valname' or 'argname'.  These maps are sorted
-    // alphabetically by key.
-    //
-    // Lastly, check format of option templates and
-    // report errors by appending to $errors.  Template
-    // errors will result in a call to ERROR via
-    // a call to check_errors below.
-
-    get_template_optn();
-    check_template_optn ( $errors );
-    check_errors ( 'option_templates' );
-
-    $argnames = [];
-    $valnames = [];
-    foreach ( $template_optn as $opt => $description )
+    if ( ! $blocked )
     {
-	if ( isset ( $description['argname'] ) )
-	    $argnames[$description['argname']][] =
-		$opt;
-	if ( isset ( $description['valname'] ) )
-	    $valnames[$description['valname']][] =
-		$opt;
+	// Set options to the json of $epm_home/
+	// template/template.optn with overrides
+	// (as a 2D matrix) from $epm_data/template/
+	// template.optn and $epm_data/admin/accounts/
+	// $aid/template.optn.
+	//
+	// Also set the following:
+	//
+	//    $valnames maps VALNAME => OPT-LIST
+	//    $argnames maps ARGNAME => OPT-LIST
+	//
+	// where the OPT in OPT-LIST have the given
+	// 'valname' or 'argname'.  These maps are
+	// sorted alphabetically by key.
+	//
+	// Lastly, check format of option templates and
+	// report errors by appending to $errors.
+	// Template errors will result in a call to
+	// ERROR via a call to check_errors below.
+
+	get_template_optn();
+	check_template_optn ( $errors );
+	check_errors ( 'option_templates' );
+
+	$argnames = [];
+	$valnames = [];
+	foreach ( $template_optn as
+	          $opt => $description )
+	{
+	    if ( isset ( $description['argname'] ) )
+		$argnames[$description['argname']][] =
+		    $opt;
+	    if ( isset ( $description['valname'] ) )
+		$valnames[$description['valname']][] =
+		    $opt;
+	}
+	ksort ( $valnames, SORT_NATURAL );
+	ksort ( $argnames, SORT_NATURAL );
+
+	$optmap = [];
+	foreach ( $template_optn as $opt => $value )
+	{
+	    if ( isset ( $value['default'] ) )
+		$optmap[$opt] = $value['default'];
+	}
+	check_optmap
+	    ( $optmap, 'template default', $errors );
+	check_errors ( 'template default values' );
+
+	$dirs = array_reverse
+	    ( find_ancestors ( $probdir ) );
+	load_optmap
+	    ( $optmap, $dirs, $problem, $errors );
+	check_optmap ( $optmap, 'inherited', $errors );
+	check_errors ( 'template inherited values' );
+
+	$inherited = $optmap;
+
+	load_optmap
+	    ( $optmap, [$probdir], $problem, $errors );
+	check_optmap ( $optmap, 'local', $errors );
+	    // Errors here do not prevent editing
+	    // as that is needed to remove errors.
+
+	$defaults = $optmap;
+
     }
-    ksort ( $valnames, SORT_NATURAL );
-    ksort ( $argnames, SORT_NATURAL );
-
-    $optmap = [];
-    foreach ( $template_optn as $opt => $value )
-    {
-	if ( isset ( $value['default'] ) )
-	    $optmap[$opt] = $value['default'];
-    }
-    check_optmap
-        ( $optmap, 'template default', $errors );
-    check_errors ( 'template default values' );
-
-    $dirs = array_reverse
-        ( find_ancestors ( $probdir ) );
-    load_optmap ( $optmap, $dirs, $problem, $errors );
-    check_optmap ( $optmap, 'inherited', $errors );
-    check_errors ( 'template inherited values' );
-
-    $inherited = $optmap;
-
-    load_optmap
-        ( $optmap, [$probdir], $problem, $errors );
-    check_optmap ( $optmap, 'local', $errors );
-        // Errors here do not prevent editing
-	// as that is needed to remove errors.
-
-    $defaults = $optmap;
     
     // If editing, $optmap is updated and errors are
     // checked.  If there are no errors, elements of
@@ -143,6 +152,8 @@
 
     if ( $epm_method == 'GET' )
         /* Do Nothing */;
+    elseif ( $blocked )
+        $state = 'normal';
     elseif ( ! $rw )
     {
         $errors[] = "you no longer have read-write"
@@ -424,6 +435,8 @@ EOT;
     </table>
     </div>
 EOT;
+
+    if ( $blocked ) exit;
 
     if ( $rw )
     {
