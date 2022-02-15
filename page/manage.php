@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 15 07:49:19 EST 2022
+    // Date:	Tue Feb 15 08:44:33 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -240,7 +240,8 @@
 
     $pmap = [];
         // Privileges for selected problem or project
-	// if $project is set.
+	// if $project is set or root if neither
+	// $project or $problem is set.
     if ( isset ( $project ) )
     {
         if ( isset ( $problem ) )
@@ -249,6 +250,8 @@
 	else
 	    project_priv_map ( $pmap, $project ); 
     }
+    elseif ( ! isset ( $problem ) )
+        root_priv_map ( $pmap );
 
     if ( $process_post
          &&
@@ -326,7 +329,9 @@
     {
         $process_post = false;
 
-	if ( ! isset ( $project ) )
+	if ( ! isset ( $project )
+	     &&
+	     isset ( $problem ) )
 	    ERROR ( "bad \$update_enabled" );
 
 	$warn = $_POST['warning'];
@@ -341,26 +346,46 @@
 	$edited_contents = $_POST['update'];
 	if ( trim ( $edited_contents ) == '' )
 	    $edited_contents = " \n";
+
 	if ( ! $rw )
 	    $errors[] = "you no longer have read-write"
 	              . " privilege";
-	elseif ( isset ( $problem ) )
+	elseif ( isset ( $project ) )
 	{
-	    check_problem_priv
-		( $update_pmap, $project, $problem,
-		  $edited_contents, $errors );
-	    $f = "/projects/$project/$problem/"
-	       . "+priv+";
-	    $n = "$project $problem";
+	    $action_files =
+		[ "/projects/$project/+actions+" ];
+	    if ( isset ( $problem ) )
+	    {
+		check_problem_priv
+		    ( $update_pmap, $project, $problem,
+		      $edited_contents, $errors );
+		$f = "/projects/$project/$problem/"
+		   . "+priv+";
+		$n = "$project $problem";
+		$action_files[] =
+		    "/projects/$project/$problem/"
+		   . "+actions+";
+	    }
+	    else
+	    {
+		check_project_priv
+		    ( $update_pmap, $project,
+		      $edited_contents, $errors );
+		$f = "/projects/$project/+priv+";
+		$n = "$project -";
+	    }
 	}
-	else
+	elseif ( ! isset ( $problem ) )
 	{
-	    check_project_priv
-		( $update_pmap, $project,
+	    check_root_priv
+		( $update_pmap,
 		  $edited_contents, $errors );
-	    $f = "/projects/$project/+priv+";
-	    $n = "$project -";
+	    $f = "/projects/+priv+";
+	    $n = "- -";
+	    $action_files =
+		[ "/projects/+actions+" ];
 	}
+
 	if ( count ( $errors ) == 0 && $warn != 'no' )
 	{
 	    $is_owner =
@@ -385,24 +410,10 @@
 		$action = "$time $aid update-priv $n"
 			. PHP_EOL;
 
-		$f = "accounts/$aid/+actions+";
-		$r = @file_put_contents
-		    ( "$epm_data/$f", $action,
-		      FILE_APPEND );
-		if ( $r === false )
-		    ERROR ( "cannot write $f" );
-
-		$f = "projects/$project/+actions+";
-		$r = @file_put_contents
-		    ( "$epm_data/$f", $action,
-		      FILE_APPEND );
-		if ( $r === false )
-		    ERROR ( "cannot write $f" );
-
-		if ( isset ( $problem ) )
+		$action_files[] =
+		    "accounts/$aid/+actions+";
+		foreach ( $action_files as $f )
 		{
-		    $f = "projects/$project/"
-		       . "$problem/+actions+";
 		    $r = @file_put_contents
 			( "$epm_data/$f", $action,
 			  FILE_APPEND );
@@ -484,14 +495,10 @@
              &&
 	     $rw
 	     &&
-	     isset ( $project )
-	     &&
 	     isset ( $pmap['owner'] )
 	     &&
 	     $pmap['owner'] == '+' )
         $update_enabled = true;
-	// If $problem is set, $pmap is problems
-	// privilege map.
 
     $copy_enabled = false;
     if ( $state == 'normal'
@@ -523,12 +530,15 @@ div.select {
     background-color: var(--bg-green);
     padding-top: var(--pad);
 }
-div.project, div.problem {
+div.project, div.problem, div.root {
     padding: var(--pad) 0px;
     margin: 0px;
     display: inline-block;
     float: left;
     width: 50%;
+}
+div.root {
+    background-color: var(--bg-violet);
 }
 div.project {
     background-color: var(--bg-tan);
@@ -794,61 +804,70 @@ EOT;
 	    $n = "$project Project";
 	    $c = 'project';
 	}
+    }
+    else
+    {
+	$f =  "/projects/+priv+";
+	$n = "Root";
+	$c = 'root';
+    }
 
-	$priv_file_contents = ATOMIC_READ
-	    ( "$epm_data/$f" );
-	if ( $priv_file_contents === false )
-	    $priv_file_contents = " \n";
+    $priv_file_contents = ATOMIC_READ
+	( "$epm_data/$f" );
+    if ( $priv_file_contents === false )
+	$priv_file_contents = " \n";
+    echo <<<EOT
+    <div class='$c'>
+    <strong>$n Privileges</strong>
+    <button type='button'
+	    style='visibility:hidden'>
+	    Submit</button>
+	    <!-- this keeps the two header
+		 heights the same, as button
+		 is higher than text -->
+    <div class='priv'>
+    <pre>$priv_file_contents</pre>
+    </div>
+    </div>
+EOT;
+
+    if ( $update_enabled )
+    {
+	if ( isset ( $edited_contents ) )
+	    $priv_file_contents = $edited_contents;
+	$e = ( $state == 'normal' ?
+	       'contenteditable=true' : '' );
 	echo <<<EOT
-	<div class='$c'>
-	<strong>$n Privileges</strong>
+	<div class='problem'>
+	<form method='POST' action='manage.php'
+	      enctype='multipart/form-data'
+	      id='post'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' name='update'
+			     id='value'>
+	<input type='hidden' id='warning'
+	       name='warning' value=''>
+	<strong>Edit and</strong>
 	<button type='button'
-		style='visibility:hidden'>
-		Submit</button>
-		<!-- this keeps the two header
-		     heights the same, as button
-		     is higher than text -->
+		onclick='UPDATE("")'>
+	    Submit</button>
+	</form>
+	<pre>   </pre>
+	<form method='POST' action='manage.php'>
+	<input type='hidden' name='id' value='$ID'>
+	<button type='submit' name='reset'>
+	    Reset</button>
+	</form>
 	<div class='priv'>
-	<pre>$priv_file_contents</pre>
+	<pre $e id='contents'
+	    >$priv_file_contents</pre>
 	</div>
 	</div>
 EOT;
+    }
 
-	if ( $update_enabled )
-	{
-	    if ( isset ( $edited_contents ) )
-		$priv_file_contents = $edited_contents;
-	    $e = ( $state == 'normal' ?
-		   'contenteditable=true' : '' );
-	    echo <<<EOT
-	    <div class='problem'>
-	    <form method='POST' action='manage.php'
-		  enctype='multipart/form-data'
-		  id='post'>
-	    <input type='hidden' name='id' value='$ID'>
-	    <input type='hidden' name='update'
-				 id='value'>
-	    <input type='hidden' id='warning'
-		   name='warning' value=''>
-	    <strong>Edit and</strong>
-	    <button type='button'
-		    onclick='UPDATE("")'>
-		Submit</button>
-	    </form>
-	    <pre>   </pre>
-	    <form method='POST' action='manage.php'>
-	    <input type='hidden' name='id' value='$ID'>
-	    <button type='submit' name='reset'>
-	        Reset</button>
-	    </form>
-	    <div class='priv'>
-	    <pre $e id='contents'
-		>$priv_file_contents</pre>
-	    </div>
-	    </div>
-EOT;
-	}
-
+    if ( isset ( $project ) )
+    {
 	if ( isset ( $problem ) )
 	{
 	    $f =  "/projects/$project/+priv+";
@@ -866,8 +885,22 @@ EOT;
 	    </div>
 EOT;
 	}
-    }
 
+	$f =  "/projects/+priv+";
+	$priv_file_contents = ATOMIC_READ
+	    ( "$epm_data/$f" );
+	if ( $priv_file_contents === false )
+	    $priv_file_contents = " \n";
+	echo <<<EOT
+	<div style='clear:both'></div>
+	<div class='root'>
+	<strong>Root Privileges</strong>
+	<div class='priv'>
+	<pre>$priv_file_contents</pre>
+	</div>
+	</div>
+EOT;
+    }
 
 ?>
 
