@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Sep 30 04:46:36 EDT 2020
+    // Date:	Tue Feb 15 07:49:19 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -10,7 +10,7 @@
     // for EPM.
 
     // Displays and edits privileges, downloads
-    // problems and projects, moves problems between
+    // problems and projects, copies problems between
     // projects.
 
     // Session Data:
@@ -20,7 +20,7 @@
     //		Current problem listname.
     //
     //	   $problem = & $data['PROBLEM']
-    //	   $project = & $data['PROJECt']
+    //	   $project = & $data['PROJECT']
     //		// $project $problem   Selected:
     //		//   NULL     NULL     Nothing
     //		//   PROJECT  NULL     PROJECT
@@ -34,8 +34,8 @@
     //			     project or problem if
     //			     submitted +priv+ file is
     //			     accepted)
-    //		move-warn (ask the user if he really
-    //			   wants to move the problem)
+    //		copy-warn (ask the user if he really
+    //			   wants to copy the problem)
     //
     //	   $download_enabled =
     //		    & $data['DOWNLOAD-ENABLED']
@@ -47,10 +47,10 @@
     //		or edited +priv+ file by last response
     //		(true in owner-warn state)
     //
-    //	   $move_enabled = & $data['MOVE-ENABLED']
-    //		true if user was presented with move to
-    //		project option or move warning by last
-    //		response (true in move-warn state)
+    //	   $copy_enabled = & $data['COPY-ENABLED']
+    //		true if user was presented with copy to
+    //		project option or copy warning by last
+    //		response (true in copy-warn state)
     //
     // POSTs:
     //
@@ -77,8 +77,8 @@
     //		Download selected project or problem
     //		if privileges allow.
     //
-    //	    move=NEW_PROJECT   warning={,no,yes}
-    //		Move PROJECT PROBLEM to NEW_PROJECT
+    //	    copy=NEW_PROJECT   warning={,no,yes}
+    //		Copy PROJECT PROBLEM to NEW_PROJECT
 
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
@@ -96,7 +96,7 @@
 	$data['PROBLEM'] = NULL;
 	$data['DOWNLOAD-ENABLED'] = false;
 	$data['UPDATE-ENABLED'] = false;
-	$data['MOVE-ENABLED'] = false;
+	$data['COPY-ENABLED'] = false;
     }
 
     $listname = & $_SESSION['EPM_MANAGE']['LISTNAME'];
@@ -104,7 +104,7 @@
     $problem = & $data['PROBLEM'];
     $download_enabled = & $data['DOWNLOAD-ENABLED'];
     $update_enabled = & $data['UPDATE-ENABLED'];
-    $move_enabled = & $data['MOVE-ENABLED'];
+    $copy_enabled = & $data['COPY-ENABLED'];
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -114,9 +114,9 @@
     $edited_contents = NULL;
 	// If not NULL, use to refresh edited version
 	// of +priv+.
-    $move_to = NULL;
+    $copy_to = NULL;
         // If not NULL, this is project that is selected
-	// for current problem to be moved to.
+	// for current problem to be copied to.
     $download = NULL;
         // If not NULL, invoke look.php with
 	// location=+temp+ and filename = $download.
@@ -236,17 +236,6 @@
 		$problem = $prob;
 	    }
 	}
-    }
-
-    if ( ! $process_post )
-    {
-	// These must be reset if $project or $problem
-	// is reset.  They can be reset if $rw is reset.
-	// Each may be set to true after POST
-	// processing.
-	//
-        $update_enabled = false;
-	$move_enabled = false;
     }
 
     $pmap = [];
@@ -427,17 +416,14 @@
     }
 
     if ( isset ( $project ) && isset ( $problem ) )
-    {
-	$move_to_projects =
-	    read_projects ( ['move-to'] );
-	project_priv_map ( $project_pmap, $project );
-    }
+	$copy_to_projects =
+	    read_projects ( ['copy-to'] );
 
     if ( $process_post
 	 &&
-	 $move_enabled
+	 $copy_enabled
 	 &&
-         isset ( $_POST['move'] )
+         isset ( $_POST['copy'] )
 	 &&
          isset ( $_POST['warning'] ) )
     {
@@ -446,24 +432,24 @@
 	if ( ! isset ( $problem )
 	     ||
 	     ! isset ( $project ) )
-	    ERROR ( "bad \$move_enabled" );
+	    ERROR ( "bad \$copy_enabled" );
 
 	$warn = $_POST['warning'];
 	if ( ! in_array ( $warn, ['','no','yes'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         if ( $state != ( $warn == '' ? 'normal' :
-	                               'move-warn' ) )
+	                               'copy-warn' ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$state = 'normal';
 	    // May be changed below.
 
-	$proj = $_POST['move'];
+	$proj = $_POST['copy'];
         if ( $proj != '' && $warn != 'no' )
 	{
-	    // Note: $move_to is NULL at this point.
+	    // Note: $copy_to is NULL at this point.
 	    //
 	    if ( ! in_array
-	               ( $proj, $move_to_projects ) )
+	               ( $proj, $copy_to_projects ) )
 		exit ( 'UNACCEPTABLE HTTP POST' );
 	    elseif ( ! $rw )
 		$errors[] = "you no longer have"
@@ -476,11 +462,11 @@
 		          . " implemented";
 	    elseif ( $warn == '' )
 	    {
-		$state = 'move-warn';
-	        $move_to = $proj;
+		$state = 'copy-warn';
+	        $copy_to = $proj;
 	    }
 	    else
-	        $errors[] = 'move not yet implemented';
+	        $errors[] = 'copy not yet implemented';
 	}
     }
 
@@ -491,6 +477,7 @@
 	    ||
 	    isset ( $project ) ) );
 
+    $update_enabled = false;
     if ( $state == 'owner-warn' )
         $update_enabled = true;
     elseif ( $state == 'normal'
@@ -503,7 +490,10 @@
 	     &&
 	     $pmap['owner'] == '+' )
         $update_enabled = true;
+	// If $problem is set, $pmap is problems
+	// privilege map.
 
+    $copy_enabled = false;
     if ( $state == 'normal'
          &&
 	 $rw
@@ -512,10 +502,12 @@
 	 &&
 	 isset ( $problem )
 	 &&
-	 isset ( $project_pmap['move-from'] )
+	 isset ( $pmap['copy-from'] )
 	 &&
-	 $project_pmap['move-from'] == '+' )
-        $move_enabled = true;
+	 $pmap['copy-from'] == '+' )
+        $copy_enabled = true;
+	// If $problem is set, $pmap is problems
+	// privilege map.
 
     if ( $process_post )
 	exit ( 'UNACCEPTABLE HTTP POST' );
@@ -596,17 +588,17 @@ div.priv pre {
 	<br></div>
 EOT;
     }
-    if ( $state == 'move-warn' )
+    if ( $state == 'copy-warn' )
     {
         echo <<<EOT
 	<div class='warnings'>
 	<form action='manage.php' method='POST'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
-	       name='move' value='$move_to'>
-	<strong>WARNING: do you really want to move
+	       name='copy' value='$copy_to'>
+	<strong>WARNING: do you really want to copy
 	                 $problem from $project
-			 to $move_to?</strong>
+			 to $copy_to?</strong>
 	<pre>   </pre>
 	<button type='submit'
 	        name='warning' value='yes'>
@@ -749,21 +741,21 @@ EOT;
     </select></form>
 EOT;
 
-    if ( $move_enabled && $state == 'normal' )
+    if ( $copy_enabled && $state == 'normal' )
     {
-	$move_options =
-	    values_to_options ( $move_to_projects );
+	$copy_options =
+	    values_to_options ( $copy_to_projects );
         echo <<<EOT
-	<strong>or Move Problem to Project</strong>
+	<strong>or Copy Problem to Project</strong>
 	<form method='POST' action='manage.php'
-	      id='move-form'>
+	      id='copy-form'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden' name='warning' value=''>
-	<select name='move'
+	<select name='copy'
 		onchange='document.getElementById
-			    ("move-form").submit()'>
+			    ("copy-form").submit()'>
 	<option value=''>No Project Selected</option>
-	$move_options
+	$copy_options
 	</select></form>
 EOT;
     }
