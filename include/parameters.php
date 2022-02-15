@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Jan 21 04:02:58 EST 2022
+// Date:    Tue Feb 15 02:15:14 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -61,15 +61,6 @@ $epm_check_ipaddr = true;
     // If true a session is not allowed to change its
     // IP address.  Set to true if server is not a
     // secure server (running SSL with a certificate).
-
-$epm_priv_prefix = '+ owner walton';
-    // Prefix to all +priv+ file scans; normally
-    // used to define the superusers by defining as:
-    //
-    //		'+ owner user1' . PHP_EOL .
-    //		'+ owner user2'
-    //
-    // Only `owner' privilege is allowed.
 
 $epm_debug = preg_match
     ( '/(XXX|YYY|ZZZ)/',
@@ -180,15 +171,19 @@ $epm_parent_re =
     //     [3]	PROJECT
     //     [4]	PROBLEM
 
+$epm_root_privs =
+    ['owner','create-project','block'];
 $epm_project_privs =
     ['owner','push-new','pull-new','re-pull',
-     'view','show','move-to','move-from','download',
-     'first-failed','publish-all','publish-own',
-     'unpublish-all','unpublish-own'];
-$epm_problem_privs = ['owner','re-push','download',
-                      'first-failed'];
-    // Privileges allowed in a project +priv+ or
-    // project problem +priv+ file.
+     'view','show','copy-to','copy-from','block',
+     'download', 'first-failed','publish-all',
+     'publish-own', 'unpublish-all','unpublish-own'];
+$epm_problem_privs =
+    ['owner','re-push','copy-from','block','download',
+     'first-failed'];
+    // Privileges allowed in projects/+priv+, projects/
+    // PROJECT/+priv+, or projects/PROJECT/PROBLEM/
+    // +priv+ respectively.
 
 $epm_specials =
     ['generate','filter','display','monitor'];

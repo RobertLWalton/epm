@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb  8 05:07:24 EST 2022
+    // Date:	Tue Feb 15 02:44:13 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -240,17 +240,34 @@
 	      $errors, "In $fname:" );
     }
 
-    // Return privilege map containing just the
-    // results of $epm_priv_prefix.
+    // Return root privilege map.  If $errors argument
+    // not given, errors are fatal.
     //
-    function prefix_priv_map
-	( & $map, & $errors )
+    function root_priv_map
+	( & $map, & $errors = NULL )
     {
-        global $epm_priv_prefix;
+        global $epm_root_privs;
 	$map = [];
+	$no_errors = ! isset ( $errors );
+	read_priv_file
+	     ( $map, "projects/+priv+",
+                     $epm_root_privs, $errors );
+	if ( $no_errors && isset ( $errors )
+	                && count ( $errors ) > 0 )
+	    ERROR ( implode ( PHP_EOL, $errors ) );
+    }
+
+    // Ditto but use $contents as the (proposed)
+    // root privilege file contents.
+    //
+    function check_root_priv
+        ( & $map, $contents, & $errors )
+    {
+        global $epm_root_privs;
 	process_privs
-	    ( $map, $epm_priv_prefix, ['owner'],
-	      $errors, "In \$epm_priv_prefix:" );
+	    ( $map, $contents, $epm_root_privs,
+	      $errors,
+	      "In proposed root privilege file:" );
     }
 
     // Return the privilege map of a project.  If
@@ -261,7 +278,7 @@
     {
         global $epm_project_privs;
 	$no_errors = ! isset ( $errors );
-        prefix_priv_map ( $map, $errors );
+        root_priv_map ( $map, $errors );
 	read_priv_file
 	     ( $map, "projects/$project/+priv+",
                      $epm_project_privs, $errors );
@@ -277,7 +294,7 @@
         ( & $map, $project, $contents, & $errors )
     {
         global $epm_project_privs;
-        prefix_priv_map ( $map, $errors );
+        root_priv_map ( $map, $errors );
 	process_privs
 	    ( $map, $contents, $epm_project_privs,
 	      $errors,
@@ -294,7 +311,7 @@
     {
         global $epm_problem_privs, $epm_project_privs;
 	$no_errors = ! isset ( $errors );
-        prefix_priv_map ( $map, $errors );
+        root_priv_map ( $map, $errors );
 	read_priv_file
 	    ( $map, "projects/$project/+priv+",
 	      $epm_project_privs, $errors );
@@ -315,7 +332,7 @@
 	  & $errors )
     {
         global $epm_problem_privs, $epm_project_privs;
-        prefix_priv_map ( $map, $errors );
+        root_priv_map ( $map, $errors );
 	read_priv_file
 	    ( $map, "projects/$project/+priv+",
 	      $epm_project_privs, $errors );

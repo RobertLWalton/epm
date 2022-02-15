@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Jan 29 13:24:07 EST 2022
+Date:	Tue Feb 15 03:15:11 EST 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1980,11 +1980,14 @@ The following are the possible project privileges:
 		     associated with the project to be included in
 		     the user's Favorites
 		     </td></tr>
-<tr><td>move&#8209;from</td><td>allows problems to be moved from the project
-				to other projects
+<tr><td>copy&#8209;from</td><td>allows the project to be copied to
+				make another project, and allows problems
+				in the project to be copied to other projects
 		     </td></tr>
-<tr><td>move&#8209;to</td><td>allows problems to be moved to the project
-                              from other projects
+<tr><td>block</td><td>allows the project and individual problems in the project
+                      to be blocked so they cannot be used
+		      </td></tr>
+<tr><td>copy&#8209;to</td><td>allows problems to be copied to the project
 		      </td></tr>
 <tr><td>download</td><td>allows a .tgz tar file to be made containing
                      the contents of the project directory
@@ -2019,6 +2022,11 @@ The following are the possible project problem privileges:
                               which has this project problem as its
 			      parent
                               </td></tr>
+<tr><td>copy&#8209;from</td><td>allows the problem to be copied to
+				another project
+		     </td></tr>
+<tr><td>block</td><td>allows the problem to be blocked so it cannot be used
+		      </td></tr>
 <tr><td>download</td><td>allows a .tgz tar file to be made containing
                      the contents of the problem subdirectory of the project
 		     directory
@@ -2035,16 +2043,22 @@ the local directory contents for a problem.
 To determine privileges, lines in privilege files are processed in
 the order
 <ol>
-<li> the $epm_priv_prefix EPM server parameter lines
-     (the parameter value is processed as if it were the
-     contents of a file)
+<li> the root privilege file lines
 <li> project privilege file lines
 <li> project problem privilege file lines, if the privileges
      of a project problem are being determined
      (as opposed to the privileges of just a project)
 </ol>
-The $epm_priv_prefix parameter is used to grant owner privileges to
-EPM server administrators.
+Root privileges are granted to EPM server administrators.
+The possible root privileges are:
+<table class='top-align'>
+<tr><td>owner</td><td>allows administrator to edit the privilege files
+                         </td></tr>
+<tr><td>block</td><td>allows administrator to block projects and problems
+		      </td></tr>
+<tr><td>create&#8209;project</td><td>allows administrator to create projects
+		     </td></tr>
+</table>
 <p>
 A privilege file line is one of the following:
 <ul>
