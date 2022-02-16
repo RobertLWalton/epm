@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 15 02:44:13 EST 2022
+    // Date:	Wed Feb 16 05:25:18 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -72,7 +72,10 @@
 
     // If accounts/AID/PROBLEM/+parent+/+blocked+
     // exists, write problem blocked error messages and
-    // return true.  Otherwise return false.
+    // return true.  Ditto if accounts/AID/PROBLEM/
+    // +parent+ does not exist (link is dangling).
+    // Otherwise return false (including case where
+    // +parent+ is not a link, file, or directory).
     //
     function blocked_parent ( $problem, & $errors )
     {
@@ -82,7 +85,17 @@
 	$p = "accounts/$aid/$problem/+parent+";
 	$b = "$p/+blocked+";
 	$btime = @filemtime ( "$epm_data/$b" );
-	if ( $btime === false ) return false;
+	if ( $btime === false )
+	{
+	    $pexists = file_exists ( "$epm_data/$p" );
+	    if ( $pexists ) return false;
+	    if ( ! is_link ( "$epm_data/$p" ) )
+	        return false;
+	    // Fall through if link exists but it
+	    // dangling.
+	}
+	else
+	    $pexists = true;
 
 	$r = @readlink ( "$epm_data/$p" );
 	if ( $r === false )
@@ -92,16 +105,25 @@
 	    ERROR ( "link $p has bad value $r" );
 	$project = $matches[3];
 	
-	$btime = strftime ( $epm_time_format, $btime );
-	$errors[] =
-	    "parent of <i>Your</i> $problem problem" .
-	    " in project $project is blocked as of" .
-	    " $btime";
-	$c = file_get_contents ( "$epm_data/$b" );
-	if ( $c === false )
-	    ERROR ( "can stat but not read $b" );
-	$c = htmlspecialchars ( $c );
-	$errors[] = $c;
+	if ( $pexists )
+	{
+	    $btime = strftime
+	        ( $epm_time_format, $btime );
+	    $errors[] =
+		"parent of <i>Your</i> $problem" .
+		" problem in project $project is" .
+		" blocked as of $btime";
+	    $c = file_get_contents ( "$epm_data/$b" );
+	    if ( $c === false )
+		ERROR ( "can stat but not read $b" );
+	    $c = htmlspecialchars ( $c );
+	    $errors[] = $c;
+	}
+	else
+	    $errors[] =
+		"parent of <i>Your</i> $problem" .
+		" problem in project $project no" .
+		" longer exists";
 	return true;
     }
 

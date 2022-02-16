@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb  9 06:26:31 EST 2022
+    // Date:	Wed Feb 16 05:46:35 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -191,10 +191,11 @@
     // directory.  Only the last component of each
     // name is returned.  The directory is relative
     // to $epm_data.  Allow file names that are link
-    // names only if $allow_links is true.
+    // names only if $allow_links is true, but
+    // record dangling links as errors in this case.
     //
     function problem_file_names
-        ( $dir, $allow_links = true )
+        ( $dir, $allow_links, & $errors )
     {
         global $epm_data, $display_file_type,
 	       $epm_filename_re, $order;
@@ -228,7 +229,8 @@
 		if ( $value === false )
 		{
 		    if ( is_link ( "$epm_data/$f" ) )
-			WARN ( "dangling link $f" );
+			$errors[] =
+			    "dangling link $fname";
 		    else
 			WARN ( "stat failed for $f" );
 		    continue 2;
@@ -958,6 +960,11 @@ EOT;
 	    $blocked = false;
     }
 
+    if ( ! $blocked )
+        $problem_files =
+	    problem_file_names
+	        ( $probdir, true, $errors );
+
 ?>
 
 <html>
@@ -1354,7 +1361,8 @@ EOT;
 	echo "</div>";
 
 	$working_files =
-	    problem_file_names( $workdir, false );
+	    problem_file_names
+	        ( $workdir, false, $NONE_SUCH );
 
 	if ( count ( $working_files ) > 0 )
 	{
@@ -1583,8 +1591,7 @@ EOT;
     <input type='hidden' name='delete_files' value=''>
 EOT;
     echo "<table style='display:block'>";
-    foreach ( problem_file_names( $probdir )
-	      as $fname )
+    foreach ( $problem_files as $fname )
     {
 
         $is_working = in_array
