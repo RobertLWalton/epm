@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 16 00:39:06 EST 2022
+    // Date:	Wed Feb 16 02:01:27 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -276,13 +276,24 @@
         // Privileges for selected problem or project
 	// if $project is set or root if neither
 	// $project or $problem is set.
+    $blocked = false;
     if ( isset ( $project ) )
     {
         if ( isset ( $problem ) )
+	{
 	    problem_priv_map
 	        ( $pmap, $project, $problem ); 
+	    $blocked = is_readable
+	        ( "$epm_data/projects/$project/" .
+		  "$problem/+blocked+" );
+	}
 	else
+	{
 	    project_priv_map ( $pmap, $project ); 
+	    $blocked = is_readable
+	        ( "$epm_data/projects/$project/" .
+		  "+blocked+" );
+	}
     }
     elseif ( ! isset ( $problem ) )
         root_priv_map ( $pmap );
@@ -540,6 +551,38 @@
 	     &&
 	     $pmap['owner'] == '+' )
         $update_enabled = true;
+
+    $block_enabled = false;
+    if ( $state == 'block-ask' )
+        $block_enabled = true;
+    elseif ( $state == 'normal'
+             &&
+	     ! $blocked
+	     &&
+	     $rw
+	     &&
+	     isset ( $project )
+	     &&
+	     isset ( $pmap['block'] )
+	     &&
+	     $pmap['block'] == '+' )
+        $block_enabled = true;
+
+    $unblock_enabled = false;
+    if ( $state == 'unblock-ask' )
+        $unblock_enabled = true;
+    elseif ( $state == 'normal'
+             &&
+	     $blocked
+	     &&
+	     $rw
+	     &&
+	     isset ( $project )
+	     &&
+	     isset ( $pmap['block'] )
+	     &&
+	     $pmap['block'] == '+' )
+        $unblock_enabled = true;
 
     $copy_enabled = false;
     if ( $state == 'normal'
