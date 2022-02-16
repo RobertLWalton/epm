@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 15 08:44:33 EST 2022
+    // Date:	Tue Feb 15 19:29:50 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -487,6 +487,13 @@
 	  ( isset ( $problem )
 	    ||
 	    isset ( $project ) ) );
+    if ( $download_enabled && isset ( $project ) )
+    {
+        if ( ! isset ( $pmap['download'] )
+	     ||
+	     $pmap['download'] != '+' )
+	    $download_enabled = false;
+    }
 
     $update_enabled = false;
     if ( $state == 'owner-warn' )
