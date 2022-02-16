@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 15 19:29:50 EST 2022
+    // Date:	Wed Feb 16 00:39:06 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -22,7 +22,7 @@
     //	   $problem = & $data['PROBLEM']
     //	   $project = & $data['PROJECT']
     //		// $project $problem   Selected:
-    //		//   NULL     NULL     Nothing
+    //		//   NULL     NULL     Root Privileges
     //		//   PROJECT  NULL     PROJECT
     //		//   NULL     PROBLEM  Your PROBLEM
     //		//   PROJECT  PROBLEM  PROJECT PROBLEM
@@ -34,8 +34,19 @@
     //			     project or problem if
     //			     submitted +priv+ file is
     //			     accepted)
-    //		copy-warn (ask the user if he really
-    //			   wants to copy the problem)
+    //		copy-ask (ask the user if he really
+    //			  wants to copy the problem
+    //			  or project, and whether or
+    //			  not he wants to block the
+    //			  source of the copy)
+    //		block-ask (ask the user if he really
+    //			   wants to block the problem
+    //			   or project and if so what
+    //			   the block file contents
+    //			   should be)
+    //		unblock-ask (ask the user if he really
+    //			     wants to unblock the
+    //			     problem or project)
     //
     //	   $download_enabled =
     //		    & $data['DOWNLOAD-ENABLED']
@@ -44,13 +55,23 @@
     //
     //	   $update_enabled = & $data['UPDATE-ENABLED']
     //		true if user was presented with editable
-    //		or edited +priv+ file by last response
-    //		(true in owner-warn state)
+    //		or edited +priv+ file by last response;
+    //		also true in owner-warn state
     //
     //	   $copy_enabled = & $data['COPY-ENABLED']
     //		true if user was presented with copy to
     //		project option or copy warning by last
-    //		response (true in copy-warn state)
+    //		response; also true in copy-ask state
+    //
+    //	   $block_enabled = & $data['BLOCK-ENABLED']
+    //		true if user was presented with problem
+    //		or project block button by last
+    //		response; also true in block-ask state
+    //
+    //	   $unblock_enabled = & $data['UNBLOCK-ENABLED']
+    //		true if user was presented with problem
+    //		or project unblock button by last
+    //		response; also true in unblock-ask state
     //
     // POSTs:
     //
@@ -66,7 +87,7 @@
     //	    problem=PROJECT:PROBLEM
     //		Select problem in project.
     //
-    //	    update=FILE    warning={,no,yes}
+    //	    update=FILE-CONTENTS    warning={,no,yes}
     //		Replace +priv+ file for selected project
     //		or problem if privileges allow.
     //
@@ -77,8 +98,17 @@
     //		Download selected project or problem
     //		if privileges allow.
     //
-    //	    copy=NEW_PROJECT   warning={,no,yes}
+    //	    copy=NEW_PROJECT action={,block,none,cancel}
     //		Copy PROJECT PROBLEM to NEW_PROJECT
+    //
+    //	    block=FILE-CONTENTS  action={,cancel,submit}
+    //		Create block file for selected project
+    //		or problem if privileges allow.
+    //
+    //	    unblock    action={,cancel,submit}
+    //		Unblock selected project or problem if
+    //		privileges allow.
+    //
 
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
@@ -97,6 +127,8 @@
 	$data['DOWNLOAD-ENABLED'] = false;
 	$data['UPDATE-ENABLED'] = false;
 	$data['COPY-ENABLED'] = false;
+	$data['BLOCK-ENABLED'] = false;
+	$data['UNBLOCK-ENABLED'] = false;
     }
 
     $listname = & $_SESSION['EPM_MANAGE']['LISTNAME'];
@@ -105,6 +137,8 @@
     $download_enabled = & $data['DOWNLOAD-ENABLED'];
     $update_enabled = & $data['UPDATE-ENABLED'];
     $copy_enabled = & $data['COPY-ENABLED'];
+    $block_enabled = & $data['BLOCK-ENABLED'];
+    $unblock_enabled = & $data['UNBLOCK-ENABLED'];
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
@@ -449,7 +483,7 @@
 	if ( ! in_array ( $warn, ['','no','yes'] ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
         if ( $state != ( $warn == '' ? 'normal' :
-	                               'copy-warn' ) )
+	                               'copy-ask' ) )
 	    exit ( 'UNACCEPTABLE HTTP POST' );
 	$state = 'normal';
 	    // May be changed below.
@@ -473,7 +507,7 @@
 		          . " implemented";
 	    elseif ( $warn == '' )
 	    {
-		$state = 'copy-warn';
+		$state = 'copy-ask';
 	        $copy_to = $proj;
 	    }
 	    else
@@ -605,7 +639,7 @@ div.priv pre {
 	<br></div>
 EOT;
     }
-    if ( $state == 'copy-warn' )
+    if ( $state == 'copy-ask' )
     {
         echo <<<EOT
 	<div class='warnings'>
@@ -819,24 +853,27 @@ EOT;
 	$c = 'root';
     }
 
-    $priv_file_contents = ATOMIC_READ
-	( "$epm_data/$f" );
-    if ( $priv_file_contents === false )
-	$priv_file_contents = " \n";
-    echo <<<EOT
-    <div class='$c'>
-    <strong>$n Privileges</strong>
-    <button type='button'
-	    style='visibility:hidden'>
-	    Submit</button>
-	    <!-- this keeps the two header
-		 heights the same, as button
-		 is higher than text -->
-    <div class='priv'>
-    <pre>$priv_file_contents</pre>
-    </div>
-    </div>
+    if ( isset ( $project ) || ! isset ( $problem ) )
+    {
+	$priv_file_contents = ATOMIC_READ
+	    ( "$epm_data/$f" );
+	if ( $priv_file_contents === false )
+	    $priv_file_contents = " \n";
+	echo <<<EOT
+	<div class='$c'>
+	<strong>$n Privileges</strong>
+	<button type='button'
+		style='visibility:hidden'>
+		Submit</button>
+		<!-- this keeps the two header
+		     heights the same, as button
+		     is higher than text -->
+	<div class='priv'>
+	<pre>$priv_file_contents</pre>
+	</div>
+	</div>
 EOT;
+    }
 
     if ( $update_enabled )
     {
