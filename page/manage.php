@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 16 02:01:27 EST 2022
+    // Date:	Wed Feb 16 02:18:55 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -98,14 +98,14 @@
     //		Download selected project or problem
     //		if privileges allow.
     //
-    //	    copy=NEW_PROJECT action={,block,none,cancel}
+    //	    copy={,block,noblock,cancel} to=PROJECT
     //		Copy PROJECT PROBLEM to NEW_PROJECT
     //
-    //	    block=FILE-CONTENTS  action={,cancel,submit}
+    //	    block={,cancel,submit} file=FILE-CONTENTS
     //		Create block file for selected project
     //		or problem if privileges allow.
     //
-    //	    unblock    action={,cancel,submit}
+    //	    unblock={,cancel,submit}
     //		Unblock selected project or problem if
     //		privileges allow.
     //
@@ -865,6 +865,38 @@ EOT;
 	<form method='POST' action='manage.php'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden' name='download' value=''>
+	<button type='submit'>$m</button>
+	</form>
+EOT;
+    }
+
+    if ( $block_enabled )
+    {
+	if ( isset ( $problem ) )
+	    $m = 'Block Problem';
+	else
+	    $m = 'Block Project';
+        echo <<<EOT
+	<strong>or</strong>
+	<form method='POST' action='manage.php'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' name='block' value=''>
+	<button type='submit'>$m</button>
+	</form>
+EOT;
+    }
+
+    if ( $unblock_enabled )
+    {
+	if ( isset ( $problem ) )
+	    $m = 'Unblock Problem';
+	else
+	    $m = 'Unblock Project';
+        echo <<<EOT
+	<strong>or</strong>
+	<form method='POST' action='manage.php'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' name='unblock' value=''>
 	<button type='submit'>$m</button>
 	</form>
 EOT;
