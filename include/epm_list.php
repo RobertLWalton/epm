@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 16 05:25:18 EST 2022
+    // Date:	Wed Feb 16 06:57:49 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -47,26 +47,81 @@
     if ( ! isset ( $aid ) )
 	exit ( 'ACCESS ERROR: $aid not set' );
 
-    // If projects/PROJECT/PROBLEM/+blocked+ exists,
-    // write problem blocked error messages and
-    // return true.  Otherwise return false.
+    // If projects/PROJECT/+blocked+ exists, write
+    // project blocked error messages and return true.
+    // Similarly if problems/PROJECT is not a directory.
+    // Otherwise return false.
     //
-    function blocked ( $project, $problem, & $errors )
+    function blocked_project
+    	( $project, & $errors )
     {
         global $epm_data, $epm_time_format;
 
-	$b = "projects/$project/$problem/+blocked+";
+	$p = "projects/$project/";
+	$b = "$p/+blocked+";
 	$btime = @filemtime ( "$epm_data/$b" );
-	if ( $btime === false ) return false;
+	if ( $btime === false )
+	{
+	    if ( is_dir ( "$epm_data/$p" ) )
+		return false;
+	    $errors[] = "project $project no longer" .
+	                " exists";
+	}
+	else
+	{
+	    $btime = strftime
+	        ( $epm_time_format, $btime );
+	    $errors[] = "project $project blocked as" .
+	                " of $btime";
+	    $c = file_get_contents ( "$epm_data/$b" );
+	    if ( $c === false )
+		ERROR ( "can stat but not read $b" );
+	    $c = htmlspecialchars ( $c );
+	    $errors[] = $c;
+	}
+	return true;
+    }
 
-	$btime = strftime ( $epm_time_format, $btime );
-	$errors[] = "problem $problem in project" .
-		    " $project blocked as of $btime";
-	$c = file_get_contents ( "$epm_data/$b" );
-	if ( $c === false )
-	    ERROR ( "can stat but not read $b" );
-	$c = htmlspecialchars ( $c );
-	$errors[] = $c;
+    // If blocked_project ( $project, $errors ) returns
+    // true, return true.
+    //
+    // Otherwise if projects/PROJECT/PROBLEM/+blocked+
+    // exists, write problem blocked error messages and
+    // return true.  Similarly if problems/PROJECT/
+    // PROBLEM is not a directory.  Otherwise return
+    // false.
+    //
+    function blocked_problem
+    	( $project, $problem, & $errors )
+    {
+        global $epm_data, $epm_time_format;
+
+	if ( blocked_project ( $project, $errors ) )
+	    return true;
+
+	$p = "projects/$project/$problem";
+	$b = "$p/+blocked+";
+	$btime = @filemtime ( "$epm_data/$b" );
+	if ( $btime === false )
+	{
+	    if ( is_dir ( "$epm_data/$p" ) )
+		return false;
+	    $errors[] = "problem $problem in project" .
+	                " $project no longer exists";
+	}
+	else
+	{
+	    $btime = strftime
+	        ( $epm_time_format, $btime );
+	    $errors[] = "problem $problem in project" .
+			" $project blocked as of" .
+			" $btime";
+	    $c = file_get_contents ( "$epm_data/$b" );
+	    if ( $c === false )
+		ERROR ( "can stat but not read $b" );
+	    $c = htmlspecialchars ( $c );
+	    $errors[] = $c;
+	}
 	return true;
     }
 
@@ -882,10 +937,14 @@
     // of the PROBLEM's directory otherwise.  List
     // elements are sorted most recent TIME first.
     //
-    function read_project_list ( $project )
+    function read_project_list
+        ( $project, & $warnings )
     {
         global $epm_data, $epm_name_re,
 	       $epm_time_format;
+
+	if ( blocked_project ( $project, $warnings ) )
+	    return [];
 
 	// First build map from PROBLEM to TIME
 	// and sort on TIME.
@@ -980,7 +1039,8 @@
 	    return read_your_list();
 	elseif ( preg_match ( '/^(.+):-$/',
 	                      $listname, $matches ) )
-    	    return read_project_list ( $matches[1] );
+    	    return read_project_list
+	    	( $matches[1], $warnings );
 
 	$f = listname_to_filename ( $listname );
 	$old_list = read_file_list ( $f );

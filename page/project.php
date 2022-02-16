@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb  6 08:50:35 EST 2022
+    // Date:	Wed Feb 16 06:57:15 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -555,20 +555,17 @@ EOT;
 	       $epm_time_format, $epm_parent_re,
 	       $data, $push_file_map;
 
+	if ( blocked_project ( $project, $errors ) )
+	    return;
+
         $srcdir = "accounts/$aid/$problem";
-	$d = "projects/$project";
 	if ( ! is_dir ( "$epm_data/$srcdir" ) )
 	{
 	    $errors[] =
 	        "you have no problem named $problem";
 	    return;
 	}
-	if ( ! is_dir ( "$epm_data/$d" ) )
-	{
-	    $errors[] =
-	        "there is no project named $project";
-	    return;
-	}
+	$d = "projects/$project";
 	$desdir = "$d/$problem";
 	$g = "$srcdir/+parent+";
 	if ( is_link ( "$epm_data/$g" ) )
@@ -595,8 +592,8 @@ EOT;
 	}
 	if ( is_dir ( "$epm_data/$desdir" ) )
 	{
-	    if ( blocked ( $project, $problem,
-	                   $errors ) )
+	    if ( blocked_problem ( $project, $problem,
+	                           $errors ) )
 	        return;
 	    problem_priv_map
 	        ( $pmap, $project, $problem );
@@ -797,24 +794,13 @@ EOT;
 	       $epm_time_format, $data,
 	       $push_file_map, $epm_parent_re;
 
-        $desdir = "accounts/$aid/$problem";
-	$d = "projects/$project";
-	if ( ! is_dir ( "$epm_data/$d" ) )
-	{
-	    $errors[] =
-	        "there is no project named $project";
-	    return;
-	}
-	$srcdir = "$d/$problem";
-	if ( ! is_dir ( "$epm_data/$srcdir" ) )
-	{
-	    $errors[] = "project $project does not have"
-	              . " a problem named $problem";
-	    return;
-	}
-	if ( blocked ( $project, $problem, $errors ) )
+	if ( blocked_problem
+	         ( $project, $problem, $errors ) )
 	    return;
 
+        $desdir = "accounts/$aid/$problem";
+	$d = "projects/$project";
+	$srcdir = "$d/$problem";
 	$g = "$desdir/+parent+";
 	$pull_priv = 'pull-new';
 	if ( is_link ( "$epm_data/$g" ) )
@@ -2500,7 +2486,8 @@ EOT;
 	    if ( $project == '-' ) $project = 'Your';
 	    echo <<<EOT
 	    <div class='description'>
-	    <strong>Description of: $project $name</strong>:
+	    <strong>Description of:
+	            $project $name</strong>:
 	    <br>
 	    <div class='list-description'>
 	    $description

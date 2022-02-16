@@ -2,7 +2,7 @@
 
     // File:	show.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb  6 08:47:15 EST 2022
+    // Date:	Wed Feb 16 07:39:13 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -74,7 +74,8 @@
 	if ( ! preg_match ( $epm_name_re, $project ) )
 	    exit ( "UNACCEPTABLE HTTP POST: PROJECT" );
 	require "$epm_home/include/epm_list.php";
-	if ( ! blocked ( $project, $problem, $errors ) )
+	if ( ! blocked_problem
+	           ( $project, $problem, $errors ) )
 	{
 	    problem_priv_map
 		( $pmap, $project, $problem, $errors );
