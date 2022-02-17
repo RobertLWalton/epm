@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 16 02:18:55 EST 2022
+    // Date:	Thu Feb 17 00:39:10 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -471,17 +471,13 @@
 	}
     }
 
-    if ( isset ( $project ) && isset ( $problem ) )
-	$copy_to_projects =
-	    read_projects ( ['copy-to'] );
-
     if ( $process_post
 	 &&
 	 $copy_enabled
 	 &&
          isset ( $_POST['copy'] )
 	 &&
-         isset ( $_POST['warning'] ) )
+         isset ( $_POST['to'] ) )
     {
         $process_post = false;
 
@@ -490,33 +486,40 @@
 	     ! isset ( $project ) )
 	    ERROR ( "bad \$copy_enabled" );
 
-	$warn = $_POST['warning'];
-	if ( ! in_array ( $warn, ['','no','yes'] ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
-        if ( $state != ( $warn == '' ? 'normal' :
-	                               'copy-ask' ) )
-	    exit ( 'UNACCEPTABLE HTTP POST' );
+	$act = $_POST['copy'];
+	if ( ! in_array ( $act, ['','block','noblock',
+	                         'cancel'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " copy = $act" );
+        if ( $state != ( $act == '' ? 'normal' :
+	                              'copy-ask' ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " copy state = $state" );
 	$state = 'normal';
 	    // May be changed below.
 
-	$proj = $_POST['copy'];
-        if ( $proj != '' && $warn != 'no' )
+	$proj = $_POST['to'];
+        if ( $proj != '' && $act != 'cancel' )
 	{
 	    // Note: $copy_to is NULL at this point.
 	    //
-	    if ( ! in_array
-	               ( $proj, $copy_to_projects ) )
-		exit ( 'UNACCEPTABLE HTTP POST' );
+	    project_priv_map ( $projmap, $proj ); 
+	    if ( blocked_project ( $proj, $errors ) )
+	        $errors[] = "project $proj has just" .
+		            " been blocked";
+	    elseif ( ! isset ( $projmap['copy-to'] )
+	             ||
+		     $projmap['copy-to'] != '+' )
+		$errors[] = "you have lost copy-to" .
+		            " privilege for project" .
+			    " $proj";
 	    elseif ( ! $rw )
 		$errors[] = "you no longer have"
 		          . " read-write privilege";
 	    elseif ( $proj == $project )
 		$errors[] = "problem is aleady in $proj"
 		          . " project";
-	    elseif ( $_POST['warning'] == 'yes' )
-	        $errors[] = "moving not yet"
-		          . " implemented";
-	    elseif ( $warn == '' )
+	    elseif ( $act == '' )
 	    {
 		$state = 'copy-ask';
 	        $copy_to = $proj;
@@ -585,20 +588,28 @@
         $unblock_enabled = true;
 
     $copy_enabled = false;
-    if ( $state == 'normal'
-         &&
-	 $rw
-	 &&
-	 isset ( $project )
-	 &&
-	 isset ( $problem )
-	 &&
-	 isset ( $pmap['copy-from'] )
-	 &&
-	 $pmap['copy-from'] == '+' )
+    if ( $state == 'copy-ask' )
         $copy_enabled = true;
+    elseif ( $state == 'normal'
+             &&
+	     $rw
+	     &&
+	     isset ( $project )
+	     &&
+	     isset ( $problem )
+	     &&
+	     isset ( $pmap['copy-from'] )
+	     &&
+	     $pmap['copy-from'] == '+' )
+    {
 	// If $problem is set, $pmap is problems
 	// privilege map.
+
+	$copy_to_projects =
+	    read_projects ( ['copy-to'] );
+	if ( count ( $copy_to_projects ) > 0 )
+	    $copy_enabled = true;
+    }
 
     if ( $process_post )
 	exit ( 'UNACCEPTABLE HTTP POST' );
@@ -689,18 +700,24 @@ EOT;
 	<form action='manage.php' method='POST'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
-	       name='copy' value='$copy_to'>
+	       name='to' value='$copy_to'>
 	<strong>WARNING: do you really want to copy
 	                 $problem from $project
-			 to $copy_to?</strong>
+			 to $copy_to and</strong>
+	<br>
+	<button type='submit'
+	        name='copy' value='block'>
+	     BLOCK problem $problem in
+	     project $project</button>
 	<pre>   </pre>
 	<button type='submit'
-	        name='warning' value='yes'>
-	     YES</button>
+	        name='copy' value='noblock'>
+	     or leave problem $problem in
+	     project $project UNBLOCKED</button>
 	<pre>   </pre>
 	<button type='submit'
-	        name='warning' value='no'>
-	     NO</button>
+	        name='copy' value='cancel'>
+	     or CANCEL copy</button>
 	<br></form></div>
 EOT;
     }
@@ -844,8 +861,8 @@ EOT;
 	<form method='POST' action='manage.php'
 	      id='copy-form'>
 	<input type='hidden' name='id' value='$ID'>
-	<input type='hidden' name='warning' value=''>
-	<select name='copy'
+	<input type='hidden' name='copy' value=''>
+	<select name='to'
 		onchange='document.getElementById
 			    ("copy-form").submit()'>
 	<option value=''>No Project Selected</option>
