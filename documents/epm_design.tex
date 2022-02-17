@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{February 4, 2022}
+\date{February 16, 2022}
  
 \maketitle
 
@@ -953,6 +953,10 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	      & setup & (super)
 	      & (all) \\
 \hline
+\TT{projects/+priv+} & lines & \STACK{root\\privileges \pagref{PRIV}}
+	      & (updaters) & manage
+	      & \STACK{project\\problem\\run\\option\\manage\\show} \\ 
+\hline
 \TT{projects/PROJECT} & dir & \STACK{project\\directory}
 	      & \STACK{setup\\(super)} & \STACK{project\\manage}
 	      & \STACK{project\\problem\\run\\option\\manage} \\ 
@@ -964,7 +968,8 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 \FSTACK{projects}{/PROJECT/\\+priv+} & lines
 	   & \STACK{project\\privileges \pagref{PRIV}}
-	   & manage & manage & \STACK{project\\problem\\run\\manage} \\
+	   & (updaters) & manage
+	   & \STACK{project\\problem\\run\\option\\manage\\show} \\ 
 \hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM} & dir
 	   & \STACK{problem\\directory\\in project}
@@ -987,7 +992,8 @@ Name & Format & Description & Creators & Updaters & Readers \\
 \hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM/\\+priv+} & lines
 	   & \STACK{problem\\privileges \pagref{PRIV}}
-	   & manage & manage & \STACK{project\\problem\\run\\manage} \\
+	   & (updaters) & manage
+	   & \STACK{project\\problem\\run\\option\\manage\\show} \\ 
 \hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM/\\+sources+} & dir
 	   & \STACK{problem\\sources \pagref{PROBLEM/SOURCES}}
@@ -2052,6 +2058,11 @@ Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
 \TT{accounts/AID/PROBLEM/+altered+}	& create  & touch & stat & - \\
 \TT{accounts/AID/PROBLEM/+changes+}	& create  & append & - & - \\
 \TT{accounts/AID/PROBLEM/+actions+}	& create  & append & - & - \\
+\TT{projects/+priv+}			& -  & - & read & - \\
+\TT{projects/PROJECT/+priv+}		& -  & - & read & - \\
+\TT{projects/PROJECT/+block+}		& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+priv+}	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+block+}	& -  & - & read & - \\
 \end{tabular}
 \\\bigskip
 {\bf Problem Page Work Files}
@@ -2210,6 +2221,16 @@ Template commands redirect their standard error so it does not appear here.
 \TT{accounts/AID/PROBLEM/+run+/XXXX-PROBLEM.rerr}   & create  & append & read
                                                                        & - \\
 \end{tabular}
+\\\bigskip
+{\bf Run Page Maintenance Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{projects/+priv+}			& -  & - & read & - \\
+\TT{projects/PROJECT/+priv+}		& -  & - & read & - \\
+\TT{projects/PROJECT/+block+}		& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+priv+}	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+block+}	& -  & - & read & - \\
+\end{tabular}
 \end{center}
 
 \subsubsection{Run Page File Formats}
@@ -2268,6 +2289,16 @@ See Run Page Transactions Below.
 \TT{accounts/AID/PROBLEM/PROBLEM.optn}  & create  & update & read & - \\
 \TT{projects/PROJECT/PROBLEM/PROBLEM.optn} & -  & -  & read & - \\
 \TT{H/template/template.optn} & -  & -  & read & - \\
+\end{tabular}
+\\\bigskip
+{\bf Option Page Maintenance Files}
+\\[1ex]
+\begin{tabular}{lllll}
+\TT{projects/+priv+}			& -  & - & read & - \\
+\TT{projects/PROJECT/+priv+}		& -  & - & read & - \\
+\TT{projects/PROJECT/+block+}		& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+priv+}	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+block+}	& -  & - & read & - \\
 \end{tabular}
 \end{center}
 
@@ -2422,8 +2453,11 @@ These are made visible by links to the local problem directory.
 \TT{projects/PROJECT/PROBLEM/+changes+} & create  & append & - & - \\
 \TT{projects/PROJECT/PROBLEM/+lock+} & create  & update & read & - \\
 \TT{projects/PROJECT/PROBLEM/+priv+} & -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+block+}	& -  & - & read & - \\
 \TT{projects/PROJECT/+actions+} & create  & append & - & - \\
 \TT{projects/PROJECT/+priv+} & -  & - & read & - \\
+\TT{projects/PROJECT/+block+}		& -  & - & read & - \\
+\TT{projects/+priv+}			& -  & - & read & - \\
 \TT{accounts/AID/+actions+} & create  & append & - & - \\
 \TT{accounts/AID/+lists+}    	& create  & - & read & - \\
 \TT{accounts/AID/+lists+/+favorites+}    	& create  & - & read & - \\
@@ -2657,6 +2691,9 @@ See List Page File Formats \pagref{LIST-PAGE-FILE-FORMATS}.
 \begin{tabular}{lllll}
 \TT{projects/PROJECT/PROBLEM/+priv+}   	& create  & update & read & - \\
 \TT{projects/PROJECT/+priv+}    	& create  & update & read & - \\
+\TT{projects/+priv+}    		& create  & update & read & - \\
+\TT{projects/PROJECT/PROBLEM/+blocked+}	& create  & -      & read & delete \\
+\TT{projects/PROJECT/+blocked+}    	& create  & -      & read & delete \\
 \TT{accounts/AID/+lists+}    		& create  & -	   & read & - \\
 \TT{accounts/AID/+lists+/+favorites+}  	& create  & -	   & read & - \\
 \TT{projects/PROJECT/PROBLEM/+actions+} & create  & append & -    & - \\
@@ -2674,9 +2711,14 @@ See List Page File Formats \pagref{LIST-PAGE-FILE-FORMATS}.
 
 \begin{indpar}
 \begin{itemlist}
-\item[\TT{projects/PROJECT/+priv+}:]
+\item[\TT{projects/+priv+}:]
+\item[\TT{projects/PROJECT/+priv+}:]\vspace*{-1ex}~
 \item[\TT{projects/PROJECT/PROBLEM/+priv+}:]\vspace*{-1ex}~
 \label{PRIV} \\
+See Help Page.
+\item[\TT{projects/PROJECT/+blocked+}:]
+\item[\TT{projects/PROJECT/PROBLEM/+blocked+}:]\vspace*{-1ex}~
+\label{BLOCKED} \\
 See Help Page.
 \item[\TT{accounts/AID/+lists+}:]
 \item[\TT{accounts/AID/+lists+/+favorites+}:]\vspace*{-1ex}~ \\
