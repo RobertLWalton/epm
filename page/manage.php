@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 17 00:39:10 EST 2022
+    // Date:	Thu Feb 17 02:27:53 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -475,9 +475,7 @@
 	 &&
 	 $copy_enabled
 	 &&
-         isset ( $_POST['copy'] )
-	 &&
-         isset ( $_POST['to'] ) )
+         isset ( $_POST['copy'] ) )
     {
         $process_post = false;
 
@@ -485,6 +483,10 @@
 	     ||
 	     ! isset ( $project ) )
 	    ERROR ( "bad \$copy_enabled" );
+
+	if ( ! isset ( $_POST['to'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " copy without `to' argument" );
 
 	$act = $_POST['copy'];
 	if ( ! in_array ( $act, ['','block','noblock',
@@ -526,6 +528,76 @@
 	    }
 	    else
 	        $errors[] = 'copy not yet implemented';
+	}
+    }
+
+    if ( $process_post
+	 &&
+	 $block_enabled
+	 &&
+         isset ( $_POST['block'] ) )
+    {
+        $process_post = false;
+
+	if ( ! isset ( $project ) )
+	    ERROR ( "bad \$block_enabled" );
+
+	$act = $_POST['block'];
+	if ( ! in_array ( $act, ['','submit',
+	                         'cancel'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " block = $act" );
+        if ( $state != ( $act == '' ? 'normal' :
+	                              'block-ask' ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " block state = $state" );
+	$state = 'normal';
+	    // May be changed below.
+
+        if ( $act != 'cancel' )
+	{
+	    if ( ! $rw )
+		$errors[] = "you no longer have"
+		          . " read-write privilege";
+	    elseif ( $act == '' )
+		$state = 'block-ask';
+	    else
+	        $errors[] = 'block not yet implemented';
+	}
+    }
+
+    if ( $process_post
+	 &&
+	 $unblock_enabled
+	 &&
+         isset ( $_POST['unblock'] ) )
+    {
+        $process_post = false;
+
+	if ( ! isset ( $project ) )
+	    ERROR ( "bad \$unblock_enabled" );
+
+	$act = $_POST['unblock'];
+	if ( ! in_array ( $act, ['','yes','no'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " unblock = $act" );
+        if ( $state != ( $act == '' ? 'normal' :
+	                              'unblock-ask' ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " unblock state = $state" );
+	$state = 'normal';
+	    // May be changed below.
+
+        if ( $act != 'no' )
+	{
+	    if ( ! $rw )
+		$errors[] = "you no longer have"
+		          . " read-write privilege";
+	    elseif ( $act == '' )
+		$state = 'unblock-ask';
+	    else
+	        $errors[] =
+		    'unblock not yet implemented';
 	}
     }
 
@@ -719,6 +791,57 @@ EOT;
 	        name='copy' value='cancel'>
 	     or CANCEL copy</button>
 	<br></form></div>
+EOT;
+    }
+    if ( $state == 'block-ask' )
+    {
+	$e = ( isset ( $problem ) ?
+	       " Problem $problem" : "" );
+        echo <<<EOT
+	<div class='warnings'>
+	<form action='manage.php' method='POST'
+	      id='block-post'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden' id='block-act'
+	                     name='block' value=''>
+	<input type='hidden' id='block-file'
+	                     name='file' value=''>
+	<strong>Reason for Blocking$e in Project
+	                   $project: </strong>
+	<pre>   </pre>
+	<button type='button'
+		onclick='BLOCK("submit")'>
+	     Submit</button>
+	<pre>   </pre>
+	<button type='button'
+		onclick='BLOCK("cancel")'>
+	     Cancel</button>
+	<br>
+	<div class='priv'>
+	<pre contenteditable='true'
+	     id='block-contents'>(replace with reason)</pre>
+	</div></form></div>
+EOT;
+    }
+    if ( $state == 'unblock-ask' )
+    {
+	$e = ( isset ( $problem ) ?
+	       " Problem $problem" : "" );
+        echo <<<EOT
+	<div class='warnings'>
+	<form action='manage.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
+	<strong>WARNING: do you really want to UNBLOCK$e
+	                 in Project $project?</strong>
+	<pre>   </pre>
+	<button type='submit'
+	        name='unblock' value='yes'>
+	     YES</button>
+	<pre>   </pre>
+	<button type='submit'
+	        name='unblock' value='no'>
+	     NO</button>
+	</form></div>
 EOT;
     }
 
@@ -1049,6 +1172,16 @@ function UPDATE ( warn )
     warning = document.getElementById ( 'warning' );
     des.value = src.innerText;
     warning.value = warn;
+    form.submit();
+}
+function BLOCK ( action )
+{
+    src = document.getElementById ( 'block-contents' );
+    des = document.getElementById ( 'block-file' );
+    act = document.getElementById ( 'block-act' );
+    form = document.getElementById ( 'block-post' );
+    des.value = src.innerText;
+    act.value = action;
     form.submit();
 }
 </script>
