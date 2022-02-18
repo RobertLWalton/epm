@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 16 06:57:49 EST 2022
+    // Date:	Thu Feb 17 20:49:50 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -423,9 +423,11 @@
     // Return the list of projects that have one of
     // the given privileges, or if $privs = NULL,
     // that have any privilege.  The list is sorted in
-    // natural order.
+    // natural order.  Exclude blocked projects unless
+    // $allow_blocked is true.
     //
-    function read_projects ( $privs = NULL )
+    function read_projects
+        ( $privs = NULL, $allow_blocked = false )
     {
 	global $epm_data, $epm_name_re;
 	$projects = [];
@@ -437,6 +439,11 @@
 	{
 	    if ( ! preg_match
 	               ( $epm_name_re, $project ) )
+	        continue;
+	    if ( ! $allow_blocked
+	         &&
+	         is_readable ("$epm_data/projects/" .
+		              "$project/+blocked+" ) )
 	        continue;
 	    project_priv_map ( $map, $project );
 

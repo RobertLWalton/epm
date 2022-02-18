@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 17 19:49:06 EST 2022
+    // Date:	Thu Feb 17 20:52:06 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -201,8 +201,9 @@
     //
     $list = read_problem_list ( $listname, $warnings );
         // List of selectable problems.
-    $priv_projects = read_projects();
-        // List of selectable projects.
+    $priv_projects = read_projects ( NULL, true );
+        // List of selectable projects.  Blocked
+	// projects are allowed.
     if ( $process_post
 	 &&
 	 $state == 'normal' )
