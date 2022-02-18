@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 17 20:52:06 EST 2022
+    // Date:	Fri Feb 18 05:46:47 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -394,6 +394,9 @@
 	if ( ! $rw )
 	    $errors[] = "you no longer have read-write"
 	              . " privilege";
+	elseif ( $blocked )
+	    $errors[] = "project or problem has" .
+	                " become blocked";
 	elseif ( isset ( $project ) )
 	{
 	    $action_files =
@@ -620,6 +623,8 @@
     elseif ( $state == 'normal'
              &&
 	     $rw
+	     &&
+	     ! $blocked
 	     &&
 	     isset ( $pmap['owner'] )
 	     &&
