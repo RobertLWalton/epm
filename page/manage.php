@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 17 02:27:53 EST 2022
+    // Date:	Thu Feb 17 19:49:06 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -283,16 +283,14 @@
 	{
 	    problem_priv_map
 	        ( $pmap, $project, $problem ); 
-	    $blocked = is_readable
-	        ( "$epm_data/projects/$project/" .
-		  "$problem/+blocked+" );
+	    $blocked = blocked_problem
+	        ( $project, $problem, $warnings );
 	}
 	else
 	{
 	    project_priv_map ( $pmap, $project ); 
-	    $blocked = is_readable
-	        ( "$epm_data/projects/$project/" .
-		  "+blocked+" );
+	    $blocked = blocked_project
+	        ( $project, $warnings );
 	}
     }
     elseif ( ! isset ( $problem ) )
@@ -819,7 +817,8 @@ EOT;
 	<br>
 	<div class='priv'>
 	<pre contenteditable='true'
-	     id='block-contents'>(replace with reason)</pre>
+	     id='block-contents'
+	     >(replace with reason)</pre>
 	</div></form></div>
 EOT;
     }

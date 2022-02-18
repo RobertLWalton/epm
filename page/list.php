@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jan 29 08:35:17 EST 2022
+    // Date:	Thu Feb 17 20:23:27 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -702,8 +702,16 @@ EOT;
 			  . " the same";
 	    else
 	    {
-	    	$names[$J] = $name;
-		$lists[$J] = NULL;
+	        list ( $proj, $prob ) =
+		    explode ( ':', $name );
+		if ( $proj == '-'
+		     ||
+		     ! blocked_project
+		           ( $proj, $errors ) )
+		{
+		    $names[$J] = $name;
+		    $lists[$J] = NULL;
+		}
 	    }
 	}
 	elseif ( ! $rw && $_POST['op'] != 'select' )
