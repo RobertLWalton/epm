@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 18 05:46:47 EST 2022
+    // Date:	Sat Feb 19 10:15:21 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -558,13 +558,50 @@
 
         if ( $act != 'cancel' )
 	{
+
+	    $p = "project $project";
+	    if ( isset ( $problem ) )
+	        $p = "problem $problem in $p";
 	    if ( ! $rw )
 		$errors[] = "you no longer have"
 		          . " read-write privilege";
+	    elseif ( ! isset ( $pmap['block'] )
+	             ||
+		     $pmap['block'] != '+' )
+		$errors[] = "you no longer have"
+		          . " block privilege on"
+			  . " $p";
 	    elseif ( $act == '' )
 		$state = 'block-ask';
 	    else
-	        $errors[] = 'block not yet implemented';
+	    {
+		if ( ! isset ( $_POST['file'] ) )
+		    exit ( "UNACCEPTABLE HTTP POST:" .
+			   " file" );
+		$file = $_POST['file'];
+		$f = "projects/$project";
+		if ( isset ( $problem ) )
+		    $f = "$f/$problem";
+		$f = "$f/+blocked+";
+		if ( file_exists ( "$epm_data/$f" ) )
+		    $errors[] = "$p is" .
+		                " already blocked";
+		elseif ( $file == '' )
+		    $errors[] = "no reason given to" .
+		                " block $p;" .
+		                " block aborted";
+		elseif ( ATOMIC_WRITE ( "$epm_data/$f",
+		                        $file )
+			 === false )
+		    ERROR ( "could not write $f" );
+		elseif ( isset ( $problem ) )
+		    $blocked = blocked_problem
+		        ( $project, $problem,
+			  $warnings );
+		else
+		    $blocked = blocked_project
+		        ( $project, $warnings );
+	    }
 	}
     }
 
@@ -592,14 +629,41 @@
 
         if ( $act != 'no' )
 	{
+	    $p = "project $project";
+	    if ( isset ( $problem ) )
+	        $p = "problem $problem in $p";
 	    if ( ! $rw )
 		$errors[] = "you no longer have"
 		          . " read-write privilege";
+	    elseif ( ! isset ( $pmap['block'] )
+	             ||
+		     $pmap['block'] != '+' )
+		$errors[] = "you no longer have"
+		          . " block privilege on"
+			  . " $p";
 	    elseif ( $act == '' )
 		$state = 'unblock-ask';
 	    else
-	        $errors[] =
-		    'unblock not yet implemented';
+	    {
+		$f = "projects/$project";
+		if ( isset ( $problem ) )
+		    $f = "$f/$problem";
+		$f = "$f/+blocked+";
+		if ( ! file_exists ( "$epm_data/$f" ) )
+		    $errors[] = "$p is" .
+		                " already UNblocked";
+		elseif ( unlink ( "$epm_data/$f" )
+			 === false )
+		    ERROR ( "could not unlink $f" );
+		else
+		{
+		    $warnings[] = '';
+		    $warnings[] =
+		       "$p is now unblocked";
+		    $blocked = false;
+		}
+
+	    }
 	}
     }
 
@@ -1026,7 +1090,7 @@ EOT;
 	<form method='POST' action='manage.php'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden' name='block' value=''>
-	<button type='submit'>$m</button>
+	<button $disabled type='submit'>$m</button>
 	</form>
 EOT;
     }
@@ -1042,7 +1106,7 @@ EOT;
 	<form method='POST' action='manage.php'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden' name='unblock' value=''>
-	<button type='submit'>$m</button>
+	<button $disabled type='submit'>$m</button>
 	</form>
 EOT;
     }
