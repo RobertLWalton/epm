@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Feb 19 10:15:21 EST 2022
+    // Date:	Sun Feb 20 02:09:12 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -39,6 +39,10 @@
     //			  or project, and whether or
     //			  not he wants to block the
     //			  source of the copy)
+    //		update-ask (ask the user if he really
+    //			    wants to update files in
+    //			    an existing copy of a
+    //			    problem or project)
     //		block-ask (ask the user if he really
     //			   wants to block the problem
     //			   or project and if so what
@@ -61,7 +65,8 @@
     //	   $copy_enabled = & $data['COPY-ENABLED']
     //		true if user was presented with copy to
     //		project option or copy warning by last
-    //		response; also true in copy-ask state
+    //		response; also true in copy-ask and
+    //		update-ask states
     //
     //	   $block_enabled = & $data['BLOCK-ENABLED']
     //		true if user was presented with problem
@@ -98,8 +103,11 @@
     //		Download selected project or problem
     //		if privileges allow.
     //
-    //	    copy={,block,noblock,cancel} to=PROJECT
-    //		Copy PROJECT PROBLEM to NEW_PROJECT
+    //	    copy={,block,noblock,cancel,update}
+    //			to=PROJECT
+    //		Copy PROJECT PROBLEM to NEW_PROJECT or
+    //		update NEW_PROJECT PROBLEM from
+    //		PROJECT PROBLEM
     //
     //	    block={,cancel,submit} file=FILE-CONTENTS
     //		Create block file for selected project
@@ -491,24 +499,35 @@
 	           " copy without `to' argument" );
 
 	$act = $_POST['copy'];
-	if ( ! in_array ( $act, ['','block','noblock',
-	                         'cancel'] ) )
+	if ( $state == 'normal' )
+	    $ok = ( $act == '' );
+	elseif ( $state == 'copy-ask' )
+	    $ok = in_array ( $act, ['block',
+	                            'noblock',
+				    'cancel'] );
+	elseif ( $state == 'update-ask' )
+	    $ok = in_array ( $act, ['update',
+				    'cancel'] );
+	else
+	    $ok = false;
+	if ( ! $ok )
 	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " copy = $act" );
-        if ( $state != ( $act == '' ? 'normal' :
-	                              'copy-ask' ) )
-	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " copy state = $state" );
-	$state = 'normal';
-	    // May be changed below.
-
+		   " copy=$act state = $state" );
 	$proj = $_POST['to'];
-        if ( $proj != '' && $act != 'cancel' )
+	if ( $proj == '' )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " empty `to' argument" );
+        if ( $act == 'cancel' )
+	    $state = 'normal';
+        else
 	{
 	    // Note: $copy_to is NULL at this point.
 	    //
 	    project_priv_map ( $projmap, $proj ); 
-	    if ( blocked_project ( $proj, $errors ) )
+	    if ( $proj == $project )
+	        $errors[] = "you cannot copy $problem" .
+		            " in $project to itself";
+	    elseif ( blocked_project ( $proj, $errors ) )
 	        $errors[] = "project $proj has just" .
 		            " been blocked";
 	    elseif ( ! isset ( $projmap['copy-to'] )
@@ -520,12 +539,13 @@
 	    elseif ( ! $rw )
 		$errors[] = "you no longer have"
 		          . " read-write privilege";
-	    elseif ( $proj == $project )
-		$errors[] = "problem is aleady in $proj"
-		          . " project";
 	    elseif ( $act == '' )
 	    {
-		$state = 'copy-ask';
+		$f = "projects/$proj/$problem";
+		if ( is_dir ( "$epm_data/$f" ) )
+		    $state = 'update-ask';
+		else
+		    $state = 'copy-ask';
 	        $copy_to = $proj;
 	    }
 	    else
@@ -730,6 +750,8 @@
     $copy_enabled = false;
     if ( $state == 'copy-ask' )
         $copy_enabled = true;
+    elseif ( $state == 'update-ask' )
+        $copy_enabled = true;
     elseif ( $state == 'normal'
              &&
 	     $rw
@@ -841,7 +863,7 @@ EOT;
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
 	       name='to' value='$copy_to'>
-	<strong>WARNING: do you really want to copy
+	<strong>Do you really want to copy
 	                 $problem from $project
 			 to $copy_to and</strong>
 	<br>
@@ -861,6 +883,30 @@ EOT;
 	<br></form></div>
 EOT;
     }
+    if ( $state == 'copy-ask' )
+    {
+        echo <<<EOT
+	<div class='warnings'>
+	<form action='manage.php' method='POST'>
+	<input type='hidden' name='id' value='$ID'>
+	<input type='hidden'
+	       name='to' value='$copy_to'>
+	<strong>Do you really want to update
+	        $problem in $copy_to with any
+		<br>
+		more recent files from $problem
+		in $project?</strong>
+	<br>
+	<button type='submit'
+	        name='copy' value='update'>
+	     YES</button>
+	<pre>   </pre>
+	<button type='submit'
+	        name='copy' value='cancel'>
+	     NO</button>
+	<br></form></div>
+EOT;
+    }
     if ( $state == 'block-ask' )
     {
 	$e = ( isset ( $problem ) ?
@@ -874,7 +920,7 @@ EOT;
 	                     name='block' value=''>
 	<input type='hidden' id='block-file'
 	                     name='file' value=''>
-	<strong>Reason for Blocking$e in Project
+	<strong>Your reason for Blocking$e in Project
 	                   $project: </strong>
 	<pre>   </pre>
 	<button type='button'
@@ -900,8 +946,8 @@ EOT;
 	<div class='warnings'>
 	<form action='manage.php' method='POST'>
 	<input type='hidden' name='id' value='$ID'>
-	<strong>WARNING: do you really want to UNBLOCK$e
-	                 in Project $project?</strong>
+	<strong>Do you really want to UNBLOCK$e
+	           in Project $project?</strong>
 	<pre>   </pre>
 	<button type='submit'
 	        name='unblock' value='yes'>
