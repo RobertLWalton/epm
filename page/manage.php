@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb 20 02:09:12 EST 2022
+    // Date:	Sun Feb 20 03:48:19 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -864,8 +864,9 @@ EOT;
 	<input type='hidden'
 	       name='to' value='$copy_to'>
 	<strong>Do you really want to copy
-	                 $problem from $project
-			 to $copy_to and</strong>
+		problem $problem from project $project
+		to problem $problem in project
+		$copy_to and</strong>
 	<br>
 	<button type='submit'
 	        name='copy' value='block'>
@@ -883,7 +884,7 @@ EOT;
 	<br></form></div>
 EOT;
     }
-    if ( $state == 'copy-ask' )
+    if ( $state == 'update-ask' )
     {
         echo <<<EOT
 	<div class='warnings'>
@@ -892,10 +893,10 @@ EOT;
 	<input type='hidden'
 	       name='to' value='$copy_to'>
 	<strong>Do you really want to update
-	        $problem in $copy_to with any
+	        problem $problem in project $copy_to
 		<br>
-		more recent files from $problem
-		in $project?</strong>
+		with more recent files from problem
+		$problem in project $project?</strong>
 	<br>
 	<button type='submit'
 	        name='copy' value='update'>
