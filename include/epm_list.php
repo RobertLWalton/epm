@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 17 20:49:50 EST 2022
+    // Date:	Mon Feb 21 07:49:32 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1343,6 +1343,137 @@
 	    </button>
 EOT;
 	}
+	return $r;
+    }
+
+    // Given the name of a file, directory, or link,
+    // remove any beginning $epm_data and then any
+    // beginning /'s  and ./'s so the name can be
+    // printed without revealing $epm_data.  It
+    // is possible for '' to be input or output.
+    //
+    function scrub_name ( $name )
+    {
+        global $epm_data;
+
+	$len = strlen ( $epm_data );
+	if ( substr ( $name, 0, $len ) == $epm_data )
+	    $name = substr ( $name, $len );
+
+	while ( strlen ( $name ) > 0 )
+	{
+	    if ( $name[0] == '/' )
+		$name = substr ( $name, 1 );
+	    elseif ( substr ( $name, 0, 2 ) == './' )
+		$name = substr ( $name, 2 );
+	    else
+	        break;
+	}
+
+	return $name;
+    }
+
+    // Given the output of an rsync run, as a list of
+    // lines (returned by exec), return this output as
+    // html that is ready to be included in a <pre>
+    // block.  Lines are ended with \n.  Lines are
+    // limited to 80 characters (unless names are
+    // very long).  Names are passed through scrub_name.
+    // Result is passed through htmlspecialchars.
+    //
+    function rsync_to_html
+        ( $rsync_out, $dryrun = false )
+    {
+    	$deletes = [];
+	$links = [];
+	$creates = [];
+	$copies = [];
+	$r = '';
+	foreach ( $rsync_out as $line )
+	{
+	    $list = explode ( ' ', $line );
+	    $length = count ( $list );
+	    if ( $length == 1 )
+	    {
+	        $name = scrub_name ( $list[0] );
+		if ( $name != '' )
+		    $copies[] = $name;
+	    }
+	    elseif ( $length == 2
+	             &&
+		     $list[0] == 'deleting' )
+	    {
+	        $name = scrub_name ( $list[1] );
+		if ( $name != '' )
+		    $deletes[] = $name;
+	    }
+	    elseif ( $length == 3
+	             &&
+		     $list[1] == '->' )
+	    {
+	        $name1 = scrub_name ( $list[0] );
+	        $name2 = scrub_name ( $list[2] );
+		if ( $name1 != '' && $name2 != '' )
+		    $links[] = [ $name1, $name2 ];
+	    }
+	    elseif ( $length == 3
+	             &&
+		     $list[0] == 'created'
+		     &&
+		     $list[1] == 'directory' )
+	    {
+	        $name = scrub_name ( $list[2] );
+		if ( $name != '' )
+		    $creates[] = $name;
+	    }
+	}
+
+	$to_be = ( $dryrun ? ' to be' : '' );
+
+	if ( count ( $deletes ) > 0 )
+	{
+	    $r .= "<strong>Files$to_be" .
+	          " deleted:</strong><br><pre>";
+	    foreach ( $deletes as $name )
+	        $r .= "  " .
+		      htmlspecialchars ( $name ) . "\n";
+	    $r .= "</pre>";
+	}
+
+	if ( count ( $creates ) > 0 )
+	{
+	    $r .= "<strong>Directories$to_be" .
+	          " created:</strong><br><pre>";
+	    foreach ( $creates as $name )
+	        $r .= "  " .
+		      htmlspecialchars ( $name ) . "\n";
+	    $r .= "</pre>";
+	}
+
+	if ( count ( $links ) > 0 )
+	{
+	    $r .= "<strong>Links$to_be" .
+	          " (re)created:</strong><br><pre>";
+	    foreach ( $links as $e )
+	    {
+	        list ( $src, $des ) = $e;
+	        $r .= "  " .
+		      htmlspecialchars
+		          ( "  $src -> $des" ) . "\n";
+	    }
+	    $r .= "</pre>";
+	}
+
+	if ( count ( $copies ) > 0 )
+	{
+	    $r .= "<strong>Files$to_be" .
+	          " copied:</strong><br><pre>";
+	    foreach ( $copies as $name )
+	        $r .= "  " .
+		      htmlspecialchars ( $name ) . "\n";
+	    $r .= "</pre>";
+	}
+
 	return $r;
     }
 

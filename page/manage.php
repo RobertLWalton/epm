@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 21 02:10:50 EST 2022
+    // Date:	Mon Feb 21 07:50:16 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -571,11 +571,11 @@
 			$state = 'copy-ask';
 		    $copy_to = $proj;
 		    $copy_out =
-		        "Command to be executed:" .
-			"$pubcom<br><br>" .
-			"Result of dry run:<br>" .
-		        implode ( "<br>", $copy_out ) .
-			"<br>";
+		        "<strong>" .
+			"Command to be executed:" .
+			"</strong> $pubcom<br><br>" .
+		        rsync_to_html
+			    ( $copy_out, true );
 		}
 	    }
 	    else
