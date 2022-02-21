@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb 20 03:48:19 EST 2022
+    // Date:	Mon Feb 21 02:10:50 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -517,13 +517,18 @@
 	if ( $proj == '' )
 	    exit ( "UNACCEPTABLE HTTP POST:" .
 	           " empty `to' argument" );
-        if ( $act == 'cancel' )
-	    $state = 'normal';
-        else
+	$state = 'normal';
+	    // State if cancel or errors.
+        if ( $act != 'cancel' )
 	{
 	    // Note: $copy_to is NULL at this point.
 	    //
+	    $src = "projects/$project/$problem/";
+	    $des = "projects/$proj/$problem/";
 	    project_priv_map ( $projmap, $proj ); 
+	    $pubargs = "-av --delete $src $des";
+	    $args = "2>&1 -av --delete $epm_data/$src"
+	          . " $epm_data/$des";
 	    if ( $proj == $project )
 	        $errors[] = "you cannot copy $problem" .
 		            " in $project to itself";
@@ -536,17 +541,42 @@
 		$errors[] = "you have lost copy-to" .
 		            " privilege for project" .
 			    " $proj";
+	    elseif ( ! isset ( $pmap['copy-from'] )
+	             ||
+		     $pmap['copy-from'] != '+' )
+		$errors[] = "you have lost copy-to" .
+		            " privilege for problem" .
+			    " $problem of project" .
+			    " $project";
 	    elseif ( ! $rw )
 		$errors[] = "you no longer have"
 		          . " read-write privilege";
 	    elseif ( $act == '' )
 	    {
-		$f = "projects/$proj/$problem";
-		if ( is_dir ( "$epm_data/$f" ) )
-		    $state = 'update-ask';
+		$com = "rsync -n $args";
+		$pubcom = "rsync $pubargs";
+		$copy_out = NULL;
+		exec ( $com, $copy_out, $r );
+		if ( $r != 0 )
+		{
+		    $errors[] = $pubcom;
+		    $errors[] =
+		        "failed with exit code $r";
+		}
 		else
-		    $state = 'copy-ask';
-	        $copy_to = $proj;
+		{
+		    if ( is_dir ( "$epm_data/$des" ) )
+			$state = 'update-ask';
+		    else
+			$state = 'copy-ask';
+		    $copy_to = $proj;
+		    $copy_out =
+		        "Command to be executed:" .
+			"$pubcom<br><br>" .
+			"Result of dry run:<br>" .
+		        implode ( "<br>", $copy_out ) .
+			"<br>";
+		}
 	    }
 	    else
 	        $errors[] = 'copy not yet implemented';
@@ -859,6 +889,9 @@ EOT;
     {
         echo <<<EOT
 	<div class='warnings'>
+	$copy_out
+	<br>
+	<br>
 	<form action='manage.php' method='POST'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
