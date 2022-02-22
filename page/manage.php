@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 21 07:50:16 EST 2022
+    // Date:	Tue Feb 22 03:16:01 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -525,10 +525,21 @@
 	    //
 	    $src = "projects/$project/$problem/";
 	    $des = "projects/$proj/$problem/";
+	    $is_update = is_dir ( "$epm_data/$des" );
 	    project_priv_map ( $projmap, $proj ); 
-	    $pubargs = "-av --delete $src $des";
-	    $args = "2>&1 -av --delete $epm_data/$src"
+
+	    $a = "-av --delete";
+	    if ( $is_update )
+	        $a .= " --include=+sources+" .
+		      " --exclude=+*+";
+	    else
+	        $a .= " --exclude=+blocked+" .
+		      " --exclude=+priv+";
+
+	    $pubargs = "$a $src $des";
+	    $args = "2>&1 $a $epm_data/$src"
 	          . " $epm_data/$des";
+
 	    if ( $proj == $project )
 	        $errors[] = "you cannot copy $problem" .
 		            " in $project to itself";
@@ -565,7 +576,7 @@
 		}
 		else
 		{
-		    if ( is_dir ( "$epm_data/$des" ) )
+		    if ( $is_update )
 			$state = 'update-ask';
 		    else
 			$state = 'copy-ask';
@@ -966,9 +977,10 @@ EOT;
 	     Cancel</button>
 	<br>
 	<div class='priv'>
-	<pre contenteditable='true'
-	     id='block-contents'
-	     >(replace with reason)</pre>
+	<textarea contenteditable='true'
+	          id='block-contents'
+	          placeholder='(replace with reason)'
+	     ></textarea>
 	</div></form></div>
 EOT;
     }
@@ -1329,7 +1341,7 @@ function BLOCK ( action )
     des = document.getElementById ( 'block-file' );
     act = document.getElementById ( 'block-act' );
     form = document.getElementById ( 'block-post' );
-    des.value = src.innerText;
+    des.value = src.value;
     act.value = action;
     form.submit();
 }
