@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 21 07:49:32 EST 2022
+    // Date:	Mon Feb 21 19:32:28 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1373,6 +1373,84 @@ EOT;
 	return $name;
     }
 
+    // Given a list of file names, format these for the
+    // rsync_to_html program, returning the formatted
+    // string which contains a sequence of \n-ended
+    // lines after it is run through htmlspecialchars.
+    //
+    function format_file_list ( $list )
+    {
+	$r = '';
+	$previous = [];
+	$prevlen = 0;
+	$line = '';
+	foreach ( $list as $name )
+	{
+	    $current = explode ( '/', $name );
+	    $len = count ( $current );
+	    $i = 0;
+	    $j = 0;
+	    while ( $i < $len )
+	    {
+		if ( $current[$i] != '' )
+		{
+		    if ( $i < $len - 1 )
+			$current[$i] .= '/';
+		    $current[$j] = $current[$i];
+		    $j = $j + 1;
+		}
+		$i = $i + 1;
+	    }
+	    $len = $j;
+
+	    $indent = "  ";
+	    $i = 0;
+	    while( $i < $len
+	           &&
+	           $i < $prevlen
+		   &&
+		   $current[$i] == $previous[$i] )
+	    {
+		$indent .= "  ";
+		$i = $i + 1;
+	    }
+
+	    if ( $i == $len ) continue;
+
+	    if ( $len == $prevlen
+	         &&
+		 $i + 1 == $len
+		 &&
+		 $line != ''
+		 &&
+		 $current[$i][-1] != '/'
+		 &&
+		   strlen ( $line )
+		 + strlen ( $current[$i] )
+		 < 80 )
+	    {
+	        $line .= " $current[$i]";
+	    }
+	    else
+	    {
+		while ( $i < $len )
+		{
+		    if ( $line != '' )
+			$r .= "$line\n";
+		    $line = "$indent$current[$i]";
+		    $indent .= "  ";
+		    $i = $i + 1;
+		}
+	    }
+	    $previous = $current;
+	    $prevlen = $len;
+	}
+	if ( $line != '' )
+	    $r .= "$line\n";
+
+	return htmlspecialchars ( $r );
+    }
+
     // Given the output of an rsync run, as a list of
     // lines (returned by exec), return this output as
     // html that is ready to be included in a <pre>
@@ -1434,9 +1512,7 @@ EOT;
 	{
 	    $r .= "<strong>Files$to_be" .
 	          " deleted:</strong><br><pre>";
-	    foreach ( $deletes as $name )
-	        $r .= "  " .
-		      htmlspecialchars ( $name ) . "\n";
+	    $r .= format_file_list ( $deletes );
 	    $r .= "</pre>";
 	}
 
@@ -1459,7 +1535,7 @@ EOT;
 	        list ( $src, $des ) = $e;
 	        $r .= "  " .
 		      htmlspecialchars
-		          ( "  $src -> $des" ) . "\n";
+		          ( "$src -> $des" ) . "\n";
 	    }
 	    $r .= "</pre>";
 	}
@@ -1468,9 +1544,7 @@ EOT;
 	{
 	    $r .= "<strong>Files$to_be" .
 	          " copied:</strong><br><pre>";
-	    foreach ( $copies as $name )
-	        $r .= "  " .
-		      htmlspecialchars ( $name ) . "\n";
+	    $r .= format_file_list ( $copies );
 	    $r .= "</pre>";
 	}
 
