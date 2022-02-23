@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 23 10:50:53 EST 2022
+    // Date:	Wed Feb 23 13:14:58 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -156,6 +156,10 @@
     $notice = NULL;
         // If not NULL, output after errors and warnings
 	// as <div class='notice'>$notice</div>.
+    $action = NULL;
+        // If not NULL, written as an action into each
+	// member of $action_files.
+    $action_files = [ "accounts/$aid/+actions+" ];
     			
     $edited_contents = NULL;
 	// If not NULL, use to refresh edited version
@@ -347,8 +351,14 @@
 			   " file" );
 		$file = $_POST['file'];
 		$f = "projects/$project";
+		$action_files[] = "$f/+actions+";
+		$n = "$project -";
 		if ( isset ( $problem ) )
+		{
 		    $f = "$f/$problem";
+		    $action_files[] = "$f/+actions+";
+		    $n = "$project $problem";
+		}
 		$f = "$f/+blocked+";
 		if ( file_exists ( "$epm_data/$f" ) )
 		    $errors[] = "$p is" .
@@ -361,6 +371,17 @@
 		                        $file )
 			 === false )
 		    ERROR ( "could not write $f" );
+		else
+		{
+		    $time = @filemtime
+			( "$epm_data/$f" );
+		    if ( $time === false )
+			ERROR ( "cannot stat $f" );
+		    $time = strftime
+			( $epm_time_format, $time );
+		    $action = "$time $aid block" .
+		              " $n" . PHP_EOL;
+		}
 	    }
 	}
     }
@@ -406,8 +427,14 @@
 	    else
 	    {
 		$f = "projects/$project";
+		$action_files[] = "$f/+actions+";
+		$n = "$project -";
 		if ( isset ( $problem ) )
+		{
 		    $f = "$f/$problem";
+		    $action_files[] = "$f/+actions+";
+		    $n = "$project $problem";
+		}
 		$f = "$f/+blocked+";
 		if ( ! file_exists ( "$epm_data/$f" ) )
 		    $errors[] = "$p is" .
@@ -415,6 +442,13 @@
 		elseif ( unlink ( "$epm_data/$f" )
 			 === false )
 		    ERROR ( "could not unlink $f" );
+		else
+		{
+		    $time = strftime
+			( $epm_time_format );
+		    $action = "$time $aid unblock" .
+		              " $n" . PHP_EOL;
+		}
 	    }
 	}
     }
@@ -534,8 +568,8 @@
 	                " become blocked";
 	elseif ( isset ( $project ) )
 	{
-	    $action_files =
-		[ "/projects/$project/+actions+" ];
+	    $action_files[] =
+		"/projects/$project/+actions+";
 	    if ( isset ( $problem ) )
 	    {
 		check_problem_priv
@@ -564,8 +598,7 @@
 		  $edited_contents, $errors );
 	    $f = "/projects/+priv+";
 	    $n = "- -";
-	    $action_files =
-		[ "/projects/+actions+" ];
+	    $action_files[] = "/projects/+actions+";
 	}
 
 	if ( count ( $errors ) == 0 && $warn != 'no' )
@@ -591,17 +624,6 @@
 		    ( $epm_time_format, $time );
 		$action = "$time $aid update-priv $n"
 			. PHP_EOL;
-
-		$action_files[] =
-		    "accounts/$aid/+actions+";
-		foreach ( $action_files as $f )
-		{
-		    $r = @file_put_contents
-			( "$epm_data/$f", $action,
-			  FILE_APPEND );
-		    if ( $r === false )
-			ERROR ( "cannot write $f" );
-		}
 	    }
 	    else
 		$state = 'owner-warn';
@@ -670,7 +692,8 @@
 	    if ( $proj == $project )
 	        $errors[] = "you cannot copy $problem" .
 		            " in $project to itself";
-	    elseif ( blocked_project ( $proj, $errors ) )
+	    elseif ( blocked_project
+	                 ( $proj, $errors ) )
 	        $errors[] = "project $proj has just" .
 		            " been blocked";
 	    elseif ( ! isset ( $projmap['copy-to'] )
@@ -723,6 +746,19 @@
 
     if ( $process_post )
 	exit ( 'UNACCEPTABLE HTTP POST' );
+
+
+    if ( isset ( $action ) )
+    {
+	foreach ( $action_files as $f )
+	{
+	    $r = @file_put_contents
+		( "$epm_data/$f", $action,
+		  FILE_APPEND );
+	    if ( $r === false )
+		ERROR ( "cannot write $f" );
+	}
+    }
 
     $download_enabled =
         ( $state == 'normal'
