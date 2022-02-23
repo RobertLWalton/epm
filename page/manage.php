@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Feb 22 03:16:01 EST 2022
+    // Date:	Wed Feb 23 10:50:53 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -152,6 +152,10 @@
     $warnings = [];  // Warning messages to be shown.
     $process_post = ( $epm_method == 'POST' );
         // True if POST that has not yet been processed.
+
+    $notice = NULL;
+        // If not NULL, output after errors and warnings
+	// as <div class='notice'>$notice</div>.
     			
     $edited_contents = NULL;
 	// If not NULL, use to refresh edited version
@@ -285,25 +289,148 @@
         // Privileges for selected problem or project
 	// if $project is set or root if neither
 	// $project or $problem is set.
+    if ( isset ( $project ) )
+    {
+        if ( isset ( $problem ) )
+	    problem_priv_map
+	        ( $pmap, $project, $problem ); 
+	else
+	    project_priv_map ( $pmap, $project ); 
+    }
+    elseif ( ! isset ( $problem ) )
+        root_priv_map ( $pmap );
+
+    if ( $process_post
+	 &&
+	 $block_enabled
+	 &&
+         isset ( $_POST['block'] ) )
+    {
+        $process_post = false;
+
+	if ( ! isset ( $project ) )
+	    ERROR ( "bad \$block_enabled" );
+
+	$act = $_POST['block'];
+	if ( ! in_array ( $act, ['','submit',
+	                         'cancel'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " block = $act" );
+        if ( $state != ( $act == '' ? 'normal' :
+	                              'block-ask' ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " block state = $state" );
+	$state = 'normal';
+	    // May be changed below.
+
+        if ( $act != 'cancel' )
+	{
+
+	    $p = "project $project";
+	    if ( isset ( $problem ) )
+	        $p = "problem $problem in $p";
+	    if ( ! $rw )
+		$errors[] = "you no longer have"
+		          . " read-write privilege";
+	    elseif ( ! isset ( $pmap['block'] )
+	             ||
+		     $pmap['block'] != '+' )
+		$errors[] = "you no longer have"
+		          . " block privilege on"
+			  . " $p";
+	    elseif ( $act == '' )
+		$state = 'block-ask';
+	    else
+	    {
+		if ( ! isset ( $_POST['file'] ) )
+		    exit ( "UNACCEPTABLE HTTP POST:" .
+			   " file" );
+		$file = $_POST['file'];
+		$f = "projects/$project";
+		if ( isset ( $problem ) )
+		    $f = "$f/$problem";
+		$f = "$f/+blocked+";
+		if ( file_exists ( "$epm_data/$f" ) )
+		    $errors[] = "$p is" .
+		                " already blocked";
+		elseif ( $file == '' )
+		    $errors[] = "no reason given to" .
+		                " block $p;" .
+		                " block aborted";
+		elseif ( ATOMIC_WRITE ( "$epm_data/$f",
+		                        $file )
+			 === false )
+		    ERROR ( "could not write $f" );
+	    }
+	}
+    }
+
+    if ( $process_post
+	 &&
+	 $unblock_enabled
+	 &&
+         isset ( $_POST['unblock'] ) )
+    {
+        $process_post = false;
+
+	if ( ! isset ( $project ) )
+	    ERROR ( "bad \$unblock_enabled" );
+
+	$act = $_POST['unblock'];
+	if ( ! in_array ( $act, ['','yes','no'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " unblock = $act" );
+        if ( $state != ( $act == '' ? 'normal' :
+	                              'unblock-ask' ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " unblock state = $state" );
+	$state = 'normal';
+	    // May be changed below.
+
+        if ( $act != 'no' )
+	{
+	    $p = "project $project";
+	    if ( isset ( $problem ) )
+	        $p = "problem $problem in $p";
+	    if ( ! $rw )
+		$errors[] = "you no longer have"
+		          . " read-write privilege";
+	    elseif ( ! isset ( $pmap['block'] )
+	             ||
+		     $pmap['block'] != '+' )
+		$errors[] = "you no longer have"
+		          . " block privilege on"
+			  . " $p";
+	    elseif ( $act == '' )
+		$state = 'unblock-ask';
+	    else
+	    {
+		$f = "projects/$project";
+		if ( isset ( $problem ) )
+		    $f = "$f/$problem";
+		$f = "$f/+blocked+";
+		if ( ! file_exists ( "$epm_data/$f" ) )
+		    $errors[] = "$p is" .
+		                " already UNblocked";
+		elseif ( unlink ( "$epm_data/$f" )
+			 === false )
+		    ERROR ( "could not unlink $f" );
+	    }
+	}
+    }
+
+    // Set after processing block/unblock POST.
+    //
     $blocked = false;
     if ( isset ( $project ) )
     {
         if ( isset ( $problem ) )
-	{
-	    problem_priv_map
-	        ( $pmap, $project, $problem ); 
 	    $blocked = blocked_problem
 	        ( $project, $problem, $warnings );
-	}
 	else
-	{
-	    project_priv_map ( $pmap, $project ); 
 	    $blocked = blocked_project
 	        ( $project, $warnings );
-	}
     }
-    elseif ( ! isset ( $problem ) )
-        root_priv_map ( $pmap );
 
     if ( $process_post
          &&
@@ -581,7 +708,7 @@
 		    else
 			$state = 'copy-ask';
 		    $copy_to = $proj;
-		    $copy_out =
+		    $notice =
 		        "<strong>" .
 			"Command to be executed:" .
 			"</strong> $pubcom<br><br>" .
@@ -594,139 +721,8 @@
 	}
     }
 
-    if ( $process_post
-	 &&
-	 $block_enabled
-	 &&
-         isset ( $_POST['block'] ) )
-    {
-        $process_post = false;
-
-	if ( ! isset ( $project ) )
-	    ERROR ( "bad \$block_enabled" );
-
-	$act = $_POST['block'];
-	if ( ! in_array ( $act, ['','submit',
-	                         'cancel'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " block = $act" );
-        if ( $state != ( $act == '' ? 'normal' :
-	                              'block-ask' ) )
-	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " block state = $state" );
-	$state = 'normal';
-	    // May be changed below.
-
-        if ( $act != 'cancel' )
-	{
-
-	    $p = "project $project";
-	    if ( isset ( $problem ) )
-	        $p = "problem $problem in $p";
-	    if ( ! $rw )
-		$errors[] = "you no longer have"
-		          . " read-write privilege";
-	    elseif ( ! isset ( $pmap['block'] )
-	             ||
-		     $pmap['block'] != '+' )
-		$errors[] = "you no longer have"
-		          . " block privilege on"
-			  . " $p";
-	    elseif ( $act == '' )
-		$state = 'block-ask';
-	    else
-	    {
-		if ( ! isset ( $_POST['file'] ) )
-		    exit ( "UNACCEPTABLE HTTP POST:" .
-			   " file" );
-		$file = $_POST['file'];
-		$f = "projects/$project";
-		if ( isset ( $problem ) )
-		    $f = "$f/$problem";
-		$f = "$f/+blocked+";
-		if ( file_exists ( "$epm_data/$f" ) )
-		    $errors[] = "$p is" .
-		                " already blocked";
-		elseif ( $file == '' )
-		    $errors[] = "no reason given to" .
-		                " block $p;" .
-		                " block aborted";
-		elseif ( ATOMIC_WRITE ( "$epm_data/$f",
-		                        $file )
-			 === false )
-		    ERROR ( "could not write $f" );
-		elseif ( isset ( $problem ) )
-		    $blocked = blocked_problem
-		        ( $project, $problem,
-			  $warnings );
-		else
-		    $blocked = blocked_project
-		        ( $project, $warnings );
-	    }
-	}
-    }
-
-    if ( $process_post
-	 &&
-	 $unblock_enabled
-	 &&
-         isset ( $_POST['unblock'] ) )
-    {
-        $process_post = false;
-
-	if ( ! isset ( $project ) )
-	    ERROR ( "bad \$unblock_enabled" );
-
-	$act = $_POST['unblock'];
-	if ( ! in_array ( $act, ['','yes','no'] ) )
-	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " unblock = $act" );
-        if ( $state != ( $act == '' ? 'normal' :
-	                              'unblock-ask' ) )
-	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " unblock state = $state" );
-	$state = 'normal';
-	    // May be changed below.
-
-        if ( $act != 'no' )
-	{
-	    $p = "project $project";
-	    if ( isset ( $problem ) )
-	        $p = "problem $problem in $p";
-	    if ( ! $rw )
-		$errors[] = "you no longer have"
-		          . " read-write privilege";
-	    elseif ( ! isset ( $pmap['block'] )
-	             ||
-		     $pmap['block'] != '+' )
-		$errors[] = "you no longer have"
-		          . " block privilege on"
-			  . " $p";
-	    elseif ( $act == '' )
-		$state = 'unblock-ask';
-	    else
-	    {
-		$f = "projects/$project";
-		if ( isset ( $problem ) )
-		    $f = "$f/$problem";
-		$f = "$f/+blocked+";
-		if ( ! file_exists ( "$epm_data/$f" ) )
-		    $errors[] = "$p is" .
-		                " already UNblocked";
-		elseif ( unlink ( "$epm_data/$f" )
-			 === false )
-		    ERROR ( "could not unlink $f" );
-		else
-		{
-		    $warnings[] = '';
-		    $warnings[] =
-		       "$p is now unblocked";
-		    $blocked = false;
-		}
-
-	    }
-	}
-    }
+    if ( $process_post )
+	exit ( 'UNACCEPTABLE HTTP POST' );
 
     $download_enabled =
         ( $state == 'normal'
@@ -813,9 +809,6 @@
 	if ( count ( $copy_to_projects ) > 0 )
 	    $copy_enabled = true;
     }
-
-    if ( $process_post )
-	exit ( 'UNACCEPTABLE HTTP POST' );
 ?>
 
 <html>
@@ -877,6 +870,9 @@ div.priv pre {
 	    echo "<pre>$e</pre><br>";
 	echo "<br></div></div>";
     }
+    if ( isset ( $notice ) )
+        echo "<div class='notice'>$notice</div>";
+
     if ( $state == 'owner-warn' )
     {
         echo <<<EOT
@@ -900,9 +896,6 @@ EOT;
     {
         echo <<<EOT
 	<div class='warnings'>
-	$copy_out
-	<br>
-	<br>
 	<form action='manage.php' method='POST'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
