@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 23 13:14:58 EST 2022
+    // Date:	Wed Feb 23 14:13:08 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -493,31 +493,47 @@
 	{
 	    $d = "accounts/$aid/$problem";
 	    $n = $problem;
+	    $N = "- $problem";
 	}
 	elseif ( ! isset ( $problem ) )
 	{
 	    $d = "projects/$project";
 	    $n = $project;
+	    $action_files[] = "$d/+actions+";
+	    $N = "$project -";
 	}
 	else
 	{
 	    $d = "projects/$project/$problem";
 	    $n = "$project-$problem";
+	    $action_files[] =
+	        "projects/$project/+actions+";
+	    $action_files[] = "$d/+actions+";
+	    $N = "$project $problem";
 	}
 
 	if ( isset ( $d ) )
 	{
-	    $t = "$epm_data/accounts/$aid"
+	    $t = "accounts/$aid"
 	       . "/+download-$uid+";
 	    $c = "cd $epm_data/$d;"
-	       . "rm -f $t;"
-	       . "tar zcf $t .;";
+	       . "rm -f $epm_data/$t;"
+	       . "tar zcf $epm_data/$t .;";
 	    exec ( $c, $forget, $r );
 	    if ( $r != 0 )
 		$errors[] =
 		    "could not create $n.tgz";
 	    else
+	    {
 		$download = "$n.tgz";
+		$time = @filemtime ( "$epm_data/$t" );
+		if ( $time === false )
+		    ERROR ( "cannot stat $t" );
+		$time = strftime
+		    ( $epm_time_format, $time );
+		$action = "$time $aid download $N"
+			. PHP_EOL;
+	    }
 	}
     }
 
