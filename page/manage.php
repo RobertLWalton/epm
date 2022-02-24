@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 23 14:13:08 EST 2022
+    // Date:	Thu Feb 24 02:13:55 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -654,9 +654,7 @@
     {
         $process_post = false;
 
-	if ( ! isset ( $problem )
-	     ||
-	     ! isset ( $project ) )
+	if ( ! isset ( $project ) )
 	    ERROR ( "bad \$copy_enabled" );
 
 	if ( ! isset ( $_POST['to'] ) )
@@ -687,11 +685,25 @@
         if ( $act != 'cancel' )
 	{
 	    // Note: $copy_to is NULL at this point.
-	    //
-	    $src = "projects/$project/$problem/";
-	    $des = "projects/$proj/$problem/";
+
+	    if ( isset ( $problem ) )
+	    {
+		$src = "projects/$project/$problem/";
+		$des = "projects/$proj/$problem/";
+		project_priv_map ( $tomap, $proj ); 
+		$n = "problem $problem of project" .
+		     " $project";
+		$m = "project $proj";
+	    }
+	    else
+	    {
+		$src = "projects/$project/";
+		$des = "projects/$proj/";
+		root_priv_map ( $tomap ); 
+		$n = "project $project";
+		$m = "root";
+	    }
 	    $is_update = is_dir ( "$epm_data/$des" );
-	    project_priv_map ( $projmap, $proj ); 
 
 	    $a = "-av --delete";
 	    if ( $is_update )
@@ -705,26 +717,27 @@
 	    $args = "2>&1 $a $epm_data/$src"
 	          . " $epm_data/$des";
 
-	    if ( $proj == $project )
-	        $errors[] = "you cannot copy $problem" .
-		            " in $project to itself";
-	    elseif ( blocked_project
+	    if ( ! is_dir ( "$epm_data/$src" ) )
+	        $errors[] = "$n does not exist";
+	    elseif ( $proj == $project )
+	        $errors[] = "you cannot copy $n" .
+		            " to itself";
+	    elseif ( isset ( $problem )
+	             &&
+		     blocked_project
 	                 ( $proj, $errors ) )
 	        $errors[] = "project $proj has just" .
 		            " been blocked";
-	    elseif ( ! isset ( $projmap['copy-to'] )
+	    elseif ( ! isset ( $tomap['copy-to'] )
 	             ||
-		     $projmap['copy-to'] != '+' )
+		     $tomap['copy-to'] != '+' )
 		$errors[] = "you have lost copy-to" .
-		            " privilege for project" .
-			    " $proj";
+		            " privilege for $m";
 	    elseif ( ! isset ( $pmap['copy-from'] )
 	             ||
 		     $pmap['copy-from'] != '+' )
-		$errors[] = "you have lost copy-to" .
-		            " privilege for problem" .
-			    " $problem of project" .
-			    " $project";
+		$errors[] = "you have lost copy-from" .
+		            " privilege for $n";
 	    elseif ( ! $rw )
 		$errors[] = "you no longer have"
 		          . " read-write privilege";
@@ -750,7 +763,7 @@
 		    $notice =
 		        "<strong>" .
 			"Command to be executed:" .
-			"</strong> $pubcom<br><br>" .
+			"</strong>$pubcom<br><br>" .
 		        rsync_to_html
 			    ( $copy_out, true );
 		}
@@ -847,8 +860,6 @@
 	     &&
 	     isset ( $project )
 	     &&
-	     isset ( $problem )
-	     &&
 	     isset ( $pmap['copy-from'] )
 	     &&
 	     $pmap['copy-from'] == '+' )
@@ -856,10 +867,21 @@
 	// If $problem is set, $pmap is problems
 	// privilege map.
 
-	$copy_to_projects =
-	    read_projects ( ['copy-to'] );
-	if ( count ( $copy_to_projects ) > 0 )
-	    $copy_enabled = true;
+	if ( isset ( $problem ) )
+	{
+	    $copy_to_projects =
+		read_projects ( ['copy-to'] );
+	    if ( count ( $copy_to_projects ) > 0 )
+		$copy_enabled = true;
+	}
+	else
+	{
+	    root_priv_map ( $rmap );
+	    if ( isset ( $rmap['copy-to'] )
+	         &&
+		 $rmap['copy-to'] == '+' )
+		$copy_enabled = true;
+	}
     }
 ?>
 
@@ -1183,21 +1205,36 @@ EOT;
 
     if ( $copy_enabled && $state == 'normal' )
     {
-	$copy_options =
-	    values_to_options ( $copy_to_projects );
-        echo <<<EOT
-	<strong>or Copy Problem to Project</strong>
-	<form method='POST' action='manage.php'
-	      id='copy-form'>
-	<input type='hidden' name='id' value='$ID'>
-	<input type='hidden' name='copy' value=''>
-	<select name='to'
-		onchange='document.getElementById
-			    ("copy-form").submit()'>
-	<option value=''>No Project Selected</option>
-	$copy_options
-	</select></form>
+        if ( isset ( $problem ) )
+	{
+	    $copy_options =
+		values_to_options ( $copy_to_projects );
+	    echo <<<EOT
+	    <strong>or Copy Problem to Project</strong>
+	    <form method='POST' action='manage.php'
+		  id='copy-form'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type='hidden' name='copy' value=''>
+	    <select name='to'
+		    onchange='document.getElementById
+				("copy-form").submit()'>
+	    <option value=''>No Project Selected</option>
+	    $copy_options
+	    </select></form>
 EOT;
+	}
+	else
+	{
+	    echo <<<EOT
+	    <strong>or Copy This Project to Project</strong>
+	    <form method='POST' action='manage.php'
+		  id='copy-form'>
+	    <input type='hidden' name='id' value='$ID'>
+	    <input type='hidden' name='copy' value=''>
+	    <input type='text' name='to' value=''>
+	    </form>
+EOT;
+	}
     }
 
     if ( $download_enabled )
