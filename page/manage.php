@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 24 02:13:55 EST 2022
+    // Date:	Thu Feb 24 03:47:04 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -745,8 +745,8 @@
 	    {
 		$com = "rsync -n $args";
 		$pubcom = "rsync $pubargs";
-		$copy_out = NULL;
-		exec ( $com, $copy_out, $r );
+		$rsync_out = NULL;
+		exec ( $com, $rsync_out, $r );
 		if ( $r != 0 )
 		{
 		    $errors[] = $pubcom;
@@ -765,11 +765,30 @@
 			"Command to be executed:" .
 			"</strong>$pubcom<br><br>" .
 		        rsync_to_html
-			    ( $copy_out, true );
+			    ( $rsync_out, true );
 		}
 	    }
 	    else
-	        $errors[] = 'copy not yet implemented';
+	    {
+		$com = "rsync $args";
+		$pubcom = "rsync $pubargs";
+		$rsync_out = NULL;
+		exec ( $com, $rsync_out, $r );
+		if ( $r != 0 )
+		{
+		    $errors[] = $pubcom;
+		    $errors[] =
+		        "failed with exit code $r";
+		}
+		else
+		{
+		    $notice =
+		        "<strong>" .
+			"Command executed:" .
+			"</strong>$pubcom<br><br>" .
+		        rsync_to_html ( $rsync_out );
+		}
+	    }
 	}
     }
 
@@ -968,6 +987,18 @@ EOT;
     }
     if ( $state == 'copy-ask' )
     {
+        if ( isset ( $problem ) )
+	{
+	    $from =
+	        "problem $problem in project $project";
+	    $to = "problem $problem in project $proj";
+	}
+	else
+	{
+	    $from = "project $project";
+	    $to = "project $proj";
+	}
+
         echo <<<EOT
 	<div class='warnings'>
 	<form action='manage.php' method='POST'>
@@ -975,19 +1006,17 @@ EOT;
 	<input type='hidden'
 	       name='to' value='$copy_to'>
 	<strong>Do you really want to copy
-		problem $problem from project $project
-		to problem $problem in project
-		$copy_to and</strong>
+		$from to $to
+		and</strong>
 	<br>
 	<button type='submit'
 	        name='copy' value='block'>
-	     BLOCK problem $problem in
-	     project $project</button>
+	     BLOCK $from</button>
 	<pre>   </pre>
 	<button type='submit'
 	        name='copy' value='noblock'>
-	     or leave problem $problem in
-	     project $project UNBLOCKED</button>
+	     or leave $from
+	     UNBLOCKED</button>
 	<pre>   </pre>
 	<button type='submit'
 	        name='copy' value='cancel'>
@@ -997,17 +1026,26 @@ EOT;
     }
     if ( $state == 'update-ask' )
     {
+        if ( isset ( $problem ) )
+	{
+	    $from =
+	        "problem $problem in project $project";
+	    $to = "problem $problem in project $proj";
+	}
+	else
+	{
+	    $from = "project $project";
+	    $to = "project $proj";
+	}
         echo <<<EOT
 	<div class='warnings'>
 	<form action='manage.php' method='POST'>
 	<input type='hidden' name='id' value='$ID'>
 	<input type='hidden'
 	       name='to' value='$copy_to'>
-	<strong>Do you really want to update
-	        problem $problem in project $copy_to
-		<br>
-		with more recent files from problem
-		$problem in project $project?</strong>
+	<strong>Do you really want to update $to<br>
+		with more recent files from $from?
+		</strong>
 	<br>
 	<button type='submit'
 	        name='copy' value='update'>
