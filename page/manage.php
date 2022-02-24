@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 24 03:47:04 EST 2022
+    // Date:	Thu Feb 24 14:32:56 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -691,17 +691,20 @@
 		$src = "projects/$project/$problem/";
 		$des = "projects/$proj/$problem/";
 		project_priv_map ( $tomap, $proj ); 
-		$n = "problem $problem of project" .
+		$from = "problem $problem of project" .
 		     " $project";
-		$m = "project $proj";
+		$to = "problem $problem of project" .
+		      " $proj";
+		$topriv = "project $proj";
 	    }
 	    else
 	    {
 		$src = "projects/$project/";
 		$des = "projects/$proj/";
 		root_priv_map ( $tomap ); 
-		$n = "project $project";
-		$m = "root";
+		$from = "project $project";
+		$to = "project $proj";
+		$topriv = "root";
 	    }
 	    $is_update = is_dir ( "$epm_data/$des" );
 
@@ -718,9 +721,9 @@
 	          . " $epm_data/$des";
 
 	    if ( ! is_dir ( "$epm_data/$src" ) )
-	        $errors[] = "$n does not exist";
+	        $errors[] = "$from does not exist";
 	    elseif ( $proj == $project )
-	        $errors[] = "you cannot copy $n" .
+	        $errors[] = "you cannot copy $from" .
 		            " to itself";
 	    elseif ( isset ( $problem )
 	             &&
@@ -732,12 +735,12 @@
 	             ||
 		     $tomap['copy-to'] != '+' )
 		$errors[] = "you have lost copy-to" .
-		            " privilege for $m";
+		            " privilege for $topriv";
 	    elseif ( ! isset ( $pmap['copy-from'] )
 	             ||
 		     $pmap['copy-from'] != '+' )
 		$errors[] = "you have lost copy-from" .
-		            " privilege for $n";
+		            " privilege for $from";
 	    elseif ( ! $rw )
 		$errors[] = "you no longer have"
 		          . " read-write privilege";
@@ -782,8 +785,34 @@
 		}
 		else
 		{
+		    if ( $is_update )
+		        $m = "$to has been updated" .
+			     " from $from";
+		    else
+		        $m = "$from has been copied" .
+			     " to $to";
+		    if ( $act == 'block'
+		         &&
+			 ! $blocked )
+		    {
+			$f = "$src/+blocked+";
+			if ( ATOMIC_WRITE
+			         ( "$epm_data/$f", $m )
+			     === false )
+			    ERROR
+			      ( "could not write $f" );
+			if ( isset ( $problem ) )
+			    $blocked = blocked_problem
+				( $project, $problem,
+				  $warnings );
+			else
+			    $blocked = blocked_project
+				( $project, $warnings );
+			$m .= "<br>$from has been" .
+			      " blocked";
+		    }
 		    $notice =
-		        "<strong>" .
+		        "<strong>" . $m . "<br><br>" .
 			"Command executed:" .
 			"</strong>$pubcom<br><br>" .
 		        rsync_to_html ( $rsync_out );
@@ -1256,7 +1285,8 @@ EOT;
 	    <select name='to'
 		    onchange='document.getElementById
 				("copy-form").submit()'>
-	    <option value=''>No Project Selected</option>
+	    <option value=''>No Project Selected
+	    </option>
 	    $copy_options
 	    </select></form>
 EOT;
@@ -1264,7 +1294,8 @@ EOT;
 	else
 	{
 	    echo <<<EOT
-	    <strong>or Copy This Project to Project</strong>
+	    <strong>or Copy This Project to
+	            Project</strong>
 	    <form method='POST' action='manage.php'
 		  id='copy-form'>
 	    <input type='hidden' name='id' value='$ID'>
