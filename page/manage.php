@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 24 14:32:56 EST 2022
+    // Date:	Fri Feb 25 03:00:52 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -696,6 +696,7 @@
 		$to = "problem $problem of project" .
 		      " $proj";
 		$topriv = "project $proj";
+		$pname = $problem;
 	    }
 	    else
 	    {
@@ -705,6 +706,7 @@
 		$from = "project $project";
 		$to = "project $proj";
 		$topriv = "root";
+		$pname = '-';
 	    }
 	    $is_update = is_dir ( "$epm_data/$des" );
 
@@ -776,6 +778,7 @@
 		$com = "rsync $args";
 		$pubcom = "rsync $pubargs";
 		$rsync_out = NULL;
+		$before_rsync = time();
 		exec ( $com, $rsync_out, $r );
 		if ( $r != 0 )
 		{
@@ -785,12 +788,32 @@
 		}
 		else
 		{
+		    $time = filemtime
+			( "$epm_data/$des" );
+		    if ( $time === false )
+			ERROR ( "cannot stat $des" );
 		    if ( $is_update )
+		    {
 		        $m = "$to has been updated" .
 			     " from $from";
+			if ( $time < $before_rsync )
+			    $time = $before_rsync;
+			$action = 'update-from';
+		    }
 		    else
+		    {
 		        $m = "$from has been copied" .
 			     " to $to";
+			$action = 'copy-from';
+		    }
+		    $time = strftime
+		        ( $epm_time_format, $time );
+
+		    $action_files[] = "$src/+actions+";
+		    if ( isset ( $problem ) )
+			$action_files[] =
+			  "projects/$project/+actions+";
+
 		    if ( $act == 'block'
 		         &&
 			 ! $blocked )
@@ -808,14 +831,48 @@
 			else
 			    $blocked = blocked_project
 				( $project, $warnings );
+
 			$m .= "<br>$from has been" .
 			      " blocked";
+
+			$btime = filemtime
+			    ( "$epm_data/$f" );
+			if ( $btime === false )
+			    ERROR
+			      ( "could not stat $f" );
+			$btime = strftime
+			    ( $epm_time_format,
+			      $btime );
+			$baction =
+			    "$btime $aid blocked" .
+			    " $project $pname" .
+			    PHP_EOL;
+
+			foreach ( $action_files as $f )
+			{
+			    $r = @file_put_contents
+				( "$epm_data/$f",
+				  $baction,
+				  FILE_APPEND );
+			    if ( $r === false )
+				ERROR
+				  ( "cannot write $f" );
+			}
 		    }
 		    $notice =
 		        "<strong>" . $m . "<br><br>" .
 			"Command executed:" .
 			"</strong>$pubcom<br><br>" .
 		        rsync_to_html ( $rsync_out );
+
+		    $action = "$time $aid $action" .
+		              " $proj $pname" .
+			      " $project $pname" .
+			      PHP_EOL;
+		    $action_files[] = "$des/+actions+";
+		    if ( isset ( $problem ) )
+		        $action_files[] =
+			    "projects/$proj/+actions+";
 		}
 	    }
 	}
