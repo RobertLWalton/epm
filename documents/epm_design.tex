@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{February 16, 2022}
+\date{February 25, 2022}
  
 \maketitle
 
@@ -876,6 +876,11 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	          \pagref{ACCOUNTS/AID/READ-ONLY}}
 	& index & index & [+main+] \\ 
 \hline
+\FSTACK{accoun}{ts/AID/\\+download-UID+}
+        & file & \STACK{file to be\\downloaded
+	          \pagref{ACCOUNTS/AID/DOWNLOAD}}
+	& manage & - & look \\ 
+\hline
 \end{tabular}
 \end{center}
 
@@ -995,6 +1000,15 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	   & (updaters) & manage
 	   & \STACK{project\\problem\\run\\option\\manage\\show} \\ 
 \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Format & Description & Creators & Updaters & Readers \\
+\hline\hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM/\\+sources+} & dir
 	   & \STACK{problem\\sources \pagref{PROBLEM/SOURCES}}
 	   & project & project & - \\
@@ -1008,15 +1022,6 @@ Name & Format & Description & Creators & Updaters & Readers \\
                            \pagref{PROJECT-VISIBLE-FILES}}
 	& project & project & \STACK{problem\\run} \\
 \hline
-\end{tabular}
-\end{center}
-
-\begin{center}
-\small
-\begin{tabular}{|l|l|l|l|l|l|}
-\hline
-Name & Format & Description & Creators & Updaters & Readers \\
-\hline\hline
 \FSTACK{projects}{/PROJECT/\\+lists+} & dir
 	   & \STACK{project\\published lists}
 	   & list & list & \STACK{list\\favorites\\project} \\
@@ -1141,7 +1146,8 @@ AID & AID of account performing action (EPM\_AID) \\
 TYPE & see below \\
 PROJECT & project involved in action, or {\tt -} if none \\
 NAME & PROBLEM involved in action,
-       or LIST involved in action \\
+       or LIST involved in action,
+       or {\tt -} if none \\
 DATA & TYPE-specific data, or empty \\
 \end{tabular}
 \end{indpar}
@@ -1173,15 +1179,17 @@ All account actions are appended to the {\tt accounts/AID/+actions+} file.
 If a PROJECT is involved in an action, the action is also appended to
 the {\tt project/\EOL PROJECT/\EOL +actions+} file.
 
+If both a PROJECT and a PROBLEM are involved in an action,
+the action is also appended to
+the {\tt project/PROJECT/PROBLEM/+actions+} file,
+the {\tt project/PROJECT/+actions+} file,
+and the {\tt accounts/\EOL AID/\EOL PROBLEM/\EOL +actions+} file.
+
 If a LIST is involved in an action, the action is also appended to
 the {\tt accounts/\EOL AID/\EOL +lists+/\EOL +actions+} file.
-If a published list is involved, the action is also appended to
-the {\tt lists/\EOL +actions+} file.
-
-If both a PROJECT and a PROBLEM are involved in an action,
-the action is also appended to both
-the {\tt project/PROJECT/PROBLEM/+actions+} file
-and the {\tt accounts/\EOL AID/\EOL PROBLEM/\EOL +actions+} file.
+For list publishing and unpublishing, the action is also appended to
+the {\tt projects/PROJECT/+lists+/\EOL +actions+} and
+the {\tt projects/PROJECT/\EOL +actions+} files.
 
 \section{Job Templates}
 \label{JOB-TEMPLATES}
@@ -1476,6 +1484,12 @@ time of the +read-write+ file is used to determine the
 last time the account made a read-write request.
 
 Download and xhttp requests are not recorded.
+
+\item[\TT{accounts/AID/+download-UID+}:]~
+\label{ACCOUNTS/AID/DOWNLOAD} \\
+File to be downloaded by the Look Page.
+E.g., a {\tt PROBLEM.tgz} file.
+
 
 
 \end{itemlist}
@@ -2702,6 +2716,7 @@ See List Page File Formats \pagref{LIST-PAGE-FILE-FORMATS}.
 \TT{accounts/AID/PROBLEM/\ldots}    	& -	  & -	   & read & - \\
 \TT{projects/PROJECT/PROBLEM/\ldots}    & -	  & -	   & read & - \\
 \TT{projects/PROJECT/\ldots}    	& -	  & -	   & read & - \\
+\TT{accounts/AID/+download-UID+}	& create  & -      & -    & - \\
 \end{tabular}
 
 
@@ -2715,11 +2730,12 @@ See List Page File Formats \pagref{LIST-PAGE-FILE-FORMATS}.
 \item[\TT{projects/PROJECT/+priv+}:]\vspace*{-1ex}~
 \item[\TT{projects/PROJECT/PROBLEM/+priv+}:]\vspace*{-1ex}~
 \label{PRIV} \\
-See Help Page.
+See Help Page, `privilege files'.
 \item[\TT{projects/PROJECT/+blocked+}:]
 \item[\TT{projects/PROJECT/PROBLEM/+blocked+}:]\vspace*{-1ex}~
 \label{BLOCKED} \\
-See Help Page.
+ASCII text containing one or more lines explaining why the
+problem or project is blocked.
 \item[\TT{accounts/AID/+lists+}:]
 \item[\TT{accounts/AID/+lists+/+favorites+}:]\vspace*{-1ex}~ \\
 See \pagref{FAVORITES}.
@@ -2730,7 +2746,10 @@ See \pagref{ACCOUNT-ACTIONS}.
 \item[\TT{projects/PROJECT/PROBLEM/\ldots}:]
 \item[\TT{projects/PROJECT/\ldots}:]\vspace*{-1ex}
 \item[\TT{accounts/AID/PROBLEM/\ldots}:]\vspace*{-1ex} ~ \\
-    The Manage page can download these directories as .tgz files.
+The Manage page can download these directories as {\tt .tgz} files.
+\item[\TT{accounts/AID/+download-UID+}] \\
+When downloading a directory, the {\tt .tgz} file is stored
+here and passed to the Look Page.
 
 \end{itemlist}
 \end{indpar}
@@ -2741,8 +2760,14 @@ See \pagref{ACCOUNT-ACTIONS}.
 \item Display project and project problem privileges ({\tt +priv+} files).
 \item Edit project and project problem privileges ({\tt +priv+} files).
 \item Download {\tt .tgz} files containing problem or project directories.
-\item Move problems between projects.
+\item Move or copy problems to other projects.  Update previous copies.
+\item Move or copy projects.  Update previous copies.
+\item Block problems or projects.
 \end{enumerate}
+
+To move a problem or project, the problem or project is copied
+and then the source is blocked.  The source is \underline{not}
+deleted or modified in any other way.
 
 \newpage
 
@@ -2804,6 +2829,73 @@ See Job Templates \pagref{JOB-TEMPLATES}.
 
 \begin{enumerate}
 \item Display job template files.
+\end{enumerate}
+
+\newpage
+
+\subsection{Show Page}
+
+\begin{center}
+
+{\bf Show Page Files}
+
+\begin{tabular}{l@{\hspace{0.5in}}llll}
+\TT{accounts/AID/PROBLEM/PROBLEM.pdf}  	& -       & -      & read & - \\
+\TT{projects/PROJECT/PROBLEM.pdf}  	& -       & -      & read & - \\
+\end{tabular}
+
+
+\end{center}
+
+\subsubsection{Show Page File Formats}
+
+\begin{indpar}
+PDF files containing a problem description.
+\end{indpar}
+
+\subsubsection{Show Page Transactions}
+
+\begin{enumerate}
+\item Display or download a PROBLEM.pdf file.
+\end{enumerate}
+
+\newpage
+
+\subsection{Look Page}
+
+\begin{center}
+
+{\bf Look Page Files}
+
+\begin{tabular}{l@{\hspace{0.5in}}llll}
+\TT{accounts/AID/PROBLEM/\ldots}  		& -       & -      & read & - \\
+\TT{accounts/AID/PROBLEM/+work+/\ldots}  	& -       & -      & read & - \\
+\TT{accounts/AID/PROBLEM/+run+/\ldots}  	& -       & -      & read & - \\
+\TT{accounts/AID/PROBLEM/+parent+/{\ldots}.run}	& -       & -      & read & - \\
+\TT{downloads/{\ldots}}				& -       & -      & read & - \\
+\TT{documents/{\ldots}}				& -       & -      & read & - \\
+\TT{accounts/AID/+download-UID+}		& -       & -      & read & - \\
+\end{tabular}
+
+
+\end{center}
+
+\subsubsection{Look Page File Formats}
+
+\begin{indpar}
+{\tt +download-UID+} files can be in any format, and are downloaded
+as is.  Packed tar format ({\tt .tgz}) is common.
+
+{\tt .pdf} files are in PDF format.
+
+Other files are sequences of UTF-8 lines to be shown or downloaded.
+\end{indpar}
+
+\subsubsection{Look Page Transactions}
+
+\begin{enumerate}
+\item Display or download a file.  UTF-8 files are displayed with
+line numbers.
 \end{enumerate}
 
 \end{document}
