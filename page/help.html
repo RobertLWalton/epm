@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Fri Feb 25 14:09:23 EST 2022
+Date:	Sat Feb 26 13:04:42 EST 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1930,18 +1930,14 @@ to prepare programming contest problems.
 <p>
 The Manage Page allows you to view root, project, and project problem
 privileges, and to change any one of these for which you have owner privilege.
-The Manage Page also allows
-you to download gzipped .tgz tar files of problems and projects if
-you have download privileges, to copy problems between projects
-if you have copy privileges, and to copy projects to other projects,
-effectively changing the name of a project.
-The Manage Page allows you
+Then if you have appropriate privileges,
+the Manage Page also allows
+you to download gzipped tar files of problems and projects,
+to copy problems between projects,
+to copy projects to other projects
+(effectively changing the name of a project),
 to block a problem in a project, so it cannot be accessed, or
 to block a project, so none of its problems can be accessed.
-Blocking has the same effect as deleting as far as using the
-blocked problem or project is concerned, but is reversible and
-gives users of the problem or project a notice specifying why
-the problem or project was blocked.
 <p>
 On the Manage Page you begin by selecting either a project or a
 problem, or neither.
@@ -1976,16 +1972,17 @@ When you select a non-project problem, a button appears that allows you
 to download a .tgz tar file of the problem's local directory
 (you need no privileges for this).
 <p>
+Blocking a project or project problem effectively deletes the
+project or project problem.
 When you block a project or project problem, you must supply
 one or more lines of text giving the reason you are blocking
-the project or project problem.
+the project or project problem.  These will be displayed
+when an account which has previously pulled a problem that
+is blocked tries to do something with that problem.
 If you have block privilege for the project or project problem,
 and the project or project problem is already blocked, an
-unblock button appears in place of the block button.
-<p>
-If you select NEITHER a project or a problem, the root privilege
-file is displayed, and if you have owner provileges in that file,
-you can edit the file.
+unblock button appears in place of the block button that
+allows you to unblock the project or project problem.
 <p>
 The following are the possible project privileges:
 <table class='top-align'>
@@ -2078,6 +2075,10 @@ the order
      of a project problem are being determined
      (as opposed to the privileges of just a project)
 </ol>
+<p>
+If you select NEITHER a project or a problem, the root privilege
+file is displayed, and if you have owner provileges in that file,
+you can edit the file.
 Root privileges are granted to EPM server administrators.
 The possible root privileges are:
 <table class='top-align'>
@@ -2118,7 +2119,7 @@ A privilege file line is one of the following:
      </ul>
      <br>
      If this line matches, the
-     line assigns &lt;sign&gt; to &lt;key&gt; unless
+     line assigns &lt;sign&gt; to &lt;key&gt; UNLESS
      &lt;key&gt; has previously been assigned.
      <br>
      A &lt;regular-expression&gt; matches if it matches the
