@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Tue Feb 15 03:15:11 EST 2022
+Date:	Fri Feb 25 14:09:23 EST 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1928,35 +1928,64 @@ to prepare programming contest problems.
 
 <h1 id="manage-page">Manage Page</h1>
 <p>
-The Manage Page allows you to view project and project problem
-privileges, to change these if you have owner privilege for
-a project or project problem.  The Manage Page also allows
+The Manage Page allows you to view root, project, and project problem
+privileges, and to change any one of these for which you have owner privilege.
+The Manage Page also allows
 you to download gzipped .tgz tar files of problems and projects if
-you have download privileges, and to move problems between projects
-if you have move privileges.
+you have download privileges, to copy problems between projects
+if you have copy privileges, and to copy projects to other projects,
+effectively changing the name of a project.
+The Manage Page allows you
+to block a problem in a project, so it cannot be accessed, or
+to block a project, so none of its problems can be accessed.
+Blocking has the same effect as deleting as far as using the
+blocked problem or project is concerned, but is reversible and
+gives users of the problem or project a notice specifying why
+the problem or project was blocked.
 <p>
 On the Manage Page you begin by selecting either a project or a
-problem.
+problem, or neither.
 <p>
 When you select a project, the privilege file of the project is
 displayed, and if you have owner privilege for the project,
-you can edit this file.  A button also appears that allows you to
-to download a .tgz tar file of the project contents if you have download
-privileges for the project.
+you can edit this file.
+If you have download privilege for the
+project, a button appears that allows you to
+to download a .tgz tar file of the project contents.
+If you have block privilege for the project, a button appears
+which allows you to block the project.
+If you have copy-from privileges for the project and copy-to
+privileges for root, a field appears which allows you to enter
+the name of a new project to which the project will be copied.
 <p>
 When you select a project (non-local) problem, the privilege file
 of the project problem is displayed, and if you have owner privilege
-for the project problem, you can edit this file.  A button also appears
-that allows you to download a .tgz tar file of the problem's directory
-within its project, if you have download privileges for
-the project problem.  A selector also appears which allows you to
-select a target project to move the problem to, if you have move-from
-privileges for the problem's current project (you must also have
-move-to privileges for the target project).
+for the project problem, you can edit this file.
+If you have download privilege for the
+project problem, a button appears that allows you to
+to download a .tgz tar file of the project problem directory
+within its project.
+If you have block privilege for the project problem, a button appears
+which allows you to block the project problem.
+If you have copy-from privileges for the project problem and copy-to
+privileges for other projects, a field appears which allows you to
+select one of these other projects and copy the problem to that
+other project.
 <p>
 When you select a non-project problem, a button appears that allows you
 to download a .tgz tar file of the problem's local directory
 (you need no privileges for this).
+<p>
+When you block a project or project problem, you must supply
+one or more lines of text giving the reason you are blocking
+the project or project problem.
+If you have block privilege for the project or project problem,
+and the project or project problem is already blocked, an
+unblock button appears in place of the block button.
+<p>
+If you select NEITHER a project or a problem, the root privilege
+file is displayed, and if you have owner provileges in that file,
+you can edit the file.
 <p>
 The following are the possible project privileges:
 <table class='top-align'>
@@ -2058,6 +2087,8 @@ The possible root privileges are:
 		      </td></tr>
 <tr><td>create&#8209;project</td><td>allows administrator to create projects
 		     </td></tr>
+<tr><td>copy&#8209;to</td><td>allows a project to be copied to a new project
+		      </td></tr>
 </table>
 <p>
 A privilege file line is one of the following:
@@ -2132,11 +2163,13 @@ prevent two sessions for the same user stepping on each others toes.</dd>
 logged in, your session will become unusable, unless the
 server is secure (uses SSL and certificates) and has been
 set to not check IP addresses.</dd>
-<dt>Multiple Logins (Main Tabs) in the Same Session</dt>
-<dd>If you log in using a fresh browser tab and you are already
-logged using another tab on the same browser, your old login main tab
-will become orphaned and unusable.  Only the old login main tab is affected,
-not the session or problem tabs.</dd>
+<dt>Multiple Connections (Main Tabs) in the Same Session</dt>
+<dd>If you connect to the server
+using a URL in a fresh browser tab and you are already
+connected using another tab on the same browser, your old connection main tab
+will become orphaned and unusable.  Only the old connection
+main tab is affected,
+not the new connection or problem tabs.</dd>
 <dt>Multiple Tabs for the Same Problem</dt>
 <dd>You should NOT open a problem tab by using a URL in a new tab.
 If you do and there is already another tab for the same problem,
@@ -2147,8 +2180,6 @@ the Project Page selector to create a problem window.</dd>
 
 <h1 id="deficiencies">Deficiencies</h1>
 <dl>
-<dt>Moving Problems Between Projects</dt>
-<dd>To be implemented on Manage Page.  Not yet implemented.</dd>
 
 <dt>New Project Creation</dt>
 <dd>The Manage Page does not allow users
@@ -2177,6 +2208,12 @@ the Project Page selector to create a problem window.</dd>
 
 <dt>JAVA Output File Too Large</dt>
 <dd>This is not correctly scored.</dd>
+
+<dt>Garbage Collection</dt>
+<dd>Deletion of projects and project problems that were
+    blocked a long time ago is unimplemented.  Deletion
+    of derived files from account problems that have
+    not been touched for a long time is unimplemented.</dd>
 
 </dl>
 
