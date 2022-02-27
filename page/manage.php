@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Feb 25 03:00:52 EST 2022
+    // Date:	Sun Feb 27 02:00:13 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -631,6 +631,8 @@
 		if ( $r === false )
 		    ERROR ( "cannot write $f" );
 		$edited_contents = NULL;
+		    // Forces re-read of +priv+ file.
+		$pmap = $update_pmap;
 
 		$time = @filemtime
 		    ( "$epm_data/$f" );
