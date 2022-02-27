@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Feb 21 19:32:28 EST 2022
+    // Date:	Sun Feb 27 01:10:18 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -221,7 +221,8 @@
 
 	$lines = explode ( "\n", $contents );
 	$error_found = false;
-	$priv_re = '/^(\+|\-)\h+(\S+)\h+(\S+)$/';
+	$priv_re = '/^(\+|\-|\<|\>)\h+(\S+)\h+(\S+)$/';
+	$enabled = true;
 	foreach ( $lines as $line )
 	{
 	    $line = trim ( $line );
@@ -240,24 +241,11 @@
 		continue;
 	    }
 	    $sign = $matches[1];
-	    $priv = $matches[2];
 	    $re   = $matches[3];
 
 	    $errs = [];
-	    $match = false;
-	    if ( $priv[0] == '@' )
-	    {
-	        if (! preg_match
-		          ( $epm_name_re,
-			    substr ( $priv, 1 ) ) )
-		    $errs[] = "bad group name $priv";
-	    }
-	    elseif ( ! in_array ( $priv,
-	                          $allowed_privs,
-				  true ) )
-		    $errs[] = "privilege $priv not"
-		            . " allowed";
 
+	    $match = false;
 	    if ( $re[0] == '@' )
 	    {
 	        if ( ! preg_match
@@ -278,6 +266,37 @@
 		    $match = true;
 	    }
 
+	    $enb = NULL;  // Set if $enabled to be set.
+	    if ( $sign == '<' || $sign == '>' )
+	    {
+	        $timestr = $matches[2];
+		$time == strtotime ( $timestr );
+		if ( $time === false )
+		    $errs[] = "badly formatted time:" .
+		              " $timestr";
+		elseif ( $sign == '<' )
+		    $enb = ( time() < $time );
+		else
+		    $enb = ( time() > $time );
+	    }
+	    else
+	    {
+		$priv = $matches[2];
+		if ( $priv[0] == '@' )
+		{
+		    if (! preg_match
+			      ( $epm_name_re,
+				substr ( $priv, 1 ) ) )
+			$errs[] =
+			    "bad group name $priv";
+		}
+		elseif ( ! in_array ( $priv,
+				      $allowed_privs,
+				      true ) )
+			$errs[] = "privilege $priv not"
+				. " allowed";
+	    }
+
 	    if ( count ( $errs ) > 0 )
 	    {
 		if ( ! $error_found )
@@ -289,9 +308,13 @@
 		    $errors[] =
 			"    $err in line `$line'";
 	    }
-	    elseif ( $match
-	             &&
-		     ! isset ( $map[$priv] ) )
+	    elseif ( ! $match )
+	        /* do nothing */;
+	    elseif ( isset ( $enb ) )
+	        $enabled = $enb;
+	    elseif ( ! $enabled )
+	        /* do nothing */;
+	    elseif ( ! isset ( $map[$priv] ) )
 	        $map[$priv] = $sign;
 	}
     }
