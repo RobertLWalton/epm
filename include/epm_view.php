@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Feb 28 07:25:44 EST 2022
+// Date:	Mon Feb 28 08:21:05 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -74,6 +74,14 @@ function view_priv ( $project )
 //	[TIME, UID, 'download', '-', PROBLEM]
 //	[TIME, UID, 'download', PROJECT, '-']
 //	[TIME, UID, 'download', PROJECT, PROBLEM]
+//	[TIME, UID, 'copy-from', PROJECT1, PROBLEM,
+//                               PROJECT2, PROBLEM]
+//	[TIME, UID, 'copy-from', PROJECT1, '-',
+//                               PROJECT2, '-']
+//	[TIME, UID, 'update-from', PROJECT1, PROBLEM,
+//                                 PROJECT2, PROBLEM]
+//	[TIME, UID, 'update-from', PROJECT1, '-',
+//                                 PROJECT2, '-']
 //
 // For 'info':
 //
@@ -163,19 +171,7 @@ function actions_to_rows ( $actions )
 		$k[] = 'operation';
 	    }
 	}
-	elseif ( $type[1] == 'problem' )
-	{
-	    $a = "{$type[0]} problem {$items[4]}";
-	    array_push
-	        ( $k, $type[0], $items[4], 'problem' );
-	}
-	elseif ( $type[1] == 'list' )
-	{
-	    $a = "{$type[0]} list {$items[4]}";
-	    array_push
-	        ( $k, $type[0], $items[4], 'list' );
-	}
-	else
+	elseif ( $items[3] != '-' )
 	{
 	    $project = $items[3];
 	    $d = "$epm_data/projects/$project";
@@ -189,8 +185,24 @@ function actions_to_rows ( $actions )
 	    }
 	}
 
+	// Action items from here on cannot be viewed
+	// unless $item[3] is '-' or a PROJECT with
+	// view privilege.
+
 	if ( isset ( $a ) )
 	    /* Do Nothing */;
+	elseif ( $type[1] == 'problem' )
+	{
+	    $a = "{$type[0]} problem {$items[4]}";
+	    array_push
+	        ( $k, $type[0], $items[4], 'problem' );
+	}
+	elseif ( $type[1] == 'list' )
+	{
+	    $a = "{$type[0]} list {$items[4]}";
+	    array_push
+	        ( $k, $type[0], $items[4], 'list' );
+	}
 	else if ( $type[1] == 'priv' )
 	{
 	    array_push ( $k, $type[0], 'privileges' );
@@ -226,11 +238,26 @@ function actions_to_rows ( $actions )
 	    $k[] = 'download';
 	    $m = $items[3];
 	    $n = $items[4];
-	    if ( $m == '-' ) $m = 'local';
+	    if ( $m == '-' ) $m = '(local)';
 	    else $k[] = $m;
 	    if ( $n == '-' ) $n = 'project';
 	    else $k[] = $n;
 	    $a = "{$type[0]} $m $n";
+	}
+	else if ( $type[1] == 'from' )
+	{
+	    // Keys may be duplicated.
+	    //
+	    array_push
+	        ( $k, $type[0], $items[3], $items[4] );
+	    $m = $items[4];
+	    $n = $items[6];
+	    if ( $m == '-' ) $m = 'project';
+	    else $k[] = $m;
+	    if ( $n == '-' ) $n = 'project';
+	    else $k[] = $n;
+	    $a = "{$type[0]} {$items[3]} $m" .
+	         " from {$items[5]} $n";
 	}
 	else if ( $type[0] == 'pull' )
 	{
