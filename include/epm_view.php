@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Fri Oct  2 09:05:25 EDT 2020
+// Date:	Mon Feb 28 07:05:45 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -59,6 +59,7 @@ function view_priv ( $project )
 //			      STIME, SCORE...]
 //	[TIME, UID, 'create-problem', '-', PROBLEM]
 //	[TIME, UID, 'delete-problem', '-', PROBLEM]
+//	[TIME, UID, 'update-priv', '-', '-']
 //	[TIME, UID, 'update-priv', PROJECT, '-']
 //	[TIME, UID, 'update-priv', PROJECT, PROBLEM]
 //	[TIME, UID, 'create-list', '-', NAME]
@@ -185,13 +186,22 @@ function actions_to_rows ( $actions )
 	    /* Do Nothing */;
 	else if ( $type[1] == 'priv' )
 	{
-	    array_push
-	        ( $k, $type[0], $items[3],
-		  'privileges' );
+	    array_push ( $k, $type[0], 'privileges' );
+	    $p = $items[3];
 	    $n = $items[4];
-	    if ( $n == '' ) $n = 'project';
-	    else $k[] = $items[4];
-	    $a = "{$type[0]} {$items[3]} $n privileges";
+	    if ( $p == '-' )
+	    {
+	        $p = 'root';
+		$n = '';
+	    }
+	    else
+	    {
+		if ( $n == '-' ) $n = 'project';
+		else $k[] = $n;
+	    }
+	    $k[] = $p;
+	    if ( $n != '' ) $n = " $n";
+	    $a = "{$type[0]} $p$n privileges";
 	}
 	else if ( $type[0] == 'pull' )
 	{
