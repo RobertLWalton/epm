@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Feb 28 08:48:27 EST 2022
+// Date:	Mon Feb 28 09:41:00 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -68,8 +68,10 @@ function view_priv ( $project )
 //	[TIME, UID, 'unblock', PROJECT, PROBLEM]
 //	[TIME, UID, 'create-list', '-', NAME]
 //	[TIME, UID, 'update-list', '-', NAME]
-//	[TIME, UID, 'publish-list', '-', NAME]
-//	[TIME, UID, 'unpublish-list', '-', NAME]
+//	[TIME, UID, 'publish-copy', PROJECT, NAME]
+//	[TIME, UID, 'publish-move', PROJECT, NAME]
+//	[TIME, UID, 'unpublish-copy', PROJECT, NAME]
+//	[TIME, UID, 'unpublish-move', PROJECT, NAME]
 //	[TIME, UID, 'delete-list', '-', NAME]
 //	[TIME, UID, 'download', '-', PROBLEM]
 //	[TIME, UID, 'download', PROJECT, '-']
@@ -219,6 +221,31 @@ function actions_to_rows ( $actions )
 		array_push
 		    ( $k, $type[0], $items[4], 'list' );
 	    }
+	}
+	elseif ( $type[0] == 'publish' )
+	{
+	    array_push
+		( $k, $type[0], $items[3], $items[4],
+		      'list' );
+	    $a = "publish Your {$items[4]} list" .
+		 " to project ${items[3]}";
+	    if ( $type[1] == 'move' )
+	        $a .= " and delete Your {$items[4]}";
+	    else
+	        $a .= " while keeping Your {$items[4]}";
+	}
+	elseif ( $type[0] == 'unpublish' )
+	{
+	    array_push
+		( $k, $type[0], $items[3], $items[4],
+		      'list', 'publish' );
+	    $a = "copy {$items[4]} list in project" .
+	         " {$items[3]} to Your {$items[4]}" .
+		 " list";
+	    if ( $type[1] == 'move' )
+		$a .= " and unpublish (delete)" .
+		      " {$items[4]} list in project" .
+		      " ${items[3]}";
 	}
 	else if ( $type[1] == 'priv' )
 	{
