@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Feb 28 08:21:05 EST 2022
+// Date:	Mon Feb 28 08:48:27 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -199,9 +199,26 @@ function actions_to_rows ( $actions )
 	}
 	elseif ( $type[1] == 'list' )
 	{
-	    $a = "{$type[0]} list {$items[4]}";
-	    array_push
-	        ( $k, $type[0], $items[4], 'list' );
+	    if ( $type[0] == 'copy' )
+	    {
+	        $m = $items[3];
+	        $n = $items[4];
+		if ( $m == '-' ) $m = 'Your';
+		else $k[] = $m;
+		if ( $n == '-' ) $n = 'Problems';
+		else $k[] = $n;
+		$a = "create Your list {$items[6]}" .
+		     " as copy of $m $n";
+		array_push
+		    ( $k, 'copy', $items[4],
+		          'list', 'create' );
+	    }
+	    else
+	    {
+		$a = "{$type[0]} list {$items[4]}";
+		array_push
+		    ( $k, $type[0], $items[4], 'list' );
+	    }
 	}
 	else if ( $type[1] == 'priv' )
 	{
@@ -238,7 +255,7 @@ function actions_to_rows ( $actions )
 	    $k[] = 'download';
 	    $m = $items[3];
 	    $n = $items[4];
-	    if ( $m == '-' ) $m = '(local)';
+	    if ( $m == '-' ) $m = 'Your';
 	    else $k[] = $m;
 	    if ( $n == '-' ) $n = 'project';
 	    else $k[] = $n;
