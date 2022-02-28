@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Feb 28 07:05:45 EST 2022
+// Date:	Mon Feb 28 07:25:44 EST 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -62,11 +62,18 @@ function view_priv ( $project )
 //	[TIME, UID, 'update-priv', '-', '-']
 //	[TIME, UID, 'update-priv', PROJECT, '-']
 //	[TIME, UID, 'update-priv', PROJECT, PROBLEM]
+//	[TIME, UID, 'block', PROJECT, '-']
+//	[TIME, UID, 'block', PROJECT, PROBLEM]
+//	[TIME, UID, 'unblock', PROJECT, '-']
+//	[TIME, UID, 'unblock', PROJECT, PROBLEM]
 //	[TIME, UID, 'create-list', '-', NAME]
 //	[TIME, UID, 'update-list', '-', NAME]
 //	[TIME, UID, 'publish-list', '-', NAME]
 //	[TIME, UID, 'unpublish-list', '-', NAME]
 //	[TIME, UID, 'delete-list', '-', NAME]
+//	[TIME, UID, 'download', '-', PROBLEM]
+//	[TIME, UID, 'download', PROJECT, '-']
+//	[TIME, UID, 'download', PROJECT, PROBLEM]
 //
 // For 'info':
 //
@@ -187,11 +194,11 @@ function actions_to_rows ( $actions )
 	else if ( $type[1] == 'priv' )
 	{
 	    array_push ( $k, $type[0], 'privileges' );
-	    $p = $items[3];
+	    $m = $items[3];
 	    $n = $items[4];
-	    if ( $p == '-' )
+	    if ( $m == '-' )
 	    {
-	        $p = 'root';
+	        $m = 'root';
 		$n = '';
 	    }
 	    else
@@ -199,9 +206,31 @@ function actions_to_rows ( $actions )
 		if ( $n == '-' ) $n = 'project';
 		else $k[] = $n;
 	    }
-	    $k[] = $p;
+	    $k[] = $m;
 	    if ( $n != '' ) $n = " $n";
-	    $a = "{$type[0]} $p$n privileges";
+	    $a = "{$type[0]} $m$n privileges";
+	}
+	else if ( $type[0] == 'block'
+	          ||
+		  $type[0] == 'unblock' )
+	{
+	    array_push ( $k, 'block', 'unblock',
+	                     $items[3] );
+	    $n = $items[4];
+	    if ( $n == '-' ) $n = 'project';
+	    else $k[] = $n;
+	    $a = "{$type[0]} {$items[3]} $n privileges";
+	}
+	else if ( $type[0] == 'download' )
+	{
+	    $k[] = 'download';
+	    $m = $items[3];
+	    $n = $items[4];
+	    if ( $m == '-' ) $m = 'local';
+	    else $k[] = $m;
+	    if ( $n == '-' ) $n = 'project';
+	    else $k[] = $n;
+	    $a = "{$type[0]} $m $n";
 	}
 	else if ( $type[0] == 'pull' )
 	{
