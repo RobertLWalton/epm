@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{February 25, 2022}
+\date{March 12, 2022}
  
 \maketitle
 
@@ -580,6 +580,10 @@ session can write such a file, but many may read it.
 \item {\tt +priv+} files containing privileges.  Its possible
 but rare for such a file to be writtable by several sessions if it has
 multiple owners, but if these collide, `last-writter-wins' is
+an acceptable implementation.  These files can have many readers.
+\item {\tt +block+} files containing blocking reason.  Its possible
+but rare for such a file to be writtable by several sessions if several
+users have block privilege, but if these collide, `last-writter-wins' is
 an acceptable implementation.  These files can have many readers.
 \end{itemize}
 
