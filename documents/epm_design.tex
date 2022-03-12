@@ -581,7 +581,7 @@ session can write such a file, but many may read it.
 but rare for such a file to be writtable by several sessions if it has
 multiple owners, but if these collide, `last-writter-wins' is
 an acceptable implementation.  These files can have many readers.
-\item {\tt +block+} files containing blocking reason.  Its possible
+\item {\tt +blocked+} files containing blocking reason.  Its possible
 but rare for such a file to be writtable by several sessions if several
 users have block privilege, but if these collide, `last-writter-wins' is
 an acceptable implementation.  These files can have many readers.
@@ -980,6 +980,11 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	   & (updaters) & manage
 	   & \STACK{project\\problem\\run\\option\\manage\\show} \\ 
 \hline
+\FSTACK{projects}{/PROJECT/\\+blocked+} & lines
+	   & \STACK{project\\block\\message \pagref{BLOCKED}}
+	   & manage &
+	   & \STACK{project\\problem\\run\\option\\list\\manage\\show} \\ 
+\hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM} & dir
 	   & \STACK{problem\\directory\\in project}
 	   & project & project & \STACK{project\\problem\\run\\manage} \\
@@ -994,6 +999,15 @@ Name & Format & Description & Creators & Updaters & Readers \\
 		    \pagref{PUSH-CHANGES}}
 	   & project & project & - \\
 \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Name & Format & Description & Creators & Updaters & Readers \\
+\hline\hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM/\\+lock+} & lock
 	   & \STACK{project\\problem\\lock
 		    \pagref{PROJECT/PROBLEM/LOCK}}
@@ -1004,15 +1018,11 @@ Name & Format & Description & Creators & Updaters & Readers \\
 	   & (updaters) & manage
 	   & \STACK{project\\problem\\run\\option\\manage\\show} \\ 
 \hline
-\end{tabular}
-\end{center}
-
-\begin{center}
-\small
-\begin{tabular}{|l|l|l|l|l|l|}
+\FSTACK{projects}{/PROJECT/\\PROBLEM/\\+blocked+} & lines
+	   & \STACK{problem\\block\\message \pagref{BLOCKED}}
+	   & manage &
+	   & \STACK{project\\problem\\run\\option\\manage\\show} \\ 
 \hline
-Name & Format & Description & Creators & Updaters & Readers \\
-\hline\hline
 \FSTACK{projects}{/PROJECT/\\PROBLEM/\\+sources+} & dir
 	   & \STACK{problem\\sources \pagref{PROBLEM/SOURCES}}
 	   & project & project & - \\
@@ -2078,9 +2088,9 @@ Special values for YYYY: \TT{generate}, \TT{filter}, \TT{monitor}, \TT{display}
 \TT{accounts/AID/PROBLEM/+actions+}	& create  & append & - & - \\
 \TT{projects/+priv+}			& -  & - & read & - \\
 \TT{projects/PROJECT/+priv+}		& -  & - & read & - \\
-\TT{projects/PROJECT/+block+}		& -  & - & read & - \\
+\TT{projects/PROJECT/+blocked+}		& -  & - & read & - \\
 \TT{projects/PROJECT/PROBLEM/+priv+}	& -  & - & read & - \\
-\TT{projects/PROJECT/PROBLEM/+block+}	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+blocked+}	& -  & - & read & - \\
 \end{tabular}
 \\\bigskip
 {\bf Problem Page Work Files}
@@ -2245,9 +2255,9 @@ Template commands redirect their standard error so it does not appear here.
 \begin{tabular}{lllll}
 \TT{projects/+priv+}			& -  & - & read & - \\
 \TT{projects/PROJECT/+priv+}		& -  & - & read & - \\
-\TT{projects/PROJECT/+block+}		& -  & - & read & - \\
+\TT{projects/PROJECT/+blocked+}		& -  & - & read & - \\
 \TT{projects/PROJECT/PROBLEM/+priv+}	& -  & - & read & - \\
-\TT{projects/PROJECT/PROBLEM/+block+}	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+blocked+}	& -  & - & read & - \\
 \end{tabular}
 \end{center}
 
@@ -2314,9 +2324,9 @@ See Run Page Transactions Below.
 \begin{tabular}{lllll}
 \TT{projects/+priv+}			& -  & - & read & - \\
 \TT{projects/PROJECT/+priv+}		& -  & - & read & - \\
-\TT{projects/PROJECT/+block+}		& -  & - & read & - \\
+\TT{projects/PROJECT/+blocked+}		& -  & - & read & - \\
 \TT{projects/PROJECT/PROBLEM/+priv+}	& -  & - & read & - \\
-\TT{projects/PROJECT/PROBLEM/+block+}	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+blocked+}	& -  & - & read & - \\
 \end{tabular}
 \end{center}
 
@@ -2471,10 +2481,10 @@ These are made visible by links to the local problem directory.
 \TT{projects/PROJECT/PROBLEM/+changes+} & create  & append & - & - \\
 \TT{projects/PROJECT/PROBLEM/+lock+} & create  & update & read & - \\
 \TT{projects/PROJECT/PROBLEM/+priv+} & -  & - & read & - \\
-\TT{projects/PROJECT/PROBLEM/+block+}	& -  & - & read & - \\
+\TT{projects/PROJECT/PROBLEM/+blocked+}	& -  & - & read & - \\
 \TT{projects/PROJECT/+actions+} & create  & append & - & - \\
 \TT{projects/PROJECT/+priv+} & -  & - & read & - \\
-\TT{projects/PROJECT/+block+}		& -  & - & read & - \\
+\TT{projects/PROJECT/+blocked+}		& -  & - & read & - \\
 \TT{projects/+priv+}			& -  & - & read & - \\
 \TT{accounts/AID/+actions+} & create  & append & - & - \\
 \TT{accounts/AID/+lists+}    	& create  & - & read & - \\
@@ -2846,6 +2856,11 @@ See Job Templates \pagref{JOB-TEMPLATES}.
 \begin{tabular}{l@{\hspace{0.5in}}llll}
 \TT{accounts/AID/PROBLEM/PROBLEM.pdf}  	& -       & -      & read & - \\
 \TT{projects/PROJECT/PROBLEM.pdf}  	& -       & -      & read & - \\
+\TT{projects/PROJECT/PROBLEM/+priv+}	& -       & -      & read & - \\
+\TT{projects/PROJECT/PROBLEM/+blocked+}	& -       & -      & read & - \\
+\TT{projects/PROJECT/+priv+} 	 	& -       & -      & read & - \\
+\TT{projects/PROJECT/+blocked+}  	& -       & -      & read & - \\
+\TT{projects/+priv+} 		 	& -       & -      & read & - \\
 \end{tabular}
 
 
@@ -2854,7 +2869,9 @@ See Job Templates \pagref{JOB-TEMPLATES}.
 \subsubsection{Show Page File Formats}
 
 \begin{indpar}
-PDF files containing a problem description.
+PDF files containing a problem description. \\
+{\tt +priv+} files see \pageref{PRIV}. \\
+{\tt +blocked+} files see \pageref{BLOCKED}.
 \end{indpar}
 
 \subsubsection{Show Page Transactions}
