@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb 27 01:10:18 EST 2022
+    // Date:	Sat Mar 12 00:57:26 EST 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -73,7 +73,7 @@
 	        ( $epm_time_format, $btime );
 	    $errors[] = "project $project blocked as" .
 	                " of $btime";
-	    $c = file_get_contents ( "$epm_data/$b" );
+	    $c = ATOMIC_READ ( "$epm_data/$b" );
 	    if ( $c === false )
 		ERROR ( "can stat but not read $b" );
 	    $c = htmlspecialchars ( $c );
@@ -116,7 +116,7 @@
 	    $errors[] = "problem $problem in project" .
 			" $project blocked as of" .
 			" $btime";
-	    $c = file_get_contents ( "$epm_data/$b" );
+	    $c = ATOMIC_READ ( "$epm_data/$b" );
 	    if ( $c === false )
 		ERROR ( "can stat but not read $b" );
 	    $c = htmlspecialchars ( $c );
@@ -168,7 +168,7 @@
 		"parent of <i>Your</i> $problem" .
 		" problem in project $project is" .
 		" blocked as of $btime";
-	    $c = file_get_contents ( "$epm_data/$b" );
+	    $c = ATOMIC_READ ( "$epm_data/$b" );
 	    if ( $c === false )
 		ERROR ( "can stat but not read $b" );
 	    $c = htmlspecialchars ( $c );
