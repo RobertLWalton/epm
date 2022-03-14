@@ -120,7 +120,7 @@ Design Manual}
 
 \author{Robert L. Walton}
 
-\date{March 12, 2022}
+\date{March 13, 2022}
  
 \maketitle
 
@@ -1499,12 +1499,6 @@ last time the account made a read-write request.
 
 Download and xhttp requests are not recorded.
 
-\item[\TT{accounts/AID/+download-UID+}:]~
-\label{ACCOUNTS/AID/DOWNLOAD} \\
-File to be downloaded by the Look Page.
-E.g., a {\tt PROBLEM.tgz} file.
-
-
 
 \end{itemlist}
 \end{indpar}
@@ -2761,7 +2755,8 @@ See \pagref{ACCOUNT-ACTIONS}.
 \item[\TT{projects/PROJECT/\ldots}:]\vspace*{-1ex}
 \item[\TT{accounts/AID/PROBLEM/\ldots}:]\vspace*{-1ex} ~ \\
 The Manage page can download these directories as {\tt .tgz} files.
-\item[\TT{accounts/AID/+download-UID+}] ~ \\
+\item[\TT{accounts/AID/+download-UID+}] ~ 
+\label{ACCOUNTS/AID/DOWNLOAD} \\
 When downloading a directory, the {\tt .tgz} file is stored
 here and passed to the Look Page.
 
