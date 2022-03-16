@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Mar 12 00:57:26 EST 2022
+    // Date:	Wed Mar 16 05:20:20 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -270,7 +270,7 @@
 	    if ( $sign == '<' || $sign == '>' )
 	    {
 	        $timestr = $matches[2];
-		$time == strtotime ( $timestr );
+		$time = @strtotime ( $timestr );
 		if ( $time === false )
 		    $errs[] = "badly formatted time:" .
 		              " $timestr";
