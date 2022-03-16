@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Mar 16 05:45:39 EDT 2022
+Date:	Wed Mar 16 08:03:14 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -2147,7 +2147,8 @@ A privilege file line is one of the following:
  A &lt;group&gt; matches if it has previously been assigned
  `+'.
  <br>
- Lines in a privilege file are enabled unless disabled by a line in the file.
+ Lines in each privilege file are enabled unless disabled by the most recently
+ seen &lt; or &gt; line in the same file.
 <p>
 If after all the privilege file lines are processed a privilege
 has the value `+', the current user has the privilege.  Otherwise
