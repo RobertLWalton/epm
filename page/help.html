@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Feb 26 13:04:42 EST 2022
+Date:	Wed Mar 16 05:45:39 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -2096,13 +2096,31 @@ A privilege file line is one of the following:
 <ul>
 <li> blank line; ignored
 <li> comment line; first non-whitespace character is `#', ignored
+<li> line of form `&lt;sign&gt; &lt;time&gt; &lt;matcher&gt;'
+     <br>
+     where
+     <ul>
+     <li> &lt;sign&gt; ::= `&lt;' | `&gt;'
+     <li> &lt;time&gt; ::= &lt;date&gt;T&lt;time-of-day&gt;
+     <li> &lt;date&gt; ::= &lt;year&gt;-&lt;month&gt;-&lt;day&gt;
+     <li> &lt;time-of-day&gt; ::= &lt;hour&gt;:&lt;minute&gt;&lt;time-zone&gt;
+     <li> &lt;time-zone&gt; ::= `EST' | `EDT' | ...
+     <li> &lt;matcher&gt; ::= &lt;regular-expression&gt; | &lt;group&gt;
+     </ul>
+     If this line matches, subsequent lines in the same privilege file
+     (problem, project, or root) are enabled if and only if:
+     <ul>
+     <li> &lt;sign&gt; is `&lt;' and the current time is less than
+          &lt;time&gt;
+     <li> &lt;sign&gt; is `&gt;' and the current time is greater than
+          &lt;time&gt;
+     </ul>
 <li> line of form `&lt;sign&gt; &lt;key&gt; &lt;matcher&gt;'
      <br>
      where
      <ul>
      <li> &lt;sign&gt; ::= `+' | `-'
      <li> &lt;key&gt; ::= &lt;privilege&gt; | &lt;group&gt;
-     <li> &lt;matcher&gt; ::= &lt;regular-expression&gt; | &lt;group&gt;
      <li> &lt;privilege&gt; ::= `owner' | ... 
               <div style='margin-left:2em'>
 	      where &lt;privilege&gt; must be appropriate for the file
@@ -2118,16 +2136,18 @@ A privilege file line is one of the following:
 	      </div>
      </ul>
      <br>
-     If this line matches, the
+     If this line matches and is enabled, the
      line assigns &lt;sign&gt; to &lt;key&gt; UNLESS
      &lt;key&gt; has previously been assigned.
-     <br>
-     A &lt;regular-expression&gt; matches if it matches the
-     current user ID.
-     <br>
-     A &lt;group&gt; matches if it has previously been assigned
-     `+'.
 </ul>
+ <p>
+ A &lt;regular-expression&gt; matches if it matches the
+ current user ID.
+ <br>
+ A &lt;group&gt; matches if it has previously been assigned
+ `+'.
+ <br>
+ Lines in a privilege file are enabled unless disabled by a line in the file.
 <p>
 If after all the privilege file lines are processed a privilege
 has the value `+', the current user has the privilege.  Otherwise
