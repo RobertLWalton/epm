@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  3 01:58:13 EDT 2022
+    // Date:	Sun Apr  3 02:40:39 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -357,76 +357,75 @@ EOT;
         'Login Name; Click to See User Profile';
     echo <<<EOT
     <div class='manage'>
-    <form method='GET' action='manage.php'>
-    <input type='hidden' name='id' value='$ID'>
     <table style='width:100%'>
-    <tr>
+
+    <tr id='not-edited' style='width:100%'>
+    <form method='GET' action='contest.php'>
+    <input type='hidden' name='id' value='$ID'>
     <td>
-EOT;
-
-    if ( $state == 'normal' )
-        echo <<< EOT
-	<button type='submit'
-		formaction='user.php'
-		title='$login_title'>
-		$lname</button>
-	</td>
-	<td>
-	<strong>Go To</strong>
-	<button type='submit'
-		formaction='project.php'>
-		Project</button>
-	<button type='submit'
-		formaction='manage.php'>
-		Manage</button>
-	<strong>Page</strong>
-EOT;
-    else
-        echo <<< EOT
-        $lname
-	</td>
-	<td>
-EOT;
-
-    echo <<<EOT
+    <button type='submit'
+    	    formaction='user.php'
+	    title='$login_title'>
+	    $lname</button>
     </td>
-    <td style='text-align:right'>
+    <td>
+    <strong>Go To</strong>
+    <button type='submit' formaction='project.php'>
+    Project
+    </button>
+    <button type='submit' formaction='manage.php'>
+    Manage
+    </button>
+    <strong>Page</strong>
+    </td>
+    </td>
+    <td>
+    </td><td style='text-align:right'>
     $RW_BUTTON
     <button type='button' id='refresh'
             onclick='location.replace
-	        ("manage.php?id=$ID")'>
+	        ("contest.php?id=$ID")'>
 	&#8635;</button>
     <button type='button'
-            onclick='HELP("manage-page")'>
+            onclick='HELP("contest-page")'>
+	?</button>
+    </td>
+    </form>
+    </tr>
+
+    <tr id='edited' style='width:100%;display:none'>
+    <td>
+    <input type='hidden' name='id' value='$ID'>
+    <strong title='Login Name'>$lname</strong>
+    </td>
+    <td>
+    <button type='button'
+	    onclick='SUBMIT("save")'>
+	    SAVE</button>
+    <button type='button'
+	    onclick='SUBMIT("reset")'>
+	    RESET</button>
+    <form method='POST' action='contest.php'
+	  id='submit-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' name='op' id='op'>
+    <input type='hidden' name='indices'
+	   id='indices'>
+    </form>
+    </td>
+    <td>
+    </td><td style='text-align:right'>
+    <button type='button'
+            onclick='HELP("contest-page")'>
 	?</button>
     </td>
     </tr>
-    </table></form></div>
+    </table></div>
 EOT;
 
 ?>
 
 <script>
-function UPDATE ( warn )
-{
-    src = document.getElementById ( 'contents' );
-    des = document.getElementById ( 'value' );
-    form = document.getElementById ( 'post' );
-    warning = document.getElementById ( 'warning' );
-    des.value = src.innerText;
-    warning.value = warn;
-    form.submit();
-}
-function BLOCK ( action )
-{
-    src = document.getElementById ( 'block-contents' );
-    des = document.getElementById ( 'block-file' );
-    act = document.getElementById ( 'block-act' );
-    form = document.getElementById ( 'block-post' );
-    des.value = src.value;
-    act.value = action;
-    form.submit();
-}
 </script>
 
 </body>
