@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  3 01:45:53 EDT 2022
+    // Date:	Sun Apr  3 01:58:13 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -126,8 +126,8 @@
 	$contestname = $name;
         if ( isset ( $name ) )
 	{
-	    $f = "projects/$name/+contest+;
-	    $c = @get_file_contents ( "$epm_data/$f );
+	    $f = "projects/$name/+contest+";
+	    $c = @get_file_contents ( "$epm_data/$f" );
 	    if ( $c === false )
 	    {
 	        $errors[] =
@@ -214,7 +214,7 @@
 	$c = "projects/$new_contest/+contest+";
 	root_priv_map ( $root_map );
 	if ( ! preg_match
-	           ( $epm_name_re, $new_contest) )
+	           ( $epm_name_re, $new_contest ) )
 	    $errors[] = "badly formatted new contest" .
 	                " name: $new_contest";
 	elseif ( file_exists ( "$epm_data/$c" ) )
@@ -233,22 +233,18 @@
 		              " already exists";
 	        $warnings[] = "making it into a contest";
 	    }
-	    else
-	    {
-	        $r = @mkdir ( "$epm_data/$d",
-		              02771, true );
-		if ( $r === false )
-		    ERROR
-		        ( "cannot make directory $d" );
-		$j = json_encode
-		    ( ['NAME' => $new_contest],
-		      JSON_PRETTY_PRINT );
-		$r = file_put_contents
-		    ( "$epm_data/$c", $j );
-		if ( $r === false )
-		    ERROR ( "cannot write file $c" );
-		init_contest ( $new_contest );
-	    }
+	    $r = @mkdir ( "$epm_data/$d", 02771, true );
+	    if ( $r === false )
+		ERROR
+		    ( "cannot make directory $d" );
+	    $j = json_encode
+		( ['NAME' => $new_contest],
+		  JSON_PRETTY_PRINT );
+	    $r = file_put_contents
+		( "$epm_data/$c", $j );
+	    if ( $r === false )
+		ERROR ( "cannot write file $c" );
+	    init_contest ( $new_contest );
 	}
     }
 
@@ -381,11 +377,8 @@ EOT;
 		formaction='project.php'>
 		Project</button>
 	<button type='submit'
-		formaction='list.php'>
-		Edit Lists</button>
-	<button type='submit'
-		formaction='favorites.php'>
-		Edit Favorites</button>
+		formaction='manage.php'>
+		Manage</button>
 	<strong>Page</strong>
 EOT;
     else
@@ -409,11 +402,6 @@ EOT;
     </td>
     </tr>
     </table></form></div>
-EOT;
-
-
-    echo <<<EOT
-    </div>
 EOT;
 
 ?>
