@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  3 02:40:39 EDT 2022
+    // Date:	Sun Apr  3 16:26:39 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -76,7 +76,7 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    // require "$epm_home/include/debug_info.php";
+    require "$epm_home/include/debug_info.php";
 
     require "$epm_home/include/epm_list.php";
 
@@ -171,6 +171,7 @@
         // True if POST that has not yet been processed.
     $updated = false;
         // True iff $contestdata has been updated.
+    root_priv_map ( $root_map );
 
     $notice = NULL;
         // If not NULL, output after errors and warnings
@@ -212,7 +213,6 @@
 	$new_contest = $_POST['new-contest'];
 	$d = "projects/$new_contest";
 	$c = "projects/$new_contest/+contest+";
-	root_priv_map ( $root_map );
 	if ( ! preg_match
 	           ( $epm_name_re, $new_contest ) )
 	    $errors[] = "badly formatted new contest" .
@@ -359,7 +359,7 @@ EOT;
     <div class='manage'>
     <table style='width:100%'>
 
-    <tr id='not-edited' style='width:100%'>
+    <tr id='not-edited-1' style='width:100%'>
     <form method='GET' action='contest.php'>
     <input type='hidden' name='id' value='$ID'>
     <td>
@@ -389,6 +389,22 @@ EOT;
     <button type='button'
             onclick='HELP("contest-page")'>
 	?</button>
+    </td>
+    </form>
+    </tr>
+
+    <tr id='not-edited-2' style='width:100%'>
+    <form method='POST' action='contest.php'
+          id='new-contest-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <td>
+    <strong>or Create New Contest:</strong>
+    <input type='text' id='new-contest' size='32'
+    <input type="text" size="32"
+	   placeholder="New Contest Name"
+	   title="New Contest Name"
+	   name='new-contest'
+	   onkeydown='KEYDOWN("new-contest-form")'>
     </td>
     </form>
     </tr>
@@ -426,6 +442,16 @@ EOT;
 ?>
 
 <script>
+function KEYDOWN ( form_id )
+{
+    if ( event.code === 'Enter' )
+    {
+	event.preventDefault();
+	let form = document.getElementById
+	    ( form_id );
+	form.submit();
+    }
+}
 </script>
 
 </body>
