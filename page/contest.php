@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  3 16:26:39 EDT 2022
+    // Date:	Mon Apr  4 03:58:35 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -162,6 +162,40 @@
 	    $contestdata['TIMES'] = NULL;
 	    $contestdata['EMAILS'] = NULL;
 	}
+    }
+
+    // Return a map PROJECT => MTIME of all projects
+    // which have a +contest+ file, where MTIME is the
+    // mtime of the +contest+ file.  The list may be
+    // sorted alphabetically by
+    //		ksort ( list, SORT_STRING )
+    // or most recent first by
+    //		arsort ( list, SORT_NUMERIC )
+    //
+    $contest_re = '/projects/([^/]+)/\+contest\+$';
+    function find_contests ()
+    {
+        global $epm_data, $contest_re;
+	$r = [];
+	$p = "$epm_data/projects/*/+contest+";
+	foreach ( glob ( $p ) as $f )
+	{
+	    if ( preg_match ( $contest_re,
+	                      $f, $matches ) )
+	    {
+	        $project = $matches[1];
+		$time = @filemtime ( $f );
+		if ( $time === false )
+		{
+		    WARN ( "cannot stat existing" .
+		           " project/$project/" .
+			   "+contest+" );
+		    continue;
+		}
+		$r[$project] = $time;
+	    }
+	}
+	return $r;
     }
 
     if ( $epm_method == 'GET' )
@@ -353,6 +387,41 @@ div.priv pre {
 EOT;
     }
 
+    if ( isset ( $contestname ) )
+    {
+        echo <<<EOT
+	<strong>Current Contest:</strong>
+	$contestname
+EOT;
+	$select_msg = 'or Select Another Contest';
+    }
+    else
+	$select_msg = 'Select Contest';
+
+    if ( $state == 'normal' )
+    {
+        $contests = find_contests();
+	$contest_options = '';
+	if ( count ( $contests ) == 0 )
+	{
+	    $select_contest = 'none';
+	    $or = '';
+	}
+	else
+	{
+	    $select_contest = 'inline';
+	    $or = 'or';
+	    arsort ( $contests, SORT_NUMERIC );
+	    $contest_options .= 
+		'<option value="">No Contest Selected' .
+		'</option>';
+	    foreach ( $contests as $project => $time )
+		$contest_options .=
+		    "<option value=$project>" .
+		    "$project</option>";
+	}
+    }
+
     $login_title =
         'Login Name; Click to See User Profile';
     echo <<<EOT
@@ -394,12 +463,22 @@ EOT;
     </tr>
 
     <tr id='not-edited-2' style='width:100%'>
+    <td>
+    <div style='display:$select_contest'>
+    <strong>$select_msg:</strong>
+    <form method='POST' action='project.php'
+	  id='contest-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <select name='contest'
+	    onchange='document.getElementById
+			("contest-form").submit()'>
+    $contest_options
+    </select></form>
+    </div>
+    <strong>$or Create New Contest:</strong>
     <form method='POST' action='contest.php'
           id='new-contest-form'>
     <input type='hidden' name='id' value='$ID'>
-    <td>
-    <strong>or Create New Contest:</strong>
-    <input type='text' id='new-contest' size='32'
     <input type="text" size="32"
 	   placeholder="New Contest Name"
 	   title="New Contest Name"
