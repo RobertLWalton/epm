@@ -122,12 +122,12 @@
     //
     function init_contest ( $name = NULL )
     {
-        global $contestname, $contestdata;
+        global $contestname, $contestdata, $epm_data;
 	$contestname = $name;
         if ( isset ( $name ) )
 	{
 	    $f = "projects/$name/+contest+";
-	    $c = @get_file_contents ( "$epm_data/$f" );
+	    $c = @file_get_contents ( "$epm_data/$f" );
 	    if ( $c === false )
 	    {
 	        $errors[] =
@@ -145,6 +145,7 @@
 		        ( "cannot decode json in $f:" .
 			  PHP_EOL . "    $m" );
 		}
+		$contestdata = $j;
 	    }
 	}
 
@@ -172,7 +173,7 @@
     // or most recent first by
     //		arsort ( list, SORT_NUMERIC )
     //
-    $contest_re = '/projects/([^/]+)/\+contest\+$';
+    $contest_re = '|\/projects/+([^/]+)/\+contest\+$|';
     function find_contests ()
     {
         global $epm_data, $contest_re;
@@ -265,7 +266,8 @@
 	    {
 	        $warnings[] = "project $new_contest" .
 		              " already exists";
-	        $warnings[] = "making it into a contest";
+	        $warnings[] = "making it into a" .
+		              " contest";
 	    }
 	    $r = @mkdir ( "$epm_data/$d", 02771, true );
 	    if ( $r === false )
@@ -280,6 +282,24 @@
 		ERROR ( "cannot write file $c" );
 	    init_contest ( $new_contest );
 	}
+    }
+
+    if ( $process_post
+         &&
+	 isset ( $_POST['select-contest'] )
+	 &&
+	 $state == 'normal' )
+    {
+        $process_post = false;
+
+	$selected_contest = $_POST['select-contest'];
+	if ( ! preg_match
+	           ( $epm_name_re, $selected_contest ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " select-contest" .
+		   " $selected_contest" );
+
+	init_contest ( $selected_contest );
     }
 
 
@@ -389,14 +409,16 @@ EOT;
 
     if ( isset ( $contestname ) )
     {
-        echo <<<EOT
-	<strong>Current Contest:</strong>
-	$contestname
-EOT;
+	$show_name = 'inline';
+	$shown_name = $contestname;
 	$select_msg = 'or Select Another Contest';
     }
     else
+    {
+	$show_name = 'none';
+	$shown_name = '';
 	$select_msg = 'Select Contest';
+    }
 
     if ( $state == 'normal' )
     {
@@ -463,13 +485,17 @@ EOT;
     </tr>
 
     <tr id='not-edited-2' style='width:100%'>
+    <td style='display:$show_name'>
+    <strong>Current Contest:</strong>
+    <pre class='contest'>$shown_name</pre>
+    </td>
     <td>
     <div style='display:$select_contest'>
     <strong>$select_msg:</strong>
-    <form method='POST' action='project.php'
+    <form method='POST' action='contest.php'
 	  id='contest-form'>
     <input type='hidden' name='id' value='$ID'>
-    <select name='contest'
+    <select name='select-contest'
 	    onchange='document.getElementById
 			("contest-form").submit()'>
     $contest_options

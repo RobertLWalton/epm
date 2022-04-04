@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Feb 23 10:45:50 EST 2022
+// Date:    Mon Apr  4 17:27:54 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -79,7 +79,7 @@ echo "<title>$title</title>";
         font-size: var(--large-font-size);
 	font-weight: bold;
     }
-    pre.problem {
+    pre.problem, pre.contest {
         color: var(--hl-purple);
         font-size: var(--large-font-size);
 	padding: 0px calc(0.5*var(--font-size))

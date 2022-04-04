@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 16 05:46:35 EST 2022
+    // Date:	Mon Apr  4 17:25:21 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1185,7 +1185,7 @@ EOT;
     </td><td style='text-align:center'>
 
     <strong>Problem:</strong>&nbsp;
-    <pre class='problem'>$problem</pre></b>
+    <pre class='problem'>$problem</pre>
 EOT;
 
     if ( isset ( $parent ) )
