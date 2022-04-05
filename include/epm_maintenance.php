@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed Jan 19 04:24:02 EST 2022
+// Date:    Tue Apr  5 04:16:01 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -90,7 +90,7 @@ function title ( $title )
         substr ( '--------------------', 0, 5 * $c );
     if ( $c == 0 )
 	echo "$dashes [" .
-	     strftime ( $epm_time_format ) .
+	     date ( $epm_time_format ) .
 	     "] $title" . PHP_EOL;
     else
 	echo "$dashes $title" . PHP_EOL;
@@ -104,7 +104,7 @@ function done()
         ( '********************', 0, 5 * $c );
     if ( $c == 0 )
 	echo "$stars [" .
-	     strftime ( $epm_time_format ) .
+	     date ( $epm_time_format ) .
 	     "] done $title" . PHP_EOL;
     else
 	echo "$stars done $title" . PHP_EOL;
@@ -1127,7 +1127,7 @@ function backup ( $dryrun )
 
     backup_list ( $list );
 
-    $time = strftime ( $epm_time_format );
+    $time = date ( $epm_time_format );
     $time = str_replace ( ':', '_', $time );
         // Tar interprets :'s in its file name
 	// specially.

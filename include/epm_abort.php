@@ -2,10 +2,10 @@
 
 // File:	abort.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Sep 14 14:46:40 EDT 2020
+// Date:	Tue Apr  5 04:14:36 EDT 2022
 
-$our_time = strftime ( $epm_time_format, $our_time );
-$cur_time = strftime ( $epm_time_format, $cur_time );
+$our_time = date ( $epm_time_format, $our_time );
+$cur_time = date ( $epm_time_format, $cur_time );
 $aid = $_SESSION['EPM_AID'];
 $email = $_SESSION['EPM_EMAIL'];
 

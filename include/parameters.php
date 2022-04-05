@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Apr  4 14:48:45 EDT 2022
+// Date:    Tue Apr  5 04:08:13 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -133,11 +133,8 @@ $epm_max_display_lines = 2000;
     // Maximum number of lines displayed when a text
     // file is being displayed.   See look.php.
 
-$epm_time_format = "%FT%T%Z";
-    // Format for times, as per strftime.
-    // Format as per date function would be
-    //		"Y-m-d\Th:i:se"  [not tested]
-    // strftime is being deprecated in php 8.1
+$epm_time_format = "Y-m-d\Th:i:sT";  // date format.
+// $epm_time_format = "%FT%T%Z"; strftime format.
 
 $epm_name_re =
     '/^[A-Za-z][-_A-Za-z0-9]*[A-Za-z0-9]$/';

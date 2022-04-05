@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Aug  6 16:15:36 EDT 2021
+// Date:    Tue Apr  5 04:16:25 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -2207,7 +2207,7 @@ function finish_run ( & $warnings, & $errors )
     $time = @filemtime ( "$epm_data/$rout" );
     if ( $time === false )
 	ERROR ( "cannot stat $rout" );
-    $time = strftime ( $epm_time_format, $time );
+    $time = date ( $epm_time_format, $time );
 
     if ( preg_match
              ( '/(?m)^Maximum-Solution-Time:(.*)$/',

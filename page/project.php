@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Feb 16 06:57:15 EST 2022
+    // Date:	Tue Apr  5 04:13:22 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -631,7 +631,7 @@ EOT;
 	$changes = "Changes to Push $aid $problem to"
 	         . " $project $problem" . PHP_EOL
 		 . "    by $aid ("
-	         . strftime ( $epm_time_format )
+	         . date ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
 	$desmap = [];
@@ -849,7 +849,7 @@ EOT;
 	$changes = "Changes to Pull $aid $problem from"
 	         . " $project $problem" . PHP_EOL
 		 . "    by $aid ("
-	         . strftime ( $epm_time_format )
+	         . date ( $epm_time_format )
 	         . "):" . PHP_EOL;
 	$commands = [];
 
@@ -1097,7 +1097,7 @@ EOT;
 	$time = @filemtime ( "$epm_data/$f" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
-	$time = strftime ( $epm_time_format, $time );
+	$time = date ( $epm_time_format, $time );
 	$action = "$time $aid push $project $problem"
 	        . PHP_EOL;
 
@@ -1148,7 +1148,7 @@ EOT;
 	$time = @filemtime ( "$epm_data/$f" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $f" );
-	$time = strftime ( $epm_time_format, $time );
+	$time = date ( $epm_time_format, $time );
 	$action = "$time $aid pull $project $problem"
 	        . PHP_EOL;
 
@@ -1301,7 +1301,7 @@ EOT;
 		    ( "$epm_data/$d" );
 		if ( $time === false )
 		    ERROR ( "cannot stat $d" );
-		$time = strftime
+		$time = date
 		    ( $epm_time_format, $time );
 		$action = "$time $aid"
 			. " create-problem"

@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Mar 16 05:20:20 EDT 2022
+    // Date:	Tue Apr  5 04:15:33 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -69,7 +69,7 @@
 	}
 	else
 	{
-	    $btime = strftime
+	    $btime = date
 	        ( $epm_time_format, $btime );
 	    $errors[] = "project $project blocked as" .
 	                " of $btime";
@@ -111,7 +111,7 @@
 	}
 	else
 	{
-	    $btime = strftime
+	    $btime = date
 	        ( $epm_time_format, $btime );
 	    $errors[] = "problem $problem in project" .
 			" $project blocked as of" .
@@ -162,7 +162,7 @@
 	
 	if ( $pexists )
 	{
-	    $btime = strftime
+	    $btime = date
 	        ( $epm_time_format, $btime );
 	    $errors[] =
 		"parent of <i>Your</i> $problem" .
@@ -628,7 +628,7 @@
 	$time = @filemtime ( "$epm_data/$f" );
 	if ( $time === false )
 	    ERROR ( "could not stat $f" );
-	$time = strftime ( $epm_time_format, $time );
+	$time = date ( $epm_time_format, $time );
 
 	$f = "accounts/$aid/+lists+/+favorites+";
 	$flist = read_file_list ( $f );
@@ -1000,8 +1000,7 @@
 
 	$list = [];
 	foreach ( $map as $problem => $time )
-	    $list[] = [strftime ( $epm_time_format,
-	                          $time ),
+	    $list[] = [date ( $epm_time_format, $time ),
 		       $project, $problem];
 	return $list;
     }
@@ -1042,8 +1041,7 @@
 	arsort ( $map, SORT_NUMERIC );
 	$list = [];
 	foreach ( $map as $problem => $time )
-	    $list[] = [strftime ( $epm_time_format,
-	                          $time ),
+	    $list[] = [date ( $epm_time_format, $time ),
 		       '-', $problem];
 	return $list;
     }
@@ -1208,8 +1206,7 @@
 	    $time = @filemtime ( "$epm_data/$g" );
 	    if ( $time === false )
 		ERROR ( "cannot stat $g" );
-	    $time = strftime
-	        ( $epm_time_format, $time );
+	    $time = date ( $epm_time_format, $time );
 	    $new_list[] = [$time, '-', '-'];
 	    $modified = true;
 	    if ( ! $reinitializing )
@@ -1232,7 +1229,7 @@
 
 		$time = filemtime ( $fname );
 		if ( $time < $old_time ) continue;
-		$time = strftime
+		$time = date
 		    ( $epm_time_format, $time );
 
 		$new_list[] = [$time, $project, $name];

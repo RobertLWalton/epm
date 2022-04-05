@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Fri Aug 14 21:28:20 EDT 2020
+// Date:    Tue Apr  5 04:16:51 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -481,7 +481,7 @@ function write_info ( & $info )
     }
 
     $changes = '';
-    $time = strftime ( $epm_time_format );
+    $time = date ( $epm_time_format );
     $h = "$time $aid info";
 
     $f = "admin/{$type}s/$aid/$aid.info";

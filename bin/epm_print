@@ -3,7 +3,7 @@
 
 // File:	epm_print
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Sep 21 03:52:06 EDT 2020
+// Date:	Tue Apr  5 04:29:38 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -59,7 +59,8 @@ if ( ! isset ( $dir ) )
     exit ( "cannot find $PPPP" );
 
 $time = filemtime ( "../$dir/$PPPP$ext" );
-$time = strftime ( "%D ^%T", $time );
+// $time = strftime ( "%D ^%T", $time );
+$time = date ( "m/d/y H:i:s", $time );
 
 $command = "../$dir/$PPPP -doc |"
          . " enscript -2r"

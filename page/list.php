@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Feb 17 20:23:27 EST 2022
+    // Date:	Tue Apr  5 04:11:29 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -415,7 +415,7 @@ EOT;
 
 	$warnings[] = "<i>Your</i> $basename" .
 	              " list has been created";
-	return strftime ( $epm_time_format, $time );
+	return date ( $epm_time_format, $time );
     }
 
     // Execute $subop (keep, delete, cancel) for
@@ -531,7 +531,7 @@ EOT;
 	$time = @filemtime ( "$epm_data/$g" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $g" );
-	return strftime ( $epm_time_format, $time );
+	return date ( $epm_time_format, $time );
     }
 
     // Execute $subop (keep, delete, cancel) for
@@ -625,7 +625,7 @@ EOT;
 	$time = @filemtime ( "$epm_data/$g" );
 	if ( $time === false )
 	    ERROR ( "cannot stat $g" );
-	return strftime ( $epm_time_format, $time );
+	return date ( $epm_time_format, $time );
     }
 
     if ( $epm_method != 'POST' )
@@ -865,7 +865,7 @@ EOT;
 			( "$epm_data/$f" );
 		    if ( $time === false )
 			ERROR ( "cannot stat $f" );
-		    $time = strftime
+		    $time = date
 			( $epm_time_format, $time );
 		    $action = "$time $aid"
 			    . " $action"
@@ -884,7 +884,7 @@ EOT;
 	    delete_list ( $name, $errors, true );
 	    if ( count ( $errors ) == 0 )
 	    {
-		$time = strftime ( $epm_time_format );
+		$time = date ( $epm_time_format );
 		$action = "$time $aid"
 			. " delete-list"
 			. " - $name"

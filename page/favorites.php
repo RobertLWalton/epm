@@ -2,7 +2,7 @@
 
     // File:	favorites.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jan 21 05:13:49 EST 2022
+    // Date:	Tue Apr  5 04:11:00 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -121,7 +121,7 @@
     $time = @filemtime
         ( "$epm_data/accounts/$aid/+actions+" );
     if ( $time === false ) $time = time();
-    $time = strftime ( $epm_time_format, $time );
+    $time = date ( $epm_time_format, $time );
     $inmap["-:-"] = $time;
     $projects = read_projects ( ["show"] );
     foreach ( $projects as $project )
@@ -130,7 +130,7 @@
 	    ( "$epm_data/projects/$project" );
 	if ( $time === false )
 	    ERROR ( "cannot stat projects/$project" );
-	$time = strftime ( $epm_time_format, $time );
+	$time = date ( $epm_time_format, $time );
         $inmap["$project:-"] = $time;
     }
     $d = "accounts/$aid/+lists+";
@@ -148,7 +148,7 @@
 	    if ( $time === false )
 		ERROR ( "cannot stat $d/$fname" );
 	    $inmap["-:$basename"] =
-	        strftime ( $epm_time_format, $time );
+	        date ( $epm_time_format, $time );
 	}
 
     foreach ( $projects as $project )
@@ -160,7 +160,7 @@
 	    $basename = basename ( $fname, ".list" );
 	    $time = filemtime ( $fname );
 	    $inmap["$project:$basename"] =
-	        strftime ( $epm_time_format, $time );
+	        date ( $epm_time_format, $time );
 	}
     }
 

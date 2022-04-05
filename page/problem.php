@@ -2,7 +2,7 @@
 
     // File:	problem.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr  4 17:25:21 EDT 2022
+    // Date:	Tue Apr  5 04:12:57 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -702,7 +702,7 @@
 	$run = [];
 	exec ( "rm -rf $epm_data/$probdir" );
 
-	$time = strftime ( $epm_time_format );
+	$time = date ( $epm_time_format );
 	$action = "$time $aid delete-problem - $problem"
 		. PHP_EOL;
 	$f = "accounts/$aid/+actions+";

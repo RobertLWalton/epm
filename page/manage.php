@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Feb 27 02:00:13 EST 2022
+    // Date:	Tue Apr  5 04:12:29 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -377,7 +377,7 @@
 			( "$epm_data/$f" );
 		    if ( $time === false )
 			ERROR ( "cannot stat $f" );
-		    $time = strftime
+		    $time = date
 			( $epm_time_format, $time );
 		    $action = "$time $aid block" .
 		              " $n" . PHP_EOL;
@@ -444,7 +444,7 @@
 		    ERROR ( "could not unlink $f" );
 		else
 		{
-		    $time = strftime
+		    $time = date
 			( $epm_time_format );
 		    $action = "$time $aid unblock" .
 		              " $n" . PHP_EOL;
@@ -529,7 +529,7 @@
 		$time = @filemtime ( "$epm_data/$t" );
 		if ( $time === false )
 		    ERROR ( "cannot stat $t" );
-		$time = strftime
+		$time = date
 		    ( $epm_time_format, $time );
 		$action = "$time $aid download $N"
 			. PHP_EOL;
@@ -638,7 +638,7 @@
 		    ( "$epm_data/$f" );
 		if ( $time === false )
 		    ERROR ( "cannot stat $f" );
-		$time = strftime
+		$time = date
 		    ( $epm_time_format, $time );
 		$action = "$time $aid update-priv $n"
 			. PHP_EOL;
@@ -808,7 +808,7 @@
 			     " to $to";
 			$action = 'copy-from';
 		    }
-		    $time = strftime
+		    $time = date
 		        ( $epm_time_format, $time );
 
 		    $action_files[] = "$src/+actions+";
@@ -842,7 +842,7 @@
 			if ( $btime === false )
 			    ERROR
 			      ( "could not stat $f" );
-			$btime = strftime
+			$btime = date
 			    ( $epm_time_format,
 			      $btime );
 			$baction =

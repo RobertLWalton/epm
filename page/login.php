@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Sep 28 15:51:39 EDT 2020
+    // Date:	Tue Apr  5 04:11:59 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -93,8 +93,8 @@
 	}
 
 	$_SESSION['EPM_TIME'] =
-	    strftime ( $epm_time_format,
-	               $_SERVER['REQUEST_TIME'] );
+	    date ( $epm_time_format,
+	           $_SERVER['REQUEST_TIME'] );
 	$_SESSION['EPM_IPADDR'] =
 	    $_SERVER['REMOTE_ADDR'];
 	$_SESSION['EPM_THROTTLE'] =
