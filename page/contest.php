@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr  4 03:58:35 EDT 2022
+    // Date:	Mon Apr  4 22:46:01 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -326,33 +326,9 @@
 
 <style>
 
-div.select {
+div.parameters {
     background-color: var(--bg-green);
     padding-top: var(--pad);
-}
-div.project, div.problem, div.root {
-    padding: var(--pad) 0px;
-    margin: 0px;
-    display: inline-block;
-    float: left;
-    width: 50%;
-}
-div.root {
-    background-color: var(--bg-violet);
-}
-div.project {
-    background-color: var(--bg-tan);
-}
-div.problem {
-    background-color: var(--bg-blue);
-}
-div.priv {
-    margin-left: 2%;
-    border: black solid 1px;
-    width: 95%;
-}
-div.priv pre {
-    font-size: var(--large-font-size);
 }
 
 </style>
@@ -543,6 +519,18 @@ EOT;
     </tr>
     </table></div>
 EOT;
+
+if ( isset ( $contestname ) )
+{
+    echo <<<EOT
+    <div class='parameters'>
+    <strong>Contest Start:</strong>
+    <input type='datetime-local' name='start'
+                value='2022-02-07T13:00'>
+    </div>
+
+EOT;
+}
 
 ?>
 
