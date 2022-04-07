@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr  6 22:13:54 EDT 2022
+    // Date:	Thu Apr  7 02:58:35 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -452,7 +452,7 @@ EOT;
     </button>
     <strong>Page</strong>
     </td>
-    <td style='text-align:right'>
+    <td style='text-align:center'>
     $RW_BUTTON
     <button type='button' id='refresh'
             onclick='location.replace
@@ -498,11 +498,15 @@ EOT;
 
     <table style='width:100%;display:none' id='edited'>
     <tr style='width:100%'>
-    <td>
+    <td style='width:25%'>
     <input type='hidden' name='id' value='$ID'>
     <strong title='Login Name'>$lname</strong>
     </td>
-    <td>
+    <td style='text-align:left'>
+    <label>Current Contest:</label>
+    <pre class='contest'>$shown_name</pre>
+    </td>
+    <td style='text-align:right'>
     <button type='button'
 	    onclick='SUBMIT("save")'>
 	    SAVE</button>
@@ -510,7 +514,7 @@ EOT;
 	    onclick='SUBMIT("reset")'>
 	    RESET</button>
     </td>
-    <td style='text-align:right'>
+    <td style='width:25%;text-align:right'>
     <button type='button'
             onclick='HELP("contest-page")'>
 	?</button>
@@ -524,6 +528,10 @@ if ( isset ( $contestname ) )
 {
     $z = date ( "T" );
     $z = "<strong>$z</strong>";
+    if ( isset ( $email ) )
+        $reg_email = $email;
+    else
+        $reg_email = '';
     if ( isset ( $start ) )
         $start_time = $start;
     else
@@ -532,21 +540,29 @@ if ( isset ( $contestname ) )
         $stop_time = $stop;
     else
         $stop_time = '';
+    $dtitle = 'mm/dd/yyyy, hh::mm:[AP]M';
     echo <<<EOT
     <div class='parameters'>
     <form method='POST' action='contest.php'
           id='parameters-form'>
     <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='op' id='op'>
+    <label>To Register, Email:</label>
+    <input type='email' name='email'
+           value='$reg_email' size='40'
+	   onchange=ONINPUT()>
+    <br>
     <label>Contest Times:</label>
     <label style='margin-left:1em'>Start:</label>
     <input type='datetime-local' name='start'
                 value='$start_time'
-		oninput=ONINPUT()> $z
+	        title='$dtitle'
+		onchange=ONINPUT()> $z
     <label style='margin-left:1em'>Stop:</label>
-    <input type='datetime-local' name='start'
+    <input type='datetime-local' name='stop'
                 value='$stop_time'
-		oninput=ONINPUT()> $z
+	        title='$dtitle'
+		onchange=ONINPUT()> $z
     </form>
     </div>
 
@@ -574,7 +590,7 @@ var edited =
 function ONINPUT ( )
 {
     not_edited.style.display = 'none';
-    edited.style.display = 'block';
+    edited.style.display = 'table';
 }
 
 var parameters_form =
