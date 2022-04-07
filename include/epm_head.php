@@ -2,7 +2,7 @@
 
 // File:    epm_head.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon Apr  4 17:27:54 EDT 2022
+// Date:    Tue Apr  5 04:47:23 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -75,7 +75,7 @@ echo "<title>$title</title>";
     .center {
         text-align: center;
     }
-    strong {
+    strong, label {
         font-size: var(--large-font-size);
 	font-weight: bold;
     }

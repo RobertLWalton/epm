@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr  4 22:46:01 EDT 2022
+    // Date:	Wed Apr  6 22:13:54 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -302,6 +302,13 @@
 	init_contest ( $selected_contest );
     }
 
+    if ( $process_post
+         &&
+	 isset ( $_POST['op'] ) )
+    {
+        $process_post = false;
+    }
+
 
     if ( $process_post )
 	exit ( 'UNACCEPTABLE HTTP POST' );
@@ -337,7 +344,7 @@ div.parameters {
 
 <div style='background-color:orange;
 	    text-align:center'>
-<strong>This Page is Under Construction.</strong>
+<label>This Page is Under Construction.</label>
 </div>
 
 <?php 
@@ -424,9 +431,9 @@ EOT;
         'Login Name; Click to See User Profile';
     echo <<<EOT
     <div class='manage'>
-    <table style='width:100%'>
+    <table style='width:100%' id='not-edited'>
 
-    <tr id='not-edited-1' style='width:100%'>
+    <tr style='width:100%'>
     <form method='GET' action='contest.php'>
     <input type='hidden' name='id' value='$ID'>
     <td>
@@ -445,9 +452,7 @@ EOT;
     </button>
     <strong>Page</strong>
     </td>
-    </td>
-    <td>
-    </td><td style='text-align:right'>
+    <td style='text-align:right'>
     $RW_BUTTON
     <button type='button' id='refresh'
             onclick='location.replace
@@ -460,14 +465,14 @@ EOT;
     </form>
     </tr>
 
-    <tr id='not-edited-2' style='width:100%'>
+    <tr style='width:100%'>
     <td style='display:$show_name'>
-    <strong>Current Contest:</strong>
+    <label>Current Contest:</label>
     <pre class='contest'>$shown_name</pre>
     </td>
     <td>
     <div style='display:$select_contest'>
-    <strong>$select_msg:</strong>
+    <label>$select_msg:</label>
     <form method='POST' action='contest.php'
 	  id='contest-form'>
     <input type='hidden' name='id' value='$ID'>
@@ -477,7 +482,7 @@ EOT;
     $contest_options
     </select></form>
     </div>
-    <strong>$or Create New Contest:</strong>
+    <label>$or Create New Contest:</label>
     <form method='POST' action='contest.php'
           id='new-contest-form'>
     <input type='hidden' name='id' value='$ID'>
@@ -489,8 +494,10 @@ EOT;
     </td>
     </form>
     </tr>
+    </table>
 
-    <tr id='edited' style='width:100%;display:none'>
+    <table style='width:100%;display:none' id='edited'>
+    <tr style='width:100%'>
     <td>
     <input type='hidden' name='id' value='$ID'>
     <strong title='Login Name'>$lname</strong>
@@ -502,31 +509,45 @@ EOT;
     <button type='button'
 	    onclick='SUBMIT("reset")'>
 	    RESET</button>
-    <form method='POST' action='contest.php'
-	  id='submit-form'>
-    <input type='hidden' name='id' value='$ID'>
-    <input type='hidden' name='op' id='op'>
-    <input type='hidden' name='indices'
-	   id='indices'>
-    </form>
     </td>
-    <td>
-    </td><td style='text-align:right'>
+    <td style='text-align:right'>
     <button type='button'
             onclick='HELP("contest-page")'>
 	?</button>
     </td>
     </tr>
-    </table></div>
+    </table>
+    </div>
 EOT;
 
 if ( isset ( $contestname ) )
 {
+    $z = date ( "T" );
+    $z = "<strong>$z</strong>";
+    if ( isset ( $start ) )
+        $start_time = $start;
+    else
+        $start_time = '';
+    if ( isset ( $stop ) )
+        $stop_time = $stop;
+    else
+        $stop_time = '';
     echo <<<EOT
     <div class='parameters'>
-    <strong>Contest Start:</strong>
+    <form method='POST' action='contest.php'
+          id='parameters-form'>
+    <input type='hidden' name='id' value='$ID'>
+    <input type='hidden' name='op' id='op'>
+    <label>Contest Times:</label>
+    <label style='margin-left:1em'>Start:</label>
     <input type='datetime-local' name='start'
-                value='2022-02-07T13:00'>
+                value='$start_time'
+		oninput=ONINPUT()> $z
+    <label style='margin-left:1em'>Stop:</label>
+    <input type='datetime-local' name='start'
+                value='$stop_time'
+		oninput=ONINPUT()> $z
+    </form>
     </div>
 
 EOT;
@@ -544,6 +565,26 @@ function KEYDOWN ( form_id )
 	    ( form_id );
 	form.submit();
     }
+}
+
+var not_edited =
+    document.getElementById ( 'not-edited' );
+var edited =
+    document.getElementById ( 'edited' );
+function ONINPUT ( )
+{
+    not_edited.style.display = 'none';
+    edited.style.display = 'block';
+}
+
+var parameters_form =
+    document.getElementById ( 'parameters-form' );
+var op_input =
+    document.getElementById ( 'op' );
+function SUBMIT ( op )
+{
+    op_input.value = op;
+    parameters_form.submit();
 }
 </script>
 
