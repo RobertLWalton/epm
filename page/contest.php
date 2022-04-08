@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  7 02:58:35 EDT 2022
+    // Date:	Thu Apr  7 21:52:17 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -551,6 +551,13 @@ if ( isset ( $contestname ) )
     <input type='email' name='email'
            value='$reg_email' size='40'
 	   onchange=ONINPUT()>
+    <label style='margin-left:1em'>Contest Type:</label>
+    <input type='radio' id='1-phase' name='type'
+                                     value='1-phase'>
+    <label for='1-phase'>One Phase</label>
+    <input type='radio' id='2-phase' name='type'
+                                     value='2-phase'>
+    <label for='2-phase'>Two Phase</label>
     <br>
     <label>Contest Times:</label>
     <label style='margin-left:1em'>Start:</label>
