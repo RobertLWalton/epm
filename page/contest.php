@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr  7 21:52:17 EDT 2022
+    // Date:	Fri Apr  8 06:42:40 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -35,43 +35,23 @@
     //	    contest=CONTESTNAME
     //		Set existing CONTESTNAME.
     //
-    //	    account=EMAIL
-    //		Add account with given email to the
-    //		list of contest accounts.  Team email
-    //		is that of team manager.
+    //	    op=save OPTIONS
+    //		Update +contest+ according to OPTIONS:
     //
-    //	    flags=FLAG-LIST    warning={,no,yes}
-    //		Replace account flag list with that
-    //		given.  FLAG-LIST is comma separated
-    //		list of items of form ACCOUNT:mjc.
-    //
-    //    	    m: 'M' if manager, else '-'
-    //    	    j: 'J' if judge, else '-'
-    //    	    c: 'C' if contestant, else '-'
-    //
-    //		Warning is given when manager ceases to
-    //		be a manager.
+    //		registration-email=EMAIL
+    //		contest-type=[12]-phase
+    //		judge-can-see=checked (or omitted)
+    //		solution-start=TIME
+    //		solution-stop=TIME
+    //		description-start=TIME
+    //		description-stop=TIME
+    //		account-flags=FLAG-LIST
+
+    //		FLAG-LIST is comma separated list of
+    //		items of form ACCOUNT:FLAGS.
     //		
-    //	    type=TYPE
-    //		Set contest type: 1-PHASE or 2-PHASE.
-    //		
-    //	    start=TIME
-    //		Set contest start time.
-    //
-    //	    stop=HH:MM
-    //		Set contest stop time.
-    //
-    //	    op=OPERATION
-    //
-    //		One of:
-    //
-    //	    	    cancel
-    //			Reset account list from
-    //			+contest+ file.
-    //
-    //		    deploy
-    //			Create account projects for a
-    //			2-PHASE contest.
+    //	    op=reset
+    //		Restore data from +contest+.
 
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
@@ -87,16 +67,26 @@
         & $_SESSION['EPM_CONTEST']['CONTESTNAME'];
     $contestdata = & $data['CONTEST'];
 
-    $options = & $contestdata['OPTIONS'];
-        // [12][j]
-	//	1: 1-phase contest
-	//	2: 2-phase contest
-	//	j: judges can see emails
-	//         (managers can always see emails)
-    $start = & $contestdata['START'];
-        // start time in $epm_time_format
-    $stop = & $contestdata['STOP'];
-        // stop time in $epm_time_format
+    // Parameters stored in +contest+.
+    // See HELP for more documentation.
+    //
+    $registration_email =
+	    & $contestdata['REGISTRATION-EMAIL'];
+        // Email.
+    $contest_type = & $contestdata['CONTEST-TYPE'];
+        // Either '1-phase' or '2-phase'.
+    $judge_can_see = & $contestdata['JUDGE-CAN-SEE'];
+        // 'checked' or NULL. 
+    $solution_start = & $contestdata['SOLUTION-START'];
+        // time in $epm_time_format
+    $solution_stop = & $contestdata['SOLUTION-STOP'];
+        // time in $epm_time_format
+    $description_start =
+	    & $contestdata['DESCRIPTION-START'];
+        // time in $epm_time_format
+    $description_stop =
+	    & $contestdata['DESCRIPTION-STOP'];
+        // time in $epm_time_format
     $deployed = & $contestdata['DEPLOYED'];
         // time last deployed in $epm_time_format
     $flags = & $contestdata['FLAGS'];
@@ -112,7 +102,7 @@
 	//		  flags
     $emails = & $contestdata['EMAILS'];
         // map ACCOUNT => "email address"
-	// Email addresses used to add accounts
+	// Email addresses used to add account
 	// to contest.
 
     // Set $contestname to $name and if this is NULL,
@@ -155,9 +145,13 @@
 	    // NULL because of references into it.
 
 	    $contestdata['NAME'] = NULL;
-	    $contestdata['OPTIONS'] = NULL;
-	    $contestdata['START'] = NULL;
-	    $contestdata['STOP'] = NULL;
+	    $contestdata['REGISTRATION-EMAIL'] = NULL;
+	    $contestdata['CONTEST-TYPE'] = NULL;
+	    $contestdata['JUDGE-CAN-SEE'] = NULL;
+	    $contestdata['SOLUTION-START'] = NULL;
+	    $contestdata['SOLUTION-STOP'] = NULL;
+	    $contestdata['DESCRIPTION-START'] = NULL;
+	    $contestdata['DESCRIPTION-STOP'] = NULL;
 	    $contestdata['DEPLOYED'] = NULL;
 	    $contestdata['FLAGS'] = NULL;
 	    $contestdata['TIMES'] = NULL;
@@ -526,20 +520,17 @@ EOT;
 
 if ( isset ( $contestname ) )
 {
+    // Note: NULL automatically converts to the
+    // empty string.
+
     $z = date ( "T" );
     $z = "<strong>$z</strong>";
-    if ( isset ( $email ) )
-        $reg_email = $email;
+    if ( isset ( $contest_type ) )
+        $select_type =
+	    "<script>document.getElementById" .
+	    " ( '$type' ).select();</script>";
     else
-        $reg_email = '';
-    if ( isset ( $start ) )
-        $start_time = $start;
-    else
-        $start_time = '';
-    if ( isset ( $stop ) )
-        $stop_time = $stop;
-    else
-        $stop_time = '';
+        $select_type = '';
     $dtitle = 'mm/dd/yyyy, hh::mm:[AP]M';
     echo <<<EOT
     <div class='parameters'>
@@ -548,10 +539,12 @@ if ( isset ( $contestname ) )
     <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='op' id='op'>
     <label>To Register, Email:</label>
-    <input type='email' name='email'
-           value='$reg_email' size='40'
+    <input type='email' name='registration-email'
+           value='$registration_email' size='40'
 	   onchange='ONCHANGE()'>
-    <label style='margin-left:1em'>Contest Type:</label>
+
+    <div style='margin-top:0.5em;margin-bottom:0.5em'>
+    <label>Contest Type:</label>
     <input type='radio' id='1-phase'
            name='type' value='1-phase'
 	   onchange='ONCHANGE()'>
@@ -560,18 +553,48 @@ if ( isset ( $contestname ) )
            name='type' value='2-phase'
 	   onchange='ONCHANGE()'>
     <label for='2-phase'>Two Phase</label>
-    <br>
-    <label>Contest Times:</label>
+    $select_type
+    <input style='margin-left:10em'
+           type='checkbox' name='judge-can-see'
+	                   value='checked'
+                           id='judge-can-see'
+			   $judge_can_see
+			   onchange='ONCHANGE()'>
+    <label for='judge-can-see'>
+    Judges Can See Contestant Account Names/Emails
+    </label>
+    </div>
+
+    <div>
+    <label>Problem Solution Submit Times:</label>
     <label style='margin-left:1em'>Start:</label>
-    <input type='datetime-local' name='start'
-                value='$start_time'
+    <input type='datetime-local' name='solution-start'
+                value='$solution_start'
 	        title='$dtitle'
 		onchange='ONCHANGE()'> $z
     <label style='margin-left:1em'>Stop:</label>
-    <input type='datetime-local' name='stop'
-                value='$stop_time'
+    <input type='datetime-local' name='solution-stop'
+                value='$solution_stop'
 	        title='$dtitle'
 		onchange='ONCHANGE()'> $z
+    </div>
+
+    <div>
+    <label>Problem Definition Submit Times:</label>
+    <label style='margin-left:1em'>Start:</label>
+    <input type='datetime-local'
+                name='description-start'
+                value='$description_start'
+	        title='$dtitle'
+		onchange='ONCHANGE()'> $z
+    <label style='margin-left:1em'>Stop:</label>
+    <input type='datetime-local'
+                name='description-stop'
+                value='$description_stop'
+	        title='$dtitle'
+		onchange='ONCHANGE()'> $z
+    </div>
+
     </form>
     </div>
 
