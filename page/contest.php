@@ -550,13 +550,15 @@ if ( isset ( $contestname ) )
     <label>To Register, Email:</label>
     <input type='email' name='email'
            value='$reg_email' size='40'
-	   onchange=ONINPUT()>
+	   onchange='ONCHANGE()'>
     <label style='margin-left:1em'>Contest Type:</label>
-    <input type='radio' id='1-phase' name='type'
-                                     value='1-phase'>
+    <input type='radio' id='1-phase'
+           name='type' value='1-phase'
+	   onchange='ONCHANGE()'>
     <label for='1-phase'>One Phase</label>
-    <input type='radio' id='2-phase' name='type'
-                                     value='2-phase'>
+    <input type='radio' id='2-phase'
+           name='type' value='2-phase'
+	   onchange='ONCHANGE()'>
     <label for='2-phase'>Two Phase</label>
     <br>
     <label>Contest Times:</label>
@@ -564,12 +566,12 @@ if ( isset ( $contestname ) )
     <input type='datetime-local' name='start'
                 value='$start_time'
 	        title='$dtitle'
-		onchange=ONINPUT()> $z
+		onchange='ONCHANGE()'> $z
     <label style='margin-left:1em'>Stop:</label>
     <input type='datetime-local' name='stop'
                 value='$stop_time'
 	        title='$dtitle'
-		onchange=ONINPUT()> $z
+		onchange='ONCHANGE()'> $z
     </form>
     </div>
 
@@ -594,7 +596,7 @@ var not_edited =
     document.getElementById ( 'not-edited' );
 var edited =
     document.getElementById ( 'edited' );
-function ONINPUT ( )
+function ONCHANGE ( )
 {
     not_edited.style.display = 'none';
     edited.style.display = 'table';
