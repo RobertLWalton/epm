@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr  8 06:42:40 EDT 2022
+    // Date:	Sat Apr  9 05:15:13 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -419,6 +419,12 @@ EOT;
 		    "<option value=$project>" .
 		    "$project</option>";
 	}
+	if ( isset ( $root_map['create-contest'] )
+	     &&
+	     $root_map['create-contest'] == '+' )
+	    $create_contest = 'inline';
+	else
+	    $create_contest = 'none';
     }
 
     $login_title =
@@ -464,7 +470,9 @@ EOT;
     <label>Current Contest:</label>
     <pre class='contest'>$shown_name</pre>
     </td>
+
     <td>
+
     <div style='display:$select_contest'>
     <label>$select_msg:</label>
     <form method='POST' action='contest.php'
@@ -476,6 +484,7 @@ EOT;
     $contest_options
     </select></form>
     </div>
+    <div style='display:$create_contest'>
     <label>$or Create New Contest:</label>
     <form method='POST' action='contest.php'
           id='new-contest-form'>
@@ -485,6 +494,8 @@ EOT;
 	   title="New Contest Name"
 	   name='new-contest'
 	   onkeydown='KEYDOWN("new-contest-form")'>
+    </div>
+
     </td>
     </form>
     </tr>
@@ -541,7 +552,8 @@ if ( isset ( $contestname ) )
     <label>To Register, Email:</label>
     <input type='email' name='registration-email'
            value='$registration_email' size='40'
-	   onchange='ONCHANGE()'>
+	   onchange='ONCHANGE()'
+	   onkeydown='KEYDOWN(null)'>
 
     <div style='margin-top:0.5em;margin-bottom:0.5em'>
     <label>Contest Type:</label>
@@ -609,9 +621,12 @@ function KEYDOWN ( form_id )
     if ( event.code === 'Enter' )
     {
 	event.preventDefault();
-	let form = document.getElementById
-	    ( form_id );
-	form.submit();
+	if ( form_id !== null )
+	{
+	    let form = document.getElementById
+		( form_id );
+	    form.submit();
+	}
     }
 }
 
