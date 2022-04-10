@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr  9 16:33:34 EDT 2022
+    // Date:	Sat Apr  9 21:58:36 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -73,23 +73,21 @@
     //
     $registration_email =
 	    & $contestdata['REGISTRATION-EMAIL'];
-        // Email.
+        // Email or NULL.
     $contest_type = & $contestdata['CONTEST-TYPE'];
-        // Either '1-phase' or '2-phase'.
+        // Either '1-phase' or '2-phase' or NULL.
     $judge_can_see = & $contestdata['JUDGE-CAN-SEE'];
         // 'checked' or NULL. 
     $solution_start = & $contestdata['SOLUTION-START'];
-        // time in $epm_time_format
     $solution_stop = & $contestdata['SOLUTION-STOP'];
-        // time in $epm_time_format
     $description_start =
 	    & $contestdata['DESCRIPTION-START'];
-        // time in $epm_time_format
     $description_stop =
 	    & $contestdata['DESCRIPTION-STOP'];
-        // time in $epm_time_format
+        // Time in $epm_time_format or NULL.
     $deployed = & $contestdata['DEPLOYED'];
-        // time last deployed in $epm_time_format
+        // Time last deployed in $epm_time_format,
+	// or NULL.
     $flags = & $contestdata['FLAGS'];
         // map ACCOUNT => "[Mm-][Jj-][Cc-]"
 	//    M if now manager, m if was manager,
@@ -206,13 +204,64 @@
     //
     function get_parameters ( $post )
     {
+	global $epm_time_format;
+
         $r = [];
 
 	if ( ! isset ( $post['registration-email'] ) )
 	    ERROR ( "UNACCEPTABLE HTTP POST:" .
 	            " no registration-email" );
-	$r['REGISTRATION-EMAIL'] =
-	    $post['registration-email'];
+	$v = $post['registration-email'];
+	if ( $v == '' ) $v = NULL;
+	$r['REGISTRATION-EMAIL'] = $v;
+
+	if ( ! isset ( $post['contest-type'] ) )
+	    $v = NULL;  // Unset radio OK.
+	else
+	{
+	    $v = $post['contest-type'];
+	    if ( ! in_array ( $v, ['1-phase',
+	                           '2-phase'] ) )
+		ERROR ( "UNACCEPTABLE HTTP POST:" .
+			" contest-type = $v" );
+	}
+	$r['CONTEST-TYPE'] = $v;
+
+	if ( ! isset ( $post['judge-can-see'] ) )
+	    $v = NULL;  // Unset checkbox.
+	else
+	{
+	    $v = $post['judge-can-see'];
+	    if ( $v != 'checked' )
+		ERROR ( "UNACCEPTABLE HTTP POST:" .
+			" judge-can-see = $v" );
+	}
+	$r['JUDGE-CAN-SEE'] = $v;
+
+	foreach (
+	    [['solution-start','SOLUTION-START'],
+	     ['solution-stop','SOLUTION-STOP'],
+	     ['description-start','DESCRIPTION-START'],
+	     ['description-stop','DESCRIPTION-STOP']]
+	    as $pair )
+	{
+	    $m = $pair[0];
+	    $n = $pair[1];
+	    if ( ! isset ( $post[$m] ) )
+		ERROR ( "UNACCEPTABLE HTTP POST:" .
+			" no $m" );
+	    $v = $post[$m];
+	    if ( $v == '' ) $v = NULL;
+	    else
+	    {
+		$w = @strtotime ( $v );
+		if ( $w === false )
+		    ERROR ( "UNACCEPTABLE HTTP POST:" .
+			    " $m = $v" );
+		$v = date ( $epm_time_format, $w );
+	    }
+	    $r[$n] = $v;
+	}
 
 	return $r;
     }
@@ -221,12 +270,18 @@
     // for errors and warnings.  Return 0 if none,
     // 1 if only warnings, 2 if there are errors.
     //
+    // Some error checks reference $contestdata; e.g.,
+    // DEPLOYED is used to prevent changes to CONTEST-
+    // TYPE.
+    //
     // $errors and $warnings must be set to a list
     // (they cannot be undefined) when this is called.
     //
     function check_parameters
 	    ( $params, & $warnings, & $errors )
     {
+        global $contestdata;
+
         $wc = count ( $warnings );
         $ec = count ( $errors );
 
@@ -244,6 +299,59 @@
 		    $errors[] = "    $e";
 	    }
 	}
+
+	if ( isset ( $contestdata['DEPLOYED'] )
+	     &&
+	     isset ( $contestdata['CONTEST-TYPE'] )
+	     &&
+	     $contestdata['CONTEST-TYPE']
+	     !=
+	     $params['CONTEST-TYPE'] )
+	{
+	    $v = $contestdata['CONTEST-TYPE'];
+	    $w = $params['CONTEST-TYPE'];
+	    if ( $w == NULL ) $w = "NONE";
+	    $errors[] = "cannot change contest type" .
+	                " from $v to $w because";
+	    $errors[] = "contest was deployed " .
+	                $contestdata['DEPLOYED'];
+	    $params['CONTEST-TYPE'] = $v;
+	}
+
+	if ( ! isset ( $params['SOLUTION-START'] ) )
+	    $warnings[] =
+	        "Solution Start Time is missing";
+	elseif ( ! isset ( $params['SOLUTION-STOP'] ) )
+	    $warnings[] =
+	        "Solution Stop Time is missing";
+	elseif ( strtotime ( $params['SOLUTION-STOP'] )
+	         <=
+	         strtotime ( $params['SOLUTION-START'] )
+	       )
+	    $errors[] = "Solution Stop Time is not" .
+	                " later than Solution Start" .
+			" Time";
+
+	if ( ! isset ( $params['DESCRIPTION-START'] ) )
+	    $warnings[] =
+	        "Description Start Time is missing";
+	elseif ( ! isset
+	             ( $params['DESCRIPTION-STOP'] ) )
+	    $warnings[] =
+	        "Description Stop Time is missing";
+	elseif ( strtotime
+		     ( $params['DESCRIPTION-STOP'] )
+	         <=
+	         strtotime
+		     ( $params['DESCRIPTION-START'] )
+	       )
+	    $errors[] = "Description Stop Time is not" .
+	                " later than Description Start" .
+			" Time";
+
+	if ( count ( $errors ) > $ec ) return 2;
+	elseif ( count ( $warnings ) > $wc ) return 1;
+	else return 0;
     }
 
     if ( $epm_method == 'GET' )
@@ -355,6 +463,8 @@
     {
         $process_post = false;
 	$params = get_parameters ( $_POST );
+	print_r ( $params );
+	echo "<BR>";
 	check_parameters
 	    ( $params, $warnings, $errors );
     }
@@ -614,11 +724,11 @@ if ( isset ( $contestname ) )
     <div style='margin-top:0.5em;margin-bottom:0.5em'>
     <label>Contest Type:</label>
     <input type='radio' id='1-phase'
-           name='type' value='1-phase'
+           name='contest-type' value='1-phase'
 	   onchange='ONCHANGE()'>
     <label for='1-phase'>One Phase</label>
     <input type='radio' id='2-phase'
-           name='type' value='2-phase'
+           name='contest-type' value='2-phase'
 	   onchange='ONCHANGE()'>
     <label for='2-phase'>Two Phase</label>
     $select_type
