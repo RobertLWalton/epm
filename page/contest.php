@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 12 13:48:16 EDT 2022
+    // Date:	Tue Apr 12 16:51:16 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -418,8 +418,6 @@
     {
         $r = '';
 	$emails = $params['EMAILS'];
-	$line_through =
-	    "style='text-decoration:line-through'";
 	foreach ( $params['FLAGS'] as $aid => $flags )
 	{
 	    $r .= "<tr><td>";
@@ -430,37 +428,38 @@
 	        $M = $MJC[$i];
 	        $m = $mjc[$i];
 		$f = $flags[$i];
+		$class = 'flagbox';
 		if ( $f == '-' )
-		{
-		    $d1 = '';
 		    $d2 = '&nbsp;';
-		}
 		elseif ( $f == $m )
 		{
-		    $d1 = $line_through;
+		    $class .= ",overstrike";
 		    $d2 = $M;
 		}
 		else
-		{
-		    $d1 = '';
 		    $d2 = $M;
-		}
-		$r .= "<pre class='flagbox'"
+		if ( $i % 2 == 0 )
+		    $class .= ",even-column";
+		else
+		    $class .= ",odd-column";
+
+		$r .= "<pre class='$class'"
 		    . "     data-curr='$f'"
 		    . "     data-init='$f'"
-		    . "     $d1"
 		    . "     id='$aid-$M'"
 		    . "     onmouseenter='ENTER(this)'"
 		    . "     onmouseleave='LEAVE(this)'"
-		    . "     onclick='CLICK(this)>'"
+		    . "     onclick='CLICK(this)'>"
 		    . "&nbsp;$d2&nbsp;</pre>";
 	    }
-	    $r .= "</td><td>"
+	    $email = $emails[$aid];
+	    $r .= "&nbsp;&nbsp;&nbsp;&nbsp;"
 	        . "<strong>$aid</strong>"
 	        . "</td><td>"
 	        . "<strong>$email</strong>"
 		. "</td></tr>";
 	}
+	return $r;
     }
 
     if ( $epm_method == 'GET' )
@@ -615,6 +614,20 @@ div.parameters {
 div.accounts {
     background-color: var(--bg-tan);
     padding-top: var(--pad);
+}
+
+pre.overstrike {
+    text-decoration: line-through;
+}
+pre.even-column {
+    background-color: var(--bg-blue);
+}
+pre.odd-column {
+    background-color: var(--bg-tan);
+}
+pre.flagbox {
+    border: 2px solid black;
+    background-color: var(--bg-orange);
 }
 
 </style>
@@ -897,7 +910,7 @@ if ( isset ( $contestname ) )
 
 EOT;
 
-$account_rows = account_rows ( $contestdata );
+$account_rows = display_account ( $contestdata );
 echo <<<EOT
 <div class='accounts'>
 <table style='width:100%'>
