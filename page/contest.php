@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 12 08:07:03 EDT 2022
+    // Date:	Tue Apr 12 13:48:16 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -359,14 +359,14 @@
     // per account of the form:
     //
     //		<tr>
-    //		<td 
+    //		<td> 
     //		<pre class='flagbox'
     //		     data-curr=Fm
     //		     data-init=Fm
     //		     id='aid-M'
     //		     onmouseenter=ENTER(this)
     //		     onmouseleave=LEAVE(this)
-    //		     onclick=CLICK(this)
+    //		     onclick=CLICK(this)>
     //		     Dm</pre>
     //		<pre class='flagbox'
     //		     data-curr=Fj
@@ -374,19 +374,19 @@
     //		     id='aid-J'
     //		     onmouseenter=ENTER(this)
     //		     onmouseleave=LEAVE(this)
-    //		     onclick=CLICK(this)
+    //		     onclick=CLICK(this)>
     //		     Dj</pre>
     //		<pre class='flagbox'
     //		     data-curr=Fc
     //		     data-init=Fc
     //		     onmouseenter=ENTER(this)
     //		     onmouseleave=LEAVE(this)
-    //		     onclick=CLICK(this)
+    //		     onclick=CLICK(this)>
     //		     id='aid-C'>
     //		     Dc</pre>
     //		</td>
-    //		<td><strong>aid</strong?</td>
-    //		<td><strong>email</strong?</td>
+    //		<td><strong>aid</strong></td>
+    //		<td><strong>email</strong></td>
     //		</tr>
     //		
     // where
@@ -403,6 +403,65 @@
     //		   &nbsp;&nbsp;&nbsp;	'-'
     //		Dj similar with M => J
     //		Dc similar with C => J
+    //
+    // Onclick performs the following transformation
+    // for M (J and C are similar):
+    //
+    //	    if current == initial:
+    //		if current == M: current = m
+    //		if current == m: current = M
+    //		if current == -: current = M
+    //	    else:
+    //		current = initial
+    //
+    function display_account ( $params )
+    {
+        $r = '';
+	$emails = $params['EMAILS'];
+	$line_through =
+	    "style='text-decoration:line-through'";
+	foreach ( $params['FLAGS'] as $aid => $flags )
+	{
+	    $r .= "<tr><td>";
+	    $MJC = 'MJC';
+	    $mjc = 'mjc';
+	    for ( $i = 0; $i < 3; $i ++ )
+	    {
+	        $M = $MJC[$i];
+	        $m = $mjc[$i];
+		$f = $flags[$i];
+		if ( $f == '-' )
+		{
+		    $d1 = '';
+		    $d2 = '&nbsp;';
+		}
+		elseif ( $f == $m )
+		{
+		    $d1 = $line_through;
+		    $d2 = $M;
+		}
+		else
+		{
+		    $d1 = '';
+		    $d2 = $M;
+		}
+		$r .= "<pre class='flagbox'"
+		    . "     data-curr='$f'"
+		    . "     data-init='$f'"
+		    . "     $d1"
+		    . "     id='$aid-$M'"
+		    . "     onmouseenter='ENTER(this)'"
+		    . "     onmouseleave='LEAVE(this)'"
+		    . "     onclick='CLICK(this)>'"
+		    . "&nbsp;$d2&nbsp;</pre>";
+	    }
+	    $r .= "</td><td>"
+	        . "<strong>$aid</strong>"
+	        . "</td><td>"
+	        . "<strong>$email</strong>"
+		. "</td></tr>";
+	}
+    }
 
     if ( $epm_method == 'GET' )
         init_contest ( $contestname );
