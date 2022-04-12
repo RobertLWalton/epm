@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr  9 21:58:36 EDT 2022
+    // Date:	Tue Apr 12 01:17:41 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -96,13 +96,13 @@
 	//      - if neither
 	//    C if now contestant, c if was contestant,
 	//      - if neither
-    $times = & $contestdata['TIMES'];
-        // map ACCOUNT => time of last change to account
-	//		  flags
     $emails = & $contestdata['EMAILS'];
         // map ACCOUNT => "email address"
 	// Email addresses used to add account
 	// to contest.
+    $times = & $contestdata['TIMES'];
+        // map ACCOUNT => time of last change to account
+	//		  flags or email
 
     // Set $contestname to $name and if this is NULL,
     // set all $contestdata[...] element values to NULL,
@@ -428,8 +428,13 @@
 	    if ( $r === false )
 		ERROR
 		    ( "cannot make directory $d" );
+	    $t = date ( $epm_time_format );
+	    $m = $_SESSION['EPM_EMAIL'];
 	    $j = json_encode
-		( ['NAME' => $new_contest],
+		( ['NAME' => $new_contest,
+		   'FLAGS' => [$aid => 'M--'],
+		   'EMAILS' => [$aid => $m],
+		   'TIMES' => [$aid => $t]],
 		  JSON_PRETTY_PRINT );
 	    $r = file_put_contents
 		( "$epm_data/$c", $j );
