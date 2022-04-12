@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 12 01:17:41 EDT 2022
+    // Date:	Tue Apr 12 08:07:03 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -354,6 +354,56 @@
 	else return 0;
     }
 
+    // Given a set of parameters containing account
+    // information, make display containing one row
+    // per account of the form:
+    //
+    //		<tr>
+    //		<td 
+    //		<pre class='flagbox'
+    //		     data-curr=Fm
+    //		     data-init=Fm
+    //		     id='aid-M'
+    //		     onmouseenter=ENTER(this)
+    //		     onmouseleave=LEAVE(this)
+    //		     onclick=CLICK(this)
+    //		     Dm</pre>
+    //		<pre class='flagbox'
+    //		     data-curr=Fj
+    //		     data-init=Fj
+    //		     id='aid-J'
+    //		     onmouseenter=ENTER(this)
+    //		     onmouseleave=LEAVE(this)
+    //		     onclick=CLICK(this)
+    //		     Dj</pre>
+    //		<pre class='flagbox'
+    //		     data-curr=Fc
+    //		     data-init=Fc
+    //		     onmouseenter=ENTER(this)
+    //		     onmouseleave=LEAVE(this)
+    //		     onclick=CLICK(this)
+    //		     id='aid-C'>
+    //		     Dc</pre>
+    //		</td>
+    //		<td><strong>aid</strong?</td>
+    //		<td><strong>email</strong?</td>
+    //		</tr>
+    //		
+    // where
+    //		aid = account-id
+    //		Fm is one of 'M', 'm', '-'
+    //		Fj is one of 'J', 'j', '-'
+    //		Fc is one of 'C', 'c', '-'
+    //		data-curr is current value
+    //		data-init is value when page loaded
+    //		Dm is one of:    If current flag =:
+    //		   &nbsp;M&nbsp;	'M'
+    //		   &nbsp;M&nbsp;	'm'
+    //			with overstrike text-decoration
+    //		   &nbsp;&nbsp;&nbsp;	'-'
+    //		Dj similar with M => J
+    //		Dc similar with C => J
+
     if ( $epm_method == 'GET' )
         init_contest ( $contestname );
 
@@ -500,6 +550,11 @@
 
 div.parameters {
     background-color: var(--bg-green);
+    padding-top: var(--pad);
+}
+
+div.accounts {
+    background-color: var(--bg-tan);
     padding-top: var(--pad);
 }
 
@@ -781,6 +836,15 @@ if ( isset ( $contestname ) )
     </form>
     </div>
 
+EOT;
+
+$account_rows = account_rows ( $contestdata );
+echo <<<EOT
+<div class='accounts'>
+<table style='width:100%'>
+$account_rows
+</table>
+</div>
 EOT;
 }
 
