@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 12 16:51:16 EDT 2022
+    // Date:	Wed Apr 13 04:05:43 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -361,28 +361,31 @@
     //		<tr>
     //		<td> 
     //		<pre class='flagbox'
-    //		     data-curr=Fm
-    //		     data-init=Fm
-    //		     id='aid-M'
+    //		     data-on='M'
+    //		     data-off='m'
+    //		     data-current=Fm
+    //		     data-initial=Fm
     //		     onmouseenter=ENTER(this)
     //		     onmouseleave=LEAVE(this)
     //		     onclick=CLICK(this)>
     //		     Dm</pre>
     //		<pre class='flagbox'
-    //		     data-curr=Fj
-    //		     data-init=Fj
-    //		     id='aid-J'
+    //		     data-on='J'
+    //		     data-off='j'
+    //		     data-current=Fj
+    //		     data-initial=Fj
     //		     onmouseenter=ENTER(this)
     //		     onmouseleave=LEAVE(this)
     //		     onclick=CLICK(this)>
     //		     Dj</pre>
     //		<pre class='flagbox'
-    //		     data-curr=Fc
-    //		     data-init=Fc
+    //		     data-on='C'
+    //		     data-off='c'
+    //		     data-current=Fc
+    //		     data-initial=Fc
     //		     onmouseenter=ENTER(this)
     //		     onmouseleave=LEAVE(this)
     //		     onclick=CLICK(this)>
-    //		     id='aid-C'>
     //		     Dc</pre>
     //		</td>
     //		<td><strong>aid</strong></td>
@@ -394,8 +397,8 @@
     //		Fm is one of 'M', 'm', '-'
     //		Fj is one of 'J', 'j', '-'
     //		Fc is one of 'C', 'c', '-'
-    //		data-curr is current value
-    //		data-init is value when page loaded
+    //		data-current is current value
+    //		data-initial is value when page loaded
     //		Dm is one of:    If current flag =:
     //		   &nbsp;M&nbsp;	'M'
     //		   &nbsp;M&nbsp;	'm'
@@ -433,20 +436,21 @@
 		    $d2 = '&nbsp;';
 		elseif ( $f == $m )
 		{
-		    $class .= ",overstrike";
+		    $class .= " overstrike";
 		    $d2 = $M;
 		}
 		else
 		    $d2 = $M;
 		if ( $i % 2 == 0 )
-		    $class .= ",even-column";
+		    $class .= " even-column";
 		else
-		    $class .= ",odd-column";
+		    $class .= " odd-column";
 
 		$r .= "<pre class='$class'"
-		    . "     data-curr='$f'"
-		    . "     data-init='$f'"
-		    . "     id='$aid-$M'"
+		    . "     data-on='$M'"
+		    . "     data-off='$m'"
+		    . "     data-current='$f'"
+		    . "     data-initial='$f'"
 		    . "     onmouseenter='ENTER(this)'"
 		    . "     onmouseleave='LEAVE(this)'"
 		    . "     onclick='CLICK(this)'>"
@@ -623,11 +627,10 @@ pre.even-column {
     background-color: var(--bg-blue);
 }
 pre.odd-column {
-    background-color: var(--bg-tan);
+    background-color: var(--bg-green);
 }
 pre.flagbox {
-    border: 2px solid black;
-    background-color: var(--bg-orange);
+    cursor: default;
 }
 
 </style>
@@ -956,6 +959,61 @@ function SUBMIT ( op )
     op_input.value = op;
     parameters_form.submit();
 }
+
+function DISPLAY ( box, value )
+{
+    if ( value == '-' )
+    {
+        box.innerHTML = '&nbsp;&nbsp;&nbsp';
+	box.style.textDecoration = 'none';
+    }
+    else if ( value == box.dataset.on )
+    {
+        box.innerHTML =
+	    '&nbsp;' + box.dataset.on + '&nbsp';
+	box.style.textDecoration = 'none';
+    }
+    else
+    {
+        box.innerHTML =
+	    '&nbsp;' + box.dataset.on + '&nbsp';
+	box.style.textDecoration = 'line-through';
+    }
+}
+
+function NEXT ( box )
+{
+    var next = box.dataset.current;
+    if ( next == box.dataset.initial )
+    {
+        if ( next == '-' )
+	    next = box.dataset.on;
+	else if ( next == box.dataset.on )
+	    next = box.dataset.off;
+	else
+	    next = box.dataset.on;
+    }
+    else
+        next = box.dataset.initial;
+    return next;
+}
+
+function ENTER ( box )
+{
+    DISPLAY ( box, NEXT ( box ) );
+}
+
+function LEAVE ( box )
+{
+    DISPLAY ( box, box.dataset.current );
+}
+
+function CLICK ( box )
+{
+    box.dataset.current = NEXT ( box );
+    DISPLAY ( box, box.dataset.current );
+}
+
 </script>
 
 </body>
