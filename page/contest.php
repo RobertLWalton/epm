@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 14 00:40:29 EDT 2022
+    // Date:	Thu Apr 14 01:09:41 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -852,6 +852,7 @@ if ( isset ( $contestname ) && $is_manager )
           id='parameters-form'>
     <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='op' id='op'>
+
     <label>To Register, Email:</label>
     <input type='email' name='registration-email'
            value='$registration_email' size='40'
@@ -922,6 +923,63 @@ echo <<<EOT
 $account_rows
 </table>
 </div>
+EOT;
+}
+
+if ( isset ( $contestname ) && ! $is_manager )
+{
+    function TBD ( $v, $tbd = 'TDB' )
+        { return ( $v === NULL ? $tbd : $v ); }
+    $Registration_Email = TBD ( $registration_email );
+    $Contest_Type = TBD ( $contest_type );
+    if ( $judge_can_see === NULL )
+	$Judge_Can_See = '';
+    else
+	$Judge_Can_See =
+	    "<strong style='margin-left:3em'>" .
+	    'Judges Can See Contestant Emails' .
+	    '</strong>';
+    function time_TBD ( $time )
+    {
+        if ( ! isset ( $time ) ) return 'TBD';
+	$time = strtotime ( $time );
+	return date ( 'm/d/Y, h:i A T', $time );
+    }
+    $Solution_Start = time_TBD ( $solution_start );
+    $Solution_Stop = time_TBD ( $solution_stop );
+    $Description_Start = time_TBD ( $description_start );
+    $Description_Stop = time_TBD ( $description_stop );
+
+    echo <<<EOT
+    <div class='parameters'>
+
+    <label>To Register, Email:</label>
+    <strong>$Registration_Email</strong>
+
+    <div style='margin-top:0.5em;margin-bottom:0.5em'>
+    <label>Contest Type:</label>
+    <strong>$Contest_Type</strong>
+    $Judge_Can_See
+    </div>
+
+    <div>
+    <label>Problem Solution Submit Times:</label>
+    <label style='margin-left:1em'>Start:</label>
+    <strong>$Solution_Start</strong>
+    <label style='margin-left:1em'>Stop:</label>
+    <strong>$Solution_Stop</strong>
+    </div>
+
+    <div>
+    <label>Problem Definition Submit Times:</label>
+    <label style='margin-left:1em'>Start:</label>
+    <strong>$Description_Start</strong>
+    <label style='margin-left:1em'>Stop:</label>
+    <strong>$Description_Stop</strong>
+    </div>
+
+    </div>
+
 EOT;
 }
 
