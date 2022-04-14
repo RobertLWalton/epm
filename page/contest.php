@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 13 04:05:43 EDT 2022
+    // Date:	Thu Apr 14 00:40:29 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -109,9 +109,24 @@
     // but otherwise read projects/$name/+contest+ into
     // $contestdata.
     //
+    // Set $is_manager true if $aid is contest manager
+    // and false otherwise.
+    //
+    $is_manager = false;
     function init_contest ( $name = NULL )
     {
-        global $contestname, $contestdata, $epm_data;
+        global $contestname, $contestdata, $epm_data,
+	       $is_manager, $aid, $flags;
+
+	// You cannot simply set $contestdata because
+	// of the references into it, but must set
+	// each of its elements individually.
+
+	foreach (array_keys ( $contestdata ) as $k )
+	    $contestdata[$k] = NULL;
+
+	$is_manager = false;
+
 	$contestname = $name;
         if ( isset ( $name ) )
 	{
@@ -122,7 +137,6 @@
 	        $errors[] =
 		    "contest $name no longer exists";
 		$contestname = NULL;
-		    // This clears $contestdata below.
 	    }
 	    else
 	    {
@@ -134,27 +148,14 @@
 		        ( "cannot decode json in $f:" .
 			  PHP_EOL . "    $m" );
 		}
-		$contestdata = $j;
+		foreach ( $j as $k => $v )
+		    $contestdata[$k] = $v;
+
+		if ( isset ( $flags[$aid] )
+		     &&
+		     $flags[$aid][0] == 'M' )
+		    $is_manager = true;
 	    }
-	}
-
-        if ( ! isset ( $contestname ) )
-	{
-	    // You cannot simply set $contestdata to
-	    // NULL because of references into it.
-
-	    $contestdata['NAME'] = NULL;
-	    $contestdata['REGISTRATION-EMAIL'] = NULL;
-	    $contestdata['CONTEST-TYPE'] = NULL;
-	    $contestdata['JUDGE-CAN-SEE'] = NULL;
-	    $contestdata['SOLUTION-START'] = NULL;
-	    $contestdata['SOLUTION-STOP'] = NULL;
-	    $contestdata['DESCRIPTION-START'] = NULL;
-	    $contestdata['DESCRIPTION-STOP'] = NULL;
-	    $contestdata['DEPLOYED'] = NULL;
-	    $contestdata['FLAGS'] = NULL;
-	    $contestdata['TIMES'] = NULL;
-	    $contestdata['EMAILS'] = NULL;
 	}
     }
 
@@ -360,7 +361,7 @@
     //
     //		<tr>
     //		<td> 
-    //		<pre class='flagbox'
+    //		<pre class='flagbox evencolumn Om'
     //		     data-on='M'
     //		     data-off='m'
     //		     data-current=Fm
@@ -369,7 +370,7 @@
     //		     onmouseleave=LEAVE(this)
     //		     onclick=CLICK(this)>
     //		     Dm</pre>
-    //		<pre class='flagbox'
+    //		<pre class='flagbox oddcolumn Oj'
     //		     data-on='J'
     //		     data-off='j'
     //		     data-current=Fj
@@ -378,7 +379,7 @@
     //		     onmouseleave=LEAVE(this)
     //		     onclick=CLICK(this)>
     //		     Dj</pre>
-    //		<pre class='flagbox'
+    //		<pre class='flagbox evencolumn Oc'
     //		     data-on='C'
     //		     data-off='c'
     //		     data-current=Fc
@@ -402,7 +403,7 @@
     //		Dm is one of:    If current flag =:
     //		   &nbsp;M&nbsp;	'M'
     //		   &nbsp;M&nbsp;	'm'
-    //			with overstrike text-decoration
+    //		     Om = overstrike
     //		   &nbsp;&nbsp;&nbsp;	'-'
     //		Dj similar with M => J
     //		Dc similar with C => J
@@ -474,6 +475,7 @@
     $updated = false;
         // True iff $contestdata has been updated.
     root_priv_map ( $root_map );
+        // Indicates if $aid has create-contest priv.
 
     $notice = NULL;
         // If not NULL, output after errors and warnings
@@ -830,7 +832,7 @@ EOT;
     </div>
 EOT;
 
-if ( isset ( $contestname ) )
+if ( isset ( $contestname ) && $is_manager )
 {
     // Note: NULL automatically converts to the
     // empty string.
