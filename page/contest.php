@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 14 01:09:41 EDT 2022
+    // Date:	Fri Apr 15 16:45:36 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -34,6 +34,10 @@
     //
     //	    contest=CONTESTNAME
     //		Set existing CONTESTNAME.
+    //
+    //	    add-email=EMAIL
+    //		Set add_email variable and enable
+    //	        new account to be set/selected.
     //
     //	    op=save OPTIONS
     //		Update +contest+ according to OPTIONS:
@@ -104,15 +108,18 @@
         // map ACCOUNT => time of last change to account
 	//		  flags or email
 
+    $is_manager = & $data['IS-MANAGER'];
+	// True if $aid is contest manager and false
+	// otherwise.
+    $add_email = & $data['ADD-EMAIL'];
+        // Email of account to be added, or not set if
+	// none.
+
     // Set $contestname to $name and if this is NULL,
     // set all $contestdata[...] element values to NULL,
     // but otherwise read projects/$name/+contest+ into
     // $contestdata.
     //
-    // Set $is_manager true if $aid is contest manager
-    // and false otherwise.
-    //
-    $is_manager = false;
     function init_contest ( $name = NULL )
     {
         global $contestname, $contestdata, $epm_data,
@@ -588,6 +595,15 @@
 	    ( $params, $warnings, $errors );
     }
 
+    if ( $process_post
+         &&
+	 isset ( $_POST['add-email'] )
+	 &&
+	 $state == 'normal' )
+    {
+        $process_post = false;
+    }
+
 
     if ( $process_post )
 	exit ( 'UNACCEPTABLE HTTP POST' );
@@ -614,6 +630,11 @@
 
 div.parameters {
     background-color: var(--bg-green);
+    padding-top: var(--pad);
+}
+
+div.add-account {
+    background-color: var(--bg-orange);
     padding-top: var(--pad);
 }
 
@@ -914,6 +935,17 @@ if ( isset ( $contestname ) && $is_manager )
     </form>
     </div>
 
+    <div class='add-account'>
+    <form method='POST' action='contest.php'
+          id='add-email'>
+    <input type='hidden' name='id' value='$ID'>
+
+    <label>Add Account with Email:</label>
+    <input type='email' name='add-email'
+           value='$add_email' size='40'
+	   onkeydown='KEYDOWN("add-email")'>
+    </div>
+
 EOT;
 
 $account_rows = display_account ( $contestdata );
@@ -924,7 +956,8 @@ $account_rows
 </table>
 </div>
 EOT;
-}
+
+} // end if ( isset ( $contestname ) && $is_manager )
 
 if ( isset ( $contestname ) && ! $is_manager )
 {
@@ -981,7 +1014,8 @@ if ( isset ( $contestname ) && ! $is_manager )
     </div>
 
 EOT;
-}
+
+} // end if ( isset ( $contestname ) && ! $is_manager )
 
 ?>
 
