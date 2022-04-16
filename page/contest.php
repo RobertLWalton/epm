@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 16 03:24:37 EDT 2022
+    // Date:	Sat Apr 16 04:44:38 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -605,6 +605,8 @@
 	$m = $_POST['add-email'];
 	if ( validate_email ( $m, $errors ) )
 	{
+	    LOCK ( 'admin', LOCK_SH );
+
 	    $e = read_email ( $m );
 	    if ( count ( $e ) == 0 )
 	        $errors[] = "no user has email: $m";
@@ -624,6 +626,51 @@
 		    "<strong>email $m belongs to user" .
 		    " $add_uid who last confirmed" .
 		    " $add_atime</strong>";
+		$aids = [];
+		$aids[] =
+		    [$add_uid,
+		     "user $add_uid - personal" .
+		     " account"];
+		$managers = [];
+
+		$f = "admin/users/$add_uid/manager";
+		$c = @file_get_contents
+			( "$epm_data/$f" );
+		if ( $c !== false )
+		{
+		    $c = explode ( ' ', $c );
+		    foreach ( $c as $tid )
+		    {
+		        $managers[$tid] = true;
+			$aids[] =
+			    [$tid,
+			     "team $tid - manager"];
+			$notice .=
+			    "<br><strong>user" .
+			    " $add_uid is the manager" .
+			    " of team $tid</strong>";
+		    }
+		}
+
+		$f = "admin/users/$add_uid/member";
+		$c = @file_get_contents
+			( "$epm_data/$f" );
+		if ( $c !== false )
+		{
+		    $c = explode ( ' ', $c );
+		    foreach ( $c as $tid )
+		    {
+			if ( isset ( $managers[$tid] ) )
+			    continue;
+			$aids[] =
+			    [$tid,
+			     "team $tid - member"];
+			$notice .=
+			    "<br><strong>user" .
+			    " $add_uid is a member" .
+			    " of team $tid</strong>";
+		    }
+		}
 	    }
 	}
     }
