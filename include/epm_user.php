@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Apr  5 04:16:51 EDT 2022
+// Date:    Sat Apr 16 03:44:59 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -164,6 +164,8 @@ function validate_email ( $email, & $errors )
 }
 
 // Get the item list from the admin/email/$email file.
+// Returns empty list if admin/email/$email does not
+// exist or contains blank line.
 //
 function read_email ( $email )
 {

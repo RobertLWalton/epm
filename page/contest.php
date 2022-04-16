@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 15 16:45:36 EDT 2022
+    // Date:	Sat Apr 16 03:24:37 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -602,6 +602,30 @@
 	 $state == 'normal' )
     {
         $process_post = false;
+	$m = $_POST['add-email'];
+	if ( validate_email ( $m, $errors ) )
+	{
+	    $e = read_email ( $m );
+	    if ( count ( $e ) == 0 )
+	        $errors[] = "no user has email: $m";
+	    elseif ( $e[0] == '-' )
+	    {
+	        $t = implode ( ' ', array_slice ( $e, 1 ) );
+	        $errors[] = "a user with email $m" .
+		            " has never logged in";
+	        $errors[] = "but has been assigned to" .
+		            " team(s): $t";
+	    }
+	    else
+	    {
+	        $add_uid = $e[0];
+		$add_atime = $e[2];
+		$notice =
+		    "<strong>email $m belongs to user" .
+		    " $add_uid who last confirmed" .
+		    " $add_atime</strong>";
+	    }
+	}
     }
 
 
@@ -934,7 +958,10 @@ if ( isset ( $contestname ) && $is_manager )
 
     </form>
     </div>
+EOT;
 
+if ( ! isset ( $add_email ) )
+    echo <<<EOT
     <div class='add-account'>
     <form method='POST' action='contest.php'
           id='add-email'>
@@ -945,7 +972,6 @@ if ( isset ( $contestname ) && $is_manager )
            value='$add_email' size='40'
 	   onkeydown='KEYDOWN("add-email")'>
     </div>
-
 EOT;
 
 $account_rows = display_account ( $contestdata );
