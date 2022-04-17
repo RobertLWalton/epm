@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 16 04:44:38 EDT 2022
+    // Date:	Sun Apr 17 06:03:31 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -114,6 +114,9 @@
     $add_email = & $data['ADD-EMAIL'];
         // Email of account to be added, or not set if
 	// none.
+    $add_aid = & $data['ADD-AID'];
+        // Account to be added, or not set if none
+	// or only account email known.
 
     // Set $contestname to $name and if this is NULL,
     // set all $contestdata[...] element values to NULL,
@@ -631,45 +634,17 @@
 		    [$add_uid,
 		     "user $add_uid - personal" .
 		     " account"];
-		$managers = [];
-
-		$f = "admin/users/$add_uid/manager";
-		$c = @file_get_contents
-			( "$epm_data/$f" );
-		if ( $c !== false )
+		map_tids ( $tid_map, $add_uid );
+		foreach ( $tid_map as $tid => $type )
 		{
-		    $c = explode ( ' ', $c );
-		    foreach ( $c as $tid )
-		    {
-		        $managers[$tid] = true;
-			$aids[] =
-			    [$tid,
-			     "team $tid - manager"];
-			$notice .=
-			    "<br><strong>user" .
-			    " $add_uid is the manager" .
-			    " of team $tid</strong>";
-		    }
-		}
-
-		$f = "admin/users/$add_uid/member";
-		$c = @file_get_contents
-			( "$epm_data/$f" );
-		if ( $c !== false )
-		{
-		    $c = explode ( ' ', $c );
-		    foreach ( $c as $tid )
-		    {
-			if ( isset ( $managers[$tid] ) )
-			    continue;
-			$aids[] =
-			    [$tid,
-			     "team $tid - member"];
-			$notice .=
-			    "<br><strong>user" .
-			    " $add_uid is a member" .
-			    " of team $tid</strong>";
-		    }
+		    $aids[] =
+		        [$tid, "team $tid - $type"];
+		    $m = ( $type == 'manager' ?
+		           'the' : 'a' );
+		    $notice .=
+			"<br><strong>user $add_uid is" .
+			" $m $type of team $tid" .
+			"</strong>";
 		}
 	    }
 	}

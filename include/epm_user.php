@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Apr 16 03:44:59 EDT 2022
+// Date:    Sun Apr 17 05:36:27 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -103,8 +103,8 @@ function read_accounts ( $type )
     return $r;
 }
 
-// Get the tids list from the $uid user's 'manager'
-// or 'member' files.
+// Get the tids list from the $uid user's $name file,
+// where $name is either 'manager' or 'member'.
 //
 function read_tids ( $uid, $name )
 {
@@ -118,8 +118,31 @@ function read_tids ( $uid, $name )
     return explode ( ' ', $c );
 }
 
-// Write the $tids list to the $uid user's 'manager'
-// or 'member' files.
+// Map tids from the $uid user's 'manager' and 'member'
+// files to the file the tids are in.  A tid maps to
+// 'manager' if it is in the 'manager' file and to
+// 'member if it is in the 'member' file but NOT the
+// 'manager' file.
+//
+// Sort the map so 'manager' entries are first.
+//
+function map_tids ( & $map, $uid )
+{
+    global $epm_data;
+
+    $map = [];
+    foreach ( read_tids ( $uid, 'manager' ) as $tid )
+        $map[$tid] = 'manager';
+    foreach ( read_tids ( $uid, 'member' ) as $tid )
+    {
+        if ( isset ( $map[$tid] ) ) continue;
+        $map[$tid] = 'member';
+    }
+    ksort ( $map, SORT_STRING );
+}
+
+// Write the $tids list to the $uid user's $name file,
+// where $name is either 'manager' or 'member'.
 //
 function write_tids ( $tids, $uid, $name )
 {
