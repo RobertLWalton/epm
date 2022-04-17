@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 17 06:47:33 EDT 2022
+    // Date:	Sun Apr 17 16:56:00 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -627,6 +627,7 @@
 	    }
 	    else
 	    {
+		$add_email = $m;
 	        $add_uid = $e[0];
 		$add_atime = $e[2];
 		$notice =
@@ -654,6 +655,18 @@
 		    $add_aid = $add_uid;
 	    }
 	}
+    }
+
+    if ( $process_post
+         &&
+	 isset ( $_POST['add-account'] )
+	 &&
+	 $state == 'normal' )
+    {
+        $process_post = false;
+	$account = $_POST['add-account'];
+	if ( $account == '*CANCEL*' )
+	    $add_email = NULL;
     }
 
 
@@ -999,6 +1012,24 @@ if ( ! isset ( $add_email ) )
     <input type='email' name='add-email'
            value='$add_email' size='40'
 	   onkeydown='KEYDOWN("add-email")'>
+    </form>
+    </div>
+EOT;
+
+elseif ( ! isset ( $add_aid ) )
+    echo <<<EOT
+    <div class='add-account'>
+    <form method='POST' action='contest.php'>
+    <input type='hidden' name='id' value='$ID'>
+
+    <label>Select Account to Add with Email
+    $add_email:</label>
+    <select name='add-account'>
+    <option value='*CANCEL*'>cancel</option>
+    $aid_options
+    </select>
+    <button type='submit'>Submit</button>
+    </form>
     </div>
 EOT;
 
