@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 17 06:03:31 EDT 2022
+    // Date:	Sun Apr 17 06:47:33 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -399,8 +399,10 @@
     //		     onclick=CLICK(this)>
     //		     Dc</pre>
     //		</td>
-    //		<td><strong>aid</strong></td>
-    //		<td><strong>email</strong></td>
+    //		<td style='padding-left:1em'>
+    //          <strong>aid</strong></td>
+    //		<td style='padding-left:3em'>
+    //          <strong>email</strong></td>
     //		</tr>
     //		
     // where
@@ -468,9 +470,9 @@
 		    . "&nbsp;$d2&nbsp;</pre>";
 	    }
 	    $email = $emails[$aid];
-	    $r .= "&nbsp;&nbsp;&nbsp;&nbsp;"
+	    $r .= "</td><td style='padding-left:1em'>"
 	        . "<strong>$aid</strong>"
-	        . "</td><td>"
+	        . "</td><td style='padding-left:3em'>"
 	        . "<strong>$email</strong>"
 		. "</td></tr>";
 	}
@@ -605,7 +607,9 @@
 	 $state == 'normal' )
     {
         $process_post = false;
-	$m = $_POST['add-email'];
+	$m = trim ( $_POST['add-email'] );
+	    // Most browsers trim emails, but just in
+	    // case we do too.
 	if ( validate_email ( $m, $errors ) )
 	{
 	    LOCK ( 'admin', LOCK_SH );
@@ -629,16 +633,16 @@
 		    "<strong>email $m belongs to user" .
 		    " $add_uid who last confirmed" .
 		    " $add_atime</strong>";
-		$aids = [];
-		$aids[] =
-		    [$add_uid,
-		     "user $add_uid - personal" .
-		     " account"];
+		$aid_options =
+		    "<option value='$add_uid'>" .
+		    "user $add_uid - personal" .
+		    " account</option>";
 		map_tids ( $tid_map, $add_uid );
 		foreach ( $tid_map as $tid => $type )
 		{
-		    $aids[] =
-		        [$tid, "team $tid - $type"];
+		    $aid_options .=
+			"<option value='$tid'>" .
+			"team $tid - $type</option>";
 		    $m = ( $type == 'manager' ?
 		           'the' : 'a' );
 		    $notice .=
@@ -646,6 +650,8 @@
 			" $m $type of team $tid" .
 			"</strong>";
 		}
+		if ( count ( $tid_map ) == 0 )
+		    $add_aid = $add_uid;
 	    }
 	}
     }
@@ -999,7 +1005,7 @@ EOT;
 $account_rows = display_account ( $contestdata );
 echo <<<EOT
 <div class='accounts'>
-<table style='width:100%'>
+<table>
 $account_rows
 </table>
 </div>
