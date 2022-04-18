@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 17 16:56:00 EDT 2022
+    // Date:	Mon Apr 18 05:24:35 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -114,9 +114,12 @@
     $add_email = & $data['ADD-EMAIL'];
         // Email of account to be added, or not set if
 	// none.
+    $add_aids = & $data['ADD-AIDS'];
+        // Accounts that may be selected for addition
+	// given $add_email.
     $add_aid = & $data['ADD-AID'];
         // Account to be added, or not set if none
-	// or only account email known.
+	// or only $add_email known.
 
     // Set $contestname to $name and if this is NULL,
     // set all $contestdata[...] element values to NULL,
@@ -634,6 +637,7 @@
 		    "<strong>email $m belongs to user" .
 		    " $add_uid who last confirmed" .
 		    " $add_atime</strong>";
+	        $add_aids = [ $add_uid ];
 		$aid_options =
 		    "<option value='$add_uid'>" .
 		    "user $add_uid - personal" .
@@ -641,6 +645,7 @@
 		map_tids ( $tid_map, $add_uid );
 		foreach ( $tid_map as $tid => $type )
 		{
+		    $add_aids[] = $tid;
 		    $aid_options .=
 			"<option value='$tid'>" .
 			"team $tid - $type</option>";
@@ -667,12 +672,38 @@
 	$account = $_POST['add-account'];
 	if ( $account == '*CANCEL*' )
 	    $add_email = NULL;
+	elseif ( ! in_array ( $account, $add_aids ) )
+	    ERROR ( "UNACCEPTABLE HTTP POST:" .
+	            " add_account=$account" );
+	else
+	    $add_aid = $account;
     }
 
 
     if ( $process_post )
 	exit ( 'UNACCEPTABLE HTTP POST' );
 
+    if ( isset ( $add_aid) )
+    {
+	if ( isset ( $flags[$add_aid] ) )
+	    $errors[] =
+	        "account $add_aid has previously" .
+		" been added to contest";
+	else
+	{
+	    $flags[$add_aid] = '---';
+	    $emails[$add_aid] = $add_email;
+	    $times[$add_aid] = date ( $epm_time_format );
+	    if ( isset ( $notice ) )
+	        $notice .= '<br><br>';
+	    $notice .=
+		"<strong>acccount $add_aid with" .
+		" email $add_email has been added" .
+		"</strong>";
+	}
+	$add_aid = NULL;
+	$add_email = NULL;
+    }
 
     if ( isset ( $action ) )
     {
