@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 18 05:24:35 EDT 2022
+    // Date:	Mon Apr 18 08:01:57 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -67,6 +67,9 @@
 
     $errors = [];    // Error messages to be shown.
     $warnings = [];  // Warning messages to be shown.
+    $write_contestdata = false;
+        // Set to true to write contestdata after
+	// processing POSTs.
 
     $contestname =
         & $_SESSION['EPM_CONTEST']['CONTESTNAME'];
@@ -223,8 +226,8 @@
         $r = [];
 
 	if ( ! isset ( $post['registration-email'] ) )
-	    ERROR ( "UNACCEPTABLE HTTP POST:" .
-	            " no registration-email" );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " no registration-email" );
 	$v = $post['registration-email'];
 	if ( $v == '' ) $v = NULL;
 	$r['REGISTRATION-EMAIL'] = $v;
@@ -236,8 +239,8 @@
 	    $v = $post['contest-type'];
 	    if ( ! in_array ( $v, ['1-phase',
 	                           '2-phase'] ) )
-		ERROR ( "UNACCEPTABLE HTTP POST:" .
-			" contest-type = $v" );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " contest-type = $v" );
 	}
 	$r['CONTEST-TYPE'] = $v;
 
@@ -247,8 +250,8 @@
 	{
 	    $v = $post['judge-can-see'];
 	    if ( $v != 'checked' )
-		ERROR ( "UNACCEPTABLE HTTP POST:" .
-			" judge-can-see = $v" );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " judge-can-see = $v" );
 	}
 	$r['JUDGE-CAN-SEE'] = $v;
 
@@ -262,16 +265,16 @@
 	    $m = $pair[0];
 	    $n = $pair[1];
 	    if ( ! isset ( $post[$m] ) )
-		ERROR ( "UNACCEPTABLE HTTP POST:" .
-			" no $m" );
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " no $m" );
 	    $v = $post[$m];
 	    if ( $v == '' ) $v = NULL;
 	    else
 	    {
 		$w = @strtotime ( $v );
 		if ( $w === false )
-		    ERROR ( "UNACCEPTABLE HTTP POST:" .
-			    " $m = $v" );
+		    exit ( "UNACCEPTABLE HTTP POST:" .
+			   " $m = $v" );
 		$v = date ( $epm_time_format, $w );
 	    }
 	    $r[$n] = $v;
@@ -593,6 +596,11 @@
 
     if ( $process_post
          &&
+	 ! isset ( $contestname ) )
+	exit ( "UNACCEPTABLE HTTP POST: no contest" );
+
+    if ( $process_post
+         &&
 	 isset ( $_POST['op'] ) )
     {
         $process_post = false;
@@ -673,8 +681,8 @@
 	if ( $account == '*CANCEL*' )
 	    $add_email = NULL;
 	elseif ( ! in_array ( $account, $add_aids ) )
-	    ERROR ( "UNACCEPTABLE HTTP POST:" .
-	            " add_account=$account" );
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " add_account=$account" );
 	else
 	    $add_aid = $account;
     }
@@ -694,6 +702,7 @@
 	    $flags[$add_aid] = '---';
 	    $emails[$add_aid] = $add_email;
 	    $times[$add_aid] = date ( $epm_time_format );
+	    $write_contestdata = true;
 	    if ( isset ( $notice ) )
 	        $notice .= '<br><br>';
 	    $notice .=
@@ -703,6 +712,16 @@
 	}
 	$add_aid = NULL;
 	$add_email = NULL;
+    }
+
+    if ( $write_contestdata )
+    {
+	$j = json_encode ( $contestdata,
+		            JSON_PRETTY_PRINT );
+	$f = "projects/$contestname/+contest+";
+	$r = file_put_contents ( "$epm_data/$f", $j );
+	if ( $r === false )
+	    ERROR ( "cannot write file $f" );
     }
 
     if ( isset ( $action ) )
