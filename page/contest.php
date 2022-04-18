@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 18 08:01:57 EDT 2022
+    // Date:	Mon Apr 18 17:07:10 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -229,6 +229,7 @@
 	    exit ( "UNACCEPTABLE HTTP POST:" .
 	           " no registration-email" );
 	$v = $post['registration-email'];
+	$v = trim ( $v );
 	if ( $v == '' ) $v = NULL;
 	$r['REGISTRATION-EMAIL'] = $v;
 
@@ -245,7 +246,7 @@
 	$r['CONTEST-TYPE'] = $v;
 
 	if ( ! isset ( $post['judge-can-see'] ) )
-	    $v = NULL;  // Unset checkbox.
+	    $v = NULL;  // Unset checkbox OK.
 	else
 	{
 	    $v = $post['judge-can-see'];
@@ -268,6 +269,7 @@
 		exit ( "UNACCEPTABLE HTTP POST:" .
 		       " no $m" );
 	    $v = $post[$m];
+	    $v = trim ( $v );
 	    if ( $v == '' ) $v = NULL;
 	    else
 	    {
@@ -284,37 +286,30 @@
     }
 
     // Check the parameters returned by get_parameters
-    // for errors and warnings.  Return 0 if none,
-    // 1 if only warnings, 2 if there are errors.
+    // for warnings.
     //
     // Some error checks reference $contestdata; e.g.,
     // DEPLOYED is used to prevent changes to CONTEST-
     // TYPE.
     //
-    // $errors and $warnings must be set to a list
-    // (they cannot be undefined) when this is called.
+    // $warnings must be set to a list (it cannot be
+    // undefined) when this is called.
     //
-    function check_parameters
-	    ( $params, & $warnings, & $errors )
+    function check_parameters ( $params, & $warnings )
     {
         global $contestdata;
 
-        $wc = count ( $warnings );
-        $ec = count ( $errors );
-
     	$v = $params['REGISTRATION-EMAIL'];
 	$err = [];
-	if ( ! validate_email ( $v, $err ) )
+	if ( $v === NULL )
+	    $warnings[] =
+		"Registration Email is missing";
+	elseif ( ! validate_email ( $v, $err ) )
 	{
-	    if ( count ( $err ) == 0 )
-	        $warnings[] =
-		    "Registration Email is missing";
-	    else
-	    {
-	        $errors[] = "Bad Registration Email:";
+	        $warnings[] = "Bad Registration Email:";
 		foreach ( $err as $e )
-		    $errors[] = "    $e";
-	    }
+		    $warnings[] = "    $e";
+		unset ( $params['REGISTRATION-EMAIL'] );
 	}
 
 	if ( isset ( $contestdata['DEPLOYED'] )
@@ -328,11 +323,11 @@
 	    $v = $contestdata['CONTEST-TYPE'];
 	    $w = $params['CONTEST-TYPE'];
 	    if ( $w == NULL ) $w = "NONE";
-	    $errors[] = "cannot change contest type" .
-	                " from $v to $w because";
-	    $errors[] = "contest was deployed " .
-	                $contestdata['DEPLOYED'];
-	    $params['CONTEST-TYPE'] = $v;
+	    $warnings[] = "cannot change contest type" .
+	                  " from $v to $w because";
+	    $warnings[] = "contest was deployed " .
+	                  $contestdata['DEPLOYED'];
+	    unset ( $params['CONTEST-TYPE'] );
 	}
 
 	if ( ! isset ( $params['SOLUTION-START'] ) )
@@ -345,9 +340,9 @@
 	         <=
 	         strtotime ( $params['SOLUTION-START'] )
 	       )
-	    $errors[] = "Solution Stop Time is not" .
-	                " later than Solution Start" .
-			" Time";
+	    $warnings[] = "Solution Stop Time is not" .
+	                  " later than Solution Start" .
+			  " Time";
 
 	if ( ! isset ( $params['DESCRIPTION-START'] ) )
 	    $warnings[] =
@@ -362,13 +357,10 @@
 	         strtotime
 		     ( $params['DESCRIPTION-START'] )
 	       )
-	    $errors[] = "Description Stop Time is not" .
-	                " later than Description Start" .
-			" Time";
-
-	if ( count ( $errors ) > $ec ) return 2;
-	elseif ( count ( $warnings ) > $wc ) return 1;
-	else return 0;
+	    $warnings[] =
+	        "Description Stop Time is not" .
+		" later than Description Start" .
+		" Time";
     }
 
     // Given a set of parameters containing account
@@ -605,10 +597,10 @@
     {
         $process_post = false;
 	$params = get_parameters ( $_POST );
-	print_r ( $params );
-	echo "<BR>";
-	check_parameters
-	    ( $params, $warnings, $errors );
+	check_parameters ( $params, $warnings );
+	foreach ( $params as $k => $v )
+	    $contestdata[$k] = $v;
+	$write_contestdata = true;
     }
 
     if ( $process_post
