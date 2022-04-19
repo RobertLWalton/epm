@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 19 04:09:38 EDT 2022
+    // Date:	Tue Apr 19 15:50:43 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -364,6 +364,12 @@
     //		     onmouseleave=LEAVE(this)
     //		     onclick=CLICK(this)>
     //		     Dc</pre>
+    //		<button type='button'
+    //		     style='margin-left:1em'
+    //		     data-del='false'
+    //		     onclick=TOGGLE_DELETE(this)
+    //               title='Delete Account'
+    //		     <pre>&Chi;</pre></button>
     //		</td>
     //		<td style='padding-left:1em'>
     //          <strong>aid</strong></td>
@@ -435,6 +441,15 @@
 		    . "     onclick='CLICK(this)'>"
 		    . "&nbsp;$d2&nbsp;</pre>";
 	    }
+
+	    $r .= "<button type='button'" .
+                  "        style='margin-left:1em'" .
+                  "        data-del='false'" .
+                  "        onclick=" .
+		  "            TOGGLE_DELETE(this)" .
+                  "        title='Delete Account'" .
+                  "         <pre>&Chi;</pre></button>";
+
 	    $email = $emails[$aid];
 	    $r .= "</td><td style='padding-left:1em'>"
 	        . "<strong>$aid</strong>"
@@ -596,7 +611,8 @@
 	        $errors[] = "no user has email: $m";
 	    elseif ( $e[0] == '-' )
 	    {
-	        $t = implode ( ' ', array_slice ( $e, 1 ) );
+	        $t = implode
+		    ( ' ', array_slice ( $e, 1 ) );
 	        $errors[] = "a user with email $m" .
 		            " has never logged in";
 	        $errors[] = "but has been assigned to" .
@@ -667,7 +683,8 @@
 	{
 	    $flags[$add_aid] = '---';
 	    $emails[$add_aid] = $add_email;
-	    $times[$add_aid] = date ( $epm_time_format );
+	    $times[$add_aid] =
+		date ( $epm_time_format );
 	    $write_contestdata = true;
 	    if ( isset ( $notice ) )
 	        $notice .= '<br><br>';
@@ -870,7 +887,8 @@ EOT;
         'Login Name; Click to See User Profile';
     echo <<<EOT
     <div class='manage'>
-    <table style='width:100%' id='not-edited'>
+    <table style='width:100%;height:5em'
+           id='not-edited'>
 
     <tr style='width:100%'>
     <form method='GET' action='contest.php'>
@@ -940,7 +958,8 @@ EOT;
     </tr>
     </table>
 
-    <table style='width:100%;display:none' id='edited'>
+    <table style='width:100%;height:5em;display:none'
+           id='edited'>
     <tr style='width:100%'>
     <td style='width:25%'>
     <input type='hidden' name='id' value='$ID'>
@@ -1127,10 +1146,14 @@ if ( isset ( $contestname ) && ! $is_manager )
 	$time = strtotime ( $time );
 	return date ( 'm/d/Y, h:i A T', $time );
     }
-    $Solution_Start = time_TBD ( $solution_start );
-    $Solution_Stop = time_TBD ( $solution_stop );
-    $Description_Start = time_TBD ( $description_start );
-    $Description_Stop = time_TBD ( $description_stop );
+    $Solution_Start =
+        time_TBD ( $solution_start );
+    $Solution_Stop =
+        time_TBD ( $solution_stop );
+    $Description_Start =
+        time_TBD ( $description_start );
+    $Description_Stop =
+        time_TBD ( $description_stop );
 
     echo <<<EOT
     <div class='parameters'>
@@ -1255,6 +1278,30 @@ function CLICK ( box )
 {
     box.dataset.current = NEXT ( box );
     DISPLAY ( box, box.dataset.current );
+}
+
+function TOGGLE_DELETE ( button )
+{
+    ACCOUNT = button.parentElement
+                    .nextElementSibling
+		    .firstElementChild;
+    if ( button.dataset.del == 'true' )
+    {
+	console.log ( 'found true' );
+        button.dataset.del = 'false';
+	button.title = 'Delete Account';
+	ACCOUNT.style.textDecoration = 'none';
+    }
+    else
+    {
+	console.log ( 'found false' );
+        button.dataset.del = 'true';
+	button.title = 'UN-Delete Account';
+	ACCOUNT.style.textDecoration =
+	    'line-through red wavy';
+    }
+
+    ONCHANGE();
 }
 
 </script>
