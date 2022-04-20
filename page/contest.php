@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr 19 15:50:43 EDT 2022
+    // Date:	Wed Apr 20 01:42:41 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -43,7 +43,7 @@
     //		Update +contest+ according to OPTIONS:
     //
     //		registration-email=EMAIL
-    //		contest-type=[12]-phase
+    //		contest-type=[12]-phase (or omitted)
     //		judge-can-see=checked (or omitted)
     //		solution-start=TIME
     //		solution-stop=TIME
@@ -52,7 +52,8 @@
     //		account-flags=FLAG-LIST
 
     //		FLAG-LIST is comma separated list of
-    //		items of form ACCOUNT:FLAGS.
+    //		items of form ACCOUNT:FLAGS, where FLAGS
+    //		is replaced by `XXX' to delete ACCOUNT.
     //		
     //	    op=reset
     //		Restore data from +contest+.
@@ -885,9 +886,13 @@ EOT;
 
     $login_title =
         'Login Name; Click to See User Profile';
+
+    // By fixing div height we keep it from changing
+    // when flipping from non-edited to edited.
+    //
     echo <<<EOT
-    <div class='manage'>
-    <table style='width:100%;height:5em'
+    <div class='manage' style='height:6em'>
+    <table style='width:100%'
            id='not-edited'>
 
     <tr style='width:100%'>
@@ -958,7 +963,7 @@ EOT;
     </tr>
     </table>
 
-    <table style='width:100%;height:5em;display:none'
+    <table style='width:100%;display:none'
            id='edited'>
     <tr style='width:100%'>
     <td style='width:25%'>
@@ -1021,6 +1026,8 @@ if ( isset ( $contestname ) && $is_manager )
           id='parameters-form'>
     <input type='hidden' name='id' value='$ID'>
     <input type='hidden' name='op' id='op'>
+    <input type='hidden' name='account-flags'
+                         id='account-flags'>
 
     <label>To Register, Email:</label>
     <input type='email' name='registration-email'
@@ -1119,10 +1126,146 @@ EOT;
 $account_rows = display_account ( $contestdata );
 echo <<<EOT
 <div class='accounts'>
-<table>
+<table id='account-rows'>
 $account_rows
 </table>
 </div>
+
+<script>
+
+var not_edited =
+    document.getElementById ( 'not-edited' );
+var edited =
+    document.getElementById ( 'edited' );
+function ONCHANGE ( )
+{
+    not_edited.style.display = 'none';
+    edited.style.display = 'table';
+}
+
+var parameters_form =
+    document.getElementById ( 'parameters-form' );
+var op_input =
+    document.getElementById ( 'op' );
+var account_rows =
+    document.getElementById ( 'account-rows' );
+var account_flags =
+    document.getElementById ( 'account-flags' );
+function SUBMIT ( op )
+{
+    op_input.value = op;
+    if ( op == 'reset' )
+    {
+	parameters_form.submit();
+	return;
+    }
+
+    var ROW = account_rows.firstElementChild  // tbody
+                          .firstElementChild; // tr
+    var list = [];
+    while ( ROW != null )
+    {
+        let TD = ROW.firstElementChild;
+        var FLAGS = TD.firstElementChild;  // pre
+	var flags = [];
+	for ( var i = 0; i < 3; ++ i )
+	{
+	    flags.push ( FLAGS.dataset.current );
+	    FLAGS = FLAGS.nextElementSibling;
+	}
+	flags = flags.join ( '' );
+	if ( FLAGS.dataset.del == 'true' )
+	    flags = 'XXX';
+
+	let account = TD.nextElementSibling  // td
+	                .firstElementChild   // strong;
+			.innerText;
+	list.push ( [account,flags].join ( ':' ) );
+
+        ROW = ROW.nextElementSibling;
+    }
+    account_flags.value = list.join ( ';' );
+    parameters_form.submit();
+}
+
+function DISPLAY ( box, value )
+{
+    if ( value == '-' )
+    {
+        box.innerHTML = '&nbsp;&nbsp;&nbsp';
+	box.style.textDecoration = 'none';
+    }
+    else if ( value == box.dataset.on )
+    {
+        box.innerHTML =
+	    '&nbsp;' + box.dataset.on + '&nbsp';
+	box.style.textDecoration = 'none';
+    }
+    else
+    {
+        box.innerHTML =
+	    '&nbsp;' + box.dataset.on + '&nbsp';
+	box.style.textDecoration = 'line-through';
+    }
+}
+
+function NEXT ( box )
+{
+    var next = box.dataset.current;
+    if ( next == box.dataset.initial )
+    {
+        if ( next == '-' )
+	    next = box.dataset.on;
+	else if ( next == box.dataset.on )
+	    next = box.dataset.off;
+	else
+	    next = box.dataset.on;
+    }
+    else
+        next = box.dataset.initial;
+    return next;
+}
+
+function ENTER ( box )
+{
+    DISPLAY ( box, NEXT ( box ) );
+}
+
+function LEAVE ( box )
+{
+    DISPLAY ( box, box.dataset.current );
+}
+
+function CLICK ( box )
+{
+    box.dataset.current = NEXT ( box );
+    ONCHANGE();
+    DISPLAY ( box, box.dataset.current );
+}
+
+function TOGGLE_DELETE ( button )
+{
+    ACCOUNT = button.parentElement
+                    .nextElementSibling
+		    .firstElementChild;
+    if ( button.dataset.del == 'true' )
+    {
+        button.dataset.del = 'false';
+	button.title = 'Delete Account';
+	ACCOUNT.style.textDecoration = 'none';
+    }
+    else
+    {
+        button.dataset.del = 'true';
+	button.title = 'UN-Delete Account';
+	ACCOUNT.style.textDecoration =
+	    'line-through red wavy';
+    }
+
+    ONCHANGE();
+}
+
+</script>
 EOT;
 
 } // end if ( isset ( $contestname ) && $is_manager )
@@ -1205,105 +1348,6 @@ function KEYDOWN ( form_id )
 	}
     }
 }
-
-var not_edited =
-    document.getElementById ( 'not-edited' );
-var edited =
-    document.getElementById ( 'edited' );
-function ONCHANGE ( )
-{
-    not_edited.style.display = 'none';
-    edited.style.display = 'table';
-}
-
-var parameters_form =
-    document.getElementById ( 'parameters-form' );
-var op_input =
-    document.getElementById ( 'op' );
-function SUBMIT ( op )
-{
-    op_input.value = op;
-    parameters_form.submit();
-}
-
-function DISPLAY ( box, value )
-{
-    if ( value == '-' )
-    {
-        box.innerHTML = '&nbsp;&nbsp;&nbsp';
-	box.style.textDecoration = 'none';
-    }
-    else if ( value == box.dataset.on )
-    {
-        box.innerHTML =
-	    '&nbsp;' + box.dataset.on + '&nbsp';
-	box.style.textDecoration = 'none';
-    }
-    else
-    {
-        box.innerHTML =
-	    '&nbsp;' + box.dataset.on + '&nbsp';
-	box.style.textDecoration = 'line-through';
-    }
-}
-
-function NEXT ( box )
-{
-    var next = box.dataset.current;
-    if ( next == box.dataset.initial )
-    {
-        if ( next == '-' )
-	    next = box.dataset.on;
-	else if ( next == box.dataset.on )
-	    next = box.dataset.off;
-	else
-	    next = box.dataset.on;
-    }
-    else
-        next = box.dataset.initial;
-    return next;
-}
-
-function ENTER ( box )
-{
-    DISPLAY ( box, NEXT ( box ) );
-}
-
-function LEAVE ( box )
-{
-    DISPLAY ( box, box.dataset.current );
-}
-
-function CLICK ( box )
-{
-    box.dataset.current = NEXT ( box );
-    DISPLAY ( box, box.dataset.current );
-}
-
-function TOGGLE_DELETE ( button )
-{
-    ACCOUNT = button.parentElement
-                    .nextElementSibling
-		    .firstElementChild;
-    if ( button.dataset.del == 'true' )
-    {
-	console.log ( 'found true' );
-        button.dataset.del = 'false';
-	button.title = 'Delete Account';
-	ACCOUNT.style.textDecoration = 'none';
-    }
-    else
-    {
-	console.log ( 'found false' );
-        button.dataset.del = 'true';
-	button.title = 'UN-Delete Account';
-	ACCOUNT.style.textDecoration =
-	    'line-through red wavy';
-    }
-
-    ONCHANGE();
-}
-
 </script>
 
 </body>
