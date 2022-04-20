@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 20 12:45:41 EDT 2022
+    // Date:	Wed Apr 20 15:53:15 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -339,12 +339,15 @@
     // DEPLOYED is used to prevent changes to CONTEST-
     // TYPE.
     //
+    // Some warnings cause $params to be changed so that
+    // it does not alter $contestdata.
+    //
     // $warnings must be set to a list (it cannot be
     // undefined) when this is called.
     //
-    function check_parameters ( $params, & $warnings )
+    function check_parameters ( & $params, & $warnings )
     {
-        global $contestdata;
+        global $contestdata, $aid;
 
     	$v = $params['REGISTRATION-EMAIL'];
 	$err = [];
@@ -374,6 +377,19 @@
 	    $warnings[] = "contest was deployed " .
 	                  $contestdata['DEPLOYED'];
 	    unset ( $params['CONTEST-TYPE'] );
+	}
+
+	$f = $params['FLAGS'][$aid];
+	if ( $f[0] != 'M' )
+	{
+	    $warnings[] =
+	        "you cannot delete yourself or cease" .
+		" to be a manager";
+	    $warnings[] =
+	        "(you must get another manager to" .
+		" make such changes)";
+	    $params['FLAGS'][$aid] =
+	        $contestdata['FLAGS'][$aid];
 	}
     }
 
@@ -630,6 +646,25 @@
 	{
 	    $params = get_parameters ( $_POST );
 	    check_parameters ( $params, $warnings );
+	    $pflags = & $params['FLAGS'];
+	    $time = date ( $epm_time_format );
+	    $br = ( $notice == '' ? '' : '<br>' );
+	    foreach ( $flags as $a => $f )
+	    {
+		$pf = $pflags[$a];
+	        if ( $pf == 'XXX' )
+		{
+		    $notice .=
+		        "{$br}<strong>deleted" .
+			" account $a</strong>";
+		    $br = '<br>';
+		    unset ( $pflags[$a] );
+		    unset ( $emails[$a] );
+		    unset ( $times[$a] );
+		}
+		elseif ( $f != $pf )
+		    $times[$a] = $time;
+	    }
 	    foreach ( $params as $k => $v )
 		$contestdata[$k] = $v;
 	    $write_contestdata = true;
