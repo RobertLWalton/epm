@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 20 01:42:41 EDT 2022
+    // Date:	Wed Apr 20 12:45:41 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -218,12 +218,17 @@
     // call exit with UNACCEPTABLE HTTP POST.  Return
     // array.
     //
+    // The account-flags=FLAG-LIST parameter is
+    // converted to a $parameters['FLAGS] map and
+    // checked against $flags to see if the parameter
+    // is legal.
+    //
     // More subtle parameter errors are detected by
     // check_parameters which generates warnings.
     //
     function get_parameters ( $post )
     {
-	global $epm_time_format;
+	global $epm_time_format, $flags;
 
         $r = [];
 
@@ -282,6 +287,46 @@
 		$v = date ( $epm_time_format, $w );
 	    }
 	    $r[$n] = $v;
+	}
+
+	if ( ! isset ( $post['account-flags'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " no account-flags" );
+	$account_flags = & $r['FLAGS'];
+	$account_flags = [];
+	$MJC = 'MJC';
+	$mjc = 'mjc';
+	foreach ( explode
+		      ( ';', $post['account-flags'] )
+		  as $item )
+	{
+	    list ( $a, $f ) = explode ( ':', $item );
+	    if ( ! isset ( $flags[$a] ) )
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " extraneous account $a" );
+	    $old_f = $flags[$a];
+	    $account_flags[$a] = $f;
+	    if ( $old_f == $f || $f == 'XXX' ) continue;
+	    for ( $i = 0; $i < 3; $i ++ )
+	    {
+	        $M = $MJC[$i];
+	        $m = $mjc[$i];
+		$fi = $f[$i];
+		$old_fi = $old_f[$i];
+		if ( $fi == $old_fi ) continue;
+		if ( $old_fi == '-' ) $next = $M;
+		elseif ( $old_fi == $M ) $next = $m;
+		else $next = $M;
+		if ( $fi == $next ) continue;
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " $a => $f !~ $old_f" );
+	    }
+	}
+	foreach ( $flags as $a => $f )
+	{
+	    if ( ! isset ( $account_flags[$a] ) )
+		exit ( "UNACCEPTABLE HTTP POST:" .
+		       " missing account $a" );
 	}
 
 	return $r;
