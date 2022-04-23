@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 20 15:53:15 EDT 2022
+    // Date:	Sat Apr 23 16:10:53 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -847,7 +847,7 @@ div.parameters {
 }
 
 div.add-account {
-    background-color: var(--bg-orange);
+    background-color: var(--bg-tan);
     padding-top: var(--pad);
 }
 
@@ -1100,6 +1100,39 @@ if ( isset ( $contestname ) && $is_manager )
     else
         $select_type = '';
     $dtitle = 'mm/dd/yyyy, hh::mm:[AP]M';
+
+    if ( ! isset ( $add_email ) )
+	echo <<<EOT
+	<div class='add-account'>
+	<form method='POST' action='contest.php'
+	      id='add-email'>
+	<input type='hidden' name='id' value='$ID'>
+
+	<label>Add Account with Email:</label>
+	<input type='email' name='add-email'
+	       value='$add_email' size='40'
+	       onkeydown='KEYDOWN("add-email")'>
+	</form>
+	</div>
+EOT;
+
+    elseif ( ! isset ( $add_aid ) )
+	echo <<<EOT
+	<div class='add-account'>
+	<form method='POST' action='contest.php'>
+	<input type='hidden' name='id' value='$ID'>
+
+	<label>Select Account to Add with Email
+	$add_email:</label>
+	<select name='add-account'>
+	<option value='*CANCEL*'>cancel</option>
+	$aid_options
+	</select>
+	<button type='submit'>Submit</button>
+	</form>
+	</div>
+EOT;
+
     echo <<<EOT
     <div class='parameters'>
     <form method='POST' action='contest.php'
@@ -1167,38 +1200,6 @@ if ( isset ( $contestname ) && $is_manager )
 		onchange='ONCHANGE()'> $z
     </div>
 
-    </form>
-    </div>
-EOT;
-
-if ( ! isset ( $add_email ) )
-    echo <<<EOT
-    <div class='add-account'>
-    <form method='POST' action='contest.php'
-          id='add-email'>
-    <input type='hidden' name='id' value='$ID'>
-
-    <label>Add Account with Email:</label>
-    <input type='email' name='add-email'
-           value='$add_email' size='40'
-	   onkeydown='KEYDOWN("add-email")'>
-    </form>
-    </div>
-EOT;
-
-elseif ( ! isset ( $add_aid ) )
-    echo <<<EOT
-    <div class='add-account'>
-    <form method='POST' action='contest.php'>
-    <input type='hidden' name='id' value='$ID'>
-
-    <label>Select Account to Add with Email
-    $add_email:</label>
-    <select name='add-account'>
-    <option value='*CANCEL*'>cancel</option>
-    $aid_options
-    </select>
-    <button type='submit'>Submit</button>
     </form>
     </div>
 EOT;
