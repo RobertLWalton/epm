@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 24 05:28:43 EDT 2022
+    // Date:	Sun Apr 24 05:42:15 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -37,7 +37,22 @@
     //
     //	    add-email=EMAIL
     //		Set add_email variable and enable
-    //	        new account to be set/selected.
+    //	        one of:
+    //		  * account to be selected if user
+    //		    for email has team accounts
+    //		  * new account to be added if user has
+    //		    no teams and account not already
+    //		    added
+    //		  * email of old account to be changed
+    //		    is user has no teams and user's
+    //		    account was previously added
+    //
+    //	    add-account=AID
+    //		Set add_aid variable and enable one of:
+    //		  * new account to be added if user has
+    //		    account not already added
+    //		  * email of old account to be changed
+    //		    account was previously added
     //
     //	    op=save OPTIONS
     //		Update +contest+ according to OPTIONS:
@@ -108,6 +123,10 @@
         // map ACCOUNT => "email address"
 	// Email addresses used to add account
 	// to contest.
+    $previous_emails = & $contestdata['PREVIOUS-EMAILS'];
+        // map ACCOUNT => "previous email address"
+	// Previous value of $emails[ACCOUNT] or NULL
+	// or unset if none.
     $times = & $contestdata['TIMES'];
         // map ACCOUNT => time of last change to account
 	//		  flags or email
@@ -468,6 +487,7 @@
     {
         $r = '';
 	$emails = $params['EMAILS'];
+	$previous_emails = $params['PREVIOUS-EMAILS'];
 	foreach ( $params['FLAGS'] as $aid => $flags )
 	{
 	    $r .= "<tr><td>";
@@ -513,11 +533,21 @@
                   "         <pre>&Chi;</pre></button>";
 
 	    $email = $emails[$aid];
+	    if ( isset ( $previous_emails[$aid] ) )
+	    {
+	        $e = $previous_emails[$aid];
+		$prev =
+		    "<td style='padding-left:3em'>" .
+	            "<strong>(previously $e)</strong>" .
+		    "<td>";
+	    }
+	    else
+	        $prev = '';
 	    $r .= "</td><td style='padding-left:1em'>"
 	        . "<strong>$aid</strong>"
 	        . "</td><td style='padding-left:3em'>"
 	        . "<strong>$email</strong>"
-		. "</td></tr>";
+		. "</td>$prev</tr>";
 	}
 	return $r;
     }
@@ -660,6 +690,7 @@
 		    $br = '<br>';
 		    unset ( $pflags[$a] );
 		    unset ( $emails[$a] );
+		    unset ( $previous_emails[$a] );
 		    unset ( $times[$a] );
 		}
 		elseif ( $f != $pf )
@@ -781,7 +812,11 @@
 		" has been changed from " .
 		$emails[$add_aid] . " to $add_email" .
 		"</strong>";
+	    $previous_emails[$add_aid] =
+	        $emails[$add_aid];
 	    $emails[$add_aid] = $add_email;
+	    $times[$add_aid] =
+		date ( $epm_time_format );
 	    $write_contestdata = true;
 	}
 
