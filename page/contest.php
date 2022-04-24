@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 23 16:10:53 EDT 2022
+    // Date:	Sun Apr 24 03:18:49 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -745,7 +745,7 @@
 	    $add_email = NULL;
 	elseif ( ! in_array ( $account, $add_aids ) )
 	    exit ( "UNACCEPTABLE HTTP POST:" .
-	           " add_account=$account" );
+	           " add-account=$account" );
 	else
 	    $add_aid = $account;
     }
@@ -1105,13 +1105,13 @@ if ( isset ( $contestname ) && $is_manager )
 	echo <<<EOT
 	<div class='add-account'>
 	<form method='POST' action='contest.php'
-	      id='add-email'>
+	      id='add-account'>
 	<input type='hidden' name='id' value='$ID'>
 
 	<label>Add Account with Email:</label>
 	<input type='email' name='add-email'
 	       value='$add_email' size='40'
-	       onkeydown='KEYDOWN("add-email")'>
+	       onkeydown='KEYDOWN("add-account")'>
 	</form>
 	</div>
 EOT;
@@ -1119,7 +1119,8 @@ EOT;
     elseif ( ! isset ( $add_aid ) )
 	echo <<<EOT
 	<div class='add-account'>
-	<form method='POST' action='contest.php'>
+	<form method='POST' action='contest.php'
+	      id='add-account'>
 	<input type='hidden' name='id' value='$ID'>
 
 	<label>Select Account to Add with Email
@@ -1218,10 +1219,13 @@ var not_edited =
     document.getElementById ( 'not-edited' );
 var edited =
     document.getElementById ( 'edited' );
+var add_account =
+    document.getElementById ( 'add-account' );
 function ONCHANGE ( )
 {
     not_edited.style.display = 'none';
     edited.style.display = 'table';
+    add_account.style.visibility = 'hidden';
 }
 
 var parameters_form =
