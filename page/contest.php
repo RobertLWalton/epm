@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 24 03:18:49 EDT 2022
+    // Date:	Sun Apr 24 05:28:43 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -756,11 +756,7 @@
 
     if ( isset ( $add_aid) )
     {
-	if ( isset ( $flags[$add_aid] ) )
-	    $errors[] =
-	        "account $add_aid has previously" .
-		" been added to contest";
-	else
+	if ( ! isset ( $emails[$add_aid] ) )
 	{
 	    $flags[$add_aid] = '---';
 	    $emails[$add_aid] = $add_email;
@@ -774,6 +770,21 @@
 		" email $add_email has been added" .
 		"</strong>";
 	}
+	elseif ( $emails[$add_aid] == $add_email )
+	    $warnings[] =
+	        "account $add_aid with email" .
+		" $add_email already exists";
+	else
+	{
+	    $notice .=
+		"<strong>email of acccount $add_aid" .
+		" has been changed from " .
+		$emails[$add_aid] . " to $add_email" .
+		"</strong>";
+	    $emails[$add_aid] = $add_email;
+	    $write_contestdata = true;
+	}
+
 	$add_aid = NULL;
 	$add_email = NULL;
     }
@@ -1108,7 +1119,7 @@ if ( isset ( $contestname ) && $is_manager )
 	      id='add-account'>
 	<input type='hidden' name='id' value='$ID'>
 
-	<label>Add Account with Email:</label>
+	<label>Email for New/Old Account:</label>
 	<input type='email' name='add-email'
 	       value='$add_email' size='40'
 	       onkeydown='KEYDOWN("add-account")'>
