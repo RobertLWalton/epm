@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr 24 05:42:15 EDT 2022
+    // Date:	Mon Apr 25 02:32:01 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -483,7 +483,7 @@
     //	    else:
     //		current = initial
     //
-    function display_account ( $params )
+    function display_accounts ( $params, $is_manager )
     {
         $r = '';
 	$emails = $params['EMAILS'];
@@ -503,8 +503,13 @@
 		    $d2 = '&nbsp;';
 		elseif ( $f == $m )
 		{
-		    $class .= " overstrike";
-		    $d2 = $M;
+		    if ( $is_manager )
+		    {
+			$class .= " overstrike";
+			$d2 = $M;
+		    }
+		    else
+			$d2 = '&nbsp;';
 		}
 		else
 		    $d2 = $M;
@@ -513,24 +518,32 @@
 		else
 		    $class .= " odd-column";
 
-		$r .= "<pre class='$class'"
-		    . "     data-on='$M'"
-		    . "     data-off='$m'"
-		    . "     data-current='$f'"
-		    . "     data-initial='$f'"
-		    . "     onmouseenter='ENTER(this)'"
-		    . "     onmouseleave='LEAVE(this)'"
-		    . "     onclick='CLICK(this)'>"
-		    . "&nbsp;$d2&nbsp;</pre>";
+		if ( $is_manager )
+		    $r .= "<pre class='$class'"
+			. "     data-on='$M'"
+			. "     data-off='$m'"
+			. "     data-current='$f'"
+			. "     data-initial='$f'"
+			. "     onmouseenter='ENTER"
+			. "                     (this)'"
+			. "     onmouseleave='LEAVE"
+			. "                     (this)'"
+			. "     onclick='CLICK(this)'>"
+			. "&nbsp;$d2&nbsp;</pre>";
+		else
+		    $r .= "<pre class='$class'>"
+			. "&nbsp;$d2&nbsp;</pre>";
 	    }
 
-	    $r .= "<button type='button'" .
-                  "        style='margin-left:1em'" .
-                  "        data-del='false'" .
-                  "        onclick=" .
-		  "            TOGGLE_DELETE(this)" .
-                  "        title='Delete Account'" .
-                  "         <pre>&Chi;</pre></button>";
+	    if ( $is_manager )
+		$r .= "<button type='button'"
+		    . "        style='margin-left:1em'"
+		    . "        data-del='false'"
+		    . "        onclick="
+		    . "            TOGGLE_DELETE(this)"
+		    . "        title='Delete Account'"
+		    . "         <pre>&Chi;</pre>"
+		    . "        </button>";
 
 	    $email = $emails[$aid];
 	    if ( isset ( $previous_emails[$aid] ) )
@@ -1217,41 +1230,59 @@ EOT;
     </label>
     </div>
 
-    <div>
+    <table>
+    <tr>
+    <td>
     <label>Problem Solution Submit Times:</label>
-    <label style='margin-left:1em'>Start:</label>
+    </td>
+    <td style='padding-left:1em'>
+    <label>Start:</label>
+    &nbsp;
     <input type='datetime-local' name='solution-start'
                 value='$Solution_Start'
 	        title='$dtitle'
 		onchange='ONCHANGE()'> $z
-    <label style='margin-left:1em'>Stop:</label>
+    </td>
+    <td style='padding-left:1em'>
+    <label>Stop:</label>
+    &nbsp;
     <input type='datetime-local' name='solution-stop'
                 value='$Solution_Stop'
 	        title='$dtitle'
 		onchange='ONCHANGE()'> $z
-    </div>
+    </td>
+    </tr>
 
-    <div>
+    <tr>
+    <td>
     <label>Problem Definition Submit Times:</label>
-    <label style='margin-left:1em'>Start:</label>
+    </td>
+    <td style='padding-left:1em'>
+    <label>Start:</label>
+    &nbsp;
     <input type='datetime-local'
                 name='description-start'
                 value='$Description_Start'
 	        title='$dtitle'
 		onchange='ONCHANGE()'> $z
-    <label style='margin-left:1em'>Stop:</label>
+    </td>
+    <td style='padding-left:1em'>
+    <label>Stop:</label>
+    &nbsp;
     <input type='datetime-local'
                 name='description-stop'
                 value='$Description_Stop'
 	        title='$dtitle'
 		onchange='ONCHANGE()'> $z
-    </div>
+    </td>
+    </tr>
+    </table>
 
     </form>
     </div>
 EOT;
 
-$account_rows = display_account ( $contestdata );
+$account_rows = display_accounts ( $contestdata, true );
 echo <<<EOT
 <div class='accounts'>
 <table id='account-rows'>
@@ -1441,22 +1472,50 @@ if ( isset ( $contestname ) && ! $is_manager )
     $Judge_Can_See
     </div>
 
-    <div>
+    <table>
+    <tr>
+    <td>
     <label>Problem Solution Submit Times:</label>
-    <label style='margin-left:1em'>Start:</label>
+    </td>
+    <td style='padding-left:1em'>
+    <label>Start:</label>
+    &nbsp;
     <strong>$Solution_Start</strong>
-    <label style='margin-left:1em'>Stop:</label>
+    </td>
+    <td style='padding-left:1em'>
+    <label>Stop:</label>
+    &nbsp;
     <strong>$Solution_Stop</strong>
-    </div>
+    </td>
+    </tr>
 
-    <div>
+    <tr>
+    <td>
     <label>Problem Definition Submit Times:</label>
-    <label style='margin-left:1em'>Start:</label>
+    </td>
+    <td style='padding-left:1em'>
+    <label>Start:</label>
+    &nbsp;
     <strong>$Description_Start</strong>
-    <label style='margin-left:1em'>Stop:</label>
+    </td>
+    <td style='padding-left:1em'>
+    <label>Stop:</label>
+    &nbsp;
     <strong>$Description_Stop</strong>
-    </div>
+    </td>
+    </tr>
+    </table>
 
+    </div>
+EOT;
+
+    $account_rows =
+        display_accounts ( $contestdata, false );
+    echo <<<EOT
+    <div class='accounts'>
+    <table id='account-rows'>
+    $account_rows
+    </table>
     </div>
 
 EOT;
