@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 27 03:35:31 EDT 2022
+    // Date:	Wed Apr 27 05:20:20 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -99,8 +99,9 @@
         // Email or NULL.
     $contest_type = & $contestdata['CONTEST-TYPE'];
         // Either '1-phase' or '2-phase' or NULL.
-    $judge_can_see = & $contestdata['JUDGE-CAN-SEE'];
-        // 'checked' or NULL. 
+    $can_see = & $contestdata['CAN-SEE'];
+        // can_see[k1][k2] == 'checked' for
+	// k1, k2 == 'manager', 'judge', 'contestant'
     $solution_start = & $contestdata['SOLUTION-START'];
     $solution_stop = & $contestdata['SOLUTION-STOP'];
     $description_start =
@@ -108,6 +109,16 @@
     $description_stop =
 	    & $contestdata['DESCRIPTION-STOP'];
         // Time in $epm_time_format or NULL.
+
+    $parameter_labels = [
+        'REGISTRATION-EMAIL',
+	'CONTEST-TYPE',
+	'CAN-SEE',
+	'SOLUTION-START',
+	'SOLUTION-STOP',
+	'DESCRIPTION-START',
+	'DESCRIPTION-STOP' ];
+
     $deployed = & $contestdata['DEPLOYED'];
         // Time last deployed in $epm_time_format,
 	// or NULL.
@@ -271,16 +282,38 @@
 	}
 	$r['CONTEST-TYPE'] = $v;
 
-	if ( ! isset ( $post['judge-can-see'] ) )
+	if ( ! isset ( $post['can-see'] ) )
 	    $v = NULL;  // Unset checkbox OK.
 	else
 	{
-	    $v = $post['judge-can-see'];
-	    if ( $v != 'checked' )
+	    $allowed = ['manager','judge','contestant'];
+	    $v = $post['can-see'];
+	    if ( ! is_array ( $v ) )
 		exit ( "UNACCEPTABLE HTTP POST:" .
-		       " judge-can-see = $v" );
+		       " can-see = $v" );
+	    foreach ( $v as $k1 => $v1 )
+	    {
+	        if ( ! in_array ( $k1, $allowed ) )
+		    exit ( "UNACCEPTABLE HTTP POST:" .
+			   " can-see[$k1]" );
+	        if ( ! is_array ( $v1 ) )
+		    exit ( "UNACCEPTABLE HTTP POST:" .
+			   " can-see[$k1] = $v1" );
+		foreach ( $v1 as $k2 => $v2 )
+		{
+		    if ( ! in_array ( $k2, $allowed ) )
+			exit ( "UNACCEPTABLE HTTP" .
+			       " POST:" .
+			       " can-see[$k1][$k2]" );
+		    if ( $v2 != 'checked' )
+			exit ( "UNACCEPTABLE HTTP" .
+			       " POST:" .
+			       " can-see[$k1][$k2] =" .
+			       " $v2" );
+		}
+	    }
 	}
-	$r['JUDGE-CAN-SEE'] = $v;
+	$r['CAN-SEE'] = $v;
 
 	foreach (
 	    [['solution-start','SOLUTION-START'],
@@ -709,8 +742,8 @@
 		elseif ( $f != $pf )
 		    $times[$a] = $time;
 	    }
-	    foreach ( $params as $k => $v )
-		$contestdata[$k] = $v;
+	    foreach ( $parameter_labels as $k )
+		$contestdata[$k] = $params[$k];
 	    $write_contestdata = true;
 	}
 	elseif ( $op != 'reset' )
