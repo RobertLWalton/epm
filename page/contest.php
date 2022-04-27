@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Apr 25 02:32:01 EDT 2022
+    // Date:	Wed Apr 27 03:35:31 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1208,7 +1208,9 @@ EOT;
 	   onchange='ONCHANGE()'
 	   onkeydown='KEYDOWN(null)'>
 
-    <div style='margin-top:0.5em;margin-bottom:0.5em'>
+    <table style='padding:1% 0px'>
+    <tr>
+    <td style='padding-right:5em'>
     <label>Contest Type:</label>
     <input type='radio' id='1-phase'
            name='contest-type' value='1-phase'
@@ -1219,16 +1221,72 @@ EOT;
 	   onchange='ONCHANGE()'>
     <label for='2-phase'>Two Phase</label>
     $select_type
-    <input style='margin-left:10em'
-           type='checkbox' name='judge-can-see'
-	                   value='checked'
-                           id='judge-can-see'
-			   $judge_can_see
+    </td>
+    <td style='padding-right:2em'>
+    <label>Judges Can See Email Addresses of:</label>
+    </td>
+    <td>
+    <label>
+    <input type='checkbox' name='can-see[judge][manager]'
+			   style='margin-bottom:0px'
+    			   value='checked'
+			   {$can_see['judge']['manager']}
 			   onchange='ONCHANGE()'>
-    <label for='judge-can-see'>
-    Judges Can See Contestant Account Names/Emails
-    </label>
-    </div>
+    Managers</label>
+    </td>
+    <td>
+    <label>
+    <input type='checkbox' name='can-see[judge][judge]'
+			   style='margin-bottom:0px'
+    			   value='checked'
+			   {$can_see['judge']['judge']}
+			   onchange='ONCHANGE()'>
+    Judges</label>
+    </td>
+    <td>
+    <label>
+    <input type='checkbox' name='can-see[judge][contestant]'
+			   style='margin-bottom:0px'
+    			   value='checked'
+			   {$can_see['judge']['contestant']}
+			   onchange='ONCHANGE()'>
+    Contestants</label>
+    </td>
+    </tr>
+    <tr>
+    <td></td>
+    <td style='padding-right:2em'>
+    <label>Contestants Can See Email Addresses of:</label>
+    </td>
+    <td>
+    <label>
+    <input type='checkbox' name='can-see[contestant][manager]'
+			   style='margin-bottom:0px'
+    			   value='checked'
+			   {$can_see['contestant']['manager']}
+			   onchange='ONCHANGE()'>
+    Managers</label>
+    </td>
+    <td>
+    <label>
+    <input type='checkbox' name='can-see[contestant][judge]'
+			   style='margin-bottom:0px'
+    			   value='checked'
+			   {$can_see['contestant']['judge']}
+			   onchange='ONCHANGE()'>
+    Judges</label>
+    </td>
+    <td>
+    <label>
+    <input type='checkbox' name='can-see[contestant][contestant]'
+			   style='margin-bottom:0px'
+    			   value='checked'
+			   {$can_see['contestant']['contestant']}
+			   onchange='ONCHANGE()'>
+    Contestants</label>
+    </td>
+    </tr>
+    </table>
 
     <table>
     <tr>
