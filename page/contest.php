@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 27 05:20:20 EDT 2022
+    // Date:	Wed Apr 27 16:11:25 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -102,6 +102,7 @@
     $can_see = & $contestdata['CAN-SEE'];
         // can_see[k1][k2] == 'checked' for
 	// k1, k2 == 'manager', 'judge', 'contestant'
+    $can_see_labels = ['manager','judge','contestant'];
     $solution_start = & $contestdata['SOLUTION-START'];
     $solution_stop = & $contestdata['SOLUTION-STOP'];
     $description_start =
@@ -117,7 +118,8 @@
 	'SOLUTION-START',
 	'SOLUTION-STOP',
 	'DESCRIPTION-START',
-	'DESCRIPTION-STOP' ];
+	'DESCRIPTION-STOP',
+	'FLAGS' ];
 
     $deployed = & $contestdata['DEPLOYED'];
         // Time last deployed in $epm_time_format,
@@ -134,7 +136,8 @@
         // map ACCOUNT => "email address"
 	// Email addresses used to add account
 	// to contest.
-    $previous_emails = & $contestdata['PREVIOUS-EMAILS'];
+    $previous_emails =
+            & $contestdata['PREVIOUS-EMAILS'];
         // map ACCOUNT => "previous email address"
 	// Previous value of $emails[ACCOUNT] or NULL
 	// or unset if none.
@@ -258,7 +261,8 @@
     //
     function get_parameters ( $post )
     {
-	global $epm_time_format, $flags;
+	global $epm_time_format, $flags,
+	       $can_see_labels;
 
         $r = [];
 
@@ -286,14 +290,14 @@
 	    $v = NULL;  // Unset checkbox OK.
 	else
 	{
-	    $allowed = ['manager','judge','contestant'];
 	    $v = $post['can-see'];
 	    if ( ! is_array ( $v ) )
 		exit ( "UNACCEPTABLE HTTP POST:" .
 		       " can-see = $v" );
 	    foreach ( $v as $k1 => $v1 )
 	    {
-	        if ( ! in_array ( $k1, $allowed ) )
+	        if ( ! in_array
+		         ( $k1, $can_see_labels ) )
 		    exit ( "UNACCEPTABLE HTTP POST:" .
 			   " can-see[$k1]" );
 	        if ( ! is_array ( $v1 ) )
@@ -301,7 +305,8 @@
 			   " can-see[$k1] = $v1" );
 		foreach ( $v1 as $k2 => $v2 )
 		{
-		    if ( ! in_array ( $k2, $allowed ) )
+		    if ( ! in_array
+		             ( $k2, $can_see_labels ) )
 			exit ( "UNACCEPTABLE HTTP" .
 			       " POST:" .
 			       " can-see[$k1][$k2]" );
@@ -410,7 +415,8 @@
 	        $warnings[] = "Bad Registration Email:";
 		foreach ( $err as $e )
 		    $warnings[] = "    $e";
-		unset ( $params['REGISTRATION-EMAIL'] );
+		$params['REGISTRATION-EMAIL'] =
+		    $contestdata['REGISTRATION-EMAIL'];
 	}
 
 	if ( isset ( $contestdata['DEPLOYED'] )
@@ -428,7 +434,8 @@
 	                  " from $v to $w because";
 	    $warnings[] = "contest was deployed " .
 	                  $contestdata['DEPLOYED'];
-	    unset ( $params['CONTEST-TYPE'] );
+	    $params['CONTEST-TYPE'] =
+		$contestdata['CONTEST-TYPE'];
 	}
 
 	$f = $params['FLAGS'][$aid];
@@ -516,12 +523,11 @@
     //	    else:
     //		current = initial
     //
-    function display_accounts ( $params, $is_manager )
+    function display_accounts ( $is_manager )
     {
+        global $flags, $emails, $previous_emails;
         $r = '';
-	$emails = $params['EMAILS'];
-	$previous_emails = $params['PREVIOUS-EMAILS'];
-	foreach ( $params['FLAGS'] as $aid => $flags )
+	foreach ( $flags as $aid => $fs )
 	{
 	    $r .= "<tr><td>";
 	    $MJC = 'MJC';
@@ -530,7 +536,7 @@
 	    {
 	        $M = $MJC[$i];
 	        $m = $mjc[$i];
-		$f = $flags[$i];
+		$f = $fs[$i];
 		$class = 'flagbox';
 		if ( $f == '-' )
 		    $d2 = '&nbsp;';
@@ -1193,6 +1199,18 @@ if ( isset ( $contestname ) && $is_manager )
         $select_type = '';
     $dtitle = 'mm/dd/yyyy, hh::mm:[AP]M';
 
+    $is_checked = $can_see;
+    foreach ( $can_see_labels as $k1 )
+    {
+         if ( ! isset ( $is_checked[$k1] ) )
+	     $is_checked[$k1] = NULL;
+	foreach ( $can_see_labels as $k2 )
+	{
+	     if ( ! isset ( $is_checked[$k1][$k2] ) )
+		 $is_checked[$k1][$k2] = NULL;
+	}
+    }
+
     if ( ! isset ( $add_email ) )
 	echo <<<EOT
 	<div class='add-account'>
@@ -1260,62 +1278,69 @@ EOT;
     </td>
     <td>
     <label>
-    <input type='checkbox' name='can-see[judge][manager]'
-			   style='margin-bottom:0px'
-    			   value='checked'
-			   {$can_see['judge']['manager']}
-			   onchange='ONCHANGE()'>
+    <input type='checkbox'
+           name='can-see[judge][manager]'
+	   style='margin-bottom:0px'
+	   value='checked'
+	   {$is_checked['judge']['manager']}
+	   onchange='ONCHANGE()'>
     Managers</label>
     </td>
     <td>
     <label>
-    <input type='checkbox' name='can-see[judge][judge]'
-			   style='margin-bottom:0px'
-    			   value='checked'
-			   {$can_see['judge']['judge']}
-			   onchange='ONCHANGE()'>
+    <input type='checkbox'
+           name='can-see[judge][judge]'
+	   style='margin-bottom:0px'
+	   value='checked'
+	   {$is_checked['judge']['judge']}
+	   onchange='ONCHANGE()'>
     Judges</label>
     </td>
     <td>
     <label>
-    <input type='checkbox' name='can-see[judge][contestant]'
-			   style='margin-bottom:0px'
-    			   value='checked'
-			   {$can_see['judge']['contestant']}
-			   onchange='ONCHANGE()'>
+    <input type='checkbox'
+           name='can-see[judge][contestant]'
+	   style='margin-bottom:0px'
+	   value='checked'
+	   {$is_checked['judge']['contestant']}
+	   onchange='ONCHANGE()'>
     Contestants</label>
     </td>
     </tr>
     <tr>
     <td></td>
     <td style='padding-right:2em'>
-    <label>Contestants Can See Email Addresses of:</label>
+    <label>Contestants Can See Email Addresses of:
+    </label>
     </td>
     <td>
     <label>
-    <input type='checkbox' name='can-see[contestant][manager]'
-			   style='margin-bottom:0px'
-    			   value='checked'
-			   {$can_see['contestant']['manager']}
-			   onchange='ONCHANGE()'>
+    <input type='checkbox'
+           name='can-see[contestant][manager]'
+	   style='margin-bottom:0px'
+	   value='checked'
+	   {$is_checked['contestant']['manager']}
+	   onchange='ONCHANGE()'>
     Managers</label>
     </td>
     <td>
     <label>
-    <input type='checkbox' name='can-see[contestant][judge]'
-			   style='margin-bottom:0px'
-    			   value='checked'
-			   {$can_see['contestant']['judge']}
-			   onchange='ONCHANGE()'>
+    <input type='checkbox'
+           name='can-see[contestant][judge]'
+	   style='margin-bottom:0px'
+	   value='checked'
+	   {$is_checked['contestant']['judge']}
+	   onchange='ONCHANGE()'>
     Judges</label>
     </td>
     <td>
     <label>
-    <input type='checkbox' name='can-see[contestant][contestant]'
-			   style='margin-bottom:0px'
-    			   value='checked'
-			   {$can_see['contestant']['contestant']}
-			   onchange='ONCHANGE()'>
+    <input type='checkbox'
+           name='can-see[contestant][contestant]'
+	   style='margin-bottom:0px'
+	   value='checked'
+	   {$is_checked['contestant']['contestant']}
+	   onchange='ONCHANGE()'>
     Contestants</label>
     </td>
     </tr>
@@ -1373,7 +1398,7 @@ EOT;
     </div>
 EOT;
 
-$account_rows = display_accounts ( $contestdata, true );
+$account_rows = display_accounts ( true );
 echo <<<EOT
 <div class='accounts'>
 <table id='account-rows'>
@@ -1601,7 +1626,7 @@ if ( isset ( $contestname ) && ! $is_manager )
 EOT;
 
     $account_rows =
-        display_accounts ( $contestdata, false );
+        display_accounts ( false );
     echo <<<EOT
     <div class='accounts'>
     <table id='account-rows'>
