@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Apr 27 16:11:25 EDT 2022
+    // Date:	Thu Apr 28 02:38:20 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -496,6 +496,8 @@
     //          <strong>aid</strong></td>
     //		<td style='padding-left:3em'>
     //          <strong>email</strong></td>
+    //		<td style='padding-left:3em'>
+    //          <strong>previous-email</strong></td>
     //		</tr>
     //		
     // where
@@ -513,6 +515,9 @@
     //		Dj similar with M => J
     //		Dc similar with C => J
     //
+    // Previous-email is omitted if it does not exist
+    // or current user is not a manager.
+    //
     // Onclick performs the following transformation
     // for M (J and C are similar):
     //
@@ -523,7 +528,8 @@
     //	    else:
     //		current = initial
     //
-    function display_accounts ( $is_manager )
+    function display_accounts
+    		( $is_manager, $email_mask = 'MJX' )
     {
         global $flags, $emails, $previous_emails;
         $r = '';
@@ -584,22 +590,33 @@
 		    . "         <pre>&Chi;</pre>"
 		    . "        </button>";
 
-	    $email = $emails[$aid];
-	    if ( isset ( $previous_emails[$aid] ) )
+	    $show_email = $is_manager;
+	    $i = 0;
+	    while ( ! $show_email && $i < 3 )
 	    {
-	        $e = $previous_emails[$aid];
-		$prev =
-		    "<td style='padding-left:3em'>" .
-	            "<strong>(previously $e)</strong>" .
-		    "<td>";
+	        if ( $email_mask[$i] == $fs[$i] )
+		    $show_email = true;
+		++ $i;
 	    }
-	    else
-	        $prev = '';
+
 	    $r .= "</td><td style='padding-left:1em'>"
-	        . "<strong>$aid</strong>"
-	        . "</td><td style='padding-left:3em'>"
-	        . "<strong>$email</strong>"
-		. "</td>$prev</tr>";
+		. "<strong>$aid</strong></td>";
+	    if ( $show_email )
+	    {
+		$email = $emails[$aid];
+		$r .= "<td style='padding-left:3em'>"
+		    . "<strong>$email</strong></td>";
+	    }
+	    if ( isset ( $previous_emails[$aid] )
+	         &&
+		 $is_manager )
+	    {
+		$email = $previous_emails[$aid];
+		$r .= "<td style='padding-left:3em'>"
+		    . "<strong>(previously $email)"
+		    . "</strong></td>";
+	    }
+	    $r .= "</tr>";
 	}
 	return $r;
     }
@@ -1554,13 +1571,6 @@ if ( isset ( $contestname ) && ! $is_manager )
         { return ( $v === NULL ? $tbd : $v ); }
     $Registration_Email = TBD ( $registration_email );
     $Contest_Type = TBD ( $contest_type );
-    if ( $judge_can_see === NULL )
-	$Judge_Can_See = '';
-    else
-	$Judge_Can_See =
-	    "<strong style='margin-left:3em'>" .
-	    'Judges Can See Contestant Emails' .
-	    '</strong>';
     function time_TBD ( $time )
     {
         if ( ! isset ( $time ) ) return 'TBD';
@@ -1585,7 +1595,6 @@ if ( isset ( $contestname ) && ! $is_manager )
     <div style='margin-top:0.5em;margin-bottom:0.5em'>
     <label>Contest Type:</label>
     <strong>$Contest_Type</strong>
-    $Judge_Can_See
     </div>
 
     <table>
@@ -1625,8 +1634,7 @@ if ( isset ( $contestname ) && ! $is_manager )
     </div>
 EOT;
 
-    $account_rows =
-        display_accounts ( false );
+    $account_rows = display_accounts ( false );
     echo <<<EOT
     <div class='accounts'>
     <table id='account-rows'>
