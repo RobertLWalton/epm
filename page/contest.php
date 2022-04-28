@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 28 02:38:20 EDT 2022
+    // Date:	Thu Apr 28 03:08:25 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -103,6 +103,7 @@
         // can_see[k1][k2] == 'checked' for
 	// k1, k2 == 'manager', 'judge', 'contestant'
     $can_see_labels = ['manager','judge','contestant'];
+        // In order of characters in flags, MJC.
     $solution_start = & $contestdata['SOLUTION-START'];
     $solution_stop = & $contestdata['SOLUTION-STOP'];
     $description_start =
@@ -146,8 +147,21 @@
 	//		  flags or email
 
     $is_manager = & $data['IS-MANAGER'];
-	// True if $aid is contest manager and false
-	// otherwise.
+	// True iff $flags[$aid] is set and == 'M..'.
+    $is_participant = & $data['IS-PARTICIPANT'];
+	// True iff $flags[$aid] is set and has an
+	// M, J, or C.
+    $email_mask = & $data['EMAIL-MASK'];
+	// If $is_participant but not $is_manager,
+	// set to 'mjc' where
+	//	m = 'M' if $can_see[k]['manager']
+	//	        else 'X'
+	//	j = 'J' if $can_see[k]['judge']
+	//	        else 'X'
+	//	c = 'C' if $can_see[k]['contestant']
+	//	        else 'X'
+	//      k = 'judge' if $flags[$aid] is '.J.'
+	//                  else 'contestant'
     $add_email = & $data['ADD-EMAIL'];
         // Email of account to be added, or not set if
 	// none.
@@ -166,7 +180,9 @@
     function init_contest ( $name = NULL )
     {
         global $contestname, $contestdata, $epm_data,
-	       $is_manager, $aid, $flags;
+	       $is_manager, $is_participant,
+	       $email_mask, $can_see, $can_see_labels,
+	       $aid, $flags;
 
 	// You cannot simply set $contestdata because
 	// of the references into it, but must set
@@ -176,6 +192,8 @@
 	    $contestdata[$k] = NULL;
 
 	$is_manager = false;
+	$is_participant = false;
+	$email_mask = 'XXX';
 
 	$contestname = $name;
         if ( isset ( $name ) )
@@ -198,13 +216,51 @@
 		        ( "cannot decode json in $f:" .
 			  PHP_EOL . "    $m" );
 		}
-		foreach ( $j as $k => $v )
-		    $contestdata[$k] = $v;
+		foreach ( array_keys ( $contestdata )
+		          as $k )
+		{
+		    if ( isset ( $j[$k] ) )
+			$contestdata[$k] = $j[$k];
+		    else
+			$contestdata[$k] = NULL;
+		}
+		if ( isset ( $flags[$aid] ) )
+		{
+		    $k1 = NULL;
+		    if ( $flags[$aid][0] == 'M' )
+		    {
+			$is_manager = true;
+			$is_participant = true;
+		    }
+		    elseif ( $flags[$aid][1] == 'J' )
+		    {
+			$is_participant = true;
+			$k1 = 'judge';
+		    }
+		    elseif ( $flags[$aid][2] == 'C' )
+		    {
+			$is_participant = true;
+			$k1 = 'contestant';
+		    }
 
-		if ( isset ( $flags[$aid] )
-		     &&
-		     $flags[$aid][0] == 'M' )
-		    $is_manager = true;
+		    if ( isset ( $k1 ) )
+		    {
+		        $MJC = 'MJC';
+			$mask = [];
+			for ( $i = 0; $i < 3; $i ++ )
+			{
+			    $k2 = $can_see_labels[$i];
+			    if ( isset ( $can_see
+			                   [$k1][$k2] )
+			       )
+				$mask[] = $MJC[$i];
+			    else
+			        $mask[] = 'X';
+			}
+			$email_mask =
+			    implode ( '', $mask );
+		    }
+		}
 	    }
 	}
     }
@@ -532,17 +588,18 @@
     		( $is_manager, $email_mask = 'MJX' )
     {
         global $flags, $emails, $previous_emails;
+	$MJC = 'MJC';
+	$mjc = 'mjc';
+
         $r = '';
-	foreach ( $flags as $aid => $fs )
+	foreach ( $flags as $aid => $aidflags )
 	{
 	    $r .= "<tr><td>";
-	    $MJC = 'MJC';
-	    $mjc = 'mjc';
 	    for ( $i = 0; $i < 3; $i ++ )
 	    {
 	        $M = $MJC[$i];
 	        $m = $mjc[$i];
-		$f = $fs[$i];
+		$f = $aidflags[$i];
 		$class = 'flagbox';
 		if ( $f == '-' )
 		    $d2 = '&nbsp;';
@@ -594,7 +651,7 @@
 	    $i = 0;
 	    while ( ! $show_email && $i < 3 )
 	    {
-	        if ( $email_mask[$i] == $fs[$i] )
+	        if ( $email_mask[$i] == $aidflags[$i] )
 		    $show_email = true;
 		++ $i;
 	    }
