@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 28 03:08:25 EDT 2022
+    // Date:	Thu Apr 28 06:27:52 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -226,40 +226,37 @@
 		}
 		if ( isset ( $flags[$aid] ) )
 		{
-		    $k1 = NULL;
+		    $k1s = [];
 		    if ( $flags[$aid][0] == 'M' )
 		    {
 			$is_manager = true;
 			$is_participant = true;
 		    }
-		    elseif ( $flags[$aid][1] == 'J' )
+		    if ( $flags[$aid][1] == 'J' )
 		    {
 			$is_participant = true;
-			$k1 = 'judge';
+			$k1s[] = 'judge';
 		    }
-		    elseif ( $flags[$aid][2] == 'C' )
+		    if ( $flags[$aid][2] == 'C' )
 		    {
 			$is_participant = true;
-			$k1 = 'contestant';
+			$k1s[] = 'contestant';
 		    }
 
-		    if ( isset ( $k1 ) )
+		    $MJC = 'MJC';
+		    $mask = ['X','X','X'];
+		    foreach ( $k1s as $k1 )
 		    {
-		        $MJC = 'MJC';
-			$mask = [];
 			for ( $i = 0; $i < 3; $i ++ )
 			{
 			    $k2 = $can_see_labels[$i];
 			    if ( isset ( $can_see
 			                   [$k1][$k2] )
 			       )
-				$mask[] = $MJC[$i];
-			    else
-			        $mask[] = 'X';
+				$mask[$i] = $MJC[$i];
 			}
-			$email_mask =
-			    implode ( '', $mask );
 		    }
+		    $email_mask = implode ( '', $mask );
 		}
 	    }
 	}
@@ -585,7 +582,7 @@
     //		current = initial
     //
     function display_accounts
-    		( $is_manager, $email_mask = 'MJX' )
+    		( $is_manager, $email_mask = 'XXX' )
     {
         global $flags, $emails, $previous_emails;
 	$MJC = 'MJC';
@@ -1005,6 +1002,9 @@
 		" later than Description Start" .
 		" Time";
     }
+    if ( ! $is_participant )
+        $warnings[] = 'You are not contestant, judge,'
+	            . ' or manager of this contest.';
 ?>
 
 <html>
@@ -1691,15 +1691,18 @@ if ( isset ( $contestname ) && ! $is_manager )
     </div>
 EOT;
 
-    $account_rows = display_accounts ( false );
-    echo <<<EOT
-    <div class='accounts'>
-    <table id='account-rows'>
-    $account_rows
-    </table>
-    </div>
-
+    if ( $is_participant )
+    {
+	$account_rows =
+	    display_accounts ( false, $email_mask );
+	echo <<<EOT
+	<div class='accounts'>
+	<table id='account-rows'>
+	$account_rows
+	</table>
+	</div>
 EOT;
+    }
 
 } // end if ( isset ( $contestname ) && ! $is_manager )
 
