@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  5 04:11:29 EDT 2022
+    // Date:	Fri Apr 29 16:45:32 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -376,7 +376,7 @@ EOT;
 	                . " did not previously exist";
 	}
 
-	write_list_description ( $f, $dsc, $errors );
+	write_list_description ( $f, $dsc );
 	if ( count ( $errors ) > $errors_size )
 	    return false;
 	else
@@ -1519,12 +1519,14 @@ EOT;
 	$lines
 	</div>
 EOT;
-	if ( $description != '' )
+	$description_html =
+	    description_to_HTML ( $description );
+	if ( $description_html != '' )
 	    echo <<<EOT
 	    <div class='dsc-header'>
 	    <strong>$pname List Description</strong>
 	    <div class='dsc-body'>
-	    $description
+	    $description_html
 	    </div>
 	    </div>
 EOT;

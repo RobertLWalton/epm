@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  5 04:13:22 EDT 2022
+    // Date:	Fri Apr 29 16:47:24 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -2479,7 +2479,9 @@ EOT;
     if ( isset ( $fname ) )
     {
         $description = read_list_description ( $fname );
-	if ( $description != '' )
+	$description_html =
+	    description_to_HTML ( $description );
+	if ( $description_html != '' )
 	{
 	    list ( $project, $name ) =
 	        explode ( ':', $listname );
@@ -2490,7 +2492,7 @@ EOT;
 	            $project $name</strong>:
 	    <br>
 	    <div class='list-description'>
-	    $description
+	    $description_html
 	    </div>
 	    </div>
 EOT;

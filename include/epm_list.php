@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 29 16:01:48 EDT 2022
+    // Date:	Fri Apr 29 16:49:57 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -910,30 +910,13 @@
 	return $r;
     }
 
-    // Replace description in a list file.  Append
-    // error instead if description contains < or >.
-    // Written description is NOT altered or otherwise
-    // checked.
+    // Replace description in a list file.  Description
+    // is NOT altered or otherwise checked.
     //
     function write_list_description
-	    ( $filename, $description, & $errors )
+	    ( $filename, $description )
     {
         global $epm_data;
-
-	$lines = explode ( "\n", $description );
-	foreach ( $lines as $line )
-	{
-	    if ( preg_match ( '/(<|>)/', $line ) )
-	    {
-		$line = trim ( $line );
-		$line = htmlspecialchars ( $line );
-	        $errors[] =
-		    "&lt; or &gt; is in description" .
-		    " line:";
-	        $errors[] = "    $line";
-		return;
-	    }
-	}
 
 	$c = ATOMIC_READ ( "$epm_data/$filename" );
 	if ( $c === false ) $c = '';
@@ -944,18 +927,18 @@
 	{
 	    $line = rtrim ( $line );
 	    if ( $line == '' ) break;
-	    $r .= $line . PHP_EOL;
+	    $r .= $line . "\n";
 	}
 	if ( $description != '' )
-	    $r .= PHP_EOL . $description;
+	    $r .= "\n" . $description;
 
 	$r = ATOMIC_WRITE ( "$epm_data/$filename", $r );
 	if ( $r === false )
 	    ERROR ( "cannot write $filename" );
     }
 
-    // Read list description and return it as as HTML.
-    // Returns '' if file does not exist.
+    // Read list description and return it as is (not as
+    // HTML).  Returns '' if file does not exist.
     //
     function read_list_description ( $filename )
     {
@@ -968,61 +951,14 @@
 	    // If $c was '' it is now ['']
 	$r = '';
 	$in_description = false;
-	$after_blank = true;
-	$eop = '';   // End of paragraph
 	foreach ( $c as $line )
 	{
 	    $line = rtrim ( $line );
-	    if ( $line == '' )
-	    {
-	        if ( ! $in_description )
-		{
-		    $in_description = true;
-		    continue;
-		}
-		if ( $after_blank ) continue;
-
-		if ( $eop != '' )
-		{
-		    $r .= $eop . PHP_EOL;
-		    $eop = '';
-		}
-		$after_blank = true;
-		continue;
-	    }
-	    elseif ( ! $in_description )
-	        continue;
-
-	    $line = str_replace
-	        ( "\t", "        ", $line );
-	    if ( ! $after_blank ) 
-	    {
-		// Do nothing special
-	    }
-	    elseif ( $line[0] == ' ' )
-	    {
-		$r .= "<pre>" . PHP_EOL;
-		$eop = "</pre>";
-	    }
-	    elseif ( $line[0] == '*' )
-	    {
-		$r .= "<p style='margin-left:1em;"
-		    . "text-indent:-1em'>" . PHP_EOL;
-		$line = trim ( substr ( $line, 1 ) );
-		$line = "<b>$line</b>";
-		$eop = "</p>";
-	    }
-	    else
-	    {
-		$r .= "<p>" . PHP_EOL;
-		$eop = "</p>";
-	    }
-	    $r .= $line . PHP_EOL;
-	    $after_blank = false;
+	    if ( $in_description )
+	        $r .= $line . "\n";
+	    elseif ( $line == '' )
+		$in_description = true;
 	}
-
-	if ( $eop != '' )
-	    $r .= $eop . PHP_EOL;
 	return $r;
     }
 
