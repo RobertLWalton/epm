@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  5 04:15:33 EDT 2022
+    // Date:	Fri Apr 29 16:01:48 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -839,6 +839,75 @@
 	}
 	if ( $changed )
 	    write_file_list ( $filename, $out );
+    }
+
+    // Convert description to HTML.  Returns '' if empty
+    // or all blank input.  Converts <'s to &lt;'s and
+    // >'s to &gt;'s.
+    //
+    function description_to_HTML ( $description )
+    {
+	$c = explode ( "\n", $description );
+	    // If $description was '' $c is now [''].
+	$r = '';
+	$in_description = false;
+	$after_blank = true;
+	$eop = '';   // End of paragraph
+	foreach ( $c as $line )
+	{
+	    $line = rtrim ( $line );
+	    if ( $line == '' )
+	    {
+		if ( $after_blank ) continue;
+
+		if ( $eop != '' )
+		{
+		    $r .= $eop . PHP_EOL;
+		    $eop = '';
+		}
+		$after_blank = true;
+		continue;
+	    }
+
+	    $line = str_replace
+	        ( "\t", "        ", $line );
+		// Replaces all \t's by 8 spaces.
+	    if ( preg_match ( '/(<|>)/', $line ) )
+	    {
+		$line = str_replace
+		    ( "<", "&lt;", $line );
+		$line = str_replace
+		    ( ">", "&gt;", $line );
+	    }
+	    if ( ! $after_blank ) 
+	    {
+		// Do nothing special
+	    }
+	    elseif ( $line[0] == ' ' )
+	    {
+		$r .= "<pre>" . PHP_EOL;
+		$eop = "</pre>";
+	    }
+	    elseif ( $line[0] == '*' )
+	    {
+		$r .= "<p style='margin-left:1em;"
+		    . "text-indent:-1em'>" . PHP_EOL;
+		$line = trim ( substr ( $line, 1 ) );
+		$line = "<b>$line</b>";
+		$eop = "</p>";
+	    }
+	    else
+	    {
+		$r .= "<p>" . PHP_EOL;
+		$eop = "</p>";
+	    }
+	    $r .= $line . PHP_EOL;
+	    $after_blank = false;
+	}
+
+	if ( $eop != '' )
+	    $r .= $eop . PHP_EOL;
+	return $r;
     }
 
     // Replace description in a list file.  Append
