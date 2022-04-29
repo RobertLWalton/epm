@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Apr 28 06:27:52 EDT 2022
+    // Date:	Fri Apr 29 00:36:46 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1643,16 +1643,34 @@ if ( isset ( $contestname ) && ! $is_manager )
     $Description_Stop =
         time_TBD ( $description_stop );
 
+    $i = 0;
+    if ( isset ( $can_see['contestant']['contestant'] ) )
+        $i = $i + 1;
+    if ( isset ( $can_see['judge']['contestant'] ) )
+        $i = $i + 2;
+    $Can_See = ['Only Managers',
+                'Managers and Contestants',
+                'Managers and Judges',
+                'Managers, Judges, and Contestants'][$i];
+
     echo <<<EOT
     <div class='parameters'>
 
     <label>To Register, Email:</label>
     <strong>$Registration_Email</strong>
 
-    <div style='margin-top:0.5em;margin-bottom:0.5em'>
+    <table style='padding:1% 0px'>
+    <tr>
+    <td style='padding-right:5em'>
     <label>Contest Type:</label>
     <strong>$Contest_Type</strong>
-    </div>
+    </td>
+    <td style='padding-right:2em'>
+    <label>$Can_See Can See Email Addresses
+           of Contestants</label>
+    </td>
+    </tr>
+    </table>
 
     <table>
     <tr>
