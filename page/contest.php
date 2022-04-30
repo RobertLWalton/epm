@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 29 00:36:46 EDT 2022
+    // Date:	Sat Apr 30 14:13:35 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -94,6 +94,10 @@
     // Parameters stored in +contest+.
     // See HELP for more documentation.
     //
+    $contest_description =
+	    & $contestdata['CONTEST-DESCRIPTION'];
+        // Contest description, text as per Descriptions
+	// in HELP.
     $registration_email =
 	    & $contestdata['REGISTRATION-EMAIL'];
         // Email or NULL.
@@ -113,6 +117,7 @@
         // Time in $epm_time_format or NULL.
 
     $parameter_labels = [
+        'CONTEST-DESCRIPTION',
         'REGISTRATION-EMAIL',
 	'CONTEST-TYPE',
 	'CAN-SEE',
@@ -318,6 +323,14 @@
 	       $can_see_labels;
 
         $r = [];
+
+	if ( ! isset ( $post['contest-description'] ) )
+	    exit ( "UNACCEPTABLE HTTP POST:" .
+	           " no contest-description" );
+	$v = $post['contest-description'];
+	$v = rtrim ( $v );
+	if ( $v == '' ) $v = NULL;
+	$r['CONTEST-DESCRIPTION'] = $v;
 
 	if ( ! isset ( $post['registration-email'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST:" .
@@ -971,6 +984,14 @@
 
     if ( isset ( $contestname ) )
     {
+	if ( $contest_description === NULL )
+	    $warnings[] =
+		"Contest Description is missing";
+
+	if ( $contest_type === NULL )
+	    $warnings[] =
+		"Contest Type is missing";
+
 	if ( $registration_email === NULL )
 	    $warnings[] =
 		"Registration Email is missing";
@@ -1249,6 +1270,12 @@ if ( isset ( $contestname ) && $is_manager )
     // Note: NULL automatically converts to the
     // empty string.
 
+    if ( isset ( $contest_description ) )
+        $description_html =
+	    description_to_HTML
+	        ( $contest_description );
+    else
+        $description_html = '';
     $z = date ( "T" );
     $z = "<strong>$z</strong>";
     function local_time ( $time )
@@ -1284,6 +1311,7 @@ if ( isset ( $contestname ) && $is_manager )
 		 $is_checked[$k1][$k2] = NULL;
 	}
     }
+
 
     if ( ! isset ( $add_email ) )
 	echo <<<EOT
@@ -1327,6 +1355,25 @@ EOT;
     <input type='hidden' name='account-flags'
                          id='account-flags'>
 
+    <label>Contest Description:</label>
+    <br>
+    <div class='list-description'
+         style='margin-left:1em'
+    >$description_html</div>
+
+    <br>
+    <label style='padding-right:1em'>
+    Edit Contest Description:</label>
+    <br>
+    <textarea name='contest-description'
+              style='vertical-align:text-top;
+	             margin-bottom:1em;
+		     margin-left:1em'
+	      oninput='ONCHANGE()'
+	      rows='4' cols='80'
+    >$contest_description</textarea>
+
+    <br>
     <label>To Register, Email:</label>
     <input type='email' name='registration-email'
            value='$registration_email' size='40'
@@ -1626,6 +1673,12 @@ if ( isset ( $contestname ) && ! $is_manager )
 {
     function TBD ( $v, $tbd = 'TDB' )
         { return ( $v === NULL ? $tbd : $v ); }
+    if ( isset ( $contest_description ) )
+        $description_html =
+	    description_to_HTML
+	        ( $contest_description );
+    else
+        $description_html = 'TBD';
     $Registration_Email = TBD ( $registration_email );
     $Contest_Type = TBD ( $contest_type );
     function time_TBD ( $time )
@@ -1644,17 +1697,26 @@ if ( isset ( $contestname ) && ! $is_manager )
         time_TBD ( $description_stop );
 
     $i = 0;
-    if ( isset ( $can_see['contestant']['contestant'] ) )
+    if ( isset ( $can_see['contestant']
+                         ['contestant'] ) )
         $i = $i + 1;
     if ( isset ( $can_see['judge']['contestant'] ) )
         $i = $i + 2;
     $Can_See = ['Only Managers',
                 'Managers and Contestants',
                 'Managers and Judges',
-                'Managers, Judges, and Contestants'][$i];
+                'Managers, Judges,' .
+		' and Contestants'][$i];
 
     echo <<<EOT
     <div class='parameters'>
+
+    <label>Contest Description:</label>
+    <br>
+    <div class='list-description'
+         style='margin-left:1em;
+	        padding-bottom:0.5em'
+    >$description_html</div>
 
     <label>To Register, Email:</label>
     <strong>$Registration_Email</strong>
