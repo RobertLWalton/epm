@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Wed Mar 16 08:03:14 EDT 2022
+Date:	Sat Apr 30 09:49:55 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -224,6 +224,8 @@ margin: 2em;
 <li><a href="#list-page">List Page</a> [main]
 <ul>
 <li><a href="#list-descriptions">List Descriptions</a>
+<li><a href="#publishing-lists">Publishing Lists</a>
+<li><a href="#descriptions">Descriptions</a>
 </ul>
 <li><a href="#favorites-page">Favorites Page</a> [main]
 
@@ -1794,6 +1796,23 @@ can select another list.  `CANCEL' will de-select the list without
 saving it.  `RESET' will reset the list to its state before
 you changed it, and `DELETE' will delete the list completely.
 <p>
+For an selected list of your own that has not been edited, `CANCEL' will
+de-select the list and `DELETE' will delete the list completely.
+</p>
+
+<h2 id="list-descriptions">List Descriptions</h2>
+<p>
+Each list has an optional associated <a href='#descriptions'>description</a>.
+If a selected, un-changed list of your own is named XXXX, then its description
+should be in one of your files named XXXX.dsc, and you may upload that file.
+Uploading a description file immediately stores the files
+contents in the list.
+<p>
+You can delete a list description by uploading an empty .dsc file.
+</p>
+
+<h2 id="publishing-lists">Publishing Lists</h2>
+<p>
 You can publish one of your lists to a project using the
 `PUBLISH' button.  This moves or copies your list to the project.
 You can unpublished a project list using the `UNPUBLISH' button.
@@ -1820,35 +1839,44 @@ or you must have the `unpublish-own' privilege AND the list name
 must end with `&#8209;&#8209;AAAA'.
 </p>
 
-<h2 id="list-descriptions">List Descriptions</h2>
-<p>
-If you have a list of your own named XXXX, then when you have
-selected this list for editing, you may upload
-a list description file named XXXX.dsc which contains a
-description of your list.  This description is then visible
-whenever the list is being considered for addition
-to someone's favorites list.
-When you upload a description, the list is saved as by `SAVE'.
-<p>
-You can delete a list description by uploading an empty .dsc file.
+<h2 id="descriptions">Descriptions</h2>
 <p>
 Description files contain paragraphs separated by blank lines.
 There are three kinds of paragraphs: headed, indented, and ordinary.
+<p>
 A headed paragraph begins with a `*'; its first input line
 with the `*' removed is made boldface; and then the paragraph is
 output as an HTML &lt;p&gt; paragraph with all output lines but the first
-slightly indented.   An indented paragraph begins
+slightly indented.
+<p>
+An indented paragraph begins
 with a single space or tab and is output in monospace font
-as an HTML &lt;pre&gt; paragraph with spaces and line breaks preserved.
+as an HTML &lt;pre&gt; paragraph with spaces and line ends preserved.
+<p>
 An ordinary paragraph does not begin with a `*', space, or tab, and
 is output as a plain HTML &lt;p&gt; paragraph.
 <p>
-A list description file may NOT contain the characters
-&lt; or &gt;, but may contain &amp;...;' representations
-of characters; e.g., &amp;lt; for &lt;.
-For indented paragraphs you may use
-one or more tabs at the very beginning of a line, but nowhere
-else.  Each tab will be replaced by 8 single space characters.
+Each tab is replaced by exactly 8 spaces before the above processing
+is done.  A sequence of tabs at the beginning of a line will therefore
+space correctly with tab stops set every 8 columns, but tabs embedded
+inside a line will not space correctly.
+<p>
+The characters &lt; and &gt; will output as is, unless they are
+part of one of the following HTML tags which are allowed and
+recognized anywhere in the text:
+<p>
+<table class='top-align'>
+<tr><td>&lt;br&gt;</td><td>Line Break</td></tr>
+<tr><td>&lt;b&gt;</td><td>Begin Bold</td></tr>
+<tr><td>&lt;/b&gt;</td><td>End Bold</td></tr>
+<tr><td>&lt;i&gt;</td><td>Begin Italic</td></tr>
+<tr><td>&lt;/i&gt;</td><td>End Italic</td></tr>
+</table>
+<p>
+Tags are NOT case-sensitive.
+Whitespace is not allowed inside tags.
+The text may contain &amp;...; representations
+of characters; e.g., &amp;amp; for &amp;.
 </p>
 
 <h1 id="favorites-page">Favorites Page</h1>
