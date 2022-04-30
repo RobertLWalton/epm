@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 29 16:49:57 EDT 2022
+    // Date:	Sat Apr 30 03:16:56 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -847,6 +847,10 @@
     //
     function description_to_HTML ( $description )
     {
+	global $epm_allowed_tags;
+	$pattern = implode ( "|", $epm_allowed_tags );
+	$pattern = "'(?i)<({$pattern})>'";
+
 	$c = explode ( "\n", $description );
 	    // If $description was '' $c is now [''].
 	$r = '';
@@ -872,12 +876,14 @@
 	    $line = str_replace
 	        ( "\t", "        ", $line );
 		// Replaces all \t's by 8 spaces.
-	    if ( preg_match ( '/(<|>)/', $line ) )
+	    if ( strstr ( $line, "<" ) !== false )
 	    {
+	        $line = preg_replace
+		    ( $pattern, "\n$1>", $line );
 		$line = str_replace
 		    ( "<", "&lt;", $line );
 		$line = str_replace
-		    ( ">", "&gt;", $line );
+		    ( "\n", "<", $line );
 	    }
 	    if ( ! $after_blank ) 
 	    {

@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Apr  5 04:08:13 EDT 2022
+// Date:    Sat Apr 30 03:14:35 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -185,6 +185,9 @@ $epm_problem_privs =
     // Privileges allowed in projects/+priv+, projects/
     // PROJECT/+priv+, or projects/PROJECT/PROBLEM/
     // +priv+ respectively.
+
+$epm_allowed_tags = ["br", "b", "/b", "i", "/i"];
+    // Allowed HTML tags in descriptions.
 
 $epm_specials =
     ['generate','filter','display','monitor'];
