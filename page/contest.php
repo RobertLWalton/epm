@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 30 14:13:35 EDT 2022
+    // Date:	Wed May 18 14:50:08 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1011,21 +1011,25 @@
 
 	if ( ! isset ( $description_start ) )
 	    $warnings[] =
-	        "Description Start Time is missing";
+	        "Problem Definition Start Time is" .
+		" missing";
 	elseif ( ! isset ( $description_stop ) )
 	    $warnings[] =
-	        "Description Stop Time is missing";
+	        "Problem Definition Stop Time is" .
+		" missing";
 	elseif ( strtotime ( $description_stop )
 	         <=
 	         strtotime ( $description_start ) )
 	    $warnings[] =
-	        "Description Stop Time is not" .
-		" later than Description Start" .
+	        "Problem Definition Stop Time is not" .
+		" later than Problem Definition Start" .
 		" Time";
+
+	if ( ! $is_participant )
+	    $warnings[] =
+	        'You are not contestant, judge,' .
+		' or manager of this contest.';
     }
-    if ( ! $is_participant )
-        $warnings[] = 'You are not contestant, judge,'
-	            . ' or manager of this contest.';
 ?>
 
 <html>
