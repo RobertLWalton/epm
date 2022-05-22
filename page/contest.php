@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 18 14:50:08 EDT 2022
+    // Date:	Sun May 22 17:57:04 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -686,6 +686,57 @@
 	    $r .= "</tr>";
 	}
 	return $r;
+    }
+
+    # Write the contest project privilege file.  This
+    # has the form:
+    #
+    #	# *BEGIN* *CONTEST* This line and all that
+    #	# follows is automatically generated and must
+    #	# not be editted.
+    #
+    #	+ @manager <manager-account>
+    #	.....
+    #	+ @judge <judge-account>
+    #	.....
+    #	+ @contestant <contestant-account>
+    #	.....
+    #
+    #	+ show @manager
+    #	+ view @manager
+    #
+    #	+ show @judge
+    #	+ view @judge
+    #	+ pull-new @judge
+    #	+ repull @judge
+    #	+ first-failed @judge
+    #	+ block @judge
+    #
+    #   >= <solution-start-time> @contestant
+    #	+ pull-new @contestant
+    #	+ repull @contestant
+    #	+ show @contestant
+    #	+ first-failed @contestant
+    #
+    # For One Phase Contest:
+    #
+    #
+    #   >= <description-start-time> @judge
+    #   <= <description-stop-time> @judge
+    #	+ push-new @judge
+    #	+ publish-all @judge
+    #	+ unpublish-all @judge
+    #
+    # For Two Phase Contest:
+    #
+    #   >= <description-start-time> @contestant
+    #   <= <description-stop-time> @contestant
+    #	+ copy-to @contestant
+    #	+ publish-own @contestant
+    #	+ unpublish-own @contestant
+    #	
+    function write_priv ( & $errors )
+    {
     }
 
     if ( $epm_method == 'GET' )
