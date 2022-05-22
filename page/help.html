@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Apr 30 09:49:55 EDT 2022
+Date:	Sun May 22 14:47:54 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -2129,20 +2129,19 @@ A privilege file line is one of the following:
      where
      <ul>
      <li> &lt;sign&gt; ::= `&lt;' | `&gt;'
-     <li> &lt;time&gt; ::= &lt;date&gt;T&lt;time-of-day&gt;
+     <li> &lt;time&gt; ::= &lt;date&gt;T&lt;time-of-day&gt; | `ALWAYS'
      <li> &lt;date&gt; ::= &lt;year&gt;-&lt;month&gt;-&lt;day&gt;
      <li> &lt;time-of-day&gt; ::= &lt;hour&gt;:&lt;minute&gt;&lt;time-zone&gt;
      <li> &lt;time-zone&gt; ::= `EST' | `EDT' | ...
      <li> &lt;matcher&gt; ::= &lt;regular-expression&gt; | &lt;group&gt;
      </ul>
-     If this line matches, subsequent lines in the same privilege file
-     (problem, project, or root) are enabled if and only if:
-     <ul>
-     <li> &lt;sign&gt; is `&lt;' and the current time is less than
-          &lt;time&gt;
-     <li> &lt;sign&gt; is `&gt;' and the current time is greater than
-          &lt;time&gt;
-     </ul>
+     If this line matches, it sets the
+     upper time bound (&lt;sign&gt; is `&lt;') or
+     lower time bound (&lt;sign&gt; is `&gt;')
+     for enabling privilege lines below.
+     The time value `ALWAYS' disables the designated time bound
+     (its always in the future for &lt; and always in the past
+     for &gt;).
 <li> line of form `&lt;sign&gt; &lt;key&gt; &lt;matcher&gt;'
      <br>
      where
@@ -2164,7 +2163,8 @@ A privilege file line is one of the following:
 	      </div>
      </ul>
      <br>
-     If this line matches and is enabled, the
+     If this line matches and the current time is within the
+     time bounds, the
      line assigns &lt;sign&gt; to &lt;key&gt; UNLESS
      &lt;key&gt; has previously been assigned.
 </ul>
@@ -2175,8 +2175,8 @@ A privilege file line is one of the following:
  A &lt;group&gt; matches if it has previously been assigned
  `+'.
  <br>
- Lines in each privilege file are enabled unless disabled by the most recently
- seen &lt; or &gt; line in the same file.
+ Both time bounds are set to `ALWAYS' at the beginning of each
+ privilege file.
 <p>
 If after all the privilege file lines are processed a privilege
 has the value `+', the current user has the privilege.  Otherwise
