@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  5 04:12:29 EDT 2022
+    // Date:	Sun May 22 12:25:45 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1238,6 +1238,9 @@ EOT;
 	<button type='submit'
 		formaction='project.php'>
 		Project</button>
+	<button type='submit'
+		formaction='contest.php'>
+		Contest</button>
 	<button type='submit'
 		formaction='list.php'>
 		Edit Lists</button>

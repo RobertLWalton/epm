@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Apr 30 03:16:56 EDT 2022
+    // Date:	Sun May 22 12:01:04 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -222,7 +222,10 @@
 	$lines = explode ( "\n", $contents );
 	$error_found = false;
 	$priv_re = '/^(\+|\-|\<|\>)\h+(\S+)\h+(\S+)$/';
-	$enabled = true;
+	$upper = true;
+	    // true iff last < enables changes
+	$lower = true;
+	    // true iff last > enables changes
 	foreach ( $lines as $line )
 	{
 	    $line = trim ( $line );
@@ -266,18 +269,37 @@
 		    $match = true;
 	    }
 
-	    $enb = NULL;  // Set if $enabled to be set.
-	    if ( $sign == '<' || $sign == '>' )
+	    $set_upper = NULL;
+	    $set_lower = NULL;
+	    if ( $sign == '<' )
 	    {
 	        $timestr = $matches[2];
-		$time = @strtotime ( $timestr );
-		if ( $time === false )
-		    $errs[] = "badly formatted time:" .
-		              " $timestr";
-		elseif ( $sign == '<' )
-		    $enb = ( time() < $time );
+		if ( $timestr == 'ALWAYS' )
+		    $set_upper = true;
 		else
-		    $enb = ( time() > $time );
+		{
+		    $time = @strtotime ( $timestr );
+		    if ( $time === false )
+			$errs[] =
+			    "badly formatted time:" .
+			    " $timestr";
+		    $set_upper = ( time() < $time );
+		}
+	    }
+	    elseif ( $sign == '>' )
+	    {
+	        $timestr = $matches[2];
+		if ( $timestr == 'ALWAYS' )
+		    $set_lower = true;
+		else
+		{
+		    $time = @strtotime ( $timestr );
+		    if ( $time === false )
+			$errs[] =
+			    "badly formatted time:" .
+			    " $timestr";
+		    $set_lower = ( time() > $time );
+		}
 	    }
 	    else
 	    {
@@ -310,9 +332,11 @@
 	    }
 	    elseif ( ! $match )
 	        /* do nothing */;
-	    elseif ( isset ( $enb ) )
-	        $enabled = $enb;
-	    elseif ( ! $enabled )
+	    elseif ( isset ( $set_upper ) )
+	        $upper = $set_upper;
+	    elseif ( isset ( $set_lower ) )
+	        $lower = $set_lower;
+	    elseif ( ! $upper || ! $lower )
 	        /* do nothing */;
 	    elseif ( ! isset ( $map[$priv] ) )
 	        $map[$priv] = $sign;
