@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Apr 30 03:14:35 EDT 2022
+// Date:    Mon May 23 06:11:30 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -185,6 +185,54 @@ $epm_problem_privs =
     // Privileges allowed in projects/+priv+, projects/
     // PROJECT/+priv+, or projects/PROJECT/PROBLEM/
     // +priv+ respectively.
+
+// Return contest project +priv+ file contents,
+// exclusive of header.  $phases == 1 or 2.
+//
+function epm_contest_priv
+    ( $phases, $solution_start, $solution_stop,
+               $description_start, $description_stop )
+{
+    $r = <<<EOT
+show @manager
+view @manager
+
+show @judge
+view @judge
+pull-new @judge
+repull @judge
+first-failed @judge
+block @judge
+
+> $solution_start @contestant
+pull-new @contestant
+repull @contestant
+show @contestant
+first-failed @contestant
+EOT;
+
+    if ( $phases == 1 ) $r .= <<<EOT
+For One Phase Contest:
+
+> $description_start @judge
+< $description_stop @judge
++ push-new @judge
++ publish-all @judge
++ unpublish-all @judge
+EOT;
+
+    if ( $phases == 2 ) $r .= <<<EOT
+For Two Phase Contest:
+
+> $description_start @contestant
+< $description_stop @contestant
++ copy-to @contestant
++ publish-own @contestant
++ unpublish-own @contestant
+EOT;
+
+    return $r;
+}
 
 $epm_allowed_tags = ["br", "b", "/b", "i", "/i"];
     // Allowed HTML tags in descriptions.
