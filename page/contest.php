@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 22 17:57:04 EDT 2022
+    // Date:	Tue May 24 02:51:15 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -688,8 +688,9 @@
 	return $r;
     }
 
-    # Write the contest project privilege file.  This
-    # has the form:
+    # Update the contest project privilege file.  The
+    # automatically generated part of this file is at
+    # the end of the file and has the form:
     #
     #	# *BEGIN* *CONTEST* This line and all that
     #	# follows is automatically generated and must
@@ -702,41 +703,45 @@
     #	+ @contestant <contestant-account>
     #	.....
     #
-    #	+ show @manager
-    #	+ view @manager
-    #
-    #	+ show @judge
-    #	+ view @judge
-    #	+ pull-new @judge
-    #	+ repull @judge
-    #	+ first-failed @judge
-    #	+ block @judge
-    #
-    #   >= <solution-start-time> @contestant
-    #	+ pull-new @contestant
-    #	+ repull @contestant
-    #	+ show @contestant
-    #	+ first-failed @contestant
-    #
-    # For One Phase Contest:
-    #
-    #
-    #   >= <description-start-time> @judge
-    #   <= <description-stop-time> @judge
-    #	+ push-new @judge
-    #	+ publish-all @judge
-    #	+ unpublish-all @judge
-    #
-    # For Two Phase Contest:
-    #
-    #   >= <description-start-time> @contestant
-    #   <= <description-stop-time> @contestant
-    #	+ copy-to @contestant
-    #	+ publish-own @contestant
-    #	+ unpublish-own @contestant
+    #	<result of epm_contest_priv in parameters.php>
     #	
-    function write_priv ( & $errors )
+    function write_priv()
     {
+    	global $contest_name, $contest_type,
+	       $solution_start, $solution_stop,
+	       $description_start, $description_stop,
+	       $epm_data;
+
+	$fname = "projects/$contest_name/+priv+";
+	if ( ! file_exists ( $epm_data/$fname ) )
+	    $r = '';
+	else
+	{
+	    $c = ATOMIC_READ ( $epm_data/$fname );
+	    if ( $c === false )
+	        ERROR ( "cannot read extant $fname" );
+	    $lines = explode ( "\n", $c );
+	    if ( $lines[-1] == '' )
+	        array_pop ( $lines );
+	    $r = '';
+	    foreach ( $lines as $line )
+	    {
+	        if ( preg_match
+		         ( "/\*BEGIN\* \*CONTEST\*/",
+			   $line ) )
+		    break;
+		$r .= $line . "\n";
+	    }
+	}
+
+	$r .= epm_contest_priv
+	          ( $contest_type,
+		    $solution_start, $solution_stop,
+		    $description_start,
+		    $description_stop );
+
+	$R = ATOMIC_WRITE ( $epm_data/$fname, $r );
+	    ERROR ( "cannot write $fname" );
     }
 
     if ( $epm_method == 'GET' )

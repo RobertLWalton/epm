@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May 23 06:11:30 EDT 2022
+// Date:    Tue May 24 01:35:22 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -187,11 +187,13 @@ $epm_problem_privs =
     // +priv+ respectively.
 
 // Return contest project +priv+ file contents,
-// exclusive of header.  $phases == 1 or 2.
+// exclusive of header.  Parameters are from
+// page/contest.php contestdata.
 //
 function epm_contest_priv
-    ( $phases, $solution_start, $solution_stop,
-               $description_start, $description_stop )
+    ( $contest_type,
+      $solution_start, $solution_stop,
+      $description_start, $description_stop )
 {
     $r = <<<EOT
 show @manager
@@ -211,7 +213,7 @@ show @contestant
 first-failed @contestant
 EOT;
 
-    if ( $phases == 1 ) $r .= <<<EOT
+    if ( $contest_type == '1-phase') $r .= <<<EOT
 For One Phase Contest:
 
 > $description_start @judge
@@ -221,7 +223,7 @@ For One Phase Contest:
 + unpublish-all @judge
 EOT;
 
-    if ( $phases == 2 ) $r .= <<<EOT
+    if ( $contest_type == '2-phase') $r .= <<<EOT
 For Two Phase Contest:
 
 > $description_start @contestant
