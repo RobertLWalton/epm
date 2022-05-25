@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 24 23:27:07 EDT 2022
+    // Date:	Wed May 25 04:41:44 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -694,7 +694,7 @@
     #
     #	# *BEGIN* *CONTEST* This line and all that
     #	# follows is automatically generated and must
-    #	# not be editted.
+    #	# not be edited.
     #
     #	+ @manager <manager-account>
     #	.....
@@ -711,7 +711,7 @@
     #
     function deploy()
     {
-    	global $contest_name, $contest_type,
+    	global $contestname, $contest_type,
 	       $solution_start, $solution_stop,
 	       $description_start, $description_stop,
 	       $flags, $deployed, $epm_data;
@@ -727,12 +727,12 @@
 	if ( ! isset ( $description_stop ) )
 	    return false;
 
-	$fname = "projects/$contest_name/+priv+";
-	if ( ! file_exists ( $epm_data/$fname ) )
+	$fname = "projects/$contestname/+priv+";
+	if ( ! file_exists ( "$epm_data/$fname" ) )
 	    $p = '';
 	else
 	{
-	    $c = ATOMIC_READ ( $epm_data/$fname );
+	    $c = ATOMIC_READ ( "$epm_data/$fname" );
 	    if ( $c === false )
 	        ERROR ( "cannot read extant $fname" );
 	    $lines = explode ( "\n", $c );
@@ -745,13 +745,13 @@
 		         ( "/\*BEGIN\* \*CONTEST\*/",
 			   $line ) )
 		    break;
-		$p .= $line . "\n";
+		$p .= $line . PHP_EOL;
 	    }
 	}
 
 	$p .= <<<EOT
 # *BEGIN* *CONTEST* This line and all that follows is
-# automatically generated and must not be editted.
+# automatically generated and must not be edited.
 
 
 EOT;
@@ -767,17 +767,18 @@ EOT;
 		    . PHP_EOL;
 	}
 
+	$p .= PHP_EOL;
 	$p .= epm_contest_priv
 	          ( $contest_type,
 		    $solution_start, $solution_stop,
 		    $description_start,
 		    $description_stop );
 
-	$r = ATOMIC_WRITE ( $epm_data/$fname, $p );
+	$r = ATOMIC_WRITE ( "$epm_data/$fname", $p );
 	if ( $r === false )
 	    ERROR ( "cannot write $fname" );
 
-	$t = filemtime ( $epm_data/$fname );
+	$t = filemtime ( "$epm_data/$fname" );
 	if ( $t === false )
 	    ERROR ( "cannot stat $fname" );
 	$deployed = date ( $epm_time_format, $t );
@@ -1039,6 +1040,8 @@ EOT;
 		" $add_email already exists";
 	else
 	{
+	    if ( isset ( $notice ) )
+	        $notice .= '<br><br>';
 	    $notice .=
 		"<strong>email of acccount $add_aid" .
 		" has been changed from " .
@@ -1064,6 +1067,16 @@ EOT;
 	$r = file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	    ERROR ( "cannot write file $f" );
+	$r = deploy();
+	if ( $r === false )
+	    $warnings[] = "contest was NOT deployed";
+	else
+	{
+	    if ( isset ( $notice ) )
+	        $notice .= '<br><br>';
+	    $notice .= "<strong>Contest Has Been"
+	             . " Deployed!</strong>";
+	}
     }
 
     if ( isset ( $action ) )

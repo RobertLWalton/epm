@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue May 24 01:35:22 EDT 2022
+// Date:    Wed May 25 05:06:12 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -214,6 +214,8 @@ first-failed @contestant
 EOT;
 
     if ( $contest_type == '1-phase') $r .= <<<EOT
+
+
 For One Phase Contest:
 
 > $description_start @judge
@@ -224,6 +226,8 @@ For One Phase Contest:
 EOT;
 
     if ( $contest_type == '2-phase') $r .= <<<EOT
+
+
 For Two Phase Contest:
 
 > $description_start @contestant
