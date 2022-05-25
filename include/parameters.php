@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Wed May 25 05:06:12 EDT 2022
+// Date:    Wed May 25 16:10:14 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -188,7 +188,9 @@ $epm_problem_privs =
 
 // Return contest project +priv+ file contents,
 // exclusive of header.  Parameters are from
-// page/contest.php contestdata.
+// page/contest.php contestdata.  Only $solution_...
+// parameters may be NULL.  Assumes ALWAYS time
+// constraints in effect.
 //
 function epm_contest_priv
     ( $contest_type,
@@ -196,21 +198,25 @@ function epm_contest_priv
       $description_start, $description_stop )
 {
     $r = <<<EOT
-show @manager
-view @manager
++ show @manager
++ view @manager
 
-show @judge
-view @judge
-pull-new @judge
-repull @judge
-first-failed @judge
-block @judge
++ show @judge
++ view @judge
++ pull-new @judge
++ repull @judge
++ first-failed @judge
++ block @judge
+EOT;
+
+    if ( isset ( $solution_start ) ) $r .= <<<EOT
+
 
 > $solution_start @contestant
-pull-new @contestant
-repull @contestant
-show @contestant
-first-failed @contestant
++ pull-new @contestant
++ repull @contestant
++ show @contestant
++ first-failed @contestant
 EOT;
 
     if ( $contest_type == '1-phase') $r .= <<<EOT

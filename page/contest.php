@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 25 04:41:44 EDT 2022
+    // Date:	Wed May 25 16:21:47 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -717,10 +717,6 @@
 	       $flags, $deployed, $epm_data;
 
 	if ( ! isset ( $contest_type ) )
-	    return false;
-	if ( ! isset ( $solution_start ) )
-	    return false;
-	if ( ! isset ( $solution_stop ) )
 	    return false;
 	if ( ! isset ( $description_start ) )
 	    return false;
