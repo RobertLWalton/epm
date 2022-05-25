@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 24 02:51:15 EDT 2022
+    // Date:	Tue May 24 23:27:07 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -704,17 +704,32 @@
     #	.....
     #
     #	<result of epm_contest_priv in parameters.php>
-    #	
-    function write_priv()
+    #
+    # Returns false if any of $contest_type or
+    # start/stop parameters are NULL, and true if
+    # contest deployed (in which case $deployed is set).
+    #
+    function deploy()
     {
     	global $contest_name, $contest_type,
 	       $solution_start, $solution_stop,
 	       $description_start, $description_stop,
-	       $epm_data;
+	       $flags, $deployed, $epm_data;
+
+	if ( ! isset ( $contest_type ) )
+	    return false;
+	if ( ! isset ( $solution_start ) )
+	    return false;
+	if ( ! isset ( $solution_stop ) )
+	    return false;
+	if ( ! isset ( $description_start ) )
+	    return false;
+	if ( ! isset ( $description_stop ) )
+	    return false;
 
 	$fname = "projects/$contest_name/+priv+";
 	if ( ! file_exists ( $epm_data/$fname ) )
-	    $r = '';
+	    $p = '';
 	else
 	{
 	    $c = ATOMIC_READ ( $epm_data/$fname );
@@ -723,25 +738,50 @@
 	    $lines = explode ( "\n", $c );
 	    if ( $lines[-1] == '' )
 	        array_pop ( $lines );
-	    $r = '';
+	    $p = '';
 	    foreach ( $lines as $line )
 	    {
 	        if ( preg_match
 		         ( "/\*BEGIN\* \*CONTEST\*/",
 			   $line ) )
 		    break;
-		$r .= $line . "\n";
+		$p .= $line . "\n";
 	    }
 	}
 
-	$r .= epm_contest_priv
+	$p .= <<<EOT
+# *BEGIN* *CONTEST* This line and all that follows is
+# automatically generated and must not be editted.
+
+
+EOT;
+
+	foreach ( $flags as $account => $f )
+	{
+	    if ( $f[0] == 'M' )
+	        $p .= "+ @manager $account" . PHP_EOL;
+	    if ( $f[1] == 'J' )
+	        $p .= "+ @judge $account" . PHP_EOL;
+	    if ( $f[3] == 'C' )
+	        $p .= "+ @contestant $account"
+		    . PHP_EOL;
+	}
+
+	$p .= epm_contest_priv
 	          ( $contest_type,
 		    $solution_start, $solution_stop,
 		    $description_start,
 		    $description_stop );
 
-	$R = ATOMIC_WRITE ( $epm_data/$fname, $r );
+	$r = ATOMIC_WRITE ( $epm_data/$fname, $p );
+	if ( $r === false )
 	    ERROR ( "cannot write $fname" );
+
+	$t = filemtime ( $epm_data/$fname );
+	if ( $t === false )
+	    ERROR ( "cannot stat $fname" );
+	$deployed = date ( $epm_time_format, $t );
+	return true;
     }
 
     if ( $epm_method == 'GET' )
