@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 26 01:28:28 EDT 2022
+    // Date:	Thu May 26 05:43:57 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -691,13 +691,12 @@
 	return $r;
     }
 
-    # Update the contest project privilege file.  The
-    # automatically generated part of this file is at
-    # the end of the file and has the form:
+    # Update the contest project privilege file.  This
+    # file has the format:
     #
-    #	# *BEGIN* *CONTEST* This line and all that
-    #	# follows is automatically generated and must
-    #	# not be edited.
+    #	# *BEGIN* *CONTEST* *ACCOUNT* *DEFINITIONS*
+    #   # MUST begin +priv+ file.
+    #	# Automatically generated, do NOT edit.
     #
     #	+ @manager <manager-account>
     #	.....
@@ -706,7 +705,17 @@
     #	+ @contestant <contestant-account>
     #	.....
     #
+    #	# *END* *CONTEST* *ACCOUNT* *DEFINITIONS*
+    #   <manually edited stuff, if any>
+    #	# *BEGIN* *CONTEST* *PRIVILEGES*
+    #   # MUST end +priv+ file.
+    #	# Automatically generated, do NOT edit.
+    #
+    #   < ALWAYS .*
+    #   > ALWAYS .*
     #	<result of epm_contest_priv in parameters.php>
+    #
+    #	# *END* *CONTEST* *PRIVILEGES*
     #
     # Returns false if any of $contest_type or
     # start/stop parameters are NULL, and true if

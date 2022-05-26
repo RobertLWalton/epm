@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 26 01:35:37 EDT 2022
+// Date:    Thu May 26 05:05:03 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -198,6 +198,7 @@ function epm_contest_priv
       $description_start, $description_stop )
 {
     $r = <<<EOT
++ owner @manager
 + show @manager
 + view @manager
 
@@ -207,20 +208,20 @@ function epm_contest_priv
 + re-pull @judge
 + first-failed @judge
 + block @judge
+
 EOT;
 
     if ( isset ( $solution_start ) ) $r .= <<<EOT
-
 
 > $solution_start @contestant
 + pull-new @contestant
 + re-pull @contestant
 + show @contestant
 + first-failed @contestant
+
 EOT;
 
     if ( $contest_type == '1-phase') $r .= <<<EOT
-
 
 # For One Phase Contest:
 
@@ -229,10 +230,10 @@ EOT;
 + push-new @judge
 + publish-all @judge
 + unpublish-all @judge
+
 EOT;
 
     if ( $contest_type == '2-phase') $r .= <<<EOT
-
 
 # For Two Phase Contest:
 
@@ -241,6 +242,7 @@ EOT;
 + copy-to @contestant
 + publish-own @contestant
 + unpublish-own @contestant
+
 EOT;
 
     return $r;
