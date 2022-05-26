@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed May 25 16:21:47 EDT 2022
+    // Date:	Thu May 26 01:28:28 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -86,6 +86,9 @@
     $write_contestdata = false;
         // Set to true to write contestdata after
 	// processing POSTs.
+    $has_been_deployed = false;
+        // Set to true if contest was deployed by
+	// THIS post.
 
     $contestname =
         & $_SESSION['EPM_CONTEST']['CONTESTNAME'];
@@ -714,7 +717,8 @@
     	global $contestname, $contest_type,
 	       $solution_start, $solution_stop,
 	       $description_start, $description_stop,
-	       $flags, $deployed, $epm_data;
+	       $flags, $deployed,
+	       $epm_data, $epm_time_format;
 
 	if ( ! isset ( $contest_type ) )
 	    return false;
@@ -732,7 +736,7 @@
 	    if ( $c === false )
 	        ERROR ( "cannot read extant $fname" );
 	    $lines = explode ( "\n", $c );
-	    if ( $lines[-1] == '' )
+	    if ( $c != '' && $c[-1] == "\n" )
 	        array_pop ( $lines );
 	    $p = '';
 	    foreach ( $lines as $line )
@@ -758,7 +762,7 @@ EOT;
 	        $p .= "+ @manager $account" . PHP_EOL;
 	    if ( $f[1] == 'J' )
 	        $p .= "+ @judge $account" . PHP_EOL;
-	    if ( $f[3] == 'C' )
+	    if ( $f[2] == 'C' )
 	        $p .= "+ @contestant $account"
 		    . PHP_EOL;
 	}
@@ -1063,16 +1067,29 @@ EOT;
 	$r = file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	    ERROR ( "cannot write file $f" );
-	$r = deploy();
-	if ( $r === false )
+	$has_been_deployed = deploy();
+	if ( $has_been_deployed === false )
 	    $warnings[] = "contest was NOT deployed";
-	else
-	{
-	    if ( isset ( $notice ) )
-	        $notice .= '<br><br>';
-	    $notice .= "<strong>Contest Has Been"
-	             . " Deployed!</strong>";
-	}
+    }
+
+    if ( isset ( $contestname )
+	 &&
+	 $is_manager )
+    {
+	if ( isset ( $notice ) )
+	    $notice .= '<br><br>';
+	$notice .= '<strong>';
+	if ( $has_been_deployed )
+	    $notice .=
+	        "Contest Has Been Deployed!";
+	elseif ( isset ( $deployed ) )
+	    $notice .=
+	        "Contest Was Deployed:" .
+		"&nbsp;&nbsp;&nbsp;$deployed";
+	elseif ( isset ( $deployed ) )
+	    $notice .=
+	        "Contest Has NOT Been Deployed";
+	$notice .= '</strong>';
     }
 
     if ( isset ( $action ) )
