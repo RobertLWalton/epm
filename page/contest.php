@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 26 05:43:57 EDT 2022
+    // Date:	Thu May 26 15:51:32 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -736,35 +736,16 @@
 	if ( ! isset ( $description_stop ) )
 	    return false;
 
-	$fname = "projects/$contestname/+priv+";
-	if ( ! file_exists ( "$epm_data/$fname" ) )
-	    $p = '';
-	else
-	{
-	    $c = ATOMIC_READ ( "$epm_data/$fname" );
-	    if ( $c === false )
-	        ERROR ( "cannot read extant $fname" );
-	    $lines = explode ( "\n", $c );
-	    if ( $c != '' && $c[-1] == "\n" )
-	        array_pop ( $lines );
-	    $p = '';
-	    foreach ( $lines as $line )
-	    {
-	        if ( preg_match
-		         ( "/\*BEGIN\* \*CONTEST\*/",
-			   $line ) )
-		    break;
-		$p .= $line . PHP_EOL;
-	    }
-	}
+	$begin_accounts =
+	    "*BEGIN* *CONTEST* *ACCOUNT* *DEFINITIONS*";
+	$end_accounts =
+	    "*END* *CONTEST* *ACCOUNT* *DEFINITIONS*";
+	$begin_privs =
+	    "*BEGIN* *CONTEST* *PRIVILEGES*";
+	$end_privs =
+	    "*END* *CONTEST* *PRIVILEGES*";
 
-	$p .= <<<EOT
-# *BEGIN* *CONTEST* This line and all that follows is
-# automatically generated and must not be edited.
-
-
-EOT;
-
+	$p = $begin_accounts . PHP_EOL;
 	foreach ( $flags as $account => $f )
 	{
 	    if ( $f[0] == 'M' )
@@ -775,13 +756,58 @@ EOT;
 	        $p .= "+ @contestant $account"
 		    . PHP_EOL;
 	}
+	$p .= $end_accounts . PHP_EOL . PHP_EOL;
 
-	$p .= PHP_EOL;
+	$fname = "projects/$contestname/+priv+";
+	if ( file_exists ( "$epm_data/$fname" ) )
+	{
+	    $c = ATOMIC_READ ( "$epm_data/$fname" );
+	    if ( $c === false )
+	        ERROR ( "cannot read extant $fname" );
+	    $lines = explode ( "\n", $c );
+	    if ( $lines[0] == $begin_accounts )
+	    {
+	        $i = array_search
+		    ( $end_accounts, $lines );
+		if ( $i === false )
+		    ERROR ( "badly formatted $fname" );
+		array_splice ( $lines, 0, $i + 1 );
+	    }
+
+	    $blanks = 0;
+	    $first = true;
+	    foreach ( $lines as $line )
+	    {
+		if ( trim ( $line ) == '' )
+		{
+		    $blanks = $blanks + 1;
+		    continue;
+		}
+		elseif ( $line == $begin_privs )
+		    break;
+
+		if ( $first )
+		    $first = false;
+		elseif ( $blanks > 0 )
+		    $p .= PHP_EOL;
+		    // Multiple blank lines between
+		    // non-blank lines become single
+		    // blank lines.
+
+		$blanks = 0;
+		$p .= $line . PHP_EOL;
+	    }
+	    if ( ! $first )
+		$p .= PHP_EOL;
+	}
+		        
+	$p .= $begin_privs . PHP_EOL;
 	$p .= epm_contest_priv
 	          ( $contest_type,
 		    $solution_start, $solution_stop,
 		    $description_start,
 		    $description_stop );
+	$p .= $end_privs . PHP_EOL;
 
 	$r = ATOMIC_WRITE ( "$epm_data/$fname", $p );
 	if ( $r === false )
