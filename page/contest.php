@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu May 26 15:51:32 EDT 2022
+    // Date:	Fri May 27 03:14:36 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -737,13 +737,13 @@
 	    return false;
 
 	$begin_accounts =
-	    "*BEGIN* *CONTEST* *ACCOUNT* *DEFINITIONS*";
+	    "# *BEGIN* *CONTEST* *ACCOUNT* *DEFINITIONS*";
 	$end_accounts =
-	    "*END* *CONTEST* *ACCOUNT* *DEFINITIONS*";
+	    "# *END* *CONTEST* *ACCOUNT* *DEFINITIONS*";
 	$begin_privs =
-	    "*BEGIN* *CONTEST* *PRIVILEGES*";
+	    "# *BEGIN* *CONTEST* *PRIVILEGES*";
 	$end_privs =
-	    "*END* *CONTEST* *PRIVILEGES*";
+	    "# *END* *CONTEST* *PRIVILEGES*";
 
 	$p = $begin_accounts . PHP_EOL;
 	foreach ( $flags as $account => $f )
@@ -812,6 +812,26 @@
 	$r = ATOMIC_WRITE ( "$epm_data/$fname", $p );
 	if ( $r === false )
 	    ERROR ( "cannot write $fname" );
+
+	$prefix = $contestname . '--';
+	$length = count ( $prefix );
+	$accounts = [];
+	foreach ( scandir ( "$epm_data/projects",
+	                    SCANDIR_SORT_NONE ) as $d )
+	{
+	    if ( substr ( $d, 0, $length ) != $prefix )
+	        continue;
+	    $accounts[] = substr ( $d, $length );
+	}
+
+	if ( isset ( $contest_type )
+	     &&
+	     $contest_type == '2-phase' )
+	{
+	}
+	else
+	{
+	}
 
 	$t = filemtime ( "$epm_data/$fname" );
 	if ( $t === false )
