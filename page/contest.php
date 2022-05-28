@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 28 04:19:08 EDT 2022
+    // Date:	Sat May 28 14:08:48 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -737,7 +737,8 @@
 	    return false;
 
 	$begin_accounts =
-	    "# *BEGIN* *CONTEST* *ACCOUNT* *DEFINITIONS*";
+	    "# *BEGIN* *CONTEST* *ACCOUNT*" .
+	    " *DEFINITIONS*";
 	$end_accounts =
 	    "# *END* *CONTEST* *ACCOUNT* *DEFINITIONS*";
 	$begin_privs =
@@ -745,18 +746,22 @@
 	$end_privs =
 	    "# *END* *CONTEST* *PRIVILEGES*";
 
-	$p = $begin_accounts . PHP_EOL;
+	$pm = '';
+	$pj = '';
+	$pc = '';
 	foreach ( $flags as $account => $f )
 	{
 	    if ( $f[0] == 'M' )
-	        $p .= "+ @manager $account" . PHP_EOL;
+	        $pm .= "+ @manager $account" . PHP_EOL;
 	    if ( $f[1] == 'J' )
-	        $p .= "+ @judge $account" . PHP_EOL;
+	        $pj .= "+ @judge $account" . PHP_EOL;
 	    if ( $f[2] == 'C' )
-	        $p .= "+ @contestant $account"
+	        $pc .= "+ @contestant $account"
 		    . PHP_EOL;
 	}
-	$p .= $end_accounts . PHP_EOL . PHP_EOL;
+	$p = $begin_accounts . PHP_EOL .
+	     $pm . $pj . $pc .
+	     $end_accounts . PHP_EOL . PHP_EOL;
 
 	$fname = "projects/$contestname/+priv+";
 	if ( file_exists ( "$epm_data/$fname" ) )
@@ -824,27 +829,44 @@
 	    $accounts[substr ( $d, $length )] = $d;
 	}
 
-	if ( isset ( $contest_type )
-	     &&
-	     $contest_type == '2-phase' )
+	$needy = ( isset ( $contest_type )
+	           &&
+	           $contest_type == '2-phase' );
+	foreach ( $flags as $account => $fs)
 	{
-	    foreach ( $flags as $account => $fs)
+	    $desired = ( $needy && $fs[2] == 'C' );
+	    $current =
+		( isset ( $accounts[$account] ) );
+	    if ( $desired === $current )
+		continue;
+
+	    $p = "$contestname--$account";
+	    $d = "projects/$p";
+	    if ( $desired )
 	    {
-		if ( isset ( $accounts[$account] ) )
-		{
-		    if ( $fs[2] == 'C' )
-			continue;
-		}
-		else
-		{
-		}
+		$r = @mkdir ( "$epm_data/$d",
+			      02771, true );
+		if ( $r === false )
+		    ERROR ( "cannot make" .
+			    " directory $d" );
+		$c = $pm . $pj .
+		     "+ @contestant $account" .
+		     PHP_EOL . PHP_EOL .
+		     $epm_contestant_priv;
+
+		$r = ATOMIC_WRITE
+		    ( "$epm_data/$d/+priv+", $c );
+		if ( $r === false )
+		    ERROR ( "cannot create file" .
+			    " $d/+priv+" );
+		note ( "project $p created" );
 	    }
-	          
-
-
-	}
-	else
-	{
+	    else
+	    {
+		$r = delete_dir ( $d );
+		if ( $r === true )
+		    note ( "empty project $p deleted" );
+	    }
 	}
 
 	$t = filemtime ( "$epm_data/$fname" );

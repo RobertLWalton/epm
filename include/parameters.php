@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Thu May 26 05:05:03 EDT 2022
+// Date:    Sat May 28 15:22:47 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -186,11 +186,12 @@ $epm_problem_privs =
     // PROJECT/+priv+, or projects/PROJECT/PROBLEM/
     // +priv+ respectively.
 
-// Return contest project +priv+ file contents,
-// exclusive of header.  Parameters are from
-// page/contest.php contestdata.  Only $solution_...
-// parameters may be NULL.  Assumes ALWAYS time
-// constraints in effect.
+// Return contest project +priv+ file contents that
+// go in *CONTEST* *PRIVILEGES* section.
+//
+// Parameters are from page/contest.php contestdata.
+// Only $solution_...  parameters may be NULL.  Assumes
+// ALWAYS time constraints in effect.
 //
 function epm_contest_priv
     ( $contest_type,
@@ -247,6 +248,29 @@ EOT;
 
     return $r;
 }
+
+// Contestant project +priv+ file contents written when
+// contestant project is created.
+//
+$epm_contestant_priv = <<<EOT
+# For this +priv+ file there is only ONE @contestant.
+
++ owner @manager
++ show @manager
++ view @manager
+
++ show @judge
++ view @judge
+
++ push-new @contestant
++ pull-new @contestant
++ re-pull @contestant
++ show @contestant
++ view @contestant
++ copy-from @contestant
++ block @contestant
++ download @contestant
+EOT;
 
 $epm_allowed_tags = ["br", "b", "/b", "i", "/i"];
     // Allowed HTML tags in descriptions.
