@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri May 27 03:14:36 EDT 2022
+    // Date:	Sat May 28 04:19:08 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -821,13 +821,27 @@
 	{
 	    if ( substr ( $d, 0, $length ) != $prefix )
 	        continue;
-	    $accounts[] = substr ( $d, $length );
+	    $accounts[substr ( $d, $length )] = $d;
 	}
 
 	if ( isset ( $contest_type )
 	     &&
 	     $contest_type == '2-phase' )
 	{
+	    foreach ( $flags as $account => $fs)
+	    {
+		if ( isset ( $accounts[$account] ) )
+		{
+		    if ( $fs[2] == 'C' )
+			continue;
+		}
+		else
+		{
+		}
+	    }
+	          
+
+
 	}
 	else
 	{
@@ -857,6 +871,20 @@
         // If not NULL, written as an action into each
 	// member of $action_files.
     $action_files = [ "accounts/$aid/+actions+" ];
+
+    // Put $message in $notice, separating it from the
+    // previous message, if any, with $separator.  The
+    // $message is put in <strong>...</strong> brackets.
+    //
+    function note ( $message, $separator = "<br>" )
+    {
+        global $notice;
+	$message = "<strong>" . $message . "</strong>";
+	if ( isset ( $notice ) )
+	    $notice .= $separator . $message;
+	else
+	    $notice = $message;
+    }
 
     if ( $process_post
 	 &&
@@ -966,16 +994,12 @@
 	    check_parameters ( $params, $warnings );
 	    $pflags = & $params['FLAGS'];
 	    $time = date ( $epm_time_format );
-	    $br = ( $notice == '' ? '' : '<br>' );
 	    foreach ( $flags as $a => $f )
 	    {
 		$pf = $pflags[$a];
 	        if ( $pf == 'XXX' )
 		{
-		    $notice .=
-		        "{$br}<strong>deleted" .
-			" account $a</strong>";
-		    $br = '<br>';
+		    note ( "deleted account $a" );
 		    unset ( $pflags[$a] );
 		    unset ( $emails[$a] );
 		    unset ( $previous_emails[$a] );
@@ -1023,10 +1047,9 @@
 		$add_email = $m;
 	        $add_uid = $e[0];
 		$add_atime = $e[2];
-		$notice =
-		    "<strong>email $m belongs to user" .
-		    " $add_uid who last confirmed" .
-		    " $add_atime</strong>";
+		note ( "email $m belongs to user" .
+		       " $add_uid who last confirmed" .
+		       " $add_atime" );
 	        $add_aids = [ $add_uid ];
 		$aid_options =
 		    "<option value='$add_uid'>" .
@@ -1041,10 +1064,8 @@
 			"team $tid - $type</option>";
 		    $m = ( $type == 'manager' ?
 		           'the' : 'a' );
-		    $notice .=
-			"<br><strong>user $add_uid is" .
-			" $m $type of team $tid" .
-			"</strong>";
+		    note ( "user $add_uid is" .
+			   " $m $type of team $tid" );
 		}
 		if ( count ( $tid_map ) == 0 )
 		    $add_aid = $add_uid;
@@ -1082,12 +1103,9 @@
 	    $times[$add_aid] =
 		date ( $epm_time_format );
 	    $write_contestdata = true;
-	    if ( isset ( $notice ) )
-	        $notice .= '<br><br>';
-	    $notice .=
-		"<strong>acccount $add_aid with" .
-		" email $add_email has been added" .
-		"</strong>";
+	    note ( "acccount $add_aid with" .
+		   " email $add_email has been added",
+		   "<br><br>" );
 	}
 	elseif ( $emails[$add_aid] == $add_email )
 	    $warnings[] =
@@ -1095,13 +1113,11 @@
 		" $add_email already exists";
 	else
 	{
-	    if ( isset ( $notice ) )
-	        $notice .= '<br><br>';
-	    $notice .=
-		"<strong>email of acccount $add_aid" .
-		" has been changed from " .
-		$emails[$add_aid] . " to $add_email" .
-		"</strong>";
+	    note ( "email of acccount $add_aid" .
+		   " has been changed from " .
+		   $emails[$add_aid] .
+		   " to $add_email",
+		   "<br><br>" );
 	    $previous_emails[$add_aid] =
 	        $emails[$add_aid];
 	    $emails[$add_aid] = $add_email;
@@ -1131,20 +1147,16 @@
 	 &&
 	 $is_manager )
     {
-	if ( isset ( $notice ) )
-	    $notice .= '<br><br>';
-	$notice .= '<strong>';
 	if ( $has_been_deployed )
-	    $notice .=
-	        "Contest Has Been Deployed!";
+	    note ( "Contest Has Just Been Deployed!",
+	           "<br><br>" );
 	elseif ( isset ( $deployed ) )
-	    $notice .=
-	        "Contest Was Deployed:" .
-		"&nbsp;&nbsp;&nbsp;$deployed";
-	elseif ( isset ( $deployed ) )
-	    $notice .=
-	        "Contest Has NOT Been Deployed";
-	$notice .= '</strong>';
+	    note ( "Contest Was Deployed:" .
+		   "&nbsp;&nbsp;&nbsp;$deployed",
+	           "<br><br>" );
+	else
+	    note ( "Contest Has NOT Been Deployed",
+	           "<br><br>" );
     }
 
     if ( isset ( $action ) )

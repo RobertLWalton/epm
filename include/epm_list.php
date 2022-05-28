@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 22 12:01:04 EDT 2022
+    // Date:	Sat May 28 03:54:29 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -122,6 +122,40 @@
 	    $c = htmlspecialchars ( $c );
 	    $errors[] = $c;
 	}
+	return true;
+    }
+
+    // Delete a directory if the ONLY thing it contains
+    // are files in $allowed.  Note: only files, not
+    // directories, can be listed in $allowed.  Return
+    // true if directory deleted, and false otherwise.
+    //
+    function delete_dir ( $dir, $allowed = ['+priv+'] )
+    {
+	global $epm_data;
+	$files = [];
+        $fs = scandir
+	    ( "$epm_data/$dir", SCANDIR_SORT_NONE );
+	if ( $fs === false )
+	    ERROR ( "cannot scandir $dir" );
+        foreach ( $fs as $f )
+	{
+	    if ( $f == '.' || $f == '..' ) continue;
+
+	    if ( in_array ( $f, $allowed, true ) )
+	        $files[] = $f;
+	    else
+		return false;
+	}
+	foreach ( $files as $f )
+	{
+	    $r = unlink ( "$epm_data/$dir/$f" );
+	    if ( $r === false )
+	        $ERROR ( "cannot unlink $dir/$f" );
+	}
+	$r = rmdir ( "$epm_data/$dir" );
+	if ( $r === false )
+	    $ERROR ( "cannot rmdir emptied $dir" );
 	return true;
     }
 
