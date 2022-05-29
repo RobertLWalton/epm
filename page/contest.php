@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 28 14:08:48 EDT 2022
+    // Date:	Sat May 28 22:53:10 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -727,7 +727,8 @@
 	       $solution_start, $solution_stop,
 	       $description_start, $description_stop,
 	       $flags, $deployed,
-	       $epm_data, $epm_time_format;
+	       $epm_data, $epm_time_format,
+	       $epm_contestant_priv;
 
 	if ( ! isset ( $contest_type ) )
 	    return false;
@@ -819,7 +820,7 @@
 	    ERROR ( "cannot write $fname" );
 
 	$prefix = $contestname . '--';
-	$length = count ( $prefix );
+	$length = strlen ( $prefix );
 	$accounts = [];
 	foreach ( scandir ( "$epm_data/projects",
 	                    SCANDIR_SORT_NONE ) as $d )
