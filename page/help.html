@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun May 22 14:47:54 EDT 2022
+Date:	Mon May 30 18:32:32 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -2046,10 +2046,6 @@ The following are the possible project privileges:
 <tr><td>download</td><td>allows a .tgz tar file to be made containing
                      the contents of the project directory
 		     </td></tr>
-<tr><td>first&#8209;failed</td><td>allows the input and output of the
-                     first failed test case of a project problem submission
-		     to be linked into the submitter's problem directory
-		     </td></tr>
 <tr><td>publish&#8209;all</td><td>allows any of your lists to be published to
 		     the project (i.e., copied to the project)
 		     </td></tr>
@@ -2065,6 +2061,15 @@ The following are the possible project privileges:
 		     (i.e., deleted) provided the list name ends in
 		     `&#8209;&#8209;AAAA', where AAAA is your account name
 		     </td></tr>
+<tr><td>first&#8209;failed</td><td>used to control
+                               problem first&#8209;failed privilege
+                              </td></tr>
+<tr><td>re&#8209;push</td><td>used to control (e.g., negate)
+                               problem re&#8209;push privilege
+                              </td></tr>
+<tr><td>pull&#8209;all</td><td>used to control (e.g., negate)
+                               problem pull&#8209;all privilege
+                              </td></tr>
 </table>
 </p>
 <p>
@@ -2074,7 +2079,8 @@ The following are the possible project problem privileges:
                          the project problem</td></tr>
 <tr><td>re&#8209;push</td><td>allows user to push a user problem
                               which has this project problem as its
-			      parent
+			      parent;
+		              typically set for owner of project problem
                               </td></tr>
 <tr><td>copy&#8209;from</td><td>allows the problem to be copied to
 				another project
@@ -2083,12 +2089,18 @@ The following are the possible project problem privileges:
 		      </td></tr>
 <tr><td>download</td><td>allows a .tgz tar file to be made containing
                      the contents of the problem subdirectory of the project
-		     directory
+		     directory; typically set for owner of project problem
 		     </td></tr>
 <tr><td>first&#8209;failed</td><td>allows the input and output of the
                      first failed test case of a submission of the problem
 		     to be linked into the submitter's problem directory
 		     </td></tr>
+<tr><td>pull&#8209;all</td><td>copies sources, binaries, and test files
+                               from project problem
+                               to local problem when project problem is pulled;
+			       normally these are not visible to local problem;
+			       typically set for owner of project problem
+                              </td></tr>
 </table>
 <p>
 You do not need privileges to download a .tgz tar file containing

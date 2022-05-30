@@ -2,7 +2,7 @@
 
     // File:	project.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun May 22 12:26:34 EDT 2022
+    // Date:	Mon May 30 18:12:57 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -639,7 +639,9 @@ EOT;
 	{
 	    $new_push_privs =
 		"+ owner $aid" . PHP_EOL .
-		"+ re-push $aid" . PHP_EOL;
+		"+ re-push $aid" . PHP_EOL .
+		"+ pull-all $aid" . PHP_EOL .
+		"+ download $aid" . PHP_EOL;
 	    $changes .= "  make $project $problem"
 	              . " directory" . PHP_EOL;
 	    $commands[] = ['mkdir', $desdir, '02771'];
@@ -652,6 +654,12 @@ EOT;
 	              . " for $project $problem"
 		      . PHP_EOL;
 	    $changes .= "  give $aid re-push privilege"
+	              . " for $project $problem"
+		      . PHP_EOL;
+	    $changes .= "  give $aid pull-all privilege"
+	              . " for $project $problem"
+		      . PHP_EOL;
+	    $changes .= "  give $aid download privilege"
 	              . " for $project $problem"
 		      . PHP_EOL;
 	    $commands[] = ['append', "$desdir/+priv+",
@@ -840,9 +848,9 @@ EOT;
 		" $project $problem";
 	    return;
 	}
-	$is_owner = ( isset ( $pmap['re-push'] )
+	$pull_all = ( isset ( $pmap['pull-all'] )
 	              &&
-		      $pmap['re-push'] == '+' );
+		      $pmap['pull-all'] == '+' );
 
 	$new_pull = ! is_dir ( "$epm_data/$desdir" );
 
@@ -879,7 +887,7 @@ EOT;
             $action = get_action ( $problem, $fname );
 	    if ( $action == '' ) continue;
 
-	    if ( $action != 'L' && ! $is_owner )
+	    if ( $action != 'L' && ! $pull_all )
 	        continue;
 
 	    if ( $action == 'S' )

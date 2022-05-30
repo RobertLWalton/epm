@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May 30 05:29:18 EDT 2022
+// Date:    Mon May 30 17:59:51 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -176,12 +176,12 @@ $epm_root_privs =
      'create-contest'];
 $epm_project_privs =
     ['owner','push-new','pull-new','re-pull','re-push',
-     'view','show','copy-to','copy-from','block',
-     'download', 'first-failed','publish-all',
+     'pull-all','view','show','copy-to','copy-from',
+     'block','download', 'first-failed','publish-all',
      'publish-own', 'unpublish-all','unpublish-own'];
 $epm_problem_privs =
-    ['owner','re-push','copy-from','block','download',
-     'first-failed'];
+    ['owner','re-push','pull-all','copy-from','block',
+     'download','first-failed'];
     // Privileges allowed in projects/+priv+, projects/
     // PROJECT/+priv+, or projects/PROJECT/PROBLEM/
     // +priv+ respectively.
