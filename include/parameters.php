@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat May 28 15:22:47 EDT 2022
+// Date:    Mon May 30 00:35:39 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -175,7 +175,7 @@ $epm_root_privs =
     ['owner','create-project','block','copy-to',
      'create-contest'];
 $epm_project_privs =
-    ['owner','push-new','pull-new','re-pull',
+    ['owner','push-new','pull-new','re-pull','re-push',
      'view','show','copy-to','copy-from','block',
      'download', 'first-failed','publish-all',
      'publish-own', 'unpublish-all','unpublish-own'];
@@ -200,25 +200,33 @@ function epm_contest_priv
 {
     $r = <<<EOT
 + owner @manager
+- owner .*
+
 + show @manager
 + view @manager
++ block @manager
 
 + show @judge
 + view @judge
++ block @judge
+
+- view .*
+- block .*
+
 + pull-new @judge
 + re-pull @judge
+
 + first-failed @judge
-+ block @judge
++ first-failed @contestant
 
 EOT;
 
     if ( isset ( $solution_start ) ) $r .= <<<EOT
 
 > $solution_start @contestant
++ show @contestant
 + pull-new @contestant
 + re-pull @contestant
-+ show @contestant
-+ first-failed @contestant
 
 EOT;
 
@@ -229,6 +237,7 @@ EOT;
 > $description_start @judge
 < $description_stop @judge
 + push-new @judge
++ re-push @judge
 + publish-all @judge
 + unpublish-all @judge
 
@@ -240,9 +249,13 @@ EOT;
 
 > $description_start @contestant
 < $description_stop @contestant
-+ copy-to @contestant
-+ publish-own @contestant
-+ unpublish-own @contestant
++ push-new @contestant
++ re-push @contestant
+
+> ALWAYS @contestant
+< ALWAYS @contestant
+- push-new @contestant
+- re-push @contestant
 
 EOT;
 
