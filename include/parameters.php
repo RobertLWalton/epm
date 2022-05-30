@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May 30 00:35:39 EDT 2022
+// Date:    Mon May 30 05:29:18 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -219,6 +219,19 @@ function epm_contest_priv
 + first-failed @judge
 + first-failed @contestant
 
+< $description_start .*
+> ALWAYS .*
+- push-new .*
+- re-push .*
+
+> $description_stop .*
+< ALWAYS .*
+- push-new .*
+- re-push .*
+
+> ALWAYS .*
+< ALWAYS .*
+
 EOT;
 
     if ( isset ( $solution_start ) ) $r .= <<<EOT
@@ -250,12 +263,6 @@ EOT;
 > $description_start @contestant
 < $description_stop @contestant
 + push-new @contestant
-+ re-push @contestant
-
-> ALWAYS @contestant
-< ALWAYS @contestant
-- push-new @contestant
-- re-push @contestant
 
 EOT;
 
