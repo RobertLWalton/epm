@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 28 03:54:29 EDT 2022
+    // Date:	Tue May 31 11:34:59 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1191,7 +1191,8 @@
     //
     // If any entries no longer exist, issue warnings
     // messages for them and delete them from the
-    // favorites list.
+    // favorites list.  Ditto for entries with a project
+    // that no longer has `show' privilege.
     //
     // If the resulting list is empty, construct a
     // new favorites list consisting of `Your Problems'
@@ -1216,6 +1217,9 @@
 	$new_list = [];
 	$new_list_keys = [];
 	$modified = false;
+	$projects = read_projects ( ['show'] );
+	$non_existant = [];
+	$no_show = [];
 	foreach ( $old_list as $e )
 	{
 	    list ( $time, $root, $name ) = $e;
@@ -1228,24 +1232,49 @@
 	    else
 		$g = "projects/$root/+lists+/" .
 		     "$name.list";
-	    if ( file_exists ( "$epm_data/$g" ) )
+	    if ( ! file_exists ( "$epm_data/$g" ) )
+	        $non_existant[] = $e;
+	    else if ( $root != '-'
+	              &&
+		      ! in_array ( $root, $projects ) )
+		$no_show[] = $e;
+	    else
 	    {
 	        $new_list[] = $e;
 		$new_list_keys["$root:$name"] = $time;
-		continue;
 	    }
+	}
 
-	    if ( ! $modified )
+	if ( count ( $non_existant ) > 0 )
+	{
+	    $modified = true;
+	    $warnings[] = "The following lists"
+			. " no longer exist";
+	    $warnings[] = "and have been deleted"
+			. " from Your Favorites:";
+	    foreach ( $non_existant as $e )
 	    {
-	        $modified = true;
-	        $warnings[] = "The following lists"
-		            . " no longer exist";
-		$warnings[] = "and have been deleted"
-		            . " from Your Favorites:";
+		list ( $time, $root, $name ) = $e;
+		if ( $root == '-' ) $root = 'Your';
+		if ( $name == '-' ) $name = 'Problems';
+		$warnings[] = "    $root $name";
 	    }
-	    if ( $root == '-' ) $root = 'Your';
-	    if ( $name == '-' ) $name = 'Problems';
-	    $warnings[] = "    $root $name";
+	}
+	if ( count ( $no_show ) > 0 )
+	{
+	    $modified = true;
+	    $warnings[] = "The following lists belong"
+			. " to projects for which you"
+			. " no longer have `show'"
+			. " privilege";
+	    $warnings[] = "and have been deleted"
+			. " from Your Favorites:";
+	    foreach ( $no_show as $e )
+	    {
+		list ( $time, $root, $name ) = $e;
+		if ( $name == '-' ) $name = 'Problems';
+		$warnings[] = "    $root $name";
+	    }
 	}
 
         $reinitializing = false;
@@ -1284,7 +1313,6 @@
 		    " Your Favorites";
 	}
 
-	$projects = read_projects ( ['show'] );
 	foreach ( $projects as $project )
 	{
 	    $g = glob ( "$epm_data/projects/$project/" .
