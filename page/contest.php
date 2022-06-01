@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat May 28 22:53:10 EDT 2022
+    // Date:	Wed Jun  1 16:27:05 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -818,57 +818,6 @@
 	$r = ATOMIC_WRITE ( "$epm_data/$fname", $p );
 	if ( $r === false )
 	    ERROR ( "cannot write $fname" );
-
-	$prefix = $contestname . '--';
-	$length = strlen ( $prefix );
-	$accounts = [];
-	foreach ( scandir ( "$epm_data/projects",
-	                    SCANDIR_SORT_NONE ) as $d )
-	{
-	    if ( substr ( $d, 0, $length ) != $prefix )
-	        continue;
-	    $accounts[substr ( $d, $length )] = $d;
-	}
-
-	$needy = ( isset ( $contest_type )
-	           &&
-	           $contest_type == '2-phase' );
-	foreach ( $flags as $account => $fs)
-	{
-	    $desired = ( $needy && $fs[2] == 'C' );
-	    $current =
-		( isset ( $accounts[$account] ) );
-	    if ( $desired === $current )
-		continue;
-
-	    $p = "$contestname--$account";
-	    $d = "projects/$p";
-	    if ( $desired )
-	    {
-		$r = @mkdir ( "$epm_data/$d",
-			      02771, true );
-		if ( $r === false )
-		    ERROR ( "cannot make" .
-			    " directory $d" );
-		$c = $pm . $pj .
-		     "+ @contestant $account" .
-		     PHP_EOL . PHP_EOL .
-		     $epm_contestant_priv;
-
-		$r = ATOMIC_WRITE
-		    ( "$epm_data/$d/+priv+", $c );
-		if ( $r === false )
-		    ERROR ( "cannot create file" .
-			    " $d/+priv+" );
-		note ( "project $p created" );
-	    }
-	    else
-	    {
-		$r = delete_dir ( $d );
-		if ( $r === true )
-		    note ( "empty project $p deleted" );
-	    }
-	}
 
 	$t = filemtime ( "$epm_data/$fname" );
 	if ( $t === false )
