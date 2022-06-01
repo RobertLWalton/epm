@@ -2,7 +2,7 @@
 
     // File:	list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Apr 29 16:45:32 EDT 2022
+    // Date:	Wed Jun  1 10:45:50 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1005,7 +1005,7 @@ EOT;
 	    $lists[$J] = [];
 	else
 	    $lists[$J] = read_problem_list
-	        ( $names[$J], $warnings );
+	        ( $names[$J], $warnings, true );
 	$lengths[$J] = count ( $lists[$J] );
 	$edited[$J] = 'no';
 
@@ -1426,7 +1426,7 @@ EOT;
 	    FINISH</button>
 	    <button type='button' id='cancel-button-$J'
 	            onclick='SUBMIT("cancel","$J")'>
-	    CANCEL</button>
+	    DESELECT</button>
 	    <button type='button'
 	            onclick='DELETE_YES("$J")'>
 	    DELETE</button>
