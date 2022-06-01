@@ -2,7 +2,7 @@
 
     // File:	epm_list.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue May 31 11:34:59 EDT 2022
+    // Date:	Wed Jun  1 05:00:52 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -49,7 +49,7 @@
 
     // If projects/PROJECT/+blocked+ exists, write
     // project blocked error messages and return true.
-    // Similarly if problems/PROJECT is not a directory.
+    // Similarly if projects/PROJECT is not a directory.
     // Otherwise return false.
     //
     function blocked_project
@@ -82,8 +82,9 @@
 	return true;
     }
 
-    // If blocked_project ( $project, $errors ) returns
-    // true, return true.
+    // If $ignore_project_block is false and blocked_
+    // project ( $project, $errors ) returns true,
+    // return true.
     //
     // Otherwise if projects/PROJECT/PROBLEM/+blocked+
     // exists, write problem blocked error messages and
@@ -92,11 +93,14 @@
     // false.
     //
     function blocked_problem
-    	( $project, $problem, & $errors )
+    	( $project, $problem, & $errors,
+	  $ignore_project_block = false )
     {
         global $epm_data, $epm_time_format;
 
-	if ( blocked_project ( $project, $errors ) )
+	if ( ! $ignore_project_block
+	     &&
+	     blocked_project ( $project, $errors ) )
 	    return true;
 
 	$p = "projects/$project/$problem";
@@ -1036,13 +1040,22 @@
     // of the PROBLEM's directory otherwise.  List
     // elements are sorted most recent TIME first.
     //
+    // Accumulate blocked error messages in $warnings.
+    // If $allow_blocked is false, exclude blocked
+    // problems from the returned list.  In the case
+    // the project is blocked, return the empty list
+    // if $allow_blocked is false.
+    //
     function read_project_list
-        ( $project, & $warnings )
+	    ( $project, & $warnings,
+	      $allow_blocked = false )
     {
         global $epm_data, $epm_name_re,
 	       $epm_time_format;
 
-	if ( blocked_project ( $project, $warnings ) )
+	if ( blocked_project ( $project, $warnings )
+	     &&
+	     ! $allow_blocked )
 	    return [];
 
 	// First build map from PROBLEM to TIME
@@ -1057,6 +1070,12 @@
 	{
 	    if ( ! preg_match ( $epm_name_re,
 	                        $problem ) )
+	        continue;
+	    if ( blocked_problem
+	             ( $project, $problem,
+		       $warnings, $allow_blocked )
+		 &&
+		 ! $allow_blocked )
 	        continue;
 	    $f = "$d/$problem/+changes+";
 	    $time = @filemtime ( "$epm_data/$f" );
@@ -1117,18 +1136,21 @@
 
     // Read and return a problem list given the
     // listname.
+    //
+    // Use blocked_problem to check each problem on the
+    // list and collect $errors message from blocked_
+    // problem in $warnings.  If $allow_blocked is
+    // false, exclude blocked problems from the list
+    // returned by this function.
+    //
+    // Note that problems that no longer exist are
+    // treated as blocked.  In particular, local
+    // problems, which cannot be blocked directly,
+    // are treated as blocked if they no longer exist.
     // 
-    // Issue warnings for any problems that no longer
-    // exist and delete them from the list (if the
-    // listname is ROOT:- there cannot be any such
-    // problems).  If the list is local (-:NAME), delete
-    // non-existant problems from the list itself.
-    //
-    // Also, if the list is not your list, ignore any
-    // -:PROBLEM entries without warnings.
-    //
     function read_problem_list
-	    ( $listname, & $warnings )
+	    ( $listname, & $warnings,
+              $allow_blocked = false )
     {
         global $epm_data, $aid;
 
@@ -1137,52 +1159,36 @@
 	elseif ( preg_match ( '/^(.+):-$/',
 	                      $listname, $matches ) )
     	    return read_project_list
-	    	( $matches[1], $warnings );
+	    	( $matches[1], $warnings,
+		  $allow_blocked );
 
 	$f = listname_to_filename ( $listname );
 	$old_list = read_file_list ( $f );
-	list ( $account, $name ) =
-	    explode ( ':', $listname );
-	if ( $account == $aid ) $account = '-';
-
-	$first = true;
 	$new_list = [];
+	$d = "accounts/$aid";
 	foreach ( $old_list as $e )
 	{
 	    list ( $time, $project, $problem ) = $e;
 	    if ( $project == '-' )
 	    {
-	        if ( $account != '-' ) continue;
-		$d = "accounts/$aid/$problem";
+	        if ( ! is_dir
+		    ( "$epm_data/$d/$problem" ) )
+		{
+		    $warnings[] =
+		        "Your $problem no longer" .
+			" exists";
+		    if ( ! $allow_blocked ) continue;
+		}
 	    }
-	    else
-	        $d = "projects/$project/$problem";
+	    elseif ( blocked_problem
+	                 ( $project, $problem,
+			   $warnings )
+	             &&
+		     ! $allow_blocked )
+	        continue;
 
-	    if ( is_dir ( "$epm_data/$d" ) )
-	    {
-	        $new_list[] = $e;
-		continue;
-	    }
-
-	    if ( $first )
-	    {
-	        $first = false;
-	        $warnings[] = "The following problems"
-		            . " no longer exist";
-		if ( $account == '-' )
-		    $warnings[] = "and have been"
-		                . " deleted from"
-				. " Your $name:";
-		else
-		    $warnings[] = "and have been"
-		                . " ignored:";
-	    }
-	    if ( $project == '-' ) $project = 'Your';
-	    $warnings[] = "    $project $problem";
+	    $new_list[] = $e;
 	}
-
-	if ( ! $first && $account == '-' )
-	    write_file_list ( $f, $new_list );
 
 	return $new_list;
     }
