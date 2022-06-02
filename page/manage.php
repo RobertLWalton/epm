@@ -2,7 +2,7 @@
 
     // File:	manage.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun  1 10:46:56 EDT 2022
+    // Date:	Thu Jun  2 16:28:11 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -176,6 +176,8 @@
     //
     $favorites = read_favorites_list ( $warnings );
         // List of selectable problem lists.
+    $new_listname = NULL;
+        // If not NULL, used to reset $listname.
     if ( $process_post
          &&
 	 isset ( $_POST['listname'] )
@@ -202,22 +204,30 @@
 	if ( ! $found )
 	    exit ( 'UNACCEPTABLE HTTP POST: LISTNAME' );
 	$listname = $new_listname;
-	$project = NULL;
-	$problem = NULL;
     }
 
     if ( ! isset ( $listname ) )
     {
         list ( $time, $proj, $base ) = $favorites[0];
-	$listname = "$proj:$base";
+	$new_listname = "$proj:$base";
     }
 
     // Establish $list, $priv_projects, $rw, $project,
     // and $problem.
     //
-    $list = read_problem_list
-	    ( $listname, $warnings, true );
+    $list = NULL;
         // List of selectable problems.
+    if ( isset ( $new_listname ) )
+    {
+	$listname = $new_listname;
+	$project = NULL;
+	$problem = NULL;
+	$list = read_problem_list
+		( $listname, $warnings, true );
+    }
+    else
+	$list = read_problem_list
+		( $listname, $TRASH, true );
     $priv_projects = read_projects ( NULL, true );
         // List of selectable projects.  Blocked
 	// projects are allowed.
