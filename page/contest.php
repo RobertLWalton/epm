@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun  1 16:27:05 EDT 2022
+    // Date:	Fri Jun  3 02:10:33 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -499,12 +499,12 @@
 	    $v = $contestdata['CONTEST-TYPE'];
 	    $w = $params['CONTEST-TYPE'];
 	    if ( $w == NULL ) $w = "NONE";
-	    $warnings[] = "cannot change contest type" .
-	                  " from $v to $w because";
-	    $warnings[] = "contest was deployed " .
-	                  $contestdata['DEPLOYED'];
-	    $params['CONTEST-TYPE'] =
-		$contestdata['CONTEST-TYPE'];
+	    $warnings[] =
+	        "contest type is being changed" .
+	        " from $v to $w after";
+	    $warnings[] =
+	        "contest was deployed on " .
+	        $contestdata['DEPLOYED'];
 	}
 
 	$f = $params['FLAGS'][$aid];
@@ -724,6 +724,7 @@
     function deploy()
     {
     	global $contestname, $contest_type,
+               $registration_email,
 	       $solution_start, $solution_stop,
 	       $description_start, $description_stop,
 	       $flags, $deployed,
@@ -731,6 +732,8 @@
 	       $epm_contestant_priv;
 
 	if ( ! isset ( $contest_type ) )
+	    return false;
+	if ( ! isset ( $registration_email ) )
 	    return false;
 	if ( ! isset ( $description_start ) )
 	    return false;
@@ -1539,7 +1542,8 @@ EOT;
     >$contest_description</textarea>
 
     <br>
-    <label>To Register, Email:</label>
+    <label>To Register, Email</label>
+    <strong>:&nbsp;&nbsp;&nbsp;&nbsp;</strong>
     <input type='email' name='registration-email'
            value='$registration_email' size='40'
 	   onchange='ONCHANGE()'
@@ -1883,7 +1887,8 @@ if ( isset ( $contestname ) && ! $is_manager )
 	        padding-bottom:0.5em'
     >$description_html</div>
 
-    <label>To Register, Email:</label>
+    <label>To Register, Email</label>
+    <strong>:&nbsp;&nbsp;&nbsp;&nbsp;</strong>
     <strong>$Registration_Email</strong>
 
     <table style='padding:1% 0px'>
