@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Mon May 30 18:34:53 EDT 2022
+Date:	Sat Jun  4 17:07:13 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -228,6 +228,13 @@ margin: 2em;
 <li><a href="#descriptions">Descriptions</a>
 </ul>
 <li><a href="#favorites-page">Favorites Page</a> [main]
+
+<li><a href="#contest-page">Contest Page</a> [main]
+<ul>
+<li><a href="#contest-participation">Contest Participation</a>
+<li><a href="#contest-judging">Contest Judging</a>
+<li><a href="#contest-managing">Contest Managing</a>
+</ul>
 
 <li><a href="#view-page">View Page</a> [auxiliary]
 
@@ -1913,7 +1920,117 @@ buttons are replaced by `SAVE' and `RESET' buttons.
 Changes you make are not recorded until you click `SAVE'.
 Clicking `RESET' restores Favorites to its previous state.
 You must use one of these two buttons to get the `Go To ... Page'
-buttons to reappear.
+</p>
+
+<h1 id="contest-page">Contest Page</h1>
+<p>
+The Contest Page defines a programming contest in which
+contestants try to solve as many problems as they can in limited time.
+<p>
+In a 1-phase contest, the judges make the problems, and in a
+2-phase contest, each contestant makes one problem and the scoreboard
+separately scores problems according to how well they split the field
+of contestants (for the perfect problem, exactly 50% of contestants
+get the problem).
+<p>
+A contestant is an account: it can be an individual account or a team
+account.
+<p>Besides contestants, a contest has managers and judges.  A manager
+registers contest contestants, judges, and other managers, and generally
+manages which accounts are in the contest and what role each plays.  Judges
+can test the contest problems before the contest proper.
+</p>
+
+<h2 id="contest-participation">Contest Participation</h2>
+<p>
+To register for a contest, so you can participate,
+go to the Contest Page and select
+the contest you want to participate in.  Contests are not advertised
+on EPM so you must find out about the contest by other means.
+<p>
+Then send an email registration request to the 'To Register, Email' address.
+You must have an EPM account and send the mail from an email address that
+you have associated with your EPM account.  If you are on a team,
+it will be unclear which EPM account you want to register, your
+individual account or one of your team accounts, so in this case be sure to
+include the name of the account you want to register in your email.
+<p>
+After you have registered, you may solve problems during and after
+the solution period: that is, the time between the Problem Solution
+Submit Start and Stop Times.  Only submissions before the Stop Time
+will appear on the scoreboard.  The contest is also a project;
+after the Start Time you should be able to see a list of problems for
+the project and will be able to pull and submit
+these problems.  Before the Start Time you will NOT be able to see
+the list or pull problems.
+<p>
+For a 2-phase contest you also have to make a problem.  Between
+the Problem Definition Submit Start and Stop Times you can push
+a problem to the contest project.  You will not be able to see
+a list of the project problems during this time, and will NOT
+be able to pull any problems from the project, even your own,
+should you delete your own version of your problem.  So do NOT
+delete your version of your problem until after the contest.
+<p>
+Also, during the Solution Submit Times you can submit your
+solution to your own problem, thus getting at least one problem
+on the Solution Scoreboard.
+</p>
+
+<h2 id="contest-judging">Contest Judging</h2>
+<p>
+A contest judge can pull and submit problems from the
+contest project anytime.  A judge can thus test the problems
+anytime.
+<p>
+In a 1-phase contest, a contest judge can push problems
+to the contest project between
+the Problem Definition Submit Start and Stop Times.
+In this time interval, a judge can pull a problem written
+by another judge and test it, but cannot re-push it.
+</p>
+
+<h2 id="contest-managing">Contest Managing</h2>
+<p>
+The contest manager must register contest participant
+accounts
+using email addresses from which registration requests
+are sent
+( see <a href="#contest-participation">Contest Participation</a> above).
+After registering an account, a manager selects roles for the account:
+contestant (C), judge (J), or manager (M).
+To change a role, hover over the role box at the left of the
+account line: the new role value will appear, and if you click the box
+the role value will be changed to this new value.  If you do NOT
+click the box, the value will not be changed.
+<p>
+An account can have more than one role, or no roles.
+There can be more than one manager.
+<p>
+A manager can cancel an account role,
+in which case the C, J, or M will be drawn with a line
+through it to indicate the account once had the role
+but a manager cancelled it.  A role can be restored
+and re-cancelled by a manager any number of times.  An account
+cannot be removed from the contest, but all its roles can
+be cancelled, which has the same effect.
+<p>
+There can be more than one manager.  A manager cannot perform
+as a judge or contestant unless the manager account is given
+the J or C role in addition to the M role.
+<p>
+A manager must set the contest parameters.  Until the Contest
+Description, Contest Type, Problem Definition Submit Times,
+and `To Register, Email' email address are set, the contest
+is not `deployed' and its project cannot be used by contestants
+or judges.  The Problem Solution Submit Times can be set
+later, after the contest has been deployed.  Until the
+Problem Solution Submit Times are set, only judges can submit
+solutions.
+<p>
+If parameters are reset, the contest will be redeployed.  If
+parameters required for deployment are cancelled,
+the contest will NOT be redeployed with new parameters.
 </p>
 
 <h1 id="view-page">View Page</h1>
