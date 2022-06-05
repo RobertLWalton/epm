@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun  5 02:22:25 EDT 2022
+    // Date:	Sun Jun  5 17:05:02 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -695,49 +695,32 @@
     # file has the format:
     #
     #	# *BEGIN* *CONTEST* *ACCOUNT* *DEFINITIONS*
-    #   # MUST begin +priv+ file.
-    #	# Automatically generated, do NOT edit.
-    #
     #	+ @manager <manager-account>
     #	.....
     #	+ @judge <judge-account>
     #	.....
     #	+ @contestant <contestant-account>
     #	.....
-    #
     #	# *END* *CONTEST* *ACCOUNT* *DEFINITIONS*
     #   <manually edited stuff, if any>
     #	# *BEGIN* *CONTEST* *PRIVILEGES*
-    #   # MUST end +priv+ file.
-    #	# Automatically generated, do NOT edit.
-    #
-    #   < ALWAYS .*
-    #   > ALWAYS .*
     #	<result of epm_contest_priv in parameters.php>
-    #
     #	# *END* *CONTEST* *PRIVILEGES*
     #
-    # Returns false if any of $contest_type or
-    # start/stop parameters are NULL, and true if
-    # contest deployed (in which case $deployed is set).
+    # The *CONTEST* *PRIVILEGES* section is omitted
+    # if $contest_description or $registration_email
+    # is NULL, and false is returned.  Otherwise true
+    # is returned.
     #
     function deploy()
     {
     	global $contestname, $contest_type,
                $registration_email,
+	       $contest_description,
 	       $solution_start, $solution_stop,
 	       $description_start, $description_stop,
 	       $flags, $deployed,
 	       $epm_data, $epm_time_format;
-
-	if ( ! isset ( $contest_type ) )
-	    return false;
-	if ( ! isset ( $registration_email ) )
-	    return false;
-	if ( ! isset ( $description_start ) )
-	    return false;
-	if ( ! isset ( $description_stop ) )
-	    return false;
 
 	$begin_accounts =
 	    "# *BEGIN* *CONTEST* *ACCOUNT*" .
@@ -808,14 +791,23 @@
 	    if ( ! $first )
 		$p .= PHP_EOL;
 	}
+
+	$output_privs =
+	    ( isset ( $contest_description )
+	      &&
+	      isset ( $registration_email ) );
 		        
-	$p .= $begin_privs . PHP_EOL;
-	$p .= epm_contest_priv
-	          ( $contest_type,
-		    $solution_start, $solution_stop,
-		    $description_start,
-		    $description_stop );
-	$p .= $end_privs . PHP_EOL;
+	if ( $output_privs )
+	{
+	    $p .= $begin_privs . PHP_EOL;
+	    $p .= epm_contest_priv
+		      ( $contest_type,
+			$solution_start,
+			$solution_stop,
+			$description_start,
+			$description_stop );
+	    $p .= $end_privs . PHP_EOL;
+	}
 
 	$r = ATOMIC_WRITE ( "$epm_data/$fname", $p );
 	if ( $r === false )
@@ -825,7 +817,8 @@
 	if ( $t === false )
 	    ERROR ( "cannot stat $fname" );
 	$deployed = date ( $epm_time_format, $t );
-	return true;
+
+	return $output_privs;
     }
 
     if ( $epm_method == 'GET' )
