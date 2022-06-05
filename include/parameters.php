@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Jun  5 02:13:06 EDT 2022
+// Date:    Sun Jun  5 06:19:22 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -222,6 +222,8 @@ function epm_contest_priv
 
 + first-failed @judge
 + first-failed @contestant
+
+EOT;
 
     if ( isset ( $description_start ) ) $r .= <<<EOT
 
