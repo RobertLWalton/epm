@@ -2,7 +2,7 @@
 
 // File:    parameters.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Mon May 30 17:59:51 EDT 2022
+// Date:    Sun Jun  5 02:13:06 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -198,39 +198,48 @@ function epm_contest_priv
       $solution_start, $solution_stop,
       $description_start, $description_stop )
 {
+
     $r = <<<EOT
+> ALWAYS .*
+< ALWAYS .*
+
 + owner @manager
 - owner .*
 
-+ show @manager
-+ view @manager
 + block @manager
 
-+ show @judge
++ view @manager
 + view @judge
-+ block @judge
-
 - view .*
-- block .*
+
++ show @manager
++ show @judge
 
 + pull-new @judge
 + re-pull @judge
++ publish-all @judge
++ unpublish-all @judge
 
 + first-failed @judge
 + first-failed @contestant
 
+    if ( isset ( $description_start ) ) $r .= <<<EOT
+
 < $description_start .*
-> ALWAYS .*
 - push-new .*
 - re-push .*
+- block .*
+< ALWAYS .*
+
+EOT;
+
+    if ( isset ( $description_stop ) ) $r .= <<<EOT
 
 > $description_stop .*
-< ALWAYS .*
 - push-new .*
 - re-push .*
-
+- block .*
 > ALWAYS .*
-< ALWAYS .*
 
 EOT;
 
@@ -240,57 +249,48 @@ EOT;
 + show @contestant
 + pull-new @contestant
 + re-pull @contestant
+> ALWAYS .*
 
 EOT;
 
-    if ( $contest_type == '1-phase') $r .= <<<EOT
+    if ( isset ( $contest_type )
+         &&
+	 $contest_type == '1-phase')
+	$r .= <<<EOT
 
 # For One Phase Contest:
 
 > $description_start @judge
 < $description_stop @judge
 + push-new @judge
-+ re-push @judge
-+ publish-all @judge
-+ unpublish-all @judge
+    # Account that does push-new for problem gets
+    # re-push and block privileges in problem's
+    # +priv+ file.
+> ALWAYS .*
+< ALWAYS .*
 
 EOT;
 
-    if ( $contest_type == '2-phase') $r .= <<<EOT
+    if ( isset ( $contest_type )
+         &&
+	 $contest_type == '2-phase')
+	$r .= <<<EOT
 
 # For Two Phase Contest:
 
 > $description_start @contestant
 < $description_stop @contestant
 + push-new @contestant
+    # Account that does push-new for problem gets
+    # re-push and block privileges in problem's
+    # +priv+ file.
+> ALWAYS .*
+< ALWAYS .*
 
 EOT;
 
     return $r;
 }
-
-// Contestant project +priv+ file contents written when
-// contestant project is created.
-//
-$epm_contestant_priv = <<<EOT
-# For this +priv+ file there is only ONE @contestant.
-
-+ owner @manager
-+ show @manager
-+ view @manager
-
-+ show @judge
-+ view @judge
-
-+ push-new @contestant
-+ pull-new @contestant
-+ re-pull @contestant
-+ show @contestant
-+ view @contestant
-+ copy-from @contestant
-+ block @contestant
-+ download @contestant
-EOT;
 
 $epm_allowed_tags = ["br", "b", "/b", "i", "/i"];
     // Allowed HTML tags in descriptions.
