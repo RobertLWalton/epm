@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sat Jun  4 17:07:13 EDT 2022
+Date:	Sun Jun  5 13:54:40 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -2019,18 +2019,48 @@ There can be more than one manager.  A manager cannot perform
 as a judge or contestant unless the manager account is given
 the J or C role in addition to the M role.
 <p>
-A manager must set the contest parameters.  Until the Contest
-Description, Contest Type, Problem Definition Submit Times,
-and `To Register, Email' email address are set, the contest
-is not `deployed' and its project cannot be used by contestants
-or judges.  The Problem Solution Submit Times can be set
-later, after the contest has been deployed.  Until the
-Problem Solution Submit Times are set, only judges can submit
-solutions.
+A manager must set the contest parameters.  These control
+the privileges which contest managers, judges, and contestants
+have as follows (specifically, they control the contest project
++priv+ file):
+<ol>
+<li>If either the Contest Description or `To Register, Email' parameters
+are not set, no participant gets any privileges.  Otherwise privileges
+for the project are as described in the following.
+<li>Managers get `owner', `block', `view', and `show' privileges.
+<li>Judges get `view', `show', `pull-new', `re-pull', `first-failed',
+`publish-all', `unpublish-all' privileges'.
+<li>No-one gets `push-new', `re-push' privileges before the Problem Definition
+Start Time if that is defined.  Similarly no-one but managers gets
+`block' privilege before the Problem Definition Start Time if that is defined.
+<li>No-one gets `push-new', `re-push' privileges after the Problem Definition
+Stop Time if that is defined.  Similarly no-one but managers gets
+`block' privilege after the Problem Definition Stop Time if that is defined.
+<li>If the Contest Type is defined as 1-phase and both the Problem Definition
+Start and Stop Times are defined, then between these times the judges
+have `push-new' privileges.  Each judge will have `re-push' and `block'
+privileges for any problems they push using `push-new', but only between
+the Problem Definition Start and Stop Times.
+<li>If the Contest Type is defined as 2-phase and both the Problem Definition
+Start and Stop Times are defined, then between these times the contestants
+have `push-new' privileges.  Each contestant will have `re-push' and `block'
+privileges for any problems they push using `push-new', but only between
+the Problem Definition Start and Stop Times.
+<li>If Problem Solution Start Time is defined, after this time contestants
+get `show', `pull-new', and `re-pull' privileges.  Contestants always
+have `first-failed' privilege.
+<li>The Problem Solution Stop Time only effects scoreboards, and not
+privileges.
+</ol>
 <p>
-If parameters are reset, the contest will be redeployed.  If
-parameters required for deployment are cancelled,
-the contest will NOT be redeployed with new parameters.
+Because managers have `owner' privilege, they can add to the contest
+project +priv+ file (using the <a href='#manage-page'>Manage Page</a>).
+Additions must be between automatically
+generated the *CONTEST* *ACCOUNT* *DEFINITIONS* section and the
+automatically generated *CONTEST* *PRIVILEGES* section, else the
+additions will NOT be preserved when the +priv+ file is regenerated.
+Managers can also alter contest project problem +priv+ files, but these
+only affect privileges not allowed or denied by the contest project +priv+ file.
 </p>
 
 <h1 id="view-page">View Page</h1>
