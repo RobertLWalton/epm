@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  6 16:59:08 EDT 2022
+    // Date:	Mon Jun  6 17:39:44 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1002,6 +1002,22 @@
 		    $times[$a] = $time;
 		}
 	    }
+
+	    $pcs = $params['can-see'];
+	    foreach ( $can_see_labels as $k1 )
+	    {
+	        if ( $k1 == 'manager' ) continue;
+		foreach ( $can_see_labels as $k2 )
+		{
+		    $p = $pcs[$k1][$k2];
+		    if ( $can_see[$k1][$k2] == $p )
+		        continue;
+		    $s = ( $p != '' ? '+' : '-' );
+		    $actions[] =
+		        "$header can-see $k1 $s $k2";
+		}
+	    }
+
 	    foreach ( $parameter_labels as $k )
 	    {
 	        if ( $contestdata[$k] == $params[$k] )
@@ -1016,7 +1032,7 @@
 		        $v = substr ( $v, 0, 17 )
 			   . "...";
 		}
-		$actions[] = "$header set $k $v";
+		$actions[] = "$header set $k = $v";
 		$contestdata[$k] = $params[$k];
 	    }
 	    $contestdata['flags'] = $params['flags'];
