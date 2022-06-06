@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  6 14:00:20 EDT 2022
+    // Date:	Mon Jun  6 16:59:08 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -59,12 +59,15 @@
     //
     //		registration-email=EMAIL
     //		contest-type=[12]-phase (or omitted)
-    //		judge-can-see=checked (or omitted)
+    //		can-see[K1][K2]=checked
     //		solution-start=TIME
     //		solution-stop=TIME
     //		description-start=TIME
     //		description-stop=TIME
     //		account-flags=FLAG-LIST
+
+    //		K1 and K2 are one of:
+    //		    manager, judge, contestant
 
     //		FLAG-LIST is comma separated list of
     //		items of form ACCOUNT:FLAGS, where FLAGS
@@ -107,8 +110,9 @@
     $contest_type = & $contestdata['contest-type'];
         // Either '1-phase' or '2-phase' or NULL.
     $can_see = & $contestdata['can-see'];
-        // can_see[k1][k2] == 'checked' for
-	// k1, k2 == 'manager', 'judge', 'contestant'
+        // can_see[k1][k2] == 'checked' or '' for
+	// k1 == 'judge', 'contestant'
+	// k2 == 'manager', 'judge', 'contestant'
     $can_see_labels = ['manager','judge','contestant'];
         // In order of characters in flags, MJC.
     $solution_start = & $contestdata['solution-start'];
@@ -160,14 +164,14 @@
     $email_mask = & $data['EMAIL-MASK'];
 	// If $is_participant but not $is_manager,
 	// set to 'mjc' where
-	//	m = 'M' if $can_see[k]['manager']
+	//   m = 'M' if $can_see[k]['manager'] != ''
 	//	        else 'X'
-	//	j = 'J' if $can_see[k]['judge']
+	//   j = 'J' if $can_see[k]['judge'] != ''
 	//	        else 'X'
-	//	c = 'C' if $can_see[k]['contestant']
+	//   c = 'C' if $can_see[k]['contestant'] != ''
 	//	        else 'X'
-	//      k = 'judge' if $flags[$aid] is '.J.'
-	//                  else 'contestant'
+	//   k = 'judge' if $flags[$aid] is '.J.'
+	//               else 'contestant'
     $add_email = & $data['ADD-EMAIL'];
         // Email of account to be added, or not set if
 	// none.
@@ -256,9 +260,8 @@
 			for ( $i = 0; $i < 3; $i ++ )
 			{
 			    $k2 = $can_see_labels[$i];
-			    if ( isset ( $can_see
-			                   [$k1][$k2] )
-			       )
+			    if (    $can_see[$k1][$k2]
+			         != '' )
 				$mask[$i] = $MJC[$i];
 			}
 		    }
@@ -353,9 +356,16 @@
 	}
 	$r['contest-type'] = $v;
 
-	if ( ! isset ( $post['can-see'] ) )
-	    $v = NULL;  // Unset checkbox OK.
-	else
+	$w = [];
+	foreach ( $can_see_labels as $k1 )
+	{
+	    if ( $k1 == 'manager' ) continue;
+
+	    $w[$k1] = [];
+	    foreach ( $can_see_labels as $k2 )
+	        $w[$k1][$k2] = '';
+	}
+	if ( isset ( $post['can-see'] ) )
 	{
 	    $v = $post['can-see'];
 	    if ( ! is_array ( $v ) )
@@ -364,7 +374,9 @@
 	    foreach ( $v as $k1 => $v1 )
 	    {
 	        if ( ! in_array
-		         ( $k1, $can_see_labels ) )
+		         ( $k1, $can_see_labels )
+		     ||
+		     $k1 == 'manager' )
 		    exit ( "UNACCEPTABLE HTTP POST:" .
 			   " can-see[$k1]" );
 	        if ( ! is_array ( $v1 ) )
@@ -382,10 +394,11 @@
 			       " POST:" .
 			       " can-see[$k1][$k2] =" .
 			       " $v2" );
+		    $w[$k1][$k2] = $v2;
 		}
 	    }
 	}
-	$r['can-see'] = $v;
+	$r['can-see'] = $w;
 
 	foreach (
 	    ['solution-start','solution-stop',
@@ -960,6 +973,8 @@
 	    $pflags = & $params['flags'];
 	    $time = date ( $epm_time_format );
 	    $header = "$time $aid contest $contestname";
+	    $MJC = ['M','J','C'];
+	    $mjc = ['manager','judge','contestant'];
 	    foreach ( $flags as $a => $f )
 	    {
 		$pf = $pflags[$a];
@@ -974,8 +989,16 @@
 		}
 		elseif ( $f != $pf )
 		{
-		    $actions[] = "$header role-change"
-		               . " $a $f => $pf";
+		    for ( $i = 0; $i < 3; $i++ )
+		    {
+		        $fi = ( $f[$i] == $MJC[$i] );
+		        $pfi = ( $pf[$i] == $MJC[$i] );
+			if ( $fi == $pfi ) continue;
+			$s = ( $pfi ? '+' : '-' );
+			$r = $mjc[$i];
+			$actions[] =
+			    "$header role $a $s $r";
+		    }
 		    $times[$a] = $time;
 		}
 	    }
@@ -1482,19 +1505,6 @@ if ( isset ( $contestname ) && $is_manager )
         $select_type = '';
     $dtitle = 'mm/dd/yyyy, hh::mm:[AP]M';
 
-    $is_checked = $can_see;
-    foreach ( $can_see_labels as $k1 )
-    {
-         if ( ! isset ( $is_checked[$k1] ) )
-	     $is_checked[$k1] = NULL;
-	foreach ( $can_see_labels as $k2 )
-	{
-	     if ( ! isset ( $is_checked[$k1][$k2] ) )
-		 $is_checked[$k1][$k2] = NULL;
-	}
-    }
-
-
     if ( ! isset ( $add_email ) )
 	echo <<<EOT
 	<div class='add-account'>
@@ -1586,7 +1596,7 @@ EOT;
            name='can-see[judge][manager]'
 	   style='margin-bottom:0px'
 	   value='checked'
-	   {$is_checked['judge']['manager']}
+	   {$can_see['judge']['manager']}
 	   onchange='ONCHANGE()'>
     Managers</label>
     </td>
@@ -1596,7 +1606,7 @@ EOT;
            name='can-see[judge][judge]'
 	   style='margin-bottom:0px'
 	   value='checked'
-	   {$is_checked['judge']['judge']}
+	   {$can_see['judge']['judge']}
 	   onchange='ONCHANGE()'>
     Judges</label>
     </td>
@@ -1606,7 +1616,7 @@ EOT;
            name='can-see[judge][contestant]'
 	   style='margin-bottom:0px'
 	   value='checked'
-	   {$is_checked['judge']['contestant']}
+	   {$can_see['judge']['contestant']}
 	   onchange='ONCHANGE()'>
     Contestants</label>
     </td>
@@ -1623,7 +1633,7 @@ EOT;
            name='can-see[contestant][manager]'
 	   style='margin-bottom:0px'
 	   value='checked'
-	   {$is_checked['contestant']['manager']}
+	   {$can_see['contestant']['manager']}
 	   onchange='ONCHANGE()'>
     Managers</label>
     </td>
@@ -1633,7 +1643,7 @@ EOT;
            name='can-see[contestant][judge]'
 	   style='margin-bottom:0px'
 	   value='checked'
-	   {$is_checked['contestant']['judge']}
+	   {$can_see['contestant']['judge']}
 	   onchange='ONCHANGE()'>
     Judges</label>
     </td>
@@ -1643,7 +1653,7 @@ EOT;
            name='can-see[contestant][contestant]'
 	   style='margin-bottom:0px'
 	   value='checked'
-	   {$is_checked['contestant']['contestant']}
+	   {$can_see['contestant']['contestant']}
 	   onchange='ONCHANGE()'>
     Contestants</label>
     </td>
@@ -1880,10 +1890,9 @@ if ( isset ( $contestname ) && ! $is_manager )
         time_TBD ( $description_stop );
 
     $i = 0;
-    if ( isset ( $can_see['contestant']
-                         ['contestant'] ) )
+    if ( $can_see['contestant']['contestant'] != '' )
         $i = $i + 1;
-    if ( isset ( $can_see['judge']['contestant'] ) )
+    if ( $can_see['judge']['contestant'] != '' )
         $i = $i + 2;
     $Can_See = ['Only Managers',
                 'Managers and Contestants',
