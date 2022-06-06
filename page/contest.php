@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  6 11:49:01 EDT 2022
+    // Date:	Mon Jun  6 14:00:20 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -123,12 +123,10 @@
         'contest-description',
         'registration-email',
 	'contest-type',
-	'can-see',
 	'solution-start',
 	'solution-stop',
 	'description-start',
-	'description-stop',
-	'flags' ];
+	'description-stop' ];
 
     $deployed = & $contestdata['deployed'];
         // Time last deployed in $epm_time_format,
@@ -830,9 +828,10 @@
     $notice = NULL;
         // If not NULL, output after errors and warnings
 	// as <div class='notice'>$notice</div>.
-    $action = NULL;
-        // If not NULL, written as an action into each
-	// member of $action_files.
+    $actions = [];
+        // List of actions, each of which is written
+	// as a line with PHP_EOL added into each member
+	// of $action_files.
     $action_files = [ "accounts/$aid/+actions+" ];
 
     // Put $message in $notice, separating it from the
@@ -909,8 +908,7 @@
 	    $t = date ( $epm_time_format );
 	    $m = $_SESSION['EPM_EMAIL'];
 	    $j = json_encode
-		( ['name' => $new_contest,
-		   'flags' => [$aid => 'M--'],
+		( ['flags' => [$aid => 'M--'],
 		   'emails' => [$aid => $m],
 		   'times' => [$aid => $t]],
 		  JSON_PRETTY_PRINT );
@@ -945,6 +943,10 @@
 	 ! isset ( $contestname ) )
 	exit ( "UNACCEPTABLE HTTP POST: no contest" );
 
+    if ( isset ( $contestname ) )
+        $action_files[] =
+	    "projects/$contestname/+actions+";
+
     if ( $process_post
          &&
 	 isset ( $_POST['op'] ) )
@@ -957,6 +959,7 @@
 	    check_parameters ( $params, $warnings );
 	    $pflags = & $params['flags'];
 	    $time = date ( $epm_time_format );
+	    $header = "$time $aid contest $contestname";
 	    foreach ( $flags as $a => $f )
 	    {
 		$pf = $pflags[$a];
@@ -967,12 +970,35 @@
 		    unset ( $emails[$a] );
 		    unset ( $previous_emails[$a] );
 		    unset ( $times[$a] );
+		    $actions[] = "$header delete $a";
 		}
 		elseif ( $f != $pf )
+		{
+		    $actions[] = "$header role-change"
+		               . " $a $f => $pf";
 		    $times[$a] = $time;
+		}
 	    }
 	    foreach ( $parameter_labels as $k )
+	    {
+	        if ( $contestdata[$k] == $params[$k] )
+		    continue;
+		$v = $params[$k];
+		if ( ! isset ( $v ) ) $v = 'NULL';
+		elseif ( $k == 'contest-description' )
+		{
+		    $v = explode ( "\n", $v );
+		    $v = trim ( $v[0] );
+		    if ( strlen ( $v ) > 20 )
+		        $v = substr ( $v, 0, 17 )
+			   . "...";
+		}
+		$actions[] = "$header set $k $v";
 		$contestdata[$k] = $params[$k];
+	    }
+	    $contestdata['flags'] = $params['flags'];
+	    $contestdata['can-see'] =
+	        $params['can-see'];
 	    $write_contestdata = true;
 	}
 	elseif ( $op != 'reset' )
@@ -1122,13 +1148,13 @@
 	           "<br><br>" );
     }
 
-    if ( isset ( $action ) )
+    if ( count ( $actions ) > 0 )
     {
+        $c = implode ( PHP_EOL, $actions ) . PHP_EOL;
 	foreach ( $action_files as $f )
 	{
 	    $r = @file_put_contents
-		( "$epm_data/$f", $action,
-		  FILE_APPEND );
+		( "$epm_data/$f", $c, FILE_APPEND );
 	    if ( $r === false )
 		ERROR ( "cannot write $f" );
 	}
