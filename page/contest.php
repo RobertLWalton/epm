@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Jun  5 17:05:02 EDT 2022
+    // Date:	Mon Jun  6 11:49:01 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -98,42 +98,42 @@
     // See HELP for more documentation.
     //
     $contest_description =
-	    & $contestdata['CONTEST-DESCRIPTION'];
+	    & $contestdata['contest-description'];
         // Contest description, text as per Descriptions
 	// in HELP.
     $registration_email =
-	    & $contestdata['REGISTRATION-EMAIL'];
+	    & $contestdata['registration-email'];
         // Email or NULL.
-    $contest_type = & $contestdata['CONTEST-TYPE'];
+    $contest_type = & $contestdata['contest-type'];
         // Either '1-phase' or '2-phase' or NULL.
-    $can_see = & $contestdata['CAN-SEE'];
+    $can_see = & $contestdata['can-see'];
         // can_see[k1][k2] == 'checked' for
 	// k1, k2 == 'manager', 'judge', 'contestant'
     $can_see_labels = ['manager','judge','contestant'];
         // In order of characters in flags, MJC.
-    $solution_start = & $contestdata['SOLUTION-START'];
-    $solution_stop = & $contestdata['SOLUTION-STOP'];
+    $solution_start = & $contestdata['solution-start'];
+    $solution_stop = & $contestdata['solution-stop'];
     $description_start =
-	    & $contestdata['DESCRIPTION-START'];
+	    & $contestdata['description-start'];
     $description_stop =
-	    & $contestdata['DESCRIPTION-STOP'];
+	    & $contestdata['description-stop'];
         // Time in $epm_time_format or NULL.
 
     $parameter_labels = [
-        'CONTEST-DESCRIPTION',
-        'REGISTRATION-EMAIL',
-	'CONTEST-TYPE',
-	'CAN-SEE',
-	'SOLUTION-START',
-	'SOLUTION-STOP',
-	'DESCRIPTION-START',
-	'DESCRIPTION-STOP',
-	'FLAGS' ];
+        'contest-description',
+        'registration-email',
+	'contest-type',
+	'can-see',
+	'solution-start',
+	'solution-stop',
+	'description-start',
+	'description-stop',
+	'flags' ];
 
-    $deployed = & $contestdata['DEPLOYED'];
+    $deployed = & $contestdata['deployed'];
         // Time last deployed in $epm_time_format,
 	// or NULL.
-    $flags = & $contestdata['FLAGS'];
+    $flags = & $contestdata['flags'];
         // map ACCOUNT => "[Mm-][Jj-][Cc-]"
 	//    M if now manager, m if was manager,
 	//      - if neither
@@ -141,16 +141,16 @@
 	//      - if neither
 	//    C if now contestant, c if was contestant,
 	//      - if neither
-    $emails = & $contestdata['EMAILS'];
+    $emails = & $contestdata['emails'];
         // map ACCOUNT => "email address"
 	// Email addresses used to add account
 	// to contest.
     $previous_emails =
-            & $contestdata['PREVIOUS-EMAILS'];
+            & $contestdata['previous-emails'];
         // map ACCOUNT => "previous email address"
 	// Previous value of $emails[ACCOUNT] or NULL
 	// or unset if none.
-    $times = & $contestdata['TIMES'];
+    $times = & $contestdata['times'];
         // map ACCOUNT => time of last change to account
 	//		  flags or email
 
@@ -313,7 +313,7 @@
     // array.
     //
     // The account-flags=FLAG-LIST parameter is
-    // converted to a $parameters['FLAGS] map and
+    // converted to a $parameters['flags] map and
     // checked against $flags to see if the parameter
     // is legal.
     //
@@ -333,7 +333,7 @@
 	$v = $post['contest-description'];
 	$v = rtrim ( $v );
 	if ( $v == '' ) $v = NULL;
-	$r['CONTEST-DESCRIPTION'] = $v;
+	$r['contest-description'] = $v;
 
 	if ( ! isset ( $post['registration-email'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST:" .
@@ -341,7 +341,7 @@
 	$v = $post['registration-email'];
 	$v = trim ( $v );
 	if ( $v == '' ) $v = NULL;
-	$r['REGISTRATION-EMAIL'] = $v;
+	$r['registration-email'] = $v;
 
 	if ( ! isset ( $post['contest-type'] ) )
 	    $v = NULL;  // Unset radio OK.
@@ -353,7 +353,7 @@
 		exit ( "UNACCEPTABLE HTTP POST:" .
 		       " contest-type = $v" );
 	}
-	$r['CONTEST-TYPE'] = $v;
+	$r['contest-type'] = $v;
 
 	if ( ! isset ( $post['can-see'] ) )
 	    $v = NULL;  // Unset checkbox OK.
@@ -387,17 +387,13 @@
 		}
 	    }
 	}
-	$r['CAN-SEE'] = $v;
+	$r['can-see'] = $v;
 
 	foreach (
-	    [['solution-start','SOLUTION-START'],
-	     ['solution-stop','SOLUTION-STOP'],
-	     ['description-start','DESCRIPTION-START'],
-	     ['description-stop','DESCRIPTION-STOP']]
-	    as $pair )
+	    ['solution-start','solution-stop',
+	     'description-start','description-stop']
+	    as $m )
 	{
-	    $m = $pair[0];
-	    $n = $pair[1];
 	    if ( ! isset ( $post[$m] ) )
 		exit ( "UNACCEPTABLE HTTP POST:" .
 		       " no $m" );
@@ -412,13 +408,13 @@
 			   " $m = $v" );
 		$v = date ( $epm_time_format, $w );
 	    }
-	    $r[$n] = $v;
+	    $r[$m] = $v;
 	}
 
 	if ( ! isset ( $post['account-flags'] ) )
 	    exit ( "UNACCEPTABLE HTTP POST:" .
 	           " no account-flags" );
-	$account_flags = & $r['FLAGS'];
+	$account_flags = & $r['flags'];
 	$account_flags = [];
 	$MJC = 'MJC';
 	$mjc = 'mjc';
@@ -462,8 +458,8 @@
     // for warnings.
     //
     // Some error checks reference $contestdata; e.g.,
-    // DEPLOYED is used to prevent changes to CONTEST-
-    // TYPE.
+    // $deployed is used to prevent changes to
+    // $contest_type.
     //
     // Some warnings cause $params to be changed so that
     // it does not alter $contestdata.
@@ -475,7 +471,7 @@
     {
         global $contestdata, $aid;
 
-    	$v = $params['REGISTRATION-EMAIL'];
+    	$v = $params['registration-email'];
 	$err = [];
 	if ( isset ( $v )
 	     &&
@@ -484,30 +480,30 @@
 	        $warnings[] = "Bad Registration Email:";
 		foreach ( $err as $e )
 		    $warnings[] = "    $e";
-		$params['REGISTRATION-EMAIL'] =
-		    $contestdata['REGISTRATION-EMAIL'];
+		$params['registration-email'] =
+		    $contestdata['registration-email'];
 	}
 
-	if ( isset ( $contestdata['DEPLOYED'] )
+	if ( isset ( $contestdata['deployed'] )
 	     &&
-	     isset ( $contestdata['CONTEST-TYPE'] )
+	     isset ( $contestdata['contest-type'] )
 	     &&
-	     $contestdata['CONTEST-TYPE']
+	     $contestdata['contest-type']
 	     !=
-	     $params['CONTEST-TYPE'] )
+	     $params['contest-type'] )
 	{
-	    $v = $contestdata['CONTEST-TYPE'];
-	    $w = $params['CONTEST-TYPE'];
+	    $v = $contestdata['contest-type'];
+	    $w = $params['contest-type'];
 	    if ( $w == NULL ) $w = "NONE";
 	    $warnings[] =
 	        "contest type is being changed" .
 	        " from $v to $w after";
 	    $warnings[] =
 	        "contest was deployed on " .
-	        $contestdata['DEPLOYED'];
+	        $contestdata['deployed'];
 	}
 
-	$f = $params['FLAGS'][$aid];
+	$f = $params['flags'][$aid];
 	if ( $f[0] != 'M' )
 	{
 	    $warnings[] =
@@ -516,8 +512,8 @@
 	    $warnings[] =
 	        "(you must get another manager to" .
 		" make such changes)";
-	    $params['FLAGS'][$aid] =
-	        $contestdata['FLAGS'][$aid];
+	    $params['flags'][$aid] =
+	        $contestdata['flags'][$aid];
 	}
     }
 
@@ -913,10 +909,10 @@
 	    $t = date ( $epm_time_format );
 	    $m = $_SESSION['EPM_EMAIL'];
 	    $j = json_encode
-		( ['NAME' => $new_contest,
-		   'FLAGS' => [$aid => 'M--'],
-		   'EMAILS' => [$aid => $m],
-		   'TIMES' => [$aid => $t]],
+		( ['name' => $new_contest,
+		   'flags' => [$aid => 'M--'],
+		   'emails' => [$aid => $m],
+		   'times' => [$aid => $t]],
 		  JSON_PRETTY_PRINT );
 	    $r = file_put_contents
 		( "$epm_data/$c", $j );
@@ -959,7 +955,7 @@
 	{
 	    $params = get_parameters ( $_POST );
 	    check_parameters ( $params, $warnings );
-	    $pflags = & $params['FLAGS'];
+	    $pflags = & $params['flags'];
 	    $time = date ( $epm_time_format );
 	    foreach ( $flags as $a => $f )
 	    {
