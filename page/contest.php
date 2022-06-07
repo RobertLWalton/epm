@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  7 03:49:07 EDT 2022
+    // Date:	Tue Jun  7 17:04:28 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -714,10 +714,15 @@
     #	<result of epm_contest_priv in parameters.php>
     #	# *END* *CONTEST* *PRIVILEGES*
     #
-    # The *CONTEST* *PRIVILEGES* section is omitted
-    # if $contest_description or $registration_email
-    # is NULL, and false is returned.  Otherwise true
-    # is returned.
+    # If $contest_description or $registration_email
+    # is NULL, the result of epm_contest_priv is
+    # replaced by:
+    #
+    #	+ owner @manager
+    #   + view @manager
+    #
+    # and false is returned.  Otherwise true is
+    # returned.
     #
     function deploy()
     {
@@ -799,22 +804,22 @@
 		$p .= PHP_EOL;
 	}
 
-	$output_privs =
-	    ( isset ( $contest_description )
-	      &&
-	      isset ( $registration_email ) );
-		        
-	if ( $output_privs )
-	{
-	    $p .= $begin_privs . PHP_EOL;
+	$p .= $begin_privs . PHP_EOL;
+
+	if ( isset ( $contest_description )
+	     &&
+	     isset ( $registration_email ) )
 	    $p .= epm_contest_priv
 		      ( $contest_type,
 			$solution_start,
 			$solution_stop,
 			$description_start,
 			$description_stop );
-	    $p .= $end_privs . PHP_EOL;
-	}
+	else
+	    $p .= '+ owner @manager' . PHP_EOL
+	        . '+ view  @manager' . PHP_EOL;
+
+	$p .= $end_privs . PHP_EOL;
 
 	$r = ATOMIC_WRITE ( "$epm_data/$fname", $p );
 	if ( $r === false )
@@ -825,7 +830,7 @@
 	    ERROR ( "cannot stat $fname" );
 	$deployed = date ( $epm_time_format, $t );
 
-	return $output_privs;
+	return true;
     }
 
     if ( $epm_method == 'GET' )
@@ -932,9 +937,10 @@
 	    $h = "$t $aid contest $new_contest";
 	    $actions[] = "$h create-contest";
 	    $actions[] = "$h add-account $aid";
-	    $actions[] = "$h set email $aid = $m";
+	    $actions[] = "$h email $aid = $m";
 	    $actions[] = "$h role $aid + manager";
 	    init_contest ( $new_contest );
+	    $has_been_deployed = deploy();
 	}
     }
 
@@ -1140,7 +1146,7 @@
 	    $write_contestdata = true;
 	    $actions[] = "$h add-account $add_aid";
 	    $actions[] =
-	        "$h set email $add_aid = $add_email";
+	        "$h email $add_aid = $add_email";
 	    note ( "acccount $add_aid with" .
 		   " email $add_email has been added",
 		   "<br><br>" );
@@ -1152,7 +1158,7 @@
 	else
 	{
 	    $actions[] =
-	        "$h set email $add_aid = $add_email";
+	        "$h email $add_aid = $add_email";
 	    note ( "email of acccount $add_aid" .
 		   " has been changed from " .
 		   $emails[$add_aid] .

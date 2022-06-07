@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Mon Feb 28 09:41:00 EST 2022
+// Date:	Tue Jun  7 16:39:21 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -48,46 +48,47 @@ function view_priv ( $project )
 // table row per line.  Each action item has one of the
 // format:
 //
-//	[TIME, UID, TYPE, ...]
+//	[TIME, AID, TYPE, ...]
 //
 // or more specifically, one of:
 //
-//	[TIME, UID, 'info', KEY, OP, VALUE]
-//	[TIME, UID, 'push', PROJECT, PROBLEM]
-//	[TIME, UID, 'pull', PROJECT, PROBLEM]
-//	[TIME, UID, 'submit', PROJECT, PROBLEM, RUNBASE,
+//	[TIME, AID, 'info', KEY, OP, VALUE]
+//	[TIME, AID, 'contest', CONTESTNAME, KEY, ...]
+//	[TIME, AID, 'push', PROJECT, PROBLEM]
+//	[TIME, AID, 'pull', PROJECT, PROBLEM]
+//	[TIME, AID, 'submit', PROJECT, PROBLEM, RUNBASE,
 //			      STIME, SCORE...]
-//	[TIME, UID, 'create-problem', '-', PROBLEM]
-//	[TIME, UID, 'delete-problem', '-', PROBLEM]
-//	[TIME, UID, 'update-priv', '-', '-']
-//	[TIME, UID, 'update-priv', PROJECT, '-']
-//	[TIME, UID, 'update-priv', PROJECT, PROBLEM]
-//	[TIME, UID, 'block', PROJECT, '-']
-//	[TIME, UID, 'block', PROJECT, PROBLEM]
-//	[TIME, UID, 'unblock', PROJECT, '-']
-//	[TIME, UID, 'unblock', PROJECT, PROBLEM]
-//	[TIME, UID, 'create-list', '-', NAME]
-//	[TIME, UID, 'update-list', '-', NAME]
-//	[TIME, UID, 'publish-copy', PROJECT, NAME]
-//	[TIME, UID, 'publish-move', PROJECT, NAME]
-//	[TIME, UID, 'unpublish-copy', PROJECT, NAME]
-//	[TIME, UID, 'unpublish-move', PROJECT, NAME]
-//	[TIME, UID, 'delete-list', '-', NAME]
-//	[TIME, UID, 'download', '-', PROBLEM]
-//	[TIME, UID, 'download', PROJECT, '-']
-//	[TIME, UID, 'download', PROJECT, PROBLEM]
-//	[TIME, UID, 'copy-from', PROJECT1, PROBLEM,
+//	[TIME, AID, 'create-problem', '-', PROBLEM]
+//	[TIME, AID, 'delete-problem', '-', PROBLEM]
+//	[TIME, AID, 'update-priv', '-', '-']
+//	[TIME, AID, 'update-priv', PROJECT, '-']
+//	[TIME, AID, 'update-priv', PROJECT, PROBLEM]
+//	[TIME, AID, 'block', PROJECT, '-']
+//	[TIME, AID, 'block', PROJECT, PROBLEM]
+//	[TIME, AID, 'unblock', PROJECT, '-']
+//	[TIME, AID, 'unblock', PROJECT, PROBLEM]
+//	[TIME, AID, 'create-list', '-', NAME]
+//	[TIME, AID, 'update-list', '-', NAME]
+//	[TIME, AID, 'publish-copy', PROJECT, NAME]
+//	[TIME, AID, 'publish-move', PROJECT, NAME]
+//	[TIME, AID, 'unpublish-copy', PROJECT, NAME]
+//	[TIME, AID, 'unpublish-move', PROJECT, NAME]
+//	[TIME, AID, 'delete-list', '-', NAME]
+//	[TIME, AID, 'download', '-', PROBLEM]
+//	[TIME, AID, 'download', PROJECT, '-']
+//	[TIME, AID, 'download', PROJECT, PROBLEM]
+//	[TIME, AID, 'copy-from', PROJECT1, PROBLEM,
 //                               PROJECT2, PROBLEM]
-//	[TIME, UID, 'copy-from', PROJECT1, '-',
+//	[TIME, AID, 'copy-from', PROJECT1, '-',
 //                               PROJECT2, '-']
-//	[TIME, UID, 'update-from', PROJECT1, PROBLEM,
+//	[TIME, AID, 'update-from', PROJECT1, PROBLEM,
 //                                 PROJECT2, PROBLEM]
-//	[TIME, UID, 'update-from', PROJECT1, '-',
+//	[TIME, AID, 'update-from', PROJECT1, '-',
 //                                 PROJECT2, '-']
 //
 // For 'info':
 //
-//     KEY is the UID.info element changed
+//     KEY is the AID.info element changed
 //     OP is '=' to reset the element to VALUE,
 //           '+' to add VALUE to the element list,
 //           '-' to subtract VALUE from the element
@@ -184,6 +185,47 @@ function actions_to_rows ( $actions )
 		else
 		    $v = view_priv ( $project );
 		if ( $v != '+' ) continue;
+	    }
+	}
+
+	if ( $type[0] == 'contest' )
+	{
+	    // Check for view_priv was made above.
+
+	    $contestname = $items[3];
+	    $key = $items[4];
+	    $k[] = 'contest';
+	    $k[] = $contestname;
+	    $k = array_merge
+	        ( $k, preg_split ( '/[^A-Za-z0-9]+/',
+		                   $key ) );
+	    $a = "for contest $contestname";
+
+	    if ( $key == 'create-contest' )
+	        $a = "created contest $contestname";
+	    elseif ( $key == 'add-account' )
+	    {
+		$k[] = $items[5];
+	        $a = "$a added account {$items[5]}";
+	    }
+	    elseif ( $key == 'email' )
+	    {
+		$k[] = $items[5];
+		$k[] = $items[7];
+	        $a = "$a set email for account"
+		   . " {$items[5]} to {$items[7]}";
+	    }
+	    elseif ( $key == 'role' )
+	    {
+		$k[] = $items[5];
+		$op = $items[6];
+		$k[] = $items[7];
+		if ( $op == '+' )
+		    $a = "$a added {$items[7]} role"
+		       . " to account {$items[5]}";
+		else
+		    $a = "$a removed {$items[7]} role"
+		       . " from account {$items[5]}";
 	    }
 	}
 
