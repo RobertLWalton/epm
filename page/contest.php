@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Mon Jun  6 17:39:44 EDT 2022
+    // Date:	Tue Jun  7 03:49:07 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -820,7 +820,7 @@
 	if ( $r === false )
 	    ERROR ( "cannot write $fname" );
 
-	$t = filemtime ( "$epm_data/$fname" );
+	$t = @filemtime ( "$epm_data/$fname" );
 	if ( $t === false )
 	    ERROR ( "cannot stat $fname" );
 	$deployed = date ( $epm_time_format, $t );
@@ -925,10 +925,15 @@
 		   'emails' => [$aid => $m],
 		   'times' => [$aid => $t]],
 		  JSON_PRETTY_PRINT );
-	    $r = file_put_contents
+	    $r = @file_put_contents
 		( "$epm_data/$c", $j );
 	    if ( $r === false )
 		ERROR ( "cannot write file $c" );
+	    $h = "$t $aid contest $new_contest";
+	    $actions[] = "$h create-contest";
+	    $actions[] = "$h add-account $aid";
+	    $actions[] = "$h set email $aid = $m";
+	    $actions[] = "$h role $aid + manager";
 	    init_contest ( $new_contest );
 	}
     }
@@ -985,7 +990,8 @@
 		    unset ( $emails[$a] );
 		    unset ( $previous_emails[$a] );
 		    unset ( $times[$a] );
-		    $actions[] = "$header delete $a";
+		    $actions[] =
+		        "$header delete-account $a";
 		}
 		elseif ( $f != $pf )
 		{
@@ -1028,8 +1034,8 @@
 		{
 		    $v = explode ( "\n", $v );
 		    $v = trim ( $v[0] );
-		    if ( strlen ( $v ) > 20 )
-		        $v = substr ( $v, 0, 17 )
+		    if ( strlen ( $v ) > 40 )
+		        $v = substr ( $v, 0, 37 )
 			   . "...";
 		}
 		$actions[] = "$header set $k = $v";
@@ -1124,13 +1130,17 @@
 
     if ( isset ( $add_aid) )
     {
+	$t = date ( $epm_time_format );
+	$h = "$t $aid contest $contestname";
 	if ( ! isset ( $emails[$add_aid] ) )
 	{
 	    $flags[$add_aid] = '---';
 	    $emails[$add_aid] = $add_email;
-	    $times[$add_aid] =
-		date ( $epm_time_format );
+	    $times[$add_aid] = $t;
 	    $write_contestdata = true;
+	    $actions[] = "$h add-account $add_aid";
+	    $actions[] =
+	        "$h set email $add_aid = $add_email";
 	    note ( "acccount $add_aid with" .
 		   " email $add_email has been added",
 		   "<br><br>" );
@@ -1141,6 +1151,8 @@
 		" $add_email already exists";
 	else
 	{
+	    $actions[] =
+	        "$h set email $add_aid = $add_email";
 	    note ( "email of acccount $add_aid" .
 		   " has been changed from " .
 		   $emails[$add_aid] .
@@ -1163,7 +1175,7 @@
 	$j = json_encode ( $contestdata,
 		            JSON_PRETTY_PRINT );
 	$f = "projects/$contestname/+contest+";
-	$r = file_put_contents ( "$epm_data/$f", $j );
+	$r = @file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	    ERROR ( "cannot write file $f" );
 	$has_been_deployed = deploy();
