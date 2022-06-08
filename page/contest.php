@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun  8 11:36:52 EDT 2022
+    // Date:	Wed Jun  8 14:50:24 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -472,7 +472,8 @@
     //
     function check_parameters ( & $params, & $warnings )
     {
-        global $contestdata, $aid;
+        global $contestdata, $contestname,
+	       $aid, $epm_data, $epm_problem_name_re;
 
     	$v = $params['registration-email'];
 	$err = [];
@@ -498,6 +499,53 @@
 		" make such changes)";
 	    $params['flags'][$aid] =
 	        $contestdata['flags'][$aid];
+	}
+
+	if ( isset ( $contestdata['contest-type'] ) )
+	{
+	    if ( ! isset ( $params['contest-type'] ) )
+	    {
+		$warnings[] =
+		    "you cannot unset Contest Type";
+		$params['contest-type'] =
+		    $contestdata['contest-type'];
+	    }
+	    elseif ( $contestdata['contest-type']
+	             !=
+		     $params['contest-type'] )
+	    {
+		$unblocked = [];
+	        $d = "projects/$contestname";
+		$ds = @scandir ( "$epm_data/$d" );
+		if ( $ds === false )
+		    ERROR ( "cannot read $d" );
+		foreach ( $ds as $p )
+		{
+		    if ( ! preg_match
+			       ( $epm_problem_name_re,
+				 $p ) )
+			continue;
+		    echo "C $p<BR>";
+		    if ( ! blocked_problem
+		               ( $contestname, $p,
+			         $DISCARD, true ) )
+		        $unblocked[] = $p;
+		}
+		if ( count ( $unblocked ) > 0 )
+		{
+		    $warnings[] =
+		        "the following contest" .
+			" problems are unblocked:";
+		    foreach ( $unblocked as $p )
+		        $warnings[] = "    $p";
+		    $warnings[] =
+		        "you cannot change Contest" .
+			" Type when there are" .
+			" unblocked contest problems";
+		    $params['contest-type'] =
+			$contestdata['contest-type'];
+		}
+	    }
 	}
     }
 

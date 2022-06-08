@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Wed Jun  8 11:41:26 EDT 2022
+// Date:	Wed Jun  8 13:59:41 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -256,6 +256,13 @@ function actions_to_rows ( $actions )
 		    $a = "$a preventing $role1 from"
 		       . " seeing $role2 emails";
 	    }
+	    elseif ( $key == 'delete-account' )
+	    {
+		$k[] = $item[5];
+	        $a = "$a deleted account {$items[5]}";
+	    }
+	    else
+	        $a = "$a unknown key $key";
 	}
 
 	// Action items from here on cannot be viewed
