@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Jun  7 17:04:28 EDT 2022
+    // Date:	Wed Jun  8 11:06:48 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -89,9 +89,6 @@
     $write_contestdata = false;
         // Set to true to write contestdata after
 	// processing POSTs.
-    $has_been_deployed = false;
-        // Set to true if contest was deployed by
-	// THIS post.
 
     $contestname =
         & $_SESSION['EPM_CONTEST']['CONTESTNAME'];
@@ -132,9 +129,6 @@
 	'description-start',
 	'description-stop' ];
 
-    $deployed = & $contestdata['deployed'];
-        // Time last deployed in $epm_time_format,
-	// or NULL.
     $flags = & $contestdata['flags'];
         // map ACCOUNT => "[Mm-][Jj-][Cc-]"
 	//    M if now manager, m if was manager,
@@ -468,9 +462,7 @@
     // Check the parameters returned by get_parameters
     // for warnings.
     //
-    // Some error checks reference $contestdata; e.g.,
-    // $deployed is used to prevent changes to
-    // $contest_type.
+    // Some error checks reference $contestdata.
     //
     // Some warnings cause $params to be changed so that
     // it does not alter $contestdata.
@@ -493,25 +485,6 @@
 		    $warnings[] = "    $e";
 		$params['registration-email'] =
 		    $contestdata['registration-email'];
-	}
-
-	if ( isset ( $contestdata['deployed'] )
-	     &&
-	     isset ( $contestdata['contest-type'] )
-	     &&
-	     $contestdata['contest-type']
-	     !=
-	     $params['contest-type'] )
-	{
-	    $v = $contestdata['contest-type'];
-	    $w = $params['contest-type'];
-	    if ( $w == NULL ) $w = "NONE";
-	    $warnings[] =
-	        "contest type is being changed" .
-	        " from $v to $w after";
-	    $warnings[] =
-	        "contest was deployed on " .
-	        $contestdata['deployed'];
 	}
 
 	$f = $params['flags'][$aid];
@@ -731,7 +704,7 @@
 	       $contest_description,
 	       $solution_start, $solution_stop,
 	       $description_start, $description_stop,
-	       $flags, $deployed,
+	       $flags,
 	       $epm_data, $epm_time_format;
 
 	$begin_accounts =
@@ -828,7 +801,6 @@
 	$t = @filemtime ( "$epm_data/$fname" );
 	if ( $t === false )
 	    ERROR ( "cannot stat $fname" );
-	$deployed = date ( $epm_time_format, $t );
 
 	return true;
     }
@@ -940,7 +912,7 @@
 	    $actions[] = "$h email $aid = $m";
 	    $actions[] = "$h role $aid + manager";
 	    init_contest ( $new_contest );
-	    $has_been_deployed = deploy();
+	    deploy();
 	}
     }
 
@@ -1184,25 +1156,7 @@
 	$r = @file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	    ERROR ( "cannot write file $f" );
-	$has_been_deployed = deploy();
-	if ( $has_been_deployed === false )
-	    $warnings[] = "contest was NOT deployed";
-    }
-
-    if ( isset ( $contestname )
-	 &&
-	 $is_manager )
-    {
-	if ( $has_been_deployed )
-	    note ( "Contest Has Just Been Deployed!",
-	           "<br><br>" );
-	elseif ( isset ( $deployed ) )
-	    note ( "Contest Was Deployed:" .
-		   "&nbsp;&nbsp;&nbsp;$deployed",
-	           "<br><br>" );
-	else
-	    note ( "Contest Has NOT Been Deployed",
-	           "<br><br>" );
+	deploy();
     }
 
     if ( count ( $actions ) > 0 )
