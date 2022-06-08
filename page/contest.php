@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun  8 11:06:48 EDT 2022
+    // Date:	Wed Jun  8 11:36:52 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -697,7 +697,7 @@
     # and false is returned.  Otherwise true is
     # returned.
     #
-    function deploy()
+    function update_priv()
     {
     	global $contestname, $contest_type,
                $registration_email,
@@ -912,7 +912,7 @@
 	    $actions[] = "$h email $aid = $m";
 	    $actions[] = "$h role $aid + manager";
 	    init_contest ( $new_contest );
-	    deploy();
+	    update_priv();
 	}
     }
 
@@ -1156,7 +1156,7 @@
 	$r = @file_put_contents ( "$epm_data/$f", $j );
 	if ( $r === false )
 	    ERROR ( "cannot write file $f" );
-	deploy();
+	update_priv();
     }
 
     if ( count ( $actions ) > 0 )

@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jun  7 22:41:33 EDT 2022
+// Date:	Wed Jun  8 11:41:26 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -241,6 +241,20 @@ function actions_to_rows ( $actions )
 		      preg_split ( '/[^A-Za-z0-9]+/',
 				   $value ) );
 		$a = "$a set $name = $value";
+	    }
+	    elseif ( $key == 'can-see' )
+	    {
+	        $role1 = $items[5];
+	        $op    = $items[6];
+	        $role2 = $items[7];
+		$k[] = $role1;
+		$k[] = $role2;
+		if ( $op == '+' )
+		    $a = "$a allowing $role1 to see"
+		       . " $role2 emails";
+		else
+		    $a = "$a preventing $role1 from"
+		       . " seeing $role2 emails";
 	    }
 	}
 
