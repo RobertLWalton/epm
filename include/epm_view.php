@@ -2,7 +2,7 @@
 
 // File:	epm_view.php
 // Author:	Robert L Walton <walton@acm.org>
-// Date:	Tue Jun  7 16:39:21 EDT 2022
+// Date:	Tue Jun  7 22:41:33 EDT 2022
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -226,6 +226,21 @@ function actions_to_rows ( $actions )
 		else
 		    $a = "$a removed {$items[7]} role"
 		       . " from account {$items[5]}";
+	    }
+	    elseif ( $key == 'set' )
+	    {
+	        $name = $items[5];
+		$value = implode
+		    ( ' ', array_slice ( $items, 7 ) );
+		$k = array_merge
+		    ( $k,
+		      preg_split ( '/[^A-Za-z0-9]+/',
+				   $name ) );
+		$k = array_merge
+		    ( $k,
+		      preg_split ( '/[^A-Za-z0-9]+/',
+				   $value ) );
+		$a = "$a set $name = $value";
 	    }
 	}
 
