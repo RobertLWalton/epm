@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Wed Jun  8 14:50:24 EDT 2022
+    // Date:	Thu Jun  9 08:19:36 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -735,16 +735,6 @@
     #	<result of epm_contest_priv in parameters.php>
     #	# *END* *CONTEST* *PRIVILEGES*
     #
-    # If $contest_description or $registration_email
-    # is NULL, the result of epm_contest_priv is
-    # replaced by:
-    #
-    #	+ owner @manager
-    #   + view @manager
-    #
-    # and false is returned.  Otherwise true is
-    # returned.
-    #
     function update_priv()
     {
     	global $contestname, $contest_type,
@@ -826,20 +816,12 @@
 	}
 
 	$p .= $begin_privs . PHP_EOL;
-
-	if ( isset ( $contest_description )
-	     &&
-	     isset ( $registration_email ) )
-	    $p .= epm_contest_priv
-		      ( $contest_type,
-			$solution_start,
-			$solution_stop,
-			$description_start,
-			$description_stop );
-	else
-	    $p .= '+ owner @manager' . PHP_EOL
-	        . '+ view  @manager' . PHP_EOL;
-
+	$p .= epm_contest_priv
+		  ( $contest_type,
+		    $solution_start,
+		    $solution_stop,
+		    $description_start,
+		    $description_stop );
 	$p .= $end_privs . PHP_EOL;
 
 	$r = ATOMIC_WRITE ( "$epm_data/$fname", $p );
