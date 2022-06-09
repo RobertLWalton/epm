@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Sun Jun  5 13:54:40 EDT 2022
+Date:	Thu Jun  9 12:36:14 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1924,7 +1924,7 @@ You must use one of these two buttons to get the `Go To ... Page'
 
 <h1 id="contest-page">Contest Page</h1>
 <p>
-The Contest Page defines a programming contest in which
+The Contest Page is used to define programming contests in which
 contestants try to solve as many problems as they can in limited time.
 <p>
 In a 1-phase contest, the judges make the problems, and in a
@@ -1951,9 +1951,9 @@ on EPM so you must find out about the contest by other means.
 Then send an email registration request to the 'To Register, Email' address.
 You must have an EPM account and send the mail from an email address that
 you have associated with your EPM account.  If you are on a team,
-it will be unclear which EPM account you want to register, your
+it will be unclear whether you want to register your
 individual account or one of your team accounts, so in this case be sure to
-include the name of the account you want to register in your email.
+include the name of the account you want to register in your request.
 <p>
 After you have registered, you may solve problems during and after
 the solution period: that is, the time between the Problem Solution
@@ -1974,7 +1974,7 @@ delete your version of your problem until after the contest.
 <p>
 Also, during the Solution Submit Times you can submit your
 solution to your own problem, thus getting at least one problem
-on the Solution Scoreboard.
+on the Solution Scoreboard in a 2-phase contest.
 </p>
 
 <h2 id="contest-judging">Contest Judging</h2>
@@ -1983,7 +1983,8 @@ A contest judge can pull and submit problems from the
 contest project anytime.  A judge can thus test the problems
 anytime.
 <p>
-In a 1-phase contest, a contest judge can push problems
+In a 1-phase contest, contest judges must push problems
+all the contest problems
 to the contest project between
 the Problem Definition Submit Start and Stop Times.
 In this time interval, a judge can pull a problem written
@@ -1994,7 +1995,7 @@ by another judge and test it, but cannot re-push it.
 <p>
 The contest manager must register contest participant
 accounts
-using email addresses from which registration requests
+using the email addresses from which registration requests
 are sent
 ( see <a href="#contest-participation">Contest Participation</a> above).
 After registering an account, a manager selects roles for the account:
@@ -2002,7 +2003,8 @@ contestant (C), judge (J), or manager (M).
 To change a role, hover over the role box at the left of the
 account line: the new role value will appear, and if you click the box
 the role value will be changed to this new value.  If you do NOT
-click the box, the value will not be changed.
+click the box, the value will not be changed, and the display will
+revert to the old value when you stop hovering over the role box.
 <p>
 An account can have more than one role, or no roles.
 There can be more than one manager.
@@ -2024,16 +2026,13 @@ the privileges which contest managers, judges, and contestants
 have as follows (specifically, they control the contest project
 +priv+ file):
 <ol>
-<li>If either the Contest Description or `To Register, Email' parameters
-are not set, no participant gets any privileges.  Otherwise privileges
-for the project are as described in the following.
 <li>Managers get `owner', `block', `view', and `show' privileges.
 <li>Judges get `view', `show', `pull-new', `re-pull', `first-failed',
 `publish-all', `unpublish-all' privileges'.
-<li>No-one gets `push-new', `re-push' privileges before the Problem Definition
+<li>No-one gets `push-new' or `re-push' privileges before the Problem Definition
 Start Time if that is defined.  Similarly no-one but managers gets
 `block' privilege before the Problem Definition Start Time if that is defined.
-<li>No-one gets `push-new', `re-push' privileges after the Problem Definition
+<li>No-one gets `push-new' or `re-push' privileges after the Problem Definition
 Stop Time if that is defined.  Similarly no-one but managers gets
 `block' privilege after the Problem Definition Stop Time if that is defined.
 <li>If the Contest Type is defined as 1-phase and both the Problem Definition
@@ -2059,8 +2058,13 @@ Additions must be between automatically
 generated the *CONTEST* *ACCOUNT* *DEFINITIONS* section and the
 automatically generated *CONTEST* *PRIVILEGES* section, else the
 additions will NOT be preserved when the +priv+ file is regenerated.
+Such additions allow managers to dictate privileges for specific
+accounts or for all judges or all contestants.
+<p>
 Managers can also alter contest project problem +priv+ files, but these
 only affect privileges not allowed or denied by the contest project +priv+ file.
+The problem +priv+ files are automatically generated when the problem is
+first pushed, and are NOT automatically re-genterated afterwards.
 </p>
 
 <h1 id="view-page">View Page</h1>
