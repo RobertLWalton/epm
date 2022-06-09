@@ -2,7 +2,7 @@
 
     // File:	view.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Oct  2 07:25:10 EDT 2020
+    // Date:	Thu Jun  9 16:56:28 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -71,7 +71,19 @@
     $teams = read_accounts ( 'team' );
     $accounts = array_merge ( $users, $teams );
 
-    if ( $epm_method == 'POST' )
+    if ( $epm_method == 'GET' )
+    {
+        if ( isset ( $_GET['project'] ) )
+	{
+	    $project = $_GET['project'];
+	    if ( $project == '' )
+	        $project = NULL;
+	    elseif ( ! in_array ( $project, $projects,
+	                          true ) )
+		exit ( 'UNACCEPTABLE HTTP POST' );
+	}
+    }
+    else // if $epm_method == 'POST'
     {
         if ( isset ( $_POST['listname'] ) )
 	{

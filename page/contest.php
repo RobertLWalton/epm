@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  9 08:19:36 EDT 2022
+    // Date:	Thu Jun  9 14:47:49 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1342,12 +1342,14 @@ EOT;
 	$show_name = 'inline';
 	$shown_name = $contestname;
 	$select_msg = 'or Select Another Contest';
+	$view_actions = 'inline';
     }
     else
     {
 	$show_name = 'none';
 	$shown_name = '';
 	$select_msg = 'Select Contest';
+	$view_actions = 'none';
     }
 
     if ( $state == 'normal' )
@@ -1410,7 +1412,10 @@ EOT;
     </button>
     <strong>Page</strong>
     </td>
-    <td style='text-align:center'>
+    <td style='text-align:right'>
+    <button type='button' style='display:$view_actions'
+	    onclick='AUX(event,"view.php?project=$contestname","+view+")'>
+	View Contest Actions</button>
     $RW_BUTTON
     <button type='button' id='refresh'
             onclick='location.replace
@@ -1429,7 +1434,7 @@ EOT;
     <pre class='contest'>$shown_name</pre>
     </td>
 
-    <td>
+    <td colspan='2'>
 
     <div style='display:$select_contest'>
     <label>$select_msg:</label>
@@ -1452,10 +1457,9 @@ EOT;
 	   title="New Contest Name"
 	   name='new-contest'
 	   onkeydown='KEYDOWN("new-contest-form")'>
-    </div>
-
-    </td>
     </form>
+    </div>
+    </td>
     </tr>
     </table>
 
