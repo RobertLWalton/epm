@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Thu Jun  9 12:36:14 EDT 2022
+Date:	Fri Jun 10 07:20:17 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1998,13 +1998,22 @@ accounts
 using the email addresses from which registration requests
 are sent
 ( see <a href="#contest-participation">Contest Participation</a> above).
-After registering an account, a manager selects roles for the account:
-contestant (C), judge (J), or manager (M).
-To change a role, hover over the role box at the left of the
-account line: the new role value will appear, and if you click the box
-the role value will be changed to this new value.  If you do NOT
-click the box, the value will not be changed, and the display will
-revert to the old value when you stop hovering over the role box.
+This email address is entered into the `Email for New/Old Account'
+box, and if the email address is for an individual who is also on
+teams, the individual or team account to be registered in selected.
+<p>
+Changing the email address on an account uses the same process.  If the
+account chosen already exists, its email address is simply changed.
+<p>
+Other contest parameters can be edited on the Contest Page, and then all
+the edited parameters can be saved by the SAVE button, or the
+edits can be discarded by the RESET button.
+<p>
+Roles for a participating account are selected by clicking role boxes
+to the left of the account.  The role identifiers are M for manager,
+J for judge, and C for contestant.  Hovering over a role box displays
+the change that will be made if you click on the box, but if you do
+NOT click, no change will be made.
 <p>
 An account can have more than one role, or no roles.
 There can be more than one manager.
@@ -2013,15 +2022,32 @@ A manager can cancel an account role,
 in which case the C, J, or M will be drawn with a line
 through it to indicate the account once had the role
 but a manager cancelled it.  A role can be restored
-and re-cancelled by a manager any number of times.  An account
-cannot be removed from the contest, but all its roles can
-be cancelled, which has the same effect.
+and re-cancelled by a manager any number of times.
 <p>
 There can be more than one manager.  A manager cannot perform
 as a judge or contestant unless the manager account is given
 the J or C role in addition to the M role.
 <p>
-A manager must set the contest parameters.  These control
+An account can be deleted from the contest my clicking
+on the &Chi; box to the left of the account name.  This
+displays a line through the account name to indicate
+the account is to be deleted.  Clicking a second time on
+the &Chi; removes the line.  The accounts with lines through
+their name are deleted by the SAVE button.
+be cancelled, which has the same effect.
+<p>
+The following rules are applied to the above:
+<ul>
+<li> A manager may not remove the M manager role from their own
+account, or delete their own account.  They may get another
+manager to do these things.
+<li> An account may not be deleted if it has pushed or submitted
+to the contest project.  All the account's roles may be removed,
+which effectively removes the account from participation in the
+contest.
+</ul>
+<p>
+The contest parameters control
 the privileges which contest managers, judges, and contestants
 have as follows (specifically, they control the contest project
 +priv+ file):
@@ -2059,7 +2085,8 @@ generated the *CONTEST* *ACCOUNT* *DEFINITIONS* section and the
 automatically generated *CONTEST* *PRIVILEGES* section, else the
 additions will NOT be preserved when the +priv+ file is regenerated.
 Such additions allow managers to dictate privileges for specific
-accounts or for all judges or all contestants.
+accounts or for all judges or all contestants, but normally this
+will not be necessary.
 <p>
 Managers can also alter contest project problem +priv+ files, but these
 only affect privileges not allowed or denied by the contest project +priv+ file.

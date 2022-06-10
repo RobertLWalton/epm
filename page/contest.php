@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun 10 02:16:25 EDT 2022
+    // Date:	Fri Jun 10 07:36:21 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -977,7 +977,7 @@
 	        if ( $pf == 'XXX' )
 		{
 		    // Delete $a if it has not executed
-		    // submit or pull.
+		    // submit or push.
 		    //
 		    $fname = "projects/$contestname/" .
 		             "+actions+";
@@ -998,7 +998,7 @@
 			    continue;
 			if ( $items[1] != $a ) continue;
 			$t = $items[2];
-			if ( $t != 'pull'
+			if ( $t != 'push'
 			     &&
 			     $t != 'submit' )
 			    continue;
