@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  9 14:47:49 EDT 2022
+    // Date:	Thu Jun  9 21:44:58 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -141,14 +141,6 @@
         // map ACCOUNT => "email address"
 	// Email addresses used to add account
 	// to contest.
-    $previous_emails =
-            & $contestdata['previous-emails'];
-        // map ACCOUNT => "previous email address"
-	// Previous value of $emails[ACCOUNT] or NULL
-	// or unset if none.
-    $times = & $contestdata['times'];
-        // map ACCOUNT => time of last change to account
-	//		  flags or email
 
     $is_manager = & $data['IS-MANAGER'];
 	// True iff $flags[$aid] is set and == 'M..'.
@@ -628,7 +620,7 @@
     function display_accounts
     		( $is_manager, $email_mask = 'XXX' )
     {
-        global $flags, $emails, $previous_emails;
+        global $flags, $emails;
 	$MJC = 'MJC';
 	$mjc = 'mjc';
 
@@ -704,15 +696,6 @@
 		$email = $emails[$aid];
 		$r .= "<td style='padding-left:3em'>"
 		    . "<strong>$email</strong></td>";
-	    }
-	    if ( isset ( $previous_emails[$aid] )
-	         &&
-		 $is_manager )
-	    {
-		$email = $previous_emails[$aid];
-		$r .= "<td style='padding-left:3em'>"
-		    . "<strong>(previously $email)"
-		    . "</strong></td>";
 	    }
 	    $r .= "</tr>";
 	}
@@ -996,8 +979,6 @@
 		    note ( "deleted account $a" );
 		    unset ( $pflags[$a] );
 		    unset ( $emails[$a] );
-		    unset ( $previous_emails[$a] );
-		    unset ( $times[$a] );
 		    $actions[] =
 		        "$header delete-account $a";
 		}
@@ -1013,7 +994,6 @@
 			$actions[] =
 			    "$header role $a $s $r";
 		    }
-		    $times[$a] = $time;
 		}
 	    }
 
@@ -1144,7 +1124,6 @@
 	{
 	    $flags[$add_aid] = '---';
 	    $emails[$add_aid] = $add_email;
-	    $times[$add_aid] = $t;
 	    $write_contestdata = true;
 	    $actions[] = "$h add-account $add_aid";
 	    $actions[] =
@@ -1166,11 +1145,7 @@
 		   $emails[$add_aid] .
 		   " to $add_email",
 		   "<br><br>" );
-	    $previous_emails[$add_aid] =
-	        $emails[$add_aid];
 	    $emails[$add_aid] = $add_email;
-	    $times[$add_aid] =
-		date ( $epm_time_format );
 	    $write_contestdata = true;
 	}
 
@@ -1342,7 +1317,8 @@ EOT;
 	$show_name = 'inline';
 	$shown_name = $contestname;
 	$select_msg = 'or Select Another Contest';
-	$view_actions = 'inline';
+	$view_actions =
+	    ( $is_manager ? 'inline' : 'none' );
     }
     else
     {
