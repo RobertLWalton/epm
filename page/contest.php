@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  9 21:44:58 EDT 2022
+    // Date:	Fri Jun 10 02:05:13 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -976,11 +976,49 @@
 		$pf = $pflags[$a];
 	        if ( $pf == 'XXX' )
 		{
-		    note ( "deleted account $a" );
-		    unset ( $pflags[$a] );
-		    unset ( $emails[$a] );
-		    $actions[] =
-		        "$header delete-account $a";
+		    // Delete $a if it has not executed
+		    // submit or pull.
+		    //
+		    $f = "projects/$contestname/+priv+";
+		    $c = @file_get_contents
+		              ( "$epm_data/$f" );
+		    if ( $c === false )
+		        ERROR ( "cannot read $f" );
+		    $lines = explode ( "\n", $c );
+		    $op = NULL;
+		    foreach ( $lines as $line )
+		    {
+			$line = trim ( $line );
+			if ( $line == '' ) continue;
+			$line = preg_replace
+			    ( '/\s+/', ' ', $line );
+			$items = explode ( ' ', $line );
+			if ( count ( $items ) < 3 )
+			    continue;
+			if ( $items[1] != $a ) continue;
+			$t = $items[2];
+			if ( $t != 'pull'
+			     &&
+			     $t != 'submit' )
+			    continue;
+
+			$op = $t;
+			break;
+		    }
+		    // check_parameters has already
+		    // ensured that $a != $aid.
+		    if ( isset ( $op ) )
+			$errors[] =
+			    "$a executed $op and" .
+			    " CANNOT be deleted";
+		    else
+		    {
+			note ( "deleted account $a" );
+			unset ( $pflags[$a] );
+			unset ( $emails[$a] );
+			$actions[] =
+			    "$header delete-account $a";
+		    }
 		}
 		elseif ( $f != $pf )
 		{
@@ -1390,7 +1428,10 @@ EOT;
     </td>
     <td style='text-align:right'>
     <button type='button' style='display:$view_actions'
-	    onclick='AUX(event,"view.php?project=$contestname","+view+")'>
+	    onclick='AUX
+	        (event,
+	         "view.php?project=$contestname",
+		 "+view+")'>
 	View Contest Actions</button>
     $RW_BUTTON
     <button type='button' id='refresh'
