@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun 10 02:05:13 EDT 2022
+    // Date:	Fri Jun 10 02:16:25 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -979,11 +979,12 @@
 		    // Delete $a if it has not executed
 		    // submit or pull.
 		    //
-		    $f = "projects/$contestname/+priv+";
+		    $fname = "projects/$contestname/" .
+		             "+actions+";
 		    $c = @file_get_contents
-		              ( "$epm_data/$f" );
+		              ( "$epm_data/$fname" );
 		    if ( $c === false )
-		        ERROR ( "cannot read $f" );
+		        ERROR ( "cannot read $fname" );
 		    $lines = explode ( "\n", $c );
 		    $op = NULL;
 		    foreach ( $lines as $line )
@@ -1008,9 +1009,12 @@
 		    // check_parameters has already
 		    // ensured that $a != $aid.
 		    if ( isset ( $op ) )
+		    {
 			$errors[] =
 			    "$a executed $op and" .
 			    " CANNOT be deleted";
+			$pflags[$a] = $f;
+		    }
 		    else
 		    {
 			note ( "deleted account $a" );
