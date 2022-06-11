@@ -3,7 +3,7 @@
 <!--
 File:	help.html
 Author:	Robert L Walton <walton@acm.org>
-Date:	Fri Jun 10 07:20:17 EDT 2022
+Date:	Sat Jun 11 02:40:39 EDT 2022
 
 The authors have placed EPM (its files and the
 content of these files) in the public domain; they
@@ -1993,14 +1993,13 @@ by another judge and test it, but cannot re-push it.
 
 <h2 id="contest-managing">Contest Managing</h2>
 <p>
-The contest manager must register contest participant
-accounts
-using the email addresses from which registration requests
-are sent
+The contest manager must register each contest participant
+account using the email address from which registration request
+for the account was sent
 ( see <a href="#contest-participation">Contest Participation</a> above).
 This email address is entered into the `Email for New/Old Account'
-box, and if the email address is for an individual who is also on
-teams, the individual or team account to be registered in selected.
+box.  If the email address is for an individual who is also on
+teams, the individual or team account to be registered must then be selected.
 <p>
 Changing the email address on an account uses the same process.  If the
 account chosen already exists, its email address is simply changed.
@@ -2024,7 +2023,7 @@ through it to indicate the account once had the role
 but a manager cancelled it.  A role can be restored
 and re-cancelled by a manager any number of times.
 <p>
-There can be more than one manager.  A manager cannot perform
+A manager cannot perform
 as a judge or contestant unless the manager account is given
 the J or C role in addition to the M role.
 <p>
@@ -2032,17 +2031,16 @@ An account can be deleted from the contest my clicking
 on the &Chi; box to the left of the account name.  This
 displays a line through the account name to indicate
 the account is to be deleted.  Clicking a second time on
-the &Chi; removes the line.  The accounts with lines through
-their name are deleted by the SAVE button.
-be cancelled, which has the same effect.
+the &Chi; removes the line.  All accounts that currently have lines through
+their names are deleted when the SAVE button is clicked.
 <p>
 The following rules are applied to the above:
 <ul>
 <li> A manager may not remove the M manager role from their own
 account, or delete their own account.  They may get another
-manager to do these things.
+manager to delete their account or remove its M role.
 <li> An account may not be deleted if it has pushed or submitted
-to the contest project.  All the account's roles may be removed,
+to the contest project.  However, all the account's roles may be removed,
 which effectively removes the account from participation in the
 contest.
 </ul>
@@ -2055,12 +2053,16 @@ have as follows (specifically, they control the contest project
 <li>Managers get `owner', `block', `view', and `show' privileges.
 <li>Judges get `view', `show', `pull-new', `re-pull', `first-failed',
 `publish-all', `unpublish-all' privileges'.
-<li>No-one gets `push-new' or `re-push' privileges before the Problem Definition
-Start Time if that is defined.  Similarly no-one but managers gets
-`block' privilege before the Problem Definition Start Time if that is defined.
-<li>No-one gets `push-new' or `re-push' privileges after the Problem Definition
-Stop Time if that is defined.  Similarly no-one but managers gets
-`block' privilege after the Problem Definition Stop Time if that is defined.
+<li>No-one gets `push-new' or `re-push' privileges <b>before</b>
+the Problem Definition
+Start Time if that is defined.  Similarly no non-manager gets
+`block' privilege <b>before</b>
+the Problem Definition Start Time if that is defined.
+<li>No-one gets `push-new' or `re-push' privileges <b>after</b>
+the Problem Definition
+Stop Time if that is defined.  Similarly no non-manager gets
+`block' privilege <b>after</b>
+the Problem Definition Stop Time if that is defined.
 <li>If the Contest Type is defined as 1-phase and both the Problem Definition
 Start and Stop Times are defined, then between these times the judges
 have `push-new' privileges.  Each judge will have `re-push' and `block'
@@ -2085,13 +2087,18 @@ generated the *CONTEST* *ACCOUNT* *DEFINITIONS* section and the
 automatically generated *CONTEST* *PRIVILEGES* section, else the
 additions will NOT be preserved when the +priv+ file is regenerated.
 Such additions allow managers to dictate privileges for specific
-accounts or for all judges or all contestants, but normally this
-will not be necessary.
+accounts or for all judges or all contestants.  An example
+would be adding the line `- first-failed .*' to disable the
+first-failed privilege for all participants.
 <p>
 Managers can also alter contest project problem +priv+ files, but these
 only affect privileges not allowed or denied by the contest project +priv+ file.
 The problem +priv+ files are automatically generated when the problem is
 first pushed, and are NOT automatically re-genterated afterwards.
+<p>Managers can use the View Contest Actions button to see all
+the actions performed on the contest project.  The search feature
+of the view page can be used to select only actions involving a
+particular account, or only actions of a particular type (e.g., `email').
 </p>
 
 <h1 id="view-page">View Page</h1>

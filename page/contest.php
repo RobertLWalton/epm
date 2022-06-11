@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Fri Jun 10 07:36:21 EDT 2022
+    // Date:	Sat Jun 11 02:46:13 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -79,7 +79,7 @@
     $epm_page_type = '+main+';
     require __DIR__ . '/index.php';
 
-    require "$epm_home/include/debug_info.php";
+    // require "$epm_home/include/debug_info.php";
 
     require "$epm_home/include/epm_list.php";
     require "$epm_home/include/epm_user.php";
@@ -1263,7 +1263,7 @@
 
 	if ( ! $is_participant )
 	    $warnings[] =
-	        'You are not contestant, judge,' .
+	        'You are not a contestant, judge,' .
 		' or manager of this contest.';
     }
 ?>
