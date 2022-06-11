@@ -2,7 +2,7 @@
 
     // File:	contest.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sat Jun 11 02:46:13 EDT 2022
+    // Date:	Sat Jun 11 04:02:27 EDT 2022
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1576,7 +1576,9 @@ EOT;
 	<option value='*CANCEL*'>cancel</option>
 	$aid_options
 	</select>
-	<button type='submit'>Submit</button>
+	<button type='submit'
+	        style='background-color:red;color:white'
+		>Submit</button>
 	</form>
 	</div>
 EOT;
