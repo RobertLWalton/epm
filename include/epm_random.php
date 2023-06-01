@@ -2,7 +2,7 @@
 
     // File:	epm_random.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Thu Jun  4 05:23:12 EDT 2020
+    // Date:	Thu Jun  1 18:07:14 EDT 2023
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -101,8 +101,8 @@
 	$data = substr ( $data, 0, 16 )
 	      . substr ( $encrypted, 0, 16 );
 	    // openssl_encrypt returns 32 bytes, the
-	    // last 16 of which are an encryption of the
-	    // first 16.
+	    // last 16 of which are an encryption of
+	    // padding, which we ignore.
 
 	$r = @fwrite ( $wdesc, $data, 32 );
 	if ( $r != 32  )
