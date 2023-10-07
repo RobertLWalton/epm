@@ -1,3 +1,5 @@
+To setup EPM, see include/maintenance_parameters.php
+
 This directory contains PDF files that are NOT part
 of an EPM installation, because they are printouts
 of HTML files that are part of the installation and
