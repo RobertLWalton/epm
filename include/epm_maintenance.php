@@ -2,7 +2,7 @@
 
 // File:    epm_maintenance.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Apr  5 04:16:01 EDT 2022
+// Date:    Thu Dec  7 11:56:59 UTC 2023
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -995,7 +995,9 @@ function setup ( $dryrun )
 	}
     }
     if ( $count == 0 )
-        $TODO .= "cd $epm_data" . PHP_EOL
+        $TODO .= "git clone <epm_demos repository>"
+	       . " $epm_home/epm_demos" . PHP_EOL
+	       . "cd $epm_data" . PHP_EOL
 	       . "$epm_home/bin/epm import demos" .
 	         PHP_EOL;
 
