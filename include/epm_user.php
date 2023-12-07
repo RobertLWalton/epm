@@ -2,7 +2,7 @@
 
 // File:    epm_user.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sun Apr 17 05:36:27 EDT 2022
+// Date:    Thu Dec  7 16:36:05 UTC 2023
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -682,9 +682,16 @@ function scrub_info ( $type, & $info, & $errors )
 	    $errors[] = "you must set $label";
 	    continue;
 	}
-	$length = strlen ( utf8_decode ( $value ) );
-	     // Note, grapheme_strlen is not available
-	     // because we do not assume intl extension.
+	if ( $label == 'organization'
+	     &&
+	     strtolower ( $value ) == 'self' )
+	    continue;
+	    // Self and self would be too short if
+	    // tested below.
+
+	$length = strlen
+	    ( mb_convert_encoding
+		  ( $value, 'ISO-8859-1', 'UTF-8' ) );
 	if ( $length < $min_length )
 	    $errors[] = "$label is too short"
 	              . " (< $min_length characters)";

@@ -2,7 +2,7 @@
 
     // File:	login.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Tue Apr  5 04:11:59 EDT 2022
+    // Date:	Thu Dec  7 16:54:13 UTC 2023
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -280,8 +280,9 @@
 	       " number\r\n" .
 	       "     for $lname is:\r\n" .
 	       "\r\n" .
-	       "     $ticket\r\n",
-	       "From: no_reply@$sname" );
+	       "     $ticket\r\n" );
+	    // From: no-reply... causes email to fail
+	    // on aws ec2.
 	if ( $r === false )
 	    reply ( 'UNKNOWN_EMAIL' );
 

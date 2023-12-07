@@ -2,7 +2,7 @@
 
     // File:	user.php
     // Author:	Robert L Walton <walton@acm.org>
-    // Date:	Sun Apr  3 01:56:32 EDT 2022
+    // Date:	Thu Dec  7 16:10:38 UTC 2023
 
     // The authors have placed EPM (its files and the
     // content of these files) in the public domain;
@@ -1881,9 +1881,9 @@ EOT;
 		( $tid_info, $exclude );
 	    $h = ( $new_team ?
 		       'Edit New Team Profile' :
-		   $state == 'tid-profile' ?
-		       "Edit $TID Profile" :
-		   "$TID Profile" );
+		   ( $state == 'tid-profile' ?
+		         "Edit $TID Profile" :
+		     "$TID Profile" ) );
 
 	    if ( $new_team )
 		$h = "<strong"
