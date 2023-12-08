@@ -2,7 +2,7 @@
  *
  * File:	epm_sandbox.c
  * Authors:	Bob Walton (walton@deas.harvard.edu)
- * Date:	Wed Oct  7 13:51:19 EDT 2020
+ * Date:	Fri Dec  8 04:43:39 UTC 2023
  *
  * The authors have placed this program in the public
  * domain; they make no warranty and accept no liability
@@ -1144,6 +1144,15 @@ int main ( int argc, char ** argv )
         if ( setrlimit ( RLIMIT_DATA, & limit ) < 0 )
 	    errno_exit
 	        ( "setrlimit RLIMIT_DATA" );
+
+	/* Linux no longer allows unlimited stacks.
+	 * So we do not go beyond the OS set hard limit.
+	 */
+        if ( getrlimit ( RLIMIT_STACK, & limit ) < 0 )
+	    errno_exit
+	        ( "getrlimit RLIMIT_STACK" );
+	if ( stacksize > limit.rlim_max )
+	    stacksize = limit.rlim_max;
 
 	limit.rlim_cur = stacksize;
 	limit.rlim_max = stacksize;

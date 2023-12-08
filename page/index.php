@@ -2,7 +2,7 @@
 
 // File:    index.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Sat Aug  7 16:16:15 EDT 2021
+// Date:    Fri Dec  8 05:04:30 UTC 2023
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain; they
@@ -259,9 +259,9 @@ function EPM_ERROR_HANDLER
 {
     global $epm_data, $epm_self;
 
-    if ( error_reporting() == 0 )
+    if ( ( error_reporting() & E_WARNING ) == 0 )
         return true;
-	// Return if @ operator has suppressed all
+	// Return if @ operator has suppressed E_WARNING
 	// error handling.  Returning true suppresses
 	// normal error handling.
 

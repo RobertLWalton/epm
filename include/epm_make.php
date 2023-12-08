@@ -2,7 +2,7 @@
 
 // File:    epm_make.php
 // Author:  Robert L Walton <walton@acm.org>
-// Date:    Tue Apr  5 04:16:25 EDT 2022
+// Date:    Fri Dec  8 01:27:22 UTC 2023
 
 // The authors have placed EPM (its files and the
 // content of these files) in the public domain;
@@ -1075,6 +1075,8 @@ function execute_commands ( $base, $dir, $errors )
 
     $r = '';
     $r .= "cd $epm_data/$dir" . PHP_EOL;
+    $r .= "export PATH=/usr/local/bin:/usr/bin:" .
+                 "/usr/local/sbin:/usr/sbin" .PHP_EOL;
     $r .= "export EPM_WEB=$epm_web" . PHP_EOL;
     $r .= "export EPM_HOME=$epm_home" . PHP_EOL;
     $r .= "export EPM_DATA=$epm_data" . PHP_EOL;
