@@ -1,3 +1,4 @@
++ show .*
 + push-new .*
 + pull-new .*
 + re-pull .*
